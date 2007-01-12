@@ -16,17 +16,19 @@ namespace NUnit
 		[SetUp]
 		public void Init()
 		{			
-			con = TestUtil.openDB();
-			TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
+			con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
+			con.Open();
+			/*TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 			EDBCommand Command = new EDBCommand("",con);
 			
+
 			Command.CommandText="INSERT INTO poolingtest VALUES (1, 'Test Row 1')";
 			Command.ExecuteNonQuery();
 
 
 			Command.CommandText="INSERT INTO poolingtest VALUES (2, 'Test Row 2')";
 			Command.ExecuteNonQuery();
-			
+			*/
 			TestUtil.closeDB(con);
 		}
 
@@ -44,9 +46,24 @@ namespace NUnit
 		{
 			try
 			{
-				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=enterprisedb;Password=edb;Database=edb");
+				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
+				//con = new EDBConnection("Server={127.0.0.1};Trusted_Connection={Yes};Database={edb};");
+				
 				con.Open();
-				EDBCommand Command=new EDBCommand("",con);
+				
+				TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
+				EDBCommand Command = new EDBCommand("",con);
+			
+
+				Command.CommandText="INSERT INTO poolingtest VALUES (1, 'Test Row 1')";
+				Command.ExecuteNonQuery();
+
+
+				Command.CommandText="INSERT INTO poolingtest VALUES (2, 'Test Row 2')";
+				Command.ExecuteNonQuery();
+			
+				
+				
 				Command.CommandText="SELECT COUNT(*) FROM poolingtest";
 
 				EDBDataReader Reader=Command.ExecuteReader();
@@ -54,6 +71,7 @@ namespace NUnit
 				if(Reader.Read())
 				{
 					int count=int.Parse( Reader.GetValue(0).ToString());
+					//Console.WriteLine(count.ToString());
 					if(Reader.Read())
 					{
 						Assert.Fail("Should only have one row in SELECT COUNT result set");
@@ -84,8 +102,9 @@ namespace NUnit
 		{
 			try
 			{
-				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=enterprisedb;Password=edb;Database=edb ");
+				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
 				con.Open();
+				Console.WriteLine(con.ConnectionString);
 				
 				TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 				con.Close();
@@ -96,6 +115,8 @@ namespace NUnit
 			}
 		}
 		
+
+	
 		[Test]
 		public void testNotPooledConnection()
 		{
