@@ -59,7 +59,7 @@ namespace NUnit
 				com.CommandText = PackFuncRefCursorReturnBody;
 				com.ExecuteNonQuery();
 
-				string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor ) IS BEGIN open  c_1 for select * from emp; open  c_2 for select * from emp;END;"	;
+				string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor ) IS BEGIN open  c_1 for select * from emp order by empno; open  c_2 for select * from emp order by empno;END;"	;
 				com.CommandText = strRefTwoArg;
 				com.ExecuteNonQuery();
 				
@@ -209,7 +209,7 @@ namespace NUnit
 					EDBCommand com = new EDBCommand("",con);
 					com.CommandType = CommandType.Text;
 
-					string strSqlEmptyArg = "CREATE OR REPLACE PROCEDURE public.cursortest1(c_1  OUT  refcursor) IS BEGIN open  c_1 for select * from emp; END;\n";
+					string strSqlEmptyArg = "CREATE OR REPLACE PROCEDURE public.cursortest1(c_1  OUT  refcursor) IS BEGIN open  c_1 for select * from emp order by empno; END;\n";
 					com.CommandText = strSqlEmptyArg;
 					com.ExecuteNonQuery();
 
@@ -224,11 +224,12 @@ namespace NUnit
 					int fc=result.FieldCount;
 					EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
 					rst.Read();
-					Assert.AreEqual("7499",Convert.ToString(rst.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(rst.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
-					Assert.AreEqual("7698",Convert.ToString(rst.GetString(3)));
-					Assert.AreEqual("1600.00", Convert.ToString(rst.GetString(5)));
+					Console.WriteLine(rst.GetString(0));
+					Assert.AreEqual("7369",Convert.ToString(rst.GetString(0)));
+					Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
+					Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
+					Assert.AreEqual("7902",Convert.ToString(rst.GetString(3)));
+					Assert.AreEqual("800.00", Convert.ToString(rst.GetString(5)));
 				
 					
 					tran.Commit();
@@ -266,11 +267,11 @@ namespace NUnit
 					rst.Read();
 				
 				
-					Assert.AreEqual("7499",Convert.ToString(rst.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(rst.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
-					Assert.AreEqual("7698",Convert.ToString(rst.GetString(3)));
-					Assert.AreEqual("1600.00", Convert.ToString(rst.GetString(5)));
+					Assert.AreEqual("7369",Convert.ToString(rst.GetString(0)));
+					Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
+					Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
+					Assert.AreEqual("7902",Convert.ToString(rst.GetString(3)));
+					Assert.AreEqual("800.00", Convert.ToString(rst.GetString(5)));
 				
 				
 					rst = (EDBDataReader) command.Parameters[1].Value;
@@ -278,11 +279,11 @@ namespace NUnit
 					rst.Read();
 					rst.Read();
 					rst.Read();
-					Assert.AreEqual("7566", Convert.ToString(rst.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(rst.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(rst.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(rst.GetString(3)));
-					Assert.AreEqual("2975.00", Convert.ToString(rst.GetString(5)));
+					Assert.AreEqual("7521", Convert.ToString(rst.GetString(0)));
+					Assert.AreEqual("WARD", Convert.ToString(rst.GetString(1)));
+					Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
+					Assert.AreEqual("7698", Convert.ToString(rst.GetString(3)));
+					Assert.AreEqual("1250.00", Convert.ToString(rst.GetString(5)));
 				
 				
 					tran.Commit();
