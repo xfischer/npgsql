@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription(".Net Data Provider for EnterpriseDB")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EnterpriseDB")]
-[assembly: AssemblyProduct("")]
+[assembly: AssemblyProduct("EnterpriseDB Advanced Server 8.2 (8.2.1.2)")]
 [assembly: AssemblyCopyright("Portions Copyright (c) 2004-2006 - EnterpriseDB Corporation.  All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 // You can specify all values by your own or you can build default build and revision
 // numbers with the '*' character (the default):
 
-[assembly: AssemblyVersion("8.1.5.21")]
+[assembly: AssemblyVersion("8.2.1.2")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 
