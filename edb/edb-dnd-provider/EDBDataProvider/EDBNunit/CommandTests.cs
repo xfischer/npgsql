@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using EDBTypes;
 using EnterpriseDB.EDBClient;
+using System.Net;
 
 namespace NUnit
 {
@@ -1461,11 +1462,262 @@ namespace NUnit
 
         }
 
+		[Test]
+		public void TestInet()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE INET_TBL ( i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO INET_TBL (i) VALUES ('10.90.1.226/24');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO INET_TBL (i) VALUES ('254.168.1.226');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="select * from INET_TBL";
 		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Assert.AreEqual("10.90.1.226/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("254.168.1.226",Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP Table INET_TBL";
+			command.ExecuteNonQuery();
+            _conn.Close();
+		}
+		
+
+	
+		[Test]
+		public void TestCidr()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE CIDR_TBL (c cidr);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO CIDR_TBL  VALUES ('192.168.1');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO CIDR_TBL  VALUES ('182.90.6/26');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="select * from CIDR_TBL";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("182.90.6.0/26",Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP Table CIDR_TBL";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
 		
 
 
 
+		[Test]
+		public void TestNetworkAddress()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE NETADD_TBL (c cidr, i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NETADD_TBL (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NETADD_TBL (c, i) VALUES ('10.1.2.3', '10.1.2.3/32');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="INSERT INTO NETADD_TBL (c, i) VALUES ('10', '10.1.2.3/8');";
+			command.ExecuteNonQuery();		
+
+			command.CommandText="INSERT INTO NETADD_TBL (c, i) VALUES ('10.0.0.0', '10.1.2.3/8');";
+			command.ExecuteNonQuery();	
+
+			command.CommandText="select * from NETADD_TBL";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+		
+			
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.1.2.3/32",Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.0.0.0/32",Reader.GetValue(0).ToString());
+
+			Reader.Close();
+		
+			command.CommandText="DROP Table NETADD_TBL";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+		
+
+
+		[Test]
+		public void TestNetworkFuncHost()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE NW_HOST (i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NW_HOST (i) VALUES ('192.168.1.226');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NW_HOST (i) VALUES ('192.168.1.226');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="SELECT host(i) from NW_HOST;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+		try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.226",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("192.168.1.226",Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP Table NW_HOST";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+		
+
+
+		[Test]
+		public void TestNetworkFuncFamily()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE NW_FAMILY (i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NW_FAMILY (i) VALUES ('10.90.1.145');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NW_FAMILY (i) VALUES ('255.122.11.129');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="SELECT family(i) from NW_FAMILY;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.90.1.145",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("255.122.11.129",Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP Table NW_FAMILY";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+
+
+		[Test]
+		public void TestNetworkFuncBroadcast()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE NWK_BROADCAST (c cidr);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NWK_BROADCAST (c) VALUES ('10.90.1.145');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NWK_BROADCAST(c) VALUES ('20');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="SELECT BROADCAST(c) from NWK_BROADCAST;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.90.1.145",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("20.255.255.255/8",Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP Table NWK_BROADCAST";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
 
 
 
