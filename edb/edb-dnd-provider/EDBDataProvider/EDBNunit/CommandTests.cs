@@ -1665,9 +1665,9 @@ namespace NUnit
 			}
 
 			//Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("10.90.1.145",Reader.GetValue(0).ToString());
+			Assert.AreEqual("4",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("255.122.11.129",Reader.GetValue(0).ToString());
+			Assert.AreEqual("4",Reader.GetValue(0).ToString());
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
