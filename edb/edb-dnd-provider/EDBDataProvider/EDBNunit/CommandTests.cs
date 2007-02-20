@@ -1720,6 +1720,299 @@ namespace NUnit
 		}
 
 
+		[Test]
+				public void TestNetworkFuncMasklen()
+				{
+			
+					_conn.Open();
+
+					EDBCommand command = new EDBCommand("CREATE TABLE NETADD_MASKLEN (c cidr, i inet);", _conn);
+					command.ExecuteNonQuery();
+					command.CommandText="INSERT INTO NETADD_MASKLEN (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
+					command.ExecuteNonQuery();
+					command.CommandText="INSERT INTO NETADD_MASKLEN (c, i) VALUES ('10.1.2.3', '10.1.2.3/32');";
+					command.ExecuteNonQuery();
+
+					command.CommandText="INSERT INTO NETADD_MASKLEN (c, i) VALUES ('10', '10.1.2.3/8');";
+					command.ExecuteNonQuery();		
+
+					command.CommandText="INSERT INTO NETADD_MASKLEN (c, i) VALUES ('10.0.0.0', '10.1.2.3/8');";
+					command.ExecuteNonQuery();	
+
+					command.CommandText="SELECT masklen(c) from NETADD_MASKLEN;";
+		
+					EDBDataReader Reader=command.ExecuteReader();
+
+		
+			
+					try
+					{
+						Reader.Read();
+					}
+					catch(EDBException exp)
+					{
+						throw new Exception(exp.ToString());
+					}
+
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Assert.AreEqual("24",Reader.GetValue(0).ToString());
+					Reader.Read();
+					Assert.AreEqual("32",Reader.GetValue(0).ToString());
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Reader.Read();
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Assert.AreEqual("8",Reader.GetValue(0).ToString());
+					Reader.Read();
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Assert.AreEqual("32",Reader.GetValue(0).ToString());
+
+					Reader.Close();
+		
+					command.CommandText="drop table NETADD_MASKLEN;";
+					command.ExecuteNonQuery();
+					_conn.Close();
+				}
+		
+
+		[Test]
+		public void TestNetworkFuncText()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE NET_TEXT (c cidr, i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NET_TEXT (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO NET_TEXT(c, i) VALUES ('10.1.2.3', '10.1.2.3/32');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="INSERT INTO NET_TEXT (c, i) VALUES ('10', '10.1.2.3/8');";
+			command.ExecuteNonQuery();		
+
+			command.CommandText="INSERT INTO NET_TEXT ( c, i) VALUES ('10.0.0.0', '10.1.2.3/8');";
+			command.ExecuteNonQuery();	
+
+			command.CommandText="SELECT text(c) from NET_TEXT;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+		
+			
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.1.2.3/32",Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.0.0.0/32",Reader.GetValue(0).ToString());
+
+			Reader.Close();
+		
+			command.CommandText="drop table NET_TEXT;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestNetworkFuncsetmask()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_setmasklen (c cidr, i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_setmasklen (c, i) VALUES ('192.168.1', '192.168.1.255/24');;";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_setmasklen(c, i) VALUES ('10.1.2.3', '10.1.2.3/32');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="INSERT INTO tbl_setmasklen (c, i) VALUES ('10', '10.1.2.3/8');";
+			command.ExecuteNonQuery();		
+
+			command.CommandText="INSERT INTO tbl_setmasklen ( c, i) VALUES ('10.0.0.0', '10.1.2.3/8');";
+			command.ExecuteNonQuery();	
+
+			command.CommandText="SELECT set_masklen(inet(text(i)), 24) from tbl_setmasklen;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+		
+			
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.255/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.1.2.3/24",Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.1.2.3/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.1.2.3/24",Reader.GetValue(0).ToString());
+
+			Reader.Close();
+		
+			command.CommandText="drop table tbl_setmasklen;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestNetworkFunc()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_network (c cidr, i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_network (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_network(c, i) VALUES ('10.1.2.3', '10.1.2.3/32');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="INSERT INTO tbl_network (c, i) VALUES ('10', '182.1.2.3/8');";
+			command.ExecuteNonQuery();		
+
+			command.CommandText="INSERT INTO tbl_network ( c, i) VALUES ('10.0.0.0', '10.1.2.19/24');";
+			command.ExecuteNonQuery();	
+
+			command.CommandText="SELECT network(c),network (i) from tbl_network;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+		
+			
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("10.1.2.3/32",Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10.0.0.0/32",Reader.GetValue(0).ToString());
+
+			Reader.Close();
+		
+			command.CommandText="drop table tbl_network;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+
+		[Test]
+		public void TestNetworkInputVar()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_net(c cidr, i inet);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_net (c, i) VALUES ('10:23::8000/113', '10:23::ffff');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_net(c, i) VALUES ('::ffff:1.2.3.4', '::4.3.2.1/24');";
+			command.ExecuteNonQuery();
+
+			command.CommandText="SELECT text(c),text(i) from tbl_net;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("10:23::8000/113",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Assert.AreEqual("::ffff:1.2.3.4/128",Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="drop table tbl_net;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestMacAddress()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_mac(mac macaddr);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_mac VALUES ('08002b:010203');";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * from tbl_mac;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("08:00:2b:01:02:03",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			command.CommandText="drop table tbl_mac;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
 
     }
 }
