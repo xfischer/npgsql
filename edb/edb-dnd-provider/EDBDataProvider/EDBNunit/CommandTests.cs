@@ -2014,5 +2014,265 @@ namespace NUnit
 			_conn.Close();
 		}
 
+		
+
+		[Test]
+		public void TestHarwareAddress()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_macadd(m macaddr);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_macadd VALUES ('0800.2b01.0203');";
+			command.ExecuteNonQuery();
+			command.CommandText="INSERT INTO tbl_macadd VALUES ('06-20-1a-23-02-21');";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * from tbl_macadd;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("08:00:2b:01:02:03",Reader.GetValue(0).ToString());
+			Reader.Read();
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("06:20:1a:23:02:21",Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			command.CommandText="drop table tbl_macadd;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestArrayInet()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_inet_arr ( i inet[]);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText=" INSERT INTO tbl_inet_arr (i)  VALUES ( '{10.90.1.226/24, 192.168.1.255/25,9.1.2.3/8}');";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * from tbl_inet_arr;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("{10.90.1.226/24,192.168.1.255/25,9.1.2.3/8}",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			command.CommandText="drop table tbl_inet_arr";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestArraycidr()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE tbl_cidr_arr ( c cidr[]);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText=" INSERT INTO tbl_cidr_arr (c)  VALUES ( '{192.168.1.0/26, 10.1.2.3,20.2.3.164}');";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * from tbl_cidr_arr;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();;
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("{192.168.1.0/26,10.1.2.3/32,20.2.3.164/32}",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			command.CommandText="drop table tbl_cidr_arr";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void TestInheritance()
+		{
+			
+			_conn.Open();
+
+			EDBCommand command = new EDBCommand("CREATE TABLE inhx (xx text DEFAULT 'text');", _conn);
+			command.ExecuteNonQuery();
+		    command = new EDBCommand("CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText=" INSERT INTO inhf DEFAULT VALUES;";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * FROM inhf;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("text",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			command.CommandText="drop table inhf;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop table inhx;";
+			command.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+		[Test]
+		public void TestDoubleInheritance()
+		{
+			
+			_conn.Open();
+			//EDBTransaction tran=_conn.BeginTransaction();
+
+			EDBCommand command = new EDBCommand("create table p1(ff1 int);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("create table p2(f1 text);", _conn);
+			command.ExecuteNonQuery();
+			//tran.Commit();
+			command = new EDBCommand("create table c1(f3 int) inherits(p1,p2);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText=" insert into p2 values ('hello');";
+			command.ExecuteNonQuery();
+			command.CommandText=" insert into c1(ff1,f1,f3) values(56789, 'hi', 42);";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="SELECT * FROM c1;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				Reader.Read();
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("56789",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			command.CommandText="drop table c1;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop table p2;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop table p1;";
+			command.ExecuteNonQuery();
+			//tran.Rollback();
+			
+			_conn.Close();
+		}
+
+		[Test]
+		public void TestInheritanceUpdate()
+		{
+			
+			_conn.Open();
+			//EDBTransaction tran=_conn.BeginTransaction();
+
+			EDBCommand command = new EDBCommand("create temp table foo(f1 int, f2 int);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("insert into foo values(1,1);insert into foo values(3,3);", _conn);
+			command.ExecuteNonQuery();
+			//tran.Commit();
+			command = new EDBCommand("create temp table bar(f1 int, f2 int);", _conn);
+			command.ExecuteNonQuery();
+			command.CommandText=" insert into bar values(1,1);";
+			command.ExecuteNonQuery();
+			command.CommandText=" update bar set f2 = f2 + 100 where f1 in (select f1 from foo);";
+			command.ExecuteNonQuery();
+		
+			command.CommandText="select * from bar";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				
+					Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(1).ToString());
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("101",Reader.GetValue(1).ToString());
+			Reader.Close();
+				
+			command.CommandText="DROP TABLE foo;";
+			command.ExecuteNonQuery();
+			command.CommandText="DROP TABLE bar;";
+			command.ExecuteNonQuery();
+			
+			//tran.Rollback();
+		
+			_conn.Close();
+		}
+
     }
 }
