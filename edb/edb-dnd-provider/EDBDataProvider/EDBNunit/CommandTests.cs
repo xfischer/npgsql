@@ -2274,5 +2274,57 @@ namespace NUnit
 			_conn.Close();
 		}
 
+
+		[Test]
+		public void TestInheritancetest2()
+		{
+			
+			_conn.Open();
+			//EDBTransaction tran=_conn.BeginTransaction();
+
+			EDBCommand command = new EDBCommand("create table base (i varchar);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("create table derived() inherits (base);", _conn);
+			command.ExecuteNonQuery();
+			//tran.Commit();
+			command = new EDBCommand("insert into derived (i) values ('abc');", _conn);
+			command.ExecuteNonQuery();
+			
+			command.CommandText="select derived::base from derived ;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+			
+
+			try
+			{
+				
+				Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			//Console.WriteLine(Reader.GetValue(1).ToString());
+
+			Assert.AreEqual("(abc)",Reader.GetValue(0).ToString());
+			/*Assert.AreEqual("101",Reader.GetValue(1).ToString());*/
+			Reader.Close();
+				
+			command.CommandText="drop table derived;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop table base;";
+			command.ExecuteNonQuery();
+			
+			//tran.Rollback();
+		
+			_conn.Close();
+		}
+
+		
+
     }
 }
