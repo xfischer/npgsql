@@ -535,5 +535,101 @@ namespace NUnit
 		
 		}
 
+
+		[Test]
+		public void AddRowWithDataSet()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest(field_int2 int2, field_timestamp timestamp, field_numeric numeric);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest(field_int2, field_timestamp, field_numeric) " + 
+				" values (:a, :b, :c)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			da.InsertCommand.Parameters.Add(new EDBParameter("b", DbType.DateTime));
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("c", DbType.Decimal));
+	
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+			da.InsertCommand.Parameters[1].Direction = ParameterDirection.Input;
+			da.InsertCommand.Parameters[2].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			da.InsertCommand.Parameters[1].SourceColumn = "field_timestamp";
+			da.InsertCommand.Parameters[2].SourceColumn = "field_numeric";
+	
+			da.Fill(ds);
+	
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			dr["field_timestamp"] = new DateTime(2003, 03, 03, 14, 0, 0);
+			dr["field_numeric"] = 7.3M;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+
+			command=new EDBCommand("select * from DataSetTest",_conn);
+			EDBDataReader Reader=command.ExecuteReader();
+			Assert.IsTrue(Reader.HasRows);
+			
+		    command=new EDBCommand("drop table DataSetTest;",_conn);
+			command.ExecuteNonQuery();
+		}
+		
+
+		
+
+
+		[Test]
+		public void DataSetTableByIndex()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest1(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest1", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest1(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			
+			da.Fill(ds);
+	
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+
+			command=new EDBCommand("select * from DataSetTest1",_conn);
+			EDBDataReader Reader=command.ExecuteReader();
+			Assert.IsTrue(Reader.HasRows);
+			
+			command=new EDBCommand("drop table DataSetTest1;",_conn);
+			command.ExecuteNonQuery();
+		}
+
+		
+	
+
     }
 }
