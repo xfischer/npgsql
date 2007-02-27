@@ -628,8 +628,253 @@ namespace NUnit
 			command.ExecuteNonQuery();
 		}
 
+		[Test]
+		public void DataSetTableColumnByIndex()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
 		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			
+			da.Fill(ds);
+	
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+			
+			command=new EDBCommand("select * from DataSetTest3",_conn);
+			EDBDataReader Reader=command.ExecuteReader();
+			Assert.IsTrue(Reader.HasRows);
+			Assert.AreEqual("field_int2",ds.Tables[0].Columns[0].ToString());
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+		}
+
+
+		[Test]
+		public void DataSetTableColumnByName()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			
+			da.Fill(ds);
+	
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+			
+			command=new EDBCommand("select * from DataSetTest3",_conn);
+			EDBDataReader Reader=command.ExecuteReader();
+			Assert.IsTrue(Reader.HasRows);
+			Assert.AreEqual("field_int2",ds.Tables[0].Columns["field_int2"].ToString());
+			//Console.WriteLine(ds.Tables[0].Columns["field_int2"].ToString());
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+		}
+
+		
+		[Test]
+		public void DataSetCopyTest()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			
+			da.Fill(ds);
+	
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+
+			DataSet ds2=new DataSet();
+
+			ds2=ds.Copy();
+
+			
+			Assert.AreEqual("field_int2",ds2.Tables[0].Columns[0].ToString());
+			//Console.WriteLine(ds2.Tables[0].Columns["field_int2"].ToString());
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+		}
+		
+
+		[Test]
+		public void DataSetNameTest()
+		{	
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+			
+			da.Fill(ds);
+	
+			ds.DataSetName="ds";
+			
+			//Console.WriteLine(ds.Namespace);
+			Assert.AreEqual("ds",ds.DataSetName);
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+				
+		}
+	
+		[Test]
+		public void DataSetClearTest()
+		{	_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+			DataTable dt = ds.Tables[0];
+	
+			DataRow dr = dt.NewRow();
+			dr["field_int2"] = 4;
+			
+			dt.Rows.Add(dr);
+			da.Update(dt);
+			
+			da.Fill(ds);
+	
+			//Console.WriteLine(ds.Tables[0].Rows.Count);
+			Assert.IsNotNull(ds.Tables[0].Rows.Count);
+			ds.Clear();
+			//Console.WriteLine(ds.Tables[0].Rows.Count);
+			Assert.AreEqual("0",ds.Tables[0].Rows.Count.ToString());
+
+			
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+				
+		}
+
+		[Test]
+		public void DataSetNameSpaceTest()
+		{
+				_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+		
+			
+			//Console.WriteLine(ds.Namespace);
+			ds.Namespace="TestNameSpace";
+			Console.WriteLine("TestNameSpace",ds.Namespace);
+			Assert.AreEqual("TestNameSpace",ds.Namespace);
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+				
+		}
 	
 
+	
     }
 }
