@@ -4,6 +4,7 @@ using System.Web.UI.WebControls;
 using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
+using System.IO;
 
 namespace NUnit
 {
@@ -875,6 +876,245 @@ namespace NUnit
 		}
 	
 
+		[Test]
+		public void DataSetWriteXML()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+
+			ds.WriteXml("XMLTest.xml");
+			
+			Assert.IsTrue( File.Exists("XMLTest.xml"));
+		
+			File.Delete("XMLTest.xml");
+			
+		
+			
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+				
+		}
+
+	
+		[Test]
+		public void DataSetReadXML()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+
+			ds.WriteXml("XMLTest.xml");
+			
+			Assert.IsTrue( File.Exists("XMLTest.xml"));
+		
+				
+			
+			try
+			{
+				ds.ReadXml("XMLTest.xml");
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail("File not read");
+			}
+		
+			finally
+			{
+				File.Delete("XMLTest.xml");
+				command=new EDBCommand("drop table DataSetTest3;",_conn);
+				command.ExecuteNonQuery();
+			}
+			
+	
+				
+		}
+
+		[Test]
+		public  void DataSetGetXmlTest()
+		{
+			// Create a DataSet with one table containing 
+			// two columns and 10 rows.
+			DataSet dataSet = new DataSet("dataSet");
+			DataTable table = dataSet.Tables.Add("Items");
+			table.Columns.Add("id", typeof(int));
+			table.Columns.Add("Item", typeof(string));
+
+			// Add ten rows.
+			DataRow row;
+			for(int i = 0; i <10;i++)
+			{
+				row = table.NewRow();
+				row["id"]= i;
+				row["Item"]= "Item" + i;
+				table.Rows.Add(row);
+    
+			}
+				// Display the DataSet contents as XML.
+				
+					//Console.WriteLine( dataSet.GetXml().Length );
+			Assert.AreEqual(651,dataSet.GetXml().Length);
+			
+
+		}
+		[Test]
+		public void DataSetWriteXMLSchema()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+
+			ds.WriteXmlSchema("XMLSchemaTest.xml");
+			
+			Assert.IsTrue( File.Exists("XMLSchemaTest.xml"));
+		
+			File.Delete("XMLSchemaTest.xml");
+			
+		
+			
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+				
+		}
+
+		[Test]
+		public void DataSetReadXMLSchema()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+
+			ds.WriteXmlSchema("XMLTest.xml");
+			
+			Assert.IsTrue( File.Exists("XMLTest.xml"));
+		
+				
+			
+			try
+			{
+				ds.ReadXmlSchema("XMLTest.xml");
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail("File not read");
+			}
+		
+			finally
+			{
+				File.Delete("XMLTest.xml");
+				command=new EDBCommand("drop table DataSetTest3;",_conn);
+				command.ExecuteNonQuery();
+			}
+			
+	
+				
+		}
+		
+			
+		[Test]
+		public  void DataSetGetXmlSchemaTest()
+		{
+			// Create a DataSet with one table containing 
+			// two columns and 10 rows.
+			DataSet dataSet = new DataSet("dataSet");
+			DataTable table = dataSet.Tables.Add("Items");
+			table.Columns.Add("id", typeof(int));
+			table.Columns.Add("Item", typeof(string));
+
+			// Add ten rows.
+			DataRow row;
+			for(int i = 0; i <10;i++)
+			{
+				row = table.NewRow();
+				row["id"]= i;
+				row["Item"]= "Item" + i;
+				table.Rows.Add(row);
+    
+			}
+			// Display the DataSet contents as XML.
+				
+			//Console.WriteLine( dataSet.GetXmlSchema().Length);
+			Assert.AreEqual(673,dataSet.GetXmlSchema().Length);
+			
+
+		}
     }
 }
