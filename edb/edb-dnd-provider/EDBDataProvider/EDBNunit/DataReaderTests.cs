@@ -1114,7 +1114,203 @@ namespace NUnit
 			//Console.WriteLine( dataSet.GetXmlSchema().Length);
 			Assert.AreEqual(673,dataSet.GetXmlSchema().Length);
 			
+			dataSet.Prefix="abc";
+			
+			
+		
 
 		}
+
+		[Test]
+		public void DataSetPrefixTest()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+		
+			
+			//Console.WriteLine(ds.Namespace);
+			ds.Prefix="TestPrefix";
+			//Console.WriteLine("TestPrefix",ds.Prefix);
+			Assert.AreEqual("TestPrefix",ds.Prefix);
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+				
+		}
+
+
+
+		[Test]
+		public void DataSetAddNewTableTest()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+			Assert.AreEqual(1,ds.Tables.Count);
+			DataTable dt=new DataTable();
+			ds.Tables.Add(dt);
+			Assert.AreEqual(2,ds.Tables.Count);
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+		}
+
+		[Test]
+		public void DataSetRemoveTableByObjectTest()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+			Assert.AreEqual(1,ds.Tables.Count);
+			DataTable dt=new DataTable("TestTable");
+			ds.Tables.Add(dt);
+			Assert.AreEqual(2,ds.Tables.Count);
+
+			ds.Tables.Remove(dt);
+			Assert.AreEqual(1,ds.Tables.Count);
+
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+		}
+
+		[Test]
+		public void DataSetRemoveTableByNameTest()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+			Assert.AreEqual(1,ds.Tables.Count);
+			DataTable dt=new DataTable("TestTable");
+			ds.Tables.Add(dt);
+			Assert.AreEqual(2,ds.Tables.Count);
+
+			ds.Tables.Remove("TestTable");
+			Assert.AreEqual(1,ds.Tables.Count);
+
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+		}
+
+
+		[Test]
+		public void DataSetObjectClearanceTest()
+		{
+			_conn.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			command.ExecuteNonQuery();
+			
+			DataSet ds = new DataSet();
+			
+		
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+	
+			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
+				" values (:a)", _conn);
+			
+			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
+	
+			
+			
+			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+	
+			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
+
+			da.Fill(ds);
+			Assert.AreEqual(1,ds.Tables.Count);
+			DataTable dt=new DataTable("TestTable");
+			ds.Tables.Add(dt);
+			Assert.AreEqual(2,ds.Tables.Count);
+
+			ds.Tables.Clear();
+
+			Assert.AreEqual(0,ds.Tables.Count);
+
+			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+		}
+		
+		
+
     }
 }
