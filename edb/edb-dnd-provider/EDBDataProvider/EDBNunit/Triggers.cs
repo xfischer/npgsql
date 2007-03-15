@@ -706,6 +706,347 @@ namespace NUnit
 
 
 		}
+
+		////////Rules cases
+		///
+		[Test]
+		public void RulesOnInsertDoInstead( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText="create table rtest_t1 (a int4, b int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create view rtest_v1 as select * from rtest_t1;";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create rule rtest_v1_ins as on insert to rtest_v1 do instead insert into rtest_t1 values (new.a, new.b);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="insert into rtest_v1 values (1, 11); insert into rtest_v1 values(2,12);";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="select * from rtest_v1;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+			{
+				Console.WriteLine(Reader.GetValue(0).ToString());
+				Console.WriteLine(Reader.GetValue(1).ToString());
+
+			}*/
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("11",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.AreEqual("12",Reader.GetValue(1).ToString());
+	
+			Console.WriteLine("2nd read");
+			Command.CommandText="select * from rtest_t1;";
+			Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+			{
+				Console.WriteLine(Reader.GetValue(0).ToString());
+				Console.WriteLine(Reader.GetValue(1).ToString());
+
+			}*/
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("11",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.AreEqual("12",Reader.GetValue(1).ToString());
+			
+			Command.CommandText="DROP VIEW rtest_v1;DROP TABLE rtest_t1";
+			Command.ExecuteNonQuery();
+		}
+
+		[Test]
+		public void RulesOnUpdateDoInstead( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText="create table rtest_t1 (a int4, b int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create view rtest_v1 as select * from rtest_t1;";
+			Command.ExecuteNonQuery();
+			Command.CommandText="insert into rtest_t1 values (10, 20); insert into rtest_t1 values(30,40); insert into rtest_t1 values(100,200);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create rule rtest_v1_upd as on update to rtest_v1 do instead update rtest_t1 set a = new.a, b = new.b where a = old.a;";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="update rtest_v1 set b = 142 where a = 10;";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="select * from rtest_t1 order by a;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*	while(Reader.Read())
+				{
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Console.WriteLine(Reader.GetValue(1).ToString());
+
+				}*/
+			Reader.Read();
+			Assert.AreEqual("10",Reader.GetValue(0).ToString());
+			Assert.AreEqual("142",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("30",Reader.GetValue(0).ToString());
+			Assert.AreEqual("40",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("100",Reader.GetValue(0).ToString());
+			Assert.AreEqual("200",Reader.GetValue(1).ToString());
+	
+			
+			
+			
+			Command.CommandText="DROP VIEW rtest_v1;DROP TABLE rtest_t1";
+			Command.ExecuteNonQuery();
+		}
+
+
+		
+		[Test]
+		public void RulesOnDeleteDoInstead( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText="create table rtest_t1 (a int4, b int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create view rtest_v1 as select * from rtest_t1;";
+			Command.ExecuteNonQuery();
+			Command.CommandText="insert into rtest_t1 values(1, 2); insert into rtest_t1 values(3,4); insert into rtest_t1 values(5,6);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create rule rtest_v1_del as on delete to rtest_v1 do instead delete from rtest_t1 where a = old.a;";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="delete from rtest_v1 where a = 3;";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="select * from rtest_t1 order by a ;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+				{
+					Console.WriteLine(Reader.GetValue(0).ToString());
+					Console.WriteLine(Reader.GetValue(1).ToString());
+
+				}*/
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("2",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("5",Reader.GetValue(0).ToString());
+			Assert.AreEqual("6",Reader.GetValue(1).ToString());
+			
+	
+			
+			
+			
+			Command.CommandText="DROP VIEW rtest_v1;DROP TABLE rtest_t1";
+			Command.ExecuteNonQuery();
+		}
+
+
+		[Test]
+		public void RulesMultiTabsUpdateDoAlso( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText="create table rtest_system (sysname text, sysdesc text);create table rtest_interface (sysname text, ifname text);create table rtest_admin (pname text, sysname text);";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create rule rtest_sys_upd as on update to rtest_system do also ( update rtest_interface set sysname = new.sysname    where sysname = old.sysname;  update rtest_admin set sysname = new.sysname  where sysname = old.sysname );";
+			Command.ExecuteNonQuery();
+			Command.CommandText="insert into rtest_system values ('orion', 'Linux Jan Wieck'); "+
+				" insert into rtest_system values ('notjw', 'WinNT Jan Wieck (notebook)');"+
+				" insert into rtest_system values ('neptun', 'Fileserver'); "+
+				" insert into rtest_interface values ('orion', 'eth0');     "+
+				" insert into rtest_interface values ('orion', 'eth1');     "+
+				" insert into rtest_interface values ('notjw', 'eth0');     "+
+				" insert into rtest_interface values ('neptun', 'eth0');    "+
+				" insert into rtest_admin values ('jw', 'orion');	     "+	
+				" insert into rtest_admin values ('jw', 'notjw');	     "+	
+				" insert into rtest_admin values ('bm', 'neptun');";
+			Command.ExecuteNonQuery();
+			Command.CommandText="update rtest_system set sysname = 'pluto' where sysname = 'neptun';";
+			Command.ExecuteNonQuery();
+
+			
+			
+			Command.CommandText="select * from rtest_interface order by sysname;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}*/
+			Reader.Read();
+			Assert.AreEqual("notjw",Reader.GetValue(0).ToString());
+			Assert.AreEqual("eth0",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("orion",Reader.GetValue(0).ToString());
+			Assert.AreEqual("eth0",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("orion",Reader.GetValue(0).ToString());
+			Assert.AreEqual("eth1",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("pluto",Reader.GetValue(0).ToString());
+			Assert.AreEqual("eth0",Reader.GetValue(1).ToString());
+			
+			Command.CommandText="select * from rtest_admin order by sysname;";
+			Reader=	Command.ExecuteReader();
+			
+			Console.WriteLine("Next one");
+			/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}
+			*/
+	
+			Reader.Read();
+			Assert.AreEqual("jw",Reader.GetValue(0).ToString());
+			Assert.AreEqual("notjw",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("jw",Reader.GetValue(0).ToString());
+			Assert.AreEqual("orion",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("bm",Reader.GetValue(0).ToString());
+			Assert.AreEqual("pluto",Reader.GetValue(1).ToString());
+
+			Command.CommandText="DROP TABLE rtest_system;DROP TABLE rtest_interface;DROP TABLE rtest_admin";
+			Command.ExecuteNonQuery();
+		}
+
+		[Test]
+		public void RulesMultiTabsOnInsertDoInsteadWithJoins( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText="create table rtest_t1 (a int4, b int4); "+
+				" create table rtest_t2 (a int4, b int4); "+
+				" create table rtest_t3 (a int4, b int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText=" insert into rtest_t2 values (1, 21); "+
+				" insert into rtest_t2 values (2, 22); "+
+				" insert into rtest_t2 values (3, 23); "+
+				" insert into rtest_t3 values (1, 31); "+
+				" insert into rtest_t3 values (2, 32); "+
+				" insert into rtest_t3 values (3, 33); "+
+				" insert into rtest_t3 values (4, 34); "+
+				" insert into rtest_t3 values (5, 35); ";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create view rtest_v1 as select * from rtest_t1;";
+			Command.ExecuteNonQuery();
+			Command.CommandText="create rule rtest_v1_ins as on insert to rtest_v1 do instead "+
+				"		 insert into rtest_t1 values (new.a, new.b);";
+			Command.ExecuteNonQuery();
+
+			
+			
+			Command.CommandText="insert into rtest_v1 select rtest_t2.a, rtest_t3.b "+
+				" from rtest_t2, rtest_t3 "+
+				" where rtest_t2.a = rtest_t3.a;";
+			Command.ExecuteNonQuery();
+
+
+			
+			Command.CommandText="select * from rtest_v1;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}*/
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("31",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.AreEqual("32",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("3",Reader.GetValue(0).ToString());
+			Assert.AreEqual("33",Reader.GetValue(1).ToString());
+			
+			
+			Command.CommandText="select * from rtest_t1;";
+			Reader=	Command.ExecuteReader();
+			
+			Console.WriteLine("Next one");
+			/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}
+			*/
+	
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("31",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.AreEqual("32",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("3",Reader.GetValue(0).ToString());
+			Assert.AreEqual("33",Reader.GetValue(1).ToString());
+
+			Command.CommandText="DROP VIEW rtest_v1;DROP TABLE rtest_t1;DROP TABLE rtest_t2;DROP TABLE rtest_t3";
+			Command.ExecuteNonQuery();
+		}
+
+
+		[Test]
+		public void RulesInsteadNothing( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=" create table rtest_nothn1 (a int4, b text);";
+			Command.ExecuteNonQuery();
+			Command.CommandText=" create rule rtest_nothn_r1 as on insert to rtest_nothn1 "+
+				" where new.a >= 10 and new.a < 20 do instead nothing; ";
+			Command.ExecuteNonQuery();
+
+
+			Command.CommandText="insert into rtest_nothn1 values (1, 'want this'); "+
+				" insert into rtest_nothn1 values (2, 'want this'); "+
+				" insert into rtest_nothn1 values (10, 'don''t want this'); "+
+				" insert into rtest_nothn1 values (19, 'don''t want this');"+
+				" insert into rtest_nothn1 values (20, 'want this');";
+			Command.ExecuteNonQuery();
+
+
+		
+
+			
+			Command.CommandText="select * from rtest_nothn1;";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}*/
+
+			Reader.Read();
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.AreEqual("want this",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.AreEqual("want this",Reader.GetValue(1).ToString());
+			Reader.Read();
+			Assert.AreEqual("20",Reader.GetValue(0).ToString());
+			Assert.AreEqual("want this",Reader.GetValue(1).ToString());
+
+		
+			Command.CommandText="DROP TABLE rtest_nothn1";
+			Command.ExecuteNonQuery();
+		}
 		
 
 	}
