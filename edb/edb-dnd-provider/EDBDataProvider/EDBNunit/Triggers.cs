@@ -707,6 +707,126 @@ namespace NUnit
 
 		}
 
+
+		[Test]
+		public void TriggerBeforeUpdateRowLevel()
+		{
+			string Sourcestr = "create table SourceTable10( cint int,dint int);";
+			string Destinationstr = "create table DestinationTable10( cint int);";
+			string CreateTrigger ="CREATE OR REPLACE TRIGGER TestTrigger10 BEFORE UPDATE ON SourceTable10 FOR EACH ROW BEGIN insert into DestinationTable10 values (1); END;";
+	
+			string DropSourcestr = "drop table SourceTable10";
+			string DropDestinationstr = "drop table DestinationTable10;";
+			string DropTrigger = "drop trigger TestTrigger10;";
+	
+			string InsertSql ="insert into SourceTable10 values (5,10);";
+			string DeleteSql ="UPDATE SourceTable10 SET dint=100 where cint=5";
+			
+			string SelectSql ="select * from DestinationTable10";
+
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=Sourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table created");
+			Command.CommandText=Destinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("Desti table created");
+			Command.CommandText=CreateTrigger;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("trigger created");
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted");
+			Command.CommandText=DeleteSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value updated");
+			Command.CommandText=SelectSql;
+			EDBDataReader Reader=Command.ExecuteReader();
+			Console.WriteLine("values read");
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.IsFalse(Reader.Read());
+			Command.CommandText=DropTrigger;
+			Command.ExecuteNonQuery();
+			Command.CommandText=DropSourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table dropped");
+			Command.CommandText=DropDestinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("destination table dropped");
+			
+
+
+		}
+
+		[Test]
+		public void TriggerAfterUpdateRowLevel()
+		{
+			string Sourcestr = "create table SourceTable10( cint int,dint int);";
+			string Destinationstr = "create table DestinationTable10( cint int);";
+			string CreateTrigger ="CREATE OR REPLACE TRIGGER TestTrigger10 AFTER UPDATE ON SourceTable10 FOR EACH ROW BEGIN insert into DestinationTable10 values (1); END;";
+	
+			string DropSourcestr = "drop table SourceTable10";
+			string DropDestinationstr = "drop table DestinationTable10;";
+			string DropTrigger = "drop trigger TestTrigger10;";
+	
+			string InsertSql ="insert into SourceTable10 values (5,10);";
+			string DeleteSql ="UPDATE SourceTable10 SET dint=100 where cint=5";
+			
+			string SelectSql ="select * from DestinationTable10";
+
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=Sourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table created");
+			Command.CommandText=Destinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("Desti table created");
+			Command.CommandText=CreateTrigger;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("trigger created");
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted");
+			Command.CommandText=DeleteSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value updated");
+			Command.CommandText=SelectSql;
+			EDBDataReader Reader=Command.ExecuteReader();
+			Console.WriteLine("values read");
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Assert.IsFalse(Reader.Read());
+			Command.CommandText=DropTrigger;
+			Command.ExecuteNonQuery();
+			Command.CommandText=DropSourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table dropped");
+			Command.CommandText=DropDestinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("destination table dropped");
+			
+
+
+		}
+
+
 		////////Rules cases
 		///
 		[Test]
