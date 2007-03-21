@@ -826,6 +826,204 @@ namespace NUnit
 
 		}
 
+		[Test]
+		public void TriggerWithTriggerVariables_NEW_OLD()
+		{
+			string Sourcestr = "create table t4( cint int,dint int);";
+			string Destinationstr = "create table d1( cint int);";
+			string CreateTrigger ="CREATE OR REPLACE TRIGGER TestTrigger16 BEFORE  UPDATE  ON t4 FOR EACH ROW DECLARE v_action        int; BEGIN IF :NEW.dint=100 THEN v_action := OLD.dint; ELSIF :NEW.dint=20 THEN v_action := 1; END IF; INSERT INTO d1 VALUES (v_action); END;";
+	
+			string DropSourcestr = "drop table t4";
+			string DropDestinationstr = "drop table d1;";
+			string DropTrigger = "drop trigger TestTrigger16;";
+	
+			string InsertSql ="insert into t4 values (5,10);";
+			string DeleteSql ="UPDATE t4 SET dint=100 where cint=5";
+			
+			string SelectSql ="select * from t4";
+
+
+		EDBCommand Command=new EDBCommand("",con);
+		Command.CommandText=Sourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table created");
+			Command.CommandText=Destinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("Desti table created");
+			Command.CommandText=CreateTrigger;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("trigger created");
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted");
+			Command.CommandText=DeleteSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value updated");
+			Command.CommandText=SelectSql;
+			EDBDataReader Reader=Command.ExecuteReader();
+			Console.WriteLine("values read");
+
+			/*while(Reader.Read())
+				Console.WriteLine(Reader.GetValue(0).ToString());*/
+			Reader.Read();
+
+			Assert.AreEqual("5",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("5",Reader.GetValue(0).ToString());
+			Assert.IsFalse(Reader.Read());
+			Command.CommandText=DropTrigger;
+			Command.ExecuteNonQuery();
+			Command.CommandText=DropSourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table dropped");
+			Command.CommandText=DropDestinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("destination table dropped");
+			
+
+
+		}
+
+
+		[Test]
+		public void TriggerWithTriggerVariables_Inserting_Updating_Deleting_StatementLevel()
+		{
+			string Sourcestr = "create table t4( cint int,dint int);";
+			string Destinationstr = "create table d1( cint int);";
+			string CreateTrigger ="CREATE OR REPLACE TRIGGER TestTrigger14 AFTER INSERT OR UPDATE OR DELETE ON t4 DECLARE v_action  int; BEGIN IF INSERTING THEN v_action := 1; ELSIF UPDATING THEN v_action := 2; ELSIF DELETING THEN v_action := 3; END IF; INSERT INTO d1 VALUES (v_action); END;";
+	
+			string DropSourcestr = "drop table t4";
+			string DropDestinationstr = "drop table d1;";
+			string DropTrigger = "drop trigger TestTrigger14;";
+	
+			string InsertSql ="insert into t4 values (5,10);";
+			string DeleteSql ="UPDATE t4 SET dint=100 where cint=5";
+			
+			string SelectSql ="select * from d1";
+
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=Sourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table created");
+			Command.CommandText=Destinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("Desti table created");
+			Command.CommandText=CreateTrigger;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("trigger created");
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+		
+			Command.CommandText=DeleteSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value updated");
+			Command.CommandText=SelectSql;
+			EDBDataReader Reader=Command.ExecuteReader();
+			Console.WriteLine("values read");
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.IsFalse(Reader.Read());
+			Command.CommandText=DropTrigger;
+			Command.ExecuteNonQuery();
+			Command.CommandText=DropSourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table dropped");
+			Command.CommandText=DropDestinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("destination table dropped");
+			
+
+
+		}
+
+		[Test]
+		public void TriggerWithTriggerVariables_Inserting_Updating_Deleting_RowLevel()
+		{
+			string Sourcestr = "create table t4( cint int,dint int);";
+			string Destinationstr = "create table d1( cint int);";
+			string CreateTrigger ="CREATE OR REPLACE TRIGGER TestTrigger14 AFTER INSERT OR UPDATE OR DELETE ON t4 FOR EACH ROW DECLARE v_action  int; BEGIN IF INSERTING THEN v_action := 1; ELSIF UPDATING THEN v_action := 2; ELSIF DELETING THEN v_action := 3; END IF; INSERT INTO d1 VALUES (v_action); END;";
+	
+			string DropSourcestr = "drop table t4";
+			string DropDestinationstr = "drop table d1;";
+			string DropTrigger = "drop trigger TestTrigger14;";
+	
+			string InsertSql ="insert into t4 values (5,10);";
+			string DeleteSql ="UPDATE t4 SET dint=100 where cint=5";
+			
+			string SelectSql ="select * from d1";
+
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=Sourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table created");
+			Command.CommandText=Destinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("Desti table created");
+			Command.CommandText=CreateTrigger;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("trigger created");
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+		
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+			Command.CommandText=InsertSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value inserted"); 
+
+			Command.CommandText=DeleteSql;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("value updated");
+			Command.CommandText=SelectSql;
+			EDBDataReader Reader=Command.ExecuteReader();
+			Console.WriteLine("values read");
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("1",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+
+			Reader.Read();
+
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Reader.Read();
+
+			Assert.AreEqual("2",Reader.GetValue(0).ToString());
+			Assert.IsFalse(Reader.Read());
+			Command.CommandText=DropTrigger;
+			Command.ExecuteNonQuery();
+			Command.CommandText=DropSourcestr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("source table dropped");
+			Command.CommandText=DropDestinationstr;
+			Command.ExecuteNonQuery();
+			Console.WriteLine("destination table dropped");
+			
+
+
+		}
+
+
 
 		////////Rules cases
 		///
@@ -1040,6 +1238,7 @@ namespace NUnit
 			Command.ExecuteNonQuery();
 		}
 
+		
 		[Test]
 		public void RulesMultiTabsOnInsertDoInsteadWithJoins( )
 		{
@@ -1168,6 +1367,157 @@ namespace NUnit
 			Command.ExecuteNonQuery();
 		}
 		
+
+
+		[Test]
+		public void RuleInsertView( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=" create table GeoPath4( cval int4,eval int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText=" insert into GeoPath4 values (5,10) ";
+			Command.ExecuteNonQuery();
+
+
+			Command.CommandText="create VIEW  V1 as select * from GeoPath4;";
+			Command.ExecuteNonQuery();
+
+			
+			Command.CommandText="create table GeoPathLog4( dval int4);";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="CREATE RULE log_Geo4 AS ON INSERT TO V1  DO INSTEAD INSERT INTO GeoPathLog4 VALUES ( NEW.eval )";
+			Command.ExecuteNonQuery();
+
+
+		
+			Command.CommandText="insert into V1 values (50,100)";
+			Command.ExecuteNonQuery();
+
+
+			
+		
+
+			Command.CommandText="select * from V1";
+			EDBDataReader Reader=	Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}*/
+
+			Reader.Read();
+			Assert.AreEqual("5",Reader.GetValue(0).ToString());
+			Assert.AreEqual("10",Reader.GetValue(1).ToString());
+			Reader.Close();
+			
+			Command.CommandText="DROP VIEW V1;DROP TABLE GeoPathLog4;DROP TABLE GeoPath4";
+			Command.ExecuteNonQuery();
+		}
+		
+
+
+		[Test]
+		public void RuleDeleteView( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=" create table GeoPath5( cval int4,eval int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText=" insert into GeoPath5 values (5,10) ";
+			Command.ExecuteNonQuery();
+
+
+			Command.CommandText="create VIEW  V2 as select * from GeoPath5;";
+			Command.ExecuteNonQuery();
+
+			
+			Command.CommandText="create table GeoPathLog5( dval int4);";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="CREATE RULE log_Geo5 AS ON DELETE TO V2  DO INSTEAD INSERT INTO GeoPathLog5 VALUES ( OLD.eval )";
+			Command.ExecuteNonQuery();
+
+
+		
+			Command.CommandText="Delete from V2 where cval=5";
+			Command.ExecuteNonQuery();
+
+
+			
+	
+
+			Command.CommandText="select * from GeoPathLog5";
+			EDBDataReader Reader=	Command.ExecuteReader();
+	/*
+			while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						//Console.WriteLine(Reader.GetValue(1).ToString());
+
+					}
+*/
+			Reader.Read();
+			
+			Assert.AreEqual("10",Reader.GetValue(0).ToString());
+			Reader.Close();
+			
+			Command.CommandText="DROP VIEW V2;DROP TABLE GeoPathLog5;DROP TABLE GeoPath5";
+			Command.ExecuteNonQuery();
+		}
+		
+
+		[Test]
+		public void RuleUpdateView( )
+		{
+
+			EDBCommand Command=new EDBCommand("",con);
+			Command.CommandText=" create table GeoPath5( cval int4,eval int4);";
+			Command.ExecuteNonQuery();
+			Command.CommandText=" insert into GeoPath5 values (5,10) ";
+			Command.ExecuteNonQuery();
+
+
+			Command.CommandText="create VIEW  V2 as select * from GeoPath5;";
+			Command.ExecuteNonQuery();
+
+			
+			Command.CommandText="create table GeoPathLog5( dval int4);";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="CREATE RULE log_Geo5 AS ON UPDATE TO V2  DO INSTEAD INSERT INTO GeoPathLog5 VALUES ( OLD.eval )";
+			Command.ExecuteNonQuery();
+
+
+		
+			Command.CommandText="Update V2 set eval=100 where cval=5";
+			Command.ExecuteNonQuery();
+
+
+			
+	
+
+			Command.CommandText="select * from GeoPathLog5";
+			EDBDataReader Reader=	Command.ExecuteReader();
+		/*	
+					while(Reader.Read())
+							{
+								Console.WriteLine(Reader.GetValue(0).ToString());
+								//Console.WriteLine(Reader.GetValue(1).ToString());
+
+							}
+		*/
+			Reader.Read();
+			
+			Assert.AreEqual("10",Reader.GetValue(0).ToString());
+			Reader.Close();
+			
+			Command.CommandText="DROP VIEW V2;DROP TABLE GeoPathLog5;DROP TABLE GeoPath5";
+			Command.ExecuteNonQuery();
+		}
 
 	}
 }
