@@ -27,7 +27,7 @@ namespace NUnit
 			Command.ExecuteNonQuery();
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V2',2)";
 			Command.ExecuteNonQuery();
-						
+			TestUtil.createTempTable(con,"test_Index","major int4, minor INT4, name VARCHAR");
 
 		}
 
@@ -37,6 +37,10 @@ namespace NUnit
 			
 			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="DROP Table TESTTAB";
+			Command.CommandType=CommandType.Text;
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="DROP Table test_Index";
 			Command.CommandType=CommandType.Text;
 			Command.ExecuteNonQuery();
 			
@@ -748,6 +752,185 @@ namespace NUnit
 				throw new Exception(exp.ToString());
 			}
 		}
+
+		[Test]
+		public void MultiColIndex ()
+		{
+			
+			try
+			{
+				EDBCommand Command = new EDBCommand("",con);
+				
+				Command.CommandText="INSERT INTO test_Index VALUES (2000, 3000, 'Ali');";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="CREATE INDEX test_2_mm_idx ON test_Index (major, minor);";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="SELECT name FROM test_Index WHERE major = 2000 AND minor = 3000;";
+				EDBDataReader Reader = Command.ExecuteReader();
+
+			/*	while(Reader.Read())
+				{
+					Console.WriteLine(Reader.GetValue(0).ToString());
+				}*/
+				Assert.IsTrue(Reader.Read());
+				Assert.AreEqual("Ali",Reader.GetValue(0));
+
+				Reader.Close();
+			}
+
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+		}
+
+
+		[Test]
+		public void UniqueIndex ()
+		{
+			
+			try
+			{
+				EDBCommand Command = new EDBCommand("",con);
+				
+				Command.CommandText="INSERT INTO test_Index VALUES (3000, 4000, 'Usman');";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="CREATE UNIQUE INDEX index2 ON test_Index (major, minor);";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="SELECT name FROM test_Index WHERE major = 3000 AND minor = 4000;";
+				EDBDataReader Reader = Command.ExecuteReader();
+
+				/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+					}*/
+				Assert.IsTrue(Reader.Read());
+				Assert.AreEqual("Usman",Reader.GetValue(0));
+
+				Reader.Close();
+			}
+
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+		}
+
+		[Test]
+		public void ViolUniqueIndex ()
+		{
+			
+			try
+			{
+				EDBCommand Command = new EDBCommand("",con);
+				
+				Command.CommandText="INSERT INTO test_Index VALUES (3000, 4000, 'Kamran');";
+				try
+				{
+					Command.ExecuteNonQuery();
+					
+
+				}
+				catch(EDBException exp)
+				{
+					Assert.Fail("Unable to execute... Unique Index violated");;
+				}
+				
+				
+			}
+
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+		}
+
+
+		[Test]
+		public void DdlFunctionalIndex ()
+		{
+			
+			try
+			{
+				EDBCommand Command = new EDBCommand("",con);
+				
+				Command.CommandText="CREATE TABLE functional_index (name NAME,id int);";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="CREATE SEQUENCE id INCREMENT BY 5 START WITH 1000 MAXVALUE 1010 MINVALUE 1000 Cache 3;";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="INSERT INTO functional_index VALUES('Ali',id.NextVal);";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="INSERT INTO functional_index VALUES('Ahmed',id.NextVal);";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="CREATE INDEX upper_name_idx ON functional_index(upper(name));";
+				Command.ExecuteNonQuery();
+
+				Command.CommandText="SELECT * from functional_index where upper(name) ='Ali';";
+				EDBDataReader Reader = Command.ExecuteReader();
+
+				/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+					}*/
+				Assert.IsFalse(Reader.Read());
+				
+
+				Reader.Close();
+				
+				Command.CommandText="DROP TABLE functional_index;Drop sequence id";
+				Command.ExecuteNonQuery();
+
+			}
+
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+		}
+
+
+		[Test]
+		public void DdlHashIndex ()
+		{
+			
+				EDBCommand Command = new EDBCommand("",con);
+				
+				Command.CommandText="CREATE TABLE tb_hash (major int,minor int,name varchar)";
+				Command.ExecuteNonQuery();
+
+			
+
+				Command.CommandText="CREATE INDEX tb_hash_idx ON tb_hash USING hash(name);";
+				try
+				{
+				Command.ExecuteNonQuery();
+				}
+
+				catch(EDBException exp)
+				{
+				Assert.Fail("Could not create Hash index");
+				}
+				
+				/*	while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+					}*/
+				Command.CommandText="DROP TABLE tb_hash;";
+				Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+	
 
 	}
 }
