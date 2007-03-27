@@ -932,5 +932,512 @@ namespace NUnit
 		}
 	
 
+		// Following cases verify Arrays w.r.t various datatypes
+		
+
+
+		[Test]
+		public void ArraysInt2()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i int2[10],j int2[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{40,50,60,70,81,90,32765}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+				/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{0,1,2,3,4,5,6,7,8,9}",Reader.GetValue(0));
+			Assert.AreEqual("{40,50,60,70,81,90,32765}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+		
+		[Test]
+		public void ArraysInt4()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i int4[10],j int4[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{-2147483648,100,433,544,2147483647}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{0,1,2,3,4,5,6,7,8,9}",Reader.GetValue(0));
+			Assert.AreEqual("{-2147483648,100,433,544,2147483647}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+		[Test]
+		public void ArraysInt8()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i int8[10],j int8[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}','{65454545,32769}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}",Reader.GetValue(0));
+			Assert.AreEqual("{65454545,32769}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+		}
+
+		[Test]
+		public void ArraysFloat()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (f1 Float[10],f2 Float[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{2.0,4.21,6.32,3.98,4.00,5.91,6.00,7.66,8.88,9.99}','{43534.234,5534.463}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{2,4.21,6.32,3.98,4,5.91,6,7.66,8.88,9.99}",Reader.GetValue(0));
+			Assert.AreEqual("{43534.234,5534.463}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+		[Test]
+		public void ArraysFloat4()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (f1 Float4[10],f2 Float4[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}','{2132.32,987.145}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}",Reader.GetValue(0));
+			Assert.AreEqual("{2132.32,987.145}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+		[Test]
+		public void ArraysFloat8()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (f1 Float8[10],f2 Float8[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}','{8555.233,654.9785}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}",Reader.GetValue(0));
+			Assert.AreEqual("{8555.233,654.9785}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysReal()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest1 (r1 Real[10],r2 Real[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest1 VALUES ('{12.3233,13.223,265.323,30.001,4235.9,543.454,543.453,775.235,800.992,9122.12}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest1;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{12.3233,13.223,265.323,30.001,4235.9,543.454,543.453,775.235,800.992,9122.12}",Reader.GetValue(0));
+			//Assert.AreEqual("{8555.233,654.9785}",Reader.GetValue(1));*/
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest1";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+		
+		[Test]
+		public void ArraysNumeric()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (n1 Numeric[10],n2 numeric[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			/*while(Reader.Read())
+					{
+						Console.WriteLine(Reader.GetValue(0).ToString());
+						Console.WriteLine(Reader.GetValue(1).ToString());
+					}*/
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}",Reader.GetValue(0));
+			Assert.AreEqual("{132.654,897.2563}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+			
+
+			
+		}
+
+
+		[Test]
+		public void ArraysNumericWithPrecision()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (n1 Numeric(5,2)[10],n2 Numeric(4,3)[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//			while(Reader.Read())
+//					{
+//						Console.WriteLine(Reader.GetValue(0).ToString());
+//						Console.WriteLine(Reader.GetValue(1).ToString());
+//					}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{120.89,123.90,22.33,412.40,422.22,552.21,62.22,712.09,18.11,91.65}",Reader.GetValue(0));
+			Assert.AreEqual("{1.234,2.142}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysSmallInt()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i smallint[10],j smallint[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{-1,-2,-3,-4,0,4,5,6,7,8}','{40,50,60,70,81,90,32765}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			//			while(Reader.Read())
+			//					{
+			//						Console.WriteLine(Reader.GetValue(0).ToString());
+			//						Console.WriteLine(Reader.GetValue(1).ToString());
+			//					}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{-1,-2,-3,-4,0,4,5,6,7,8}",Reader.GetValue(0));
+			Assert.AreEqual("{40,50,60,70,81,90,32765}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysBigInt()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i bigint[10],j bigint[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{-100,-200,-300,-4000,-922337203685477,50000,6000,7000,8000,9000}','{-9223372036854775808,9223372036854775807}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			//			while(Reader.Read())
+			//					{
+			//						Console.WriteLine(Reader.GetValue(0).ToString());
+			//						Console.WriteLine(Reader.GetValue(1).ToString());
+			//					}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{-100,-200,-300,-4000,-922337203685477,50000,6000,7000,8000,9000}",Reader.GetValue(0));
+			Assert.AreEqual("{-9223372036854775808,9223372036854775807}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysDoublePrecision()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (d1 double precision[3],d2 double precision[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//						while(Reader.Read())
+//								{
+//									Console.WriteLine(Reader.GetValue(0).ToString());
+//									Console.WriteLine(Reader.GetValue(1).ToString());
+//								}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{122.323423453,230.32131231322,123342.2323324}",Reader.GetValue(0));
+			Assert.AreEqual("{555.43534543233,344654.345344398}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysInteger()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (i integer[],j integer[2]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{-2147483648,2147483647}','{5,9}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			//						while(Reader.Read())
+			//								{
+			//									Console.WriteLine(Reader.GetValue(0).ToString());
+			//									Console.WriteLine(Reader.GetValue(1).ToString());
+			//								}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{-2147483648,2147483647}",Reader.GetValue(0));
+			Assert.AreEqual("{5,9}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		
+		[Test]
+		public void ArraysNumber()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (n1 Number[5],n2 Number[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{321.255,654.233,8987,545.23,654.36}','{31.2434,23.1442}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			//						while(Reader.Read())
+			//								{
+			//									Console.WriteLine(Reader.GetValue(0).ToString());
+			//									Console.WriteLine(Reader.GetValue(1).ToString());
+			//								}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{321.255,654.233,8987,545.23,654.36}",Reader.GetValue(0));
+			Assert.AreEqual("{31.2434,23.1442}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysDecimal()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (n1 Decimal(5,2)[10],n2 Decimal(4,3)[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//									while(Reader.Read())
+//											{
+//												Console.WriteLine(Reader.GetValue(0).ToString());
+//												Console.WriteLine(Reader.GetValue(1).ToString());
+//											}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{120.89,123.90,22.33,412.40,422.22,552.21,62.22,712.09,18.11,91.65}",Reader.GetValue(0));
+			Assert.AreEqual("{1.234,2.142}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+
 	}
 }
