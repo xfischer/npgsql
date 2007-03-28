@@ -1439,5 +1439,560 @@ namespace NUnit
 		}
 
 
+		[Test]
+		public void ArraysMoney()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (m1 money[],m2 money[2]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{-21474823123326.4128,2123432474836.247}','{2343245.571,523432.3226}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//												while(Reader.Read())
+//														{
+//															Console.WriteLine(Reader.GetValue(0).ToString());
+//															Console.WriteLine(Reader.GetValue(1).ToString());
+//														}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{-21474823123326.4128,2123432474836.2470}",Reader.GetValue(0));
+			Assert.AreEqual("{2343245.5710,523432.3226}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysSmallMoney()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (m1 smallmoney[],m2 smallmoney[2]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{-474836.4128,74836.2417}','{45.1157,15.2636}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//															while(Reader.Read())
+//																	{
+//																		Console.WriteLine(Reader.GetValue(0).ToString());
+//																		Console.WriteLine(Reader.GetValue(1).ToString());
+//																	}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{-474836.4128,74836.2417}",Reader.GetValue(0));
+			Assert.AreEqual("{45.1157,15.2636}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysText()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE books( books text[]);;";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO books VALUES ('{ Lord of the Rings , Suffocles}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM  books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//																		while(Reader.Read())
+//																				{
+//																					Console.WriteLine(Reader.GetValue(0).ToString());
+//																					Console.WriteLine(Reader.GetValue(1).ToString());
+//																				}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{\"Lord of the Rings\",Suffocles}",Reader.GetValue(0));
+//			Assert.AreEqual("{45.1157,15.2636}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE  books";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysVarchar()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE favourite_books( books Varchar[3]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO favourite_books VALUES ('{The Hitchhikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM  favourite_books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//			while(Reader.Read())
+//			{
+//				Console.WriteLine(Reader.GetValue(0).ToString());
+//				Console.WriteLine(Reader.GetValue(1).ToString());
+//			}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{\"The Hitchhikers Guide to the Galaxy\",\"Harry Potter\",Kitten,Squared}",Reader.GetValue(0));
+					//	Assert.AreEqual("{45.1157,15.2636}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE  favourite_books";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		
+		[Test]
+		public void ArraysTinyText()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE books( books tinytext[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO books VALUES ('{Lord of the Rings,Suffocles}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM  books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+			//			while(Reader.Read())
+			//			{
+			//				Console.WriteLine(Reader.GetValue(0).ToString());
+			//				Console.WriteLine(Reader.GetValue(1).ToString());
+			//			}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{\"Lord of the Rings\",Suffocles}",Reader.GetValue(0));
+			//	Assert.AreEqual("{45.1157,15.2636}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE  books";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysVarchar2()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE favourite_books( books Varchar2[3]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO favourite_books VALUES ('{The Hitchikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM  favourite_books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+
+//						while(Reader.Read())
+//						{
+//							Console.WriteLine(Reader.GetValue(0).ToString());
+//							//Console.WriteLine(Reader.GetValue(1).ToString());
+//						}
+			Assert.IsTrue(Reader.Read());
+			
+			Assert.AreEqual("{\"The Hitchikers Guide to the Galaxy\",\"Harry Potter\",Kitten,Squared}",Reader.GetValue(0));
+			//	Assert.AreEqual("{45.1157,15.2636}",Reader.GetValue(1));
+			Reader.Close();
+			Command.CommandText="DROP TABLE  favourite_books";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysCharacter()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE chartest( ch character(10)[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO chartest VALUES ('{1st char,sec char}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM chartest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+//
+//									while(Reader.Read())
+//									{
+//										Console.WriteLine(Reader.GetValue(0).ToString());
+//										//Console.WriteLine(Reader.GetValue(1).ToString());
+//									}
+			
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"1st char  \",\"sec char  \"}",Reader.GetValue(0));
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE chartest";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysChar()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE chartest( ch char(8)[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO chartest VALUES ('{1st char,sec char}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM chartest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+//												while(Reader.Read())
+//												{
+//													Console.WriteLine(Reader.GetValue(0).ToString());
+//													//Console.WriteLine(Reader.GetValue(1).ToString());
+//												}
+			
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"1st char\",\"sec char\"}",Reader.GetValue(0));
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE chartest";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysLong()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE books( books long[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO books VALUES ('{Lord of the War,Suffocles}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+//															while(Reader.Read())
+//															{
+//																Console.WriteLine(Reader.GetValue(0).ToString());
+//																//Console.WriteLine(Reader.GetValue(1).ToString());
+//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"Lord of the War\",Suffocles}",Reader.GetValue(0));
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE books";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysLongText()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE books( books longtext[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO books VALUES ('{Lord of the War,Suffocles,A walk in the cloudsssss }');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM books;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"Lord of the War\",Suffocles,\"A walk in the cloudsssss\"}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE books";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysDate()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (d1 Date[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{040506,101203}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"2004-05-06 00:00:00\",\"2010-12-03 00:00:00\"}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysTimestamp()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t Timestamp[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"1999-01-08 04:05:06\",\"2006-12-11 04:05:06\"}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysDateTime()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t DATETIME[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{\"1999-01-08 04:05:06\",\"2006-12-11 04:05:06\"}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysTime()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t TIME[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{04:05:06,12:10:48 }');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{04:05:06,12:10:48}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		[Test]
+		public void ArraysBoolean()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t boolean[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{t,f,t,t,t,f,f,f,f,f,f,f }');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{t,f,t,t,t,f,f,f,f,f,f,f}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+		[Test]
+		public void ArraysBool()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t bool[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{true,false,false,false,true,false,false,true }');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//															while(Reader.Read())
+			//															{
+			//																Console.WriteLine(Reader.GetValue(0).ToString());
+			//																//Console.WriteLine(Reader.GetValue(1).ToString());
+			//															}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{t,f,f,f,t,f,f,t}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+		
+		[Test]
+		public void ArraysBool2()
+		{
+			
+			EDBCommand Command = new EDBCommand("",con);
+				
+			Command.CommandText="CREATE TABLE arrtest (t bool[]);";
+			Command.ExecuteNonQuery();
+
+			
+
+			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,1,0,0,0,1,1,1,1,1,0}');";
+			Command.ExecuteNonQuery();
+			
+			Command.CommandText="SELECT * FROM arrtest;";
+			EDBDataReader Reader = Command.ExecuteReader();
+			
+			//	while(Reader.Read())
+			//	{
+			//		Console.WriteLine(Reader.GetValue(0).ToString());
+			//		Console.WriteLine(Reader.GetValue(1).ToString());
+			//	}
+			Assert.IsTrue(Reader.Read());
+			Assert.AreEqual("{f,t,t,f,f,f,t,t,t,t,t,f}",Reader.GetValue(0));
+			//Console.WriteLine(Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+			Command.CommandText="DROP TABLE arrtest;";
+			Command.ExecuteNonQuery();
+
+		}
+
+
+		
+
+
 	}
 }
