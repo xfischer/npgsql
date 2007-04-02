@@ -172,6 +172,44 @@ namespace NUnit
 		}
 
 		[Test]
+		public void RefCursorInvalidFunc()
+		{
+			bool ex=false;
+			try
+			{
+				EDBCommand command=new EDBCommand("public.getrefcursor()",con);
+				command.CommandType=CommandType.StoredProcedure;
+				
+				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+				command.Prepare();
+
+				command.ExecuteReader();
+				EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+
+				Assert.IsNotNull(rst);
+				Assert.IsTrue(rst.Read());
+				Assert.AreEqual("V1",rst.GetValue(0).ToString());
+				Assert.IsTrue(rst.Read());
+			
+				if(2==int.Parse(rst.GetValue(1).ToString()))
+					Assert.IsTrue(true);
+				else
+					Assert.IsFalse(false);
+						
+				rst.Close();
+			}
+
+			catch(EDBException exp)
+			{
+				ex=true;
+			}
+		
+			if(!ex) 
+				Assert.Fail("Expected an exception. Cursor should be invalid");
+		 }
+
+		[Test]
 		public void RefCursorFuncOut()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -198,11 +236,13 @@ namespace NUnit
 		[Test]
 		public void RefCursorInvalidFuncOut()
 		{
-				EDBTransaction tran=con.BeginTransaction();
-		
+				
+			bool ex=false;
+			try
+			{
 				EDBCommand command = new EDBCommand("public.GETREFCURSOR_OUT(:param1)", con); 
 				command.CommandType = CommandType.StoredProcedure; 
-				command.Transaction=tran;
+				
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 				command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.RefCursor,10,"param0",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
@@ -219,12 +259,139 @@ namespace NUnit
 				Assert.AreEqual("1",rst.GetValue(0).ToString());
 				Assert.IsNotNull(rst);
 				Assert.IsNotNull(rst1);
-		
+				rst.GetValue(2);
+				
 				rst.Close();
 				rst1.Close();
-				tran.Commit();
-			
+				
+			}
+	
+			catch(EDBException exp)
+			{
+				ex=true;
+			}
 
+			if(!ex) 
+				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
+		
+
+
+		[Test]
+		public void RefCursorProc()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			
+			EDBCommand command=new EDBCommand("public.getrefcursorproc(:param1)",con);
+			command.CommandType=CommandType.StoredProcedure;
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.AreEqual("V1",rst.GetValue(0).ToString());
+
+			Assert.IsTrue(rst.Read());
+			if(2==int.Parse(rst.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+						
+			rst.Close();
+			rst.Close();
+			tran.Commit();
+			
+		}
+
+
+		[Test]
+		public void RefCursorInvalidProc()
+		{
+			
+			bool ex=false;
+
+			try
+			{
+				EDBCommand command=new EDBCommand("public.getrefcursorproc(:param1)",con);
+				command.CommandType=CommandType.StoredProcedure;
+			
+				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+				command.Prepare();
+
+				command.ExecuteReader();
+				EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+
+				Assert.IsNotNull(rst);
+				Assert.IsTrue(rst.Read());
+				Assert.AreEqual("V1",rst.GetValue(0).ToString());
+
+				Assert.IsTrue(rst.Read());
+				if(2==int.Parse(rst.GetValue(1).ToString()))
+					Assert.IsTrue(true);
+				else
+					Assert.IsFalse(false);
+						
+				rst.Close();
+				rst.Close();
+			}
+
+			catch(EDBException exp)
+			{
+				ex=true;
+			}
+			if(!ex) 
+				Assert.Fail("Expected an exception. Cursor should be invalid");
+		}
+
+
+
+		[Test]
+		public void RefcursorsVV()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			EDBCommand command = new EDBCommand("public.GETREFCURSORSVVPROC(:param1,:param0)", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.RefCursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.AreEqual("V1",rst.GetValue(0).ToString());
+			Assert.IsTrue(rst.Read());
+			if(2==int.Parse(rst.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+
+			Assert.IsNotNull(rst1);
+			Assert.IsTrue(rst1.Read());
+			Assert.AreEqual("V1",rst1.GetValue(0).ToString());
+			Assert.IsTrue(rst1.Read());
+			if(2==int.Parse(rst1.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+
+		
+			
+			rst.Close();
+			rst1.Close();
+			tran.Commit();
+			
+		}	
+
 	}
 }
