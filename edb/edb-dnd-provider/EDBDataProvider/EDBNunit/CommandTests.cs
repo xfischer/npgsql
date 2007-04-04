@@ -2324,7 +2324,217 @@ namespace NUnit
 			_conn.Close();
 		}
 
+
+		[Test]
+		public void CompositeTypeTestGeneric()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+			command.CommandText="select * from on_hand;";
 		
+			EDBDataReader Reader=command.ExecuteReader();
+
+
+
+			try
+			{
+				
+				Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+		
+
+			Assert.AreEqual("(\"fuzzy dice\",42,1.99)",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			
+			command.CommandText="drop table on_hand;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop TYPE inventory_item;";
+			command.ExecuteNonQuery();
+			
+			
+		
+			_conn.Close();
+		}
+		
+		[Test]
+		public void CompositeTypeTestIndividualValue()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+			command.CommandText="select (item).name from on_hand where (item).price=1.99;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+
+
+			try
+			{
+				
+				Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+		
+
+			Assert.AreEqual("fuzzy dice",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			
+			command.CommandText="drop table on_hand;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop TYPE inventory_item;";
+			command.ExecuteNonQuery();
+			
+			
+		
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void CompositeTypeTestMultiTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand2 (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			
+			
+			command = new EDBCommand("INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("INSERT INTO on_hand2 VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+
+			command.CommandText="select (on_hand.item).name  from on_hand where (on_hand.item).price=( select (on_hand2.item).price from on_hand2 where (on_hand.item).name='fuzzy dice')";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+				
+
+			try
+			{
+				
+				Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+		
+
+			Assert.AreEqual("fuzzy dice",Reader.GetValue(0).ToString());
+			Console.WriteLine(Reader.GetValue(0).ToString());
+			Reader.Close();
+				
+			
+			command.CommandText="drop table on_hand;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop table on_hand2;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop TYPE inventory_item;";
+			command.ExecuteNonQuery();
+			
+			
+		
+			_conn.Close();
+		}
+
+		[Test]
+		public void CompositeTypeTestUpdate()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("UPDATE on_hand SET item = ROW('New Name', 50, 10.99) WHERE count=1000;", _conn);
+			command.ExecuteNonQuery();
+			
+			command.CommandText="select (item).name from on_hand where count=1000;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+
+
+		
+						
+
+			try
+			{
+				
+				Reader.Read();
+				
+			}
+			catch(EDBException exp)
+			{
+				throw new Exception(exp.ToString());
+			}
+
+		
+
+			Assert.AreEqual("New Name",Reader.GetValue(0).ToString());
+			
+			Reader.Close();
+				
+			
+			command.CommandText="drop table on_hand;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop TYPE inventory_item;";
+			command.ExecuteNonQuery();
+			
+			
+		
+			_conn.Close();
+		}
 
     }
 }
