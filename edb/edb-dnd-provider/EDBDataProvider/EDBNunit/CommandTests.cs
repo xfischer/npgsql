@@ -2536,5 +2536,43 @@ namespace NUnit
 			_conn.Close();
 		}
 
+
+		[Test]
+		public void CompositeTypeTestDelete()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", _conn);
+			command.ExecuteNonQuery();
+			command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);", _conn);
+			command.ExecuteNonQuery();
+			
+			command = new EDBCommand("delete from on_hand WHERE count=1000;", _conn);
+			command.ExecuteNonQuery();
+			
+			command.CommandText="select * from on_hand where count=1000;";
+		
+			EDBDataReader Reader=command.ExecuteReader();
+			
+			
+			Assert.IsFalse(Reader.HasRows);
+			Reader.Close();
+				
+			
+			command.CommandText="drop table on_hand;";
+			command.ExecuteNonQuery();
+			command.CommandText="drop TYPE inventory_item;";
+			command.ExecuteNonQuery();
+			
+			
+		
+			_conn.Close();
+		}
+
     }
 }
