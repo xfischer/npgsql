@@ -145,6 +145,70 @@ namespace NUnit
 				"		END;";
 			Command.ExecuteNonQuery();
 
+				////////////
+			Command.CommandText="CREATE OR REPLACE PACKAGE REFCURSOR_PKG IS\n"+
+			"	FUNCTION GETREFCURSOR RETURN REFCURSOR;\n"+
+				"PROCEDURE GETREFCURSORPROC(A OUT REFCURSOR);\n"+
+				"FUNCTION GETREFCURSOR_OUT(R OUT REFCURSOR) RETURN REFCURSOR;\n"+
+				"PROCEDURE GETREFCURSORSVVPROC(A OUT REFCURSOR,B OUT REFCURSOR);\n"+
+				"PROCEDURE GETREFCURSORSVPROC(A OUT REFCURSOR,B OUT REFCURSOR);\n"+
+				"FUNCTION DEFAULTINRETURNFUNC(A IN INT4 DEFAULT 29) RETURN INT4;\n"+
+				"PROCEDURE DEFAULTINPROC(B OUT INT4,A IN INT4 DEFAULT 29);\n"+
+			"END REFCURSOR_PKG;";
+			
+			Command.ExecuteNonQuery();
+
+
+			Command.CommandText="CREATE OR REPLACE PACKAGE BODY REFCURSOR_PKG IS\n"
+				+ "FUNCTION GETREFCURSOR RETURN REFCURSOR AS\n"+
+				"	TEST_REF REFCURSOR;\n"+
+				"		BEGIN\n"+
+				"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
+				"			RETURN TEST_REF;\n"+
+				"		END;\n"+
+				"PROCEDURE GETREFCURSORPROC(A OUT REFCURSOR) AS\n"+
+			"	TEST_REF REFCURSOR;\n"+
+			"		BEGIN\n"+
+			"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
+			"			A:=TEST_REF;\n"+
+			"		END;"+
+				"FUNCTION GETREFCURSOR_OUT(R OUT REFCURSOR) RETURN REFCURSOR AS\n"+
+				"	TEST_REF REFCURSOR;\n"+
+				"	TEST_REF2 REFCURSOR;\n"+
+				"		BEGIN\n"+
+				"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
+				"			OPEN TEST_REF2 FOR SELECT b FROM TESTTAB;\n"+
+				"			R:=TEST_REF2;\n"+
+				"			RETURN TEST_REF;\n"+
+				"		END;"+
+				"PROCEDURE GETREFCURSORSVVPROC(A OUT REFCURSOR,B OUT REFCURSOR) AS\n"+
+				"	TEST_REF REFCURSOR;\n"+
+				"	TEST_REF2 REFCURSOR;\n"+
+				"		BEGIN\n"+
+				"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
+				"			OPEN TEST_REF2 FOR SELECT * FROM TESTTAB;\n"+
+				"			A:=TEST_REF;\n"+
+				"			B:=TEST_REF2;\n"+
+				"		END;"+
+				"PROCEDURE GETREFCURSORSVPROC(A OUT REFCURSOR,B OUT REFCURSOR) AS\n"+
+				"	TEST_REF REFCURSOR;\n"+
+				"		BEGIN\n"+
+				"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
+				"			A:=TEST_REF;\n"+
+				"			B:=A;\n"+
+				"		END;"+
+				"FUNCTION DEFAULTINRETURNFUNC(A IN INT4 DEFAULT 29) RETURN INT4 AS\n"+
+				"		BEGIN\n"+
+				"			RETURN A;\n"+
+				"		END;"+
+				"PROCEDURE DEFAULTINPROC(B OUT INT4,A IN INT4 DEFAULT 29) AS\n"+
+				"		BEGIN\n"+
+				"			B:=A;\n"+
+				"		END;"+
+				"END REFCURSOR_PKG;\n";
+
+			Command.ExecuteNonQuery();
+
 		
 
 		}
@@ -200,6 +264,9 @@ namespace NUnit
 			
 
 			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVPROC";
+			Command.ExecuteNonQuery();
+
+			Command.CommandText="DROP Package REFCURSOR_PKG";
 			Command.ExecuteNonQuery();
 
 			TestUtil.closeDB(con);
@@ -676,5 +743,199 @@ namespace NUnit
 			
 		}
 
+		[Test]
+		public void PACKAGERefCursorFunc()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			
+			EDBCommand command=new EDBCommand("REFCURSOR_PKG.getrefcursor()",con);
+			command.CommandType=CommandType.StoredProcedure;
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.AreEqual("V1",rst.GetValue(0).ToString());
+			rst.Close();
+			tran.Commit();
+			
+		}
+
+		[Test]
+		public void PACKAGERefCursorProc()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			
+			EDBCommand command=new EDBCommand("REFCURSOR_PKG.getrefcursorproc(:param1)",con);
+			command.CommandType=CommandType.StoredProcedure;
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.AreEqual("V1",rst.GetValue(0).ToString());
+
+			Assert.IsTrue(rst.Read());
+			if(2==int.Parse(rst.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+						
+			rst.Close();
+			rst.Close();
+			tran.Commit();
+			
+		}
+
+
+		[Test]
+		public void PACKGAERefCursorFuncOut()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			EDBCommand command = new EDBCommand("REFCURSOR_PKG.GETREFCURSOR_OUT(:param1)", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.RefCursor,10,"param0",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsNotNull(rst1);
+			
+			rst.Close();
+			tran.Commit();
+			
+		}
+
+
+		[Test]
+		public void PACKAGERefcursorsVV()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			EDBCommand command = new EDBCommand("REFCURSOR_PKG.GETREFCURSORSVVPROC(:param1,:param0)", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.RefCursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.AreEqual("V1",rst.GetValue(0).ToString());
+			Assert.IsTrue(rst.Read());
+			if(2==int.Parse(rst.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+
+			Assert.IsNotNull(rst1);
+			Assert.IsTrue(rst1.Read());
+			Assert.AreEqual("V1",rst1.GetValue(0).ToString());
+			Assert.IsTrue(rst1.Read());
+			if(2==int.Parse(rst1.GetValue(1).ToString()))
+				Assert.IsTrue(true);
+			else
+				Assert.IsFalse(false);
+
+		
+			
+			rst.Close();
+			rst1.Close();
+			tran.Commit();
+			
+		}
+	
+
+		[Test]
+		public void PACKAGERefcursorsV()
+		{
+			EDBTransaction tran=con.BeginTransaction();
+			EDBCommand command = new EDBCommand("public.GETREFCURSORSVPROC(:param1,:param0)", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			command.Transaction=tran;
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.RefCursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.RefCursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+
+			Assert.IsNotNull(rst);
+			Assert.IsTrue(rst.Read());
+			Assert.IsTrue(rst.Read());
+			Assert.IsFalse(rst.Read());
+			Assert.IsFalse(rst1.Read());
+
+			
+			
+			rst.Close();
+			rst1.Close();
+			tran.Commit();
+			
+		}	
+
+		[Test]
+		public void PACKAGEDefaultInAsReturn()
+		{
+			
+			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC()", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			int a= int.Parse(command.Parameters[0].Value.ToString());
+			if(a==29)
+				Assert.IsTrue(true);
+			else
+				Assert.IsTrue(false);
+		
+			
+		}	
+
+		[Test]
+		public void PACKAGEDefaultInAsOutProc()
+		{
+			
+			EDBCommand command = new EDBCommand("public.DEFAULTINPROC(:param1)", con); 
+			command.CommandType = CommandType.StoredProcedure; 
+			
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			
+			command.Prepare();
+
+			command.ExecuteReader();
+			int a= int.Parse(command.Parameters[0].Value.ToString());
+			if(a==29)
+				Assert.IsTrue(true);
+			else
+				Assert.IsTrue(false);
+		
+			
+		}	
 	}
 }
