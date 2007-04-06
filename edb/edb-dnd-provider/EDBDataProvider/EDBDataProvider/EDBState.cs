@@ -829,7 +829,7 @@ namespace EnterpriseDB.EDBClient
 								{
 									descriptions[ri] = efd;
 									
-									if(efd.type_oid==1790)//if it is a refcursor, fetch all records
+									if(efd.type_oid==1790 && row.GetData(i) != DBNull.Value )//if it is a refcursor, fetch all records
 									{
 										EDBCommand cmd = new EDBCommand("fetch all in \""+ row.GetData(i).ToString()+"\"",context);
 										EDBDataReader rst =  cmd.ExecuteReader();
@@ -844,7 +844,7 @@ namespace EnterpriseDB.EDBClient
 							else
 							{
 								descriptions[efd.ReturingIndex] = efd;								
-								if(efd.type_oid==1790)//if it is a refcursor, fetch all records
+								if(efd.type_oid==1790 && row.GetData(i) != DBNull.Value )//if it is a refcursor, fetch all records
 								{
 									EDBCommand cmd = new EDBCommand("fetch all in \""+ row.GetData(i).ToString()+"\"", context);
 									EDBDataReader rst =  cmd.ExecuteReader();							
