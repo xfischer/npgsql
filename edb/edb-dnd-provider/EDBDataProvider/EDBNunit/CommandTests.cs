@@ -2574,5 +2574,165 @@ namespace NUnit
 			_conn.Close();
 		}
 
+
+		[Test]
+		public void SingleExecuteNonQuerryCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4)",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP TABLE TAB1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4)",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand(" DROP TABLE TAB1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1read(A INT4)",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand(" DROP TABLE TAB1read",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+		[Test]
+		public void MultipleExecuteNonQuerryCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP TABLE TAB1;DROP TABLE TAB2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand(" DROP TABLE TAB1;DROP TABLE TAB2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderCreateTable()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP TABLE TAB1;DROP TABLE TAB2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteNonQuerryCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP VIEW vista",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP VIEW vista",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP VIEW vista",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
     }
 }
