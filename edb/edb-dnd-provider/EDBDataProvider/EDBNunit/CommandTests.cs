@@ -2734,5 +2734,167 @@ namespace NUnit
 
 			_conn.Close();
 		}
+
+		[Test]
+		public void MultipleExecuteNonQuerryCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP VIEW vista;DROP VIEW vistb",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP VIEW vista;DROP VIEW vistb",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderCreateView()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP VIEW vista;DROP VIEW vistb",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+		[Test]
+		public void SingleExecuteNonQuerryCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP SEQUENCE seq1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP SEQUENCE seq1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP SEQUENCE seq1",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderCreateSequence()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+		
     }
 }
