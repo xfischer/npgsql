@@ -44,11 +44,14 @@ namespace EnterpriseDB.EDBClient
         private static readonly String CLASSNAME = "EDBAsciiRow";
 
         private readonly Int16        READ_BUFFER_SIZE = 300; //[FIXME] Is this enough??
+        private byte[] _inputBuffer;
+        private char[] _chars;
 
         public EDBAsciiRow(EDBRowDescription rowDesc, ProtocolVersion protocolVersion)
                 : base(rowDesc, protocolVersion)
         {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
+           EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
+           
         }
 
         public override void ReadFromStream(Stream inputStream, Encoding encoding)
@@ -265,7 +268,66 @@ namespace EnterpriseDB.EDBClient
             return (((test_byte << (index%8)) & 0x80) == 0);
         }
     
-	
+
+		private int GetCharsFromStream(Stream inputStream, int count, Decoder decoder, char[] chars)
+		{
+			// Now, read just the field value.
+			PGUtil.CheckedStreamRead(inputStream, _inputBuffer, 0, count);
+			int charCount = decoder.GetCharCount(_inputBuffer, 0, count);
+			decoder.GetChars(_inputBuffer, 0, count, chars, 0);
+			return charCount;
+		}		
+
+		private string ReadStringFromStream(Stream inputStream, int field_value_size, Decoder decoder)
+		{
+			int bytes_left = field_value_size;
+			int charCount;
+
+			if (field_value_size > _inputBuffer.Length)
+			{
+				StringBuilder   result = new StringBuilder();
+
+				while (bytes_left > READ_BUFFER_SIZE)
+				{
+					charCount = GetCharsFromStream(inputStream, READ_BUFFER_SIZE, decoder, _chars);
+					result.Append(_chars, 0,charCount);
+					bytes_left -= READ_BUFFER_SIZE;
+				}
+
+				charCount = GetCharsFromStream(inputStream, bytes_left, decoder, _chars);
+				result.Append(_chars, 0,charCount);
+
+				return result.ToString();
+			}
+			else
+			{
+				charCount = GetCharsFromStream(inputStream, bytes_left, decoder, _chars);
+
+				return new String(_chars, 0,charCount);
+			}
+		}
+  
+		private byte[] ReadBytesFromStream(Stream inputStream, int field_value_size)
+		{
+			byte[] binary_data = new byte[field_value_size];
+			int bytes_left = field_value_size;
+			if (field_value_size > _inputBuffer.Length)
+			{
+				int i=0;
+				while (bytes_left > READ_BUFFER_SIZE)
+				{
+					PGUtil.CheckedStreamRead(inputStream, _inputBuffer, 0, READ_BUFFER_SIZE);
+					_inputBuffer.CopyTo(binary_data, i*READ_BUFFER_SIZE);
+					i++;
+					bytes_left -= READ_BUFFER_SIZE;
+				}
+			}
+			PGUtil.CheckedStreamRead(inputStream, _inputBuffer, 0, bytes_left);
+			Int32 offset = field_value_size - bytes_left;
+			Array.Copy(_inputBuffer, 0, binary_data, offset, bytes_left);
+			return binary_data;
+		}
+
 	
 	
 }

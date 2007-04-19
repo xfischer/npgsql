@@ -814,7 +814,16 @@ namespace EnterpriseDB.EDBClient
             
         }
         
-        
+		public void ClearPool()
+		{
+			EDBConnectorPool.ConnectorPoolMgr.ClearPool(this);
+		}
+
+		public void ClearAllPools()
+		{
+			EDBConnectorPool.ConnectorPoolMgr.ClearAllPools();
+		}
+
         private DataTable GetSchemaDatabases()
         {
             EDBConnection conn = new EDBConnection(this.ConnectionString);
@@ -838,13 +847,9 @@ namespace EnterpriseDB.EDBClient
                 row["Name"] = dr["Name"];
                 row["Owner"] = dr["Owner"];
                 row["Encoding"] = dr["Encoding"];
-                
                 result.Rows.Add(row);
             }
-            
-            
             dr.Close();
-            
             conn.Close();
             
 

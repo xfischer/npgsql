@@ -32,6 +32,7 @@ using System.Collections;
 using EDBTypes;
 using EnterpriseDB.EDBClient.Design;
 using System.Text.RegularExpressions;
+using System.IO;
 
 #if WITHDESIGN
 using EDB.Design;
@@ -50,8 +51,9 @@ namespace EnterpriseDB.EDBClient
     public sealed class EDBCommand : Component, IDbCommand, ICloneable
     {
         // Logging related values
-        private static readonly String CLASSNAME = "EDBCommand";
+        private static readonly String CLASSNAME = "NpgsqlCommand";
         private static ResourceManager resman = new ResourceManager(typeof(EDBCommand));
+        private static readonly Regex parameterReplace = new Regex(@"([:@][\w\.]*)", RegexOptions.Singleline);
 
         private EDBConnection            connection;
         private EDBConnector             connector;
@@ -68,6 +70,8 @@ namespace EnterpriseDB.EDBClient
         private Boolean						invalidTransactionDetected = false;
 			
         private CommandBehavior             commandBehavior;
+
+        private Int64                       lastInsertedOID = 0;
 
         // Constructors
 
@@ -113,10 +117,12 @@ namespace EnterpriseDB.EDBClient
 		
 			
             parameters = new EDBParameterCollection();
-            timeout = 20;
+            
             type = CommandType.Text;
             this.Transaction = transaction;
             commandBehavior = CommandBehavior.Default;
+            
+            SetCommandTimeout();
             
             
         }
@@ -250,6 +256,8 @@ namespace EnterpriseDB.EDBClient
                 if (this.connection != null)
                     connector = this.connection.Connector;
 
+				
+                SetCommandTimeout();
                 EDBEventLog.LogPropertySet(LogLevel.Debug, CLASSNAME, "Connection", value);
             }
         }
@@ -357,15 +365,44 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Attempts to cancel the execution of a <see cref="EDB.EDBCommand">EDBCommand</see>.
+        /// Returns oid of inserted row. This is only updated when using executenonQuery and when command inserts just a single row. If table is created without oids, this will always be 0.
+        /// </summary>
+
+	public Int64 LastInsertedOID
+        {
+            get
+            {
+                return lastInsertedOID;
+            }
+        }
+
+
+        /// <summary>
+        /// Attempts to cancel the execution of a <see cref="EDBCommand">EDBCommand</see>.
         /// </summary>
         /// <remarks>This Method isn't implemented yet.</remarks>
         public void Cancel()
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Cancel");
 
-            // [TODO] Finish method implementation.
-            throw new NotImplementedException();
+			try
+			{
+				// get copy for thread safety of null test
+				EDBConnector connector = Connector;
+				if (connector != null)
+				{
+					connector.CancelRequest();
+				}
+			}
+			catch (IOException)
+			{
+				Connection.ClearPool();
+			}   
+			catch (EDBException)
+			{
+				// Cancel documentation says the Cancel doesn't throw on failure
+			}
+
         }
 //EDB Team: Patch of new npgsql release               
         /// <summary>
@@ -419,6 +456,7 @@ namespace EnterpriseDB.EDBClient
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ExecuteNonQuery");
 			if(parameters!=null)
 				connector.Mediator.setParameters(parameters);
+			lastInsertedOID = 0;
             ExecuteCommand();
             
             //UpdateOutputParameters();//EDB Team: Patch of new npgsql release       
@@ -443,13 +481,22 @@ namespace EnterpriseDB.EDBClient
             // [FIXME] Is there a better way to check this??
             if ((String.Compare(ret_string_tokens[0], "INSERT", true) == 0) ||
                     (String.Compare(ret_string_tokens[0], "UPDATE", true) == 0) ||
-                    (String.Compare(ret_string_tokens[0], "DELETE", true) == 0))
+                    (String.Compare(ret_string_tokens[0], "DELETE", true) == 0) ||
+                    (String.Compare(ret_string_tokens[0], "FETCH", true) == 0) ||
+                    (String.Compare(ret_string_tokens[0], "MOVE", true) == 0))
+                
+                
+            {
+                if (String.Compare(ret_string_tokens[0], "INSERT", true) == 0)
+                    // Get oid of inserted row.
+                    lastInsertedOID = Int32.Parse(ret_string_tokens[1]);
 
                 // The number of rows affected is in the third token for insert queries
                 // and in the second token for update and delete queries.
                 // In other words, it is the last token in the 0-based array.
 
                 return Int32.Parse(ret_string_tokens[ret_string_tokens.Length - 1]);
+            }
             else
                 return -1;
         }
@@ -704,6 +751,11 @@ namespace EnterpriseDB.EDBClient
             // Check the connection state.
             CheckConnectionState();
 
+		  // reset any responses just before getting new ones
+            Connector.Mediator.ResetResponses();
+            
+            // Set command timeout.
+            connector.Mediator.CommandTimeout = CommandTimeout;
             if (!Connector.SupportsPrepare)
             {
                 return;	// Do nothing.
@@ -1298,7 +1350,20 @@ namespace EnterpriseDB.EDBClient
 				
             }
         }
-        
+        private void SetCommandTimeout()
+        {
+            if (Connector != null)
+                timeout = Connector.CommandTimeout;
+            else
+                timeout = ConnectionStringDefaults.CommandTimeout;
+        }
+
+        private void ClearPoolAndThrowException(Exception e)
+        {
+            Connection.ClearPool();
+            throw new EDBException(resman.GetString("Exception_ConnectionBroken"), e);
+
+        }
         
          
         

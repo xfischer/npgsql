@@ -54,7 +54,7 @@ namespace EnterpriseDB.EDBClient
         /// <value>Unique static instance of the connector pool
         /// mamager.</value>
         internal static EDBConnectorPool ConnectorPoolMgr = new EDBConnectorPool();
-
+	
         public EDBConnectorPool()
         {
             PooledConnectors = new Hashtable();	
@@ -64,7 +64,6 @@ namespace EnterpriseDB.EDBClient
             Timer.Start();
 
         }
-        
         
         ~EDBConnectorPool()
         {
@@ -512,5 +511,60 @@ namespace EnterpriseDB.EDBClient
         {
             // To be implemented
         }
-    }
+		private void ClearQueue(ConnectorQueue Queue)
+		{
+			if (Queue == null)
+				return;
+
+			while (Queue.Count > 0)
+			{
+				EDBConnector connector = (EDBConnector)Queue.Dequeue();
+
+				try
+				{
+					connector.Close();
+				}
+				catch 
+				{
+					// Maybe we should log something here to say we got an exception while closing connector?
+
+				}
+
+			}
+
+		}
+
+
+		internal void ClearPool(EDBConnection Connection)
+		{
+			// Prevent multithread access to connection pool count.
+			lock(this)
+			{
+				// Try to find a queue.
+				ConnectorQueue queue = (ConnectorQueue)PooledConnectors[Connection.ConnectionString.ToString()];
+                
+				ClearQueue(queue);
+
+				PooledConnectors[Connection.ConnectionString.ToString()] = null;
+
+			}
+
+
+		}
+
+		internal void ClearAllPools()
+		{
+
+			lock (this)
+			{
+				foreach (ConnectorQueue Queue in PooledConnectors.Values)
+					ClearQueue(Queue);
+
+			}
+
+
+		}
+	
+	
+	}
 }

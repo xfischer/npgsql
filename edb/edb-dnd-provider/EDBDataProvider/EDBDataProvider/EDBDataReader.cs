@@ -26,7 +26,7 @@
 using System;
 using System.Data;
 using System.Collections;
-
+using System.Text;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient
@@ -41,11 +41,12 @@ namespace EnterpriseDB.EDBClient
         private ArrayList			_responses;
         private Int32 				_rowIndex;
         private Int32				_resultsetIndex;
+        private Int32               _recordsAffected;
         private	EDBResultSet		_currentResultset;
         private DataTable			_currentResultsetSchema;
         private CommandBehavior     _behavior;
         private Boolean             _isClosed;
-        private EDBCommand       _command;
+        private EDBCommand          _command;
 
 
         // Logging related values
@@ -57,20 +58,22 @@ namespace EnterpriseDB.EDBClient
             _responses = responses;
             _connection = command.Connection;
             _rowIndex = -1;
-            _resultsetIndex = 0;
+            _resultsetIndex = -1;
+            _recordsAffected = -1;
 
-            if (_resultsets.Count > 0)
-                _currentResultset = (EDBResultSet)_resultsets[_resultsetIndex];
+            // positioned before the first results.
+            // move to the first results
+            NextResult();
 
-            _behavior = behavior;
+			_behavior = behavior;
             _isClosed = false;
             _command = command;
-        }
+	    }
 
-        private Boolean HaveResultSet()
-        {
-            return (_currentResultset != null);
-        }
+		private Boolean HaveResultSet()
+		{
+			return (_currentResultset != null);
+		}
 
         private Boolean HaveRow()
         {
@@ -196,7 +199,14 @@ namespace EnterpriseDB.EDBClient
             }
 
             _isClosed = true;
+            if (this.ReaderClosed != null)
+	            this.ReaderClosed(this, EventArgs.Empty);
         }
+        
+        /// <summary>
+        /// Is raised whenever Close() is called.
+        /// </summary>
+        public event EventHandler ReaderClosed;
 
         /// <summary>
         /// Advances the data reader to the next result, when multiple result sets were returned by the PostgreSQL backend.
@@ -212,8 +222,8 @@ namespace EnterpriseDB.EDBClient
                 _rowIndex = -1;
                 _currentResultset = (EDBResultSet)_resultsets[_resultsetIndex];
                 return true;
-            }
-            else
+                        }
+                        else
                 return false;
 
         }
@@ -263,7 +273,7 @@ namespace EnterpriseDB.EDBClient
 
                 EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "FieldCount");
 
-                if (! HaveResultSet()) //Executed a non return rows query.
+                if (!HaveResultSet()) //Executed a non return rows query.
                     return -1;
                 else
                     return _currentResultset.RowDescription.NumFields;
@@ -316,7 +326,7 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
-                return TI.Name;
+				return TI.Name;
             }
         }
 
@@ -691,26 +701,67 @@ namespace EnterpriseDB.EDBClient
                 result.Columns.Add ("IsLong", typeof (bool));
                 result.Columns.Add ("IsReadOnly", typeof (bool));
 
+                if (_connection.Connector.BackendProtocolVersion == ProtocolVersion.Version2)
+                {
+                    FillSchemaTable_v2(result);
+                }
+                else if (_connection.Connector.BackendProtocolVersion == ProtocolVersion.Version3)
+                {
+                    FillSchemaTable_v3(result);
+                }
+            }
+
+            return result;
+
+        }
+
+        private void FillSchemaTable_v2(DataTable schema)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "FillSchemaTable_v2");
+            EDBRowDescription rd = _currentResultset.RowDescription;
+            ArrayList keyList = null;
+			
+			if ((_behavior & CommandBehavior.KeyInfo) == CommandBehavior.KeyInfo)
+			{
+				keyList = GetPrimaryKeys(GetTableNameFromQuery());
+			}
+
                 DataRow row;
 
-                for (Int16 i = 0; i < numFields; i++)
+            for (Int16 i = 0; i < rd.NumFields; i++)
                 {
-                    row = result.NewRow();
+                row = schema.NewRow();
 
                     row["ColumnName"] = GetName(i);
                     row["ColumnOrdinal"] = i + 1;
+                if (rd[i].type_modifier != -1 && rd[i].type_info != null && (rd[i].type_info.Name == "varchar" || rd[i].type_info.Name == "bpchar"))
+                    row["ColumnSize"] = rd[i].type_modifier - 4;
+                else if (rd[i].type_modifier != -1 && rd[i].type_info != null && (rd[i].type_info.Name == "bit" || rd[i].type_info.Name == "varbit"))
+                    row["ColumnSize"] = rd[i].type_modifier;
+                else
                     row["ColumnSize"] = (int) rd[i].type_size;
+                if (rd[i].type_modifier != -1 && rd[i].type_info != null && rd[i].type_info.Name == "numeric")
+                {
+                    row["NumericPrecision"] = ((rd[i].type_modifier-4)>>16)&ushort.MaxValue;
+                    row["NumericScale"] = (rd[i].type_modifier-4)&ushort.MaxValue;
+                }
+                else
+                {
                     row["NumericPrecision"] = 0;
                     row["NumericScale"] = 0;
+                }
                     row["IsUnique"] = false;
-                    row["IsKey"] = DBNull.Value;
+                row["IsKey"] = IsKey(GetName(i), keyList);
                     row["BaseCatalogName"] = "";
+                row["BaseSchemaName"] = "";
+                row["BaseTableName"] = "";
                     row["BaseColumnName"] = GetName(i);
-                    row["BaseSchemaName"] = "";
-                    row["BaseTableName"] = "";
                     row["DataType"] = GetFieldType(i);
-                    row["AllowDBNull"] = false;
-                    row["ProviderType"] = (int) rd[i].type_oid;
+                row["AllowDBNull"] = IsNullable(null, i);
+                if (rd[i].type_info != null)
+                {
+                    row["ProviderType"] = rd[i].type_info.Name;
+                }
                     row["IsAliased"] = false;
                     row["IsExpression"] = false;
                     row["IsIdentity"] = false;
@@ -720,14 +771,101 @@ namespace EnterpriseDB.EDBClient
                     row["IsLong"] = false;
                     row["IsReadOnly"] = false;
 
-                    result.Rows.Add(row);
-                }
+                schema.Rows.Add(row);
             }
-
-            return result;
-			
         }
-//EDB Team: Patch of new npgsql release   
+
+        private void FillSchemaTable_v3(DataTable schema)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "FillSchemaTable_v3");
+            EDBRowDescription rd = _currentResultset.RowDescription;
+
+			Hashtable oidTableLookup = null;
+			KeyLookup keyLookup = new KeyLookup();
+			Hashtable columnLookup = null;
+
+			if ((_behavior & CommandBehavior.KeyInfo) == CommandBehavior.KeyInfo)
+			{
+				ArrayList tableOids = new ArrayList();
+				for(short i=0; i<rd.NumFields; ++i)
+				{
+					if (rd[i].table_oid != 0 && !tableOids.Contains(rd[i].table_oid))
+						tableOids.Add(rd[i].table_oid);
+				}
+				oidTableLookup = GetTablesFromOids(tableOids);
+
+				if (oidTableLookup != null && oidTableLookup.Count == 1)
+				{
+					// only 1, but we can't index into the Hashtable
+					foreach(DictionaryEntry entry in oidTableLookup)
+					{
+						keyLookup = GetKeys((Int32)entry.Key);
+					}
+				}
+
+				columnLookup = GetColumns();
+			}
+
+            DataRow row;
+            for (Int16 i = 0; i < rd.NumFields; i++)
+            {
+                row = schema.NewRow();
+
+				string baseColumnName = GetBaseColumnName(columnLookup, i);
+
+                row["ColumnName"] = GetName(i);
+                row["ColumnOrdinal"] = i + 1;
+                if (rd[i].type_modifier != -1 && rd[i].type_info != null && (rd[i].type_info.Name == "varchar" || rd[i].type_info.Name == "bpchar"))
+                    row["ColumnSize"] = rd[i].type_modifier - 4;
+                else if (rd[i].type_modifier != -1 && rd[i].type_info != null && (rd[i].type_info.Name == "bit" || rd[i].type_info.Name == "varbit"))
+                    row["ColumnSize"] = rd[i].type_modifier;
+                else
+                    row["ColumnSize"] = (int) rd[i].type_size;
+                if (rd[i].type_modifier != -1 && rd[i].type_info != null && rd[i].type_info.Name == "numeric")
+                {
+                    row["NumericPrecision"] = ((rd[i].type_modifier-4)>>16)&ushort.MaxValue;
+                    row["NumericScale"] = (rd[i].type_modifier-4)&ushort.MaxValue;
+                }
+                else
+                {
+                    row["NumericPrecision"] = 0;
+                    row["NumericScale"] = 0;
+                }
+                row["IsUnique"] = IsUnique(keyLookup, baseColumnName);
+                row["IsKey"] = IsKey(keyLookup, baseColumnName);
+                if (rd[i].table_oid != 0 && oidTableLookup != null)
+                {
+                    row["BaseCatalogName"] = ((object[])oidTableLookup[rd[i].table_oid])[Tables.table_catalog];
+                    row["BaseSchemaName"] = ((object[])oidTableLookup[rd[i].table_oid])[Tables.table_schema];
+                    row["BaseTableName"] = ((object[])oidTableLookup[rd[i].table_oid])[Tables.table_name];
+                }
+                else
+                {
+                    row["BaseCatalogName"] = "";
+                    row["BaseSchemaName"] = "";
+                    row["BaseTableName"] = "";
+                }
+                row["BaseColumnName"] = baseColumnName;
+                row["DataType"] = GetFieldType(i);
+                row["AllowDBNull"] = IsNullable(columnLookup, i);
+                if (rd[i].type_info != null)
+                {
+                    row["ProviderType"] = rd[i].type_info.Name;
+                }
+                row["IsAliased"] = string.CompareOrdinal((string)row["ColumnName"], baseColumnName) != 0;
+                row["IsExpression"] = false;
+                row["IsIdentity"] = false;
+                row["IsAutoIncrement"] = IsAutoIncrement(columnLookup, i);
+                row["IsRowVersion"] = false;
+                row["IsHidden"] = false;
+                row["IsLong"] = false;
+                row["IsReadOnly"] = false;
+
+                schema.Rows.Add(row);
+            }
+        }
+
+
         private Boolean IsKey(String ColumnName, ArrayList ListOfKeys)
         {
             if (ListOfKeys == null || ListOfKeys.Count == 0)
@@ -771,14 +909,145 @@ namespace EnterpriseDB.EDBClient
             return result;
         }
 
+		private bool IsKey(KeyLookup keyLookup, string fieldName)
+		{
+			if (keyLookup.primaryKey == null || keyLookup.primaryKey.Count == 0)
+				return false;
 
-
-        private Boolean IsNullable(Int32 FieldIndex)
-        {
+			for (int i=0; i<keyLookup.primaryKey.Count; ++i)
+			{
+                if (fieldName == (String)keyLookup.primaryKey[i])
             return true;
         }
 
-//EDB Team: Patch of new npgsql release   
+			return false;
+		}
+
+		private bool IsUnique(KeyLookup keyLookup, string fieldName)
+		{
+			if (keyLookup.uniqueColumns == null || keyLookup.uniqueColumns.Count == 0)
+				return false;
+
+			for (int i=0; i<keyLookup.uniqueColumns.Count; ++i)
+			{
+                if (fieldName == (String)keyLookup.uniqueColumns[i])
+					return true;
+			}
+
+			return false;
+		}
+
+		private struct KeyLookup
+		{
+			/// <summary>
+			/// Contains the column names as the keys
+			/// </summary>
+			public ArrayList primaryKey;
+			/// <summary>
+			/// Contains all unique columns
+			/// </summary>
+			public ArrayList uniqueColumns;
+		}
+
+		private KeyLookup GetKeys(Int32 tableOid)
+		{
+      
+			string getKeys = "select a.attname, ci.relname, i.indisprimary from pg_catalog.pg_class ct, pg_catalog.pg_class ci, pg_catalog.pg_attribute a, pg_catalog.pg_index i WHERE ct.oid=i.indrelid AND ci.oid=i.indexrelid AND a.attrelid=ci.oid AND i.indisunique AND ct.oid = :tableOid order by ci.relname";
+
+			KeyLookup lookup = new KeyLookup();
+			lookup.primaryKey = new ArrayList();
+			lookup.uniqueColumns = new ArrayList();
+
+			using (EDBConnection metadataConn = _connection.Clone())
+			{
+				EDBCommand c = new EDBCommand(getKeys, metadataConn);
+				c.Parameters.Add(new EDBParameter("tableOid", EDBDbType.Integer)).Value = tableOid;
+
+				using (EDBDataReader dr = c.ExecuteReader())
+				{
+					string previousKeyName = null;
+					string possiblyUniqueColumn = null;
+					string columnName;
+					string currentKeyName;
+					// loop through adding any column that is primary to the primary key list
+					// add any column that is the only column for that key to the unique list
+					// unique here doesn't mean general unique constraint (with possibly multiple columns)
+					// it means all values in this single column must be unique
+					while (dr.Read())
+					{
+         
+						columnName = dr.GetString(0);
+						currentKeyName = dr.GetString(1);
+						// if i.indisprimary
+						if (dr.GetBoolean(2))
+						{
+							// add column name as part of the primary key
+							lookup.primaryKey.Add(columnName);
+						}
+						if (currentKeyName != previousKeyName)
+						{
+							if (possiblyUniqueColumn != null)
+							{
+								lookup.uniqueColumns.Add(possiblyUniqueColumn);
+							}
+							possiblyUniqueColumn = columnName;
+						}
+						else
+						{
+							possiblyUniqueColumn = null;
+						}
+						previousKeyName = currentKeyName;
+					}
+					// if finished reading and have a possiblyUniqueColumn name that is
+					// not null, then it is the name of a unique column
+					if (possiblyUniqueColumn != null)
+						lookup.uniqueColumns.Add(possiblyUniqueColumn);
+				}
+			}
+
+			return lookup;
+		}
+
+        private Boolean IsNullable(Hashtable columnLookup, Int32 FieldIndex)
+        {
+            if (columnLookup == null || _currentResultset.RowDescription[FieldIndex].table_oid == 0)
+                return true;
+
+            string lookupKey = _currentResultset.RowDescription[FieldIndex].table_oid.ToString() + "," + _currentResultset.RowDescription[FieldIndex].column_attribute_number;
+            object[] row = (object[])columnLookup[lookupKey];
+            if (row != null)
+                return !(bool)row[Columns.column_notnull];
+            else
+                return true;
+        }
+
+        private string GetBaseColumnName(Hashtable columnLookup, Int32 FieldIndex)
+        {
+            if (columnLookup == null || _currentResultset.RowDescription[FieldIndex].table_oid == 0)
+                return GetName(FieldIndex);
+            
+            string lookupKey = _currentResultset.RowDescription[FieldIndex].table_oid.ToString() + "," + _currentResultset.RowDescription[FieldIndex].column_attribute_number;
+            object[] row = (object[])columnLookup[lookupKey];
+            if (row != null)
+                return (string)row[Columns.column_name];
+            else
+                return GetName(FieldIndex);
+        }
+
+		private bool IsAutoIncrement(Hashtable columnLookup, Int32 FieldIndex)
+		{
+			if (columnLookup == null || _currentResultset.RowDescription[FieldIndex].table_oid == 0)
+				return false;
+
+			string lookupKey = _currentResultset.RowDescription[FieldIndex].table_oid.ToString() + "," + _currentResultset.RowDescription[FieldIndex].column_attribute_number;
+			object[] row = (object[])columnLookup[lookupKey];
+			if (row != null)
+				return row[Columns.column_default].ToString().StartsWith("nextval(");
+			else
+				return true;
+		}
+
+
         ///<summary>
         /// This methods parses the command text and tries to get the tablename
         /// from it.
@@ -805,10 +1074,104 @@ namespace EnterpriseDB.EDBClient
 
         }
 
+        private struct Tables
+        {
+            public const int table_catalog = 0;
+            public const int table_schema = 1;
+            public const int table_name = 2;
+            public const int table_id = 3;
+        }
+
+        private Hashtable GetTablesFromOids(ArrayList oids)
+        {
+            if (oids.Count == 0)
+                return null;
+
+            StringBuilder sb = new StringBuilder();
+
+            // the column index is used to find data.
+            // any changes to the order of the columns needs to be reflected in struct Tables
+            sb.Append("SELECT current_database() AS table_catalog, nc.nspname AS table_schema, c.relname AS table_name, c.oid as table_id");
+            sb.Append(" FROM pg_namespace nc, pg_class c WHERE c.relnamespace = nc.oid AND (c.relkind = 'r' OR c.relkind = 'v') AND c.oid IN (");
+            bool first = true;
+            foreach(int oid in oids)
+            {
+                if (!first)
+                    sb.Append(',');
+                sb.Append(oid);
+                first = false;
+            }
+            sb.Append(')');
+
+            using (EDBConnection connection = _connection.Clone())
+            using (EDBCommand command = new EDBCommand(sb.ToString(), connection))
+            using (EDBDataReader reader = command.ExecuteReader())
+            {
+                Hashtable oidLookup = new Hashtable();
+                int columnCount = reader.FieldCount;
+                while (reader.Read())
+                {
+                    object[] values = new object[columnCount];
+                    reader.GetValues(values);
+                    oidLookup[Convert.ToInt32(reader[Tables.table_id])] = values;
+                }
+                return oidLookup;
+            }
+        }
+
+        private struct Columns
+        {
+            public const int column_name = 0;
+            public const int column_notnull = 1;
+            public const int table_id = 2;
+            public const int column_num = 3;
+			public const int column_default = 4;
+        }
+
+        private Hashtable GetColumns()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            // the column index is used to find data.
+            // any changes to the order of the columns needs to be reflected in struct Columns
+            sb.Append("SELECT a.attname AS column_name, a.attnotnull AS column_notnull, a.attrelid AS table_id, a.attnum AS column_num, d.adsrc as column_default");
+            sb.Append(" FROM pg_attribute a LEFT OUTER JOIN pg_attrdef d ON a.attrelid = d.adrelid AND a.attnum = d.adnum WHERE a.attnum > 0 AND (");
+            bool first = true;
+            for(int i=0; i<_currentResultset.RowDescription.NumFields; ++i)
+            {
+                if (_currentResultset.RowDescription[i].table_oid != 0)
+                {
+                    if (!first)
+                        sb.Append(" OR ");
+                    sb.AppendFormat("(a.attrelid={0} AND a.attnum={1})", _currentResultset.RowDescription[i].table_oid, _currentResultset.RowDescription[i].column_attribute_number);
+                    first = false;
+                }
+            }
+            sb.Append(')');
+
+            // if the loop ended without setting first to false, then there will be no results from the query
+            if (first)
+                return null;
+
+            using (EDBConnection connection = _connection.Clone())
+            using (EDBCommand command = new EDBCommand(sb.ToString(), connection))
+            using (EDBDataReader reader = command.ExecuteReader())
+            {
+                Hashtable columnLookup = new Hashtable();
+                int columnCount = reader.FieldCount;
+                while(reader.Read())
+                {
+                    object[] values = new object[columnCount];
+                    reader.GetValues(values);
+                    columnLookup[reader[Columns.table_id].ToString() + "," + reader[Columns.column_num].ToString()] = values;
+                }
+                return columnLookup;
+            }
+        }
+
         IEnumerator IEnumerable.GetEnumerator ()
         {
             return new System.Data.Common.DbEnumerator (this);
         }
     }
-
 }

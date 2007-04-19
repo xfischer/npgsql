@@ -64,7 +64,8 @@ namespace EnterpriseDB.EDBClient
 		public Int16                    type_size;                 // Protocol 2/3
 		public Int32                    type_modifier;		       // Protocol 2/3
 		public FormatCode               format_code;               // Protocol 3. 0 text, 1 binary
-		public EDBBackendTypeInfo    type_info;                 // everything we know about this field type
+		public EDBBackendTypeInfo       type_info;                 // everything we know about this field type
+		
 	}
     /// <summary>
     /// This class represents a RowDescription message sent from
@@ -197,8 +198,7 @@ namespace EnterpriseDB.EDBClient
             for (Int16 i = 0; i < num_fields; i++)
             {
                 fd = new EDBRowDescriptionFieldData();
-
-                fd.name = PGUtil.ReadString(input_stream, encoding);
+				fd.name = PGUtil.ReadString(input_stream, encoding);
                 fd.table_oid = PGUtil.ReadInt32(input_stream, input_buffer);
                 fd.column_attribute_number = PGUtil.ReadInt16(input_stream, input_buffer);
                 fd.type_oid = PGUtil.ReadInt32(input_stream, input_buffer);
@@ -229,7 +229,7 @@ namespace EnterpriseDB.EDBClient
 			for (Int16 i = 0; i < num_fields; i++)
 			{
 				fdout = new EDBRowDescriptionFieldData();
-
+				
 				fdout.name = PGUtil.ReadString(input_stream, encoding);
 				fdout.ReturingIndex = PGUtil.ReadInt16(input_stream, input_buffer);
 				fdout.type_oid = PGUtil.ReadInt32(input_stream, input_buffer);

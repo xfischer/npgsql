@@ -1,4 +1,5 @@
 // EDBCommandBuilder.cs
+
 //
 // Author:
 //   Pedro Martínez Juliá (yoros@wanadoo.es)
@@ -48,6 +49,9 @@ namespace EnterpriseDB.EDBClient
         private EDBCommand delete_command;
 
         private string table_name = String.Empty;
+		private string quotePrefix = "\"";
+        private string quoteSuffix = "\"";
+
 		private DataTable select_schema;
         public EDBCommandBuilder ()
         {}
@@ -128,21 +132,24 @@ namespace EnterpriseDB.EDBClient
         public string QuotePrefix {
             get
             {
-                return "";
+               return quotePrefix;
             }
             set
-            { }
+            {
+               quotePrefix = value; 
+            }
         }
 
         public string QuoteSuffix {
             get
             {
-                return "";
+                return quoteSuffix;
             }
             set
-            { }
+            {
+				quoteSuffix = value;
+			}
         }
-
       
 	///<summary>
 	///
@@ -154,11 +161,36 @@ namespace EnterpriseDB.EDBClient
 	/// <param name="command">NpgsqlCommand whose function parameters will be obtained.</param>
         public static void DeriveParameters (EDBCommand command)
         {
-            String query = "select proargtypes from pg_proc where proname = :procname";
-    
+
+            // Updated after 0.99.3 to support the optional existence of a name qualifying schema and case insensitivity when the schema ror procedure name do not contain a quote.
+            // This fixed an incompatibility with NpgsqlCommand.CheckFunctionReturn(String ReturnType)
+            String query = null;
+            string procedureName = null;
+            string schemaName = null;
+            string[] fullName = command.CommandText.Split('.');
+            if (fullName.Length > 1 && fullName[0].Length > 0)
+            {
+                query = "select proargtypes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname";
+                schemaName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
+                procedureName = (fullName[1].IndexOf("\"") != -1) ? fullName[1] : fullName[1].ToLower();
+            }
+            else
+            {
+                query = "select proargtypes from pg_proc where proname = :proname";
+                procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
+            }
+
             EDBCommand c = new EDBCommand(query, command.Connection);
-            c.Parameters.Add(new EDBParameter("procname", EDBTypes.EDBDbType.Text));
-            c.Parameters[0].Value = command.CommandText;
+            c.Parameters.Add(new EDBParameter("proname", EDBTypes.EDBDbType.Text));
+			
+            
+            c.Parameters[0].Value = procedureName.Replace("\"", "").Trim();
+
+            if (fullName.Length > 1 && schemaName.Length > 0)
+            {
+                EDBParameter prm = c.Parameters.Add(new EDBParameter("nspname", EDBTypes.EDBDbType.Text));
+                prm.Value = schemaName.Replace("\"", "").Trim();
+            }
     
             String types = (String) c.ExecuteScalar();
             
@@ -388,6 +420,25 @@ namespace EnterpriseDB.EDBClient
             Dispose(false);
         }*/
 
+        private string QualifiedTableName(string schema, string tableName)
+        {
+            if (schema == null || schema.Length == 0)
+            {
+                return GetQuotedName(tableName);
+            }
+            else
+            {
+                return GetQuotedName(schema) + "." + GetQuotedName(tableName);
+            }
+        }
+
+        private static void SetParameterValuesFromRow(EDBCommand command, DataRow row)
+        {
+            foreach (EDBParameter parameter in command.Parameters)
+            {
+                parameter.Value = row[parameter.SourceColumn, parameter.SourceVersion];
+            }
+        }
     }
 
 }

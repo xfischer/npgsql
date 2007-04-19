@@ -597,7 +597,7 @@ namespace EnterpriseDB.EDBClient
 						rd.ReadFromStream(stream, context.Encoding, context.OidToNameMapping);
 						//System.Windows.Forms.MessageBox.Show("In Row Description: Col Count="+rd.NumFields.ToString());
 						mediator.AddRowDescription(rd);
-						
+					
 					}
 
 						// Now wait for the AsciiRow messages.
@@ -608,10 +608,8 @@ namespace EnterpriseDB.EDBClient
                      EDBEventLog.LogMsg(resman, "Log_ProtocolMessage", LogLevel.Debug, "DataRow");
                     {
 				
-					
                         EDBAsciiRow asciiRow = new EDBAsciiRow(context.Mediator.LastRowDescription, context.BackendProtocolVersion);
                         asciiRow.ReadFromStream(stream, context.Encoding);
-						
                         // Add this row to the rows array.
                         mediator.AddAsciiRow(asciiRow);
 						
