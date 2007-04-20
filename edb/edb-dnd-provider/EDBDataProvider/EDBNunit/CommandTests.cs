@@ -435,7 +435,7 @@ namespace NUnit
 
         }
         
-        
+       
         [Test]
         public void PreparedStatementInsert()
         {
@@ -910,7 +910,7 @@ namespace NUnit
         [Test]
         public void PrecisionScaleNumericSupport()
         {
-            _conn.Open();
+         _conn.Open();
 
 
             EDBCommand command = new EDBCommand("select * from tableb where field_serial = 4", _conn);
@@ -2895,6 +2895,220 @@ namespace NUnit
 			_conn.Close();
 		}
 
-		
+
+		[Test]
+		public void SingleExecuteNonQuerryProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP PROCEDURE p1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP PROCEDURE p1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP PROCEDURE p1",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand(" DROP PROCEDURE p1;DROP PROCEDURE p2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP PROCEDURE p1;DROP PROCEDURE p2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderProcedure()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP PROCEDURE p1;DROP PROCEDURE p2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+		[Test]
+		public void SingleExecuteNonQuerrySPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarSPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderSPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerrySPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarSPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderSPLFunc()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
     }
 }
