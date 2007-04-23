@@ -3110,5 +3110,220 @@ namespace NUnit
 			_conn.Close();
 		}
 
+
+		[Test]
+		public void SingleExecuteNonQuerryPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderPgFuncInQuotes()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+				[Test]
+		public void SingleExecuteNonQuerryPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';",_conn);
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderPgFuncInDollars()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';",_conn);
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
     }
 }
