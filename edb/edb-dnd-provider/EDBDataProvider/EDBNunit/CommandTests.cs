@@ -3746,6 +3746,425 @@ namespace NUnit
 			_conn.Close();
 		}
 
+		[Test]
+		public void SingleExecuteNonQuerryPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteNonQuery();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteScalar();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteReader();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteScalar();
+			
+			
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderPackageAs()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteReader();
+			
+			
+
+			_conn.Close();
+		}
+
+
+		
+		[Test]
+		public void SingleExecuteNonQuerryPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteNonQuery();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+			command.ExecuteNonQuery();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteNonQuery();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteScalarPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteScalar();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+
+			command.ExecuteScalar();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteScalar();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void SingleExecuteReaderPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;",_conn);
+			command.ExecuteReader();
+
+			command=new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"END;",_conn);
+
+			command.ExecuteReader();
+			
+			command=new EDBCommand("DROP PACKAGE PKG_TEST",_conn);
+			command.ExecuteReader();
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteNonQuerryPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteNonQuery();
+			
+			
+
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteScalarPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteScalar();
+			
+			
+
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void MultipleExecuteReaderPackageAsOnNewLine()
+		{
+			
+			_conn.Open();
+			
+
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+				"\r	AS" +
+				"\r	A INT4:=23;" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
+				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST " +
+				"\r	AS" +
+				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN 34;" +
+				"\r	END;" +
+				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
+				"\r	BEGIN" +
+				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
+				"\r		RETURN A;" +
+				"\r	END;" +
+				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			command.ExecuteReader();
+			
+			
+
+			_conn.Close();
+		}
 
     }
 }
