@@ -5,506 +5,507 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
 using System.IO;
+using ADODB;
 
 namespace NUnit
 {
 
-    [TestFixture]
-    public class DataReaderTests
-    {
+	[TestFixture]
+	public class DataReaderTests
+	{
 
-        private EDBConnection 	_conn = null;
+		private EDBConnection 	_conn = null;
 		string connectionString = string.Empty;
         
-        [SetUp]
-        protected void SetUp()
-        {
+		[SetUp]
+		protected void SetUp()
+		{
 			connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
 			_conn = new EDBConnection(connectionString);
-        }
+		}
 
-        [TearDown]
-        protected void TearDown()
-        {
-            if (_conn.State != ConnectionState.Closed)
-                _conn.Close();
-        }
+		[TearDown]
+		protected void TearDown()
+		{
+			if (_conn.State != ConnectionState.Closed)
+				_conn.Close();
+		}
 
-        [Test]
-        public void GetBoolean()
-        {
-            _conn.Open();
+		[Test]
+		public void GetBoolean()
+		{
+			_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = 4;", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 4;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
-            Boolean result = dr.GetBoolean(4);
-            Assert.AreEqual(true, result);
+			dr.Read();
+			Boolean result = dr.GetBoolean(4);
+			Assert.AreEqual(true, result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetChars()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+		[Test]
+		public void GetChars()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
-            Char[] result = new Char[6];
+			dr.Read();
+			Char[] result = new Char[6];
 
 
-            Int64 a = dr.GetChars(1, 0, result, 0, 6);
+			Int64 a = dr.GetChars(1, 0, result, 0, 6);
 
-            Assert.AreEqual("Random", new String(result));
-            /*ConsoleWriter cw = new ConsoleWriter(Console.Out);
+			Assert.AreEqual("Random", new String(result));
+			/*ConsoleWriter cw = new ConsoleWriter(Console.Out);
 
-            cw.WriteLine(result);*/
+			cw.WriteLine(result);*/
 
 
-        }
+		}
 
-        [Test]
-        public void GetInt32()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = 2;", _conn);
+		[Test]
+		public void GetInt32()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 2;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
 
-            Int32 result = dr.GetInt32(2);
+			Int32 result = dr.GetInt32(2);
 
-            //ConsoleWriter cw = new ConsoleWriter(Console.Out);
+			//ConsoleWriter cw = new ConsoleWriter(Console.Out);
 
-            //cw.WriteLine(result.GetType().Name);
-            Assert.AreEqual(4, result);
+			//cw.WriteLine(result.GetType().Name);
+			Assert.AreEqual(4, result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetInt16()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tableb where field_serial = 1;", _conn);
+		[Test]
+		public void GetInt16()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 1;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            Int16 result = dr.GetInt16(1);
+			Int16 result = dr.GetInt16(1);
 
-            Assert.AreEqual(2, result);
+			Assert.AreEqual(2, result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetDecimal()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tableb where field_serial = 3;", _conn);
+		[Test]
+		public void GetDecimal()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 3;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            Decimal result = dr.GetDecimal(3);
+			Decimal result = dr.GetDecimal(3);
 
 
-            Assert.AreEqual(4.2300000M, result);
+			Assert.AreEqual(4.2300000M, result);
 
-        }
+		}
 
 
 
 
-        [Test]
-        public void GetDouble()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tabled where field_serial = 2;", _conn);
+		[Test]
+		public void GetDouble()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 2;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            //Double result = Double.Parse(dr.GetInt32(2).ToString());
-            Double result = dr.GetDouble(2);
+			//Double result = Double.Parse(dr.GetInt32(2).ToString());
+			Double result = dr.GetDouble(2);
 
-            Assert.AreEqual(.123456789012345D, result);
+			Assert.AreEqual(.123456789012345D, result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetFloat()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tabled where field_serial = 1;", _conn);
+		[Test]
+		public void GetFloat()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 1;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            //Single result = Single.Parse(dr.GetInt32(2).ToString());
-            Single result = dr.GetFloat(1);
+			//Single result = Single.Parse(dr.GetInt32(2).ToString());
+			Single result = dr.GetFloat(1);
 
-            Assert.AreEqual(.123456F, result);
+			Assert.AreEqual(.123456F, result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetString()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+		[Test]
+		public void GetString()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            String result = dr.GetString(1);
+			String result = dr.GetString(1);
 
-            Assert.AreEqual("Random text", result);
+			Assert.AreEqual("Random text", result);
 
-        }
+		}
 
 
-        [Test]
-        public void GetStringWithParameter()
-        {
-           /* _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+		[Test]
+		public void GetStringWithParameter()
+		{
+			/* _conn.Open();
+			 EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-            String test = "Random text";
-            EDBParameter param = new EDBParameter();
-            param.ParameterName = "value";
-            param.DbType = DbType.String;
-            //param.EDBDbType = EDBDbType.Text;
-            param.Size = test.Length;
-            param.Value = test;
-            command.Parameters.Add(param);
+			 String test = "Random text";
+			 EDBParameter param = new EDBParameter();
+			 param.ParameterName = "value";
+			 param.DbType = DbType.String;
+			 //param.EDBDbType = EDBDbType.Text;
+			 param.Size = test.Length;
+			 param.Value = test;
+			 command.Parameters.Add(param);
 
-            EDBDataReader dr = command.ExecuteReader();
+			 EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			 dr.Read();
 
-            String result = dr.GetString(1);
+			 String result = dr.GetString(1);
 
-            Assert.AreEqual(test, result);*/
+			 Assert.AreEqual(test, result);*/
 
-        }
+		}
 
-        [Test]
-        public void GetStringWithQuoteWithParameter()
-        {
-            /*_conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+		[Test]
+		public void GetStringWithQuoteWithParameter()
+		{
+			/*_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-            String test = "Text with ' single quote";
-            EDBParameter param = new EDBParameter();
-            param.ParameterName = "value";
-            param.DbType = DbType.String;
-            //param.EDBDbType = EDBDbType.Text;
-            param.Size = test.Length;
-            param.Value = test;
-            command.Parameters.Add(param);
+			String test = "Text with ' single quote";
+			EDBParameter param = new EDBParameter();
+			param.ParameterName = "value";
+			param.DbType = DbType.String;
+			//param.EDBDbType = EDBDbType.Text;
+			param.Size = test.Length;
+			param.Value = test;
+			command.Parameters.Add(param);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            String result = dr.GetString(1);
+			String result = dr.GetString(1);
 
-            Assert.AreEqual(test, result);*/
+			Assert.AreEqual(test, result);*/
 
-        }
+		}
 
 
-        [Test]
-        public void GetValueByName()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+		[Test]
+		public void GetValueByName()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            String result = (String) dr["field_text"];
+			String result = (String) dr["field_text"];
 
-            Assert.AreEqual("Random text", result);
+			Assert.AreEqual("Random text", result);
 
-        }
+		}
 
-        [Test]
-        public void GetValueFromEmptyResultset()
-        {
-            /*_conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+		[Test]
+		public void GetValueFromEmptyResultset()
+		{
+			/*_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-            String test = "Text single quote";
-            EDBParameter param = new EDBParameter();
-            param.ParameterName = "value";
-            param.DbType = DbType.String;
-            //param.EDBDbType = EDBDbType.Text;
-            param.Size = test.Length;
-            param.Value = test;
-            command.Parameters.Add(param);
+			String test = "Text single quote";
+			EDBParameter param = new EDBParameter();
+			param.ParameterName = "value";
+			param.DbType = DbType.String;
+			//param.EDBDbType = EDBDbType.Text;
+			param.Size = test.Length;
+			param.Value = test;
+			command.Parameters.Add(param);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
 
-            // This line should throw the invalid operation exception as the datareader will
-            // have an empty resultset.
-            Console.WriteLine(dr.IsDBNull(1));*/
+			// This line should throw the invalid operation exception as the datareader will
+			// have an empty resultset.
+			Console.WriteLine(dr.IsDBNull(1));*/
 
 
-        }
+		}
 
 
-        [Test]
-        public void TestOverlappedParameterNames()
-        {
-            _conn.Open();
+		[Test]
+		public void TestOverlappedParameterNames()
+		{
+			_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
-            command.Parameters.Add(new EDBParameter("a", DbType.Int32, 4, "a"));
-            command.Parameters.Add(new EDBParameter("aa", DbType.Int32, 4, "aa"));
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
+			command.Parameters.Add(new EDBParameter("a", DbType.Int32, 4, "a"));
+			command.Parameters.Add(new EDBParameter("aa", DbType.Int32, 4, "aa"));
 
-            command.Parameters[0].Value = 2;
-            command.Parameters[1].Value = 3;
+			command.Parameters[0].Value = 2;
+			command.Parameters[1].Value = 3;
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-        }
+		}
 
-        [Test]
-        public void TestNonExistentParameterName()
-        {
-            /*_conn.Open();
+		[Test]
+		public void TestNonExistentParameterName()
+		{
+			/*_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
-            command.Parameters.Add(new EDBParameter(":b", DbType.Int32, 4, "b"));
-            command.Parameters.Add(new EDBParameter(":aa", DbType.Int32, 4, "aa"));
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
+			command.Parameters.Add(new EDBParameter(":b", DbType.Int32, 4, "b"));
+			command.Parameters.Add(new EDBParameter(":aa", DbType.Int32, 4, "aa"));
 
-            command.Parameters[0].Value = 2;
-            command.Parameters[1].Value = 3;
+			command.Parameters[0].Value = 2;
+			command.Parameters[1].Value = 3;
 
-            EDBDataReader dr = command.ExecuteReader();*/
+			EDBDataReader dr = command.ExecuteReader();*/
 
 
-        }
+		}
 
 
 
 
-        [Test]
-        public void UseDataAdapter()
-        {
+		[Test]
+		public void UseDataAdapter()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea", _conn);
 
-            EDBDataAdapter da = new EDBDataAdapter();
+			EDBDataAdapter da = new EDBDataAdapter();
 
-            da.SelectCommand = command;
+			da.SelectCommand = command;
 
-            DataSet ds = new DataSet();
+			DataSet ds = new DataSet();
 
-            da.Fill(ds);
+			da.Fill(ds);
 
-            //ds.WriteXml("TestUseDataAdapter.xml");
+			//ds.WriteXml("TestUseDataAdapter.xml");
 
 
-        }
+		}
 
-        [Test]
-        public void UseDataAdapterEDBConnectionConstructor()
-        {
+		[Test]
+		public void UseDataAdapterEDBConnectionConstructor()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea", _conn);
 
-            command.Connection = _conn;
+			command.Connection = _conn;
 
-            EDBDataAdapter da = new EDBDataAdapter(command);
+			EDBDataAdapter da = new EDBDataAdapter(command);
 
-            DataSet ds = new DataSet();
+			DataSet ds = new DataSet();
 
-            da.Fill(ds);
+			da.Fill(ds);
 
-            //ds.WriteXml("TestUseDataAdapterEDBConnectionConstructor.xml");
+			//ds.WriteXml("TestUseDataAdapterEDBConnectionConstructor.xml");
 
 
-        }
+		}
 
-        [Test]
-        public void UseDataAdapterStringEDBConnectionConstructor()
-        {
+		[Test]
+		public void UseDataAdapterStringEDBConnectionConstructor()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
 
-            EDBDataAdapter da = new EDBDataAdapter("select * from tablea", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", _conn);
 
-            DataSet ds = new DataSet();
+			DataSet ds = new DataSet();
 
-            da.Fill(ds);
+			da.Fill(ds);
 
-            //ds.WriteXml("TestUseDataAdapterStringEDBConnectionConstructor.xml");
+			//ds.WriteXml("TestUseDataAdapterStringEDBConnectionConstructor.xml");
 
 
-        }
+		}
 
 
-        [Test]
-        public void UseDataAdapterStringStringConstructor()
-        {
+		[Test]
+		public void UseDataAdapterStringStringConstructor()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
 
-            EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
+			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
 
-            DataSet ds = new DataSet();
+			DataSet ds = new DataSet();
 
-            da.Fill(ds);
+			da.Fill(ds);
 
-            ds.WriteXml("TestUseDataAdapterStringStringConstructor.xml");
+			ds.WriteXml("TestUseDataAdapterStringStringConstructor.xml");
 
 
-        }
+		}
 
-        [Test]
-        public void UseDataAdapterStringStringConstructor2()
-        {
+		[Test]
+		public void UseDataAdapterStringStringConstructor2()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
 
-            EDBDataAdapter da = new EDBDataAdapter("select * from tableb", connectionString);
+			EDBDataAdapter da = new EDBDataAdapter("select * from tableb", connectionString);
 
-            DataSet ds = new DataSet();
+			DataSet ds = new DataSet();
 
-            da.Fill(ds);
+			da.Fill(ds);
 
-            ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
+			ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
 
 
-        }
+		}
 
-        [Test]
-        public void DataGridWebControlSupport()
-        {
+		[Test]
+		public void DataGridWebControlSupport()
+		{
 
-            _conn.Open();
+			_conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea;", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            DataGrid dg = new DataGrid();
+			DataGrid dg = new DataGrid();
 
-            dg.DataSource = dr;
-            dg.DataBind();
+			dg.DataSource = dr;
+			dg.DataBind();
 
 
-        }
+		}
 
 
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void ReadPastDataReaderEnd()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea;", _conn);
+		[Test]
+		[ExpectedException(typeof(InvalidOperationException))]
+		public void ReadPastDataReaderEnd()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            while (dr.Read())
-                ;
+			while (dr.Read())
+				;
 
-            Object o = dr[0];
+			Object o = dr[0];
 
-        }
+		}
 
-        [Test]
-        public void IsDBNull()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select field_text from tablea;", _conn);
+		[Test]
+		public void IsDBNull()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select field_text from tablea;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
-            Assert.AreEqual(false, dr.IsDBNull(0));
-            dr.Read();
-            Assert.AreEqual(true, dr.IsDBNull(0));
+			dr.Read();
+			Assert.AreEqual(false, dr.IsDBNull(0));
+			dr.Read();
+			Assert.AreEqual(true, dr.IsDBNull(0));
 
 
-        }
+		}
 
-        [Test]
-        public void IsDBNullFromScalar()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select max(field_serial) from tablea;", _conn);
+		[Test]
+		public void IsDBNullFromScalar()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select max(field_serial) from tablea;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
-            Assert.AreEqual(false, dr.IsDBNull(0));
+			dr.Read();
+			Assert.AreEqual(false, dr.IsDBNull(0));
 
-        }
+		}
 
 
 
-        [Test]
-        public void TypesNames()
-        {
-            _conn.Open();
-            EDBCommand command = new EDBCommand("select * from tablea where 1 = 2;", _conn);
+		[Test]
+		public void TypesNames()
+		{
+			_conn.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where 1 = 2;", _conn);
 
-            EDBDataReader dr = command.ExecuteReader();
+			EDBDataReader dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            Assert.AreEqual("int4", dr.GetDataTypeName(0));
-            Assert.AreEqual("text", dr.GetDataTypeName(1));
-            Assert.AreEqual("int4", dr.GetDataTypeName(2));
-            Assert.AreEqual("int8", dr.GetDataTypeName(3));
-            Assert.AreEqual("bool", dr.GetDataTypeName(4));
+			Assert.AreEqual("int4", dr.GetDataTypeName(0));
+			Assert.AreEqual("text", dr.GetDataTypeName(1));
+			Assert.AreEqual("int4", dr.GetDataTypeName(2));
+			Assert.AreEqual("int8", dr.GetDataTypeName(3));
+			Assert.AreEqual("bool", dr.GetDataTypeName(4));
 
-            dr.Close();
+			dr.Close();
 
-            command.CommandText = "select * from tableb where 1 = 2";
+			command.CommandText = "select * from tableb where 1 = 2";
 
-            dr = command.ExecuteReader();
+			dr = command.ExecuteReader();
 
-            dr.Read();
+			dr.Read();
 
-            Assert.AreEqual("int4", dr.GetDataTypeName(0));
-            Assert.AreEqual("int2", dr.GetDataTypeName(1));
-            Assert.AreEqual("timestamp", dr.GetDataTypeName(2));
-            Assert.AreEqual("numeric", dr.GetDataTypeName(3));
+			Assert.AreEqual("int4", dr.GetDataTypeName(0));
+			Assert.AreEqual("int2", dr.GetDataTypeName(1));
+			Assert.AreEqual("timestamp", dr.GetDataTypeName(2));
+			Assert.AreEqual("numeric", dr.GetDataTypeName(3));
 
 
 
-        }
+		}
 		
 		[Test]
 		public void testgetByte() 
@@ -581,7 +582,7 @@ namespace NUnit
 			EDBDataReader Reader=command.ExecuteReader();
 			Assert.IsTrue(Reader.HasRows);
 			
-		    command=new EDBCommand("drop table DataSetTest;",_conn);
+			command=new EDBCommand("drop table DataSetTest;",_conn);
 			command.ExecuteNonQuery();
 		}
 		
@@ -795,7 +796,8 @@ namespace NUnit
 	
 		[Test]
 		public void DataSetClearTest()
-		{	_conn.Open();
+		{
+				_conn.Open();
 			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
 			command.ExecuteNonQuery();
 			
@@ -841,7 +843,7 @@ namespace NUnit
 		[Test]
 		public void DataSetNameSpaceTest()
 		{
-				_conn.Open();
+			_conn.Open();
 			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
 			command.ExecuteNonQuery();
 			
@@ -989,9 +991,9 @@ namespace NUnit
 				table.Rows.Add(row);
     
 			}
-				// Display the DataSet contents as XML.
+			// Display the DataSet contents as XML.
 				
-					//Console.WriteLine( dataSet.GetXml().Length );
+			//Console.WriteLine( dataSet.GetXml().Length );
 			Assert.AreEqual(651,dataSet.GetXml().Length);
 			
 
@@ -1309,8 +1311,88 @@ namespace NUnit
 			
 			
 		}
+
+		[Test]
+		public void ADOConnectionTest()
+		{
+			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			ADODB.Connection Conn=new ADODB.Connection();
+			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Assert.AreEqual(1,Conn.State);
+			Conn.Close();
+			Assert.AreEqual(0,Conn.State);
+
+		}
+
+		[Test]
+		public void ADOConnectionPropertiesTest ()
+		{
+			
+			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			ADODB.Connection Conn=new ADODB.Connection();
+			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Assert.AreEqual(1,Conn.State);
+			// ADO connection's 12th property represents the DBMS Name
+			Assert.AreEqual("EnterpriseDB",Conn.Properties[11].Value.ToString());
+			// ADO connection's 41st property represents the user Name
+			Assert.AreEqual("buildfarm",Conn.Properties[40].Value.ToString());
+			
+			Conn.Close();
+			Assert.AreEqual(0,Conn.State);
+
+		}
+
+		[Test]
+		public void ADOConnectionTimeOutTest ()
+		{
+			
+			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			ADODB.Connection Conn=new ADODB.Connection();
+			Conn.ConnectionTimeout=30;
+			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Assert.AreEqual(30,Conn.ConnectionTimeout);			
+			Conn.Close();
+			Assert.AreEqual(0,Conn.State);
+
+		}
+
+		[Test]
+		public void ADODDLTest()
+		{
+			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			
+			string SQL = "create table test(a int, b varchar)";
+			string DropSql="drop table test";
 		
+			//create ADODB Connection object
+			ADODB.Connection Conn=new ADODB.Connection();
+			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			object RecordsAffected=null;
+			Conn.Execute(SQL,out RecordsAffected,-1);
+			Assert.AreEqual(0,Conn.Errors.Count);
+			Conn.Execute(DropSql,out RecordsAffected,-1);
+			Assert.AreEqual(0,Conn.Errors.Count);
+			Conn.Close();
+		}
+		[Test]
+		public void ADORecordSetTestOne()
+		{
+			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			//create ADODB Connection object
+			ADODB.Connection Conn=new ADODB.Connection();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
+			Conn.Open(DBConnection,"buildfarm","edb",-1);  
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
+			Assert.AreEqual("SMITH",rs.Fields[0].Value);
+			rs.Close();
+			Conn.Close();  
+		}
 		
 
-    }
+	}
 }
