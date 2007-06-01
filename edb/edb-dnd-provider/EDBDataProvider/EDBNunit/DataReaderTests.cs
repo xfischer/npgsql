@@ -7,7 +7,7 @@ using NUnit.Framework;
 using System.IO;
 using ADODB;
 
-namespace NUnit
+namespace DOTNET
 {
 
 	[TestFixture]
@@ -1311,88 +1311,6 @@ namespace NUnit
 			
 			
 		}
-
-		[Test]
-		public void ADOConnectionTest()
-		{
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			ADODB.Connection Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
-			Assert.AreEqual(1,Conn.State);
-			Conn.Close();
-			Assert.AreEqual(0,Conn.State);
-
-		}
-
-		[Test]
-		public void ADOConnectionPropertiesTest ()
-		{
-			
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			ADODB.Connection Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
-			Assert.AreEqual(1,Conn.State);
-			// ADO connection's 12th property represents the DBMS Name
-			Assert.AreEqual("EnterpriseDB",Conn.Properties[11].Value.ToString());
-			// ADO connection's 41st property represents the user Name
-			Assert.AreEqual("buildfarm",Conn.Properties[40].Value.ToString());
-			
-			Conn.Close();
-			Assert.AreEqual(0,Conn.State);
-
-		}
-
-		[Test]
-		public void ADOConnectionTimeOutTest ()
-		{
-			
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			ADODB.Connection Conn=new ADODB.Connection();
-			Conn.ConnectionTimeout=30;
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
-			Assert.AreEqual(30,Conn.ConnectionTimeout);			
-			Conn.Close();
-			Assert.AreEqual(0,Conn.State);
-
-		}
-
-		[Test]
-		public void ADODDLTest()
-		{
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			
-			string SQL = "create table test(a int, b varchar)";
-			string DropSql="drop table test";
-		
-			//create ADODB Connection object
-			ADODB.Connection Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
-			object RecordsAffected=null;
-			Conn.Execute(SQL,out RecordsAffected,-1);
-			Assert.AreEqual(0,Conn.Errors.Count);
-			Conn.Execute(DropSql,out RecordsAffected,-1);
-			Assert.AreEqual(0,Conn.Errors.Count);
-			Conn.Close();
-		}
-		[Test]
-		public void ADORecordSetTestOne()
-		{
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			// sql statment
-			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADODB Connection object
-			ADODB.Connection Conn=new ADODB.Connection();
-			//create ADODB Recordset object
-			ADODB.Recordset rs= new ADODB.Recordset();
-			Conn.Open(DBConnection,"buildfarm","edb",-1);  
-			   
-			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
-			Assert.AreEqual("SMITH",rs.Fields[0].Value);
-			rs.Close();
-			Conn.Close();  
-		}
-		
 
 	}
 }
