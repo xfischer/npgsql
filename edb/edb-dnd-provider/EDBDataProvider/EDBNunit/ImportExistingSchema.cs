@@ -5,7 +5,7 @@ using System.Data;
 using NUnit;
 
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// it creates a new table importing the schema of an existing table

@@ -6,7 +6,7 @@ using EDBTypes;
 using EnterpriseDB.EDBClient;
 using System.Net;
 
-namespace NUnit
+namespace DOTNET
 {
 
     public enum EnumTest : short

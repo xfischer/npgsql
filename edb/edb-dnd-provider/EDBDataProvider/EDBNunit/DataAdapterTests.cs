@@ -6,7 +6,7 @@ using EDBTypes;
 using NUnit.Framework;
 
 
-namespace NUnit
+namespace DOTNET
 {
 
     [TestFixture]

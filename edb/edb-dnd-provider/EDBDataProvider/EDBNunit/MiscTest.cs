@@ -5,7 +5,7 @@ using System.Data;
 using NUnit;
 
 //Haroon
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// Summary description for MiscTest.

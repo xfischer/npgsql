@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// Summary description for MiscProcTest.

@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.IO;
 
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// Utility class for .NET tests

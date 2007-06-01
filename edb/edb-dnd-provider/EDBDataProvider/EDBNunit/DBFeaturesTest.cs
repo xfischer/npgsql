@@ -4,7 +4,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// This Class contains functions for unit testing of .Net Driver.

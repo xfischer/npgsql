@@ -3,7 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// Testing Functions with Different combination of parameters

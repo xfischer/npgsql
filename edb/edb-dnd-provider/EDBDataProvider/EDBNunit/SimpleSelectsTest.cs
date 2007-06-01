@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// A couple of tests for Simple select statements

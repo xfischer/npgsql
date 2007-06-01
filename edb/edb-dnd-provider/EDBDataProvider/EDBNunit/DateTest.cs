@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 
 
-namespace NUnit
+namespace DOTNET
 {
 	/// <summary>
 	/// Summary description for DateTest.
