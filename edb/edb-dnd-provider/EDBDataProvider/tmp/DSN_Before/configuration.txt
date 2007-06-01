@@ -1,0 +1,7 @@
+# DSN_Automation configuration file
+
+DSN=EnterpriseDB;
+DATABASE=edb;
+SERVER=localhost;
+USERNAME=enterprisedb;
+PASSWORD=;
