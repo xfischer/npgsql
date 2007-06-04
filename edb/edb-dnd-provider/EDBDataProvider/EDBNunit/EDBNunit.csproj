@@ -100,9 +100,9 @@
                     HintPath = "Config\nunit.framework.dll"
                 />
                 <Reference
-                    Name = "Interop.ADODB"
-                    AssemblyName = "Interop.ADODB"
-                    HintPath = "D:\InterOP\Interop.ADODB.dll"
+                    Name = "ADOCOM"
+                    AssemblyName = "ADOCOM"
+                    HintPath = "D:\InterOP\ADOCOM.dll"
                 />
             </References>
         </Build>
