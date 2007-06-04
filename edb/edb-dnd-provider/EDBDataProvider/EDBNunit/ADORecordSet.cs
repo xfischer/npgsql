@@ -15,54 +15,50 @@ namespace ADO
 	[TestFixture]
 	public class ADORecordSet
 	{
-		private ADODB.Connection Conn=null;
+		private ADOCOM.Connection Conn=null;
 		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
 			
 		[SetUp]
 		protected void SetUp()
 		{ 
-			
+			Conn=new ADOCOM.Connection();
+			Conn.Open(DBConnection,"buildfarm","edb",-1); 
 		}	
 
 		[TearDown]
 		protected void TearDown()
 		{
-			
+			Conn.Close();  			
 		}
 
 		[Test]
 		public void ADORecordSetTestOne()
 		{
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+			
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADODB Connection object
-			ADODB.Connection Conn=new ADODB.Connection();
-			//create ADODB Recordset object
-			ADODB.Recordset rs= new ADODB.Recordset();
-			Conn.Open(DBConnection,"buildfarm","edb",-1);  
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
 			Assert.AreEqual("SMITH",rs.Fields[0].Value);
 			rs.Close();
-			Conn.Close();  
+
 		}
 
 		[Test]
 		public void ADORecordSetReferenceTest()
 		{
-			string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADODB Connection object
-			ADODB.Connection Conn=new ADODB.Connection();
-			//create ADODB Recordset object
-			ADODB.Recordset rs= new ADODB.Recordset();
-			Conn.Open(DBConnection,"buildfarm","edb",-1);  
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -81,7 +77,7 @@ namespace ADO
 		
 			
 			rs.Close();
-			Conn.Close();  
+			
 		}
 	}
 }
