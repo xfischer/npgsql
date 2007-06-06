@@ -5,7 +5,7 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
 using System.IO;
-using ADODB;
+
 
 namespace DOTNET
 {
