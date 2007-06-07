@@ -241,5 +241,86 @@ namespace ADO
 				
 			}
 		}
+
+		[Test]
+		public void ADOFloatBelowRange()
+		{
+			object RecordsAffected=null;
+			try
+			{
+				Conn.Execute("INSERT INTO TableWithAllTypesWithSynonyms(c17) VALUES(1E-308);",out RecordsAffected,-1);
+				Assert.Fail("Value below range inserted into float");
+			}
+			
+			catch(Exception exp)
+			{
+				Assert.AreEqual(1,Conn.Errors.Count);
+			}
+		}
+
+		[Test]
+		public void ADODateAboveRange()
+		{
+			object RecordsAffected=null;
+			try
+			{
+				Conn.Execute("INSERT INTO TableWithAllTypesWithSynonyms(c15) VALUES('January 1,5874898 AD');",out RecordsAffected,-1);
+				Assert.Fail("Value above range inserted into Date");
+			}
+			
+			catch(Exception exp)
+			{
+				Assert.AreEqual(1,Conn.Errors.Count);
+			}
+		}
+
+		[Test]
+		public void ADODateBelowRange()
+		{
+			object RecordsAffected=null;
+			try
+			{
+				Conn.Execute("INSERT INTO TableWithAllTypesWithSynonyms(c15) VALUES('January 1,4714 BC');",out RecordsAffected,-1);
+				Assert.Fail("Value below range inserted into Date");
+			}
+			
+			catch(Exception exp)
+			{
+				Assert.AreEqual(1,Conn.Errors.Count);
+			}
+		}
+
+		[Test]
+		public void ADODateOnMaxRange()
+		{
+			object RecordsAffected=null;
+			try
+			{
+				Conn.Execute("INSERT INTO TableWithAllTypesWithSynonyms(c15) VALUES('January 1,9999 AD');",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+			}
+			
+			catch(Exception exp)
+			{
+				Assert.Fail("Value within the range not inserted into Date");
+				
+			}
+		}
+
+		[Test]
+		public void ADOFloatAboveRange()
+		{
+			object RecordsAffected=null;
+			try
+			{
+				Conn.Execute("INSERT INTO TableWithAllTypesWithSynonyms(c15) VALUES('January 1,4714 BC');",out RecordsAffected,-1);
+				Assert.Fail("Value below range inserted into Date");
+			}
+			
+			catch(Exception exp)
+			{
+				Assert.AreEqual(1,Conn.Errors.Count);
+			}
+		}
 	}
 }
