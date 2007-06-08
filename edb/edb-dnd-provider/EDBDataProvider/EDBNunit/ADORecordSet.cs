@@ -256,5 +256,315 @@ namespace ADO
 			
 		}
 
+		
+		[Test]
+		public void ADORecordSetTestOneDynamic()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			Assert.AreEqual("SMITH",rs.Fields[0].Value);
+			rs.Close();
+
+		}
+
+		[Test]
+		public void ADORecordSetReferenceTestDynamic()
+		{
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			string JobByName=rs.Fields["job"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("CLERK",JobByIndex);
+		
+			
+			rs.Close();
+			
+		}
+
+		[Test]
+		public void ADORecordSetUpdateTestDynamic()
+		{
+			// sql statment
+			string SQL = "select ename,job,empno from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			string JobByName=rs.Fields["job"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("CLERK",JobByIndex);
+
+			rs.Update(1,"Salesman");
+			
+			rs.Close();
+
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);  
+     
+			Assert.AreEqual("Salesman",rs.Fields["job"].Value.ToString());
+
+			rs.Close();
+
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);  
+				
+			rs.Update(1,"CLERK");
+			rs.Close();
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);  
+			
+			Assert.AreEqual("CLERK",rs.Fields["job"].Value.ToString());
+
+			rs.Close();
+
+			
+		}
+
+		[Test]
+		public void ADORecordSetUpdateBatchOptimisticDynamic()
+		{
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			string JobByName=rs.Fields["job"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("CLERK",JobByIndex);
+			//update should not update field in the data source
+			rs.Update(1,"New Job");
+			
+			
+			rs.Close();
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);      
+		
+			Assert.AreEqual("CLERK",rs.Fields[1].Value.ToString());
+			rs.Close();
+		}
+
+		[Test]
+		public void ADORecordSetUpdateReadOnlyDynamic()
+		{
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockReadOnly,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			string JobByName=rs.Fields["job"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("CLERK",JobByIndex);
+			//update should not update field in the data source
+			
+			try
+			{
+				rs.Update(1,"New Job");
+				Assert.Fail("Can't update a readonly recordset");
+				rs.Close();
+			}
+
+			catch(Exception exp)
+			{
+				rs.Close();
+				
+			}
+			
+			
+		}
+
+		[Test]
+		public void ADORecordSetUpdatePessimisticDynamic()
+		{
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			string JobByName=rs.Fields["job"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("CLERK",JobByIndex);
+			//update should not update field in the data source
+			
+			try
+			{
+				rs.Update(1,"New Job");
+				rs.Close();
+
+				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);  
+				rs.Update(1,"CLERK");
+				rs.Close();
+			}
+
+			catch(Exception exp)
+			{
+				rs.Close();
+				Console.WriteLine(exp.Message);
+				Assert.Fail("Could not update");
+				
+			}
+			
+			
+		}
+
+		[Test]
+		public void ADORecordsetScrollabilityROLock()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockReadOnly,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			try
+			{
+				rs.MoveLast();
+				Assert.Fail("Forward only should not move back");
+			}
+
+			catch (Exception exp)
+			{
+				rs.Close();
+			}
+
+
+
+		}
+
+		
+		[Test]
+		public void ADORecordsetScrollabilityUSLock()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockUnspecified,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			try
+			{
+				rs.MoveLast();
+				Assert.Fail("Forward only should not move back");
+			}
+
+			catch (Exception exp)
+			{
+				rs.Close();
+			}
+
+		}
+
+		[Test]
+		public void ADORecordsetScrollabilityOPLock()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			try
+			{
+				rs.MoveLast();
+				Assert.Fail("Forward only should not move back");
+			}
+
+			catch (Exception exp)
+			{
+				rs.Close();
+			}
+
+		}
+
 	}
 }
