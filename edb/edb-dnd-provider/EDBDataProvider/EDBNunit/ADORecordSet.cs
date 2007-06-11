@@ -5,6 +5,7 @@ using System.Globalization;
 using EDBTypes;
 using EnterpriseDB.EDBClient;
 using System.Net;
+using System.IO;
 
 namespace ADO
 {
@@ -564,6 +565,182 @@ namespace ADO
 				rs.Close();
 			}
 
+		}
+
+		[Test]
+		public void ADORecordSetClosedAccess()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			Assert.AreEqual("SMITH",rs.Fields[0].Value);
+			rs.Close();
+
+			try
+			{
+				Assert.AreEqual("SMITH",rs.Fields[0].Value);
+				Assert.Fail("Operation is not allowed when the object is closed.");
+			}
+
+			catch(Exception exp)
+			{
+				;	
+			}
+
+		}
+
+		[Test]
+		public void ADORecordSetClosedAccessWithoutRecordAccess()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			Assert.AreEqual("SMITH",rs.Fields[0].Value);
+			rs.Close();
+
+			try
+			{
+				Assert.AreEqual("SMITH",rs.Fields[0].Value);
+				Assert.Fail("Operation is not allowed when the object is closed.");
+			}
+
+			catch(Exception exp)
+			{
+				;	
+			}
+
+		}
+
+		[Test]
+		public void ADORecordSet_xSaveXML()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			
+			rs._xSave("Recordset.xml",ADOCOM.PersistFormatEnum.adPersistXML);
+			
+			if(File.Exists("Recordset.xml"))
+			{
+				File.Delete("Recordset.xml");
+				Console.WriteLine("File deleted");
+			}
+			else
+			{
+				Assert.Fail("Could not save recordset in File");
+			}
+
+			rs.Close();
+		}
+
+		[Test]
+		public void ADORecordSetSaveXML()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			
+			rs.Save("Recordset.xml",ADOCOM.PersistFormatEnum.adPersistXML);
+	
+			if(File.Exists("Recordset.xml"))
+			{
+				File.Delete("Recordset.xml");
+				Console.WriteLine("File deleted");
+			}
+			else
+			{
+				Assert.Fail("Could not save recordset in File");
+			}
+
+			rs.Close();
+		}
+
+
+		
+		[Test]
+		public void ADORecordSet_xSaveADTG()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			
+			rs._xSave("Recordset",ADOCOM.PersistFormatEnum.adPersistADTG);
+			
+			if(File.Exists("Recordset"))
+			{
+				File.Delete("Recordset");
+				Console.WriteLine("File deleted");
+			}
+			else
+			{
+				Assert.Fail("Could not save recordset in File");
+			}
+
+			rs.Close();
+		}
+
+		[Test]
+		public void ADORecordSetSaveADTG()
+		{
+			
+			// sql statment
+			string SQL = "select ename,job from emp where empno=7369;";
+			
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			 
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			
+			rs.Save("Recordset",ADOCOM.PersistFormatEnum.adPersistADTG);
+	
+			if(File.Exists("Recordset"))
+			{
+				File.Delete("Recordset");
+				Console.WriteLine("File deleted");
+			}
+			else
+			{
+				Assert.Fail("Could not save recordset in File");
+			}
+
+			rs.Close();
 		}
 
 	}

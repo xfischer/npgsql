@@ -216,6 +216,26 @@ namespace ADO
 			Conn.Close();
 		}
 
+		[Test]
+		public void ADOConnectionClosedAcess ()
+		{
+			ADOCOM.Connection Con=new ADOCOM.Connection();
+			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			
+			Con.Close();
+
+			object RecordsAffected=null;
+
+			try
+			{
+				Con.Execute("SELECT * FROM EMP",out RecordsAffected,-1);
+				Assert.Fail("Closed connection should not execute a Statement");
+			}
+			catch(Exception exp)
+			{
+				;
+			}
+		}
 
 	}
 }
