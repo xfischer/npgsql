@@ -723,7 +723,7 @@ namespace ADO
 			
 			//create ADOCOM Recordset object
 			ADOCOM.Recordset rs= new ADOCOM.Recordset();
-			 
+		
 			   
 			//execute the query specifying static sursor, batch optimistic locking
 			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
@@ -742,6 +742,140 @@ namespace ADO
 
 			rs.Close();
 		}
+
+		[Test]
+		public void ADORecordsetBookmarkForward()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			try
+			{
+				int a =int.Parse(rs.Bookmark.ToString());
+
+				Console.WriteLine(rs.Fields[0].Value.ToString());
+				Console.WriteLine(rs.Fields[1].Value.ToString());
+
+				rs.MoveNext();
+
+				Console.WriteLine(rs.Bookmark.ToString());
+
+				Assert.Fail("Current Recordset does not support Bookmarks");
+			}
+
+			catch(Exception exp)
+			{
+				rs.Close();
+			}
+		}
+
+
+
+		[Test]
+		public void ADORecordsetBookmarkStatic()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+				int a =int.Parse(rs.Bookmark.ToString());
+
+				Console.WriteLine(rs.Fields[0].Value.ToString());
+				Console.WriteLine(rs.Fields[1].Value.ToString());
+
+				rs.MoveNext();
+
+				Console.WriteLine(rs.Bookmark.ToString());
+				rs.Close();
+			
+		}
+
+
+		[Test]
+		public void ADORecordsetBookmarkDynamic()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			try
+			{
+				int a =int.Parse(rs.Bookmark.ToString());
+
+				Console.WriteLine(rs.Fields[0].Value.ToString());
+				Console.WriteLine(rs.Fields[1].Value.ToString());
+
+				rs.MoveNext();
+
+				Console.WriteLine(rs.Bookmark.ToString());
+
+				Assert.Fail("Current Recordset does not support Bookmarks");
+			}
+
+			catch(Exception exp)
+			{
+				rs.Close();
+			}
+		}
+
+
+		[Test]
+		public void ADORecordsetBookmarkKeySet()
+		{
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenKeyset,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+
+			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+
+			rs.MoveNext();
+			
+			
+				int a =int.Parse(rs.Bookmark.ToString());
+
+				Console.WriteLine(rs.Fields[0].Value.ToString());
+				Console.WriteLine(rs.Fields[1].Value.ToString());
+
+				rs.MoveNext();
+
+				Console.WriteLine(rs.Bookmark.ToString());
+				rs.Close();
+		}
+
+
 
 	}
 }

@@ -237,5 +237,45 @@ namespace ADO
 			}
 		}
 
+		[Test]
+		public void ADOConnectionMultipleDatabase ()
+		{
+			ADOCOM.Connection Con=new ADOCOM.Connection();
+			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			object RecordsAffected=null;
+			Con.Execute("Create database regressiontest",out RecordsAffected,-1);
+			Assert.AreEqual(0,Con.Errors.Count);
+			Con.Execute("Create database regressiontest2",out RecordsAffected,-1);
+			Assert.AreEqual(0,Con.Errors.Count);
+			Con.Close();
+			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Assert.AreEqual(1,Con.State);
+			Con.Execute("drop database regressiontest",out RecordsAffected,-1);
+			Console.WriteLine(Con.Errors.Count);
+			Con.Execute("drop database regressiontest2",out RecordsAffected,-1);
+			Console.WriteLine(Con.Errors.Count);
+			Assert.AreEqual(1,Conn.State);
+			Assert.AreEqual(1,Con.State);
+			Con.Close();
+
+		}
+
+
+		[Test]
+		public void ADOConnectionMultipleConnect ()
+		{
+			
+			try
+			{
+				Conn.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+				Assert.Fail("Operation is not allowed when the object is open");
+			}
+
+			catch (Exception exp)
+			{
+				;
+			}
+		}
+
 	}
 }
