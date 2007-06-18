@@ -16,7 +16,7 @@ namespace DOTNET
 		[SetUp]
 		public void Init()
 		{			
-			con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
+			con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Database=edb");
 			con.Open();
 			/*TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 			EDBCommand Command = new EDBCommand("",con);
@@ -46,7 +46,7 @@ namespace DOTNET
 		{
 			try
 			{
-				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
+				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Database=edb");
 				//con = new EDBConnection("Server={127.0.0.1};Trusted_Connection={Yes};Database={edb};");
 				
 				con.Open();
@@ -102,7 +102,7 @@ namespace DOTNET
 		{
 			try
 			{
-				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=buildfarm;Database=edb");
+				con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Database=edb");
 				con.Open();
 				Console.WriteLine(con.ConnectionString);
 				

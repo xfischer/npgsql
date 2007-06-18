@@ -23,7 +23,7 @@ namespace ADO
 		protected void SetUp()
 		{ 
 			Conn=new ADOCOM.Connection();
-			Conn.Open(DBConnection,"buildfarm","edb",-1); 
+			Conn.Open(DBConnection,"edb","edb",-1); 
 		}	
 
 		[TearDown]

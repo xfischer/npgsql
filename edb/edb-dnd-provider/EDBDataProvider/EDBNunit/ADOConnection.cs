@@ -22,7 +22,7 @@ namespace ADO
 		protected void SetUp()
 		{ 
 			Conn=new ADOCOM.Connection();
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Conn.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 		}	
 
 		[TearDown]
@@ -51,7 +51,7 @@ namespace ADO
 			// ADO connection's 12th property represents the DBMS Name
 			Assert.AreEqual("EnterpriseDB",Conn.Properties[11].Value.ToString());
 			// ADO connection's 41st property represents the user Name
-			Assert.AreEqual("buildfarm",Conn.Properties[40].Value.ToString());
+			Assert.AreEqual("edb",Conn.Properties[40].Value.ToString());
 			
 			Conn.Close();
 			Assert.AreEqual(0,Conn.State);
@@ -64,7 +64,7 @@ namespace ADO
 
 			Conn.Close();
 			Conn.ConnectionTimeout=30;
-			Conn.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Conn.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 			Assert.AreEqual(30,Conn.ConnectionTimeout);			
 			Conn.Close();
 			Assert.AreEqual(0,Conn.State);
@@ -220,7 +220,7 @@ namespace ADO
 		public void ADOConnectionClosedAcess ()
 		{
 			ADOCOM.Connection Con=new ADOCOM.Connection();
-			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 			
 			Con.Close();
 
@@ -241,14 +241,14 @@ namespace ADO
 		public void ADOConnectionMultipleDatabase ()
 		{
 			ADOCOM.Connection Con=new ADOCOM.Connection();
-			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 			object RecordsAffected=null;
 			Con.Execute("Create database regressiontest",out RecordsAffected,-1);
 			Assert.AreEqual(0,Con.Errors.Count);
 			Con.Execute("Create database regressiontest2",out RecordsAffected,-1);
 			Assert.AreEqual(0,Con.Errors.Count);
 			Con.Close();
-			Con.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 			Assert.AreEqual(1,Con.State);
 			Con.Execute("drop database regressiontest",out RecordsAffected,-1);
 			Console.WriteLine(Con.Errors.Count);
@@ -267,7 +267,7 @@ namespace ADO
 			
 			try
 			{
-				Conn.Open(DBConnection,"buildfarm","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
+				Conn.Open(DBConnection,"edb","edb",(int)ADOCOM.ConnectModeEnum.adModeUnknown);
 				Assert.Fail("Operation is not allowed when the object is open");
 			}
 
