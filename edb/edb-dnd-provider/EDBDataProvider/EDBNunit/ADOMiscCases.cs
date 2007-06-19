@@ -322,5 +322,157 @@ namespace ADO
 				Assert.AreEqual(1,Conn.Errors.Count);
 			}
 		}
+
+		[Test]
+		public void ADOExecuteSingleTable()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE TABLE TAB1(A INT4);",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP TABLE TAB1;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteMultipleTable()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4);",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP TABLE TAB1;DROP TABLE TAB2;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteSingleView()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP VIEW vista;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteMultipleViews()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP VIEW vista;DROP VIEW vistb;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteSingleProcedure()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP PROCEDURE p1;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteMultipleProcedures()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute(" DROP PROCEDURE p1;DROP PROCEDURE p2;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteSingleSPLFunc()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP FUNCTION p1",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
+
+		[Test]
+		public void ADOExecuteMultipleSPLFunc()
+		{
+			object RecordsAffected=null;
+
+			try
+			{
+				Conn.Execute("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+				Conn.Execute("DROP FUNCTION p1;DROP FUNCTION p2;",out RecordsAffected,-1);
+				Assert.AreEqual(0,Conn.Errors.Count);
+
+			}
+			catch (Exception exp)
+			{
+				Assert.Fail(exp.Message);
+			}
+		}
 	}
 }
