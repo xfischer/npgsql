@@ -291,12 +291,12 @@ namespace EDBTypes
                 NativeTypeMapping.AddTypeAlias("circle", typeof(EDBCircle));
 				//EDB Team
 
-				NativeTypeMapping.AddType("varchar", EDBDbType.Varchar, DbType.Binary, false,
+				NativeTypeMapping.AddType("varchar", EDBDbType.Varchar, DbType.Binary, true,
 					null);
 				//NativeTypeMapping.AddTypeAlias("varchar", typeof(String));
 
 				//EDB TEAM :19 OCT 05  Mapping of varchar2 and datetime F# 1184
-				NativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, false,
+				NativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, true,
 					null);
 				NativeTypeMapping.AddTypeAlias("varchar2", typeof(String));
 
