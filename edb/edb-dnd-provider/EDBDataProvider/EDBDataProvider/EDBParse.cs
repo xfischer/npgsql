@@ -122,7 +122,7 @@ namespace EnterpriseDB.EDBClient
 		
 					for(Int32 i = 0; i < _parameters.Count ; i++)
 					    {					
-						PGUtil.WriteInt16(outputStream , Convert.ToInt16( EDBParameter.ParamDirectionToValue( _parameters[i].Direction.ToString())));
+						PGUtil.WriteInt16(outputStream , Convert.ToInt16( EDBParameter.NetParamDirectionToEDBParamDirection( _parameters[i].Direction)));
 
 						}
 
