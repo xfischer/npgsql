@@ -68,19 +68,13 @@ namespace EnterpriseDB.EDBClient
         {
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Query");
-
-
-
-            //String commandText = command.GetCommandText();
-            //EDBEventLog.LogMsg(resman, "Log_QuerySent", LogLevel.Debug, commandText);
 			
             // Send the query request to backend.
 
             EDBQuery query = new EDBQuery(command, context.BackendProtocolVersion);
 			
-            BufferedStream stream = new BufferedStream(context.Stream);
-            query.WriteToStream(stream, context.Encoding);
-            stream.Flush();
+            query.WriteToStream(context.Stream , context.Encoding);
+            
 
             ProcessBackendResponses(context);
 
@@ -98,10 +92,8 @@ namespace EnterpriseDB.EDBClient
         	
 			
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Parse");
-            BufferedStream stream = new BufferedStream(context.Stream);
-
+            Stream stream = context.Stream;
 			
-			//if (String.Equals(context.ServerVersion.ToString(),ServerVersion.EDB_ServerVerion)) //EDB Team Protocol change 
 			if(SupportCallable)	 //31 OCT 05 .Patch for server version 
 				if((cmd.CommandType.ToString() ==  "Text") ||  (cmd.CommandType.ToString() == "TableDirect") )
 				{
@@ -142,10 +134,8 @@ namespace EnterpriseDB.EDBClient
         public override void Bind(EDBConnector context, EDBBind bind)
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Bind");
-            BufferedStream stream = new BufferedStream(context.Stream);
-            bind.WriteToStream(stream, context.Encoding);
-            stream.Flush();
-        }
+            bind.WriteToStream(context.Stream, context.Encoding);
+		}
 
 		/// <summary>
 		///  Execute IF Block supports EDB new protocol version ,and Else part supports old version 
@@ -157,8 +147,7 @@ namespace EnterpriseDB.EDBClient
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Execute");
             EDBDescribe describe = new EDBDescribe('P', execute.PortalName);
-            BufferedStream stream = new BufferedStream(context.Stream);
-	      
+       		Stream stream = context.Stream;
  
 
 
@@ -187,12 +176,6 @@ namespace EnterpriseDB.EDBClient
 			
 			}
 		
-
-			//    if(String.Equals(context.ServerVersion.ToString(),"8.0.3.9"))
-			//		
-			//	 else
-				
-
             stream.Flush();
             Sync(context);
         }
