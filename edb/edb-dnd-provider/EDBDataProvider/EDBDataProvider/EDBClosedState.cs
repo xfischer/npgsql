@@ -138,7 +138,7 @@ namespace EnterpriseDB.EDBClient
                         throw new InvalidOperationException(resman.GetString("Exception_Ssl_RequestError"));
             }
 
-               context.Stream = new BufferedStream(stream);
+               context.Stream = stream;
                context.Socket = socket;
                
 
