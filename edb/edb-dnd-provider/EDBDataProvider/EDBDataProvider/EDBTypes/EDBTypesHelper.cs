@@ -633,7 +633,7 @@ namespace EDBTypes
             if ( (EDBDbType == EDBDbType.Char)
                 || (EDBDbType == EDBDbType.Varchar))
                 
-                _UseSize = true;
+                _UseSize = false;
             else
                 _UseSize = false;
         }

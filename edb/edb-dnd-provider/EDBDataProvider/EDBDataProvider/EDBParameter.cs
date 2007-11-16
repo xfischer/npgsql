@@ -702,6 +702,8 @@ namespace EnterpriseDB.EDBClient
 
 				case "polygon":
 					return EDBParameterOID.Polygon;
+				case "_varchar":
+					return EDBParameterOID.StringArray;
 
 					/*   
 					 * If OID does not exist/match then return 0 which indicates server to lookup for OID
