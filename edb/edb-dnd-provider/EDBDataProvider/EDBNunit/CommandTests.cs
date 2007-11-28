@@ -4322,7 +4322,8 @@ namespace DOTNET
 				com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Char));
 				com.Parameters[0].Value="t";
 				Reader=com.ExecuteReader();
-				Assert.Fail("size for type character must at least be 1");
+
+				
 			}
 
 			catch(EDBException exp)
@@ -4361,7 +4362,7 @@ namespace DOTNET
 				com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar));
 				com.Parameters[0].Value="t";
 				Reader=com.ExecuteReader();
-				Assert.Fail("size for type varchar must at least be 1");
+				
 			}
 
 			catch(EDBException exp)
@@ -4382,6 +4383,376 @@ namespace DOTNET
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
+
+		[Test]
+		public void QuoteHandling9()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			EDBDataReader Reader=null;
+			com.CommandText="select id from Quote where b= :No";
+			try
+			{
+				com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Char,-1));
+				com.Parameters[0].Value="t";
+				Reader=com.ExecuteReader();
+				
+
+				//Assert.Fail("should fail for negative value of size");
+			}
+
+			catch(EDBException exp)
+			{
+				//Console.WriteLine(exp.Message);
+				com.CommandText="drop table Quote";
+				com.ExecuteNonQuery();
+				_conn.Close();
+				return;
+			}
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling10()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Char,-4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+				
+			}
+				
+			catch(EDBException exp)
+			{
+				_conn.Close();
+				return;
+			}
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void QuoteHandling11()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Varchar2,-4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=com.ExecuteReader();
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling12()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			com.CommandText="select id from Quote where b= :No";
+			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar2,-1));
+			com.Parameters[0].Value="t";
+			EDBDataReader Reader=com.ExecuteReader();
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+		
+		[Test]
+		public void QuoteHandling13()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Varchar,-4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+				
+			}
+
+			catch(Exception exp)
+			{
+				return;
+			}
+
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling14()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			com.CommandText="select id from Quote where b= :No";
+			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,-1));
+			com.Parameters[0].Value="t";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+			
+			}
+
+			catch(Exception exp)
+			{
+				com.CommandText="drop table Quote";
+				com.ExecuteNonQuery();
+
+				return;
+			}
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void QuoteHandling15()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			EDBDataReader Reader=null;
+			com.CommandText="select id from Quote where b= :No";
+			try
+			{
+				com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Char,0));
+				com.Parameters[0].Value="t";
+				Reader=com.ExecuteReader();
+				
+
+				//Assert.Fail("should fail for negative value of size");
+			}
+
+			catch(EDBException exp)
+			{
+				//Console.WriteLine(exp.Message);
+				com.CommandText="drop table Quote";
+				com.ExecuteNonQuery();
+				_conn.Close();
+				return;
+			}
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling16()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Char,4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+				
+			}
+				
+			catch(EDBException exp)
+			{
+				_conn.Close();
+				return;
+			}
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+
+		[Test]
+		public void QuoteHandling17()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Varchar2,4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=com.ExecuteReader();
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling18()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			com.CommandText="select id from Quote where b= :No";
+			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar2,0));
+			com.Parameters[0].Value="t";
+			EDBDataReader Reader=com.ExecuteReader();
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
+		
+		[Test]
+		public void QuoteHandling19()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="select empno from emp where ename= :Name";
+			com.Parameters.Add(new EDBParameter("Name",EDBTypes.EDBDbType.Varchar,4));
+			com.Parameters[0].Value="SMITH";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+				
+			}
+
+			catch(Exception exp)
+			{
+				return;
+			}
+
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			_conn.Close();
+		}
+
+		[Test]
+		public void QuoteHandling20()
+		{
+			_conn.Open();
+
+			EDBCommand com=new EDBCommand("",_conn);
+			com.CommandText="create table Quote(id int4, b char)";
+			com.ExecuteNonQuery();
+			com.CommandText="insert into Quote values(1, 't')";
+			com.ExecuteNonQuery();
+			com.CommandText="select id from Quote where b= :No";
+			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,0));
+			com.Parameters[0].Value="t";
+			EDBDataReader Reader=null;
+			try
+			{
+				Reader=com.ExecuteReader();
+			
+			}
+
+			catch(Exception exp)
+			{
+				com.CommandText="drop table Quote";
+				com.ExecuteNonQuery();
+
+				return;
+			}
+
+			while(Reader.Read())
+			{
+				Console.WriteLine( Reader.GetInt32(0));
+			}
+			Reader.Close();
+			com.CommandText="drop table Quote";
+			com.ExecuteNonQuery();
+			_conn.Close();
+		}
+
 
 
     }
