@@ -691,7 +691,7 @@ namespace EnterpriseDB.EDBClient
                 result.Columns.Add ("BaseTableName", typeof (string));
                 result.Columns.Add ("DataType", typeof(Type));
                 result.Columns.Add ("AllowDBNull", typeof (bool));
-                result.Columns.Add ("ProviderType", typeof (int));
+                result.Columns.Add ("ProviderType", typeof (string));
                 result.Columns.Add ("IsAliased", typeof (bool));
                 result.Columns.Add ("IsExpression", typeof (bool));
                 result.Columns.Add ("IsIdentity", typeof (bool));
