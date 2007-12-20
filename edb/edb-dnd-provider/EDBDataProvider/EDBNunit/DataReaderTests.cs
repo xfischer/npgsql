@@ -1111,16 +1111,13 @@ namespace DOTNET
 				table.Rows.Add(row);
     
 			}
-			// Display the DataSet contents as XML.
-				
-			//Console.WriteLine( dataSet.GetXmlSchema().Length);
-			Assert.AreEqual(673,dataSet.GetXmlSchema().Length);
-			
-			dataSet.Prefix="abc";
-			
-			
-		
 
+			if(Environment.Version.Major==1)
+			Assert.AreEqual(673,dataSet.GetXmlSchema().Length);
+			else
+			if(Environment.Version.Major==2)
+			Assert.AreEqual(718,dataSet.GetXmlSchema().Length);
+			dataSet.Prefix="abc";
 		}
 
 		[Test]
