@@ -339,7 +339,7 @@ namespace ADO
 			
 		}
 
-		//[Test]
+		[Test]
 		public void ADORecordSetUpdatePessimisticDynamic()
 		{
 			// sql statment
@@ -373,6 +373,56 @@ namespace ADO
 
 				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);  
 				rs.Update(1,"CLERK");
+				rs.Close();
+			}
+
+			catch(Exception exp)
+			{
+				rs.Close();
+				Console.WriteLine(exp.Message);
+				Assert.Fail("Could not update");
+				
+			}
+			
+			
+		}
+
+		[Test]
+		public void ADORecordSetUpdatePessimisticDynamic1()
+		{
+			// sql statment
+			string SQL = "select ename,mgr from emp where empno=7369;";
+			//create ADOCOM Recordset object
+			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			   
+			//execute the query specifying static sursor, batch optimistic locking
+			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);       
+
+			//reference the ename field by column index
+			string ENameByIndex=rs.Fields[0].Value.ToString();
+			
+			//reference the ename field by column name
+			string ENameByName=rs.Fields["ename"].Value.ToString();
+			Assert.AreEqual(ENameByIndex,ENameByName);
+			Assert.AreEqual("SMITH",ENameByName);
+			
+			//reference the job field by column index
+			string JobByIndex=rs.Fields[1].Value.ToString();
+			//reference the job field by column name
+			//string JobByName=rs.Fields["job"].Value.ToString();
+			//Assert.AreEqual(ENameByIndex,ENameByName);
+			//Assert.AreEqual("CLERK",JobByIndex);
+			//update should not update field in the data source
+
+			Console.WriteLine(JobByIndex);
+			
+			try
+			{
+				//rs.Update(1,2222); //old one was 7902
+				rs.Close();
+
+				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);  
+				rs.Update(1,7902);
 				rs.Close();
 			}
 
@@ -714,7 +764,7 @@ namespace ADO
 		}
 
 
-		//[Test]
+		[Test]
 		public void ADORecordsetBookmarkDynamic()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
@@ -955,6 +1005,72 @@ namespace ADO
 			rs2.Close();
 			
 			rs.Close();
+			
+		}
+
+		[Test]
+		public void ADORecordsetBookmarkDynamic1()
+		{
+			
+			
+
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockUnspecified,1);
+
+			
+			
+			try
+			{
+			
+
+				rs.MoveNext();
+
+				Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+				rs.MoveNext();
+
+				Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+			}
+
+			catch(Exception exp)
+			{
+				;
+			}
+			
+		
+		}
+
+		[Test]
+		public void ADORecordsetBookmarkDynamic2()
+		{
+			
+			string SQL="SELECT * FROM EMP order by empno;";
+			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+
+			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);
+
+			
+			
+			try
+			{
+			
+
+				rs.MoveNext();
+
+				Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
+
+				rs.MoveNext();
+
+				Assert.AreEqual("7499",rs.Fields[0].Value.ToString());
+			}
+
+			catch(Exception exp)
+			{
+				;
+			}
+			
 			
 		}
 
