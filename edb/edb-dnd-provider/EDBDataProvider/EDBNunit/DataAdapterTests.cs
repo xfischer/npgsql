@@ -437,5 +437,146 @@ namespace DOTNET
 			_conn.Close();
 			
 		}
+
+		[Test]
+		public void AdapFillSchemaMapped()
+		{
+			_conn.Open();
+
+			DataSet ds= new DataSet();
+
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
+			try
+			{
+				da.FillSchema(ds,SchemaType.Mapped);
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail(exp.Message);
+				_conn.Close();
+			}
+
+		}
+
+		[Test]
+		public void AdapFillSchemaSource()
+		{
+			_conn.Open();
+
+			DataSet ds= new DataSet();
+
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
+			try
+			{
+				da.FillSchema(ds,SchemaType.Source);
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail(exp.Message);
+				_conn.Close();
+			}
+			
+			_conn.Close();
+
+		}
+
+		[Test]
+		public void AdapFillSchemaDataTableSourceColumnNameAccess()
+		{
+			_conn.Open();
+
+			DataSet ds= new DataSet();
+
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
+			try
+			{
+				da.FillSchema(ds,SchemaType.Source);
+				DataTable dt =new DataTable("testtab");
+				da.FillSchema(dt,SchemaType.Source);
+
+				Assert.AreEqual("job".ToUpper(),dt.Columns[2].ColumnName.ToUpper());
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail(exp.Message);
+				_conn.Close();
+			}
+
+			
+			_conn.Close();
+
+		}
+
+		[Test]
+		public void AdapFillSchemaDataTableSourceColumnType()
+		{
+			_conn.Open();
+
+			DataSet ds= new DataSet();
+
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
+			try
+			{
+				da.FillSchema(ds,SchemaType.Source);
+				DataTable dt =new DataTable("testtab");
+				da.FillSchema(dt,SchemaType.Source);
+
+				Assert.AreEqual("system.decimal".ToUpper(),dt.Columns[0].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.string".ToUpper(),dt.Columns[1].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.string".ToUpper(),dt.Columns[2].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.decimal".ToUpper(),dt.Columns[3].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.datetime".ToUpper(),dt.Columns[4].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.decimal".ToUpper(),dt.Columns[5].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.decimal".ToUpper(),dt.Columns[6].DataType.FullName.ToUpper());
+				Assert.AreEqual("system.decimal".ToUpper(),dt.Columns[7].DataType.FullName.ToUpper());
+								
+
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail(exp.Message);
+				_conn.Close();
+			}
+
+			
+			_conn.Close();
+
+		}
+
+
+		[Test]
+		public void AdapFillSchemaDataTableSourcePrimaryKey()
+		{
+			_conn.Open();
+
+			DataSet ds= new DataSet();
+
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
+			try
+			{
+				da.FillSchema(ds,SchemaType.Source);
+				DataTable dt =new DataTable("testtab");
+				da.FillSchema(dt,SchemaType.Source);
+
+				Assert.AreEqual("empno".ToUpper(),dt.PrimaryKey.GetValue(0).ToString().ToUpper());
+			}
+
+			catch(EDBException exp)
+			{
+				Assert.Fail(exp.Message);
+				_conn.Close();
+			}
+
+			
+			_conn.Close();
+
+		}
+
+
+		
     }
 }
