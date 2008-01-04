@@ -451,7 +451,7 @@ namespace DOTNET
 				da.FillSchema(ds,SchemaType.Mapped);
 			}
 
-			catch(EDBException exp)
+			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
 				_conn.Close();
@@ -472,7 +472,7 @@ namespace DOTNET
 				da.FillSchema(ds,SchemaType.Source);
 			}
 
-			catch(EDBException exp)
+			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
 				_conn.Close();
@@ -499,7 +499,7 @@ namespace DOTNET
 				Assert.AreEqual("job".ToUpper(),dt.Columns[2].ColumnName.ToUpper());
 			}
 
-			catch(EDBException exp)
+			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
 				_conn.Close();
@@ -536,7 +536,7 @@ namespace DOTNET
 
 			}
 
-			catch(EDBException exp)
+			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
 				_conn.Close();
@@ -565,7 +565,7 @@ namespace DOTNET
 				Assert.AreEqual("empno".ToUpper(),dt.PrimaryKey.GetValue(0).ToString().ToUpper());
 			}
 
-			catch(EDBException exp)
+			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
 				_conn.Close();
