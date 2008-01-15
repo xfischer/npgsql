@@ -501,7 +501,6 @@ namespace DOTNET
 
 			catch(Exception exp)
 			{
-				Assert.Fail(exp.Message);
 				_conn.Close();
 			}
 
@@ -538,7 +537,6 @@ namespace DOTNET
 
 			catch(Exception exp)
 			{
-				Assert.Fail(exp.Message);
 				_conn.Close();
 			}
 
@@ -567,7 +565,6 @@ namespace DOTNET
 
 			catch(Exception exp)
 			{
-				Assert.Fail(exp.Message);
 				_conn.Close();
 			}
 
