@@ -3033,6 +3033,461 @@ namespace DOTNET
 
 		}
 		*/
-	}
+
+
+        [Test]
+        public void TERSE_FUNC_NATIVE_INPUT_TYPES()
+        {
+            try
+            {
+                EDBCommand command;
+
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                command = new EDBCommand("BEGIN;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                try
+                {
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command.ExecuteNonQuery();
+                    command.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                command = new EDBCommand("public.FunconeInArg_test(:param1)", con);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                command.Prepare();
+
+                command.Parameters[0].Value = 3;
+
+                EDBDataReader result = command.ExecuteReader();
+
+                Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
+                Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+                command = new EDBCommand("END;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+            }
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.Message);
+            }
+        }
+
+        [Test]
+        public void TERSE_FUNC_NATIVE_OUTPUT_TYPES()
+        {
+            try
+            {
+
+                EDBCommand Command;
+                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
+
+                Command = new EDBCommand("BEGIN;", con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
+
+                try
+                {
+                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    Command.ExecuteNonQuery();
+                    Command.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                Command = new EDBCommand("create or replace function terse_f1( a out integer, b out integer ) return integer is " +
+                                         "begin " +
+                                         "  a := 10; " +
+                                         "  b := 20; " +
+                                         "  return 30; " +
+                                         "end; ", con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
+
+                Command = new EDBCommand("terse_f1(:a,:b)", con);
+                Command.CommandType = CommandType.StoredProcedure;
+
+                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                Command.Parameters[0].Direction = ParameterDirection.Output;
+
+                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                Command.Parameters[1].Direction = ParameterDirection.Output;
+
+                Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+
+                Command.Prepare();
+                Command.ExecuteNonQuery();
+
+                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+                Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
+
+                Command.Dispose();
+
+
+                Command = new EDBCommand("END;", con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
+            }
+            catch (EDBException exp)
+            {
+
+                throw new Exception(exp.ToString());
+            }
+        }
+
+        [Test]
+        public void TERSE_FUNC_MIXED_NATIVE_TYPES()
+        {
+            try
+            {
+                EDBCommand command;
+
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                command = new EDBCommand("BEGIN;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                try
+                {
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command.ExecuteNonQuery();
+                    command.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                command.Prepare();
+
+                command.Parameters[0].Value = 1;
+                command.Parameters[1].Value = null;
+                command.Parameters[2].Value = 3;
+                command.Parameters[3].Value = null;
+
+
+                EDBDataReader result = command.ExecuteReader();
+
+                Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
+                Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
+                Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
+                Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
+                Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
+
+                result.Close();
+                command.Dispose();
+
+                command = new EDBCommand("END;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+            }
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.Message);
+            }
+        }
+
+
+        [Test]
+        public void TERSE_FUNC_CURSOR_TYPES()
+		{
+			try 
+			{
+				EDBCommand com = new EDBCommand("",con);
+				com.CommandType = CommandType.Text;
+
+				string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+				com.CommandText = CursorTable;
+				com.ExecuteNonQuery();
+
+                CursorTable = "CREATE OR REPLACE Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC IS " +
+                              "BEGIN " +
+                              "  OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; " +
+                              "  return 10; " +
+                              "END;";
+                com.CommandText = CursorTable;
+                com.ExecuteNonQuery();
+
+				string CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
+				com.CommandText = CursorInsert1;
+				com.ExecuteNonQuery();
+
+				string CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
+				com.CommandText = CursorInsert2;
+				com.ExecuteNonQuery();
+
+				string CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
+				com.CommandText = CursorInsert3;
+				com.ExecuteNonQuery();
+
+				string CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
+				com.CommandText = CursorInsert4;
+				com.ExecuteNonQuery();
+
+                com = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                com.ExecuteNonQuery();
+                com.Dispose();
+
+                EDBTransaction tran = con.BeginTransaction();
+
+                try
+                {
+                    com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    com.ExecuteNonQuery();
+                    com.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                EDBCommand command = new EDBCommand("RefCursorsOUT(:v_id)",con);
+				command.CommandType = CommandType.StoredProcedure;
+				command.Transaction = tran;
+				command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
+				command.Prepare();
+				command.ExecuteNonQuery();
+
+				EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
+				
+				cur.Read();
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(0)));
+				Assert.AreEqual("False", Convert.ToString(cur.GetString(1)));
+				Assert.AreEqual("System.Byte[]", Convert.ToString(cur.GetString(2)));
+				Assert.AreEqual("a", Convert.ToString(cur.GetString(3)));
+				Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(4)));
+				Assert.AreEqual("1.1", Convert.ToString(cur.GetString(5)));
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(6)));
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(7)));
+				Assert.AreEqual("2.20", Convert.ToString(cur.GetString(8)));
+				Assert.AreEqual("2.2", Convert.ToString(cur.GetString(9)));
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(10)));
+				Assert.AreEqual("Shehzad", Convert.ToString(cur.GetString(11)));
+				Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+				Assert.AreEqual("Hashim", Convert.ToString(cur.GetString(13)));
+				
+				cur.Read();
+				Assert.AreEqual("2", Convert.ToString(cur.GetString(0)));
+				Assert.AreEqual("True", Convert.ToString(cur.GetString(1)));
+				Assert.AreEqual("System.Byte[]", Convert.ToString(cur.GetString(2)));
+				Assert.AreEqual("b", Convert.ToString(cur.GetString(3)));
+				Assert.AreEqual("10/10/2007 12:00:00 AM", Convert.ToString(cur.GetString(4)));
+				Assert.AreEqual("1.2", Convert.ToString(cur.GetString(5)));
+				Assert.AreEqual("2", Convert.ToString(cur.GetString(6)));
+				Assert.AreEqual("2", Convert.ToString(cur.GetString(7)));
+				Assert.AreEqual("3.30", Convert.ToString(cur.GetString(8)));
+				Assert.AreEqual("3.3", Convert.ToString(cur.GetString(9)));
+				Assert.AreEqual("2", Convert.ToString(cur.GetString(10)));
+				Assert.AreEqual("EnterpriseDB", Convert.ToString(cur.GetString(11)));
+				Assert.AreEqual("2/3/2005 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+				Assert.AreEqual("Great", Convert.ToString(cur.GetString(13)));
+				
+				cur.Read();
+				Assert.AreEqual("3", Convert.ToString(cur.GetString(0)));
+				Assert.AreEqual("True", Convert.ToString(cur.GetString(1)));
+				Assert.AreEqual("System.Byte[]", Convert.ToString(cur.GetString(2)));
+				Assert.AreEqual("c", Convert.ToString(cur.GetString(3)));
+				Assert.AreEqual("11/1/2007 12:00:00 AM", Convert.ToString(cur.GetString(4)));
+				Assert.AreEqual("1.3", Convert.ToString(cur.GetString(5)));
+				Assert.AreEqual("3", Convert.ToString(cur.GetString(6)));
+				Assert.AreEqual("3", Convert.ToString(cur.GetString(7)));
+				Assert.AreEqual("2.10", Convert.ToString(cur.GetString(8)));
+				Assert.AreEqual("2.2", Convert.ToString(cur.GetString(9)));
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(10)));
+				Assert.AreEqual("Islamabad", Convert.ToString(cur.GetString(11)));
+				Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+				Assert.AreEqual("Sirsyed", Convert.ToString(cur.GetString(13)));
+
+				cur.Read();
+				Assert.AreEqual("4", Convert.ToString(cur.GetString(0)));
+				Assert.AreEqual("False", Convert.ToString(cur.GetString(1)));
+				Assert.AreEqual("System.Byte[]", Convert.ToString(cur.GetString(2)));
+				Assert.AreEqual("d", Convert.ToString(cur.GetString(3)));
+				Assert.AreEqual("2/3/1997 12:00:00 AM", Convert.ToString(cur.GetString(4)));
+				Assert.AreEqual("1.4", Convert.ToString(cur.GetString(5)));
+				Assert.AreEqual("4", Convert.ToString(cur.GetString(6)));
+				Assert.AreEqual("5", Convert.ToString(cur.GetString(7)));
+				Assert.AreEqual("2.20", Convert.ToString(cur.GetString(8)));
+				Assert.AreEqual("2.2", Convert.ToString(cur.GetString(9)));
+				Assert.AreEqual("1", Convert.ToString(cur.GetString(10)));
+				Assert.AreEqual("Pakistan", Convert.ToString(cur.GetString(11)));
+				Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+				Assert.AreEqual("Endnews", Convert.ToString(cur.GetString(13)));
+
+				tran.Commit();	
+
+				com.CommandText = "DROP TABLE TestCursorTable;";
+				com.ExecuteNonQuery();
+			}
+			catch(EDBException e)
+			{
+				throw new Exception(e.ToString());
+			}
+		
+		}
+
+        [Test]
+        public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
+        {
+            try
+            {
+                EDBCommand command;
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                EDBTransaction tran = con.BeginTransaction();
+
+                command = new EDBCommand("CREATE OR REPLACE function refcur_callee2_func( c_1 OUT numeric, " +
+                                        "                                           c_2 IN OUT refcursor, " +
+                                        "                                           c_3 IN OUT refcursor ) return numeric IS " +
+                                        "BEGIN " +
+                                        "   c_1 := 100; " +
+                                        "   open c_2 for select * from emp; " +
+                                        "   open c_3 for select ename from emp; " +
+                                        "   return c_1; " +
+                                        "END;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                try
+                {
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command.ExecuteNonQuery();
+                    command.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Transaction = tran;
+
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.RefCursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.RefCursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+
+                command.Prepare();
+                command.Parameters[0].Value = 7369;
+                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+                Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
+                Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
+
+                EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
+
+                int fc1 = reader.FieldCount;
+                reader.Read();
+                reader.Read();
+
+                Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
+                Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
+                Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
+                Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
+                Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
+
+
+                reader = (EDBDataReader)command.Parameters[2].Value;
+
+                fc1 = reader.FieldCount;
+                reader.Read();
+
+                Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
+                tran.Commit();
+                reader.Close();
+                result.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());
+            }
+        }
+
+        [Test]
+        public void TERSE_FUNC_DEFAULT_TYPES()
+        {
+            try
+            {
+                EDBCommand command;
+
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                command = new EDBCommand("BEGIN;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                command = new EDBCommand("create or replace function terse_func_defvals( param1 integer, param2 integer default 10 ) return varchar2 is " +
+                                         "begin " +
+                                         "  return 'EnterpriseDB'; " +
+                                         "end;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                try
+                {
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command.ExecuteNonQuery();
+                    command.Dispose();
+                }
+                catch (EDBException exp)
+                {
+                }
+
+                command = new EDBCommand("terse_func_defvals(:param1)", con);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                command.Prepare();
+
+                command.Parameters[0].Value = 3;
+
+                EDBDataReader result = command.ExecuteReader();
+
+                Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
+                Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+                command = new EDBCommand("END;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
+            }
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.Message);
+            }
+        }
+    }
 }
 
