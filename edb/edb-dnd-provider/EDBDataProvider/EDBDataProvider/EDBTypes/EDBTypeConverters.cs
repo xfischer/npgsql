@@ -172,17 +172,26 @@ namespace EDBTypes
                                         DateTimeFormatInfo.InvariantInfo,
                                         DateTimeStyles.NoCurrentDateDefault | DateTimeStyles.AllowWhiteSpaces);
         }
-
+		
         /// <summary>
         /// Convert a postgresql money to a System.Decimal.
         /// </summary>
         internal static Object ToMoney(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
         {
             // It's a number with a $ on the beginning...
+			if(BackendData.StartsWith("(") == true)
+			{
+				// It's number with () around from server ,and we know that this is negative value.
+				BackendData = BackendData.Remove(BackendData.Length-1,1);
+				BackendData = BackendData.Substring(2,BackendData.Length-2);	
+				BackendData = "-" + BackendData.ToString();
+				return	Convert.ToDecimal(BackendData,CultureInfo.InvariantCulture);
+			}
+		
             return Convert.ToDecimal(BackendData.Substring(1, BackendData.Length - 1), CultureInfo.InvariantCulture);
-        }
+		}
     }
-
+		
     /// <summary>
     /// Provide event handlers to convert the basic native supported data types from
     /// native form to backend representation.
@@ -283,7 +292,8 @@ namespace EDBTypes
         internal static String ToMoney(EDBNativeTypeInfo TypeInfo, Object NativeData)
         {
             //EnterpriseDB Team :F#2090.Retunrn as string with out converting to Money Format ($).
-			return  NativeData.ToString();  
+			//EnterpriseDB Money compatible with PG Money
+			return "$" + ((IFormattable)NativeData).ToString(null, CultureInfo.InvariantCulture.NumberFormat);
         }
     }
 

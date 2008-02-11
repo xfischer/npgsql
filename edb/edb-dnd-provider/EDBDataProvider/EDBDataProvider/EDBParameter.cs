@@ -66,7 +66,7 @@ namespace EnterpriseDB.EDBClient
 		Bytea = 17,
         Varchar2 = 1043,
         Datetime = 1082,
-        Currency = 1700,    //Numeric on server
+        Currency = 790,    //PG compatible Money Type
         Char = 1042,
 		Refcursor = 1790,
 
