@@ -1313,10 +1313,15 @@ namespace DOTNET
 			
 				command.ExecuteNonQuery();
 
-				Assert.AreEqual(10000,int.Parse(command.Parameters[0].Value.ToString()));
-				Assert.AreEqual(10000,int.Parse(command.Parameters[1].Value.ToString()));	
-				Assert.AreEqual(-2,int.Parse(command.Parameters[2].Value.ToString()));	
-				Assert.AreEqual(1234,int.Parse(command.Parameters[3].Value.ToString()));	
+				Assert.AreEqual("10000",command.Parameters[0].Value.ToString());
+				Console.WriteLine(command.Parameters[0].Value.ToString());
+				
+				Assert.AreEqual("10000.00",command.Parameters[1].Value.ToString());	
+				Console.WriteLine(command.Parameters[1].Value.ToString());
+				Assert.AreEqual("-2.00",command.Parameters[2].Value.ToString());	
+				Console.WriteLine(command.Parameters[2].Value.ToString());
+				Assert.AreEqual("1234.00",command.Parameters[3].Value.ToString());	
+				Console.WriteLine(command.Parameters[3].Value.ToString());
 			}
 			catch(EDBException e)
 			{			
@@ -1348,18 +1353,18 @@ namespace DOTNET
 				command = new EDBCommand("FunctionWithSmallMoney(:v_in,:v_inout,:v_out)",con);
 				command.CommandType = CommandType.StoredProcedure;
 				
-				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Money,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,10000));
-				command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Money,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,-2));
-				command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Money,10,"v_out",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,40000));
-				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Money,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
+				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Numeric,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,10000));
+				command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,-2));
+				command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric,10,"v_out",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,40000));
+				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 				command.Prepare();
 			
 				command.ExecuteNonQuery();
 
-				Assert.AreEqual(10000,int.Parse(command.Parameters[0].Value.ToString()));
-				Assert.AreEqual(10000,int.Parse(command.Parameters[1].Value.ToString()));	
-				Assert.AreEqual(-2,int.Parse(command.Parameters[2].Value.ToString()));	
-				Assert.AreEqual(1234,int.Parse(command.Parameters[3].Value.ToString()));	
+				Assert.AreEqual("10000",command.Parameters[0].Value.ToString());
+				Assert.AreEqual("10000",command.Parameters[1].Value.ToString());	
+				Assert.AreEqual("-2",command.Parameters[2].Value.ToString());	
+				Assert.AreEqual("1234",command.Parameters[3].Value.ToString());	
 			}
 			catch(EDBException e)
 			{			
