@@ -1455,16 +1455,12 @@ namespace DOTNET
 			
 			Command.CommandText="SELECT * FROM arrtest;";
 			EDBDataReader Reader = Command.ExecuteReader();
-
-//												while(Reader.Read())
-//														{
-//															Console.WriteLine(Reader.GetValue(0).ToString());
-//															Console.WriteLine(Reader.GetValue(1).ToString());
-//														}
+			object[] test={"($21,474,823,123,326.41)","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
 			
-			Assert.AreEqual("{-21474823123326.4128,2123432474836.2470}",Reader.GetValue(0));
-			Assert.AreEqual("{2343245.5710,523432.3226}",Reader.GetValue(1));
+			Assert.AreEqual("{\""+test[0].ToString()+"\",\""+test[1].ToString()+"\"}",Reader.GetValue(0).ToString());
+			string[] teststr={"$2,343,245.57","$523,432.32"};
+			Assert.AreEqual("{\""+teststr[0]+"\",\""+teststr[1]+"\"}",Reader.GetValue(1));
 			Reader.Close();
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
