@@ -1455,7 +1455,7 @@ namespace DOTNET
 			
 			Command.CommandText="SELECT * FROM arrtest;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			object[] test={"($21,474,823,123,326.41)","$2,123,432,474,836.25"};
+			object[] test={"-$21,474,823,123,326.41","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual("{\""+test[0].ToString()+"\",\""+test[1].ToString()+"\"}",Reader.GetValue(0).ToString());
