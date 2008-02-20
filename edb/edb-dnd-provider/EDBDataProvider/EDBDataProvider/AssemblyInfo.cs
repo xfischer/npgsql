@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription(".Net Data Provider for EnterpriseDB")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EnterpriseDB")]
-[assembly: AssemblyProduct("Postgres Plus Advanced Server 8.3 (8.3.0.10)")]
+[assembly: AssemblyProduct("EnterpriseDB Advanced Server 8.3 (8.3.0.10)")]
 [assembly: AssemblyCopyright("Portions Copyright (c) 2004-2006 - EnterpriseDB Corporation.  All Rights Reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
