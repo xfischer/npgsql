@@ -178,17 +178,37 @@ namespace EDBTypes
         /// </summary>
         internal static Object ToMoney(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
         {
-            // It's a number with a $ on the beginning...
-			if(BackendData.StartsWith("(") == true)
-			{
-				// It's number with () around from server ,and we know that this is negative value.
-				BackendData = BackendData.Remove(BackendData.Length-1,1);
-				BackendData = BackendData.Substring(2,BackendData.Length-2);	
-				BackendData = "-" + BackendData.ToString();
-				return	Convert.ToDecimal(BackendData,CultureInfo.InvariantCulture);
-			}
-		
-            return Convert.ToDecimal(BackendData.Substring(1, BackendData.Length - 1), CultureInfo.InvariantCulture);
+            //
+            // Note :- Server always send money datatype in two formats for negative value
+            //      1. ($1234.00)
+            //      2. -$1234.00
+            //
+
+
+            // Determine whether we have negative value or not
+            bool negative = ((BackendData.StartsWith("(") == true) ||
+                             (BackendData.StartsWith("-") == true))
+                            ? true : false;
+
+            if (negative)
+            {
+                // Remove negative sign
+                BackendData = PGUtil.RemoveNegSign(BackendData);
+
+                // Remove parenthensis
+                BackendData = PGUtil.RemovePara(BackendData);
+            }
+
+            // Remove currency symbol
+            BackendData = BackendData.Substring(1);
+
+            // Convert string to decimal datatype
+            decimal d = Convert.ToDecimal(BackendData, CultureInfo.InvariantCulture);
+
+            // If value is negative, then set negative sign.
+            d = (negative) ? -d : d;
+
+            return d;
 		}
     }
 		

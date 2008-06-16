@@ -376,5 +376,36 @@ namespace EnterpriseDB.EDBClient
             return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(buffer, 0));
 
         }
+
+        /// <summary>
+        /// Remove starting and ending parenthensis from the string value.
+        /// </summary>
+        public static string RemovePara(string s)
+        {
+            if (s.StartsWith("(") == true)
+            {
+                s = s.Substring(1);
+            }
+
+            if (s.EndsWith(")") == true)
+            {
+                s = s.Substring(0, (s.Length - 1));
+            }
+
+            return s;
+        }
+
+        /// <summary>
+        /// Remove negative sign from string value.
+        /// </summary>
+        public static string RemoveNegSign(string s)
+        {
+            if (s.StartsWith("-") == true)
+            {
+                s = s.Substring(1);
+            }
+
+            return s;
+        }
     }
 }
