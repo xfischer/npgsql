@@ -182,7 +182,7 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ProcessBackendResponses");
 
-            Stream 	stream = context.Stream;
+            BufferedStream 	stream = new BufferedStream(context.Stream);
             EDBMediator mediator = context.Mediator;
 			
             // Often used buffer

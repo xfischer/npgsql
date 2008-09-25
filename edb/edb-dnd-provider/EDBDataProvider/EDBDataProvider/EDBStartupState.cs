@@ -55,7 +55,10 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Authenticate");
             EDBPasswordPacket pwpck = new EDBPasswordPacket(password, context.BackendProtocolVersion);
-            pwpck.WriteToStream(context.Stream, context.Encoding);
+            BufferedStream stream = new BufferedStream(context.Stream);
+            pwpck.WriteToStream(stream, context.Encoding);
+            stream.Flush();
+
         }
     }
 }

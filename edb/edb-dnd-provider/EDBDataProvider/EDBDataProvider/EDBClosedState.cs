@@ -82,37 +82,9 @@ namespace EnterpriseDB.EDBClient
             {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
 
-           /* TcpClient tcpc = new TcpClient();
+            TcpClient tcpc = new TcpClient();
             tcpc.Connect(new IPEndPoint(ResolveIPHost(context.Host), context.Port));
-                Stream stream = tcpc.GetStream(); */
-                
-                Socket socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-                
-                /*socket.SetSocketOption (SocketOptionLevel.Socket, SocketOptionName.SendTimeout, context.ConnectionTimeout*1000);*/
-
-                //socket.Connect(new IPEndPoint(ResolveIPHost(context.Host), context.Port));
-                
-                IAsyncResult result = socket.BeginConnect(new IPEndPoint(ResolveIPHost(context.Host), context.Port), null, null);
-
-                if (!result.AsyncWaitHandle.WaitOne(context.ConnectionTimeout*1000, true))
-                {
-                    socket.Close();
-                    throw new Exception(resman.GetString("Exception_ConnectionTimeout"));
-                }
-
-                try
-                {
-                    socket.EndConnect(result);
-                }
-                catch (Exception ex)
-                {
-                    socket.Close();
-                    throw;
-                }
-
-                Stream stream = new NetworkStream(socket, true);
-
-    
+            Stream stream = tcpc.GetStream();
 
             // If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
                 if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))
@@ -124,7 +96,7 @@ namespace EnterpriseDB.EDBClient
                 if (response == 'S')
                 {
                     stream = new SslClientStream(
-                                 stream,
+                                 tcpc.GetStream(),
                                  context.Host,
                                  true,
                                  Mono.Security.Protocol.Tls.SecurityProtocolType.Default
@@ -139,8 +111,6 @@ namespace EnterpriseDB.EDBClient
             }
 
                context.Stream = stream;
-               context.Socket = socket;
-               
 
             EDBEventLog.LogMsg(resman, "Log_ConnectedTo", LogLevel.Normal, context.Host, context.Port);
             ChangeState(context, EDBConnectedState.Instance);

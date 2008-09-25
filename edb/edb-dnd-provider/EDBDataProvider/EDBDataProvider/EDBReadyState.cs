@@ -73,8 +73,9 @@ namespace EnterpriseDB.EDBClient
 
             EDBQuery query = new EDBQuery(command, context.BackendProtocolVersion);
 			
-            query.WriteToStream(context.Stream , context.Encoding);
-            
+            BufferedStream stream = new BufferedStream(context.Stream);
+            query.WriteToStream(stream, context.Encoding);
+            stream.Flush();
 
             ProcessBackendResponses(context);
 
@@ -92,8 +93,10 @@ namespace EnterpriseDB.EDBClient
         	
 			
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Parse");
-            Stream stream = context.Stream;
+            BufferedStream stream = new BufferedStream(context.Stream);
+
 			
+			//if (String.Equals(context.ServerVersion.ToString(),ServerVersion.EDB_ServerVerion)) //EDB Team Protocol change 
 			if(SupportCallable)	 //31 OCT 05 .Patch for server version 
 				if((cmd.CommandType.ToString() ==  "Text") ||  (cmd.CommandType.ToString() == "TableDirect") )
 				{
@@ -134,7 +137,9 @@ namespace EnterpriseDB.EDBClient
         public override void Bind(EDBConnector context, EDBBind bind)
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Bind");
-            bind.WriteToStream(context.Stream, context.Encoding);
+            BufferedStream stream = new BufferedStream(context.Stream);
+            bind.WriteToStream(stream, context.Encoding);
+            stream.Flush();
 		}
 
 		/// <summary>
@@ -147,7 +152,8 @@ namespace EnterpriseDB.EDBClient
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Execute");
             EDBDescribe describe = new EDBDescribe('P', execute.PortalName);
-       		Stream stream = context.Stream;
+            BufferedStream stream = new BufferedStream(context.Stream);
+	      
  
 
 
