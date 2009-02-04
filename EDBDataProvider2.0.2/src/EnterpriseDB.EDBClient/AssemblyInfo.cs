@@ -40,8 +40,8 @@ using System.Resources;
 [assembly : AssemblyTitle("EDBClient - .Net Data Provider for EnterpriseDB")]
 [assembly : AssemblyDescription(".Net Data Provider for EnterpriseDB")]
 [assembly : AssemblyConfiguration("")]
-[assembly : AssemblyCompany("")]
-[assembly : AssemblyProduct("")]
+[assembly : AssemblyCompany("EnterpriseDB")]
+[assembly : AssemblyProduct("Postgres Plus Advanced Server 8.3 (8.3.0.100)")]
 [assembly : AssemblyCopyright("The Npgsql Development Team")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
@@ -54,4 +54,4 @@ using System.Resources;
 // You can specify all values by your own or you can build default build and revision
 // numbers with the '*' character (the default):
 
-[assembly : AssemblyVersion("2.0.2")]
+[assembly : AssemblyVersion("8.3.0.100")]
