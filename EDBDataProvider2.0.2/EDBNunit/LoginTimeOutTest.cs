@@ -47,7 +47,7 @@ namespace DOTNET
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=45.0;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=45;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -76,7 +76,7 @@ namespace DOTNET
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=-1;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=1;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -90,7 +90,7 @@ namespace DOTNET
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=zzzz;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=enterprisedb;Password=edb;Database=edb;Timeout=10;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
