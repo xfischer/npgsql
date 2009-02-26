@@ -178,27 +178,50 @@ namespace EDBTypes
 		/// </summary>
 		internal static Object ToMoney(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
 		{
-            /*
-             * EDB TEAM:
-             * The negative money value returned by server will be surrouded by brackets, and will not contain negative sign
-             * e.g -$2.00 will be returned as ($2.00)
-             * We need to remove small brackets and $ sign before converting it in to decimal
-             */
-            if (BackendData[0] == '(')
-            {
-                BackendData = BackendData.Replace("(", "");
-                BackendData = BackendData.Replace(")", "");
-                BackendData = BackendData.Remove(0, 1);
-                // BackendData = BackendData.Substring(2, BackendData.Length - 3);
-                BackendData = "-" + BackendData;
-                return Convert.ToDecimal(BackendData, CultureInfo.InvariantCulture);
+             //
+            // Note :- Server always send money datatype in two formats for negative value
+            //      1. ($1234.00)
+            //      2. -$1234.00
+            //
 
-            }
-            else
+
+            // Determine whether we have negative value or not
+            bool negative = ((BackendData.StartsWith("(") == true) ||
+                             (BackendData.StartsWith("-") == true))
+                            ? true : false;
+
+            if (negative)
             {
-                // It's a number with a $ on the beginning...           
-                return Convert.ToDecimal(BackendData.Substring(1, BackendData.Length - 1), CultureInfo.InvariantCulture);
+                // Remove negative sign
+                if (BackendData.StartsWith("-") == true)
+                {
+                    BackendData = BackendData.Substring(1);
+                }
+                // Remove parenthensis
+                if (BackendData.StartsWith("(") == true)
+                {
+                    BackendData = BackendData.Substring(1);
+                }
+
+                if (BackendData.EndsWith(")") == true)
+                {
+                    BackendData = BackendData.Substring(0, (BackendData.Length - 1));
+                }
+
+                
             }
+
+            // Remove currency symbol
+            BackendData = BackendData.Substring(1);
+
+            // Convert string to decimal datatype
+            decimal d = Convert.ToDecimal(BackendData, CultureInfo.InvariantCulture);
+
+            // If value is negative, then set negative sign.
+            d = (negative) ? -d : d;
+
+            return d;
+
 		}
 	}
 
@@ -696,5 +719,6 @@ namespace EDBTypes
 				return nativeData.ToString();
 			}
 		}
+
 	}
 }
