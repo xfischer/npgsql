@@ -173,11 +173,15 @@ namespace EnterpriseDB.EDBClient
                 query = "select proargtypes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname";
                 schemaName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
                 procedureName = (fullName[1].IndexOf("\"") != -1) ? fullName[1] : fullName[1].ToLower();
+                if (procedureName.IndexOf("(") != -1)
+                    procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
             }
             else
             {
                 query = "select proargtypes from pg_proc where proname = :proname";
                 procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
+                if(procedureName.IndexOf("(") != -1)
+                    procedureName = procedureName.Substring(0,procedureName.IndexOf("("));
             }
 
             EDBCommand c = new EDBCommand(query, command.Connection);
@@ -196,6 +200,8 @@ namespace EnterpriseDB.EDBClient
             
             if (types == null)
                 throw new InvalidOperationException (String.Format(resman.GetString("Exception_InvalidFunctionName"), command.CommandText));
+            if(types.Equals(String.Empty))
+                throw new InvalidOperationException(String.Format(resman.GetString("Exception_InvalidFunction"), command.CommandText));
     
             command.Parameters.Clear();
             Int32 i = 1;

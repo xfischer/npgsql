@@ -1,435 +1,309 @@
-<VisualStudioProject>
-    <CSHARP
-        ProjectType = "Local"
-        ProductVersion = "7.10.3077"
-        SchemaVersion = "2.0"
-        ProjectGuid = "{2DF8409B-4EC0-4B10-92D6-78CED5F06C0E}"
-    >
-        <Build>
-            <Settings
-                ApplicationIcon = ""
-                AssemblyKeyContainerName = ""
-                AssemblyName = "EDBDataProvider"
-                AssemblyOriginatorKeyFile = ""
-                DefaultClientScript = "JScript"
-                DefaultHTMLPageLayout = "Grid"
-                DefaultTargetSchema = "IE50"
-                DelaySign = "false"
-                OutputType = "Library"
-                PreBuildEvent = ""
-                PostBuildEvent = ""
-                RootNamespace = "EDBDataProvider"
-                RunPostBuildEvent = "OnBuildSuccess"
-                StartupObject = ""
-            >
-                <Config
-                    Name = "Debug"
-                    AllowUnsafeBlocks = "false"
-                    BaseAddress = "285212672"
-                    CheckForOverflowUnderflow = "false"
-                    ConfigurationOverrideFile = ""
-                    DefineConstants = "DEBUG;TRACE"
-                    DocumentationFile = ""
-                    DebugSymbols = "true"
-                    FileAlignment = "4096"
-                    IncrementalBuild = "false"
-                    NoStdLib = "false"
-                    NoWarn = ""
-                    Optimize = "false"
-                    OutputPath = "bin\Debug\"
-                    RegisterForComInterop = "false"
-                    RemoveIntegerChecks = "false"
-                    TreatWarningsAsErrors = "false"
-                    WarningLevel = "4"
-                />
-                <Config
-                    Name = "Release"
-                    AllowUnsafeBlocks = "false"
-                    BaseAddress = "285212672"
-                    CheckForOverflowUnderflow = "false"
-                    ConfigurationOverrideFile = ""
-                    DefineConstants = "TRACE"
-                    DocumentationFile = ""
-                    DebugSymbols = "false"
-                    FileAlignment = "4096"
-                    IncrementalBuild = "false"
-                    NoStdLib = "false"
-                    NoWarn = ""
-                    Optimize = "true"
-                    OutputPath = "bin\Release\"
-                    RegisterForComInterop = "false"
-                    RemoveIntegerChecks = "false"
-                    TreatWarningsAsErrors = "false"
-                    WarningLevel = "4"
-                />
-            </Settings>
-            <References>
-                <Reference
-                    Name = "System"
-                    AssemblyName = "System"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll"
-                />
-                <Reference
-                    Name = "System.Data"
-                    AssemblyName = "System.Data"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Data.dll"
-                />
-                <Reference
-                    Name = "System.XML"
-                    AssemblyName = "System.Xml"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
-                />
-                <Reference
-                    Name = "System.Design"
-                    AssemblyName = "System.Design"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Design.dll"
-                />
-                <Reference
-                    Name = "System.Drawing.Design"
-                    AssemblyName = "System.Drawing.Design"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Drawing.Design.dll"
-                />
-                <Reference
-                    Name = "System.Drawing"
-                    AssemblyName = "System.Drawing"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Drawing.dll"
-                />
-                <Reference
-                    Name = "System.Windows.Forms"
-                    AssemblyName = "System.Windows.Forms"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Windows.Forms.dll"
-                />
-                <Reference
-                    Name = "Mono.Security"
-                    Project = "{3C6C7065-9DAB-4D13-B6AE-5F910CA22D7C}"
-                    Package = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"
-                />
-            </References>
-        </Build>
-        <Files>
-            <Include>
-                <File
-                    RelPath = "AssemblyInfo.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBAsciiRow.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBBackEndKeyData.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBBinaryRow.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBBind.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBClosedState.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBCommand.cs"
-                    SubType = "Component"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBCommand.resx"
-                    DependentUpon = "EDBCommand.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "EDBCommandBuilder.cs"
-                    SubType = "Component"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBConnectedState.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBConnection.cs"
-                    SubType = "Component"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBConnection.resx"
-                    DependentUpon = "EDBConnection.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "EDBConnectionString.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBConnector.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBConnectorPool.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBDataAdapter.cs"
-                    SubType = "Component"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBDataReader.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBDescribe.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBError.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBEventLog.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBException.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBExecute.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBFlush.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBMediator.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBMessageTypes.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBNotificationEventArgs.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBParameter.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBParameterCollection.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBParameterStatus.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBParse.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBPasswordPacket.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBQuery.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBReadyState.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBResultSet.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBRow.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBRowDescription.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBStartupPacket.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBStartupState.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBState.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBSync.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTransaction.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "HashAlgorithm.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "MD5.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "MD5CryptoServiceProvider.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "PGUtil.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditor.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditorForm.cs"
-                    SubType = "Form"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditorForm.de.resx"
-                    DependentUpon = "ConnectionStringEditorForm.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditorForm.es.resx"
-                    DependentUpon = "ConnectionStringEditorForm.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditorForm.fi.resx"
-                    DependentUpon = "ConnectionStringEditorForm.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "Design\ConnectionStringEditorForm.resx"
-                    DependentUpon = "ConnectionStringEditorForm.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "Design\EDBParameterConverter.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Design\EDBParametersEditor.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Design\EDBSysDescriptionAttribute.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBDbType.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBOids.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBParamDirection.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBTypeConverters.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBTypes.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\EDBTypesHelper.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\FastPath.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\FastPathArg.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\LargeObject.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "EDBTypes\LargeObjectManager.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-            </Include>
-        </Files>
-    </CSHARP>
-</VisualStudioProject>
-
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2DF8409B-4EC0-4B10-92D6-78CED5F06C0E}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>EDBDataProvider</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <RootNamespace>EDBDataProvider</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>none</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Design">
+      <Name>System.Design</Name>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.Drawing.Design">
+      <Name>System.Drawing.Design</Name>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+    <ProjectReference Include="..\Mono.Security\Mono.Security.csproj">
+      <Name>Mono.Security</Name>
+      <Project>{3C6C7065-9DAB-4D13-B6AE-5F910CA22D7C}</Project>
+      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Design\ConnectionStringEditor.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Design\ConnectionStringEditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Design\EDBParameterConverter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Design\EDBParametersEditor.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Design\EDBSysDescriptionAttribute.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBAsciiRow.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBBackEndKeyData.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBBinaryRow.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBBind.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBClosedState.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EDBCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EDBConnectedState.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EDBConnectionString.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBConnector.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBConnectorPool.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EDBDataReader.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBDescribe.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBError.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBEventLog.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBException.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBExecute.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBFlush.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBMediator.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBMessageTypes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBNotificationEventArgs.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBParameter.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBParameterCollection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBParameterStatus.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBParse.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBPasswordPacket.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBQuery.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBReadyState.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBResultSet.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBRow.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBRowDescription.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBStartupPacket.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBStartupState.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBState.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBSync.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTransaction.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBDbType.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBOids.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBParamDirection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBTypeConverters.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBTypes.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\EDBTypesHelper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\FastPath.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\FastPathArg.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\LargeObject.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EDBTypes\LargeObjectManager.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HashAlgorithm.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MD5.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MD5CryptoServiceProvider.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PGUtil.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <EmbeddedResource Include="Design\ConnectionStringEditorForm.de.resx">
+      <DependentUpon>ConnectionStringEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\ConnectionStringEditorForm.es.resx">
+      <DependentUpon>ConnectionStringEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\ConnectionStringEditorForm.fi.resx">
+      <DependentUpon>ConnectionStringEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Design\ConnectionStringEditorForm.resx">
+      <DependentUpon>ConnectionStringEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EDBCommand.resx">
+      <DependentUpon>EDBCommand.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EDBCommandBuilder.resx">
+      <DependentUpon>EDBCommandBuilder.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EDBConnection.resx">
+      <DependentUpon>EDBConnection.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
