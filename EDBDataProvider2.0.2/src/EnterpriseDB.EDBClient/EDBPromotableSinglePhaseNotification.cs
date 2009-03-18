@@ -24,6 +24,7 @@
 
 using System;
 using System.Transactions;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -36,7 +37,7 @@ namespace EnterpriseDB.EDBClient
         private IEDBResourceManager _rm;
         private bool _inTransaction;
 
-		private static readonly String CLASSNAME = "NpgsqlPromotableSinglePhaseNotification";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		public EDBPromotableSinglePhaseNotification(EDBConnection connection)
 		{

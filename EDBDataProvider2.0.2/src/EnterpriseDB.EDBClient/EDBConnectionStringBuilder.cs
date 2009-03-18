@@ -60,6 +60,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Resources;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 
@@ -67,7 +68,7 @@ namespace EnterpriseDB.EDBClient
 	public sealed class EDBConnectionStringBuilder : DbConnectionStringBuilder
 
 	{
-		private static readonly ResourceManager resman = new ResourceManager(typeof (EDBConnectionStringBuilder));
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
 		private static readonly Dictionary<Keywords, object> defaults = new Dictionary<Keywords, object>();
 
@@ -121,6 +122,7 @@ namespace EnterpriseDB.EDBClient
 
 			defaults.Add(Keywords.UseExtendedTypes, false);
             defaults.Add(Keywords.IntegratedSecurity, false);
+            defaults.Add(Keywords.Compatible, THIS_VERSION);
 		}
 
 
@@ -565,6 +567,23 @@ namespace EnterpriseDB.EDBClient
             set { SetValue(GetKeyName(Keywords.IntegratedSecurity), value); }
         }
 
+        private Version _compatible;
+        private static readonly Version THIS_VERSION = MethodBase.GetCurrentMethod().DeclaringType.Assembly.GetName().Version;
+        /// <summary>
+        /// Compatibilty version. When possible, behaviour caused by breaking changes will be preserved
+        /// if this version is less than that where the breaking change was introduced.
+        /// </summary>
+        public Version Compatible
+        {
+            get
+            {
+                return _compatible;
+            }
+            set
+            {
+                SetValue(GetKeyName(Keywords.Compatible), value);
+            }
+        }
 		#endregion
 
 		private static Keywords GetKey(string key)
@@ -919,6 +938,13 @@ namespace EnterpriseDB.EDBClient
                     case Keywords.IntegratedSecurity:
                         this._integrated_security = ToIntegratedSecurity(value);
                         break;
+
+                    case Keywords.Compatible:
+                        Version ver = new Version(value.ToString());
+                        if (ver > THIS_VERSION)
+                            throw new ArgumentException("Attempt to set compatibility with version " + value + " when using version " + THIS_VERSION);
+                        _compatible = ver;
+                        break;
 				}
 			}
 
@@ -1038,7 +1064,8 @@ namespace EnterpriseDB.EDBClient
 		PreloadReader,
 
 		UseExtendedTypes,
-        IntegratedSecurity
+        IntegratedSecurity,
+        Compatible
 	}
 
 

@@ -45,7 +45,7 @@ namespace EnterpriseDB.EDBClient
 	internal static class PGUtil
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "PGUtil";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 		internal static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 		//TODO: What should this value be?
 		//There is an obvious balancing act in setting this value. The larger the value, the fewer times
@@ -322,7 +322,9 @@ namespace EnterpriseDB.EDBClient
 
 			EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, the_string);
 
-			network_stream.Write(ENCODING_UTF8.GetBytes(the_string + '\x00'), 0, ENCODING_UTF8.GetByteCount(the_string) + 1);
+            byte[] bytes = ENCODING_UTF8.GetBytes(the_string + '\x00');
+
+            network_stream.Write(bytes, 0, bytes.Length);
 		}
 
 		///<summary>
@@ -486,6 +488,14 @@ namespace EnterpriseDB.EDBClient
 		{
 			return (val << shift) | (val >> (sizeof (int) - shift));
 		}
+        public static StringBuilder TrimStringBuilder(StringBuilder sb)
+        {
+            while (sb.Length != 0 && char.IsWhiteSpace(sb[0]))
+                sb.Remove(0, 1);
+            while (sb.Length != 0 && char.IsWhiteSpace(sb[sb.Length - 1]))
+                sb.Remove(sb.Length - 1, 1);
+            return sb;
+        }
 	}
 
 	/// <summary>

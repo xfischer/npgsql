@@ -32,6 +32,7 @@ using System.Data.Common;
 using System.IO;
 using System.Resources;
 using System.Runtime.Serialization;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -44,8 +45,8 @@ namespace EnterpriseDB.EDBClient
 		private readonly IList errors;
 
 		// Logging related values
-		//private static readonly String CLASSNAME = "EDBException";
-		private static readonly ResourceManager resman = new ResourceManager(typeof (EDBException));
+        //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
 		// To allow deserialization.
 		private EDBException(SerializationInfo info, StreamingContext context)

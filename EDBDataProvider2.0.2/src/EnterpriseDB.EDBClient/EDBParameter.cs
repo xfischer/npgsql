@@ -33,6 +33,7 @@ using System.Data;
 using System.Data.Common;
 using System.Resources;
 using EDBTypes;
+using System.Reflection;
 
 #if WITHDESIGN
 using Npgsql.Design;
@@ -50,7 +51,7 @@ namespace EnterpriseDB.EDBClient
     public sealed class EDBParameter : DbParameter, ICloneable
     {
         // Logging related values
-        private static readonly String CLASSNAME = "NpgsqlParameter";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
         // Fields to implement IDbDataParameter interface.
         private byte precision = 0;
@@ -68,7 +69,7 @@ namespace EnterpriseDB.EDBClient
         private DataRowVersion source_version = DataRowVersion.Current;
         private Object value = DBNull.Value;
         private Boolean sourceColumnNullMapping;
-        private readonly ResourceManager resman;
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
         private Boolean useCast = false;
 
@@ -77,7 +78,6 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public EDBParameter()
         {
-            resman = new ResourceManager(this.GetType());
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
             //type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
         }
@@ -98,7 +98,6 @@ namespace EnterpriseDB.EDBClient
         /// </remarks>
         public EDBParameter(String parameterName, object value)
         {
-            resman = new ResourceManager(this.GetType());
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, parameterName, value);
 
             this.ParameterName = parameterName;
@@ -163,7 +162,6 @@ namespace EnterpriseDB.EDBClient
         /// <param m_Name="sourceColumn">The m_Name of the source column.</param>
         public EDBParameter(String parameterName, EDBDbType parameterType, Int32 size, String sourceColumn)
         {
-            resman = new ResourceManager(this.GetType());
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, parameterName, parameterType, size, source_column);
 
@@ -206,7 +204,6 @@ namespace EnterpriseDB.EDBClient
                                ParameterDirection direction, bool isNullable, byte precision, byte scale,
                                DataRowVersion sourceVersion, object value)
         {
-            resman = new ResourceManager(this.GetType());
 
             this.ParameterName = parameterName;
             this.Size = size;
@@ -578,7 +575,9 @@ namespace EnterpriseDB.EDBClient
         /// is a copy of the current instance.
         /// </summary>
         /// <returns>A new <see cref="Npgsql.EDBParameter">EDBParameter</see> that is a copy of this instance.</returns>
-        object ICloneable.Clone()
+        /// 
+
+        public EDBParameter Clone()
         {
             // use fields instead of properties
             // to avoid auto-initializing something like type_info
@@ -596,6 +595,10 @@ namespace EnterpriseDB.EDBClient
             clone.sourceColumnNullMapping = sourceColumnNullMapping;
 
             return clone;
+        }
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
         public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)
         {

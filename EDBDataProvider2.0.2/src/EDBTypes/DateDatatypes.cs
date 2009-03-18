@@ -924,43 +924,45 @@ namespace EDBTypes
 		/// <returns>The <see cref="String"/> representation.</returns>
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder();
-			if (Months != 0)
-			{
-				sb.Append(Months).Append(Math.Abs(Months) == 1 ? " mon " : " mons ");
-			}
-			if (Days != 0)
-			{
-				if (Months < 0 && Days > 0)
-				{
-					sb.Append('+');
-				}
-				sb.Append(Days).Append(Math.Abs(Days) == 1 ? " day " : " days ");
-			}
-			if (Ticks != 0 || sb.Length == 0)
-			{
-				if (Days < 0 || (Days == 0 && Months < 0))
-				{
-					sb.Append('+');
-				}
-				TimeSpan time = Time;
-				sb.Append(time.Hours.ToString("D2")).Append(':').Append(time.Minutes.ToString("D2")).Append(':').Append(
-					time.Seconds.ToString("D2"));
-				long remainingTicks = Math.Abs(Ticks)%TicksPerSecond;
-				if (remainingTicks != 0)
-				{
-					while (remainingTicks%10 == 0)
-					{
-						remainingTicks /= 10;
-					}
-					sb.Append('.').Append(remainingTicks);
-				}
-			}
-			if (sb[sb.Length - 1] == ' ')
-			{
-				sb.Remove(sb.Length - 1, 1);
-			}
-			return sb.ToString();
+            StringBuilder sb = new StringBuilder();
+            if (Months != 0)
+            {
+                sb.Append(Months).Append(Math.Abs(Months) == 1 ? " mon " : " mons ");
+            }
+            if (Days != 0)
+            {
+                if (Months < 0 && Days > 0)
+                {
+                    sb.Append('+');
+                }
+                sb.Append(Days).Append(Math.Abs(Days) == 1 ? " day " : " days ");
+            }
+            if (Ticks != 0 || sb.Length == 0)
+            {
+                if (Ticks < 0)
+                {
+                    sb.Append('-');
+                }
+                else if (Days < 0 || (Days == 0 && Months < 0))
+                {
+                    sb.Append('+');
+                }
+                sb.Append(Math.Abs(Hours).ToString("D2")).Append(':').Append(Math.Abs(Minutes).ToString("D2")).Append(':').Append(Math.Abs(Seconds).ToString("D2"));
+                long remainingTicks = Math.Abs(Ticks) % TicksPerSecond;
+                if (remainingTicks != 0)
+                {
+                    while (remainingTicks % 10 == 0)
+                    {
+                        remainingTicks /= 10;
+                    }
+                    sb.Append('.').Append(remainingTicks);
+                }
+            }
+            if (sb[sb.Length - 1] == ' ')
+            {
+                sb.Remove(sb.Length - 1, 1);
+            }
+            return sb.ToString();
 		}
 
 		#endregion

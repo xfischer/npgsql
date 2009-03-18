@@ -36,7 +36,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBCancelRequest : ClientMessage
 	{
 		// Logging related values
-		//private static readonly String CLASSNAME = "NpgsqlCancelRequest";
+        //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 
 		private static readonly Int32 CancelRequestMessageSize = 16;

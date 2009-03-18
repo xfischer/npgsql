@@ -62,6 +62,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EDBTypes\BitString.cs" />
     <Compile Include="EnterpriseDB.EDBClient\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

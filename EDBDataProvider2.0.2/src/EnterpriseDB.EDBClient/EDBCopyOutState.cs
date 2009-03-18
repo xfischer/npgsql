@@ -38,7 +38,7 @@ namespace EnterpriseDB.EDBClient
 	{
 		public static readonly EDBCopyOutState Instance = new EDBCopyOutState();
 
-		//private readonly String CLASSNAME = "NpgsqlCopyOutState";
+        //private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		private EDBCopyFormat _copyFormat = null;
 

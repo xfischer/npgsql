@@ -33,6 +33,7 @@ using System.Data.Common;
 using System.Text;
 using System.Threading;
 using EDBTypes;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -147,16 +148,22 @@ namespace EnterpriseDB.EDBClient
 			get { return GetValue(i); }
 		}
 
+        public bool HasOrdinal(string fieldName)
+        {
+            if (CurrentDescription == null)
+                throw new InvalidOperationException("Invalid attempt to read when no data is present.");
+            return CurrentDescription.HasOrdinal(fieldName);
+        }
+
+
 		/// <summary>
 		/// Return the column name of the column named <param name="Name"></param>.
 		/// </summary>
 		public override Int32 GetOrdinal(String Name)
 		{
-			if (CurrentDescription == null)
-			{
-				throw new IndexOutOfRangeException(); //Essentially, all indices are out of range.
-			}
-			return CurrentDescription.FieldIndex(Name);
+            if (CurrentDescription == null)
+                throw new InvalidOperationException("Invalid attempt to read when no data is present.");
+            return CurrentDescription.FieldIndex(Name);
 		}
 
 
@@ -193,6 +200,15 @@ namespace EnterpriseDB.EDBClient
 			EDBBackendTypeInfo TI;
 			return TryGetTypeInfo(Index, out TI) ? TI.NpgsqlDbType : EDBDbType.Text;
 		}
+
+        public BitString GetBitString(int i)
+        {
+            object ret = GetValue(i);
+            if (ret is bool)
+                return new BitString((bool)ret);
+            else
+                return (BitString)ret;
+        }
 
 		/// <summary>
 		/// Get the value of a column as a <see cref="EDBInterval"/>.
@@ -971,7 +987,7 @@ namespace EnterpriseDB.EDBClient
 		private EDBRow _pendingRow = null;
 
 		// Logging related values
-		private static readonly String CLASSNAME = "ForwardsOnlyDataReader";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		internal ForwardsOnlyDataReader(IEnumerable<IServerResponseObject> dataEnumeration, CommandBehavior behavior,
 		                                EDBCommand command, EDBConnector.NotificationThreadBlock threadBlock,
@@ -1005,7 +1021,7 @@ namespace EnterpriseDB.EDBClient
 				{
 					if (p.Direction == ParameterDirection.InputOutput || p.Direction == ParameterDirection.Output)
 					{
-						int idx = CurrentDescription.FieldIndex(p.CleanName);
+						int idx = CurrentDescription.TryFieldIndex(p.CleanName);
 						if (idx == -1)
 						{
 							pending.Enqueue(p);
@@ -1479,7 +1495,7 @@ namespace EnterpriseDB.EDBClient
 				{
 					if (p.Direction == ParameterDirection.InputOutput || p.Direction == ParameterDirection.Output)
 					{
-						int idx = CurrentDescription.FieldIndex(p.CleanName);
+						int idx = CurrentDescription.TryFieldIndex(p.CleanName);
 						if (idx == -1)
 						{
 							pending.Enqueue(p);

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.Common.CommandTrees;
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     internal class SqlInsertGenerator : SqlBaseGenerator
 	{
@@ -37,7 +37,12 @@ namespace Npgsql.SqlGenerators
                     if (scan != null)
                     {
                         System.Data.Metadata.Edm.MetadataProperty metadata;
-                        if (scan.Target.MetadataProperties.TryGetValue("Schema", false, out metadata) && metadata.Value != null)
+                        string overrideSchema = "http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator:Schema";
+                        if (scan.Target.MetadataProperties.TryGetValue(overrideSchema, false, out metadata) && metadata.Value != null)
+                        {
+                            tableName = QuoteIdentifier(metadata.Value.ToString()) + "." + tableName;
+                        }
+                        else if (scan.Target.MetadataProperties.TryGetValue("Schema", false, out metadata) && metadata.Value != null)
                         {
                             tableName = QuoteIdentifier(metadata.Value.ToString()) + "." + tableName;
                         }

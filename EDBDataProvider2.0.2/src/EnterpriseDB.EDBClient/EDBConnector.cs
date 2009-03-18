@@ -134,6 +134,7 @@ namespace EnterpriseDB.EDBClient
         // Some kinds of messages only get one response, and do not
         // expect a ready_for_query response.
         private bool _requireReadyForQuery = true;
+        private bool? _useConformantStrings;
 
         private readonly Dictionary<string, EDBParameterStatus> _serverParameters =
             new Dictionary<string, EDBParameterStatus>(StringComparer.InvariantCultureIgnoreCase);
@@ -543,6 +544,14 @@ namespace EnterpriseDB.EDBClient
             get { return _oidToNameMapping; }
         }
 
+        internal Version CompatVersion
+        {
+            get
+            {
+                return settings.Compatible;
+            }
+        }
+
         /// <summary>
         /// The connection mediator.
         /// </summary>
@@ -939,6 +948,58 @@ namespace EnterpriseDB.EDBClient
         public IDictionary<string, EDBParameterStatus> ServerParameters
         {
             get { return new ReadOnlyDictionary<string, EDBParameterStatus>(_serverParameters); }
+        }
+
+        public string CheckParameter(string paramName)
+        {
+            EDBParameterStatus ps = null;
+            if (_serverParameters.TryGetValue(paramName, out ps))
+                return ps.ParameterValue;
+            try
+            {
+                using (EDBCommand cmd = new EDBCommand("show " + paramName, this))
+                {
+                    string paramValue = (string)cmd.ExecuteScalar();
+                    AddParameterStatus(new EDBParameterStatus(paramName, paramValue));
+                    return paramValue;
+                }
+            }
+            catch (EDBException ne)
+            {
+                if (ne.Code == "42704")//unrecognized configuration parameter
+                    return null;
+                else
+                    throw;
+            }
+        }
+        private bool CheckStringConformanceRequirements()
+        {
+            //If standards_conforming_strings is "on" then postgres will handle \ in strings differently to how we expect, unless
+            //an escaped-string literal is use (E'example\n' rather than 'example\n'. At time of writing this defaults
+            //to "off", but documentation says this will change to default "on" in the future, and it can still be "on" now.
+            //escape_string_warning being "on" (current default) will result in a warning, but not an error, on every such
+            //string, which is not ideal.
+            //On the other hand, earlier versions of postgres do not have the escaped-literal syntax and will error if it
+            //is used. Version numbers could be checked, but here the approach taken is to check on what the server is
+            //explicitly requesting.
+
+            EDBParameterStatus warning = null;
+            if (_serverParameters.TryGetValue("escape_string_warning", out warning) && warning.ParameterValue == "on")//try the most commonly set at time of coding first
+                return true;
+            EDBParameterStatus insist = null;
+            if (_serverParameters.TryGetValue("standard_conforming_strings", out insist) && insist.ParameterValue == "on")
+                return true;
+            if (warning != null && insist != null)//both where present and "off".
+                return false;
+            //We need to check at least one of these on the server.
+            return CheckParameter("standard_conforming_strings") == "on" || CheckParameter("escape_string_warning") == "on";
+        }
+        public bool UseConformantStrings
+        {
+            get
+            {
+                return _useConformantStrings ?? (_useConformantStrings = CheckStringConformanceRequirements()).Value;
+            }
         }
     }
 }

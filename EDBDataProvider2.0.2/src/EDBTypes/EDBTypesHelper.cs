@@ -32,6 +32,7 @@ using System.Net;
 using System.Resources;
 using System.Text;
 using EnterpriseDB.EDBClient;
+using System.Reflection;
 
 namespace EDBTypes
 {
@@ -42,19 +43,24 @@ namespace EDBTypes
 	internal abstract class EDBTypesHelper
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "NpgsqlTypesHelper";
-		private static ResourceManager resman = new ResourceManager(typeof (EDBTypesHelper));
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
 		private struct MappingKey : IEquatable<MappingKey>
 		{
 			public readonly Version Version;
 			public readonly bool UseExtendedTypes;
 
-			public MappingKey(Version version, bool useExtendedTypes)
+			/*public MappingKey(Version version, bool useExtendedTypes)
 			{
 				this.Version = version;
 				this.UseExtendedTypes = useExtendedTypes;
-			}
+			}*/
+            public MappingKey(EDBConnector conn)
+            {
+                Version = conn.ServerVersion;
+                UseExtendedTypes = conn.UseExtendedTypes;
+            }
 
 			public bool Equals(MappingKey other)
 			{
@@ -280,15 +286,18 @@ namespace EDBTypes
 
 			nativeTypeMapping.AddTypeAlias("bytea", typeof (Byte[]));
 
-			nativeTypeMapping.AddType("bit", EDBDbType.Bit, DbType.Boolean, false,
-			                          new ConvertNativeToBackendHandler(BasicNativeToBackendTypeConverter.ToBit));
+            nativeTypeMapping.AddType("bit", EDBDbType.Bit, DbType.Object, false,
+                                      new ConvertNativeToBackendHandler(BasicNativeToBackendTypeConverter.ToBit));
+
+            nativeTypeMapping.AddTypeAlias("bit", typeof(BitString));
+
 
 			nativeTypeMapping.AddType("bool", EDBDbType.Boolean, DbType.Boolean, false,
 			                          new ConvertNativeToBackendHandler(BasicNativeToBackendTypeConverter.ToBoolean));
 
 			nativeTypeMapping.AddTypeAlias("bool", typeof (Boolean));
 
-			nativeTypeMapping.AddType("int2", EDBDbType.Smallint, DbType.Int16, false, null);
+            nativeTypeMapping.AddType("int2", EDBDbType.Smallint, DbType.Int16, false, BasicNativeToBackendTypeConverter.ToBasicType<short>);
 
 			nativeTypeMapping.AddTypeAlias("int2", typeof (Int16));
 
@@ -296,23 +305,23 @@ namespace EDBTypes
 
 			nativeTypeMapping.AddTypeAlias("int2", typeof (Byte));
 
-			nativeTypeMapping.AddType("int4", EDBDbType.Integer, DbType.Int32, false, null);
+            nativeTypeMapping.AddType("int4", EDBDbType.Integer, DbType.Int32, false, BasicNativeToBackendTypeConverter.ToBasicType<int>);
 
 			nativeTypeMapping.AddTypeAlias("int4", typeof (Int32));
 
-			nativeTypeMapping.AddType("int8", EDBDbType.Bigint, DbType.Int64, false, null);
+            nativeTypeMapping.AddType("int8", EDBDbType.Bigint, DbType.Int64, false, BasicNativeToBackendTypeConverter.ToBasicType<long>);
 
 			nativeTypeMapping.AddTypeAlias("int8", typeof (Int64));
 
-			nativeTypeMapping.AddType("float4", EDBDbType.Float, DbType.Single, true, null);
+            nativeTypeMapping.AddType("float4", EDBDbType.Float, DbType.Single, true, BasicNativeToBackendTypeConverter.ToBasicType<float>);
 
 			nativeTypeMapping.AddTypeAlias("float4", typeof (Single));
 
-			nativeTypeMapping.AddType("float8", EDBDbType.Double, DbType.Double, true, null);
+            nativeTypeMapping.AddType("float8", EDBDbType.Double, DbType.Double, true, BasicNativeToBackendTypeConverter.ToBasicType<double>);
 
 			nativeTypeMapping.AddTypeAlias("float8", typeof (Double));
 
-			nativeTypeMapping.AddType("numeric", EDBDbType.Numeric, DbType.Decimal, true, null);
+            nativeTypeMapping.AddType("numeric", EDBDbType.Numeric, DbType.Decimal, true, BasicNativeToBackendTypeConverter.ToBasicType<decimal>);
 
 			nativeTypeMapping.AddTypeAlias("numeric", typeof (Decimal));
 
@@ -423,7 +432,7 @@ namespace EDBTypes
 				                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToBinary));
 
 			yield return
-				new EDBBackendTypeInfo(0, "bit", EDBDbType.Bit, DbType.Boolean, typeof (Boolean),
+                new EDBBackendTypeInfo(0, "bit", EDBDbType.Bit, DbType.Object, typeof(BitString),
 				                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToBit));
 
 			yield return
@@ -542,35 +551,50 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 		/// effect another connection.</returns>
 		public static EDBBackendTypeMapping CreateAndLoadInitialTypesMapping(EDBConnector conn)
 		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "LoadTypesMapping");
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "LoadTypesMapping");
 
-			// [TODO] Verify another way to get higher concurrency.
-			lock (CLASSNAME)
-			{
-				// Check the cache for an initial types map.
-				EDBBackendTypeMapping oidToNameMapping = null;
+            MappingKey key = new MappingKey(conn);
+            // Check the cache for an initial types map.
+            EDBBackendTypeMapping oidToNameMapping = null;
 
-				if (
-					BackendTypeMappingCache.TryGetValue(new MappingKey(conn.ServerVersion, conn.UseExtendedTypes), out oidToNameMapping))
-				{
-					return oidToNameMapping;
-				}
+            if (BackendTypeMappingCache.TryGetValue(key, out oidToNameMapping))
+                return oidToNameMapping;
 
-				// Not in cache, create a new one.
-				oidToNameMapping = new EDBBackendTypeMapping();
+            // Not in cache, create a new one.
+            oidToNameMapping = new EDBBackendTypeMapping();
 
-				// Create a list of all natively supported postgresql data types.
+            // Create a list of all natively supported postgresql data types.
 
-				// Attempt to map each type info in the list to an OID on the backend and
-				// add each mapped type to the new type mapping object.
-				LoadTypesMappings(conn, oidToNameMapping, TypeInfoList(conn.UseExtendedTypes));
+            // Attempt to map each type info in the list to an OID on the backend and
+            // add each mapped type to the new type mapping object.
+            LoadTypesMappings(conn, oidToNameMapping, TypeInfoList(conn.UseExtendedTypes));
 
-				// Add this mapping to the per-server-version cache so we don't have to
-				// do these expensive queries on every connection startup.
-				BackendTypeMappingCache.Add(new MappingKey(conn.ServerVersion, conn.UseExtendedTypes), oidToNameMapping);
-
-				return oidToNameMapping;
-			}
+            //We hold the lock for the least time possible on the least scope possible.
+            //We must lock on BackendTypeMappingCache because it will be updated by this operation,
+            //and we must not just add to it, but also check that another thread hasn't updated it
+            //in the meantime. Strictly just doing :
+            //return BackendTypeMappingCache[key] = oidToNameMapping;
+            //as the only call within the locked section should be safe and correct, but we'll assume
+            //there's some subtle problem with temporarily having two copies of the same mapping and
+            //ensure only one is called.
+            //It is of course wasteful that multiple threads could be creating mappings when only one
+            //will be used, but we aim for better overall concurrency at the risk of causing some
+            //threads the extra work.
+            EDBBackendTypeMapping mappingCheck = null;
+            //First check without acquiring the lock; don't lock if we don't have to.
+            if (BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
+                return mappingCheck;
+            lock (BackendTypeMappingCache)
+            {
+                //Final check. We have the lock now so if this fails it'll continue to fail.
+                if (BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
+                    return mappingCheck;
+                // Add this mapping to the per-server-version cache so we don't have to
+                // do these expensive queries on every connection startup.
+                BackendTypeMappingCache.Add(key, oidToNameMapping);
+            }
+            return oidToNameMapping;
+			
 		}
 
 		//Take a EDBBackendTypeInfo for a type and return the EDBBackendTypeInfo for

@@ -46,5 +46,10 @@ namespace EnterpriseDB.EDBClient
 			Parameter = PGUtil.ReadString(stream);
 			ParameterValue = PGUtil.ReadString(stream);
 		}
+        public EDBParameterStatus(string parameter, string parameterValue)
+        {
+            Parameter = parameter;
+            ParameterValue = parameterValue;
+        }
 	}
 }

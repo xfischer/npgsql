@@ -40,7 +40,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBParse : ClientMessage
 	{
 		// Logging related values
-		//private static readonly String CLASSNAME = "EDBParse";
+        //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		private readonly String _prepareName;
 		private readonly String _queryString;

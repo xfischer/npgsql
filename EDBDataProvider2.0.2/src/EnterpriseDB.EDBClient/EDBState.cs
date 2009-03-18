@@ -37,6 +37,7 @@ using System.Text;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -47,8 +48,8 @@ namespace EnterpriseDB.EDBClient
     internal abstract class EDBState
     {
         protected static readonly Encoding ENCODING_UTF8 = Encoding.UTF8;
-        private readonly String CLASSNAME = "NpgsqlState";
-        protected static ResourceManager resman = new ResourceManager(typeof (EDBState));
+        private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        protected readonly static ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
         
         
 
@@ -523,7 +524,7 @@ namespace EnterpriseDB.EDBClient
                             }
                             break;
                         case BackEndMessageCode.RowDescription:
-                            yield return lastRowDescription = new EDBRowDescriptionV2(stream, context.OidToNameMapping);
+                            yield return lastRowDescription = new EDBRowDescriptionV2(stream, context.OidToNameMapping,context.CompatVersion);
                             ;
                             break;
                         case BackEndMessageCode.DataRow:
@@ -803,7 +804,7 @@ namespace EnterpriseDB.EDBClient
                             }
                             break;
                         case BackEndMessageCode.RowDescription:
-                            lastRowDescription = new EDBRowDescriptionV3(stream, context.OidToNameMapping);
+                            lastRowDescription = new EDBRowDescriptionV3(stream, context.OidToNameMapping,context.CompatVersion);
                             /*
                              * EDBTeam:
                              * If command type is not procedure then return row description
@@ -982,7 +983,7 @@ namespace EnterpriseDB.EDBClient
                              */
                         case BackEndMessageCode.OutDescription:
                             EDBEventLog.LogMsg(resman, "Log_ProtocalMessage", LogLevel.Debug, "RowDescription");          
-                            rowOutDescription = new EDBRowOutDescriptionV3(stream, context.OidToNameMapping);
+                            rowOutDescription = new EDBRowOutDescriptionV3(stream, context.OidToNameMapping,context.CompatVersion);
                             break;
                         case BackEndMessageCode.ParamData:
                             EDBEventLog.LogMsg(resman, "Log_ProtocalMessage", LogLevel.Debug, "ParamData");          

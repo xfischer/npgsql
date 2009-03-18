@@ -27,6 +27,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -46,28 +47,31 @@ namespace EnterpriseDB.EDBClient
 
 		public override void WriteToStream(Stream outputStream)
 		{
-			//EDBEventLog.LogMsg( this.ToString() + _commandText, LogLevel.Debug  );
+            //EDBEventLog.LogMsg( this.ToString() + _commandText, LogLevel.Debug  );
 
 
-			String commandText = _command.GetCommandText();
+            StringBuilder commandText = _command.GetCommandText();
 
-			// Tell to mediator what command is being sent.
+            // Tell to mediator what command is being sent.
 
-			_command.Connector.Mediator.SqlSent = commandText;
+            _command.Connector.Mediator.SetSqlSent(commandText);
 
-			// Send the query to server.
-			// Write the byte 'Q' to identify a query message.
-			outputStream.WriteByte((byte) FrontEndMessageCode.Query);
+            // Send the query to server.
+            // Write the byte 'Q' to identify a query message.
+            outputStream.WriteByte((byte)FrontEndMessageCode.Query);
 
-			if (_protocolVersion == ProtocolVersion.Version3)
-			{
-				// Write message length. Int32 + string length + null terminator.
-				PGUtil.WriteInt32(outputStream, 4 + UTF8Encoding.GetByteCount(commandText) + 1);
-			}
+            //Work out the encoding of the string (null-terminated) once and take the length from having done so
+            //rather than doing so repeatedly.
+            byte[] bytes = UTF8Encoding.GetBytes(commandText.Append('\x00').ToString());
 
-			// Write the query. In this case it is the CommandText text.
-			// It is a string terminated by a C NULL character.
-			PGUtil.WriteString(commandText, outputStream);
+            if (_protocolVersion == ProtocolVersion.Version3)
+            {
+                // Write message length. Int32 + string length + null terminator.
+                PGUtil.WriteInt32(outputStream, 4 + bytes.Length);
+            }
+
+            outputStream.Write(bytes, 0, bytes.Length);
+
 		}
 	}
 }

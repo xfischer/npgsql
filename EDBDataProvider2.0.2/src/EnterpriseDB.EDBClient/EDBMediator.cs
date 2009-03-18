@@ -29,6 +29,7 @@
 using System;
 using System.IO;
 using System.Data;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -53,28 +54,30 @@ namespace EnterpriseDB.EDBClient
 		//
 		// Responses collected from the backend.
 		//
-		private String _sqlSent;
+        private StringBuilder _sqlSent;
 		private Int32 _commandTimeout;
 
 
 		public EDBMediator()
 		{
-			_sqlSent = String.Empty;
+            _sqlSent = new StringBuilder();
 			_commandTimeout = 20;
 		}
 
 		public void ResetResponses()
 		{
-			_sqlSent = String.Empty;
+            _sqlSent = new StringBuilder();
 			_commandTimeout = 20;
 		}
-
-		public String SqlSent
-		{
-			set { _sqlSent = value; }
-
-			get { return _sqlSent; }
-		}
+        public String SqlSent
+        {
+            get { return _sqlSent.Length != 0 && _sqlSent[_sqlSent.Length - 1] == '\x00' ? _sqlSent.ToString(0, _sqlSent.Length - 1) : _sqlSent.ToString(); }
+        }
+        public void SetSqlSent(StringBuilder sqlSent)
+        {
+            //We only use this if there is an error, so let's only get the string when that happens.
+            _sqlSent = sqlSent;
+        }
 
         public EDBParameterCollection Parameters
         {

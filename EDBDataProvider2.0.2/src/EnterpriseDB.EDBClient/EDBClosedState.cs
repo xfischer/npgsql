@@ -31,6 +31,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Mono.Security.Protocol.Tls;
+using System.Reflection;
 using SecurityProtocolType=Mono.Security.Protocol.Tls.SecurityProtocolType;
 
 namespace EnterpriseDB.EDBClient
@@ -38,7 +39,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBClosedState : EDBState
 	{
 		private static readonly EDBClosedState _instance = new EDBClosedState();
-		private static readonly String CLASSNAME = "NpgsqlClosedState";
+		private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 
 		private EDBClosedState()

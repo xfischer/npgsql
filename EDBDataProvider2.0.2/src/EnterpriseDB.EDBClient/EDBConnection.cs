@@ -35,6 +35,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Transactions;
 using Mono.Security.Protocol.Tls;
+using System.Reflection;
 using IsolationLevel = System.Data.IsolationLevel;
 
 #if WITHDESIGN
@@ -67,8 +68,8 @@ namespace EnterpriseDB.EDBClient
 	public sealed class EDBConnection : DbConnection, ICloneable
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "NpgsqlConnection";
-		private static readonly ResourceManager resman = new ResourceManager(typeof(EDBConnection));
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
 		// Parsed connection string cache
 		private static readonly Cache<EDBConnectionStringBuilder> cache = new Cache<EDBConnectionStringBuilder>();
@@ -394,6 +395,13 @@ namespace EnterpriseDB.EDBClient
             get
             {
                 return (FullState & ConnectionState.Open) == ConnectionState.Open ? ConnectionState.Open : ConnectionState.Closed;
+            }
+        }
+        public Version NpgsqlCompatibilityVersion
+        {
+            get
+            {
+                return settings.Compatible;
             }
         }
 

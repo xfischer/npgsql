@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -43,7 +44,7 @@ namespace EnterpriseDB.EDBClient
 
 		private static readonly EDBSync _syncMessage = new EDBSync();
 
-		private readonly String CLASSNAME = "NpgsqlReadyState";
+        private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		private EDBReadyState()
 			: base()

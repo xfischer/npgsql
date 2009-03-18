@@ -33,6 +33,7 @@ using System.Data.Common;
 using System.Resources;
 using System.Text;
 using System.Threading;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -41,8 +42,9 @@ namespace EnterpriseDB.EDBClient
     /// </summary>
     public sealed class EDBTransaction : DbTransaction
     {
-        private static readonly String CLASSNAME = "NpgsqlTransaction";
-        private static ResourceManager resman = new ResourceManager(typeof (EDBTransaction));
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
+
 
         private EDBConnection _conn = null;
         private readonly IsolationLevel _isolation = IsolationLevel.ReadCommitted;
@@ -55,7 +57,6 @@ namespace EnterpriseDB.EDBClient
 
         internal EDBTransaction(EDBConnection conn, IsolationLevel isolation)
         {
-            resman = new ResourceManager(this.GetType());
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
 

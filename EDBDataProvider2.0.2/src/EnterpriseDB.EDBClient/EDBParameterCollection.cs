@@ -36,6 +36,7 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Resources;
 using EDBTypes;
+using System.Reflection;
 
 #if WITHDESIGN
 
@@ -61,17 +62,16 @@ namespace EnterpriseDB.EDBClient
         private int return_index = -1;
 
 		// Logging related value
-		private static readonly String CLASSNAME = "NpgsqlParameterCollection";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		// Our resource manager
-		private readonly ResourceManager resman;
+        // Our resource manager
+        private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
 		/// <summary>
 		/// Initializes a new instance of the EDBParameterCollection class.
 		/// </summary>
 		internal EDBParameterCollection()
 		{
-			this.resman = new ResourceManager(this.GetType());
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
 		}
 
@@ -528,7 +528,7 @@ namespace EnterpriseDB.EDBClient
 			if (!(Object is EDBParameter))
 			{
 				throw new InvalidCastException(
-					String.Format(this.resman.GetString("Exception_WrongType"), Object.GetType()));
+					String.Format(resman.GetString("Exception_WrongType"), Object.GetType()));
 			}
 		}
 

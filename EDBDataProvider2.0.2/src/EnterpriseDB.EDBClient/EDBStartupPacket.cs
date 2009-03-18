@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -41,7 +42,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBStartupPacket : ClientMessage
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "NpgsqlStartupPacket";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		// Private fields.
 		private readonly Int32 packet_size;

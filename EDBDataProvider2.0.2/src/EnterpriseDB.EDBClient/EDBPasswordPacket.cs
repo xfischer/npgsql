@@ -30,6 +30,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -40,7 +41,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBPasswordPacket : ClientMessage
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "NpgsqlPasswordPacket";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		private readonly String password;
 		private readonly ProtocolVersion protocolVersion;

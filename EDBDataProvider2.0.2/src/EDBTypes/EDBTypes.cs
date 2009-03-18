@@ -381,9 +381,9 @@ namespace EDBTypes
         public bool Equals(EDBPath other)
         {
             if (Open != other.Open || Count != other.Count)
-            {
                 return false;
-            }
+            else if (ReferenceEquals(_points, other._points))//Short cut for shallow copies.
+                return true;
             for (int i = 0; i != Count; ++i)
             {
                 if (this[i] != other[i])
@@ -411,13 +411,13 @@ namespace EDBTypes
 
         public override int GetHashCode()
         {
-            int ret = 0;
+            int ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
             foreach (EDBPoint point in this)
             {
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
                 //but one that will be the same on subsequent calls.
-                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret%sizeof (int));
+                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret % sizeof(int));
             }
             return Open ? ret : -ret;
         }
@@ -508,9 +508,9 @@ namespace EDBTypes
         public bool Equals(EDBPolygon other)
         {
             if (Count != other.Count)
-            {
                 return false;
-            }
+            else if (ReferenceEquals(_points, _points))//Shortcut for copies of each other.
+                return true;
             for (int i = 0; i != Count; ++i)
             {
                 if (this[i] != other[i])
@@ -523,7 +523,7 @@ namespace EDBTypes
 
         public override bool Equals(object obj)
         {
-            return obj != null && obj is EDBPolygon && Equals((EDBPolygon) obj);
+            return obj is EDBPolygon && Equals((EDBPolygon)obj);
         }
 
         public static bool operator ==(EDBPolygon x, EDBPolygon y)
@@ -538,13 +538,13 @@ namespace EDBTypes
 
         public override int GetHashCode()
         {
-            int ret = 0;
+            int ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
             foreach (EDBPoint point in this)
             {
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
                 //but one that will be the same on subsequent calls.
-                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret%sizeof (int));
+                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret % sizeof(int));
             }
             return ret;
         }
@@ -571,7 +571,7 @@ namespace EDBTypes
 
         public override bool Equals(object obj)
         {
-            return obj != null && obj is EDBCircle && Equals((EDBCircle) obj);
+            return obj is EDBCircle && Equals((EDBCircle)obj);
         }
 
         public override String ToString()

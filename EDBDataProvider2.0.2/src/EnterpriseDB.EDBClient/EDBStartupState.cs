@@ -27,6 +27,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -34,7 +35,7 @@ namespace EnterpriseDB.EDBClient
 	{
 		public static readonly EDBStartupState Instance = new EDBStartupState();
 
-		private readonly String CLASSNAME = "NpgsqlStartupState";
+        private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		private EDBStartupState()
 			: base()

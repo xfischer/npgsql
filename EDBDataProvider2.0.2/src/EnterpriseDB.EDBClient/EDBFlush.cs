@@ -38,7 +38,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBFlush : ClientMessage
 	{
 		// Logging related values
-		//private static readonly String CLASSNAME = "EDBFlush";
+        //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		public override void WriteToStream(Stream outputStream)
 		{

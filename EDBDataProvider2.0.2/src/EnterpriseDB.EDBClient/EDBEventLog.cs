@@ -31,6 +31,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Resources;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -60,7 +61,7 @@ namespace EnterpriseDB.EDBClient
 	public class EDBEventLog
 	{
 		// Logging related values
-		private static readonly String CLASSNAME = "NpgsqlEventLog";
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 		private static String logfile;
 		private static LogLevel level;
 		private static Boolean echomessages;
