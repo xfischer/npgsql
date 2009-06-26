@@ -55,3 +55,8 @@ using System.Resources;
 // numbers with the '*' character (the default):
 
 [assembly : AssemblyVersion("8.3.0.106")]
+
+
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyFile("..\\..\\EnterpriseDB.EDBClient\\EDB.snk")]
+[assembly: AssemblyKeyName("")]
