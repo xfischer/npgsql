@@ -29,6 +29,25 @@ namespace DOTNET
                 "   END;";
 
             Command.ExecuteNonQuery();
+
+
+            Command.CommandText = "create table Quote(id int4, b char)";
+
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "create or replace procedure quoteproc(abc in integer)\n"
+                + "is\n"
+                + "declare\n"
+                + "i integer:=0;\n"
+                + "begin\n"
+                + "while i < abc loop\n"
+                + "insert into Quote values(1, 't');\n"
+                + "i := i+1;\n"
+                + "end loop;\n"
+                + "end;\n";
+
+            Command.ExecuteNonQuery();
+
         }
 
         [TearDown]
@@ -94,6 +113,53 @@ namespace DOTNET
             tran.Commit();
         }
 
+
+        [Test]
+        public void FB_12481()
+        {
+            EDBCommand com = new EDBCommand("", con);
+
+            com = new EDBCommand("quoteproc(:a)", con);
+            com.CommandType = CommandType.StoredProcedure;
+
+            /*
+             * Intentionally provided a short TimeOut value so that exception type 
+             * is to be verified. The right exception is EDBException.
+             */
+            com.CommandTimeout = 2;
+
+            com.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+            com.Parameters[0].Value = 2000000;
+            com.Prepare();
+
+            try
+            {
+                /*
+                 * Exception is thrown here ...
+                 */
+                com.ExecuteNonQuery();
+                Console.WriteLine("Data inserted");
+                DataSet ds = new DataSet();
+                Console.WriteLine("selecting data");
+                EDBDataAdapter da = new EDBDataAdapter("select * from Quote", con);
+                da.Fill(ds);
+                Console.WriteLine("selected data");
+                Console.WriteLine("filled data=" + ds.Tables[0].Rows.Count);
+
+                Console.WriteLine("Values selected");
+                com = new EDBCommand("drop procedure quoteproc", con);
+                com.ExecuteNonQuery();
+                GC.Collect();
+            }
+            catch (EDBException edbException)
+            {
+                Assert.IsTrue(true);
+            }
+            catch (Exception exp)
+            {
+                Assert.IsTrue(false);
+            }
+        }
 
     }
 
