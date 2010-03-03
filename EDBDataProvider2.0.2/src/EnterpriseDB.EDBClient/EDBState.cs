@@ -832,7 +832,7 @@ namespace EnterpriseDB.EDBClient
                              * if rowOutDescription is not null then the data row is always of function return value
                              * we need to save the return param value.
                              */
-                            if (rowOutDescription != null)
+                            if(context.Mediator.Type == CommandType.StoredProcedure)
                             {
                                 if (lastRowDescription[0].TypeOID == 1790)
                                     returnData = "fetch all in \"" + dataRow[0] + "\"";
@@ -993,16 +993,19 @@ namespace EnterpriseDB.EDBClient
                                 context.Mediator.Parameters.Insert(context.Mediator.Parameters.ReturnIndex, context.Mediator.Parameters.ReturnParam);
                                 context.Mediator.Parameters[context.Mediator.Parameters.ReturnIndex].Value = returnData;
                             }
-                            for (int i = 0; i < rowOutDescription.NumFields; i++)
+                            if (rowOutDescription != null)
                             {
-                                if (rowOutDescription[i].TypeOID == 1790)
+                                for (int i = 0; i < rowOutDescription.NumFields; i++)
                                 {
-                                    mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = "fetch all in \"" + paramDataRow[i] + "\"";
+                                    if (rowOutDescription[i].TypeOID == 1790)
+                                    {
+                                        mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = "fetch all in \"" + paramDataRow[i] + "\"";
+                                    }
+                                    else
+                                        mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = paramDataRow[i];
                                 }
-                                else
-                                    mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = paramDataRow[i];
+                                yield return paramDataRow;
                             }
-                            yield return paramDataRow;
                             break;
                         default:
                             // This could mean a number of things

@@ -40,15 +40,20 @@ namespace EnterpriseDB.EDBClient
 	{
 		private readonly int _messageSize;
 		private int? _nextFieldSize = null;
+        private int _readFields;
 
 		public StringRowReaderV3(EDBRowDescription rowDesc, Stream inputStream)
 			: base(rowDesc, inputStream)
 		{
 			_messageSize = PGUtil.ReadInt32(inputStream);
-			if (PGUtil.ReadInt16(inputStream) != rowDesc.NumFields)
-			{
-				throw new DataException();
-			}
+            _readFields  = PGUtil.ReadInt16(inputStream);
+            if (rowDesc != null)
+            {
+                if (_readFields != rowDesc.NumFields)
+                {
+                    throw new DataException();
+                }
+            }
 		}
 
 		protected override object ReadNext()

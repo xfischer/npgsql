@@ -19,7 +19,19 @@ namespace DOTNET
         {
             //write setup for following test cases
             con = TestUtil.openDB();
+            
 
+        }
+
+        [TearDown]
+        public void Dispose()
+        {
+            TestUtil.closeDB(con);
+        }
+
+        [Test]
+        public void FB_11665()
+        {
             EDBCommand Command = new EDBCommand("", con);
 
             Command.CommandText = "CREATE OR REPLACE FUNCTION surname(a IN INTEGER, b IN VARCHAR2) RETURN VARCHAR2 \n" +
@@ -48,21 +60,8 @@ namespace DOTNET
 
             Command.ExecuteNonQuery();
 
-        }
 
-        [TearDown]
-        public void Dispose()
-        {
-            EDBCommand Command = new EDBCommand("", con);
-            Command.CommandType = CommandType.Text;
-            Command.CommandText = "DROP FUNCTION surname(integer, varchar2)";
-            Command.ExecuteNonQuery();
-            TestUtil.closeDB(con);
-        }
 
-        [Test]
-        public void FB_11665()
-        {
             EDBTransaction tran = con.BeginTransaction();
 
             EDBCommand edbFunctionCmd = new EDBCommand("surname(:parameter1,:parameter2)", con);
@@ -111,12 +110,45 @@ namespace DOTNET
             Assert.AreEqual("Chief Justice: Iftikhar Choudhry", edbFunctionCmd.Parameters[2].Value.ToString());
             result.Close();
             tran.Commit();
+
+            Command.CommandText = "DROP FUNCTION surname(integer, varchar2)";
+            Command.ExecuteNonQuery();
+            Command.CommandText = "DROP table quote";
+            Command.ExecuteNonQuery();
+
         }
 
 
         [Test]
         public void FB_12481()
         {
+
+            EDBCommand Command = new EDBCommand("", con);
+            Command.CommandText = "CREATE OR REPLACE FUNCTION surname(a IN INTEGER, b IN VARCHAR2) RETURN VARCHAR2 \n" +
+                "   IS\n" +
+                "   BEGIN" +
+                "	RETURN ('Chief Justice: ' || b || ' Choudhry');" +
+                "   END;";
+
+            Command.ExecuteNonQuery();
+            Command.CommandText = "create table Quote(id int4, b char)";
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "create or replace procedure quoteproc(abc in integer)\n"
+                + "is\n"
+                + "declare\n"
+                + "i integer:=0;\n"
+                + "begin\n"
+                + "while i < abc loop\n"
+                + "insert into Quote values(1, 't');\n"
+                + "i := i+1;\n"
+                + "end loop;\n"
+                + "end;\n";
+
+            Command.ExecuteNonQuery();
+
+            
+            
             EDBCommand com = new EDBCommand("", con);
 
             com = new EDBCommand("quoteproc(:a)", con);
@@ -129,7 +161,7 @@ namespace DOTNET
             com.CommandTimeout = 2;
 
             com.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
-            com.Parameters[0].Value = 2000000;
+            com.Parameters[0].Value = 200;
             com.Prepare();
 
             try
@@ -150,6 +182,12 @@ namespace DOTNET
                 com = new EDBCommand("drop procedure quoteproc", con);
                 com.ExecuteNonQuery();
                 GC.Collect();
+                Command.CommandText = "DROP FUNCTION surname(integer, varchar2)";
+                Command.ExecuteNonQuery();
+                Command.CommandText = "DROP table quote";
+                Command.ExecuteNonQuery();
+
+
             }
             catch (EDBException edbException)
             {

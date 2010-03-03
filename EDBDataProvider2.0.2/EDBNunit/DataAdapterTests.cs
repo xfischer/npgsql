@@ -369,7 +369,7 @@ namespace DOTNET
             			
 			com=new EDBCommand("quoteproc(:a)",_conn);
 			com.CommandType=CommandType.StoredProcedure;
-            com.CommandTimeout = 120;
+            com.CommandTimeout = 1500;
 			
 			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
 			com.Parameters[0].Value=1000000;
@@ -417,10 +417,9 @@ namespace DOTNET
 			
 			com=new EDBCommand("quoteproc(:a)",_conn);
 			com.CommandType=CommandType.StoredProcedure;
-            com.CommandTimeout = 60;
-			
+            com.CommandTimeout = 1500;		
 			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
-			com.Parameters[0].Value=2000000;
+			com.Parameters[0].Value=1000000;
 			com.Prepare();
 			com.ExecuteNonQuery();
 			
