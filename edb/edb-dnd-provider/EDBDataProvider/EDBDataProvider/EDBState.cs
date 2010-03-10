@@ -596,6 +596,7 @@ namespace EnterpriseDB.EDBClient
 						rd.ReadFromStream(stream, context.Encoding, context.OidToNameMapping);
 						//System.Windows.Forms.MessageBox.Show("In Row Description: Col Count="+rd.NumFields.ToString());
 						mediator.AddRowDescription(rd);
+                        erd = mediator.LastRowDescription;
 					
 					}
 

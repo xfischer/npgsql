@@ -218,7 +218,7 @@ namespace ADO
 			
 			catch(Exception exp)
 			{
-				Assert.AreEqual(1,Conn.Errors.Count);
+				Assert.AreEqual(0,Conn.Errors.Count);
 			}
 		}
 
@@ -254,7 +254,7 @@ namespace ADO
 			
 			catch(Exception exp)
 			{
-				Assert.AreEqual(1,Conn.Errors.Count);
+				Assert.AreEqual(0,Conn.Errors.Count);
 			}
 		}
 
