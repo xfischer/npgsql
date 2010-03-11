@@ -2658,11 +2658,6 @@ namespace DOTNET
                 com.CommandType = CommandType.Text;
 
 
-                com.CommandText = "drop table TestCursorTable;";
-
-                com.ExecuteNonQuery();
-
-
 
                 string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
 
