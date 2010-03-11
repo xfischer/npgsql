@@ -787,104 +787,107 @@ namespace EnterpriseDB.EDBClient
 					//EDBAsciiRow asciiRow = new EDBAsciiRow(context.Mediator.LastRowDescription, context.BackendProtocolVersion);
 					EDBAsciiRow asciiRowout = new EDBAsciiRow(erd, context.BackendProtocolVersion);
 					asciiRowout.ReadFromStreamParamData(stream, context.Encoding);
-					EDBAsciiRow row;
-					if (mediator.size() ==0)// if  Row count is zero then param data messeges return zero 
-					{
-						mediator.AddAsciiRow(asciiRowout);		//So asciiRowOut is only data so add that 
-																//in mediator 
-						row= asciiRowout;
-					}
-					else
-					{
-						row = mediator.getLastAsciiRow();	// if param data return data row then add outdata row
-															//in that row									
-						int count = asciiRowout.size();
-						for(int i=0;i<count;i++)
-						{
-							
-								row.AddData(asciiRowout.GetData(i));
-							
-						}
-					}
-					//Code to arrange the parameter on their indexes set by client application  
-					
-					
-					
-					    EDBRowDescriptionFieldData[] descriptions;
-						if(mediator.GetParameters().GetReturnParam()!=null)
-							descriptions =new EDBRowDescriptionFieldData[mediator.GetParameters().Count + (mediator.GetParameters().GetReturnParam().Value==null?0:1)];						
-						else descriptions =new EDBRowDescriptionFieldData[mediator.GetParameters().Count ];						
-						Object[] data = new Object[descriptions.Length];
-						EDBParameterCollection parms = mediator.GetParameters();
-						for(int i=0;i < erd.NumFields;i++)						
-						{							
-							EDBRowDescriptionFieldData efd = erd.GetField(i);
+					EDBAsciiRow row = null;
+                    if (erd.NumFields > 0)
+                    {
+                        if (mediator.size() == 0)// if  Row count is zero then param data messeges return zero 
+                        {
+                            mediator.AddAsciiRow(asciiRowout);		//So asciiRowOut is only data so add that 
+                            //in mediator 
+                            row = asciiRowout;
+                        }
+                        else
+                        {
+                            row = mediator.getLastAsciiRow();	// if param data return data row then add outdata row
+                            //in that row									
+                            int count = asciiRowout.size();
+                            for (int i = 0; i < count; i++)
+                            {
 
-							if(efd.ReturingIndex==-1)
-							{
-								int ri = parms.getReturnIndex();
-								if(ri>=0)
-								{
-									descriptions[ri] = efd;
-									
-									if(efd.type_oid==1790 && row.GetData(i) != DBNull.Value )//if it is a refcursor, fetch all records
-									{
-										EDBCommand cmd = new EDBCommand("fetch all in \""+ row.GetData(i).ToString()+"\"",context);
-										EDBDataReader rst =  cmd.ExecuteReader();
-										data[ri] = rst;
-									}
-									else
-									{
-										data[ri] = row.GetData(i);
-									}
-								}
-							}
-							else
-							{
-								descriptions[efd.ReturingIndex] = efd;								
-								if(efd.type_oid==1790 && row.GetData(i) != DBNull.Value )//if it is a refcursor, fetch all records
-								{
-									EDBCommand cmd = new EDBCommand("fetch all in \""+ row.GetData(i).ToString()+"\"", context);
-									EDBDataReader rst =  cmd.ExecuteReader();							
-									data[efd.ReturingIndex] = rst;									
-								}
-								else
-								{
-									data[efd.ReturingIndex] = row.GetData(i);
-								}
-							}
-						}						
-						EDBRowDescription eds = new EDBRowDescription(context.BackendProtocolVersion);
-						EDBAsciiRow erow = new EDBAsciiRow(eds, context.BackendProtocolVersion);						
-						if(parms.getReturnIndex()!=-1)
-							parms.Insert(parms.getReturnIndex(),parms.GetReturnParam());
-						for(int i=0;i<descriptions.Length;i++)
-						{							
-							EDBParameter p = parms.GetParameter(i);
-							if(descriptions[i] == null)
-							{
-								EDBRowDescriptionFieldData fd = new EDBRowDescriptionFieldData();
-								fd.name = p.ParameterName;
-								fd.table_oid = 0;
-								fd.column_attribute_number = 0;
-								fd.type_modifier = 0;
-								fd.format_code = 0;
-								fd.ReturingIndex = (short)i;
-								descriptions[i]=fd;
-								data[i]=p.Value;
-							}
-							eds.AddField(descriptions[i]);
+                                row.AddData(asciiRowout.GetData(i));
 
-							 erow.AddData(data[i]);
-						}																		
-						mediator.ReplaceRowDescription(eds);
-						mediator.ReplaceDataRow(erow);
+                            }
+                        }
+                        //Code to arrange the parameter on their indexes set by client application  
 
-						mediator.UpdateCompletedResponse();
-						for(int i=0;i<data.Length;i++)
-						{
-							parms.GetParameter(i).Value=data[i];
-						}										
+
+
+                        EDBRowDescriptionFieldData[] descriptions;
+                        if (mediator.GetParameters().GetReturnParam() != null)
+                            descriptions = new EDBRowDescriptionFieldData[mediator.GetParameters().Count + (mediator.GetParameters().GetReturnParam().Value == null ? 0 : 1)];
+                        else descriptions = new EDBRowDescriptionFieldData[mediator.GetParameters().Count];
+                        Object[] data = new Object[descriptions.Length];
+                        EDBParameterCollection parms = mediator.GetParameters();
+                        for (int i = 0; i < erd.NumFields; i++)
+                        {
+                            EDBRowDescriptionFieldData efd = erd.GetField(i);
+
+                            if (efd.ReturingIndex == -1)
+                            {
+                                int ri = parms.getReturnIndex();
+                                if (ri >= 0)
+                                {
+                                    descriptions[ri] = efd;
+
+                                    if (efd.type_oid == 1790 && row.GetData(i) != DBNull.Value)//if it is a refcursor, fetch all records
+                                    {
+                                        EDBCommand cmd = new EDBCommand("fetch all in \"" + row.GetData(i).ToString() + "\"", context);
+                                        EDBDataReader rst = cmd.ExecuteReader();
+                                        data[ri] = rst;
+                                    }
+                                    else
+                                    {
+                                        data[ri] = row.GetData(i);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                descriptions[efd.ReturingIndex] = efd;
+                                if (efd.type_oid == 1790 && row.GetData(i) != DBNull.Value)//if it is a refcursor, fetch all records
+                                {
+                                    EDBCommand cmd = new EDBCommand("fetch all in \"" + row.GetData(i).ToString() + "\"", context);
+                                    EDBDataReader rst = cmd.ExecuteReader();
+                                    data[efd.ReturingIndex] = rst;
+                                }
+                                else
+                                {
+                                    data[efd.ReturingIndex] = row.GetData(i);
+                                }
+                            }
+                        }
+                        EDBRowDescription eds = new EDBRowDescription(context.BackendProtocolVersion);
+                        EDBAsciiRow erow = new EDBAsciiRow(eds, context.BackendProtocolVersion);
+                        if (parms.getReturnIndex() != -1)
+                            parms.Insert(parms.getReturnIndex(), parms.GetReturnParam());
+                        for (int i = 0; i < descriptions.Length; i++)
+                        {
+                            EDBParameter p = parms.GetParameter(i);
+                            if (descriptions[i] == null)
+                            {
+                                EDBRowDescriptionFieldData fd = new EDBRowDescriptionFieldData();
+                                fd.name = p.ParameterName;
+                                fd.table_oid = 0;
+                                fd.column_attribute_number = 0;
+                                fd.type_modifier = 0;
+                                fd.format_code = 0;
+                                fd.ReturingIndex = (short)i;
+                                descriptions[i] = fd;
+                                data[i] = p.Value;
+                            }
+                            eds.AddField(descriptions[i]);
+
+                            erow.AddData(data[i]);
+                        }
+                        mediator.ReplaceRowDescription(eds);
+                        mediator.ReplaceDataRow(erow);
+
+                        mediator.UpdateCompletedResponse();
+                        for (int i = 0; i < data.Length; i++)
+                        {
+                            parms.GetParameter(i).Value = data[i];
+                        }
+                    }					
 				}
 
 						// Now wait for CompletedResponse message.
