@@ -41,7 +41,7 @@ using System.Resources;
 [assembly : AssemblyDescription(".Net Data Provider for EnterpriseDB")]
 [assembly : AssemblyConfiguration("")]
 [assembly : AssemblyCompany("EnterpriseDB")]
-[assembly : AssemblyProduct("Postgres Plus Advanced Server 8.4 (8.4.3.2)")]
+[assembly : AssemblyProduct("Postgres Plus Advanced Server 8.4 (8.4.3.4)")]
 [assembly : AssemblyCopyright("The Npgsql Development Team")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
