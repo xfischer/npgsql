@@ -189,16 +189,20 @@ namespace EnterpriseDB.EDBClient
 
 		private static IEDBResourceManager _resourceManager;
 
+        private static System.Runtime.Remoting.Lifetime.ClientSponsor _sponser;
+
 		private static IEDBResourceManager CreateResourceManager()
 		{
 			// TODO: create network proxy for resource manager
 			if (_resourceManager == null)
 			{
+                _sponser = new System.Runtime.Remoting.Lifetime.ClientSponsor();
 				AppDomain rmDomain = AppDomain.CreateDomain("NpgsqlResourceManager", AppDomain.CurrentDomain.Evidence, AppDomain.CurrentDomain.SetupInformation);
 				_resourceManager =
 					(IEDBResourceManager)
 					rmDomain.CreateInstanceAndUnwrap(typeof (EDBResourceManager).Assembly.FullName,
 					                                 typeof (EDBResourceManager).FullName);
+                _sponser.Register((MarshalByRefObject)_resourceManager);
 			}
 			return _resourceManager;
 			//return new EDBResourceManager();

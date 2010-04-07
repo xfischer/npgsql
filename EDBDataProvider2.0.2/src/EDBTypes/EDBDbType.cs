@@ -68,6 +68,7 @@ namespace EDBTypes
 		Interval,
 		TimeTZ,
         Float,
-        Varchar2
+        Varchar2,
+        Name
 	}
 }

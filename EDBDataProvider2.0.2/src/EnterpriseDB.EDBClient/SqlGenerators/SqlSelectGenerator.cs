@@ -27,15 +27,14 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             // scopes (such as schema.table.column)
             //VisitedExpression variable = expression.Instance.Accept(this);
             VariableReferenceExpression variable = new VariableReferenceExpression(expression.Instance.Accept(this).ToString(), _variableSubstitution);
-            return new PropertyExpression(variable, expression.Property.Name);
+             return new PropertyExpression(variable, expression.Property);
         }
 
-        public override void BuildCommand(DbCommand command)
+        public override VisitedExpression Visit(DbNullExpression expression)
         {
-            System.Diagnostics.Debug.Assert(_commandTree.Query is DbProjectExpression);
-            VisitedExpression ve = _commandTree.Query.Accept(this);
-            command.CommandText = ve.ToString();
-        }
+            // must provide a NULL of the correct type
+            // this is necessary for certain types of union queries.
+            return new CastExpression(new LiteralExpression("NULL"), GetDbType(expression.ResultType.EdmType));
 	}
 }
 #endif

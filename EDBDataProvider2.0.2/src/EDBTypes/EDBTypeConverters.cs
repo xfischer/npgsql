@@ -44,6 +44,7 @@ namespace EDBTypes
 	internal abstract class BasicBackendToNativeTypeConverter
 	{
 		private static readonly String[] DateFormats = new String[] { "yyyy-MM-dd", };
+        private static readonly Regex EXCLUDE_DIGITS = new Regex("[^0-9\\-]", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 		private static readonly String[] TimeFormats =
 			new String[]
@@ -170,6 +171,18 @@ namespace EDBTypes
 		/// </summary>
 		internal static Object ToDate(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
 		{
+            // First check for special values infinity and -infinity.
+
+            if (BackendData == "infinity")
+            {
+                return DateTime.MaxValue;
+            }
+
+            if (BackendData == "-infinity")
+            {
+                return DateTime.MinValue;
+            }
+            
 			return
 				DateTime.ParseExact(BackendData, DateFormats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AllowWhiteSpaces);
 		}
@@ -247,20 +260,18 @@ namespace EDBTypes
 		/// </summary>
 		internal static String ToBinary(EDBNativeTypeInfo TypeInfo, Object NativeData)
 		{
-			Byte[] byteArray = (Byte[])NativeData;
-			int len = byteArray.Length;
-			char[] res = new char[len * 5];
+            Byte[] byteArray = (Byte[])NativeData;
+            StringBuilder res = new StringBuilder(byteArray.Length * 5);
+            foreach (byte b in byteArray)
+                if (b >= 0x20 && b < 0x7F && b != 0x27 && b != 0x5C)
+                    res.Append((char)b);
+                else
+                    res.Append("\\\\")
+                        .Append((char)('0' + (7 & (b >> 6))))
+                        .Append((char)('0' + (7 & (b >> 3))))
+                        .Append((char)('0' + (7 & b)));
+            return res.ToString();
 
-			for (int i = 0, o = 0; i < len; ++i, o += 5)
-			{
-				byte item = byteArray[i];
-				res[o] = res[o + 1] = '\\';
-				res[o + 2] = (char)('0' + (7 & (item >> 6)));
-				res[o + 3] = (char)('0' + (7 & (item >> 3)));
-				res[o + 4] = (char)('0' + (7 & item));
-			}
-
-			return new String(res);
 		}
 
 		/// <summary>
@@ -347,13 +358,15 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgres money.
 		/// </summary>
-		internal static String ToMoney(EDBNativeTypeInfo TypeInfo, Object NativeData)
-		{
+        internal static String ToMoney(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        {
             //Formats accepted vary according to locale, but it always accepts a plain number (no currency or
             //grouping symbols) passed as a string (with the appropriate cast appended, as UseCast will cause
             //to happen.
             return ((IFormattable)NativeData).ToString(null, CultureInfo.InvariantCulture.NumberFormat);
-		}
+        }
+
+
         internal static string ToBasicType<T>(EDBNativeTypeInfo TypeInfo, object NativeData)
         {
             // This double cast is needed in order to get the enum type handled correctly (IConvertible)

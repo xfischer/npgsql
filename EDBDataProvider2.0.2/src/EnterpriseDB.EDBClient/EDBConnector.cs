@@ -41,6 +41,12 @@ using EDBTypes;
 namespace EnterpriseDB.EDBClient
 {
     /// <summary>
+    /// /// <summary>
+    /// Represents the method that allows the application to provide a certificate collection to be used for SSL clien authentication
+    /// </summary>
+    /// <param name="certificates">A <see cref="System.Security.Cryptography.X509Certificates.X509CertificateCollection">X509CertificateCollection</see> to be filled with one or more client certificates.</param>
+    public delegate void ProvideClientCertificatesCallback(X509CertificateCollection certificates);
+
     /// !!! Helper class, for compilation only.
     /// Connector implements the logic for the Connection Objects to
     /// access the physical connection to the database, and isolate
@@ -60,6 +66,13 @@ namespace EnterpriseDB.EDBClient
         /// Occurs on NotificationResponses from the PostgreSQL backend.
         /// </summary>
         internal event NotificationEventHandler Notification;
+
+        /// <summary>
+        /// Called to provide client certificates for SSL handshake.
+        /// </summary>
+        internal event ProvideClientCertificatesCallback ProvideClientCertificatesCallback;
+
+        /// <summary>
 
         /// <summary>
         /// Mono.Security.Protocol.Tls.CertificateSelectionCallback delegate.
@@ -339,7 +352,8 @@ namespace EnterpriseDB.EDBClient
             {
                 // Here we use a fake NpgsqlCommand, just to send the test query string.
                 
-                Query(new EDBCommand("select 1 as ConnectionTest", this));
+                //Query(new EDBCommand("select 1 as ConnectionTest", this));
+                new EDBCommand("select 1", this).ExecuteScalar();
                 
                 // Clear mediator.
                 Mediator.ResetResponses();
@@ -470,6 +484,19 @@ namespace EnterpriseDB.EDBClient
                 return null;
             }
         }
+
+        /// <summary>
+        /// Default SSL ProvideClientCertificatesCallback implementation.
+        /// </summary>
+        internal void DefaultProvideClientCertificatesCallback(X509CertificateCollection certificates)
+        {
+            if (ProvideClientCertificatesCallback != null)
+            {
+                ProvideClientCertificatesCallback(certificates);
+            }
+        }
+
+        /// <summary>
 
         /// <summary>
         /// Version of backend server this connector is connected to.

@@ -255,6 +255,7 @@ namespace EDBTypes
 		{
 			EDBNativeTypeMapping nativeTypeMapping = new EDBNativeTypeMapping();
 
+            nativeTypeMapping.AddType("name", EDBDbType.Name, DbType.String, true, null);
 
 			nativeTypeMapping.AddType("oidvector", EDBDbType.Oidvector, DbType.String, true, null);
 
@@ -425,7 +426,7 @@ namespace EDBTypes
 
 			yield return new EDBBackendTypeInfo(0, "text", EDBDbType.Text, DbType.String, typeof (String), null);
 
-			yield return new EDBBackendTypeInfo(0, "name", EDBDbType.Text, DbType.String, typeof (String), null);
+			yield return new EDBBackendTypeInfo(0, "name", EDBDbType.Name, DbType.String, typeof (String), null);
 
 			yield return
 				new EDBBackendTypeInfo(0, "bytea", EDBDbType.Bytea, DbType.Binary, typeof (Byte[]),
@@ -677,6 +678,8 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 	/// </summary>
 	internal delegate String ConvertNativeToBackendHandler(EDBNativeTypeInfo TypeInfo, Object NativeData);
 
+    internal delegate object ConvertProviderTypeToFrameworkTypeHander(object value);
+
 	/// <summary>
 	/// Represents a backend data type.
 	/// This class can be called upon to convert a backend field representation to a native object.
@@ -684,12 +687,14 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 	internal class EDBBackendTypeInfo
 	{
 		private readonly ConvertBackendToNativeHandler _ConvertBackendToNative;
+        private readonly ConvertProviderTypeToFrameworkTypeHander _convertProviderToFramework;
 
 		internal Int32 _OID;
 		private readonly String _Name;
 		private readonly EDBDbType _NpgsqlDbType;
 		private readonly DbType _DbType;
 		private readonly Type _Type;
+        private readonly Type _frameworkType;
 
 
 		/// <summary>
@@ -711,7 +716,17 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 			_DbType = DbType;
 			_Type = Type;
 			_ConvertBackendToNative = ConvertBackendToNative;
+            _frameworkType = Type;
 		}
+
+        public EDBBackendTypeInfo(Int32 OID, String Name, EDBDbType NpgsqlDbType, DbType DbType, Type Type,
+                                     ConvertBackendToNativeHandler ConvertBackendToNative, Type frameworkType,
+                                     ConvertProviderTypeToFrameworkTypeHander convertProviderToFramework)
+            : this(OID, Name, NpgsqlDbType, DbType, Type, ConvertBackendToNative)
+        {
+            _frameworkType = frameworkType;
+            _convertProviderToFramework = convertProviderToFramework;
+        }
 
 		/// <summary>
 		/// Type OID provided by the backend server.
@@ -736,6 +751,14 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 		{
 			get { return _NpgsqlDbType; }
 		}
+        /// <summary>
+        /// System type to convert fields of this type to.
+        /// </summary>
+        public Type FrameworkType
+        {
+            get { return _frameworkType; }
+        }
+
 
 		/// <summary>
 		/// EDBDbType.
@@ -777,6 +800,30 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 				}
 			}
 		}
+
+        internal object ConvertToFrameworkType(object providerValue)
+        {
+            if (providerValue == DBNull.Value)
+            {
+                return providerValue;
+            }
+            else if (_convertProviderToFramework != null)
+            {
+                return _convertProviderToFramework(providerValue);
+            }
+            else if (Type != FrameworkType)
+            {
+                try
+                {
+                    return Convert.ChangeType(providerValue, FrameworkType, CultureInfo.InvariantCulture);
+                }
+                catch
+                {
+                    return providerValue;
+                }
+            }
+            return providerValue;
+        }
 	}
 
 	/// <summary>
@@ -827,6 +874,12 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
 			ni = (NumberFormatInfo) CultureInfo.InvariantCulture.NumberFormat.Clone();
 			ni.NumberDecimalDigits = 15;
 		}
+
+        internal static NumberFormatInfo NumberFormat
+        {
+            get { return ni; }
+        }
+
 
 		/// <summary>
 		/// Construct a new NpgsqlTypeInfo with the given attributes and conversion handlers.

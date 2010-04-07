@@ -36,6 +36,7 @@ using System.Resources;
 using System.Text;
 using System.Text.RegularExpressions;
 using EDBTypes;
+using System.Collections.Generic;
 
 #if WITHDESIGN
 
@@ -56,7 +57,7 @@ namespace EnterpriseDB.EDBClient
         // Logging related values
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
-        private static readonly Regex parameterReplace = new Regex(@"([:@][\w\.]*)", RegexOptions.Singleline);
+        private static readonly Regex parameterReplace = new Regex(@"([:@][\w\.]*)", RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly Regex POSTGRES_TEXT_ARRAY = new Regex(@"^array\[+'", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         private EDBConnection connection;
@@ -74,6 +75,8 @@ namespace EnterpriseDB.EDBClient
         private EDBBind bind;
 
         private Int64 lastInsertedOID = 0;
+
+
         
         // locals about function support so we don`t need to check it everytime a function is called.
         
@@ -84,6 +87,8 @@ namespace EnterpriseDB.EDBClient
         private Boolean functionReturnsRecord = false; // Functions don't return record by default.
 
         private Boolean functionReturnsRefcursor = false; // Functions don't return refcursor by default.
+
+        private Boolean commandTimeoutSet = false;
 
         // Constructors
 
@@ -136,7 +141,8 @@ namespace EnterpriseDB.EDBClient
             type = CommandType.Text;
             this.Transaction = transaction;
 
-            SetCommandTimeout();
+            // Internal commands aren't affected by command timeout value provided by user.
+            timeout = 20;
         }
 
         /// <summary>
@@ -201,6 +207,7 @@ namespace EnterpriseDB.EDBClient
 
                 timeout = value;
                 EDBEventLog.LogPropertySet(LogLevel.Debug, CLASSNAME, "CommandTimeout", value);
+                commandTimeoutSet = true;
             }
         }
 
@@ -423,9 +430,9 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Create a new connection based on this one.
+        /// Create a new command based on this one.
         /// </summary>
-        /// <returns>A new NpgsqlConnection object.</returns>
+        /// <returns>A new EDBCommand object.</returns>
         public EDBCommand Clone()
         {
             // TODO: Add consistency checks.
@@ -860,7 +867,6 @@ namespace EnterpriseDB.EDBClient
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "GetCommandText");
 
             return string.IsNullOrEmpty(planName) ? GetClearCommandText() : GetPreparedCommandText();
-
         }
         private static void PassEscapedArray(StringBuilder query, string array)
         {
@@ -892,7 +898,6 @@ namespace EnterpriseDB.EDBClient
             query.Append(array[endAt]);
         }
 
-
         private StringBuilder GetClearCommandText()
         {
             if (EDBEventLog.Level == LogLevel.Debug)
@@ -913,7 +918,7 @@ namespace EnterpriseDB.EDBClient
 
                         functionReturnsRefcursor = CheckFunctionReturn("refcursor");
 
-                        // Check if just procedure name was passed. If so, does not replace parameter names and just pass parameter values in order they were added in parameters collection. Also check if command text finishes in a ";" which would make Npgsql incorrectly append a "()" when executing this command text.
+                        // Check if just procedure name was passed. If so, does not replace parameter names and just pass parameter values in order they were added in parameters collection. Also check if command text finishes in a ";" which would make EDB incorrectly append a "()" when executing this command text.
                         switch (result[result.Length - 1])
                         {
                             case ')':
@@ -964,12 +969,30 @@ namespace EnterpriseDB.EDBClient
             // If parenthesis don't need to be added, they were added by user with parameter names. Replace them.
             if (!addProcedureParenthesis)
             {
+                Dictionary<string, EDBParameter> parameterIndex = new Dictionary<string, EDBParameter>(parameters.Count);
+
+                foreach (EDBParameter parameter in parameters)
+                    parameterIndex[parameter.CleanName] = parameter;
+
+
                 StringBuilder sb = new StringBuilder();
                 foreach (String s in parameterReplace.Split(result.ToString()))
                     if (s.Length != 0)
                     {
-                        EDBParameter p;
-                        if ((s[0] == ':' || s[0] == '@') && Parameters.TryGetValue(s, out p))
+                        EDBParameter p = null;
+                        string parameterName = s;
+
+                        if ((parameterName[0] == ':') || (parameterName[0] == '@'))
+                        {
+                            parameterName = parameterName.Remove(0, 1);
+
+                            parameterIndex.TryGetValue(parameterName, out p);
+
+                        }
+
+
+
+                        if (p != null)
                         {
                             // It's a parameter. Lets handle it.
                             switch (p.Direction)
@@ -987,16 +1010,10 @@ namespace EnterpriseDB.EDBClient
 
                                     string serialised = p.TypeInfo.ConvertToBackend(p.Value, false);
 
-
-
                                     // Add parentheses wrapping parameter value before the type cast to avoid problems with Int16.MinValue, Int32.MinValue and Int64.MinValue
-
                                     // See bug #1010543
-
                                     // Check if this parenthesis can be collapsed with the previous one about the array support. This way, we could use
-
                                     // only one pair of parentheses for the two purposes instead of two pairs.
-
                                     sb.Append('(');
 
                                     if (Connector.UseConformantStrings)
@@ -1019,11 +1036,7 @@ namespace EnterpriseDB.EDBClient
                                     else
                                         sb.Append(serialised);
 
-
-
                                     sb.Append(')');
-
-
 
 
                                     if (p.UseCast)
@@ -1032,8 +1045,6 @@ namespace EnterpriseDB.EDBClient
                                         if (p.TypeInfo.UseSize && (p.Size > 0))
                                             sb.Append('(').Append(p.Size).Append(')');
                                     }
-
-
 
                                     sb.Append(')');//Close probably-redundant parenthesis.
                                     break;
@@ -1060,14 +1071,10 @@ namespace EnterpriseDB.EDBClient
                     {
                         case ParameterDirection.Input:
                         case ParameterDirection.InputOutput:
-
                             // Add parentheses wrapping parameter value before the type cast to avoid problems with Int16.MinValue, Int32.MinValue and Int64.MinValue
-
                             // See bug #1010543
-
                             result.Append('(');
                             result.Append(Param.TypeInfo.ConvertToBackend(Param.Value, false));
-
                             result.Append(')');
                             if (Param.UseCast)
                             {
@@ -1177,14 +1184,14 @@ namespace EnterpriseDB.EDBClient
             EDBCommand c = new EDBCommand(returnRecordQuery, Connection);
 
             c.Parameters.Add(new EDBParameter("proargtypes", EDBDbType.Oidvector));
-            c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
+            c.Parameters.Add(new EDBParameter("proname", EDBDbType.Name));
 
             c.Parameters[0].Value = parameterTypes.ToString();
             c.Parameters[1].Value = procedureName;
 
             if (schemaName != null && schemaName.Length > 0)
             {
-                c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Text));
+                c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Name));
                 c.Parameters[2].Value = schemaName;
             }
 
@@ -1253,9 +1260,9 @@ namespace EnterpriseDB.EDBClient
 
             using (EDBCommand c = new EDBCommand(returnRecordQuery, Connection))
             {
-                c.Parameters.Add(new EDBParameter("typename", EDBDbType.Text));
+                c.Parameters.Add(new EDBParameter("typename", EDBDbType.Name));
                 c.Parameters.Add(new EDBParameter("proargtypes", EDBDbType.Oidvector));
-                c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
+                c.Parameters.Add(new EDBParameter("proname", EDBDbType.Name));
 
                 c.Parameters[0].Value = ReturnType;
                 c.Parameters[1].Value = parameterTypes.ToString();
@@ -1263,7 +1270,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (schemaName != null && schemaName.Length > 0)
                 {
-                    c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Text));
+                    c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Name));
                     c.Parameters[3].Value = schemaName;
                 }
 
@@ -1341,14 +1348,10 @@ namespace EnterpriseDB.EDBClient
 
                 foreach (EDBParameter p in parameters)
                 {
-
                     // Add parentheses wrapping parameter value before the type cast to avoid problems with Int16.MinValue, Int32.MinValue and Int64.MinValue
-
                     // See bug #1010543
-
                     result.Append('(');
                     result.Append(p.TypeInfo.ConvertToBackend(p.Value, false));
-
                     result.Append(')');
                     if (p.UseCast)
                     {
@@ -1586,6 +1589,8 @@ namespace EnterpriseDB.EDBClient
 
         private void SetCommandTimeout()
         {
+            if (commandTimeoutSet)
+                return;
             if (Connection != null)
             {
                 timeout = Connection.CommandTimeout;

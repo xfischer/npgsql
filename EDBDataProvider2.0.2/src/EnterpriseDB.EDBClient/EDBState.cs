@@ -366,8 +366,15 @@ namespace EnterpriseDB.EDBClient
                     try
                     {
                         context.CancelRequest();
+                        foreach (IServerResponseObject obj in ProcessBackendResponsesEnum(context))
+                        {
+                            if (obj is IDisposable)
+                            {
+                                (obj as IDisposable).Dispose();
+                            }
+                        }
                     }
-                    catch
+                    catch (Exception ex)
                     {
                     }
                     //We should have gotten an error from CancelRequest(). Whether we did or not, what we
@@ -963,7 +970,7 @@ namespace EnterpriseDB.EDBClient
                             EDBEventLog.LogMsg(resman, "Log_ProtocolMessage", LogLevel.Debug, "CopyData");
                             Int32 len = PGUtil.ReadInt32(stream) - 4;
                             byte[] buf = new byte[len];
-                            stream.Read(buf, 0, len);
+                            PGUtil.ReadBytes(stream, buf, 0, len);
                             context.Mediator.ReceivedCopyData = buf;
                             yield break; // read data from server one chunk at a time while staying in copy operation mode
 

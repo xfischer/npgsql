@@ -74,7 +74,7 @@ namespace EnterpriseDB.EDBClient
 
 		internal abstract long? LastInsertedOID { get; }
 
-		private bool TryGetTypeInfo(int fieldIndex, out EDBBackendTypeInfo backendTypeInfo)
+        internal bool TryGetTypeInfo(int fieldIndex, out EDBBackendTypeInfo backendTypeInfo)
 		{
 			if (CurrentDescription == null)
 			{
@@ -98,12 +98,22 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Return the data type of the column at index <param name="Index"></param>.
 		/// </summary>
-		public override Type GetFieldType(Int32 Index)
-		{
-			EDBBackendTypeInfo TI;
-			return TryGetTypeInfo(Index, out TI) ? TI.Type : typeof (string); //Default type is string.
-		}
+        public override Type GetFieldType(Int32 Index)
+        {
+            EDBBackendTypeInfo TI;
+            return TryGetTypeInfo(Index, out TI) ? TI.FrameworkType : typeof(string); //Default type is string.
+        }
 
+        /// <summary>
+        /// Return the Npgsql specific data type of the column at requested ordinal.
+        /// </summary>
+        /// <param name="ordinal">column position</param>
+        /// <returns>Appropriate Npgsql type for column.</returns>
+        public override Type GetProviderSpecificFieldType(int ordinal)
+        {
+            EDBBackendTypeInfo TI;
+            return TryGetTypeInfo(ordinal, out TI) ? TI.Type : typeof(string); //Default type is string.
+        }
 		/// <summary>
 		/// Gets the number of columns in the current row.
 		/// </summary>
@@ -174,12 +184,7 @@ namespace EnterpriseDB.EDBClient
 		{
 			get
 			{
-				Int32 fieldIndex = CurrentDescription.FieldIndex(name);
-				if (fieldIndex == -1)
-				{
-					throw new IndexOutOfRangeException("Field not found");
-				}
-				return GetValue(fieldIndex);
+                return GetValue(GetOrdinal(name));
 			}
 		}
 
@@ -220,32 +225,32 @@ namespace EnterpriseDB.EDBClient
 		/// <returns><see cref="EDBInterval"/> value of the field.</returns>
 		public EDBInterval GetInterval(Int32 i)
 		{
-			return (EDBInterval) GetValue(i);
+            return (EDBInterval)GetProviderSpecificValue(i);
 		}
 
 		public EDBTime GetTime(int i)
 		{
-			return (EDBTime) GetValue(i);
+            return (EDBTime)GetProviderSpecificValue(i);
 		}
 
 		public EDBTimeTZ GetTimeTZ(int i)
 		{
-			return (EDBTimeTZ) GetValue(i);
+            return (EDBTimeTZ)GetProviderSpecificValue(i);
 		}
 
 		public EDBTimeStamp GetTimeStamp(int i)
 		{
-			return (EDBTimeStamp) GetValue(i);
+            return (EDBTimeStamp)GetProviderSpecificValue(i);
 		}
 
 		public EDBTimeStampTZ GetTimeStampTZ(int i)
 		{
-			return (EDBTimeStampTZ) GetValue(i);
+            return (EDBTimeStampTZ)GetProviderSpecificValue(i);
 		}
 
 		public EDBDate GetDate(int i)
 		{
-			return (EDBDate) GetValue(i);
+            return (EDBDate)GetProviderSpecificValue(i);
 		}
 
 		protected void SendClosedEvent()
@@ -341,21 +346,37 @@ namespace EnterpriseDB.EDBClient
 		/// Copy values from each column in the current row into <param name="Values"></param>.
 		/// </summary>
 		/// <returns>The number of column values copied.</returns>
-		public override Int32 GetValues(Object[] Values)
-		{
-			CheckHaveRow();
+        public override Int32 GetValues(Object[] Values)
+        {
+            return LoadValues(Values, GetValue);
+        }
 
-			// Only the number of elements in the array are filled.
-			// It's also possible to pass an array with more that FieldCount elements.
-			Int32 maxColumnIndex = (Values.Length < FieldCount) ? Values.Length : FieldCount;
+        /// <summary>
+        /// Copy values from each column in the current row into <param name="Values"></param>.
+        /// </summary>
+        /// <param name="values">An array appropriately sized to store values from all columns.</param>
+        /// <returns>The number of column values copied.</returns>
+        public override int GetProviderSpecificValues(object[] values)
+        {
+            return LoadValues(values, GetProviderSpecificValue);
+        }
 
-			for (Int32 i = 0; i < maxColumnIndex; i++)
-			{
-				Values[i] = GetValue(i);
-			}
+        private delegate object ValueLoader(int ordinal);
+        private int LoadValues(object[] values, ValueLoader getValue)
+        {
+            CheckHaveRow();
 
-			return maxColumnIndex;
-		}
+            // Only the number of elements in the array are filled.
+            // It's also possible to pass an array with more that FieldCount elements.
+            Int32 maxColumnIndex = (values.Length < FieldCount) ? values.Length : FieldCount;
+
+            for (Int32 i = 0; i < maxColumnIndex; i++)
+            {
+                values[i] = getValue(i);
+            }
+
+            return maxColumnIndex;
+        }
 
 		/// <summary>
 		/// Gets the value of a column as Boolean.
@@ -1164,6 +1185,13 @@ namespace EnterpriseDB.EDBClient
 				rd = objNext as EDBRowDescription;
 			}
             _pendingDescription = null;
+            // If there were records affected before,  keep track of their values.
+            if (_recordsAffected != null)
+                _recordsAffected += (_nextRecordsAffected ?? 0);
+            else
+                _recordsAffected = _nextRecordsAffected;
+			
+                        
 			_recordsAffected = _nextRecordsAffected;
 			_nextRecordsAffected = null;
 			_lastInsertOID = _nextInsertOID;
@@ -1355,24 +1383,34 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Return the value of the column at index <param name="Index"></param>.
 		/// </summary>
-		public override Object GetValue(Int32 Index)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "GetValue");
+        public override Object GetValue(Int32 Index)
+        {
+            object providerValue = GetProviderSpecificValue(Index);
+            EDBBackendTypeInfo backendTypeInfo;
+            if ((_connection == null || !_connection.UseExtendedTypes) && TryGetTypeInfo(Index, out backendTypeInfo))
+                return backendTypeInfo.ConvertToFrameworkType(providerValue);
+            return providerValue;
+        }
 
-			if (Index < 0 || Index >= CurrentDescription.NumFields)
-			{
-				throw new IndexOutOfRangeException("Column index out of range");
-			}
+        public override object GetProviderSpecificValue(int ordinal)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "GetValue");
 
-			CheckHaveRow();
+            if (ordinal < 0 || ordinal >= CurrentDescription.NumFields)
+            {
+                throw new IndexOutOfRangeException("Column index out of range");
+            }
 
-			object ret = CurrentRow[Index];
-			if (ret is Exception)
-			{
-				throw (Exception) ret;
-			}
-			return ret;
-		}
+            CheckHaveRow();
+
+            object ret = CurrentRow[ordinal];
+            if (ret is Exception)
+            {
+                throw (Exception)ret;
+            }
+            return ret;
+        }
+
 
 		/// <summary>
 		/// Gets raw data from a column.

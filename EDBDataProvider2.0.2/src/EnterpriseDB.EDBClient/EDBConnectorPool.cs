@@ -310,9 +310,10 @@ namespace EnterpriseDB.EDBClient
 
 			Connector = CreateConnector(Connection);
 
-			Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
-			Connector.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
-			Connector.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
+            Connector.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
+            Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
+            Connector.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
+            Connector.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
 
 			Connector.Open();
 
@@ -400,6 +401,7 @@ namespace EnterpriseDB.EDBClient
 			{
 				Connector = CreateConnector(Connection);
 
+                Connector.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
 				Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
 				Connector.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
 				Connector.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
@@ -432,12 +434,14 @@ namespace EnterpriseDB.EDBClient
 				{
 					EDBConnector Spare = CreateConnector(Connection);
 
+                    Spare.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
 					Spare.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
 					Spare.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
 					Spare.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
 
 					Spare.Open();
 
+                    Spare.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
 					Spare.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
 					Spare.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
 					Spare.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
@@ -496,6 +500,7 @@ namespace EnterpriseDB.EDBClient
 		/// <param name="Connector">Connector to release</param>
 		private static void UngetNonPooledConnector(EDBConnection Connection, EDBConnector Connector)
 		{
+            Connector.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
 			Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
 			Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
 			Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
@@ -522,6 +527,7 @@ namespace EnterpriseDB.EDBClient
 				return; // Queue may be emptied by connection problems. See ClearPool below.
 			}
 
+            Connector.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
 			Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
 			Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
 			Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;

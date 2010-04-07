@@ -30,6 +30,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
 using System.Resources;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -85,6 +86,14 @@ namespace EnterpriseDB.EDBClient
 		/// Occurs on NotificationResponses from the PostgreSQL backend.
 		/// </summary>
 		public event NotificationEventHandler Notification;
+
+        /// <summary>
+        /// Called to provide client certificates for SSL handshake.
+        /// </summary>
+        public event ProvideClientCertificatesCallback ProvideClientCertificatesCallback;
+
+        internal ProvideClientCertificatesCallback ProvideClientCertificatesCallbackDelegate;
+
 
 		internal NotificationEventHandler NotificationDelegate;
 
@@ -158,6 +167,7 @@ namespace EnterpriseDB.EDBClient
 			NoticeDelegate = new NoticeEventHandler(OnNotice);
 			NotificationDelegate = new NotificationEventHandler(OnNotification);
 
+            ProvideClientCertificatesCallbackDelegate = new ProvideClientCertificatesCallback(DefaultProvideClientCertificatesCallback);
 			CertificateValidationCallbackDelegate = new CertificateValidationCallback(DefaultCertificateValidationCallback);
 			CertificateSelectionCallbackDelegate = new CertificateSelectionCallback(DefaultCertificateSelectionCallback);
 			PrivateKeySelectionCallbackDelegate = new PrivateKeySelectionCallback(DefaultPrivateKeySelectionCallback);
@@ -397,6 +407,8 @@ namespace EnterpriseDB.EDBClient
                 return (FullState & ConnectionState.Open) == ConnectionState.Open ? ConnectionState.Open : ConnectionState.Closed;
             }
         }
+
+
         public Version NpgsqlCompatibilityVersion
         {
             get
@@ -588,27 +600,27 @@ namespace EnterpriseDB.EDBClient
 		public override void Close()
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Close");
-            
-			if (connector != null)
-			{
-				Promotable.Prepare();
+
+            if (connector != null)
+            {
+                Promotable.Prepare();
                 // clear the way for another promotable transaction
                 promotable = null;
 
-				connector.Notification -= NotificationDelegate;
-				connector.Notice -= NoticeDelegate;
+                connector.Notification -= NotificationDelegate;
+                connector.Notice -= NoticeDelegate;
 
-				if (SyncNotification)
-				{
-					connector.RemoveNotificationThread();
-				}
+                if (SyncNotification)
+                {
+                    connector.RemoveNotificationThread();
+                }
 
-				EDBConnectorPool.ConnectorPoolMgr.ReleaseConnector(this, connector);
+                EDBConnectorPool.ConnectorPoolMgr.ReleaseConnector(this, connector);
 
 
-				connector = null;
-			
-			}
+                connector = null;
+
+            }
 		}
 
 		/// <summary>
@@ -833,6 +845,17 @@ namespace EnterpriseDB.EDBClient
 				return null;
 			}
 		}
+
+        /// <summary>
+        /// Default SSL ProvideClientCertificatesCallback implementation.
+        /// </summary>
+        internal void DefaultProvideClientCertificatesCallback(X509CertificateCollection certificates)
+        {
+            if (ProvideClientCertificatesCallback != null)
+            {
+                ProvideClientCertificatesCallback(certificates);
+            }
+        }
 
 
 		//

@@ -29,17 +29,19 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading;
 using Mono.Security.Protocol.Tls;
 using System.Reflection;
 using SecurityProtocolType=Mono.Security.Protocol.Tls.SecurityProtocolType;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EnterpriseDB.EDBClient
 {
 	internal sealed class EDBClosedState : EDBState
 	{
 		private static readonly EDBClosedState _instance = new EDBClosedState();
-		private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 
 		private EDBClosedState()
@@ -155,7 +157,18 @@ namespace EnterpriseDB.EDBClient
 					Char response = (Char) stream.ReadByte();
 					if (response == 'S')
 					{
-						stream = new SslClientStream(stream, context.Host, true, SecurityProtocolType.Default);
+                        //create empty collection
+                        X509CertificateCollection clientCertificates = new X509CertificateCollection();
+
+                        //trigger the callback to fetch some certificates
+                        context.DefaultProvideClientCertificatesCallback(clientCertificates);
+
+                        stream = new SslClientStream(
+                            stream,
+                            context.Host,
+                            true,
+                            SecurityProtocolType.Default,
+                            clientCertificates);
 
 						((SslClientStream) stream).ClientCertSelectionDelegate =
 							new CertificateSelectionCallback(context.DefaultCertificateSelectionCallback);

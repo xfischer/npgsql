@@ -265,6 +265,9 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
+                // Prevents casts to be added for null values when they aren't needed.
+                if (!useCast && value == DBNull.Value)
+                    return false;
                 //return useCast; //&& (value != DBNull.Value);
                 // This check for Datetime.minvalue and maxvalue is needed in order to
                 // workaround a problem when comparing date values with infinity.
@@ -272,8 +275,8 @@ namespace EnterpriseDB.EDBClient
                 // http://archives.postgresql.org/pgsql-general/2008-10/msg00535.php
                 // Josh's solution to add cast is documented here:
                 // http://pgfoundry.org/forum/message.php?msg_id=1004118
-                
-                return useCast || DateTime.MinValue.Equals(value) || DateTime.MaxValue.Equals(value);
+
+                return useCast || DateTime.MinValue.Equals(value) || DateTime.MaxValue.Equals(value) || !EDBTypesHelper.DefinedType(Value);
             }
         }
 

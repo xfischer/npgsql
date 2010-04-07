@@ -198,7 +198,7 @@ namespace EDBTypes
 		/// <param name="seconds">Number of seconds.</param>
 		/// <param name="milliseconds">Number of milliseconds.</param>
 		public EDBInterval(int days, int hours, int minutes, int seconds, int milliseconds)
-			: this(0, days, new TimeSpan(hours, minutes, seconds, milliseconds).Ticks)
+			: this(0, days, new TimeSpan(0,hours, minutes, seconds, milliseconds).Ticks)
 		{
 		}
 
@@ -230,7 +230,7 @@ namespace EDBTypes
 		/// <param name="seconds">Number of seconds.</param>
 		/// <param name="milliseconds">Number of milliseconds.</param>
 		public EDBInterval(int years, int months, int days, int hours, int minutes, int seconds, int milliseconds)
-			: this(years*12 + months, days, new TimeSpan(hours, minutes, seconds, milliseconds).Ticks)
+			: this(years*12 + months, days, new TimeSpan(0,hours, minutes, seconds, milliseconds).Ticks)
 		{
 		}
 
@@ -293,7 +293,7 @@ namespace EDBTypes
 		/// </summary>
 		public int Microseconds
 		{
-			get { return (int) (_ticks/10)%1000000; }
+            get { return (int)((_ticks / 10) % 1000000); }
 		}
 
 		/// <summary>
@@ -859,7 +859,7 @@ namespace EDBTypes
 						default:
 							hours = int.Parse(parts[0]);
 							minutes = int.Parse(parts[1]);
-							seconds = decimal.Parse(parts[2]);
+                            seconds = decimal.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
 							break;
 					}
                     if (isNegative)
@@ -947,16 +947,10 @@ namespace EDBTypes
                 {
                     sb.Append('+');
                 }
-                sb.Append(Math.Abs(Hours).ToString("D2")).Append(':').Append(Math.Abs(Minutes).ToString("D2")).Append(':').Append(Math.Abs(Seconds).ToString("D2"));
-                long remainingTicks = Math.Abs(Ticks) % TicksPerSecond;
-                if (remainingTicks != 0)
-                {
-                    while (remainingTicks % 10 == 0)
-                    {
-                        remainingTicks /= 10;
-                    }
-                    sb.Append('.').Append(remainingTicks);
-                }
+                // calculate total seconds and then subtract total whole minutes in seconds to get just the seconds and fractional part
+                decimal seconds = _ticks / (decimal)TicksPerSecond - (_ticks / TicksPerMinute) * 60;
+                sb.Append(Math.Abs(Hours).ToString("D2")).Append(':').Append(Math.Abs(Minutes).ToString("D2")).Append(':').Append(Math.Abs(seconds).ToString("0#.######", System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
+
             }
             if (sb[sb.Length - 1] == ' ')
             {
@@ -1117,45 +1111,64 @@ namespace EDBTypes
 
 		public static EDBDate Parse(string str)
 		{
-			if (str == null)
-			{
-				throw new ArgumentNullException("str");
-			}
-			str = str.Trim();
-			try
-			{
-				int idx = str.IndexOf('-');
-				if (idx == -1)
-				{
-					throw new FormatException();
-				}
-				int year = int.Parse(str.Substring(0, idx));
-				int idxLast = idx + 1;
-				if ((idx = str.IndexOf('-', idxLast)) == -1)
-				{
-					throw new FormatException();
-				}
-				int month = int.Parse(str.Substring(idxLast, idx - idxLast));
-				idxLast = idx + 1;
-				if ((idx = str.IndexOf(' ', idxLast)) == -1)
-				{
-					idx = str.Length;
-				}
-				int day = int.Parse(str.Substring(idxLast, idx - idxLast));
-				if (str.Contains("BC"))
-				{
-					year = -year;
-				}
-				return new EDBDate(year, month, day);
-			}
-			catch (OverflowException)
-			{
-				throw;
-			}
-			catch (Exception)
-			{
-				throw new FormatException();
-			}
+
+            if (str == null)
+            {
+                throw new ArgumentNullException("str");
+            }
+
+
+
+            // Handle -infinity and infinity special values.
+
+
+
+            if (str == "-infinity")
+
+                return new EDBDate(DateTime.MinValue);
+
+
+
+            if (str == "infinity")
+
+                return new EDBDate(DateTime.MaxValue);
+
+
+            str = str.Trim();
+            try
+            {
+                int idx = str.IndexOf('-');
+                if (idx == -1)
+                {
+                    throw new FormatException();
+                }
+                int year = int.Parse(str.Substring(0, idx));
+                int idxLast = idx + 1;
+                if ((idx = str.IndexOf('-', idxLast)) == -1)
+                {
+                    throw new FormatException();
+                }
+                int month = int.Parse(str.Substring(idxLast, idx - idxLast));
+                idxLast = idx + 1;
+                if ((idx = str.IndexOf(' ', idxLast)) == -1)
+                {
+                    idx = str.Length;
+                }
+                int day = int.Parse(str.Substring(idxLast, idx - idxLast));
+                if (str.Contains("BC"))
+                {
+                    year = -year;
+                }
+                return new EDBDate(year, month, day);
+            }
+            catch (OverflowException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw new FormatException();
+            }
 		}
 
 		public static bool TryParse(string str, out EDBDate date)
@@ -1414,7 +1427,6 @@ namespace EDBTypes
 		{
 			return x._daysSinceEra >= y._daysSinceEra;
 		}
-
 		public static explicit operator DateTime(EDBDate date)
 		{
 			try
@@ -1614,7 +1626,7 @@ namespace EDBTypes
 						seconds = int.Parse(parts[2]);
 						break;
 				}
-				int totalSeconds = hours*60*60 + minutes*60 + seconds*(neg ? -1 : 1);
+                int totalSeconds = (hours * 60 * 60 + minutes * 60 + seconds) * (neg ? -1 : 1);
 				return new EDBTimeZone(totalSeconds*EDBInterval.TicksPerSecond);
 			}
 			catch (OverflowException)
@@ -1825,7 +1837,7 @@ namespace EDBTypes
 		/// </summary>
 		public int Microseconds
 		{
-			get { return (int) (_ticks/10)%1000000; }
+            get { return (int)((_ticks / 10) % 1000000); }
 		}
 
 		/// <summary>
@@ -1891,19 +1903,12 @@ namespace EDBTypes
 
 		public override string ToString()
 		{
-			StringBuilder sb =
-				new StringBuilder(Hours.ToString("D2")).Append(':').Append(Minutes.ToString("D2")).Append(':').Append(
-					Seconds.ToString("D2"));
-			long remainingTicks = Math.Abs(Ticks)%EDBInterval.TicksPerSecond;
-			if (remainingTicks != 0)
-			{
-				while (remainingTicks%10 == 0)
-				{
-					remainingTicks /= 10;
-				}
-				sb.Append('.').Append(remainingTicks);
-			}
-			return sb.ToString();
+            // calculate total seconds and then subtract total whole minutes in seconds to get just the seconds and fractional part
+            decimal seconds = _ticks / (decimal)EDBInterval.TicksPerSecond - (_ticks / EDBInterval.TicksPerMinute) * 60;
+            StringBuilder sb =
+                new StringBuilder(Hours.ToString("D2")).Append(':').Append(Minutes.ToString("D2")).Append(':').Append(
+                    seconds.ToString("0#.######", System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
+            return sb.ToString();
 		}
 
 		public static EDBTime Parse(string str)
@@ -1930,7 +1935,7 @@ namespace EDBTypes
 					default:
 						hours = int.Parse(parts[0]);
 						minutes = int.Parse(parts[1]);
-						seconds = decimal.Parse(parts[2]);
+						seconds = decimal.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
 						break;
 				}
 				if (hours < 0 || hours > 24 || minutes < 0 || minutes > 59 || seconds < 0m || seconds >= 60 ||
@@ -2049,10 +2054,22 @@ namespace EDBTypes
 			return new TimeSpan(time.Ticks);
 		}
 
-		public static explicit operator EDBTime(TimeSpan interval)
-		{
-			return new EDBTime(interval);
-		}
+        public static explicit operator DateTime(EDBTime time)
+        {
+            try
+            {
+                return new DateTime(time.Ticks, DateTimeKind.Unspecified);
+            }
+            catch
+            {
+                throw new InvalidCastException();
+            }
+        }
+
+        public static explicit operator EDBTime(TimeSpan interval)
+        {
+            return new EDBTime(interval);
+        }
 
 		public EDBTime AddTicks(long ticksAdded)
 		{
@@ -2480,6 +2497,12 @@ namespace EDBTypes
 		{
 			return (TimeSpan) time.LocalTime;
 		}
+
+        public static explicit operator DateTime(EDBTimeTZ time)
+        {
+            // LocalTime property is actually time local to TimeZone
+            return new DateTime(time.AtTimeZone(EDBTimeZone.CurrentTimeZone).Ticks, DateTimeKind.Local);
+        }
 	}
 
 	[Serializable]

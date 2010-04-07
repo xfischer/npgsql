@@ -8,7 +8,7 @@ using System.Data.Common.CommandTrees;
 using EDBTypes;
 using System.Data;
 
-namespace EnterpriseDB.EDBClient.SqlGenerators
+namespace EDB.SqlGenerators
 {
 	internal abstract class VisitedExpression
 	{
@@ -42,6 +42,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             {
                 expression.WriteSql(sqlText);
             }
+        }
+
+        internal virtual IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return ExpressionList.Aggregate(Enumerable.Empty<ColumnExpression>(), (list, ve) => list.Concat(ve.GetProjectedColumns()));
+        }
+
+        internal virtual IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return ExpressionList.Aggregate(Enumerable.Empty<PropertyExpression>(), (list, ve) => list.Concat(ve.GetAccessedProperties()));
         }
 	}
 
@@ -88,7 +98,8 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
 
         internal override void WriteSql(StringBuilder sqlText)
         {
-            NpgsqlNativeTypeInfo typeInfo;
+            EDBNativeTypeInfo typeInfo;
+            System.Globalization.NumberFormatInfo ni = EDBNativeTypeInfo.NumberFormat;
             switch (_primitiveType)
             {
                 case PrimitiveTypeKind.Binary:
@@ -97,37 +108,37 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                     }
                     break;
                 case PrimitiveTypeKind.DateTime:
-                    sqlText.AppendFormat("TIMESTAMP '{0:s}'", _value);
+                    sqlText.AppendFormat(ni, "TIMESTAMP '{0:o}'", _value);
                     break;
                 case PrimitiveTypeKind.DateTimeOffset:
-                    sqlText.AppendFormat("TIMESTAMP WITH TIME ZONE '{0:o}'", _value);
+                    sqlText.AppendFormat(ni, "TIMESTAMP WITH TIME ZONE '{0:o}'", _value);
                     break;
                 case PrimitiveTypeKind.Decimal:
-                    sqlText.AppendFormat("cast({0} as numeric)", _value);
+                    sqlText.AppendFormat(ni, "cast({0} as numeric)", _value);
                     break;
                 case PrimitiveTypeKind.Double:
-                    sqlText.AppendFormat("cast({0} as float8)", _value);
+                    sqlText.AppendFormat(ni, "cast({0} as float8)", _value);
                     break;
                 case PrimitiveTypeKind.Int16:
-                    sqlText.AppendFormat("cast({0} as int2)", _value);
+                    sqlText.AppendFormat(ni, "cast({0} as int2)", _value);
                     break;
                 case PrimitiveTypeKind.Int32:
-                    sqlText.AppendFormat("{0}", _value);
+                    sqlText.AppendFormat(ni, "{0}", _value);
                     break;
                 case PrimitiveTypeKind.Int64:
-                    sqlText.AppendFormat("cast({0} as int8)", _value);
+                    sqlText.AppendFormat(ni, "cast({0} as int8)", _value);
                     break;
                 case PrimitiveTypeKind.Single:
-                    sqlText.AppendFormat("cast({0} as float4)", _value);
+                    sqlText.AppendFormat(ni, "cast({0} as float4)", _value);
                     break;
                 case PrimitiveTypeKind.Boolean:
                 case PrimitiveTypeKind.Guid:
                 case PrimitiveTypeKind.String:
-                    NpgsqlTypesHelper.TryGetNativeTypeInfo(GetDbType(_primitiveType), out typeInfo);
+                    EDBTypesHelper.TryGetNativeTypeInfo(GetDbType(_primitiveType), out typeInfo);
                     sqlText.Append(typeInfo.ConvertToBackend(_value, false));
                     break;
                 case PrimitiveTypeKind.Time:
-                    sqlText.AppendFormat("TIME '{0:T}'", _value);
+                    sqlText.AppendFormat(ni, "TIME '{0:T}'", _value);
                     break;
                 case PrimitiveTypeKind.Byte:
                 case PrimitiveTypeKind.SByte:
@@ -151,15 +162,6 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                 default:
                     return DbType.Object;
             }
-        }
-    }
-
-    internal class UnionAllExpression : VisitedExpression
-    {
-        internal override void WriteSql(StringBuilder sqlText)
-        {
-            sqlText.Append(" UNION ALL ");
-            base.WriteSql(sqlText);
         }
     }
 
@@ -188,12 +190,32 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             base.WriteSql(sqlText);
         }
 
-        public void AppendColumn(VisitedExpression column)
+        internal IEnumerable<ColumnExpression> Columns { get { return _columns; } }
+
+        private List<ColumnExpression> _columns = new List<ColumnExpression>();
+        public void AppendColumn(ColumnExpression column)
         {
+            _columns.Add(column);
             if (requiresColumnSeperator)
                 Append(",");
             Append(column);
             requiresColumnSeperator = true;
+        }
+
+        public void ReplaceColumn(ColumnExpression existingColumn, ColumnExpression newColumn)
+        {
+            int index = _columns.IndexOf(existingColumn);
+            if (index != -1)
+            {
+                _columns[index] = newColumn;
+                int baseIndex = ExpressionList.IndexOf(existingColumn);
+                ExpressionList[baseIndex] = newColumn;
+            }
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return _columns;
         }
     }
 
@@ -244,6 +266,18 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                 ReturningExpression.WriteSql(sqlText);
             }
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return base.GetAccessedProperties().Concat(ReturningExpression.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            if (ReturningExpression != null)
+                return ReturningExpression.GetProjectedColumns();
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class UpdateExpression : VisitedExpression
@@ -278,6 +312,11 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append("UPDATE ");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class DeleteExpression : VisitedExpression
@@ -298,6 +337,36 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append("DELETE FROM ");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
+    }
+
+    internal class AllColumnsExpression : VisitedExpression
+    {
+        private InputExpression _input;
+        private ProjectionExpression _projection;
+
+        public AllColumnsExpression(InputExpression input, ProjectionExpression projection)
+        {
+            _input = input;
+            _projection = projection;
+        }
+
+        internal override void WriteSql(StringBuilder sqlText)
+        {
+            bool first = true;
+            foreach (var column in _input.GetProjectedColumns())
+            {
+                if (!first)
+                    sqlText.Append(",");
+                first = false;
+                column.WriteSql(sqlText);
+            }
+            base.WriteSql(sqlText);
+        }
     }
 
     internal class ColumnExpression : VisitedExpression
@@ -311,11 +380,56 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             _columnName = columnName;
         }
 
+        public string Name { get { return _columnName; } }
+
         internal override void WriteSql(StringBuilder sqlText)
         {
             _column.WriteSql(sqlText);
             sqlText.Append(" AS " + SqlBaseGenerator.QuoteIdentifier(_columnName));
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return new ColumnExpression[] { this };
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _column.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+    }
+
+    internal class ScanExpression : VisitedExpression
+    {
+        private string _scanString;
+        private EntitySetBase _target;
+
+        public ScanExpression(string scanString, EntitySetBase target)
+        {
+            _scanString = scanString;
+            _target = target;
+        }
+
+        internal EntitySetBase Target { get { return _target; } }
+
+        internal override void WriteSql(StringBuilder sqlText)
+        {
+            sqlText.Append(_scanString);
+            base.WriteSql(sqlText);
+        }
+
+        List<ColumnExpression> _projectedColumns;
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            if (_projectedColumns == null)
+            {
+                foreach (var property in _target.ElementType.Members.OfType<EdmProperty>())
+                {
+                    _projectedColumns.Add(new ColumnExpression(new PropertyExpression(property), property.Name));
+                }
+            }
+            return _projectedColumns;
         }
     }
 
@@ -379,6 +493,17 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             if (Skip != null) Skip.WriteSql(sqlText);
             if (Limit != null) Limit.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            var accessedProperties = base.GetAccessedProperties();
+            if (Where != null) accessedProperties = accessedProperties.Concat(Where.GetAccessedProperties());
+            if (GroupBy != null) accessedProperties = accessedProperties.Concat(GroupBy.GetAccessedProperties());
+            if (OrderBy != null) accessedProperties = accessedProperties.Concat(OrderBy.GetAccessedProperties());
+            if (Skip != null) accessedProperties = accessedProperties.Concat(Skip.GetAccessedProperties());
+            if (Limit != null) accessedProperties = accessedProperties.Concat(Limit.GetAccessedProperties());
+            return accessedProperties;
+        }
     }
 
     internal class FromExpression : InputExpression
@@ -407,7 +532,7 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
 
         internal override void WriteSql(StringBuilder sqlText)
         {
-            bool wrap = !(_from is LiteralExpression);
+            bool wrap = !(_from is LiteralExpression || _from is ScanExpression);
             if (wrap)
                 sqlText.Append("(");
             _from.WriteSql(sqlText);
@@ -417,22 +542,52 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(SqlBaseGenerator.QuoteIdentifier(_name));
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            Dictionary<string, string> emptySubstitution = new Dictionary<string, string>();
+            if (_from is ScanExpression)
+            {
+                ScanExpression scan = (ScanExpression)_from;
+                foreach (var property in scan.Target.ElementType.Members.OfType<EdmProperty>())
+                {
+                    yield return new ColumnExpression(new PropertyExpression(new VariableReferenceExpression(Name, emptySubstitution), property), property.Name);
+                }
+            }
+            else
+            {
+                foreach (var column in _from.GetProjectedColumns())
+                {
+                    string columnRef = string.Format("{0}.{1}", SqlBaseGenerator.QuoteIdentifier(Name), column.Name);
+                    yield return new ColumnExpression(new LiteralExpression(columnRef), column.Name);
+                }
+            }
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _from.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
     }
 
     internal class JoinExpression : InputExpression
     {
-        private VisitedExpression _left;
+        private InputExpression _left;
         private DbExpressionKind _joinType;
-        private VisitedExpression _right;
+        private InputExpression _right;
         private VisitedExpression _condition;
 
-        public JoinExpression(VisitedExpression left, DbExpressionKind joinType, VisitedExpression right, VisitedExpression condition)
+        public JoinExpression(InputExpression left, DbExpressionKind joinType, InputExpression right, VisitedExpression condition)
         {
             _left = left;
             _joinType = joinType;
             _right = right;
             _condition = condition;
         }
+
+        public InputExpression Left { get { return _left; } }
+        public DbExpressionKind JoinType { get { return _joinType; } }
+        public InputExpression Right { get { return _right; } }
 
         public VisitedExpression Condition
         {
@@ -468,6 +623,36 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             }
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return GetProjectedColumns(this);
+        }
+
+        internal static IEnumerable<ColumnExpression> GetProjectedColumns(JoinExpression join)
+        {
+            IEnumerable<ColumnExpression> projectedColumns;
+            if (join.Left is FromExpression)
+                projectedColumns = ((FromExpression)join.Left).GetProjectedColumns();
+            else
+                projectedColumns = GetProjectedColumns((JoinExpression)join.Left);
+            if (join.Right is FromExpression)
+                projectedColumns = projectedColumns.Concat(((FromExpression)join.Right).GetProjectedColumns());
+            else
+                projectedColumns = projectedColumns.Concat(GetProjectedColumns((JoinExpression)join.Right));
+            return projectedColumns;
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            var accessedProperties = _left.GetAccessedProperties()
+                .Concat
+                (_right.GetAccessedProperties());
+            if (_joinType != DbExpressionKind.CrossJoin)
+                accessedProperties = accessedProperties.Concat(_condition.GetAccessedProperties());
+            accessedProperties = accessedProperties.Concat(base.GetAccessedProperties());
+            return accessedProperties;
+        }
     }
 
     internal class WhereExpression : VisitedExpression
@@ -489,6 +674,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
         internal void And(VisitedExpression andAlso)
         {
             _where = new BooleanExpression("AND", _where, andAlso);
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _where.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
         }
     }
 
@@ -513,7 +708,7 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                 // need some way of removing extra levels of dots
                 if (_name.Contains("."))
                 {
-                    sqlText.Append(_name.Substring(_name.LastIndexOf('.') + 1));
+                    sqlText.Append(SqlBaseGenerator.QuoteIdentifier(_name.Substring(_name.LastIndexOf('.') + 1)));
                 }
                 else
                 {
@@ -535,25 +730,78 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             }
             return unsubstitutedText.ToString();
         }
+
+        internal void AdjustAccess(string projectName)
+        {
+            int projectIndex = _name.IndexOf(projectName);
+            // start substring at the end of the projectName
+            int substringAt = projectIndex + projectName.Length + 1;
+            // skip over the ending quote if it exists
+            if (_name[substringAt] == '"')
+                ++substringAt;
+            // skip over the connecting .
+            if (_name[substringAt] == '.')
+                ++substringAt;
+            _name = _name.Substring(substringAt);
+        }
     }
 
     internal class PropertyExpression : VisitedExpression
     {
         private VariableReferenceExpression _variable;
-        private string _property;
+        private EdmMember _property;
 
-        public PropertyExpression(VariableReferenceExpression variable, string property)
+        public PropertyExpression(VariableReferenceExpression variable, EdmMember property)
         {
             _variable = variable;
             _property = property;
         }
 
+        // used for inserts or updates where the column is not qualified
+        public PropertyExpression(EdmMember property)
+        {
+            _variable = null;
+            _property = property;
+        }
+
+        public string Name { get { return _property.Name; } }
+
         internal override void WriteSql(StringBuilder sqlText)
         {
-            _variable.WriteSql(sqlText);
-            sqlText.Append(".");
-            sqlText.Append(SqlBaseGenerator.QuoteIdentifier(_property));
+            if (_variable != null)
+            {
+                _variable.WriteSql(sqlText);
+                sqlText.Append(".");
+            }
+            sqlText.Append(SqlBaseGenerator.QuoteIdentifier(_property.Name));
             base.WriteSql(sqlText);
+        }
+
+        // override ToString since we don't want variable substitution or identifier quoting
+        // until writing out the SQL.
+        public override string ToString()
+        {
+            StringBuilder unsubstitutedText = new StringBuilder();
+            if (_variable != null)
+            {
+                unsubstitutedText.Append(_variable.ToString());
+                unsubstitutedText.Append(".");
+            }
+            unsubstitutedText.Append(_property.Name);
+            return unsubstitutedText.ToString();
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return new PropertyExpression[] { this }.Concat(base.GetAccessedProperties());
+        }
+
+        internal void AdjustVariableAccess(string projectName)
+        {
+            if (_variable != null)
+            {
+                _variable.AdjustAccess(projectName);
+            }
         }
     }
 
@@ -587,6 +835,19 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(")");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _args
+                .Aggregate(Enumerable.Empty<PropertyExpression>(),
+                    (list, ve) => list.Concat(ve.GetAccessedProperties()))
+                .Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class CastExpression : VisitedExpression
@@ -607,6 +868,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.AppendFormat(" AS {0})", _type);
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _value.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class GroupByExpression : VisitedExpression
@@ -621,6 +892,11 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             if (ExpressionList.Count != 0)
                 sqlText.Append(" GROUP BY ");
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
         }
     }
 
@@ -639,6 +915,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             _arg.WriteSql(sqlText);
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _arg.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class SkipExpression : VisitedExpression
@@ -655,6 +941,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(" OFFSET ");
             _arg.WriteSql(sqlText);
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _arg.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
         }
     }
 
@@ -688,6 +984,111 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                 sqlText.Append(")");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _left.GetAccessedProperties()
+                .Concat
+                (_right.GetAccessedProperties())
+                .Concat
+                (base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
+    }
+
+    internal class NegatableBooleanExpression : NegatableExpression
+    {
+        private DbExpressionKind _booleanOperator;
+        private VisitedExpression _left;
+        private VisitedExpression _right;
+
+        public NegatableBooleanExpression(DbExpressionKind booleanOperator, VisitedExpression left, VisitedExpression right)
+        {
+            _booleanOperator = booleanOperator;
+            _left = left;
+            _right = right;
+        }
+
+        internal override void WriteSql(StringBuilder sqlText)
+        {
+            bool wrapLeft = !(_left is PropertyExpression || _left is ConstantExpression);
+            bool wrapRight = !(_right is PropertyExpression || _right is ConstantExpression);
+            if (wrapLeft)
+                sqlText.Append("(");
+            _left.WriteSql(sqlText);
+            if (wrapLeft)
+                sqlText.Append(") ");
+            switch (_booleanOperator)
+            {
+                case DbExpressionKind.Equals:
+                    if (Negated)
+                        sqlText.Append("!=");
+                    else
+                        sqlText.Append("=");
+                    break;
+                case DbExpressionKind.GreaterThan:
+                    if (Negated)
+                        sqlText.Append("<=");
+                    else
+                        sqlText.Append(">");
+                    break;
+                case DbExpressionKind.GreaterThanOrEquals:
+                    if (Negated)
+                        sqlText.Append("<");
+                    else
+                        sqlText.Append(">=");
+                    break;
+                case DbExpressionKind.LessThan:
+                    if (Negated)
+                        sqlText.Append(">=");
+                    else
+                        sqlText.Append("<");
+                    break;
+                case DbExpressionKind.LessThanOrEquals:
+                    if (Negated)
+                        sqlText.Append(">");
+                    else
+                        sqlText.Append("<=");
+                    break;
+                case DbExpressionKind.Like:
+                    if (Negated)
+                        sqlText.Append(" NOT");
+                    sqlText.Append(" LIKE ");
+                    break;
+                case DbExpressionKind.NotEquals:
+                    if (Negated)
+                        sqlText.Append("=");
+                    else
+                        sqlText.Append("!=");
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+            if (wrapRight)
+                sqlText.Append(" (");
+            _right.WriteSql(sqlText);
+            if (wrapRight)
+                sqlText.Append(")");
+            base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _left.GetAccessedProperties()
+                .Concat
+                (_right.GetAccessedProperties())
+                .Concat
+                (base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class CombinedProjectionExpression : VisitedExpression
@@ -711,6 +1112,20 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(" ");
             _second.WriteSql(sqlText);
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _first.GetAccessedProperties()
+                .Concat
+                (_second.GetAccessedProperties())
+                .Concat
+                (base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return _first.GetProjectedColumns().Concat(_second.GetProjectedColumns());
         }
     }
 
@@ -750,6 +1165,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(")");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _argument.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
+        }
     }
 
     internal class NegateExpression : NegatableExpression
@@ -771,6 +1196,11 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             sqlText.Append(")");
             base.WriteSql(sqlText);
         }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _argument.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
     }
 
     internal class IsNullExpression : NegatableExpression
@@ -790,6 +1220,16 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
                 sqlText.Append("NOT ");
             sqlText.Append("NULL ");
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<PropertyExpression> GetAccessedProperties()
+        {
+            return _argument.GetAccessedProperties().Concat(base.GetAccessedProperties());
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
         }
     }
 
@@ -813,6 +1253,11 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
         {
             sqlText.Append(" ORDER BY ");
             base.WriteSql(sqlText);
+        }
+
+        internal override IEnumerable<ColumnExpression> GetProjectedColumns()
+        {
+            return Enumerable.Empty<ColumnExpression>();
         }
     }
 }

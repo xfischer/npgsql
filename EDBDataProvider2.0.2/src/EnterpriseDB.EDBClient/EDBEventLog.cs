@@ -75,7 +75,7 @@ namespace EnterpriseDB.EDBClient
 		// static constructor
 		static EDBEventLog()
 		{
-			LogResMan = new ResourceManager(typeof(EDBEventLog));
+            LogResMan = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 		}
 
 		///<summary>

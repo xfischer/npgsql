@@ -182,11 +182,18 @@ namespace EnterpriseDB.EDBClient
 		/// If you do not perform this conversion, the compiler will assume you
 		/// are attempting to call the EDBParameterCollection.Add(string, DbType) overload.
 		/// </remarks>
-		public EDBParameter Add(string parameterName, object value)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Add", parameterName, value);
-			return this.Add(new EDBParameter(parameterName, value));
-		}
+        [Obsolete("Do not call this method. Use AddWithValue instead.")]
+        public EDBParameter Add(string parameterName, object value)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Add", parameterName, value);
+            return this.AddWithValue(parameterName, value);
+        }
+
+        public EDBParameter AddWithValue(string parameterName, object value)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Add", parameterName, value);
+            return this.Add(new EDBParameter(parameterName, value));
+        }
 
 		/// <summary>
 		/// Adds a <see cref="Npgsql.EDBParameter">EDBParameter</see> to the <see cref="Npgsql.EDBParameterCollection">EDBParameterCollection</see> given the parameter name and the data type.
@@ -528,7 +535,7 @@ namespace EnterpriseDB.EDBClient
 			if (!(Object is EDBParameter))
 			{
 				throw new InvalidCastException(
-					String.Format(resman.GetString("Exception_WrongType"), Object.GetType()));
+                    String.Format(resman.GetString("Exception_WrongType"), Object.GetType()));
 			}
 		}
 

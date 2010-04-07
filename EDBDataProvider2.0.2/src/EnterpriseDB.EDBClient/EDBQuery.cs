@@ -56,6 +56,9 @@ namespace EnterpriseDB.EDBClient
 
             _command.Connector.Mediator.SetSqlSent(commandText);
 
+            // Workaround for seek exceptions when running under ms.net. TODO: Check why Npgsql may be letting behind data in the stream.
+            outputStream.Flush();
+
             // Send the query to server.
             // Write the byte 'Q' to identify a query message.
             outputStream.WriteByte((byte)FrontEndMessageCode.Query);
