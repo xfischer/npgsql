@@ -57,6 +57,4 @@ using System.Resources;
 [assembly : AssemblyVersion("8.4.3.4")]
 
 
-[assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile("..\\..\\EnterpriseDB.EDBClient\\EDB.snk")]
-[assembly: AssemblyKeyName("")]
+
