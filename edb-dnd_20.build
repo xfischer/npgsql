@@ -9,6 +9,7 @@
     <property name="parent_dir" value="./EDBDataProvider2.0.2"/>
     <property name="build.dir" value="./EDBDataProvider2.0.2/build"/>
 	<property name="lib_dir" value="./lib"/>
+	<property name="interop_dir" value="C:/Program Files/Microsoft.NET/Primary Interop Assemblies/"/>
     <property name="assemblyname" value="EDBDataProvider2.0.2"/>
     <property name="debug" value="false"/>   
     <property name="test.outdir" value="results"/>
@@ -64,7 +65,9 @@
 
     
     <target name="buildnunit" depends="init">
+	
 	<csc target="library" output="${build.dir}/${nunitdll}.dll" debug="${debug}">
+		
 		<references>
 			<include name="System.Data.dll" />
 			<include name="System.dll" />
@@ -72,7 +75,7 @@
 			<include name="${build.dir}/${assemblyname}.dll" />
 			<include name="${lib_dir}/nunit.framework.dll" />
 			<include name="System.Web.UI.WebControls" />
-			<include name="${lib_dir}/ADOCOM.dll" />
+			<include name="${interop_dir}/ADODB.dll" />
             </references>            
 	    <sources>
 		<include name="${parent_dir}/EDBNunit/*.cs" />

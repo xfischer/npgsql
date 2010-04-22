@@ -16,13 +16,13 @@ namespace ADO
 	[TestFixture]
 	public class ADORecordSet
 	{
-		private ADOCOM.Connection Conn=null;
+		private ADODB.Connection Conn=null;
 		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
 			
 		[SetUp]
 		protected void SetUp()
 		{ 
-			Conn=new ADOCOM.Connection();
+			Conn=new ADODB.Connection();
 			Conn.Open(DBConnection,"edb","edb",-1); 
 		}	
 
@@ -39,12 +39,12 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			Assert.AreEqual("SMITH",rs.Fields[0].Value);
 			rs.Close();
 
@@ -55,11 +55,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -85,11 +85,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -110,7 +110,7 @@ namespace ADO
 			
 			
 			rs.Close();
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);      
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);      
 		
 			Assert.AreEqual("CLERK",rs.Fields[1].Value.ToString());
 			rs.Close();
@@ -121,11 +121,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockReadOnly,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockReadOnly,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -164,12 +164,12 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
 			     
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
 			
@@ -192,7 +192,7 @@ namespace ADO
 				rs.Close();
 
 				
-				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+				rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 				rs.Update(1,"CLERK");
 				rs.Close();
 			}
@@ -216,12 +216,12 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			Assert.AreEqual("SMITH",rs.Fields[0].Value);
 			rs.Close();
 
@@ -232,11 +232,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -265,11 +265,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -290,7 +290,7 @@ namespace ADO
 			
 			
 			rs.Close();
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);      
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);      
 		
 			Assert.AreEqual("CLERK",rs.Fields[1].Value.ToString());
 			rs.Close();
@@ -301,11 +301,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockReadOnly,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockReadOnly,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -344,11 +344,12 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockPessimistic,1);       
+            
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -371,7 +372,7 @@ namespace ADO
 				rs.Update(1,"New Job");
 				rs.Close();
 
-				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);  
+				rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockPessimistic,1);  
 				rs.Update(1,"CLERK");
 				rs.Close();
 			}
@@ -392,11 +393,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,mgr from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockPessimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -421,7 +422,7 @@ namespace ADO
 				//rs.Update(1,2222); //old one was 7902
 				rs.Close();
 
-				rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockPessimistic,1);  
+				rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockPessimistic,1);  
 				rs.Update(1,7902);
 				rs.Close();
 			}
@@ -441,9 +442,9 @@ namespace ADO
 		public void ADORecordsetScrollabilityROLock()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockReadOnly,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenForwardOnly,ADODB.LockTypeEnum.adLockReadOnly,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -471,9 +472,9 @@ namespace ADO
 		public void ADORecordsetScrollabilityUSLock()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockUnspecified,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenForwardOnly,ADODB.LockTypeEnum.adLockUnspecified,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -498,9 +499,9 @@ namespace ADO
 		public void ADORecordsetScrollabilityOPLock()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenForwardOnly,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -528,12 +529,12 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			Assert.AreEqual("SMITH",rs.Fields[0].Value);
 			rs.Close();
 
@@ -557,12 +558,12 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			Assert.AreEqual("SMITH",rs.Fields[0].Value);
 			rs.Close();
 
@@ -586,14 +587,14 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			
-			rs._xSave("Recordset.xml",ADOCOM.PersistFormatEnum.adPersistXML);
+			rs._xSave("Recordset.xml",ADODB.PersistFormatEnum.adPersistXML);
 			
 			if(File.Exists("Recordset.xml"))
 			{
@@ -615,14 +616,14 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			
-			rs.Save("Recordset.xml",ADOCOM.PersistFormatEnum.adPersistXML);
+			rs.Save("Recordset.xml",ADODB.PersistFormatEnum.adPersistXML);
 	
 			if(File.Exists("Recordset.xml"))
 			{
@@ -646,14 +647,14 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			 
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			
-			rs._xSave("Recordset",ADOCOM.PersistFormatEnum.adPersistADTG);
+			rs._xSave("Recordset",ADODB.PersistFormatEnum.adPersistADTG);
 			
 			if(File.Exists("Recordset"))
 			{
@@ -675,14 +676,14 @@ namespace ADO
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
 			
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 		
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 			
-			rs.Save("Recordset",ADOCOM.PersistFormatEnum.adPersistADTG);
+			rs.Save("Recordset",ADODB.PersistFormatEnum.adPersistADTG);
 	
 			if(File.Exists("Recordset"))
 			{
@@ -701,9 +702,9 @@ namespace ADO
 		public void ADORecordsetBookmarkForward()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenForwardOnly,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -739,9 +740,9 @@ namespace ADO
 		public void ADORecordsetBookmarkStatic()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -768,9 +769,9 @@ namespace ADO
 		public void ADORecordsetBookmarkDynamic()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -805,9 +806,9 @@ namespace ADO
 		public void ADORecordsetBookmarkKeySet()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenForwardOnly,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenForwardOnly,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -835,9 +836,9 @@ namespace ADO
 		public void ADORecordsetBookmarkUnspecified()
 		{
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenUnspecified,ADOCOM.LockTypeEnum.adLockOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenUnspecified,ADODB.LockTypeEnum.adLockOptimistic,1);
 
 			Assert.AreEqual("7369",rs.Fields[0].Value.ToString());
 
@@ -872,11 +873,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -893,7 +894,7 @@ namespace ADO
 			Assert.AreEqual(ENameByIndex,ENameByName);
 			//Assert.AreEqual("CLERK",JobByIndex);
 		
-			ADOCOM.Recordset rs2= rs.Clone(ADOCOM.LockTypeEnum.adLockBatchOptimistic);
+			ADODB.Recordset rs2= rs.Clone(ADODB.LockTypeEnum.adLockBatchOptimistic);
 			
 			 ENameByIndex=rs2.Fields[0].Value.ToString();
 			
@@ -920,11 +921,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -941,11 +942,11 @@ namespace ADO
 			Assert.AreEqual(ENameByIndex,ENameByName);
 			//Assert.AreEqual("CLERK",JobByIndex);
 		
-			ADOCOM.Recordset rs2=null;
+			ADODB.Recordset rs2=null;
 			try
 			{
 
-				 rs2= rs.Clone(ADOCOM.LockTypeEnum.adLockOptimistic);
+				 rs2= rs.Clone(ADODB.LockTypeEnum.adLockOptimistic);
 				Assert.Fail("Arguments are of the wrong type, are out of acceptable range, or are in conflict with one another");
 			}
 
@@ -966,11 +967,11 @@ namespace ADO
 		{
 			// sql statment
 			string SQL = "select ename,job from emp where empno=7369;";
-			//create ADOCOM Recordset object
-			ADOCOM.Recordset rs= new ADOCOM.Recordset();
+			//create ADODB Recordset object
+			ADODB.Recordset rs= new ADODB.Recordset();
 			   
 			//execute the query specifying static sursor, batch optimistic locking
-			rs.Open(SQL,DBConnection,ADOCOM.CursorTypeEnum.adOpenStatic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);       
+			rs.Open(SQL,DBConnection,ADODB.CursorTypeEnum.adOpenStatic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);       
 
 			//reference the ename field by column index
 			string ENameByIndex=rs.Fields[0].Value.ToString();
@@ -987,7 +988,7 @@ namespace ADO
 			Assert.AreEqual(ENameByIndex,ENameByName);
 			//Assert.AreEqual("CLERK",JobByIndex);
 		
-			ADOCOM.Recordset rs2= rs._xClone();
+			ADODB.Recordset rs2= rs._xClone();
 			ENameByIndex=rs2.Fields[0].Value.ToString();
 			
 			//reference the ename field by column name
@@ -1015,9 +1016,9 @@ namespace ADO
 			
 
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockUnspecified,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockUnspecified,1);
 
 			
 			
@@ -1047,9 +1048,9 @@ namespace ADO
 		{
 			
 			string SQL="SELECT * FROM EMP order by empno;";
-			ADOCOM.Recordset rs=new ADOCOM.Recordset();
+			ADODB.Recordset rs=new ADODB.Recordset();
 
-			rs.Open(SQL,Conn,ADOCOM.CursorTypeEnum.adOpenDynamic,ADOCOM.LockTypeEnum.adLockBatchOptimistic,1);
+			rs.Open(SQL,Conn,ADODB.CursorTypeEnum.adOpenDynamic,ADODB.LockTypeEnum.adLockBatchOptimistic,1);
 
 			
 			
