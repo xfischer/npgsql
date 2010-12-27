@@ -68,6 +68,7 @@ namespace EnterpriseDB.EDBClient
         private String source_column = String.Empty;
         private DataRowVersion source_version = DataRowVersion.Current;
         private Object value = DBNull.Value;
+		private Object npgsqlValue = null;
         private Boolean sourceColumnNullMapping;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -559,6 +560,29 @@ namespace EnterpriseDB.EDBClient
                 {
                     throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value.GetType()));
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the value of the parameter.
+        /// </summary>
+        /// <value>An <see cref="System.Object">Object</see> that is the value of the parameter.
+        /// The default value is null.</value>
+        [TypeConverter(typeof(StringConverter)), Category("Data")]
+        public Object EDBValue
+        {
+            get
+            {                
+                EDBEventLog.LogPropertyGet(LogLevel.Normal, CLASSNAME, "NpgsqlValue");
+                return npgsqlValue;
+            } 
+
+            set
+            {
+                EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "NpgsqlValue", value);
+
+                Value = value;
+                
             }
         }
 

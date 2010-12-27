@@ -520,6 +520,12 @@ namespace EnterpriseDB.EDBClient
             while (sb.Length != 0 && char.IsWhiteSpace(sb[sb.Length - 1]))
                 sb.Remove(sb.Length - 1, 1);
             return sb;
+		}
+
+        internal static void LogStringWritten(string theString)
+        {
+            EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
+            
         }
 	}
 

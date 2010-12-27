@@ -58,6 +58,8 @@ namespace EnterpriseDB.EDBClient
 		internal CommandBehavior _behavior;
 		internal EDBCommand _command;
 
+        internal Version Npgsql205 = new Version("2.0.5");
+
 		internal EDBDataReader(EDBCommand command, CommandBehavior behavior)
 		{
 			_behavior = behavior;
@@ -119,7 +121,13 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		public override Int32 FieldCount
 		{
-			get { return CurrentDescription == null ? -1 : CurrentDescription.NumFields; }
+			get { 
+                    if (_connector.CompatVersion <= Npgsql205)
+                        return CurrentDescription == null ? -1 : CurrentDescription.NumFields; 
+                    else
+                        // We read msdn documentation and bug report #1010649 that the common return value is 0.
+                        return CurrentDescription == null ? 0 : CurrentDescription.NumFields; 
+                }
 		}
 
 		/// <summary>

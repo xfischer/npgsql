@@ -90,6 +90,9 @@ namespace EnterpriseDB.EDBClient
 
         private Boolean commandTimeoutSet = false;
 
+        private UpdateRowSource updateRowSource = UpdateRowSource.Both;
+
+
         // Constructors
 
         /// <summary>
@@ -141,8 +144,7 @@ namespace EnterpriseDB.EDBClient
             type = CommandType.Text;
             this.Transaction = transaction;
 
-            // Internal commands aren't affected by command timeout value provided by user.
-            timeout = 20;
+            SetCommandTimeout();
         }
 
         /// <summary>
@@ -378,10 +380,23 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "UpdatedRowSource");
 
-                return UpdateRowSource.Both;
+                return updateRowSource;
             }
-
-            set { }
+            set 
+            {
+                switch (value)
+                {
+                        // validate value (required based on base type contract)
+                    case UpdateRowSource.None:
+                    case UpdateRowSource.OutputParameters:
+                    case UpdateRowSource.FirstReturnedRecord:
+                    case UpdateRowSource.Both:
+                        updateRowSource = value;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
         }
 
         /// <summary>
@@ -441,6 +456,7 @@ namespace EnterpriseDB.EDBClient
             clone.CommandTimeout = CommandTimeout;
             clone.CommandType = CommandType;
             clone.DesignTimeVisible = DesignTimeVisible;
+		   
             foreach (EDBParameter parameter in Parameters)
             {
                 clone.Parameters.Add(parameter.Clone());
@@ -866,7 +882,13 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "GetCommandText");
 
-            return string.IsNullOrEmpty(planName) ? GetClearCommandText() : GetPreparedCommandText();
+            StringBuilder ret = string.IsNullOrEmpty(planName) ? GetClearCommandText() : GetPreparedCommandText();
+            // In constructing the command text, we potentially called internal
+            // queries.  Reset command timeout and SQL sent.
+            m_Connector.Mediator.ResetResponses();
+            m_Connector.Mediator.CommandTimeout = CommandTimeout;
+            return ret;
+
         }
         private static void PassEscapedArray(StringBuilder query, string array)
         {
@@ -896,6 +918,47 @@ namespace EnterpriseDB.EDBClient
                     query.Append(array[i]);
             }
             query.Append(array[endAt]);
+        }
+        
+        private void PassParam(StringBuilder query, EDBParameter p)
+        {
+                string serialised = p.TypeInfo.ConvertToBackend(p.Value, false);
+
+                // Add parentheses wrapping parameter value before the type cast to avoid problems with Int16.MinValue, Int32.MinValue and Int64.MinValue
+                // See bug #1010543
+                // Check if this parenthesis can be collapsed with the previous one about the array support. This way, we could use
+                // only one pair of parentheses for the two purposes instead of two pairs.
+                query.Append('(');
+
+                if(Connector.UseConformantStrings)
+                    switch(serialised[0])
+                    {
+                    case '\''://type passed as string or string with type.
+                        //We could test to see if \ is used anywhere, but then we could be doing quite an expensive check (if the value is large) for little gain.
+                        query.Append("E").Append(serialised);
+                        break;
+                    case 'a':
+                        if(POSTGRES_TEXT_ARRAY.IsMatch(serialised))
+                            PassEscapedArray(query, serialised);
+                        else
+                            query.Append(serialised);
+                        break;
+                    default:
+                        query.Append(serialised);
+                        break;
+                    }
+                else
+                    query.Append(serialised);
+
+                query.Append(')');
+
+
+                if (p.UseCast)
+                {
+                    query.Append("::").Append(p.TypeInfo.CastName);
+                    if (p.TypeInfo.UseSize && (p.Size > 0))
+                        query.Append('(').Append(p.Size).Append(')');
+                }
         }
 
         private StringBuilder GetClearCommandText()

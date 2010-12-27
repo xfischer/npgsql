@@ -752,6 +752,13 @@ namespace EnterpriseDB.EDBClient
                 commandSearchPath.ExecuteBlind();
             }
 
+            try
+            {
+                EDBCommand commandSslrenegotiation = new EDBCommand("SET ssl_renegotiation_limit=0", this);
+                commandSslrenegotiation.ExecuteBlind();
+
+            }
+            catch {}
             // Make a shallow copy of the type mapping that the connector will own.
             // It is possible that the connector may add types to its private
             // mapping that will not be valid to another connector, even

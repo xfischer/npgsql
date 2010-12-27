@@ -87,6 +87,8 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		public event NotificationEventHandler Notification;
 
+		internal NotificationEventHandler NotificationDelegate;
+
         /// <summary>
         /// Called to provide client certificates for SSL handshake.
         /// </summary>
@@ -94,8 +96,6 @@ namespace EnterpriseDB.EDBClient
 
         internal ProvideClientCertificatesCallback ProvideClientCertificatesCallbackDelegate;
 
-
-		internal NotificationEventHandler NotificationDelegate;
 
 		/// <summary>
 		/// Mono.Security.Protocol.Tls.CertificateSelectionCallback delegate.

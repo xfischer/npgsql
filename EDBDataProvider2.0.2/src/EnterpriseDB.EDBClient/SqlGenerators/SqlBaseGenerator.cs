@@ -57,6 +57,20 @@ namespace EDB.SqlGenerators
         // store off current projection so the top one is the one being built
         private Stack<ProjectionExpression> _projectExpressions = new Stack<ProjectionExpression>();
 
+        private static Dictionary<string, string> AggregateFunctionNames = new Dictionary<string, string>()
+        {
+            {"Avg","avg"},
+            {"Count","count"},
+            {"Min","min"},
+            {"Max","max"},
+            {"Sum","sum"},
+            {"BigCount","count"},
+            {"StDev","stddev_samp"},
+            {"StDevP","stddev_pop"},
+            {"Var","var_samp"},
+            {"VarP","var_pop"},
+        };
+
         protected SqlBaseGenerator()
         {
         }
@@ -293,7 +307,8 @@ namespace EDB.SqlGenerators
                 _projectExpressions.Push(visitedExpression);
                 for (int i = 0; i < rowType.Properties.Count && i < expression.Arguments.Count; ++i)
                 {
-                    visitedExpression.AppendColumn(new ColumnExpression(expression.Arguments[i].Accept(this), rowType.Properties[i].Name));
+                    var prop = rowType.Properties[i];
+                    visitedExpression.AppendColumn(new ColumnExpression(expression.Arguments[i].Accept(this), prop.Name, prop.TypeUsage));
                 }
 
                 return visitedExpression;
@@ -308,7 +323,7 @@ namespace EDB.SqlGenerators
                     ProjectionExpression visitedExpression = new ProjectionExpression();
                     var visitedColumn = arg.Accept(this);
                     if (!(visitedColumn is ColumnExpression))
-                        visitedColumn = new ColumnExpression(visitedColumn, "C");
+                        visitedColumn = new ColumnExpression(visitedColumn, "C", arg.ResultType);
                     visitedExpression.AppendColumn((ColumnExpression)visitedColumn);
                     if (previousExpression != null)
                     {
@@ -355,32 +370,26 @@ namespace EDB.SqlGenerators
         public override VisitedExpression Visit(DbLikeExpression expression)
         {
             // LIKE keyword
-            // also uses ESCAPE
-            // ESCAPE may be way of identifying wild cards
-            // TODO: enhance this.  Only supporting simple case for now
-            return new BooleanExpression("LIKE", expression.Argument.Accept(this), expression.Pattern.Accept(this));
+            return new NegatableBooleanExpression(DbExpressionKind.Like, expression.Argument.Accept(this), expression.Pattern.Accept(this));
         }
 
         public override VisitedExpression Visit(DbJoinExpression expression)
         {
-            // table join
-            // the following code works ok, but the rest of the code doesn't work well in a join
-            // need to take _projectVarName and append .left then do the same for right
-            // use this to do combo variable substitution
-            return new JoinExpression(VisitJoinPart(expression.Left),
+            var joinCondition = expression.JoinCondition.Accept(this);
+            return new JoinExpression(VisitJoinPart(expression.Left, joinCondition),
                 expression.ExpressionKind,
-                VisitJoinPart(expression.Right),
-                expression.JoinCondition.Accept(this));
+                VisitJoinPart(expression.Right, joinCondition),
+                joinCondition);
         }
 
-        private InputExpression VisitJoinPart(DbExpressionBinding joinPart)
+        private InputExpression VisitJoinPart(DbExpressionBinding joinPart, VisitedExpression joinCondition)
         {
             PushProjectVar(joinPart.VariableName);
             string variableName = null;
             VisitedExpression joinPartExpression = null;
             if (joinPart.Expression is DbFilterExpression)
             {
-                joinPartExpression = VisitFilterExpression((DbFilterExpression)joinPart.Expression, true);
+                joinPartExpression = VisitFilterExpression((DbFilterExpression)joinPart.Expression, true, joinCondition);
             }
             else
             {
@@ -462,8 +471,14 @@ namespace EDB.SqlGenerators
             foreach (var key in expression.Keys)
             {
                 VisitedExpression keyColumnExpression = key.Accept(this);
-                projectExpression.AppendColumn(new ColumnExpression(keyColumnExpression, rowType.Properties[columnIndex].Name));
-                groupByExpression.AppendGroupingKey(keyColumnExpression);
+                var prop = rowType.Properties[columnIndex];
+                projectExpression.AppendColumn(new ColumnExpression(keyColumnExpression, prop.Name, prop.TypeUsage));
+                // have no idea why EF is generating a group by with a constant expression,
+                // but postgresql doesn't need it.
+                if (!(key is DbConstantExpression))
+                {
+                    groupByExpression.AppendGroupingKey(keyColumnExpression);
+                }
                 ++columnIndex;
             }
             foreach (var ag in expression.Aggregates)
@@ -472,7 +487,8 @@ namespace EDB.SqlGenerators
                 if (function == null)
                     throw new NotSupportedException();
                 VisitedExpression functionExpression = VisitFunction(function);
-                projectExpression.AppendColumn(new ColumnExpression(functionExpression, rowType.Properties[columnIndex].Name));
+                var prop = rowType.Properties[columnIndex];
+                projectExpression.AppendColumn(new ColumnExpression(functionExpression, prop.Name, prop.TypeUsage));
                 ++columnIndex;
             }
             PushProjectVar(expression.Input.GroupVariableName);
@@ -514,10 +530,10 @@ namespace EDB.SqlGenerators
 
         public override VisitedExpression Visit(DbFilterExpression expression)
         {
-            return VisitFilterExpression(expression, false);
+            return VisitFilterExpression(expression, false, null);
         }
 
-        private VisitedExpression VisitFilterExpression(DbFilterExpression expression, bool partOfJoin)
+        private VisitedExpression VisitFilterExpression(DbFilterExpression expression, bool partOfJoin, VisitedExpression joinCondition)
         {
             // complicated
             // similar logic used for other expressions (such as group by)
@@ -528,7 +544,7 @@ namespace EDB.SqlGenerators
             InputExpression inputExpression;
             if (expression.Input.Expression is DbFilterExpression)
             {
-                inputExpression = CheckedConvertFrom(VisitFilterExpression((DbFilterExpression)expression.Input.Expression, partOfJoin), expression.Input.VariableName);
+                inputExpression = CheckedConvertFrom(VisitFilterExpression((DbFilterExpression)expression.Input.Expression, partOfJoin, joinCondition), expression.Input.VariableName);
             }
             else
             {
@@ -580,7 +596,7 @@ namespace EDB.SqlGenerators
                         var projection = new ProjectionExpression();
                         // get the columns to move from previous working projection
                         // to the new projection being built from the join          // call ToArray to avoid problems with changing the list later
-                        var movedColumns = GetColumnsForJoin(join, previousProjection).ToArray();
+                        var movedColumns = GetColumnsForJoin(join, previousProjection, joinCondition).ToArray();
                         // pair up moved column with it's replacement
                         var replacementColumns = movedColumns
                             .Select(c => new { Existing = c, Replacement = GetReplacementColumn(join, c) });
@@ -617,23 +633,50 @@ namespace EDB.SqlGenerators
         /// Given a join expression and a projection, fetch all columns in the projection
         /// that reference columns in the join.
         /// </summary>
-        private IEnumerable<ColumnExpression> GetColumnsForJoin(JoinExpression join, ProjectionExpression projectionExpression)
+        private IEnumerable<ColumnExpression> GetColumnsForJoin(JoinExpression join, ProjectionExpression projectionExpression, VisitedExpression joinCondition)
         {
             List<string> fromNames = new List<string>();
+            Dictionary<string, ColumnExpression> joinColumns = new Dictionary<string, ColumnExpression>();
             GetFromNames(join, fromNames);
+            foreach (var prop in joinCondition.GetAccessedProperties())
+            {
+                System.Text.StringBuilder propName = new System.Text.StringBuilder();
+                prop.WriteSql(propName);
+                var propParts = propName.ToString().Split('.');
+                string table = propParts[0];
+                if (fromNames.Contains(table))
+                {
+                    string column = propParts.Last();
+                    // strip off quotes.
+                    column = column.Substring(1, column.Length - 2);
+                    joinColumns.Add(propName.ToString(), new ColumnExpression(new PropertyExpression(prop), column, prop.PropertyType));
+                }
+            }
             foreach (var column in projectionExpression.Columns.OfType<ColumnExpression>())
             {
-                foreach (var prop in column.GetAccessedProperties())
+                var accessedProperties = column.GetAccessedProperties().ToArray();
+                foreach (var prop in accessedProperties)
                 {
                     System.Text.StringBuilder propName = new System.Text.StringBuilder();
                     prop.WriteSql(propName);
                     string table = propName.ToString().Split('.')[0];
                     if (fromNames.Contains(table))
                     {
+                        // save off columns that are projections of a single property
+                        // for testing against join properties
+                        if (accessedProperties.Length == 1 && joinColumns.Count != 0)
+                        {
+                            // remove (if exists) the column from the join columns being returned
+                            joinColumns.Remove(propName.ToString());
+                        }
                         yield return column;
                         break;
                     }
                 }
+            }
+            foreach (var joinColumn in joinColumns.Values)
+            {
+                yield return joinColumn;
             }
         }
 
@@ -662,7 +705,7 @@ namespace EDB.SqlGenerators
         {
             return new ColumnExpression(new LiteralExpression(
                 QuoteIdentifier(_projectVarName.Peek()) + "." + QuoteIdentifier(reassociatedColumn.Name)),
-                reassociatedColumn.Name);
+                reassociatedColumn.Name, reassociatedColumn.ColumnType);
         }
 
         /// <summary>
@@ -716,9 +759,9 @@ namespace EDB.SqlGenerators
         public override VisitedExpression Visit(DbCrossJoinExpression expression)
         {
             // join without ON
-            return new JoinExpression(VisitJoinPart(expression.Inputs[0]),
+            return new JoinExpression(VisitJoinPart(expression.Inputs[0], null),
                 expression.ExpressionKind,
-                VisitJoinPart(expression.Inputs[1]),
+                VisitJoinPart(expression.Inputs[1], null),
                 null);
         }
 
@@ -898,21 +941,13 @@ namespace EDB.SqlGenerators
             if (functionAggregate.Function.NamespaceName == "Edm")
             {
                 FunctionExpression aggregate;
-                switch (functionAggregate.Function.Name)
+                try
                 {
-                    case "Avg":
-                    case "Count":
-                    case "Min":
-                    case "Max":
-                    case "StdDev":
-                    case "Sum":
-                        aggregate = new FunctionExpression(functionAggregate.Function.Name);
-                        break;
-                    case "BigCount":
-                        aggregate = new FunctionExpression("count");
-                        break;
-                    default:
-                        throw new NotSupportedException();
+                    aggregate = new FunctionExpression(AggregateFunctionNames[functionAggregate.Function.Name]);
+                }
+                catch (KeyNotFoundException)
+                {
+                    throw new NotSupportedException();
                 }
                 System.Diagnostics.Debug.Assert(functionAggregate.Arguments.Count == 1);
                 VisitedExpression aggregateArg;
@@ -938,10 +973,49 @@ namespace EDB.SqlGenerators
                 VisitedExpression arg;
                 switch (function.Name)
                 {
-                        // string functions
+                    // string functions
+                    case "Concat":
+                        System.Diagnostics.Debug.Assert(args.Count == 2);
+                        arg = args[0].Accept(this);
+                        arg.Append(" || ");
+                        arg.Append(args[1].Accept(this));
+                        return arg;
+                    case "Contains":
+                        System.Diagnostics.Debug.Assert(args.Count == 2);
+                        FunctionExpression contains = new FunctionExpression("position");
+                        arg = args[1].Accept(this);
+                        arg.Append(" in ");
+                        arg.Append(args[0].Accept(this));
+                        contains.AddArgument(arg);
+                        // if position returns zero, then contains is false
+                        return new NegatableBooleanExpression(DbExpressionKind.GreaterThan, contains, new LiteralExpression("0"));
+                    // case "EndsWith": - depends on a reverse function to be able to implement with parameterized queries
+                    case "IndexOf":
+                        System.Diagnostics.Debug.Assert(args.Count == 2);
+                        FunctionExpression indexOf = new FunctionExpression("position");
+                        arg = args[0].Accept(this);
+                        arg.Append(" in ");
+                        arg.Append(args[1].Accept(this));
+                        indexOf.AddArgument(arg);
+                        return indexOf;
                     case "Left":
                         System.Diagnostics.Debug.Assert(args.Count == 2);
                         return Substring(args[0].Accept(this), new LiteralExpression(" 1 "), args[1].Accept(this));
+                    case "Length":
+                        FunctionExpression length = new FunctionExpression("char_length");
+                        System.Diagnostics.Debug.Assert(args.Count == 1);
+                        length.AddArgument(args[0].Accept(this));
+                        return new CastExpression(length, GetDbType(resultType.EdmType));
+                    case "LTrim":
+                        return StringModifier("ltrim", args);
+                    case "Replace":
+                        FunctionExpression replace = new FunctionExpression("replace");
+                        System.Diagnostics.Debug.Assert(args.Count == 3);
+                        replace.AddArgument(args[0].Accept(this));
+                        replace.AddArgument(args[1].Accept(this));
+                        replace.AddArgument(args[2].Accept(this));
+                        return replace;
+                    // case "Reverse":
                     case "Right":
                         System.Diagnostics.Debug.Assert(args.Count == 2);
                         {
@@ -954,48 +1028,29 @@ namespace EDB.SqlGenerators
                             start.Append(arg1);
                             return Substring(arg0, start);
                         }
+                    case "RTrim":
+                        return StringModifier("rtrim", args);
                     case "Substring":
                         System.Diagnostics.Debug.Assert(args.Count == 3);
                         return Substring(args[0].Accept(this), args[1].Accept(this), args[2].Accept(this));
-                    case "Length":
-                        FunctionExpression length = new FunctionExpression("char_length");
-                        System.Diagnostics.Debug.Assert(args.Count == 1);
-                        length.AddArgument(args[0].Accept(this));
-                        return new CastExpression(length, GetDbType(resultType.EdmType));
-                    case "Concat":
+                    case "StartsWith":
                         System.Diagnostics.Debug.Assert(args.Count == 2);
-                        arg = args[0].Accept(this);
-                        arg.Append(" || ");
-                        arg.Append(args[1].Accept(this));
-                        return arg;
-                    case "IndexOf":
-                        System.Diagnostics.Debug.Assert(args.Count == 2);
-                        FunctionExpression indexOf = new FunctionExpression("position");
-                        arg = args[0].Accept(this);
+                        FunctionExpression startsWith = new FunctionExpression("position");
+                        arg = args[1].Accept(this);
                         arg.Append(" in ");
-                        arg.Append(args[1].Accept(this));
-                        indexOf.AddArgument(arg);
-                        return indexOf;
-                    case "LTrim":
-                        return StringModifier("ltrim", args);
-                    case "RTrim":
-                        return StringModifier("rtrim", args);
-                    case "Trim":
-                        return StringModifier("btrim", args);
-                    case "ToUpper":
-                        return StringModifier("upper", args);
+                        arg.Append(args[0].Accept(this));
+                        startsWith.AddArgument(arg);
+                        return new NegatableBooleanExpression(DbExpressionKind.Equals, startsWith, new LiteralExpression("1"));
                     case "ToLower":
                         return StringModifier("lower", args);
-                    case "Replace":
-                        FunctionExpression replace = new FunctionExpression("replace");
-                        System.Diagnostics.Debug.Assert(args.Count == 3);
-                        replace.AddArgument(args[0].Accept(this));
-                        replace.AddArgument(args[1].Accept(this));
-                        replace.AddArgument(args[2].Accept(this));
-                        return replace;
-                        // case "Reverse":
+                    case "ToUpper":
+                        return StringModifier("upper", args);
+                    case "Trim":
+                        return StringModifier("btrim", args);
 
                         // date functions
+                    //case "AddNanoseconds":
+                    //    return 
                     case "Day":
                     case "Hour":
                     case "Minute":
@@ -1037,8 +1092,13 @@ namespace EDB.SqlGenerators
                     case "Abs":
                     case "Ceiling":
                     case "Floor":
-                    case "Round":
                         return UnaryMath(function.Name, args);
+                    case "Round":
+                        return (args.Count == 1) ? UnaryMath(function.Name, args) : BinaryMath(function.Name, args);
+                    case "Power":
+                        return BinaryMath(function.Name, args);
+                    case "Truncate":
+                        return BinaryMath("trunc", args);
 
                     case "NewGuid":
                         return new FunctionExpression("uuid_generate_v4");
@@ -1072,6 +1132,15 @@ namespace EDB.SqlGenerators
             FunctionExpression mathFunction = new FunctionExpression(funcName);
             System.Diagnostics.Debug.Assert(args.Count == 1);
             mathFunction.AddArgument(args[0].Accept(this));
+            return mathFunction;
+        }
+
+        private VisitedExpression BinaryMath(string funcName, IList<DbExpression> args)
+        {
+            FunctionExpression mathFunction = new FunctionExpression(funcName);
+            System.Diagnostics.Debug.Assert(args.Count == 2);
+            mathFunction.AddArgument(args[0].Accept(this));
+            mathFunction.AddArgument(args[1].Accept(this));
             return mathFunction;
         }
 

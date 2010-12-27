@@ -28,6 +28,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Reflection;
 using System.Resources;
 using EDBTypes;
 using System.Reflection;
@@ -154,32 +155,44 @@ namespace EnterpriseDB.EDBClient
 
 		public new EDBCommand GetInsertCommand()
 		{
-			return (EDBCommand) base.GetInsertCommand();
+			EDBCommand cmd = (EDBCommand)base.GetInsertCommand();
+  			cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		public new EDBCommand GetInsertCommand(bool useColumnsForParameterNames)
 		{
-			return (EDBCommand) base.GetInsertCommand(useColumnsForParameterNames);
+			EDBCommand cmd = (EDBCommand)base.GetInsertCommand(useColumnsForParameterNames);
+			cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		public new EDBCommand GetUpdateCommand()
 		{
-			return (EDBCommand) base.GetUpdateCommand();
+			EDBCommand cmd = (EDBCommand) base.GetUpdateCommand();
+			cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		public new EDBCommand GetUpdateCommand(bool useColumnsForParameterNames)
 		{
-			return (EDBCommand) base.GetUpdateCommand(useColumnsForParameterNames);
+			EDBCommand cmd = (EDBCommand) base.GetUpdateCommand(useColumnsForParameterNames);
+			cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		public new EDBCommand GetDeleteCommand()
 		{
-			return (EDBCommand) base.GetDeleteCommand();
+			EDBCommand cmd = (EDBCommand) base.GetDeleteCommand();
+			 cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		public new EDBCommand GetDeleteCommand(bool useColumnsForParameterNames)
 		{
-			return (EDBCommand) base.GetDeleteCommand(useColumnsForParameterNames);
+			EDBCommand cmd = (EDBCommand) base.GetDeleteCommand(useColumnsForParameterNames);
+			cmd.UpdatedRowSource = UpdateRowSource.None;
+            return cmd;
 		}
 
 		//never used

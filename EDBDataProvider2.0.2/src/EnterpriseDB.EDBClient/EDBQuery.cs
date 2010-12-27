@@ -52,7 +52,19 @@ namespace EnterpriseDB.EDBClient
 
             StringBuilder commandText = _command.GetCommandText();
 
-            // Tell to mediator what command is being sent.
+            // Log the string being sent.
+
+            if (EDBEventLog.Level >= LogLevel.Debug)
+                PGUtil.LogStringWritten(commandText.ToString());
+
+            // This method needs refactory.
+            // The code below which deals with writing string to stream needs to be redone to use
+            // PGUtil.WriteString() as before. The problem is that WriteString is using too much strings (concatenation).
+            // Find a way to optimize that. 
+            
+            
+
+			// Tell to mediator what command is being sent.
 
             _command.Connector.Mediator.SetSqlSent(commandText);
 

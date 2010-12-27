@@ -20,7 +20,7 @@ namespace EnterpriseDB.EDBClient.SqlGenerators
             DbVariableReferenceExpression variable = expression.Instance as DbVariableReferenceExpression;
             if (variable == null || variable.VariableName != _projectVarName.Peek())
                 throw new NotSupportedException();
-              return new PropertyExpression(expression.Property);
+            return new PropertyExpression(expression.Property);
         }
 
         public override void BuildCommand(DbCommand command)
