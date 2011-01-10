@@ -41,7 +41,7 @@ using System.Resources;
 [assembly : AssemblyDescription(".Net Data Provider for EnterpriseDB")]
 [assembly : AssemblyConfiguration("")]
 [assembly : AssemblyCompany("EnterpriseDB")]
-[assembly : AssemblyProduct("Postgres Plus Advanced Server 8.4 (8.4.5.16)")]
+[assembly : AssemblyProduct("Postgres Plus Advanced Server 9.0 (9.0.0.2)")]
 [assembly : AssemblyCopyright("The Npgsql Development Team")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
@@ -54,7 +54,7 @@ using System.Resources;
 // You can specify all values by your own or you can build default build and revision
 // numbers with the '*' character (the default):
 
-[assembly : AssemblyVersion("8.4.5.16")]
+[assembly : AssemblyVersion("9.0.0.2")]
 
 
 
