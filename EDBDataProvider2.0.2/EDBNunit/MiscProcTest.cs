@@ -463,7 +463,7 @@ namespace DOTNET
 			Command.CommandText="DROP FUNCTION GETREFCURSOR";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP FUNCTION GETREFCURSOR_OUT(REFCURSOR)";
+            Command.CommandText = "DROP FUNCTION GETREFCURSOR_OUT(R OUT REFCURSOR)";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText="DROP PROCEDURE GETREFCURSORPROC";
@@ -479,7 +479,7 @@ namespace DOTNET
 			Command.ExecuteNonQuery();
 
 
-			Command.CommandText="DROP FUNCTION DEFAULTINRETURNFUNC(INT4)";
+            Command.CommandText = "DROP FUNCTION DEFAULTINRETURNFUNC(IN INT4 )";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText="DROP PROCEDURE DEFAULTINPROC";
@@ -489,7 +489,7 @@ namespace DOTNET
 			Command.ExecuteNonQuery();
 
 
-			Command.CommandText="DROP FUNCTION GETSYSREFCURSOR_OUT(REFCURSOR)";
+            Command.CommandText = "DROP FUNCTION  GETSYSREFCURSOR_OUT(OUT SYS_REFCURSOR)";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORPROC";
@@ -519,22 +519,22 @@ namespace DOTNET
 			Command.CommandText="DROP Package REFCURSOR_PKG";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayVarchar(VARCHAR,INT,INT,VARCHAR,INT);";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayVarchar( IN VARCHAR,  IN INT, IN  INT,  IN OUT VARCHAR, OUT INT) ;";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayNumeric(numeric,numeric,numeric,numeric,numeric)";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayNumeric( numeric,  IN numeric,  IN numeric,  IN OUT numeric, OUT numeric)";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayInteger(integer,integer,integer)";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayInteger(IN integer, IN integer, IN integer)";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayFloat(float,float)";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayFloat( float,  IN OUT float) ";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayDoublePrecision(double precision,double precision)";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayDoublePrecision( double precision,  IN OUT double precision)";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="drop FUNCTION FuncReturningArrayBigInt(bigint, bigint)";
+            Command.CommandText = "drop FUNCTION FuncReturningArrayBigInt( bigint,  IN OUT bigint)";
 			Command.ExecuteNonQuery();
 
 			TestUtil.closeDB(con);

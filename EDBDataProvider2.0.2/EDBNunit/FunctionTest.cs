@@ -77,13 +77,13 @@ namespace DOTNET
 			com.CommandText = "DROP Function emptyfunction_test;";
 			com.ExecuteNonQuery();
 
-			com.CommandText = "DROP Function functionsanity(NUMERIC,NUMERIC,NUMERIC,NUMERIC);";
+            com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
 			com.ExecuteNonQuery();
 
-			com.CommandText = "DROP Function FunconeInArg_test(NUMERIC);";
+            com.CommandText = "DROP Function  FunconeInArg_test( IN NUMERIC);";
 			com.ExecuteNonQuery();
 
-			com.CommandText = "DROP Function funcThreeInArg(NUMERIC, NUMERIC, NUMERIC);";
+            com.CommandText = "DROP Function funcThreeInArg( IN NUMERIC,  IN NUMERIC,  IN NUMERIC)";
 			com.ExecuteNonQuery();
 
 			TestUtil.closeDB(con);
@@ -249,7 +249,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithINT(INT,INT,INT);";
+            command.CommandText = "DROP Function FunctionWithINT( in int, inout int,out int) ";
 			command.ExecuteNonQuery();
 
 		}
@@ -293,7 +293,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithInt4(Int4, Int4, Int4);";
+            command.CommandText = "DROP FUNCTION FunctionWithInt4(in int4, inout int4, out int4);";
 			command.ExecuteNonQuery();
 		}
 		
@@ -336,7 +336,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithInt8(Int8,Int8,Int8);";
+            command.CommandText = "DROP Function FunctionWithInt8( in int8, inout int8, out int8);";
 			command.ExecuteNonQuery();
 
 		}
@@ -380,7 +380,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithInteger(Integer,Integer,Integer);";
+            command.CommandText = "DROP Function FunctionWithInteger( in Integer, inout Integer, out Integer);";
 			command.ExecuteNonQuery();
 
 		}
@@ -424,7 +424,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithSmallint(Smallint,Smallint,Smallint);";
+            command.CommandText = "DROP Function FunctionWithSmallInt( in SmallInt, inout SmallInt, out SmallInt)";
 			command.ExecuteNonQuery();
 
 		}
@@ -468,7 +468,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithBigint(Bigint,Bigint,Bigint);";
+            command.CommandText = "DROP Function FunctionWithBigInt( in Bigint, inout Bigint, out Bigint);";
 			command.ExecuteNonQuery();
 
 		}
@@ -512,7 +512,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithNumeric(Numeric, Numeric, Numeric);";
+            command.CommandText = "DROP FUNCTION FunctionWithNumeric( in NUMERIC, inout NUMERIC, out NUMERIC) ;";
 			command.ExecuteNonQuery();
 
 		}
@@ -557,7 +557,7 @@ namespace DOTNET
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithNumber(Number, Number, Number);";
+            command.CommandText = "DROP FUNCTION FunctionWithNumber( in NUMBER, inout NUMBER, out NUMBER);";
 			command.ExecuteNonQuery();
 
 		}
@@ -601,7 +601,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithDec(Dec, Dec, Dec);";
+            command.CommandText = "DROP FUNCTION FunctionWithDec( in Dec, inout Dec, out Dec);";
 			command.ExecuteNonQuery();
 
 		}
@@ -645,7 +645,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithDecimal(Decimal, Decimal, Decimal);";
+            command.CommandText = "DROP FUNCTION  FunctionWithDecimal( in Decimal, inout Decimal, out Decimal);";
 			command.ExecuteNonQuery();
 
 		}
@@ -689,7 +689,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithFloat(Float, Float, Float);";
+            command.CommandText = "DROP Function FunctionWithFloat( in FLOAT, inout FLOAT, out FLOAT);";
 			command.ExecuteNonQuery();
 		}
 
@@ -732,7 +732,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithDoublePrecision(Double Precision, Double Precision, Double Precision);";
+            command.CommandText = "DROP Function FunctionWithDoublePrecision( in Double Precision, inout Double Precision, out Double Precision) ;";
 			command.ExecuteNonQuery();
 		}
 
@@ -775,7 +775,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithReal(REAL,REAL,REAL);";
+            command.CommandText = "DROP FUNCTION FunctionWithReal( in REAL, inout REAL, out REAL);";
 			command.ExecuteNonQuery();
 		}
 
@@ -817,7 +817,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithChar(Char(30),Char(30),Char(30));";
+            command.CommandText = "DROP FUNCTION FunctionWithChar( in CHAR(30), inout CHAR(30), out CHAR(30));";
 			command.ExecuteNonQuery();
 		}
 
@@ -859,7 +859,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithCharacter(Character(30),Character(30),Character(30));";
+            command.CommandText = "DROP FUNCTION FunctionWithCharacter( in CHARACTER(30), inout CHARACTER(30), out CHARACTER(30));";
 			command.ExecuteNonQuery();
 		}
 
@@ -901,7 +901,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithCharacterVarying(CHARACTER Varying,CHARACTER Varying,CHARACTER Varying);";
+            command.CommandText = "DROP FUNCTION FunctionWithCharacterVarying( in CHARACTER Varying, inout CHARACTER Varying, out CHARACTER Varying);";
 			command.ExecuteNonQuery();
 		}
 
@@ -943,7 +943,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithCharVarying(CHAR Varying,CHAR Varying,CHAR Varying);";
+            command.CommandText = "DROP FUNCTION FunctionWithCharVarying( in CHAR Varying, inout CHAR Varying, out CHAR Varying);";
 			command.ExecuteNonQuery();
 		}
 
@@ -985,7 +985,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithCLOB(CLOB,CLOB,CLOB);";
+            command.CommandText = "DROP FUNCTION FunctionWithClob( in CLOB, inout CLOB, out CLOB);";
 			command.ExecuteNonQuery();
 		}
 		
@@ -1027,7 +1027,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithLongText(LongText,LongText,LongText);";
+            command.CommandText = "DROP FUNCTION  FunctionWithLongText( in LongText, inout LongText, out LongText)";
 			command.ExecuteNonQuery();
 
 		}
@@ -1070,7 +1070,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithLong(Long,Long,Long);";
+            command.CommandText = "DROP FUNCTION FunctionWithLong( in Long, inout Long, out Long);";
 			command.ExecuteNonQuery();
 		}
 
@@ -1112,7 +1112,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithText(Text,Text,Text);";
+            command.CommandText = "DROP FUNCTION  FunctionWithText( in Text, inout Text, out Text) ;";
 			command.ExecuteNonQuery();
 		}
 
@@ -1154,7 +1154,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithLongVarchar(Long Varchar,Long Varchar,Long Varchar);";
+            command.CommandText = "DROP FUNCTION FunctionWithLongVarchar( in Long Varchar, inout Long Varchar, out Long Varchar);";
 			command.ExecuteNonQuery();
 
 		}
@@ -1197,7 +1197,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithLVarchar(LVarchar,LVarchar,LVarchar);";
+            command.CommandText = "DROP FUNCTION FunctionWithLVarchar( in LVarchar, inout LVarchar, out LVarchar)";
 			command.ExecuteNonQuery();
 		}
 
@@ -1239,7 +1239,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithMediumText(MediumText,MediumText,MediumText);";
+            command.CommandText = "DROP FUNCTION  FunctionWithMediumText( in MediumText, inout MediumText, out MediumText) ;";
 			command.ExecuteNonQuery();
 
 		}
@@ -1282,7 +1282,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithTinyText(TinyText,TinyText,TinyText);";
+            command.CommandText = "DROP FUNCTION FunctionWithtinyText( in TinyText, inout TinyText, out TinyText);";
 			command.ExecuteNonQuery();
 
 		}
@@ -1332,7 +1332,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithMoney(Money, Money, Money);";
+            command.CommandText = "DROP FUNCTION FunctionWithMONEY( in MONEY, inout MONEY, out MONEY);";
 			command.ExecuteNonQuery();
 		}
 
@@ -1375,7 +1375,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithSmallMoney(SmallMoney, SmallMoney, SmallMoney);";
+            command.CommandText = "DROP FUNCTION FunctionWithSmallMoney( in SmallMoney, inout SmallMoney, out SmallMoney);";
 			command.ExecuteNonQuery();
 
 		}
@@ -1418,7 +1418,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithVarchar(Varchar,Varchar,Varchar);";
+            command.CommandText = "DROP FUNCTION FunctionWithVarchar( in Varchar, inout Varchar, out Varchar);";
 			command.ExecuteNonQuery();
 
 		}
@@ -1461,7 +1461,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithVarchar2(Varchar2,Varchar2,Varchar2);";
+            command.CommandText = "DROP FUNCTION FunctionWithVarchar2( in Varchar2, inout Varchar2, out Varchar2)";
 			command.ExecuteNonQuery();
 		}
 
@@ -1506,7 +1506,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithBoolean(Boolean, Boolean, Boolean);";
+            command.CommandText = "DROP Function FunctionWithBoolean( in Boolean, inout Boolean, out Boolean);";
 			command.ExecuteNonQuery();
 		}
 
@@ -1549,7 +1549,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithBit(Bit, Bit, Bit);";
+            command.CommandText = "DROP Function FunctionWithBit( in Bit, inout Bit, out Bit);";
 			command.ExecuteNonQuery();
 
 		}
@@ -1593,7 +1593,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP FUNCTION FunctionWithSmallFloat(SmallFloat,SmallFloat,SmallFloat);";
+            command.CommandText = "DROP FUNCTION FunctionWithSmallFloat( in SmallFloat, inout SmallFloat, out SmallFloat);";
 			command.ExecuteNonQuery();
 		}
 
@@ -1636,7 +1636,7 @@ namespace DOTNET
 			//////////tear down
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Function FunctionWithTinyInt(TinyInt,TinyInt,TinyInt);";
+            command.CommandText = "DROP Function FunctionWithTinyInt( in TinyInt, inout TinyInt, out TinyInt) ;";
 			command.ExecuteNonQuery();
 
 		}
