@@ -2400,7 +2400,9 @@ namespace DOTNET
 
                 }
 
-
+                Command = new EDBCommand("DROP PROCEDURE terse_p1", con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
 
                 Command = new EDBCommand("create or replace procedure terse_p1( a integer, b integer ) is " +
 
@@ -2519,6 +2521,9 @@ namespace DOTNET
                 }
 
 
+                Command = new EDBCommand("DROP PROCEDURE terse_p1",con);
+                Command.ExecuteNonQuery();
+                Command.Dispose();
 
                 Command = new EDBCommand("create or replace procedure terse_p1( a out integer, b out integer ) is " +
 
