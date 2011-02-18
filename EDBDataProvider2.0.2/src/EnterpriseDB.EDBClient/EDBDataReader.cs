@@ -57,7 +57,7 @@ namespace EnterpriseDB.EDBClient
 		internal DataTable _currentResultsetSchema;
 		internal CommandBehavior _behavior;
 		internal EDBCommand _command;
-
+        internal int Reader_iteration = 0;
         internal Version Npgsql205 = new Version("2.0.5");
 
 		internal EDBDataReader(EDBCommand command, CommandBehavior behavior)
@@ -1214,7 +1214,10 @@ namespace EnterpriseDB.EDBClient
 			{
 				if (_currentRow != null)
 				{
-					_currentRow.Dispose();
+                    if ((this._command.CommandType != CommandType.StoredProcedure) || (Reader_iteration == 0))
+                    {
+                        _currentRow.Dispose();
+                    }
 				}
 				_currentRow = value;
 			}
@@ -1267,7 +1270,13 @@ namespace EnterpriseDB.EDBClient
 				_pendingDescription = objNext as EDBRowDescription;
 				return null;
 			}
-			return objNext as EDBRow;
+
+            if (this._command.CommandType == CommandType.StoredProcedure)
+            {
+                Reader_iteration = 1;
+            }
+            
+            return objNext as EDBRow;
 		}
 
 		internal override void CheckHaveRow()

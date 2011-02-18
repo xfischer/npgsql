@@ -419,6 +419,7 @@ namespace EnterpriseDB.EDBClient
                 Stream stream = context.Stream;
                 EDBMediator mediator = context.Mediator;
                 EDBRowDescription lastRowDescription = null;
+                CachingRow returnRow = null;
                 List<EDBError> errors = new List<EDBError>();
 
                 for (;;)
@@ -664,6 +665,7 @@ namespace EnterpriseDB.EDBClient
 
                 EDBRowDescription lastRowDescription = null;
                 EDBRowDescription rowOutDescription = null;
+                CachingRow returnRow = null;
                 Object returnData = null;
 
                 List<EDBError> errors = new List<EDBError>();
@@ -834,6 +836,8 @@ namespace EnterpriseDB.EDBClient
 
                         case BackEndMessageCode.DataRow:
                             ForwardsOnlyRow dataRow = new ForwardsOnlyRow(new StringRowReaderV3(lastRowDescription, stream));
+                            CachingRow dataRow1 = new CachingRow(dataRow);
+                            
                             /*
                              * EDBTeam:
                              * if rowOutDescription is not null then the data row is always of function return value
@@ -842,9 +846,21 @@ namespace EnterpriseDB.EDBClient
                             if(context.Mediator.Type == CommandType.StoredProcedure)
                             {
                                 if (lastRowDescription[0].TypeOID == 1790)
-                                    returnData = "fetch all in \"" + dataRow[0] + "\"";
-                                else
+                                {
                                     returnData = dataRow[0];
+                                }
+                                else
+                                {
+                                    returnData = dataRow1[0];
+
+                                    if (context.Mediator.Parameters.ReturnIndex != -1)
+                                    {
+                                        context.Mediator.Parameters.Insert(context.Mediator.Parameters.ReturnIndex, context.Mediator.Parameters.ReturnParam);
+                                        context.Mediator.Parameters[context.Mediator.Parameters.ReturnIndex].Value = returnData;
+                                    }
+
+                                    returnRow = dataRow1;
+                                }
                             }
                             else
                                 yield return dataRow;
@@ -995,6 +1011,7 @@ namespace EnterpriseDB.EDBClient
                         case BackEndMessageCode.ParamData:
                             EDBEventLog.LogMsg(resman, "Log_ProtocalMessage", LogLevel.Debug, "ParamData");          
                             ForwardsOnlyRow paramDataRow = new ForwardsOnlyRow(new StringRowReaderV3(rowOutDescription, stream));
+                            CachingRow outrow = new CachingRow(paramDataRow);
                             if (context.Mediator.Parameters.ReturnIndex != -1)
                             {
                                 context.Mediator.Parameters.Insert(context.Mediator.Parameters.ReturnIndex, context.Mediator.Parameters.ReturnParam);
@@ -1004,14 +1021,17 @@ namespace EnterpriseDB.EDBClient
                             {
                                 for (int i = 0; i < rowOutDescription.NumFields; i++)
                                 {
-                                    if (rowOutDescription[i].TypeOID == 1790)
-                                    {
-                                        mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = "fetch all in \"" + paramDataRow[i] + "\"";
+                                    	mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = outrow[i];                                
                                     }
-                                    else
-                                        mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = paramDataRow[i];
+                                outrow.AddData(returnData);
+                                outrow.numFields = rowOutDescription.NumFields+1;
+                                rowOutDescription.AddReturnData(lastRowDescription[0]);
+                                if ((context.Mediator.IsReader == true) && (context.Mediator.hasRefcursorType == false))
+                                {
+                                    yield return rowOutDescription;
+                                    yield return outrow;
                                 }
-                                yield return paramDataRow;
+                                yield break;
                             }
                             break;
                         default:

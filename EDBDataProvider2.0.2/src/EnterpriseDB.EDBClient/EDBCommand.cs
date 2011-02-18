@@ -506,6 +506,8 @@ namespace EnterpriseDB.EDBClient
             
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ExecuteNonQuery");
             int? ret = null;
+            m_Connector.Mediator.IsReader = false;
+
             using (EDBDataReader rdr = GetReader(CommandBehavior.SequentialAccess))
             {
                 do
@@ -561,6 +563,8 @@ namespace EnterpriseDB.EDBClient
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ExecuteReader", cb);
             
             // Close connection if requested even when there is an error.
+                if(m_Connector != null)
+                    m_Connector.Mediator.IsReader = true;
 
                     try
                     {
@@ -644,10 +648,18 @@ namespace EnterpriseDB.EDBClient
                                }
                                else
                                {
-                                   EDBCommand command = new EDBCommand(p.Value.ToString(), Connection);
-                                   m_Connector.Mediator.Type = command.CommandType;
-                                   ForwardsOnlyDataReader rd = (ForwardsOnlyDataReader)command.ExecuteReader();
-                                   p.Value = new CachingDataReader(rd, cb);
+                                   /*
+                                    * Check if refcursor value is sent as null from server. Else
+                                    * make a query to fetch all of the cursor result.
+                                    */
+                                   if (p.Value != DBNull.Value)
+                                   {
+                                       p.Value = "fetch all in \"" + p.Value.ToString() + "\"";
+                                       EDBCommand command = new EDBCommand(p.Value.ToString(), Connection);
+                                       m_Connector.Mediator.Type = command.CommandType;
+                                       ForwardsOnlyDataReader rd = (ForwardsOnlyDataReader)command.ExecuteReader();
+                                       p.Value = new CachingDataReader(rd, cb);
+                                   }
                                }
                                
                            }
@@ -735,6 +747,16 @@ namespace EnterpriseDB.EDBClient
 
             // reset any responses just before getting new ones
             Connector.Mediator.ResetResponses();
+
+            foreach (EDBParameter edbParameter in this.parameters)
+            {
+                if (edbParameter.TypeInfo.NpgsqlDbType == EDBDbType.RefCursor)
+                {
+                    m_Connector.Mediator.hasRefcursorType = true;
+                    break;
+                }
+            }
+
 
             // Set command timeout.
             m_Connector.Mediator.CommandTimeout = CommandTimeout;

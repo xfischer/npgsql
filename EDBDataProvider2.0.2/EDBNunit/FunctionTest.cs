@@ -112,7 +112,9 @@ namespace DOTNET
 				command.Parameters[3].Value = null; 
 
 
-				EDBDataReader result = command.ExecuteReader(); 
+				EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 				
 				Assert.AreEqual(100,int.Parse(command.Parameters[0].Value.ToString()));
 				Assert.AreEqual(200,int.Parse(command.Parameters[1].Value.ToString()));
@@ -139,7 +141,9 @@ namespace DOTNET
 
 				command.Prepare(); 
 
-				EDBDataReader result = command.ExecuteReader(); 
+				EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 				Assert.AreEqual("EnterpriseDB",command.Parameters[0].Value.ToString());
 			} 
 			catch(EDBException exp) 
@@ -164,7 +168,9 @@ namespace DOTNET
 
 				command.Parameters[0].Value = 3; 
 
-				EDBDataReader result = command.ExecuteReader(); 
+				EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 				
 				Assert.AreEqual(3,int.Parse(command.Parameters[0].Value.ToString()));
 				Assert.AreEqual("EnterpriseDB",command.Parameters[1].Value.ToString());
@@ -196,7 +202,9 @@ namespace DOTNET
 				command.Parameters[2].Value = 30; 
 
 
-				EDBDataReader result = command.ExecuteReader(); 
+				EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 				
 				Assert.AreEqual(10,int.Parse(command.Parameters[0].Value.ToString()));
 				Assert.AreEqual(20,int.Parse(command.Parameters[1].Value.ToString()));
@@ -3117,6 +3125,8 @@ namespace DOTNET
                 EDBDataReader result = command.ExecuteReader();
 
 
+                while (result.Read())
+                { }
 
                 Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
 
@@ -3361,6 +3371,8 @@ namespace DOTNET
 
 
                 EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 
 
 
@@ -3657,6 +3669,8 @@ namespace DOTNET
                 command.Parameters[0].Value = 7369;
 
                 EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                while (result.Read())
+                { }
 
 
 
@@ -3809,6 +3823,8 @@ namespace DOTNET
 
 
                 EDBDataReader result = command.ExecuteReader();
+                while (result.Read())
+                { }
 
 
 

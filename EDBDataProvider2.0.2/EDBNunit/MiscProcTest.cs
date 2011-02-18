@@ -1939,14 +1939,14 @@ namespace DOTNET
 			command.CommandText="public.FuncReturningArrayFLOAT(:param0,:param1)";
 			command.CommandType=CommandType.StoredProcedure;
 			
-			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Float,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Float,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,110.345)); 
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Float,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200.123)); 
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Float,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200.123));
+            command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Float, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
 			EDBDataReader Reader=command.ExecuteReader();
 
-            Object rst = command.Parameters[0].Value;
+            Object rst = command.Parameters[2].Value;
 			
 			Console.WriteLine(rst);
 			Reader.Close();
@@ -1978,14 +1978,14 @@ namespace DOTNET
 			command.CommandText="public.FuncReturningArrayDoublePrecision(:param0,:param1)";
 			command.CommandType=CommandType.StoredProcedure;
 			
-			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Double,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Float,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,110.345)); 
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Float,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200.123)); 
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Float,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200.123));
+            command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Double, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
 			EDBDataReader Reader=command.ExecuteReader();
 
-            Object rst = command.Parameters[0].Value;
+            Object rst = command.Parameters[2].Value;
 			
 			Console.WriteLine(rst);
 			Reader.Close();
@@ -2017,14 +2017,14 @@ namespace DOTNET
 			command.CommandText="public.FuncReturningArrayBigInt(:param0,:param1)";
 			command.CommandType=CommandType.StoredProcedure;
 			
-			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Bigint,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Bigint,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,110)); 
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Bigint,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200)); 
+			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Bigint,10,"param1",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,200));
+            command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Bigint, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
 			EDBDataReader Reader=command.ExecuteReader();
 
-            Object rst = command.Parameters[0].Value;
+            Object rst = command.Parameters[2].Value;
 			
 			Console.WriteLine(rst);
 			Reader.Close();

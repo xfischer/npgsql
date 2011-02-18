@@ -143,7 +143,7 @@ namespace EnterpriseDB.EDBClient
             }
 		}
 
-        private readonly FieldData[] fields_data;
+        private  FieldData[] fields_data;
         private readonly Dictionary<string, int> field_name_index_table;
         private readonly Dictionary<string, int> caseInsensitiveNameIndexTable;
         private readonly Version _compatVersion;
@@ -200,8 +200,22 @@ namespace EnterpriseDB.EDBClient
         {
             return HasOrdinal(fieldName) ? FieldIndex(fieldName) : -1;
         }
+        public void AddReturnData(FieldData fd) 
+        {
 
-		public int FieldIndex(String fieldName)
+            FieldData[] fdData = new FieldData[fields_data.Length + 1];
+            fdData[fields_data.Length] = fd;
+            field_name_index_table.Clear();
+            field_name_index_table.Add(fd.Name, fields_data.Length);
+            for (int i = 0; i < fields_data.Length; i++)
+            {
+                fdData[i] = fields_data[i];
+                if (!field_name_index_table.ContainsKey(fields_data[i].Name))
+                     field_name_index_table.Add(fields_data[i].Name, i);
+            }
+            fields_data = fdData;
+        }
+        public int FieldIndex(String fieldName)
 		{
             int ret = -1;
             if (field_name_index_table.TryGetValue(fieldName, out ret) || caseInsensitiveNameIndexTable.TryGetValue(fieldName, out ret))

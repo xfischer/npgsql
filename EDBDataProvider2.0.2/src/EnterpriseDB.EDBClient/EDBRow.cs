@@ -54,6 +54,7 @@ namespace EnterpriseDB.EDBClient
 	{
 		private readonly List<object> _data = new List<object>();
 		private readonly ForwardsOnlyRow _inner;
+        public int numFields = -1;
 
 		public CachingRow(ForwardsOnlyRow fo)
 		{
@@ -75,10 +76,13 @@ namespace EnterpriseDB.EDBClient
 				return _data[index];
 			}
 		}
-
+        public void AddData(Object o){
+            _data.Add(o);
+        }
 		public override int NumFields
 		{
-			get { return _inner.NumFields; }
+			get { return numFields == -1?_inner.NumFields:numFields ; }
+            
 		}
 
 		public override bool IsDBNull(int index)

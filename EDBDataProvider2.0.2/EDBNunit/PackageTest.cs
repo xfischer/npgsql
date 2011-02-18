@@ -2307,7 +2307,8 @@ namespace DOTNET
 
                 Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
 
-
+                while (result.Read())
+                { }
 
                 command = new EDBCommand("END;", con);
 

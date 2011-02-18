@@ -56,7 +56,8 @@ namespace EnterpriseDB.EDBClient
 		//
         private StringBuilder _sqlSent;
 		private Int32 _commandTimeout;
-
+        private bool _isReader = true;
+        internal bool hasRefcursorType = false;
 
 		public EDBMediator()
 		{
@@ -120,6 +121,23 @@ namespace EnterpriseDB.EDBClient
             set { _type = value; }
             get { return _type; }
         }
+        public bool hasOutParam()
+        {
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (parameters[i].Direction == ParameterDirection.Output || parameters[i].Direction == ParameterDirection.InputOutput)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool  IsReader
+        {
+            set { _isReader = value; }
 
-	}
+            get { return _isReader; }
+        }
+
+    }
 }
