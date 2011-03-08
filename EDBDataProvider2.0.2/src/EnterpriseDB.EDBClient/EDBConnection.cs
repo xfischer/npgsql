@@ -761,7 +761,7 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Password.
 		/// </summary>
-		internal String Password
+        internal byte[] Password
 		{
 			get { return settings.Password; }
 		}

@@ -213,7 +213,7 @@ namespace EnterpriseDB.EDBClient
             get { return settings.UserName; }
         }
 
-        internal String Password
+        internal byte[] Password
         {
             get { return settings.Password; }
         }
@@ -296,7 +296,7 @@ namespace EnterpriseDB.EDBClient
             return CurrentState.QueryEnum(this, queryCommand);
         }
 
-        internal void Authenticate(string password)
+        internal void Authenticate(byte[] password)
         {
             CurrentState.Authenticate(this, password);
         }

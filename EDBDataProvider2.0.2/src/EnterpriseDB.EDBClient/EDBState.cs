@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient
             throw new InvalidOperationException("Internal Error! " + this);
         }
 
-        public virtual void Authenticate(EDBConnector context, string password)
+        public virtual void Authenticate(EDBConnector context, byte[] password)
         {
             throw new InvalidOperationException("Internal Error! " + this);
         }
@@ -479,7 +479,7 @@ namespace EnterpriseDB.EDBClient
 
 
                                     // 1.
-                                    byte[] passwd = ENCODING_UTF8.GetBytes(context.Password);
+                                    byte[] passwd = context.Password;
                                     byte[] saltUserName = ENCODING_UTF8.GetBytes(context.UserName);
 
                                     byte[] crypt_buf = new byte[passwd.Length + saltUserName.Length];
@@ -520,7 +520,7 @@ namespace EnterpriseDB.EDBClient
                                         sb.Append(b.ToString("x2"));
                                     }
 
-                                    context.Authenticate(sb.ToString());
+                                    context.Authenticate(ENCODING_UTF8.GetBytes(sb.ToString()));
 
                                     break;
                                 default:
@@ -732,7 +732,7 @@ namespace EnterpriseDB.EDBClient
 
 
                                     // 1.
-                                    byte[] passwd = ENCODING_UTF8.GetBytes(context.Password);
+                                    byte[] passwd = context.Password;
                                     byte[] saltUserName = ENCODING_UTF8.GetBytes(context.UserName);
 
                                     byte[] crypt_buf = new byte[passwd.Length + saltUserName.Length];
@@ -770,7 +770,7 @@ namespace EnterpriseDB.EDBClient
                                         sb.Append(b.ToString("x2"));
                                     }
 
-                                    context.Authenticate(sb.ToString());
+                                    context.Authenticate(ENCODING_UTF8.GetBytes(sb.ToString()));
 
                                     break;
 #if WINDOWS && UNMANAGED
@@ -779,10 +779,8 @@ namespace EnterpriseDB.EDBClient
                                     {
                                         if (context.IntegratedSecurity)
                                         {
-                                            // For SSPI we have to get the IP-Address (hostname doesn't work)
-                                            string ipAddressString = ((IPEndPoint)context.Socket.RemoteEndPoint).Address.ToString();
-                                            context.SSPI = new SSPIHandler(ipAddressString, "POSTGRES");
-                                            ChangeState(context, NpgsqlStartupState.Instance);
+                                            context.SSPI = new SSPIHandler(context.Host, "POSTGRES");
+                                            ChangeState(context, EDBStartupState.Instance);
                                             context.Authenticate(context.SSPI.Continue(null));
                                             break;
                                         }
@@ -798,7 +796,11 @@ namespace EnterpriseDB.EDBClient
                                     {
                                         byte[] authData = new byte[authDataLength];
                                         PGUtil.CheckedStreamRead(stream, authData, 0, authDataLength);
-                                        context.Authenticate(context.SSPI.Continue(authData));
+                                        byte[] passwd_read = context.SSPI.Continue(authData);
+                                        if (passwd_read.Length != 0)
+                                        {
+                                            context.Authenticate(passwd_read);
+                                        }
                                         break;
                                     }
 

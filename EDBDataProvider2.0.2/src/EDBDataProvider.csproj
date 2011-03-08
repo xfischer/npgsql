@@ -22,7 +22,7 @@
     <DebugType>Full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;WINDOWS;UNMANAGED</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -30,7 +30,7 @@
     <DebugType>None</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;WINDOWS;UNMANAGED</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>false</DebugSymbols>
@@ -78,6 +78,7 @@
     <Compile Include="EDBTypes\EDBTypeConverters.cs" />
     <Compile Include="EDBTypes\EDBTypes.cs" />
     <Compile Include="EDBTypes\EDBTypesHelper.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\SSPIHandler.cs" />
     <Compile Include="Npgsql\Design\*.cs" />
     <Compile Include="EnterpriseDB.EDBClient\HashAlgorithm.cs">
       <SubType>Code</SubType>

@@ -42,7 +42,7 @@ namespace EnterpriseDB.EDBClient
 		{
 		}
 
-		public override void Authenticate(EDBConnector context, string password)
+        public override void Authenticate(EDBConnector context, byte[] password)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Authenticate");
 			EDBPasswordPacket pwpck = new EDBPasswordPacket(password, context.BackendProtocolVersion);

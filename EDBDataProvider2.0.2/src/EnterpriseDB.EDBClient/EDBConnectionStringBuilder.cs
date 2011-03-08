@@ -389,7 +389,7 @@ namespace EnterpriseDB.EDBClient
 		{
 			get
             {
-                if (_integrated_security)
+                if ((_integrated_security) && (String.IsNullOrEmpty(_username)))
                 {
                     System.Security.Principal.WindowsIdentity identity = System.Security.Principal.WindowsIdentity.GetCurrent();
                     _username = identity.Name.Split('\\')[1];
@@ -400,10 +400,10 @@ namespace EnterpriseDB.EDBClient
 			set { SetValue(GetKeyName(Keywords.UserName), value); }
 		}
 
-		private string _password;
+        private byte[] _password;
 
 
-		public string Password
+        public byte[] Password
 
 		{
 			get { return _password; }
@@ -849,7 +849,7 @@ namespace EnterpriseDB.EDBClient
 
 					case Keywords.Password:
 
-						this._password = Convert.ToString(value);
+                        this._password = System.Text.Encoding.UTF8.GetBytes(Convert.ToString(value));
 
 						break;
 
