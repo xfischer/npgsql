@@ -779,7 +779,9 @@ namespace EnterpriseDB.EDBClient
                                     {
                                         if (context.IntegratedSecurity)
                                         {
-                                            context.SSPI = new SSPIHandler(context.Host, "POSTGRES");
+                                            // For SSPI we have to get the IP-Address (hostname doesn't work)
+                                            string ipAddressString = ((IPEndPoint)context.Socket.RemoteEndPoint).Address.ToString();
+                                            context.SSPI = new SSPIHandler(ipAddressString, "POSTGRES");
                                             ChangeState(context, EDBStartupState.Instance);
                                             context.Authenticate(context.SSPI.Continue(null));
                                             break;
