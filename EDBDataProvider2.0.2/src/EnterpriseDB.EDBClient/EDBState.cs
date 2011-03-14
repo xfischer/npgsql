@@ -1029,7 +1029,9 @@ namespace EnterpriseDB.EDBClient
                                     }
                                 outrow.AddData(returnData);
                                 outrow.numFields = rowOutDescription.NumFields+1;
-                                rowOutDescription.AddReturnData(lastRowDescription[0]);
+                                if (lastRowDescription != null)
+                                    rowOutDescription.AddReturnData(lastRowDescription[0]);
+
                                 if ((context.Mediator.IsReader == true) && (context.Mediator.hasRefcursorType == false))
                                 {
                                     yield return rowOutDescription;
