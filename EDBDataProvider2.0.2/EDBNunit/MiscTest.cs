@@ -2275,5 +2275,432 @@ namespace DOTNET
 
 		}
 
-	}
+    /*
+     * Following test cases test the OUT Param refactoring FB17344.
+     */
+
+        [Test]
+        public void OutParamProcSingleNumeric()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE oneOutArgProc_test(a OUT NUMERIC) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:=5; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgProc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("5", Command.Parameters[0].Value.ToString());
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE oneOutArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamProcSingleInt()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE oneOutArgProc_test(a OUT int) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:=5; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgProc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("5", Command.Parameters[0].Value.ToString());
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE oneOutArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamProcVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE oneOutArgProc_test(a OUT varchar) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:='HELLO'; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgProc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("HELLO", Command.Parameters[0].Value.ToString());
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE oneOutArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamSingleInParamProc()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE oneOutOneInArgProc_test(a OUT varchar, b IN varchar) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= b; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutOneInArgProc_test(:param1)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("HELLO", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE oneOutOneInArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamTwoVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE twoOutArgProc_test(a OUT varchar, b OUT varchar) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 'HELLO1'; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("twoOutArgProc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,HELLO1)", Command.Parameters["param1"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE twoOutArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamMultipleMixed()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE allOutMixedArgProc_test(a OUT varchar, b OUT int, c OUT numeric, d OUT long) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 10; \n"
+                    + "    c:= 20.55; \n"
+                    + "    d:= 'HELLO1'; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("allOutMixedArgProc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,10,20.55,HELLO1)", Command.Parameters["param1"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE allOutMixedArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamTwoInOutParamVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE PROCEDURE twoInOutArgProc_test(a OUT varchar, b INOUT varchar) \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 'HELLO1'; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("twoInOutArgProc_test(:param1)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "a"));
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,HELLO1)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE twoInOutArgProc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncSingleOutNumeric()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION oneOutArgFunction_test(a OUT NUMERIC) RETURN INT\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:=5; \n"
+                    + " return 10;\n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgFunction_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(5,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION oneOutArgFunction_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncSingleOutInt()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION oneOutArgFunc_test(a OUT int) RETURN INT\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:=5; \n"
+                    + " return 10;\n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgFunc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(5,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION oneOutArgFunc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncSingleOutVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION oneOutArgFunc_test(a OUT varchar) RETURN INT\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:='HELLO'; \n"
+                    + " return 10;\n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutArgFunc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION oneOutArgFunc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncSingleOutParamSingleInParam()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION oneOutOneInArgFunc_test(a OUT varchar, b IN varchar) RETURN int \n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= b; \n"
+                    + " return 10;\n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("oneOutOneInArgFunc_test(:param1)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION oneOutOneInArgFunc_test(varchar)";
+            Command.ExecuteNonQuery();
+
+        }
+        
+        [Test]
+        public void OutParamFuncTwoOutParamVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION twoOutArgFunc_test(a OUT varchar, b OUT varchar) RETURN INT\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 'HELLO1'; \n"
+                    + "    return 10; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("twoOutArgFunc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION twoOutArgFunc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncMultipleMixedParam()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION allOutMixedArgFunc_test(a OUT varchar, b OUT int, c OUT numeric, d OUT long) RETURN int\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 10; \n"
+                    + "    c:= 20.55; \n"
+                    + "    d:= 'HELLO1'; \n"
+                    + "    return 10; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("allOutMixedArgFunc_test()", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,10,20.55,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION allOutMixedArgFunc_test";
+            Command.ExecuteNonQuery();
+
+        }
+
+        [Test]
+        public void OutParamFuncTwoInOutParamVarchar()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = "CREATE OR REPLACE FUNCTION twoInOutArgFunc_test(a OUT varchar, b INOUT varchar) RETURN int\n"
+                    + " AS \n"
+                    + " BEGIN \n"
+                    + "    a:= 'HELLO'; \n"
+                    + "    b:= 'HELLO1'; \n"
+                    + "    return 10; \n"
+                    + " END; \n";
+            Command.ExecuteNonQuery();
+
+
+
+            Command = new EDBCommand("twoInOutArgFunc_test(:param1)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "HELLO"));
+            Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("(HELLO,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP FUNCTION twoInOutArgFunc_test(varchar)";
+            Command.ExecuteNonQuery();
+
+        }
+    }
 }
