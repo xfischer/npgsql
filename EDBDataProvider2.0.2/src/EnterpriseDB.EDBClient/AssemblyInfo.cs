@@ -42,7 +42,7 @@ using System.Resources;
 [assembly : AssemblyConfiguration("")]
 [assembly : AssemblyCompany("EnterpriseDB")]
 [assembly : AssemblyProduct("Postgres Plus Advanced Server 9.1 (9.1.2.2)")]
-[assembly : AssemblyCopyright("Portions Copyright (c) 2004-2011 - EnterpriseDB Corporation.  All Rights Reserved.")]
+[assembly : AssemblyCopyright("Portions Copyright (c) 2004-2012 - EnterpriseDB Corporation.  All Rights Reserved.")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
 [assembly : NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
