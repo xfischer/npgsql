@@ -8,15 +8,15 @@
 <project name="edb" default="build" >
     <property name="parent_dir" value="./EDBDataProvider2.0.2"/>
     <property name="build.dir" value="./EDBDataProvider2.0.2/build"/>
-	<property name="lib_dir" value="./lib"/>
-	<property name="interop_dir" value="C:/Program Files/Microsoft.NET/Primary Interop Assemblies/"/>
+	<property name="lib_dir" value="./lib" overwrite="false"/>
+	<property name="interop_dir" value="C:/Program Files (x86)/Microsoft.NET/Primary Interop Assemblies/"/>
     <property name="assemblyname" value="EDBDataProvider2.0.2"/>
     <property name="debug" value="false"/>   
     <property name="test.outdir" value="results"/>
     <property name="nunitdll" value="EDBNUnit"/>
     <property name="zip.name" value="NunitReport"/>
-    <property name="mail.subject" value="Win32 Installer for AS84 [edb-postgres (EnterpriseDB) 8.4.3.4] - NUnit-2.0"/>
-    <property name="mail.tolist" value="cm@enterprisedb.com"/>
+    <property name="mail.subject" value="Win32 Installer for AS84 [edb-postgres (EnterpriseDB) 8.4.3.4] - NUnit-2.0" overwrite="false"/>
+    <property name="mail.tolist" value="cm@enterprisedb.com" overwrite="false"/>
     <property name="mail.from" value="buildfarm@enterprisedb.com"/>
     <property name="mail.host" value="mailgateway.enterprisedb.com"/>
     <property name="edb_inst" value="C:/PostgresPlus/8.4AS"/>
@@ -124,6 +124,9 @@
 			    }
 			]]>
 		    </code>
+			<references>
+			<include name="System.Xml.dll" />
+            </references>
 		</script>
 		<call target="email" />
 	</target>
