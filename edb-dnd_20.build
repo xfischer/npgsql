@@ -9,7 +9,7 @@
     <property name="parent_dir" value="./EDBDataProvider2.0.2"/>
     <property name="build.dir" value="./EDBDataProvider2.0.2/build"/>
 	<property name="lib_dir" value="./lib" overwrite="false"/>
-	<property name="interop_dir" value="C:/Program Files (x86)/Microsoft.NET/Primary Interop Assemblies/"/>
+	<property name="interop_dir" value="C:/Program Files/Microsoft.NET/Primary Interop Assemblies/"/>
     <property name="assemblyname" value="EDBDataProvider2.0.2"/>
     <property name="debug" value="false"/>   
     <property name="test.outdir" value="results"/>
