@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: AssemblyCompany("EnterpriseDB")]
 
-[assembly: AssemblyProduct("Postgres Plus Advanced Server 9.2 (9.2.0.1)")]
+[assembly: AssemblyProduct("Postgres Plus Advanced Server 9.2 (9.2.1.3)")]
 
 [assembly: AssemblyCopyright("Portions Copyright (c) 2004-2012 - EnterpriseDB Corporation.  All Rights Reserved.")]
 
@@ -47,7 +47,7 @@ using System.Runtime.CompilerServices;
 
 
 
-[assembly: AssemblyVersion("9.2.0.1")]
+[assembly: AssemblyVersion("9.2.1.3")]
 
 
 
