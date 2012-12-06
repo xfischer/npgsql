@@ -1318,11 +1318,22 @@ namespace EDBTypes
 
 		public EDBDate AddMonths(int months)
 		{
-			int newMonthOffset = Month - 1 + months;
-			int newYear = Year + newMonthOffset/12;
-			int maxDay = (IsLeap(newYear) ? LeapYearMaxes : CommonYearMaxes)[newMonthOffset];
-			int newDay = Day > maxDay ? maxDay : Day;
-			return new EDBDate(newYear, newMonthOffset + 1, newDay);
+            int newYear = Year;
+            int newMonth = Month + months;
+
+            while (newMonth > 12)
+            {
+                newMonth -= 12;
+                newYear += 1;
+            };
+            while (newMonth < 1)
+            {
+                newMonth += 12;
+                newYear -= 1;
+            };
+            int maxDay = (IsLeap(newYear) ? LeapYearMaxes : CommonYearMaxes)[newMonth - 1];
+            int newDay = Day > maxDay ? maxDay : Day;
+            return new EDBDate(newYear, newMonth, newDay);
 		}
 
 		public EDBDate Add(EDBInterval interval)
@@ -3413,6 +3424,44 @@ namespace EDBTypes
 			}
 		}
 
+        public static implicit operator EDBTimeStampTZ(DateTimeOffset datetimeoffset)
+        {
+            if (datetimeoffset == DateTimeOffset.MaxValue)
+            {
+                return Infinity;
+            }
+            else if (datetimeoffset == DateTimeOffset.MinValue)
+            {
+                return MinusInfinity;
+            }
+            else
+            {
+                EDBDate newDate = new EDBDate(datetimeoffset.Year,
+                    datetimeoffset.Month, datetimeoffset.Day);
+                return
+                    new EDBTimeStampTZ(newDate, new EDBTimeTZ(datetimeoffset.TimeOfDay,
+                        new EDBTimeZone(datetimeoffset.Offset)));
+            }
+        }
+        public static explicit operator DateTimeOffset(EDBTimeStampTZ timestamp)
+        {
+            switch (timestamp._type)
+            {
+                case TimeType.Infinity:
+                    return DateTimeOffset.MaxValue;
+                case TimeType.MinusInfinity:
+                    return DateTimeOffset.MinValue;
+                default:
+                    try
+                    {
+                        return new DateTimeOffset(timestamp.Date.DaysSinceEra * EDBInterval.TicksPerDay + timestamp.Time.Ticks, timestamp.TimeZone);
+                    }
+                    catch
+                    {
+                        throw new InvalidCastException();
+                    }
+            }
+        }
 		public static EDBTimeStampTZ operator +(EDBTimeStampTZ timestamp, EDBInterval interval)
 		{
 			return timestamp.Add(interval);

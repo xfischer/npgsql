@@ -62,6 +62,7 @@ namespace EnterpriseDB.EDBClient
         //private EDBDbType                    npgsqldb_type = EDBDbType.Text;
         //private DbType                    db_type = DbType.String;
         private EDBNativeTypeInfo type_info;
+        private EDBBackendTypeInfo backendTypeInfo;
         private ParameterDirection direction = ParameterDirection.Input;
         private Boolean is_nullable = false;
         private String m_Name = String.Empty;
@@ -73,6 +74,8 @@ namespace EnterpriseDB.EDBClient
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
         private Boolean useCast = false;
+
+        private static readonly EDBNativeTypeInfo defaultTypeInfo = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Npgsql.EDBParameter">EDBParameter</see> class.
@@ -102,19 +105,20 @@ namespace EnterpriseDB.EDBClient
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, parameterName, value);
 
             this.ParameterName = parameterName;
-            this.value = value;
+            this.Value = value;
 
-            if ((this.value == null) || (this.value == DBNull.Value))
+            /*if ((this.value == null) || (this.value == DBNull.Value))
             {
                 // don't really know what to do - leave default and do further exploration
                 // Default type for null values is String.
                 this.value = DBNull.Value;
-                type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+                type_info = NpgsqlTypesHelper.GetNativeTypeInfo(typeof(String));
             }
-            else if (!EDBTypesHelper.TryGetNativeTypeInfo(value.GetType(), out type_info))
+            else if (!NpgsqlTypesHelper.TryGetNativeTypeInfo(value.GetType(), out type_info))
             {
                 throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value.GetType()));
-            }
+            }*/
+           // }
         }
 
         /// <summary>
@@ -130,7 +134,7 @@ namespace EnterpriseDB.EDBClient
 
 
         public EDBParameter(String parameterName, DbType parameterType)
-            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).NpgsqlDbType, 0, String.Empty)
+            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).EDBDbType, 0, String.Empty)
         {
         }
 
@@ -147,7 +151,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         public EDBParameter(String parameterName, DbType parameterType, Int32 size)
-            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).NpgsqlDbType, size, String.Empty)
+            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).EDBDbType, size, String.Empty)
         {
         }
 
@@ -175,7 +179,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         public EDBParameter(String parameterName, DbType parameterType, Int32 size, String sourceColumn)
-            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).NpgsqlDbType, size, sourceColumn)
+            : this(parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).EDBDbType, size, sourceColumn)
         {
         }
 
@@ -231,7 +235,7 @@ namespace EnterpriseDB.EDBClient
                                ParameterDirection direction, bool isNullable, byte precision, byte scale,
                                DataRowVersion sourceVersion, object value)
             : this(
-                parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).NpgsqlDbType, size, sourceColumn, direction,
+                parameterName, EDBTypesHelper.GetNativeTypeInfo(parameterType).EDBDbType, size, sourceColumn, direction,
                 isNullable, precision, scale, sourceVersion, value)
         {
         }
@@ -267,7 +271,7 @@ namespace EnterpriseDB.EDBClient
             get
             {
                 // Prevents casts to be added for null values when they aren't needed.
-                if (!useCast && value == DBNull.Value)
+                if (!useCast && (value == DBNull.Value || value == null))
                     return false;
                 //return useCast; //&& (value != DBNull.Value);
                 // This check for Datetime.minvalue and maxvalue is needed in order to
@@ -334,6 +338,9 @@ namespace EnterpriseDB.EDBClient
             get
             {
                 EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "DbType");
+                if (type_info == null)
+                    return defaultTypeInfo.DbType;
+                else
                 return TypeInfo.DbType;
             } // [TODO] Validate data type.
             set
@@ -361,7 +368,10 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "NpgsqlDbType");
 
-                return TypeInfo.NpgsqlDbType;
+                if (type_info == null)
+                    return defaultTypeInfo.EDBDbType;
+                else
+                return TypeInfo.EDBDbType;
             } // [TODO] Validate data type.
             set
             {
@@ -385,7 +395,8 @@ namespace EnterpriseDB.EDBClient
             {
                 if (type_info == null)
                 {
-                    type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+                    //type_info = NpgsqlTypesHelper.GetNativeTypeInfo(typeof(String));
+                    return defaultTypeInfo;
                 }
                 return type_info;
             }
@@ -538,27 +549,55 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                EDBEventLog.LogPropertyGet(LogLevel.Normal, CLASSNAME, "Value");
-                return value;
+                return this.value;
+
+                /*
+                NpgsqlEventLog.LogPropertyGet(LogLevel.Normal, CLASSNAME, "Value");
+                //return value;
+
+                
+                NpgsqlBackendTypeInfo backendTypeInfo;
+                
+                if (NpgsqlTypesHelper.TryGetBackendTypeInfo(type_info.Name, out backendTypeInfo))
+                {
+                    return backendTypeInfo.ConvertToFrameworkType(NpgsqlValue);
+                }
+                
+                throw new NotSupportedException();
+                */
             } // [TODO] Check and validate data type.
             set
             {
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "Value", value);
 
-                this.value = value;
-                if ((this.value == null) || (this.value == DBNull.Value))
+                
+                if ((value == null) || (value == DBNull.Value))
                 {
                     // don't really know what to do - leave default and do further exploration
                     // Default type for null values is String.
-                    this.value = DBNull.Value;
-                    if (type_info == null)
-                    {
-                        type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+                    this.value = value;
+                    this.npgsqlValue = value;
+
+                    //if (type_info == null)
+                    //{
+                    //    type_info = NpgsqlTypesHelper.GetNativeTypeInfo(typeof(String));
+                    //}
+                    return;
                     }
-                }
-                else if (type_info == null && !EDBTypesHelper.TryGetNativeTypeInfo(value.GetType(), out type_info))
+                if (type_info == null && !EDBTypesHelper.TryGetNativeTypeInfo(value.GetType(), out type_info))
                 {
                     throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value.GetType()));
+                }
+
+                if (backendTypeInfo == null && !EDBTypesHelper.TryGetBackendTypeInfo(type_info.Name, out backendTypeInfo))
+                {
+                    throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value.GetType()));
+
+                }
+                else
+                {
+                    this.npgsqlValue = backendTypeInfo.ConvertToProviderType(value);
+                    this.value = backendTypeInfo.ConvertToFrameworkType(npgsqlValue);
                 }
             }
         }
@@ -588,7 +627,9 @@ namespace EnterpriseDB.EDBClient
 
         public override void ResetDbType()
         {
-            type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+            //type_info = NpgsqlTypesHelper.GetNativeTypeInfo(typeof(String));
+            type_info = null;
+            this.Value = Value;
         }
 
         public override bool SourceColumnNullMapping

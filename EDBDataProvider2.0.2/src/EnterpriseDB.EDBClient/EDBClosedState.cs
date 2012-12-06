@@ -38,6 +38,34 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace EnterpriseDB.EDBClient
 {
+
+    internal class EDBNetworkStream : NetworkStream
+    {
+       EDBConnector mContext = null;
+
+        
+        public EDBNetworkStream(EDBConnector context, Socket socket, Boolean owner)
+            : base(socket, owner)
+        {
+            mContext = context;
+        }
+
+        
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!disposing)
+            {
+                mContext.Close();
+                mContext = null;
+            }
+
+            base.Dispose(disposing);
+
+        }
+
+    }
+
 	internal sealed class EDBClosedState : EDBState
 	{
 		private static readonly EDBClosedState _instance = new EDBClosedState();
@@ -89,7 +117,7 @@ namespace EnterpriseDB.EDBClient
                 
                 IAsyncResult result = socket.BeginConnect(new IPEndPoint(ResolveIPHost(context.Host), context.Port), null, null);
 
-                if (!result.AsyncWaitHandle.WaitOne(context.ConnectionTimeout*1000, true))
+                if (!result.AsyncWaitHandle.WaitOne(context.ConnectionTimeout*1000, false))
                 {
                     socket.Close();
                     throw new Exception(resman.GetString("Exception_ConnectionTimeout"));
@@ -144,8 +172,8 @@ namespace EnterpriseDB.EDBClient
 					throw new Exception(string.Format(resman.GetString("Exception_FailedConnection"), context.Host));
 				}
 
-				Stream stream = new NetworkStream(socket, true);
-
+				//Stream stream = new NetworkStream(socket, true);
+                Stream stream = new EDBNetworkStream(context, socket, true);
 
 				// If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
 				if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))

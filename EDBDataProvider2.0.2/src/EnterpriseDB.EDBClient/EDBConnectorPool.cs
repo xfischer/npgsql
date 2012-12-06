@@ -43,13 +43,16 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// A queue with an extra Int32 for keeping track of busy connections.
 		/// </summary>
-		private class ConnectorQueue : Queue<EDBConnector>
+		private class ConnectorQueue
 		{
-			/// <summary>
-			/// The number of pooled Connectors that belong to this queue but
-			/// are currently in use.
-			/// </summary>
-			public Int32 UseCount = 0;
+            /// <summary>
+            /// Connections available to the end user
+            /// </summary>
+            public Queue<EDBConnector> Available = new Queue<EDBConnector>();
+            /// <summary>
+            /// Connections currently in use
+            /// </summary>
+            public Dictionary<EDBConnector, object> Busy = new Dictionary<EDBConnector, object>();
 
 			public Int32 ConnectionLifeTime;
 			public Int32 InactiveTime = 0;
@@ -60,66 +63,83 @@ namespace EnterpriseDB.EDBClient
 		/// mamager.</value>
 		internal static EDBConnectorPool ConnectorPoolMgr = new EDBConnectorPool();
 
-		public EDBConnectorPool()
-		{
-			PooledConnectors = new Dictionary<string, ConnectorQueue>();
-			Timer = new Timer(1000);
-			Timer.AutoReset = true;
-			Timer.Elapsed += new ElapsedEventHandler(TimerElapsedHandler);
-			Timer.Start();
-		}
+        private object locker = new object();
 
 
-		~EDBConnectorPool()
-		{
-			Timer.Stop();
-		}
+        public EDBConnectorPool()
+        {
+            PooledConnectors = new Dictionary<string, ConnectorQueue>();
+            Timer = new Timer(1000);
+            Timer.AutoReset = false;
+            Timer.Elapsed += new ElapsedEventHandler(TimerElapsedHandler);
+            Timer.Start();
+            
+        }
+        
+        ~EDBConnectorPool()
+        {
+            Timer.Stop();
 
-		private void TimerElapsedHandler(object sender, ElapsedEventArgs e)
-		{
-			EDBConnector Connector;
-			lock (this)
-			{
-				foreach (ConnectorQueue Queue in PooledConnectors.Values)
-				{
-					if (Queue.Count > 0)
-					{
-						if (Queue.Count + Queue.UseCount > Queue.MinPoolSize)
-						{
-							if (Queue.InactiveTime >= Queue.ConnectionLifeTime)
-							{
-								Int32 diff = Queue.Count + Queue.UseCount - Queue.MinPoolSize;
-								Int32 toBeClosed = (diff + 1) / 2;
-								toBeClosed = Math.Min(toBeClosed, Queue.Count);
+        }
 
-								if (diff < 2)
-								{
-									diff = 2;
-								}
-								Queue.InactiveTime -= Queue.ConnectionLifeTime / (int)(Math.Log(diff) / Math.Log(2));
-								for (Int32 i = 0; i < toBeClosed; ++i)
-								{
-									Connector = Queue.Dequeue();
-									Connector.Close();
-								}
-							}
-							else
-							{
-								Queue.InactiveTime++;
-							}
-						}
-						else
-						{
-							Queue.InactiveTime = 0;
-						}
-					}
-					else
-					{
-						Queue.InactiveTime = 0;
-					}
-				}
-			}
-		}
+        private void TimerElapsedHandler(object sender, ElapsedEventArgs e)
+        {
+            EDBConnector Connector;
+            
+            try
+            {
+                lock (locker)
+                {
+                    foreach (ConnectorQueue Queue in PooledConnectors.Values)
+                    {
+                        lock (Queue)
+                        {
+                            if (Queue.Available.Count > 0)
+                            {
+                                if (Queue.Available.Count + Queue.Busy.Count > Queue.MinPoolSize)
+                                {
+                                    if (Queue.InactiveTime >= Queue.ConnectionLifeTime)
+                                    {
+                                        Int32 diff = Queue.Available.Count + Queue.Busy.Count - Queue.MinPoolSize;
+                                        Int32 toBeClosed = (diff + 1) / 2;
+                                        toBeClosed = Math.Min(toBeClosed, Queue.Available.Count);
+
+                                        if (diff < 2)
+                                        {
+                                            diff = 2;
+                                        }
+
+                                        Queue.InactiveTime -= Queue.ConnectionLifeTime / (int)(Math.Log(diff) / Math.Log(2));
+
+                                        for (Int32 i = 0; i < toBeClosed; ++i)
+                                        {
+                                            Connector = Queue.Available.Dequeue();
+                                            Connector.Close();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Queue.InactiveTime++;
+                                    }
+                                }
+                                else
+                                {
+                                    Queue.InactiveTime = 0;
+                                }
+                            }
+                            else
+                            {
+                                Queue.InactiveTime = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Timer.Start();
+            }
+        }
 
 
 		/// <value>Map of index to unused pooled connectors, avaliable to the
@@ -173,10 +193,11 @@ namespace EnterpriseDB.EDBClient
 			EDBConnector Connector;
 			Int32 timeoutMilliseconds = Connection.Timeout * 1000;
 
-			lock (this)
-			{
-				Connector = RequestPooledConnectorInternal(Connection);
-			}
+            // No need for this lock anymore
+            //lock (this)
+            {
+                Connector = RequestPooledConnectorInternal(Connection);
+            }
 
 			while (Connector == null && timeoutMilliseconds > 0)
 			{
@@ -185,11 +206,12 @@ namespace EnterpriseDB.EDBClient
 				Thread.Sleep(ST);
 				timeoutMilliseconds -= ST;
 
-				lock (this)
-				{
-					Connector = RequestPooledConnectorInternal(Connection);
-				}
-			}
+                
+                //lock (this)
+                {
+                    Connector = RequestPooledConnectorInternal(Connection);
+                }
+            }
 
 			if (Connector == null)
 			{
@@ -260,13 +282,15 @@ namespace EnterpriseDB.EDBClient
 		/// <param name="Connector">The connector to release.</param>
 		public void ReleaseConnector(EDBConnection Connection, EDBConnector Connector)
 		{
-			if (Connector.CurrentReader != null)
-			{
-				CleanUpConnector(Connection, Connector);
-			}
-			else if (Connector.Pooled)
-			{
-				ReleasePooledConnector(Connection, Connector);
+            //We can only clean up a connector with a reader if the current thread hasn't been aborted
+            //If it has then we need to just close it (ReleasePooledConnector will do this for an aborted thread)
+            if (Connector.CurrentReader != null && (Thread.CurrentThread.ThreadState & (ThreadState.Aborted | ThreadState.AbortRequested)) == 0)
+            {
+                CleanUpConnector(Connection, Connector);
+            }
+            else if (Connector.Pooled)
+            {
+                ReleasePooledConnector(Connection, Connector);
 			}
 			else
 			{
@@ -279,8 +303,8 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		private void ReleasePooledConnector(EDBConnection Connection, EDBConnector Connector)
 		{
-			lock (this)
-			{
+            //lock (this)
+            {
 				ReleasePooledConnectorInternal(Connection, Connector);
 			}
 		}
@@ -329,77 +353,70 @@ namespace EnterpriseDB.EDBClient
 			ConnectorQueue Queue;
 			EDBConnector Connector = null;
 
-			// Try to find a queue.
-			if (!PooledConnectors.TryGetValue(Connection.ConnectionString, out Queue))
-			{
-				Queue = new ConnectorQueue();
-				Queue.ConnectionLifeTime = Connection.ConnectionLifeTime;
-				Queue.MinPoolSize = Connection.MinPoolSize;
-				PooledConnectors[Connection.ConnectionString] = Queue;
-			}
+
+            lock (locker)
+            {
+
+                // Try to find a queue.
+                if (!PooledConnectors.TryGetValue(Connection.ConnectionString, out Queue))
+                {
+
+                    Queue = new ConnectorQueue();
+                    Queue.ConnectionLifeTime = Connection.ConnectionLifeTime;
+                    Queue.MinPoolSize = Connection.MinPoolSize;
+                    PooledConnectors[Connection.ConnectionString] = Queue;
+                }
+            }
 
 			// Fix queue use count. Use count may be dropped below zero if Queue was cleared and there were connections open.
-			if (Queue.UseCount < 0)
-			{
-				Queue.UseCount = 0;
-			}
+            lock (Queue)
+            {
 
 
-			if (Queue.Count > 0)
-			{
-				// Found a queue with connectors.  Grab the top one.
+                if (Queue.Available.Count > 0)
+                {
+                    // Found a queue with connectors.  Grab the top one.
 
-				// Check if the connector is still valid.
+                    // Check if the connector is still valid.
 
-				Connector = Queue.Dequeue();
-				/*try
-				{
-					Connector.TestConnector();
-					Connector.RequireReadyForQuery = true;
-				}
-				catch //This connector is broken!
-				{
-					try
-					{
-						Connector.Close();
-					}
-					catch
-					{
-						try
-						{
-							Connector.Stream.Close();
-						}
-						catch
-						{
-						}
-					}
-					return GetPooledConnector(Connection); //Try again
-				}*/
-				
-				if (!Connector.IsValid())
-				{
-        				try
-        					{
-        						Connector.Close();
-        					}
-        					catch
-        					{
-        						try
-        						{
-        							Connector.Stream.Close();
-        						}
-        						catch
-        						{
-        						}
-        					}
-        					return GetPooledConnector(Connection); //Try again
-        		    
-    				}
-				Queue.UseCount++;
-			}
-			else if (Queue.Count + Queue.UseCount < Connection.MaxPoolSize)
-			{
-				Connector = CreateConnector(Connection);
+                    Connector = Queue.Available.Dequeue();
+                    Queue.Busy.Add(Connector, null);
+                }
+            }
+
+            if (Connector != null)
+            {
+                if (!Connector.IsValid())
+                {
+                    lock (Queue)
+                    {
+                        Queue.Busy.Remove(Connector);
+                    }
+
+
+                    Connector.Close();
+                    return GetPooledConnector(Connection); //Try again
+                }
+
+                return Connector;
+            }
+
+
+            lock (Queue)
+            {
+
+                if (Queue.Available.Count + Queue.Busy.Count < Connection.MaxPoolSize)
+                {
+                    Connector = CreateConnector(Connection);
+                    Queue.Busy.Add(Connector, null);
+
+                }
+                
+            }
+
+
+            if (Connector != null)
+            {
 
                 Connector.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
 				Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
@@ -412,43 +429,44 @@ namespace EnterpriseDB.EDBClient
 				}
 				catch
 				{
-					try
-					{
-						Connector.Close();
-					}
-					catch
-					{
-					}
+                    lock (Queue)
+                    {
+                        Queue.Busy.Remove(Connector);
+                    }
+
+                    Connector.Close();
 
 					throw;
 				}
 
 
-				Queue.UseCount++;
-			}
 
 			// Meet the MinPoolSize requirement if needed.
-			if (Connection.MinPoolSize > 0)
-			{
-				while (Queue.Count + Queue.UseCount < Connection.MinPoolSize)
-				{
-					EDBConnector Spare = CreateConnector(Connection);
+                if (Connection.MinPoolSize > 1)
+                {
+                    lock (Queue)
+                    {
+                        while (Queue.Available.Count + Queue.Busy.Count < Connection.MinPoolSize)
+                        {
+                            EDBConnector Spare = CreateConnector(Connection);
 
-                    Spare.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
-					Spare.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
-					Spare.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
-					Spare.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
+                            Spare.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
+                            Spare.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
+                            Spare.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
+                            Spare.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
 
-					Spare.Open();
+                            Spare.Open();
 
-                    Spare.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
-					Spare.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
-					Spare.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
-					Spare.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
+                            Spare.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
+                            Spare.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
+                            Spare.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
+                            Spare.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
 
-					Queue.Enqueue(Spare);
-				}
-			}
+                            Queue.Available.Enqueue(Spare);
+                        }
+                    }
+                }
+            }
 
 			return Connector;
 		}
@@ -483,13 +501,13 @@ namespace EnterpriseDB.EDBClient
 			ConnectorQueue Queue;
 
 			// Prevent multithread access to connection pool count.
-			lock (this)
-			{
+            lock (locker)
+            {
 				// Try to find a queue.
                 if (PooledConnectors.TryGetValue(Connection.ConnectionString, out Queue) && Queue != null)
 				{
-					Queue.UseCount--;
-				}
+                    Queue.Busy.Remove(Connection.Connector);
+                }
 			}
 		}
 
@@ -519,20 +537,34 @@ namespace EnterpriseDB.EDBClient
 		/// <param name="Connector">Connector to pool</param>
 		private void UngetPooledConnector(EDBConnection Connection, EDBConnector Connector)
 		{
-			ConnectorQueue Queue;
+            ConnectorQueue queue;
 
-			// Find the queue.
-			if (!PooledConnectors.TryGetValue(Connection.ConnectionString, out Queue) || Queue == null)
-			{
-				return; // Queue may be emptied by connection problems. See ClearPool below.
-			}
+            // Find the queue.
+            // As we are handling all possible queues, we have to lock everything...
+            lock (locker)
+            {
+                PooledConnectors.TryGetValue(Connection.ConnectionString, out queue);
+            }
+
+            
+            if (queue == null)
+            {
+                Connector.Close(); // Release connection to postgres
+                return; // Queue may be emptied by connection problems. See ClearPool below.
+            }
 
             Connector.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
 			Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
 			Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
 			Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
 
-			Queue.UseCount--;
+            bool inQueue = false;
+
+            lock (queue)
+            {
+                inQueue = queue.Busy.ContainsKey(Connector);
+                queue.Busy.Remove(Connector);
+            }
 
 			if (!Connector.IsInitialized)
 			{
@@ -558,16 +590,38 @@ namespace EnterpriseDB.EDBClient
 				}
 			}
 
-			if (Connector.State == ConnectionState.Open &&
-                (Thread.CurrentThread.ThreadState & (ThreadState.Aborted | ThreadState.AbortRequested)) == 0)
-			{
-				// Release all resources associated with this connector.
-				Connector.ReleaseResources();
+            if (Connector.State == ConnectionState.Open)
+            {
+                //If thread is good
+                if ((Thread.CurrentThread.ThreadState & (ThreadState.Aborted | ThreadState.AbortRequested)) == 0)
+                {
+                    // Release all resources associated with this connector.
+                    try
+                    {
+                        Connector.ReleaseResources();
+                    }
+                    catch (Exception)
+                    {
+                        //If the connector fails to release its resources then it is probably broken, so make sure we don't add it to the queue.
+                        // Usually it already won't be in the queue as it would of broken earlier
+                        inQueue = false;
+                    }
 
-				Queue.Enqueue(Connector);
-			}
-		}
-
+                    if (inQueue)
+                        lock (queue)
+                        {
+                            queue.Available.Enqueue(Connector);
+                        }
+                    else
+                        Connector.Close();
+                }
+                else
+                {
+                    //Thread is being aborted, this connection is possibly broken. So kill it rather than returning it to the pool
+                    Connector.Close();
+                }
+            }
+        }
 		/*
 				/// <summary>
 				/// Stop sharing a shared connector.
@@ -586,9 +640,9 @@ namespace EnterpriseDB.EDBClient
 				return;
 			}
 
-			while (Queue.Count > 0)
-			{
-				EDBConnector connector = Queue.Dequeue();
+            while (Queue.Available.Count > 0)
+            {
+                EDBConnector connector = Queue.Available.Dequeue();
 
 				try
 				{
@@ -599,14 +653,16 @@ namespace EnterpriseDB.EDBClient
 					// Maybe we should log something here to say we got an exception while closing connector?
 				}
 			}
+            //Clear the busy list so that the current connections don't get re-added to the queue
+            Queue.Busy.Clear();
 		}
 
 
 		internal void ClearPool(EDBConnection Connection)
 		{
 			// Prevent multithread access to connection pool count.
-			lock (this)
-			{
+            lock (locker)
+            {
                 ConnectorQueue queue;
 				// Try to find a queue.
                 if (PooledConnectors.TryGetValue(Connection.ConnectionString, out queue))
@@ -621,8 +677,8 @@ namespace EnterpriseDB.EDBClient
 		
 		internal void ClearAllPools()
 		{
-			lock (this)
-			{
+            lock (locker)
+            {
 				foreach (ConnectorQueue Queue in PooledConnectors.Values)
 				{
 					ClearQueue(Queue);

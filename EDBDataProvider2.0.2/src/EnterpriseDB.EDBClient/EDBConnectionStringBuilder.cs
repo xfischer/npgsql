@@ -88,7 +88,7 @@ namespace EnterpriseDB.EDBClient
 
 			defaults.Add(Keywords.Port, 5432);
 
-			defaults.Add(Keywords.Protocol, ProtocolVersion.Unknown);
+			defaults.Add(Keywords.Protocol, ProtocolVersion.Version3);
 
 			defaults.Add(Keywords.Database, string.Empty);
 
@@ -123,6 +123,8 @@ namespace EnterpriseDB.EDBClient
 			defaults.Add(Keywords.UseExtendedTypes, false);
             defaults.Add(Keywords.IntegratedSecurity, false);
             defaults.Add(Keywords.Compatible, THIS_VERSION);
+            
+            defaults.Add(Keywords.ApplicationName, string.Empty);
 		}
 
 
@@ -403,13 +405,18 @@ namespace EnterpriseDB.EDBClient
         private byte[] _password;
 
 
-        public byte[] Password
+		public byte[] PasswordAsByteArray
 
 		{
 			get { return _password; }
 
-			set { SetValue(GetKeyName(Keywords.Password), value); }
+			set { _password = value; }
 		}
+
+        public string Password
+        {
+            set { SetValue(GetKeyName(Keywords.Password), value); }
+        }
 
 		private bool _ssl;
 
@@ -584,6 +591,17 @@ namespace EnterpriseDB.EDBClient
                 SetValue(GetKeyName(Keywords.Compatible), value);
             }
         }
+
+
+        private string _application_name;
+
+        public string ApplicationName
+        {
+            get { return _application_name; }
+
+            set { SetValue(GetKeyName(Keywords.ApplicationName), value); }
+        }
+
 		#endregion
 
 		private static Keywords GetKey(string key)
@@ -691,6 +709,11 @@ namespace EnterpriseDB.EDBClient
                     return Keywords.UseExtendedTypes;
                 case "INTEGRATED SECURITY":
                     return Keywords.IntegratedSecurity;
+                case "COMPATIBLE":
+                    return Keywords.Compatible;
+
+                case "APPLICATIONNAME":
+                    return Keywords.ApplicationName;
 
 				default:
 
@@ -702,21 +725,58 @@ namespace EnterpriseDB.EDBClient
 		internal static string GetKeyName(Keywords keyword)
 
 		{
-			if (keyword == Keywords.UserName)
-
-			{
-				return "USER ID";
-            }
-            else if (keyword == Keywords.IntegratedSecurity)
-            {
-                return "INTEGRATED SECURITY";
-            }
-
-			else
-
-			{
-				return keyword.ToString().ToUpperInvariant();
-			}
+		    switch(keyword)
+		    {
+                
+                case Keywords.Host:
+                    return "HOST";
+                case Keywords.Port:
+                    return "PORT";
+                case Keywords.Protocol:
+                    return "PROTOCOL";
+                case Keywords.Database:
+                    return "DATABASE";
+                case Keywords.UserName:
+                   return "USER ID";
+                case Keywords.Password:
+                    return "PASSWORD";
+                case Keywords.SSL:
+                    return "SSL";
+                case Keywords.SslMode:
+                    return "SSLMODE";
+                case Keywords.Encoding:
+                    return "ENCODING";
+                case Keywords.Timeout:
+                     return "TIMEOUT";
+                case Keywords.SearchPath:
+                    return "SEARCHPATH";
+                case Keywords.Pooling:
+                    return "POOLING";
+                case Keywords.ConnectionLifeTime:
+                    return "CONNECTIONLIFETIME";
+                case Keywords.MinPoolSize:
+                    return "MINPOOLSIZE";
+                case Keywords.MaxPoolSize:
+                    return "MAXPOOLSIZE";
+                case Keywords.SyncNotification:
+                    return "SYNCNOTIFICATION";
+                case Keywords.CommandTimeout:
+                    return "COMMANDTIMEOUT";
+                case Keywords.Enlist:
+                    return "ENLIST";
+                case Keywords.PreloadReader:
+                    return "PRELOADREADER";
+                case Keywords.UseExtendedTypes:
+                    return "USEEXTENDEDTYPES";
+                case Keywords.IntegratedSecurity:
+                    return "INTEGRATED SECURITY";
+                case Keywords.Compatible:
+                    return "COMPATIBLE";
+                default:
+                    return keyword.ToString().ToUpperInvariant();
+                
+            
+		    }
 		}
 
 
@@ -792,11 +852,15 @@ namespace EnterpriseDB.EDBClient
 					base[GetKeyName(key)] = ToString(this.Protocol);
 				}
 
-				else
+                else if (key == Keywords.Compatible)
+                {
+                    base[GetKeyName(key)] = ((Version)this.Compatible).ToString();
+                }
 
-				{
-					base[GetKeyName(key)] = value;
-				}
+                else
+                {
+                    base[GetKeyName(key)] = value;
+                }
 			}
 		}
 
@@ -945,6 +1009,10 @@ namespace EnterpriseDB.EDBClient
                             throw new ArgumentException("Attempt to set compatibility with version " + value + " when using version " + THIS_VERSION);
                         _compatible = ver;
                         break;
+
+                    case Keywords.ApplicationName:
+                        this._application_name = Convert.ToString(value);
+                        break;
 				}
 			}
 
@@ -1010,7 +1078,7 @@ namespace EnterpriseDB.EDBClient
 			foreach (Keywords keyword in defaults.Keys)
 
 			{
-				SetValue(keyword, defaults[keyword]);
+                SetValue(GetKeyName(keyword), defaults[keyword]);
 			}
 		}
 	}
@@ -1065,7 +1133,9 @@ namespace EnterpriseDB.EDBClient
 
 		UseExtendedTypes,
         IntegratedSecurity,
-        Compatible
+        Compatible,
+
+        ApplicationName
 	}
 
 

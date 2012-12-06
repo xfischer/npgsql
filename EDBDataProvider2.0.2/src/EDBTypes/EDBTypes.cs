@@ -31,6 +31,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 using EnterpriseDB.EDBClient;
 
 namespace EDBTypes
@@ -656,6 +657,11 @@ namespace EDBTypes
                 return x.addr;
             
         }
+        public static implicit operator EDBInet(IPAddress ipaddress)
+        {
+            return new EDBInet(ipaddress);
+            
+        }
 
         public bool Equals(EDBInet other)
         {
@@ -678,6 +684,86 @@ namespace EDBTypes
         }
 
         public static bool operator !=(EDBInet x, EDBInet y)
+        {
+            return !(x == y);
+        }
+    }
+
+    /// <summary>
+    /// Represents a PostgreSQL MacAddress type.
+    /// </summary>
+    public struct EDBMacAddress : IEquatable<EDBMacAddress>
+    {
+        public PhysicalAddress macAddr;
+
+        public EDBMacAddress(PhysicalAddress macAddr)
+        {
+            this.macAddr = macAddr;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="macAddr">The macAddr parameter must contain a string that can only consist of numbers
+        /// and upper-case letters as hexadecimal digits. (See PhysicalAddress.Parse method on MSDN)</param>
+        public EDBMacAddress(string macAddr)
+        {
+            if (!string.IsNullOrEmpty(macAddr))
+            {
+                string lowerMacAddr = macAddr.ToUpper();
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                foreach (char c in lowerMacAddr)
+                {
+                    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
+                    {
+                        sb.Append(c);
+                    }
+                }
+                this.macAddr = PhysicalAddress.Parse(sb.ToString());
+            }
+            else
+            {
+                this.macAddr = PhysicalAddress.None;
+            }
+        }
+
+        public override String ToString()
+        {
+            return macAddr.ToString();
+        }
+
+        public static explicit operator PhysicalAddress(EDBMacAddress x)
+        {
+            return x.macAddr;
+        }
+
+        public static implicit operator EDBMacAddress(PhysicalAddress macAddr)
+        {
+            return new EDBMacAddress(macAddr);
+        }
+
+        public bool Equals(EDBMacAddress other)
+        {
+            return macAddr.Equals(other.macAddr);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj != null && obj is EDBMacAddress && Equals((EDBMacAddress)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            int ret = 266370105;  //seed with something other than zero to make paths of all zeros hash differently.
+            return PGUtil.RotateShift(macAddr.GetHashCode(), ret);
+        }
+
+        public static bool operator ==(EDBMacAddress x, EDBMacAddress y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(EDBMacAddress x, EDBMacAddress y)
         {
             return !(x == y);
         }

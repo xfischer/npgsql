@@ -110,13 +110,13 @@ namespace EnterpriseDB.EDBClient
 			if (fullName.Length > 1 && fullName[0].Length > 0)
 			{
 				query =
-					"select proargtypes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname";
+					"select proargnames, proargtypes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname";
 				schemaName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
 				procedureName = (fullName[1].IndexOf("\"") != -1) ? fullName[1] : fullName[1].ToLower();
 			}
 			else
 			{
-				query = "select proargtypes from pg_proc where proname = :proname";
+				query = "select proargnames, proargtypes from pg_proc where proname = :proname";
 				procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
                 if (procedureName.IndexOf("(") != -1)
                     procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
@@ -131,7 +131,21 @@ namespace EnterpriseDB.EDBClient
 					EDBParameter prm = c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Text));
 					prm.Value = schemaName.Replace("\"", "").Trim();
 				}
-				String types = (String) c.ExecuteScalar();
+
+				String[] names = null;
+				String[] types = null;
+
+				using (EDBDataReader rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
+				{
+					if (rdr.Read())
+					{
+						if (!rdr.IsDBNull(0))
+							names = rdr.GetValue(0) as String[];
+						if (!rdr.IsDBNull(1))
+							types = rdr.GetString(1).Split();
+					}
+				}
+
 				if (types == null)
 				{
 					throw new InvalidOperationException(
@@ -139,39 +153,42 @@ namespace EnterpriseDB.EDBClient
 				}
 
 				command.Parameters.Clear();
-				Int32 i = 1;
-				foreach (String s in types.Split())
+				for (Int32 i = 0; i < types.Length; i++)
 				{
-					EDBBackendTypeInfo typeInfo = null;
-					if (!c.Connector.OidToNameMapping.TryGetValue(int.Parse(s), out typeInfo))
-					{
-						command.Parameters.Clear();
-						throw new InvalidOperationException(String.Format("Invalid parameter type: {0}", s));
-					}
-					command.Parameters.Add(new EDBParameter("parameter" + i++, typeInfo.NpgsqlDbType));
+                    // skip parameter if type string is empty
+                    // empty parameter lists can cause this
+                    if (!string.IsNullOrEmpty(types[i]))
+                    {
+                        EDBBackendTypeInfo typeInfo = null;
+                        if (!c.Connector.OidToNameMapping.TryGetValue(int.Parse(types[i]), out typeInfo))
+                        {
+                            command.Parameters.Clear();
+                            throw new InvalidOperationException(String.Format("Invalid parameter type: {0}", types[i]));
+                        }
+                        if (names != null && i < names.Length)
+                            command.Parameters.Add(new EDBParameter(":" + names[i], typeInfo.EDBDbType));
+                        else
+                            command.Parameters.Add(new EDBParameter("parameter" + (i + 1).ToString(), typeInfo.EDBDbType));
+                    }
 				}
 			}
 		}
 
 		public new EDBCommand GetInsertCommand()
 		{
-			EDBCommand cmd = (EDBCommand)base.GetInsertCommand();
-  			cmd.UpdatedRowSource = UpdateRowSource.None;
-            return cmd;
+            return GetInsertCommand(false);
 		}
 
 		public new EDBCommand GetInsertCommand(bool useColumnsForParameterNames)
 		{
-			EDBCommand cmd = (EDBCommand)base.GetInsertCommand(useColumnsForParameterNames);
-			cmd.UpdatedRowSource = UpdateRowSource.None;
+            EDBCommand cmd = (EDBCommand) base.GetInsertCommand(useColumnsForParameterNames);
+            cmd.UpdatedRowSource = UpdateRowSource.None;
             return cmd;
 		}
 
 		public new EDBCommand GetUpdateCommand()
 		{
-			EDBCommand cmd = (EDBCommand) base.GetUpdateCommand();
-			cmd.UpdatedRowSource = UpdateRowSource.None;
-            return cmd;
+            return GetUpdateCommand(false);
 		}
 
 		public new EDBCommand GetUpdateCommand(bool useColumnsForParameterNames)
@@ -183,9 +200,7 @@ namespace EnterpriseDB.EDBClient
 
 		public new EDBCommand GetDeleteCommand()
 		{
-			EDBCommand cmd = (EDBCommand) base.GetDeleteCommand();
-			 cmd.UpdatedRowSource = UpdateRowSource.None;
-            return cmd;
+            return GetDeleteCommand(false);
 		}
 
 		public new EDBCommand GetDeleteCommand(bool useColumnsForParameterNames)
@@ -220,8 +235,25 @@ namespace EnterpriseDB.EDBClient
 
 		protected override void ApplyParameterInfo(DbParameter p, DataRow row, StatementType statementType, bool whereClause)
 		{
+            
 			EDBParameter parameter = (EDBParameter) p;
-			parameter.DbType = EDBTypesHelper.GetNativeTypeInfo((Type) row[SchemaTableColumn.DataType]).DbType;
+
+            /* TODO: Check if this is the right thing to do.
+             * ADO.Net seems to set this property to true when creating the parameter for the following query:
+             * ((@IsNull_FieldName = 1 AND FieldName IS NULL) OR 
+                  (FieldName = @Original_FieldName))
+             * This parameter: @IsNull_FieldName was having its sourcecolumn set to the same name of FieldName.
+             * This was causing ADO.Net to try to set a value of different type of Int32. 
+             * See bug 1010973 for more info.
+             */
+            if (parameter.SourceColumnNullMapping)
+            {
+                parameter.SourceColumn = "";
+            }
+            else
+
+                parameter.EDBDbType = EDBTypesHelper.GetNativeTypeInfo((Type)row[SchemaTableColumn.DataType]).EDBDbType;
+            
 		}
 
 		protected override string GetParameterName(int parameterOrdinal)
@@ -241,7 +273,15 @@ namespace EnterpriseDB.EDBClient
 
 		protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
 		{
-			if (!(adapter is EDBDataAdapter))
+			
+            /* Disabling this handler makes the ado.net updating code works.
+             * Check if this code is really necessary or how to implement it correctly.
+             * By having this handler specified, ADO.Net was reusing strangely NpgsqlParameters when updating datasets.
+             * See bug 1010973 for more info.
+             */
+
+            /*
+            if (!(adapter is NpgsqlDataAdapter))
 			{
 				throw new InvalidOperationException("adapter needs to be a NpgsqlDataAdapter");
 			}
@@ -249,7 +289,9 @@ namespace EnterpriseDB.EDBClient
 
 			this.rowUpdatingHandler = new NpgsqlRowUpdatingEventHandler(this.RowUpdatingHandler);
 
-			((EDBDataAdapter) adapter).RowUpdating += this.rowUpdatingHandler;
+			((NpgsqlDataAdapter) adapter).RowUpdating += this.rowUpdatingHandler;
+             */
+
 		}
 
 

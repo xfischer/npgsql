@@ -211,7 +211,7 @@ namespace EnterpriseDB.EDBClient
 		public EDBDbType GetFieldNpgsqlDbType(Int32 Index)
 		{
 			EDBBackendTypeInfo TI;
-			return TryGetTypeInfo(Index, out TI) ? TI.NpgsqlDbType : EDBDbType.Text;
+			return TryGetTypeInfo(Index, out TI) ? TI.EDBDbType : EDBDbType.Text;
 		}
 
         public BitString GetBitString(int i)
@@ -333,6 +333,14 @@ namespace EnterpriseDB.EDBClient
 		{
 			return (Decimal) GetValue(i);
 		}
+        
+        /// <summary>
+        /// Gets the value of a column as TimeSpan.
+        /// </summary>
+        public TimeSpan GetTimeSpan(Int32 i)
+        {
+            return (TimeSpan) GetValue(i);
+        }
 
 		/// <summary>
 		/// Gets a value indicating the depth of nesting for the current row.  Always returns zero.
@@ -1404,7 +1412,11 @@ namespace EnterpriseDB.EDBClient
         {
             object providerValue = GetProviderSpecificValue(Index);
             EDBBackendTypeInfo backendTypeInfo;
-            if ((_connection == null || !_connection.UseExtendedTypes) && TryGetTypeInfo(Index, out backendTypeInfo))
+            if (_command.ExpectedTypes != null && _command.ExpectedTypes.Length > Index && _command.ExpectedTypes[Index] != null)
+            {
+                return ExpectedTypeConverter.ChangeType(providerValue, _command.ExpectedTypes[Index]);
+            }                       
+            else if ((_connection == null || !_connection.UseExtendedTypes) && TryGetTypeInfo(Index, out backendTypeInfo))
                 return backendTypeInfo.ConvertToFrameworkType(providerValue);
             return providerValue;
         }

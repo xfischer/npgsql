@@ -38,7 +38,7 @@ namespace EnterpriseDB.EDBClient
 	internal sealed class EDBSchema
 	{
 		private readonly EDBConnection _connection;
-
+ 
 		/// <summary>
 		/// Creates an EDBSchema that can read schema information from the database.
 		/// </summary>
@@ -101,9 +101,12 @@ namespace EnterpriseDB.EDBClient
 						{
 							query.Append(" AND ");
 						}
-						query.AppendFormat("{0} = :{0}", names[i]);
 
-						command.Parameters.Add(new EDBParameter(names[i], restrictions[i]));
+					    string paramName = RemoveSpecialChars(names[i]);
+
+						query.AppendFormat("{0} = :{1}", names[i], paramName);
+
+						command.Parameters.Add(new EDBParameter(paramName, restrictions[i]));
 					}
 				}
 			}
@@ -112,6 +115,11 @@ namespace EnterpriseDB.EDBClient
 
 			return command;
 		}
+
+        private string RemoveSpecialChars(string paramName)
+        {
+            return paramName.Replace("(", "").Replace(")", "").Replace(".", "");
+        }
 
 		/// <summary>
 		/// Returns the Databases that contains a list of all accessable databases.
@@ -362,6 +370,41 @@ where
             return indexColumns;
         }
 
+        internal DataTable GetForeignKeys(string[] restrictions)
+        {
+            StringBuilder getForeignKeys = new StringBuilder();
+
+            getForeignKeys.Append(
+@"select
+  current_database() as ""CONSTRAINT_CATALOG"",
+  pgn.nspname as ""CONSTRAINT_SCHEMA"",
+  pgc.conname as ""CONSTRAINT_NAME"",
+  current_database() as ""TABLE_CATALOG"",
+  pgtn.nspname as ""TABLE_SCHEMA"",
+  pgt.relname as ""TABLE_NAME"",
+  'FOREIGN KEY' as ""CONSTRAINT_TYPE"",
+  pgc.condeferrable as ""IS_DEFERRABLE"",
+  pgc.condeferred as ""INITIALLY_DEFERRED""
+from pg_catalog.pg_constraint pgc
+inner join pg_catalog.pg_namespace pgn on pgc.connamespace = pgn.oid
+inner join pg_catalog.pg_class pgt on pgc.conrelid = pgt.oid
+inner join pg_catalog.pg_namespace pgtn on pgt.relnamespace = pgtn.oid
+where pgc.contype='f'
+");
+
+            using (
+                EDBCommand command =
+                    BuildCommand(getForeignKeys, restrictions, false, "current_database()", "pgtn.nspname", "pgt.relname", "pgc.conname"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    DataTable table = new DataTable("ForeignKeys");
+                    adapter.Fill(table);
+                    return table;
+                }
+            }
+        }
+
 		internal static DataTable GetDataSourceInformation()
 		{
 			DataSet ds = new DataSet();
@@ -371,5 +414,118 @@ where
 			}
 			return ds.Tables["DataSourceInformation"].Copy();
 		}
+
+	    public static DataTable GetReservedWords()
+	    {
+	        DataTable table = new DataTable("ReservedWords");
+	        table.Columns.Add("ReservedWord", typeof (string));
+            // List of keywords taken from PostgreSQL 9.0 reserved words documentation.
+	        string[] keywords = new[]
+	        {
+                "ALL",
+                "ANALYSE",
+                "ANALYZE",
+                "AND",
+                "ANY",
+                "ARRAY",
+                "AS",
+                "ASC",
+                "ASYMMETRIC",
+                "AUTHORIZATION",
+                "BINARY",
+                "BOTH",
+                "CASE",
+                "CAST",
+                "CHECK",
+                "COLLATE",
+                "COLUMN",
+                "CONCURRENTLY",
+                "CONSTRAINT",
+                "CREATE",
+                "CROSS",
+                "CURRENT_CATALOG",
+                "CURRENT_DATE",
+                "CURRENT_ROLE",
+                "CURRENT_SCHEMA",
+                "CURRENT_TIME",
+                "CURRENT_TIMESTAMP",
+                "CURRENT_USER",
+                "DEFAULT",
+                "DEFERRABLE",
+                "DESC",
+                "DISTINCT",
+                "DO",
+                "ELSE",
+                "END",
+                "EXCEPT",
+                "FALSE",
+                "FETCH",
+                "FOR",
+                "FOREIGN",
+                "FREEZE",
+                "FROM",
+                "FULL",
+                "GRANT",
+                "GROUP",
+                "HAVING",
+                "ILIKE",
+                "IN",
+                "INITIALLY",
+                "INNER",
+                "INTERSECT",
+                "INTO",
+                "IS",
+                "ISNULL",
+                "JOIN",
+                "LEADING",
+                "LEFT",
+                "LIKE",
+                "LIMIT",
+                "LOCALTIME",
+                "LOCALTIMESTAMP",
+                "NATURAL",
+                "NOT",
+                "NOTNULL",
+                "NULL",
+                "OFFSET",
+                "ON",
+                "ONLY",
+                "OR",
+                "ORDER",
+                "OUTER",
+                "OVER",
+                "OVERLAPS",
+                "PLACING",
+                "PRIMARY",
+                "REFERENCES",
+                "RETURNING",
+                "RIGHT",
+                "SELECT",
+                "SESSION_USER",
+                "SIMILAR",
+                "SOME",
+                "SYMMETRIC",
+                "TABLE",
+                "THEN",
+                "TO",
+                "TRAILING",
+                "TRUE",
+                "UNION",
+                "UNIQUE",
+                "USER",
+                "USING",
+                "VARIADIC",
+                "VERBOSE",
+                "WHEN",
+                "WHERE",
+                "WINDOW",
+                "WITH"
+            };
+            foreach (string keyword in keywords)
+            {
+                table.Rows.Add(keyword);
+            }
+	        return table;
+	    }
 	}
 }

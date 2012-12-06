@@ -69,6 +69,8 @@ namespace EDBTypes
 		TimeTZ,
         Float,
         Varchar2,
-        Name
+        Name,
+        Abstime,
+        MacAddr
 	}
 }

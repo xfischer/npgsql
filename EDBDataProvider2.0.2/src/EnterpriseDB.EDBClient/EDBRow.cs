@@ -347,7 +347,7 @@ namespace EnterpriseDB.EDBClient
 		public bool CanGetByteStream(int index)
 		{
 //TODO: Add support for byte[] being read as a stream of bytes.
-			return _rowDesc[index].TypeInfo.NpgsqlDbType == EDBDbType.Bytea;
+			return _rowDesc[index].TypeInfo.EDBDbType == EDBDbType.Bytea;
 		}
 
 		public bool CanGetCharStream(int index)

@@ -52,6 +52,8 @@ namespace EDBTypes
 					"HH:mm:ss.ffffff", "HH:mm:ss", "HH:mm:ss.ffffffzz", "HH:mm:sszz", "HH:mm:ss.fffff", "HH:mm:ss.ffff", "HH:mm:ss.fff"
 					, "HH:mm:ss.ff", "HH:mm:ss.f", "HH:mm:ss.fffffzz", "HH:mm:ss.ffffzz", "HH:mm:ss.fffzz", "HH:mm:ss.ffzz",
 					"HH:mm:ss.fzz",
+                    "HH:mm:ss.fffffzzz", "HH:mm:ss.ffffzzz", "HH:mm:ss.fffzzz", "HH:mm:ss.ffzzz",
+                    "HH:mm:ss.fzzz", "HH:mm:sszzz",
 				};
 
 		private static readonly String[] DateTimeFormats =
@@ -61,57 +63,74 @@ namespace EDBTypes
 					"yyyy-MM-dd HH:mm:ss.fffff", "yyyy-MM-dd HH:mm:ss.ffff", "yyyy-MM-dd HH:mm:ss.fff", "yyyy-MM-dd HH:mm:ss.ff",
 					"yyyy-MM-dd HH:mm:ss.f", "yyyy-MM-dd HH:mm:ss.fffffzz", "yyyy-MM-dd HH:mm:ss.ffffzz", "yyyy-MM-dd HH:mm:ss.fffzz",
 					"yyyy-MM-dd HH:mm:ss.ffzz", "yyyy-MM-dd HH:mm:ss.fzz",
+                    "yyyy-MM-dd HH:mm:ss.fffffzzz", "yyyy-MM-dd HH:mm:ss.ffffzzz", "yyyy-MM-dd HH:mm:ss.fffzzz",
+                    "yyyy-MM-dd HH:mm:ss.ffzzz", "yyyy-MM-dd HH:mm:ss.fzzz", "yyyy-MM-dd HH:mm:sszzz"
 				};
 
 		/// <summary>
-		/// Binary data.
+		/// Binary data. TODO EDB
 		/// </summary>
-		internal static Object ToBinary(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
-		{
-			Int32 octalValue = 0;
-			Int32 byteAPosition = 0;
-			Int32 byteAStringLength = BackendData.Length;
-			MemoryStream ms = new MemoryStream();
+        internal static Object ToBinary(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
+        {
+            Int32 octalValue = 0;
+            Int32 byteAPosition = 0;
+            Int32 byteAStringLength = BackendData.Length;
+            MemoryStream ms = new MemoryStream();
 
-			while (byteAPosition < byteAStringLength)
-			{
-				// The IsDigit is necessary in case we receive a \ as the octal value and not
-				// as the indicator of a following octal value in decimal format.
-				// i.e.: \201\301P\A
-				if (BackendData[byteAPosition] == '\\')
-				{
-					if (byteAPosition + 1 == byteAStringLength)
-					{
-						octalValue = '\\';
-						byteAPosition++;
-					}
-					else if (Char.IsDigit(BackendData[byteAPosition + 1]))
-					{
-                        octalValue = Convert.ToByte(BackendData.Substring(byteAPosition + 1, 3), 8);
-                        //octalValue = (Byte.Parse(BackendData[byteAPosition + 1].ToString()) << 6);
-                        //octalValue |= (Byte.Parse(BackendData[byteAPosition + 2].ToString()) << 3);
-                        //octalValue |= Byte.Parse(BackendData[byteAPosition + 3].ToString());
-						byteAPosition += 4;
-					}
-					else
-					{
-						octalValue = '\\';
-						byteAPosition += 2;
-					}
-				}
-				else
-				{
-					octalValue = (Byte)BackendData[byteAPosition];
-					byteAPosition++;
-				}
+            if (BackendData.StartsWith("\\x"))
+            {
+                // PostgreSQL 8.5+'s bytea_output=hex format
+                for (byteAPosition = 2; byteAPosition < byteAStringLength; byteAPosition += 2)
+                {
+                    byte value = Convert.ToByte(BackendData.Substring(byteAPosition, 2), 16);
+                    ms.WriteByte(value);
+                }
+            }
+
+            else
+            {
+
+                while (byteAPosition < byteAStringLength)
+                {
+                    // The IsDigit is necessary in case we receive a \ as the octal value and not
+                    // as the indicator of a following octal value in decimal format.
+                    // i.e.: \201\301P\A
+                    if (BackendData[byteAPosition] == '\\')
+                    {
+                        if (byteAPosition + 1 == byteAStringLength)
+                        {
+                            octalValue = '\\';
+                            byteAPosition++;
+                        }
+                        else if (Char.IsDigit(BackendData[byteAPosition + 1]))
+                        {
+                            octalValue = Convert.ToByte(BackendData.Substring(byteAPosition + 1, 3), 8);
+                            //octalValue = (Byte.Parse(BackendData[byteAPosition + 1].ToString()) << 6);
+                            //octalValue |= (Byte.Parse(BackendData[byteAPosition + 2].ToString()) << 3);
+                            //octalValue |= Byte.Parse(BackendData[byteAPosition + 3].ToString());
+                            byteAPosition += 4;
+                        }
+                        else
+                        {
+                            octalValue = '\\';
+                            byteAPosition += 2;
+                        }
+                    }
+                    else
+                    {
+                        octalValue = (Byte)BackendData[byteAPosition];
+                        byteAPosition++;
+                    }
 
 
-				ms.WriteByte((Byte)octalValue);
-			}
-
+                    ms.WriteByte((Byte)octalValue);
+                }
+            }
+            
 			return ms.ToArray();
 		}
 
+      
 		/// <summary>
 		/// Convert a postgresql boolean to a System.Boolean.
 		/// </summary>
@@ -258,7 +277,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Binary data.
 		/// </summary>
-		internal static String ToBinary(EDBNativeTypeInfo TypeInfo, Object NativeData)
+		internal static String ToBinary(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
             Byte[] byteArray = (Byte[])NativeData;
             StringBuilder res = new StringBuilder(byteArray.Length * 5);
@@ -277,7 +296,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgresql boolean.
 		/// </summary>
-		internal static String ToBoolean(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToBoolean(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			return ((bool)NativeData) ? "TRUE" : "FALSE";
 		}
@@ -285,7 +304,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgresql bit.
 		/// </summary>
-		internal static String ToBit(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToBit(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
             if (NativeData is bool)
                 return ((bool)NativeData) ? "1" : "0";
@@ -311,11 +330,11 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgresql timestamp.
 		/// </summary>
-		internal static String ToDateTime(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToDateTime(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			if (!(NativeData is DateTime))
 			{
-				return ExtendedNativeToBackendTypeConverter.ToTimeStamp(TypeInfo, NativeData);
+				return ExtendedNativeToBackendTypeConverter.ToTimeStamp(TypeInfo, NativeData, ForExtendedQuery);
 			}
 			if (DateTime.MaxValue.Equals(NativeData))
 			{
@@ -331,11 +350,11 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgresql date.
 		/// </summary>
-		internal static String ToDate(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToDate(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			if (!(NativeData is DateTime))
 			{
-				return ExtendedNativeToBackendTypeConverter.ToDate(TypeInfo, NativeData);
+				return ExtendedNativeToBackendTypeConverter.ToDate(TypeInfo, NativeData, ForExtendedQuery);
 			}
 			return ((DateTime)NativeData).ToString("yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo);
 		}
@@ -343,11 +362,11 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgresql time.
 		/// </summary>
-		internal static String ToTime(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToTime(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			if (!(NativeData is DateTime))
 			{
-				return ExtendedNativeToBackendTypeConverter.ToTime(TypeInfo, NativeData);
+				return ExtendedNativeToBackendTypeConverter.ToTime(TypeInfo, NativeData, ForExtendedQuery);
 			}
 			else
 			{
@@ -358,16 +377,29 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgres money.
 		/// </summary>
-        internal static String ToMoney(EDBNativeTypeInfo TypeInfo, Object NativeData)
-        {
-            //Formats accepted vary according to locale, but it always accepts a plain number (no currency or
-            //grouping symbols) passed as a string (with the appropriate cast appended, as UseCast will cause
-            //to happen.
-            return ((IFormattable)NativeData).ToString(null, CultureInfo.InvariantCulture.NumberFormat);
-        }
+        internal static String ToMoney(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
+		{
+		    //Formats accepted vary according to locale, but it always accepts a plain number (no currency or
+		    //grouping symbols) passed as a string (with the appropriate cast appended, as UseCast will cause
+		    //to happen.
+			return ((IFormattable)NativeData).ToString(null, CultureInfo.InvariantCulture.NumberFormat);
+		}
+		
+		
+		/// <summary>
+		/// Convert to a postgres double with maximum precision.
+		/// </summary>
+        internal static String ToSingleDouble(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
+		{
+		    //Formats accepted vary according to locale, but it always accepts a plain number (no currency or
+		    //grouping symbols) passed as a string (with the appropriate cast appended, as UseCast will cause
+		    //to happen.
+			return ((IFormattable)NativeData).ToString("R", CultureInfo.InvariantCulture.NumberFormat);
+		}
+		
 
 
-        internal static string ToBasicType<T>(EDBNativeTypeInfo TypeInfo, object NativeData)
+        internal static string ToBasicType<T>(EDBNativeTypeInfo TypeInfo, object NativeData, Boolean ForExtendedQuery)
         {
             // This double cast is needed in order to get the enum type handled correctly (IConvertible)
             // and the decimal separator always as "." regardless of culture (IFormattable)
@@ -530,6 +562,14 @@ namespace EDBTypes
 		{
 			return new EDBInet(BackendData);
 		}
+
+        /// <summary>
+        /// MAC Address.
+        /// </summary>
+        internal static Object ToMacAddress(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
+        {
+            return new EDBMacAddress(BackendData);
+        }
 		
         internal static Object ToGuid(EDBBackendTypeInfo TypeInfo, String BackendData, Int16 TypeSize, Int32 TypeModifier)
         {
@@ -582,7 +622,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Point.
 		/// </summary>
-		internal static String ToPoint(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToPoint(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			if (NativeData is EDBPoint)
 			{
@@ -591,14 +631,14 @@ namespace EDBTypes
 			}
 			else
 			{
-				throw new InvalidCastException("Unable to cast data to NpgsqlPoint type");
+				throw new InvalidCastException("Unable to cast data to EDBPoint type");
 			}
 		}
 
 		/// <summary>
 		/// Box.
 		/// </summary>
-		internal static String ToBox(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToBox(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			/*if (NativeData.GetType() == typeof(Rectangle)) {
                 Rectangle       R = (Rectangle)NativeData;
@@ -623,7 +663,7 @@ namespace EDBTypes
 		/// <summary>
 		/// LSeg.
 		/// </summary>
-		internal static String ToLSeg(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToLSeg(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			EDBLSeg S = (EDBLSeg)NativeData;
 			return String.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3}", S.Start.X, S.Start.Y, S.End.X, S.End.Y);
@@ -632,7 +672,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Open path.
 		/// </summary>
-		internal static String ToPath(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToPath(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			StringBuilder B = null;
 			try
@@ -657,7 +697,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Polygon.
 		/// </summary>
-		internal static String ToPolygon(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToPolygon(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			StringBuilder B = new StringBuilder();
 
@@ -669,10 +709,22 @@ namespace EDBTypes
 			return String.Format("({0})", B);
 		}
 
+        /// <summary>
+        /// Convert to a postgres MAC Address.
+        /// </summary>
+        internal static String ToMacAddress(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
+        {
+            if (NativeData is EDBMacAddress)
+            {
+                return ((EDBMacAddress)NativeData).ToString();
+            }
+            return NativeData.ToString();
+        }
+        
 		/// <summary>
 		/// Circle.
 		/// </summary>
-		internal static String ToCircle(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToCircle(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			EDBCircle C = (EDBCircle)NativeData;
 			return String.Format(CultureInfo.InvariantCulture, "{0},{1},{2}", C.Center.X, C.Center.Y, C.Radius);
@@ -681,7 +733,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgres inet.
 		/// </summary>
-		internal static String ToIPAddress(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToIPAddress(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			if (NativeData is EDBInet)
 			{
@@ -694,7 +746,7 @@ namespace EDBTypes
 		/// <summary>
 		/// Convert to a postgres interval
 		/// </summary>
-		internal static String ToInterval(EDBNativeTypeInfo TypeInfo, Object NativeData)
+        internal static String ToInterval(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean ForExtendedQuery)
 		{
 			return
 				((NativeData is TimeSpan)
@@ -702,11 +754,11 @@ namespace EDBTypes
 					: ((EDBInterval)NativeData).ToString());
 		}
 
-		internal static string ToTime(EDBNativeTypeInfo typeInfo, object nativeData)
+        internal static string ToTime(EDBNativeTypeInfo typeInfo, object nativeData, Boolean ForExtendedQuery)
 		{
 			if (nativeData is DateTime)
 			{
-				return BasicNativeToBackendTypeConverter.ToTime(typeInfo, nativeData);
+				return BasicNativeToBackendTypeConverter.ToTime(typeInfo, nativeData, ForExtendedQuery);
 			}
 			EDBTime time;
 			if (nativeData is TimeSpan)
@@ -720,11 +772,11 @@ namespace EDBTypes
 			return time.ToString();
 		}
 
-		internal static string ToTimeTZ(EDBNativeTypeInfo typeInfo, object nativeData)
+        internal static string ToTimeTZ(EDBNativeTypeInfo typeInfo, object nativeData, Boolean ForExtendedQuery)
 		{
 			if (nativeData is DateTime)
 			{
-				return BasicNativeToBackendTypeConverter.ToTime(typeInfo, nativeData);
+				return BasicNativeToBackendTypeConverter.ToTime(typeInfo, nativeData, ForExtendedQuery);
 			}
 			EDBTimeTZ time;
 			if (nativeData is TimeSpan)
@@ -738,11 +790,11 @@ namespace EDBTypes
 			return time.ToString();
 		}
 
-		internal static string ToDate(EDBNativeTypeInfo typeInfo, object nativeData)
+        internal static string ToDate(EDBNativeTypeInfo typeInfo, object nativeData, Boolean ForExtendedQuery)
 		{
 			if (nativeData is DateTime)
 			{
-				return BasicNativeToBackendTypeConverter.ToDate(typeInfo, nativeData);
+				return BasicNativeToBackendTypeConverter.ToDate(typeInfo, nativeData, ForExtendedQuery);
 			}
 			else
 			{
@@ -750,11 +802,11 @@ namespace EDBTypes
 			}
 		}
 
-		internal static string ToTimeStamp(EDBNativeTypeInfo typeInfo, object nativeData)
+        internal static string ToTimeStamp(EDBNativeTypeInfo typeInfo, object nativeData, Boolean ForExtendedQuery)
 		{
 			if (nativeData is DateTime)
 			{
-				return BasicNativeToBackendTypeConverter.ToDateTime(typeInfo, nativeData);
+				return BasicNativeToBackendTypeConverter.ToDateTime(typeInfo, nativeData, ForExtendedQuery);
 			}
 			else
 			{

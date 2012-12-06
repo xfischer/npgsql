@@ -87,6 +87,7 @@ namespace EnterpriseDB.EDBClient
         private Boolean functionReturnsRecord = false; // Functions don't return record by default.
 
         private Boolean functionReturnsRefcursor = false; // Functions don't return refcursor by default.
+        private Boolean functionNeedsColumnListDefinition = false; // Functions don't return record by default.
 
         private Boolean commandTimeoutSet = false;
 
@@ -163,7 +164,7 @@ namespace EnterpriseDB.EDBClient
             parameters = new EDBParameterCollection();
 
             // Internal commands aren't affected by command timeout value provided by user.
-            timeout = 20;
+            // timeout = 20;
         }
 
         // Public properties.
@@ -299,6 +300,8 @@ namespace EnterpriseDB.EDBClient
                 return m_Connector;
             }
         }
+
+        internal Type[] ExpectedTypes { get; set; }
 
         protected override DbParameterCollection DbParameterCollection
         {
@@ -456,7 +459,10 @@ namespace EnterpriseDB.EDBClient
             clone.CommandTimeout = CommandTimeout;
             clone.CommandType = CommandType;
             clone.DesignTimeVisible = DesignTimeVisible;
-		   
+            if (ExpectedTypes != null)
+            {
+                clone.ExpectedTypes = (Type[])ExpectedTypes.Clone();
+            }
             foreach (EDBParameter parameter in Parameters)
             {
                 clone.Parameters.Add(parameter.Clone());
@@ -693,7 +699,7 @@ namespace EnterpriseDB.EDBClient
 
                     // Do special handling of bytea values. They will be send in binary form.
                     // TODO: Add binary format support for all supported types. Not only bytea.
-                    if (parameters[i].TypeInfo.NpgsqlDbType != EDBDbType.Bytea)
+                    if (parameters[i].TypeInfo.EDBDbType != EDBDbType.Bytea)
                     {
                         parameterValues[i] = parameters[i].TypeInfo.ConvertToBackend(parameters[i].Value, true);
                     }
@@ -714,9 +720,23 @@ namespace EnterpriseDB.EDBClient
                 bind.ParameterFormatCodes = parameterFormatCodes;
             }
 
-            Connector.Bind(bind);
+            try
+            {
+                // In case of error when binding parameters, the ReadyForQuery isn't returned.
+                // According to docs: "[...] The response is either BindComplete or ErrorResponse."
 
-            Connector.Flush();
+                Connector.RequireReadyForQuery = false;
+
+                Connector.Bind(bind);
+
+                Connector.Flush();
+            }
+            catch
+            {
+                // Check catch{} of Preapre method for discussion about that.
+                Connector.Sync();
+                throw;
+            }
         }
 
         /// <summary>
@@ -750,7 +770,7 @@ namespace EnterpriseDB.EDBClient
 
             foreach (EDBParameter edbParameter in this.parameters)
             {
-                if (edbParameter.TypeInfo.NpgsqlDbType == EDBDbType.RefCursor)
+                if (edbParameter.TypeInfo.EDBDbType == EDBDbType.RefCursor)
                 {
                     m_Connector.Mediator.hasRefcursorType = true;
                     break;
@@ -784,9 +804,9 @@ namespace EnterpriseDB.EDBClient
                         // Use the extended query parsing...
                         planName = m_Connector.NextPlanName();
                         String portalName = m_Connector.NextPortalName();
-
+                     
                         parse = new EDBParse(planName, GetParseCommandText(), new Int32[] { },parameters,command);
-
+                        m_Connector.Sync();
                         m_Connector.Parse(parse,command);
 
                         // We need that because Flush() doesn't cause backend to send
@@ -797,8 +817,8 @@ namespace EnterpriseDB.EDBClient
                         // ReadyForQuery, but on postgresql server below 8.1 there is an error
                         // with extended query processing which hinders us from using it.
                         m_Connector.RequireReadyForQuery = false;
-                        m_Connector.Flush();
-
+                       // m_Connector.Flush();
+                        Connector.Flush();
                         // Description...
                         EDBDescribe describe = new EDBDescribe('S', planName);
                         m_Connector.Describe(describe);
@@ -816,7 +836,7 @@ namespace EnterpriseDB.EDBClient
                                 EDBRowDescription.FieldData returnRowDescData = returnRowDesc[i];
 
 
-                                if (returnRowDescData.TypeInfo != null && returnRowDescData.TypeInfo.NpgsqlDbType == EDBDbType.Bytea)
+                                if (returnRowDescData.TypeInfo != null && returnRowDescData.TypeInfo.EDBDbType == EDBDbType.Bytea)
                                 {
                                     // Binary format
                                     resultFormatCodes[i] = (Int16)FormatCode.Binary;
@@ -841,7 +861,19 @@ namespace EnterpriseDB.EDBClient
                     }
                     catch
                     {
-                        // See ExecuteCommand method for a discussion of this.
+
+                        // As per documentation:
+
+                        // "[...] When an error is detected while processing any extended-query message,
+
+                        // the backend issues ErrorResponse, then reads and discards messages until a
+
+                        // Sync is reached, then issues ReadyForQuery and returns to normal message processing.[...]"
+
+                        // So, send a sync command if we get any problems.
+
+
+
                         m_Connector.Sync();
 
                         throw;

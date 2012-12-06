@@ -116,6 +116,7 @@ namespace EnterpriseDB.EDBClient
         private Boolean _supportsSavepoint = false;
 
         private EDBBackendTypeMapping _oidToNameMapping = null;
+        private EDBNativeTypeInfo native = null;
 
         private Boolean _isInitialized;
 
@@ -151,6 +152,12 @@ namespace EnterpriseDB.EDBClient
 
         private readonly Dictionary<string, EDBParameterStatus> _serverParameters =
             new Dictionary<string, EDBParameterStatus>(StringComparer.InvariantCultureIgnoreCase);
+        
+        // For IsValid test
+        private readonly RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+        
+        // Did we already called cancelRequest?
+        private Boolean _cancelRequestCalled = false;
 
 #if WINDOWS && UNMANAGED
 
@@ -187,10 +194,10 @@ namespace EnterpriseDB.EDBClient
 
         //Finalizer should never be used, but if some incident has left to a connector being abandoned (most likely
         //case being a user not cleaning up a connection properly) then this way we can at least reduce the damage.
-        ~EDBConnector()
-        {
-            Close();
-        }
+      //  ~EDBConnector()
+     //   {
+     //       Close();
+      //  }
 
 
         internal String Host
@@ -215,7 +222,7 @@ namespace EnterpriseDB.EDBClient
 
         internal byte[] Password
         {
-            get { return settings.Password; }
+            get { return settings.PasswordAsByteArray; }
         }
 
         internal Boolean SSL
@@ -352,9 +359,20 @@ namespace EnterpriseDB.EDBClient
             {
                 // Here we use a fake NpgsqlCommand, just to send the test query string.
                 
-                //Query(new EDBCommand("select 1 as ConnectionTest", this));
-                new EDBCommand("select 1", this).ExecuteScalar();
+                // Get random test value.
+                Byte[] testBytes = new Byte[2];
+                rng.GetNonZeroBytes(testBytes);
+                String testValue = String.Format("Npgsql{0}{1}", testBytes[0], testBytes[1]);
                 
+                //Query(new NpgsqlCommand("select 1 as ConnectionTest", this));
+                string compareValue = string.Empty;
+                using(EDBCommand cmd = new EDBCommand("select '" + testValue + "'", this))
+                {
+                    compareValue = (string) cmd.ExecuteScalar();
+                }
+                
+                if (compareValue != testValue)
+                    return false;
                 // Clear mediator.
                 Mediator.ResetResponses();
                 this.RequireReadyForQuery = true;
@@ -382,7 +400,11 @@ namespace EnterpriseDB.EDBClient
 
         internal void ReleaseRegisteredListen()
         {
-            Query(new EDBCommand("unlisten *", this));
+            //Query(new NpgsqlCommand("unlisten *", this));
+            using(EDBCommand cmd = new EDBCommand("unlisten *", this))
+            {
+                Query(cmd);
+            }
         }
 
         /// <summary>
@@ -398,7 +420,11 @@ namespace EnterpriseDB.EDBClient
                 {
                     try
                     {
-                        Query(new EDBCommand(String.Format("deallocate \"{0}\";", _planNamePrefix + i), this));
+                        //Query(new NpgsqlCommand(String.Format("deallocate \"{0}\";", _planNamePrefix + i), this));
+                        using(EDBCommand cmd = new EDBCommand(String.Format("deallocate \"{0}\";", _planNamePrefix + i.ToString()), this))
+                        {
+                            Query(cmd);
+                        }
                     }
                     
                     // Ignore any error which may occur when releasing portals as this portal name may not be valid anymore. i.e.: the portal name was used on a prepared query which had errors.
@@ -596,6 +622,11 @@ namespace EnterpriseDB.EDBClient
             set { _transaction = value; }
         }
 
+        internal Boolean SupportsApplicationName
+        {
+            get { return ServerVersion >= new Version(9, 0, 0); }
+        }
+
         /// <summary>
         /// Report whether the current connection can support prepare functionality.
         /// </summary>
@@ -626,6 +657,10 @@ namespace EnterpriseDB.EDBClient
             {
                 _supportCallable = value;
             }
+        }
+		 
+		 public Boolean CancelRequestCalled  {
+            get { return _cancelRequestCalled; }
         }
 
         /// <summary>
@@ -711,8 +746,12 @@ namespace EnterpriseDB.EDBClient
             // This should not happen for protocol version 3+.
             if (ServerVersion == null)
             {
-                EDBCommand command = new EDBCommand("set DATESTYLE TO ISO;select version();", this);
-                ServerVersion = new Version(PGUtil.ExtractServerVersion((string) command.ExecuteScalar()));
+                //NpgsqlCommand command = new NpgsqlCommand("set DATESTYLE TO ISO;select version();", this);
+                //ServerVersion = new Version(PGUtil.ExtractServerVersion((string) command.ExecuteScalar()));
+                using(EDBCommand command = new EDBCommand("set DATESTYLE TO ISO;select version();", this))
+                {
+                    ServerVersion = new Version(PGUtil.ExtractServerVersion((string) command.ExecuteScalar()));
+                }
             }
 
             // Adjust client encoding.
@@ -751,6 +790,32 @@ namespace EnterpriseDB.EDBClient
                 EDBCommand commandSearchPath = new EDBCommand("SET SEARCH_PATH=" + settings.SearchPath, this);
                 commandSearchPath.ExecuteBlind();
             }
+            
+            if (!string.IsNullOrEmpty(settings.ApplicationName))
+             {
+                 if (!SupportsApplicationName)
+                 {
+                     //TODO
+                     //throw new InvalidOperationException(resman.GetString("Exception_ApplicationNameNotSupported"));
+                     throw new InvalidOperationException("ApplicationName not supported.");
+                 }
+ 
+                 if (settings.ApplicationName.Contains(";"))
+                 {
+                     throw new InvalidOperationException();
+                 }
+ 
+                 EDBCommand commandApplicationName = new EDBCommand("SET APPLICATION_NAME='" + settings.ApplicationName + "'", this);
+                 commandApplicationName.ExecuteBlind();
+             }
+
+            /*
+             * Try to set SSL negotiation to 0. As of 2010-03-29, recent problems in SSL library implementations made
+             * postgresql to add a parameter to set a value when to do this renegotiation or 0 to disable it.
+             * Currently, Npgsql has a problem with renegotiation so, we are trying to disable it here.
+             * This only works on postgresql servers where the ssl renegotiation settings is supported of course.
+             * See http://lists.pgfoundry.org/pipermail/npgsql-devel/2010-February/001065.html for more information.
+             */
 
             try
             {
@@ -759,12 +824,33 @@ namespace EnterpriseDB.EDBClient
 
             }
             catch {}
+
+			
+			
+			/*
+			 * Set precision digits to maximum value possible. For postgresql before 9 it was 2, after that, it is 3.
+			 * This way, we set first to 2 and then to 3. If there is an error because of 3, it will have been set to 2 at least.
+			 * Check bug report #1010992 for more information.
+			 */
+			
+			
+			try
+            {
+                EDBCommand commandSingleDoublePrecision = new EDBCommand("SET extra_float_digits=2;SET extra_float_digits=3;", this);
+                commandSingleDoublePrecision.ExecuteBlind();
+
+            }
+            catch {}
+
+			
+
             // Make a shallow copy of the type mapping that the connector will own.
             // It is possible that the connector may add types to its private
             // mapping that will not be valid to another connector, even
             // if connected to the same backend version.
-            _oidToNameMapping = EDBTypesHelper.CreateAndLoadInitialTypesMapping(this).Clone();
-
+            _oidToNameMapping = EDBTypesHelper.CreateAndLoadInitialTypesMapping(this);
+           // native = EDBTypesHelper.GetNativeTypeInfo(DbType.Int16);
+            
             ProcessServerVersion();
 
             // The connector is now fully initialized. Beyond this point, it is
@@ -795,16 +881,25 @@ namespace EnterpriseDB.EDBClient
 
         internal void CancelRequest()
         {
-            EDBConnector CancelConnector = new EDBConnector(settings, false, false);
+            EDBConnector cancelConnector = new EDBConnector(settings, false, false);
 
-            CancelConnector._backend_keydata = BackEndKeyData;
+            cancelConnector._backend_keydata = BackEndKeyData;
 
+            try
+            {
+                // Get a raw connection, possibly SSL...
+                cancelConnector.CurrentState.Open(cancelConnector);
 
-            // Get a raw connection, possibly SSL...
-            CancelConnector.CurrentState.Open(CancelConnector);
-
-            // Cancel current request.
-            CancelConnector.CurrentState.CancelRequest(CancelConnector);
+                // Cancel current request.
+                cancelConnector.CurrentState.CancelRequest(cancelConnector);
+            }
+            finally
+            {
+                cancelConnector.CurrentState.Close(cancelConnector);
+                
+                _cancelRequestCalled = true;
+            }
+            
         }
 
 
@@ -813,7 +908,7 @@ namespace EnterpriseDB.EDBClient
         ///</summary>
         internal String NextPortalName()
         {
-            return _portalNamePrefix + Interlocked.Increment(ref _portalIndex);
+            return _portalNamePrefix + Interlocked.Increment(ref _portalIndex).ToString();
         }
 
 
@@ -822,7 +917,7 @@ namespace EnterpriseDB.EDBClient
         ///</summary>
         internal String NextPlanName()
         {
-            return _planNamePrefix + Interlocked.Increment(ref _planIndex);
+            return _planNamePrefix + Interlocked.Increment(ref _planIndex).ToString();
         }
 
 
@@ -998,13 +1093,26 @@ namespace EnterpriseDB.EDBClient
                     return paramValue;
                 }
             }
-            catch (EDBException ne)
+            
+            /*
+             * In case of problems with the command above, we simply return null in order to 
+             * say we don't support it.
+             */
+            catch(EDBException e)
             {
-                if (ne.Code == "42704")//unrecognized configuration parameter
+                return null;
+            }
+            /*
+             * Original catch handler by Jon Hanna.
+             * 7.3 version doesn't support error code. Only 7.4+
+             
+             * catch(NpgsqlException ne)
+            {
+                if(ne.Code == "42704")//unrecognized configuration parameter
                     return null;
                 else
                     throw;
-            }
+            }*/
         }
         private bool CheckStringConformanceRequirements()
         {

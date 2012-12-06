@@ -763,7 +763,7 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
         internal byte[] Password
 		{
-			get { return settings.Password; }
+			get { return settings.PasswordAsByteArray; }
 		}
 
 		/// <summary>
@@ -968,8 +968,9 @@ namespace EnterpriseDB.EDBClient
 				case "DataSourceInformation":
 					return EDBSchema.GetDataSourceInformation();
 				case "DataTypes":
-				case "ReservedWords":
-					throw new NotSupportedException();
+                    throw new NotSupportedException();
+                case "ReservedWords":
+			        return EDBSchema.GetReservedWords();
 				// custom collections for npgsql
 				case "Databases":
 					return new EDBSchema(new EDBConnection(ConnectionString)).GetDatabases(restrictions);
@@ -981,6 +982,12 @@ namespace EnterpriseDB.EDBClient
 					return new EDBSchema(new EDBConnection(ConnectionString)).GetViews(restrictions);
 				case "Users":
 					return new EDBSchema(new EDBConnection(ConnectionString)).GetUsers(restrictions);
+                case "Indexes":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetIndexes(restrictions);
+                case "IndexColumns":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetIndexColumns(restrictions);
+                case "ForeignKeys":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetForeignKeys(restrictions);
 				default:
 					throw new NotSupportedException();
 			}

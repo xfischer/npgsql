@@ -131,7 +131,11 @@ namespace EnterpriseDB.EDBClient
                                 case -1:
                                     throw new EndOfStreamException();
                                 case 'Z':
-                                    context.Query(new EDBCommand("UNLISTEN *", context));
+                                    //context.Query(new NpgsqlCommand("UNLISTEN *", context));
+                                    using(EDBCommand cmd = new EDBCommand("UNLISTEN *", context))
+                                    {
+                                        context.Query(cmd);
+                                    }
                                     return;
                             }
                         }

@@ -106,6 +106,27 @@ namespace Npgsql
                     }
                 case "date":
                     return TypeUsage.CreateDateTimeTypeUsage(primitiveType, 0);
+                case "timestamptz":
+                    if (storeType.Facets.TryGetValue(PrecisionFacet, false, out facet) &&
+                        !facet.IsUnbounded && facet.Value != null)
+                    {
+                        return TypeUsage.CreateDateTimeOffsetTypeUsage(primitiveType, (byte)facet.Value);
+                    }
+                    else
+                    {
+                        return TypeUsage.CreateDateTimeOffsetTypeUsage(primitiveType, null);
+                    }
+                case "time":
+                case "interval":
+                    if (storeType.Facets.TryGetValue(PrecisionFacet, false, out facet) &&
+                        !facet.IsUnbounded && facet.Value != null)
+                    {
+                        return TypeUsage.CreateTimeTypeUsage(primitiveType, (byte)facet.Value);
+                    }
+                    else
+                    {
+                        return TypeUsage.CreateTimeTypeUsage(primitiveType, null);
+                    }
                 case "bytea":
                     {
                         if (storeType.Facets.TryGetValue(MaxLengthFacet, false, out facet) &&
@@ -200,6 +221,26 @@ namespace Npgsql
                     {
                         return TypeUsage.CreateDateTimeTypeUsage(StoreTypeNameToStorePrimitiveType["timestamp"], null);
                     }
+                case PrimitiveTypeKind.DateTimeOffset:
+                    if (edmType.Facets.TryGetValue(PrecisionFacet, false, out facet) &&
+                        !facet.IsUnbounded && facet.Value != null)
+                    {
+                        return TypeUsage.CreateDateTimeOffsetTypeUsage(StoreTypeNameToStorePrimitiveType["timestamptz"], (byte)facet.Value);
+                    }
+                    else
+                    {
+                        return TypeUsage.CreateDateTimeOffsetTypeUsage(StoreTypeNameToStorePrimitiveType["timestamptz"], null);
+                    }
+                case PrimitiveTypeKind.Time:
+                    if (edmType.Facets.TryGetValue(PrecisionFacet, false, out facet) &&
+                        !facet.IsUnbounded && facet.Value != null)
+                    {
+                        return TypeUsage.CreateDateTimeTypeUsage(StoreTypeNameToStorePrimitiveType["interval"], (byte)facet.Value);
+                    }
+                    else
+                    {
+                        return TypeUsage.CreateDateTimeTypeUsage(StoreTypeNameToStorePrimitiveType["interval"], null);
+                    }
                 case PrimitiveTypeKind.Binary:
                     {
                         if (edmType.Facets.TryGetValue(MaxLengthFacet, false, out facet) &&
@@ -214,8 +255,6 @@ namespace Npgsql
                 // notably missing
                 // PrimitiveTypeKind.Byte:
                 // PrimitiveTypeKind.SByte:
-                // PrimitiveTypeKind.DateTimeOffset:
-                // PrimitiveTypeKind.Time:
             }
 
             throw new NotSupportedException();
@@ -225,6 +264,20 @@ namespace Npgsql
         {
             return XmlReader.Create(System.Reflection.Assembly.GetAssembly(typeof(NpgsqlProviderManifest)).GetManifestResourceStream(resourceName));
         }
+
+#if NET40
+        public override bool SupportsEscapingLikeArgument(out char escapeCharacter)
+        {
+            escapeCharacter = '\\';
+            return true;
+        }
+
+        public override string EscapeLikeArgument(string argument)
+        {
+            return argument.Replace("%", "\\%").Replace("_", "\\_");
+        }
+#endif
+
     }
 }
 #endif
