@@ -302,6 +302,7 @@ namespace EDBTypes
 			nativeTypeMapping.AddTypeAlias("char", typeof (Char));
 
 			nativeTypeMapping.AddType("varchar", EDBDbType.Varchar, DbType.String, true, null);
+            nativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, true, null);
 
 			nativeTypeMapping.AddType("text", EDBDbType.Text, DbType.String, true, null);
 
@@ -345,7 +346,7 @@ namespace EDBTypes
 
 			nativeTypeMapping.AddTypeAlias("int8", typeof (Int64));
 
-			nativeTypeMapping.AddType("float4", EDBDbType.Real, DbType.Single, true, new ConvertNativeToBackendHandler(BasicNativeToBackendTypeConverter.ToSingleDouble));
+            nativeTypeMapping.AddType("float4", EDBDbType.Float, DbType.Single, true, BasicNativeToBackendTypeConverter.ToBasicType<float>);
 
 			nativeTypeMapping.AddTypeAlias("float4", typeof (Single));
 
@@ -473,6 +474,7 @@ namespace EDBTypes
 			yield return new EDBBackendTypeInfo(0, "bpchar", EDBDbType.Text, DbType.String, typeof (String), null);
 
 			yield return new EDBBackendTypeInfo(0, "varchar", EDBDbType.Varchar, DbType.String, typeof (String), null);
+            yield return new EDBBackendTypeInfo(0, "varchar2", EDBDbType.Varchar2, DbType.String, typeof(String), null);
 
 			yield return new EDBBackendTypeInfo(0, "text", EDBDbType.Text, DbType.String, typeof (String), null);
 
@@ -498,7 +500,7 @@ namespace EDBTypes
 
 			yield return new EDBBackendTypeInfo(0, "oid", EDBDbType.Bigint, DbType.Int64, typeof (Int64), null);
 
-			yield return new EDBBackendTypeInfo(0, "float4", EDBDbType.Real, DbType.Single, typeof (Single), null);
+			yield return new EDBBackendTypeInfo(0, "float4", EDBDbType.Float, DbType.Single, typeof (Single), null);
 
 			yield return new EDBBackendTypeInfo(0, "float8", EDBDbType.Double, DbType.Double, typeof (Double), null);
 

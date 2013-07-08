@@ -220,7 +220,7 @@ namespace EnterpriseDB.EDBClient
             this.SourceVersion = sourceVersion;
             this.Value = value;
 
-            if (this.value == null)
+            if (this.value == null && parameterType != EDBDbType.RefCursor)
             {
                 this.value = DBNull.Value;
                 type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
