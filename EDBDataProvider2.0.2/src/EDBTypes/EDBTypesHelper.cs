@@ -101,6 +101,7 @@ namespace EDBTypes
 				
 				//do the same for the equivalent array type.
                 NameIndex.Add("_" + TypeInfo.Name, ArrayTypeInfo(TypeInfo));
+                
 				
 			}
              
@@ -557,26 +558,21 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
                 yield return
                     new EDBBackendTypeInfo(0, "interval", EDBDbType.Interval, DbType.Object, typeof(EDBInterval),
                                   new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToInterval));
-
                 yield return
                     new EDBBackendTypeInfo(0, "date", EDBDbType.Date, DbType.Date, typeof(EDBDate),
                                   new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToDate));
-
                 yield return
                     new EDBBackendTypeInfo(0, "time", EDBDbType.Time, DbType.Time, typeof(EDBTime),
                                               new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTime));
-
                 yield return
                     new EDBBackendTypeInfo(0, "timetz", EDBDbType.TimeTZ, DbType.Time, typeof(EDBTimeTZ),
                                               new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeTZ));
-
                 yield return
                     new EDBBackendTypeInfo(0, "timestamp", EDBDbType.Timestamp, DbType.DateTime, typeof(EDBTimeStamp),
                                               new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStamp));
                 yield return
                     new EDBBackendTypeInfo(0, "abstime", EDBDbType.Abstime , DbType.DateTime, typeof(EDBTimeStampTZ),
                                               new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStampTZ));
-
                 yield return
                     new EDBBackendTypeInfo(0, "timestamptz", EDBDbType.TimestampTZ, DbType.DateTime, typeof(EDBTimeStampTZ),
                                               new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStampTZ));
@@ -600,35 +596,24 @@ ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToGuid));
                 }
 
 				yield return
-					new EDBBackendTypeInfo(0, "date", EDBDbType.Date, DbType.Date, typeof (EDBDate),
-					                          new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToDate),
-                                              typeof(DateTime), date => (DateTime)(EDBDate)date, EDBDate => (EDBDate is DateTime ? (EDBDate)(DateTime) EDBDate : EDBDate));
+					new EDBBackendTypeInfo(0, "date", EDBDbType.Date, DbType.Date, typeof (DateTime),
+					                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToDate));
 
 				yield return
-					new EDBBackendTypeInfo(0, "time", EDBDbType.Time, DbType.Time, typeof (EDBTime),
-                                              new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTime),
-                                              typeof(DateTime), time => time is DateTime ? time : (DateTime)(EDBTime)time, EDBTime => (EDBTime is TimeSpan ? (EDBTime)(TimeSpan) EDBTime : EDBTime));
+					new EDBBackendTypeInfo(0, "time", EDBDbType.Time, DbType.Time, typeof (DateTime),
+					                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToTime));
 
 				yield return
-					new EDBBackendTypeInfo(0, "timetz", EDBDbType.TimeTZ, DbType.Time, typeof (EDBTimeTZ),
-                                              new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeTZ),
-                                              typeof(DateTime), timetz => (DateTime)(EDBTimeTZ)timetz, EDBTimetz => (EDBTimetz is TimeSpan ? (EDBTimeTZ)(TimeSpan) EDBTimetz : EDBTimetz));
+					new EDBBackendTypeInfo(0, "timetz", EDBDbType.TimeTZ, DbType.Time, typeof (DateTime),
+					                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToTime));
 
 				yield return
-					new EDBBackendTypeInfo(0, "timestamp", EDBDbType.Timestamp, DbType.DateTime, typeof (EDBTimeStamp),
-                                              new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStamp),
-                                              typeof(DateTime), timestamp => (DateTime)(EDBTimeStamp)timestamp, EDBTimestamp => (EDBTimestamp is DateTime ? (EDBTimeStamp)(DateTime) EDBTimestamp : EDBTimestamp));
-                yield return
-                    new EDBBackendTypeInfo(0, "abstime", EDBDbType.Abstime, DbType.DateTime, typeof(EDBTimeStampTZ),
-                              new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStampTZ),
-                              typeof(DateTime), timestamp => (DateTime)(EDBTimeStampTZ)timestamp, EDBTimestampTZ => (EDBTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime) EDBTimestampTZ : EDBTimestampTZ));
+					new EDBBackendTypeInfo(0, "timestamp", EDBDbType.Timestamp, DbType.DateTime, typeof (DateTime),
+					                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToDateTime));
+
 				yield return
-					new EDBBackendTypeInfo(0, "timestamptz", EDBDbType.TimestampTZ, DbType.DateTime, typeof (EDBTimeStampTZ),
-                                              new ConvertBackendToNativeHandler(ExtendedBackendToNativeTypeConverter.ToTimeStampTZ),
-
-                                              typeof(DateTime), timestamptz => ((DateTime)(EDBTimeStampTZ)timestamptz).ToLocalTime(), EDBTimestampTZ => (EDBTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime)EDBTimestampTZ : EDBTimestampTZ is DateTimeOffset ? (EDBTimeStampTZ)(DateTimeOffset)EDBTimestampTZ :
-
-EDBTimestampTZ));
+					new EDBBackendTypeInfo(0, "timestamptz", EDBDbType.TimestampTZ, DbType.DateTime, typeof (DateTime),
+					                          new ConvertBackendToNativeHandler(BasicBackendToNativeTypeConverter.ToDateTime));
 			}
 		}
 
@@ -730,7 +715,7 @@ EDBTimestampTZ));
 
 				NameIndex.Add("_" + TypeInfo.Name, ArrayTypeInfo(TypeInfo));
 
-				InList.Append(", '_").Append(TypeInfo.Name).Append('\'');
+                InList.Append(", '_").Append(TypeInfo.Name).Append('\'');
 			}
 
 			if (InList.Length == 0)

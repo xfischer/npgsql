@@ -165,7 +165,7 @@ namespace EnterpriseDB.EDBClient
                             command.Parameters.Clear();
                             throw new InvalidOperationException(String.Format("Invalid parameter type: {0}", types[i]));
                         }
-                        if (names != null && i < names.Length)
+                        if (names != null && i < names.Length && command.CommandType != CommandType.StoredProcedure)
                             command.Parameters.Add(new EDBParameter(":" + names[i], typeInfo.EDBDbType));
                         else
                             command.Parameters.Add(new EDBParameter("parameter" + (i + 1).ToString(), typeInfo.EDBDbType));
