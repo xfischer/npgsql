@@ -1041,14 +1041,7 @@ namespace EnterpriseDB.EDBClient
                                     yield return rowOutDescription;
                                     yield return outrow;
                                 }
-                                ChangeState(context, EDBReadyState.Instance);
-
-                                if (errors.Count != 0)
-                                {
-                                    throw new EDBException(errors);
-                                }
-                                stream.Flush();
-                                yield break;
+                         
                             }
                             break;
                         default:
