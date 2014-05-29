@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisualState xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ShowCheckBoxes="false">
+  <TopNode>[0-1233]DOTNET.CommandTests.TestInheritancetest2</TopNode>
+  <SelectedNode>[0-1244]DOTNET.ConnectionTest</SelectedNode>
+  <ExcludeCategories>false</ExcludeCategories>
+  <Nodes>
+    <Node UniqueName="[0-1711]C:\Works\DNET\git_latest\Dev-V2\backup-V7\CON-DNET\EDBDataProvider2.0.2\EDBNunit\bin\Debug\EDBNunit.dll" Expanded="true" />
+    <Node UniqueName="[0-1712]ADO" Expanded="true" />
+    <Node UniqueName="[0-1713]DOTNET" Expanded="true" />
+    <Node UniqueName="[0-1070]DOTNET.BaseDataSourceTest" Expanded="true" />
+    <Node UniqueName="[0-1074]DOTNET.ByteaTest" Expanded="true" />
+    <Node UniqueName="[0-1083]DOTNET.CommandTests" Expanded="true" />
+    <Node UniqueName="[0-1244]DOTNET.ConnectionTest" Expanded="true" />
+    <Node UniqueName="[0-1254]DOTNET.CursorTest" Expanded="true" />
+    <Node UniqueName="[0-1256]DOTNET.DataAdapterTests" Expanded="true" />
+    <Node UniqueName="[0-1272]DOTNET.DataReaderTests" Expanded="true" />
+    <Node UniqueName="[0-1317]DOTNET.DateTest" Expanded="true" />
+    <Node UniqueName="[0-1319]DOTNET.DBFeaturesTest" Expanded="true" />
+    <Node UniqueName="[0-1325]DOTNET.DMLTest" Expanded="true" />
+    <Node UniqueName="[0-1329]DOTNET.FBs" Expanded="true" />
+    <Node UniqueName="[0-1332]DOTNET.FunctionTest" Expanded="true" />
+    <Node UniqueName="[0-1380]DOTNET.ImportExistingSchema" Expanded="true" />
+    <Node UniqueName="[0-1387]DOTNET.MiscProcTest" Expanded="true" />
+    <Node UniqueName="[0-1435]DOTNET.MiscTest" Expanded="true" />
+    <Node UniqueName="[0-1521]DOTNET.NumericDataTypeTest" Expanded="true" />
+    <Node UniqueName="[0-1562]DOTNET.PackageTest" Expanded="true" />
+    <Node UniqueName="[0-1595]DOTNET.PreparedStatements" Expanded="true" />
+    <Node UniqueName="[0-1605]DOTNET.ProcedureTest" Expanded="true" />
+    <Node UniqueName="[0-1637]DOTNET.RefCursor" Expanded="true" />
+    <Node UniqueName="[0-1665]DOTNET.Sequences" Expanded="true" />
+    <Node UniqueName="[0-1680]DOTNET.SimpleSelectsTest" Expanded="true" />
+    <Node UniqueName="[0-1684]DOTNET.Triggers" Expanded="true" />
+  </Nodes>
+</VisualState>

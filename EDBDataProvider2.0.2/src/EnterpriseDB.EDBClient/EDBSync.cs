@@ -30,21 +30,18 @@ using System.IO;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
+	/// <summary>   
 	/// This class represents the Parse message sent to PostgreSQL
 	/// server.
 	/// </summary>
 	///
-	internal sealed class EDBSync : ClientMessage
+	internal sealed class EDBSync : SimpleClientMessage
 	{
-		// Logging related values
+        internal static readonly EDBSync Default = new EDBSync();
         //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		public override void WriteToStream(Stream outputStream)
-		{
-			outputStream.WriteByte((byte) FrontEndMessageCode.Sync);
-
-			PGUtil.WriteInt32(outputStream, 4);
-		}
-	}
+        private EDBSync()
+        : base(FrontEndMessageCode.Sync)
+        {}
+    }
 }

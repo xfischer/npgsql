@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -16,6 +17,13 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <DelaySign>false</DelaySign>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -59,14 +67,25 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EDBTypes\BitString.cs" />
+    <Compile Include="EDBTypes\EDBNativeToBackendOptions.cs" />
+    <Compile Include="EDBTypes\EDBTypeConvBackendToNative.cs" />
+    <Compile Include="EDBTypes\EDBTypeConvNativeToBackend.cs" />
+    <Compile Include="EDBTypes\EDBTypeInfoBackend.cs" />
+    <Compile Include="EDBTypes\EDBTypeInfoNative.cs" />
+    <Compile Include="EDBTypes\EDBTypeMappings.cs" />
+    <Compile Include="EDBTypes\ExpectedTypeConverter.cs" />
+    <Compile Include="EDBTypes\FastConverter.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\ASCIIBytes.cs" />
     <Compile Include="EnterpriseDB.EDBClient\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="EnterpriseDB.EDBClient\BackendEncoding.cs" />
     <Compile Include="EnterpriseDB.EDBClient\Cache.cs" />
     <Compile Include="EDBTypes\ArrayHandling.cs" />
     <Compile Include="EDBTypes\DateDatatypes.cs" />
@@ -75,7 +94,6 @@
     <Compile Include="EDBTypes\FastPathArg.cs" />
     <Compile Include="EDBTypes\LargeObject.cs" />
     <Compile Include="EDBTypes\LargeObjectManager.cs" />
-    <Compile Include="EDBTypes\EDBTypeConverters.cs" />
     <Compile Include="EDBTypes\EDBTypes.cs" />
     <Compile Include="EDBTypes\EDBTypesHelper.cs" />
     <Compile Include="EnterpriseDB.EDBClient\SSPIHandler.cs" />

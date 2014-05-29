@@ -65,10 +65,13 @@ namespace EnterpriseDB.EDBClient
 
         private object locker = new object();
 
-
         public EDBConnectorPool()
         {
             PooledConnectors = new Dictionary<string, ConnectorQueue>();
+        }
+
+        private void StartTimer()
+        {
             Timer = new Timer(1000);
             Timer.AutoReset = false;
             Timer.Elapsed += new ElapsedEventHandler(TimerElapsedHandler);
@@ -76,16 +79,12 @@ namespace EnterpriseDB.EDBClient
             
         }
         
-        ~EDBConnectorPool()
-        {
-            Timer.Stop();
-
-        }
-
+ 
         private void TimerElapsedHandler(object sender, ElapsedEventArgs e)
         {
             EDBConnector Connector;
-            
+            var activeConnectionsExist = false;
+
             try
             {
                 lock (locker)
@@ -126,6 +125,8 @@ namespace EnterpriseDB.EDBClient
                                 {
                                     Queue.InactiveTime = 0;
                                 }
+                                if (Queue.Available.Count > 0 || Queue.Busy.Count > 0)
+                                    activeConnectionsExist = true;
                             }
                             else
                             {
@@ -137,7 +138,10 @@ namespace EnterpriseDB.EDBClient
             }
             finally
             {
-                Timer.Start();
+                if (activeConnectionsExist)
+                    Timer.Start();
+                else
+                    Timer = null;
             }
         }
 
@@ -159,39 +163,20 @@ namespace EnterpriseDB.EDBClient
 		/// <value>Timer for tracking unused connections in pools.</value>
 		// I used System.Timers.Timer because of bad experience with System.Threading.Timer
 		// on Windows - it's going mad sometimes and don't respect interval was set.
-		private readonly Timer Timer;
+        private Timer Timer;
 
-		/// <summary>
-		/// Searches the shared and pooled connector lists for a
-		/// matching connector object or creates a new one.
-		/// </summary>
-		/// <param name="Connection">The NpgsqlConnection that is requesting
-		/// the connector. Its ConnectionString will be used to search the
-		/// pool for available connectors.</param>
-		/// <returns>A connector object.</returns>
-		public EDBConnector RequestConnector(EDBConnection Connection)
-		{
-			EDBConnector Connector;
-
-			if (Connection.Pooling)
-			{
-				Connector = RequestPooledConnector(Connection);
-			}
-			else
-			{
-				Connector = GetNonPooledConnector(Connection);
-			}
-
-			return Connector;
-		}
-
-		/// <summary>
-		/// Find a pooled connector.  Handle locking and timeout here.
-		/// </summary>
-		private EDBConnector RequestPooledConnector(EDBConnection Connection)
-		{
-			EDBConnector Connector;
-			Int32 timeoutMilliseconds = Connection.Timeout * 1000;
+        /// <summary>
+        /// Searches the shared and pooled connector lists for a
+        /// matching connector object or creates a new one.
+        /// </summary>
+        /// <param name="Connection">The NpgsqlConnection that is requesting
+        /// the connector. Its ConnectionString will be used to search the
+        /// pool for available connectors.</param>
+        /// <returns>A connector object.</returns>
+        public EDBConnector RequestConnector(EDBConnection Connection)
+        {
+            EDBConnector Connector;
+            Int32 timeoutMilliseconds = Connection.Timeout * 1000;
 
             // No need for this lock anymore
             //lock (this)
@@ -225,8 +210,11 @@ namespace EnterpriseDB.EDBClient
 				}
 			}
 
-			return Connector;
-		}
+            if (Timer == null)
+                StartTimer();
+
+            return Connector;
+        }
 
 		/// <summary>
 		/// Find a pooled connector.  Handle shared/non-shared here.
@@ -288,71 +276,40 @@ namespace EnterpriseDB.EDBClient
             {
                 CleanUpConnector(Connection, Connector);
             }
-            else if (Connector.Pooled)
+            else
             {
-                ReleasePooledConnector(Connection, Connector);
-			}
-			else
-			{
-				UngetNonPooledConnector(Connection, Connector);
-			}
-		}
-
-		/// <summary>
-		/// Release a pooled connector.  Handle locking here.
-		/// </summary>
-		private void ReleasePooledConnector(EDBConnection Connection, EDBConnector Connector)
-		{
-            //lock (this)
+                //lock (this)
+                {
+                    ReleaseConnectorInternal(Connection, Connector);
+                }
+            }
+        }
+        /// <summary>
+        /// Release a pooled connector.  Handle shared/non-shared here.
+        /// </summary>
+        private void ReleaseConnectorInternal(EDBConnection Connection,EDBConnector Connector)
+        {
+            if (!Connector.Shared)
             {
-				ReleasePooledConnectorInternal(Connection, Connector);
-			}
-		}
+                UngetConnector(Connection, Connector);
+            }
+            else
+            {
+                // Connection sharing? What's that?
+                throw new NotImplementedException("Internal: Shared pooling not implemented");
+            }
+        }
 
-		/// <summary>
-		/// Release a pooled connector.  Handle shared/non-shared here.
-		/// </summary>
-		private void ReleasePooledConnectorInternal(EDBConnection Connection, EDBConnector Connector)
-		{
-			if (!Connector.Shared)
-			{
-				UngetPooledConnector(Connection, Connector);
-			}
-			else
-			{
-				// Connection sharing? What's that?
-				throw new NotImplementedException("Internal: Shared pooling not implemented");
-			}
-		}
+        /// <summary>
+        /// Find an available pooled connector in the non-shared pool, or create
+        /// a new one if none found.
+        /// </summary>
+        private EDBConnector GetPooledConnector(EDBConnection Connection)
+        {
+            ConnectorQueue Queue;
+            EDBConnector Connector = null;
 
-		/// <summary>
-		/// Create a connector without any pooling functionality.
-		/// </summary>
-		private static EDBConnector GetNonPooledConnector(EDBConnection Connection)
-		{
-			EDBConnector Connector;
-
-			Connector = CreateConnector(Connection);
-
-            Connector.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
-            Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
-            Connector.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
-            Connector.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
-
-			Connector.Open();
-
-			return Connector;
-		}
-
-		/// <summary>
-		/// Find an available pooled connector in the non-shared pool, or create
-		/// a new one if none found.
-		/// </summary>
-		private EDBConnector GetPooledConnector(EDBConnection Connection)
-		{
-			ConnectorQueue Queue;
-			EDBConnector Connector = null;
-
+            // We only need to lock all pools when trying to get one pool or create one.
 
             lock (locker)
             {
@@ -368,7 +325,7 @@ namespace EnterpriseDB.EDBClient
                 }
             }
 
-			// Fix queue use count. Use count may be dropped below zero if Queue was cleared and there were connections open.
+            // Now we can simply lock on the pool itself.
             lock (Queue)
             {
 
@@ -407,7 +364,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (Queue.Available.Count + Queue.Busy.Count < Connection.MaxPoolSize)
                 {
-                    Connector = CreateConnector(Connection);
+                    Connector = new EDBConnector(Connection);
                     Queue.Busy.Add(Connector, null);
 
                 }
@@ -422,6 +379,7 @@ namespace EnterpriseDB.EDBClient
 				Connector.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
 				Connector.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
 				Connector.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
+                Connector.ValidateRemoteCertificateCallback += Connection.ValidateRemoteCertificateCallbackDelegate;
 
 				try
 				{
@@ -448,12 +406,13 @@ namespace EnterpriseDB.EDBClient
                     {
                         while (Queue.Available.Count + Queue.Busy.Count < Connection.MinPoolSize)
                         {
-                            EDBConnector Spare = CreateConnector(Connection);
+                            EDBConnector Spare = new EDBConnector(Connection);
 
                             Spare.ProvideClientCertificatesCallback += Connection.ProvideClientCertificatesCallbackDelegate;
                             Spare.CertificateSelectionCallback += Connection.CertificateSelectionCallbackDelegate;
                             Spare.CertificateValidationCallback += Connection.CertificateValidationCallbackDelegate;
                             Spare.PrivateKeySelectionCallback += Connection.PrivateKeySelectionCallbackDelegate;
+                            Spare.ValidateRemoteCertificateCallback += Connection.ValidateRemoteCertificateCallbackDelegate;
 
                             Spare.Open();
 
@@ -461,6 +420,7 @@ namespace EnterpriseDB.EDBClient
                             Spare.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
                             Spare.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
                             Spare.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
+                            Spare.ValidateRemoteCertificateCallback -= Connection.ValidateRemoteCertificateCallbackDelegate;
 
                             Queue.Available.Enqueue(Spare);
                         }
@@ -468,15 +428,15 @@ namespace EnterpriseDB.EDBClient
                 }
             }
 
-			return Connector;
-		}
+            return Connector;
+        }
 
 		/*
 				/// <summary>
 				/// Find an available shared connector in the shared pool, or create
 				/// a new one if none found.
 				/// </summary>
-				private NpgsqlConnector GetSharedConnector(NpgsqlConnection Connection)
+				private EDBConnector GetSharedConnector(EDBConnection Connection)
 				{
 					// To be implemented
 
@@ -484,59 +444,13 @@ namespace EnterpriseDB.EDBClient
 				}
 		*/
 
-		private static EDBConnector CreateConnector(EDBConnection Connection)
-		{
-			return new EDBConnector(Connection.ConnectionStringValues.Clone(), Connection.Pooling, false);
-		}
-
-
-		/// <summary>
-		/// This method is only called when NpgsqlConnection.Dispose(false) is called which means a
-		/// finalization. This also means, an NpgsqlConnection was leak. We clear pool count so that
-		/// client doesn't end running out of connections from pool. When the connection is finalized, its underlying
-		/// socket is closed.
-		/// </summary>
-		public void FixPoolCountBecauseOfConnectionDisposeFalse(EDBConnection Connection)
-		{
-			ConnectorQueue Queue;
-
-			// Prevent multithread access to connection pool count.
-            lock (locker)
-            {
-				// Try to find a queue.
-                if (PooledConnectors.TryGetValue(Connection.ConnectionString, out Queue) && Queue != null)
-				{
-                    Queue.Busy.Remove(Connection.Connector);
-                }
-			}
-		}
-
-		/// <summary>
-		/// Close the connector.
-		/// </summary>
-		/// <param name="Connection"></param>
-		/// <param name="Connector">Connector to release</param>
-		private static void UngetNonPooledConnector(EDBConnection Connection, EDBConnector Connector)
-		{
-            Connector.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
-			Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
-			Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
-			Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
-
-			if (Connector.Transaction != null)
-			{
-				Connector.Transaction.Cancel();
-			}
-
-			Connector.Close();
-		}
-
-		/// <summary>
-		/// Put a pooled connector into the pool queue.
-		/// </summary>
-		/// <param name="Connector">Connector to pool</param>
-		private void UngetPooledConnector(EDBConnection Connection, EDBConnector Connector)
-		{
+        /// <summary>
+        /// Put a pooled connector into the pool queue.
+        /// </summary>
+        /// <param name="Connection">Connection <paramref name="Connector"/> is leased to.</param>
+        /// <param name="Connector">Connector to pool</param>
+        private void UngetConnector(EDBConnection Connection, EDBConnector Connector)
+        {
             ConnectorQueue queue;
 
             // Find the queue.
@@ -554,17 +468,19 @@ namespace EnterpriseDB.EDBClient
             }
 
             Connector.ProvideClientCertificatesCallback -= Connection.ProvideClientCertificatesCallbackDelegate;
-			Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
-			Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
-			Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
+            Connector.CertificateSelectionCallback -= Connection.CertificateSelectionCallbackDelegate;
+            Connector.CertificateValidationCallback -= Connection.CertificateValidationCallbackDelegate;
+            Connector.PrivateKeySelectionCallback -= Connection.PrivateKeySelectionCallbackDelegate;
+            Connector.ValidateRemoteCertificateCallback -= Connection.ValidateRemoteCertificateCallbackDelegate;
 
-            bool inQueue = false;
+            /*bool inQueue = false;
 
             lock (queue)
             {
                 inQueue = queue.Busy.ContainsKey(Connector);
                 queue.Busy.Remove(Connector);
             }
+            */
 
 			if (!Connector.IsInitialized)
 			{
@@ -590,6 +506,8 @@ namespace EnterpriseDB.EDBClient
 				}
 			}
 
+            bool inQueue = queue.Busy.ContainsKey(Connector);
+
             if (Connector.State == ConnectionState.Open)
             {
                 //If thread is good
@@ -605,29 +523,39 @@ namespace EnterpriseDB.EDBClient
                         //If the connector fails to release its resources then it is probably broken, so make sure we don't add it to the queue.
                         // Usually it already won't be in the queue as it would of broken earlier
                         inQueue = false;
+                        Connector.Close();
                     }
 
-                    if (inQueue)
-                        lock (queue)
-                        {
-                            queue.Available.Enqueue(Connector);
-                        }
-                    else
-                        Connector.Close();
                 }
                 else
                 {
                     //Thread is being aborted, this connection is possibly broken. So kill it rather than returning it to the pool
+                    inQueue = false;
                     Connector.Close();
                 }
             }
+
+            // Check if Connector should return to the queue of available connectors. If not, this connector is invalid and should
+            // only be removed from the busy queue which effectvely removes it from the pool.
+            if (inQueue)
+                lock (queue)
+                {
+                    queue.Busy.Remove(Connector);
+                    queue.Available.Enqueue(Connector);
+                }
+            else
+                lock (queue)
+                {
+                    queue.Busy.Remove(Connector);
+                }
+
         }
 		/*
 				/// <summary>
 				/// Stop sharing a shared connector.
 				/// </summary>
 				/// <param name="Connector">Connector to unshare</param>
-				private void UngetSharedConnector(NpgsqlConnection Connection, NpgsqlConnector Connector)
+				private void UngetSharedConnector(EDBConnection Connection, EDBConnector Connector)
 				{
 					// To be implemented
 				}

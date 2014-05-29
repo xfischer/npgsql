@@ -24,8 +24,9 @@
 // ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-
+using System;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -35,26 +36,16 @@ namespace EnterpriseDB.EDBClient
 	/// <summary>
 	/// Provides the underlying mechanism for reading schema information.
 	/// </summary>
-	internal sealed class EDBSchema
+	internal static class EDBSchema
 	{
-		private readonly EDBConnection _connection;
- 
-		/// <summary>
-		/// Creates an EDBSchema that can read schema information from the database.
-		/// </summary>
-		/// <param name="connection">An open database connection for reading metadata.</param>
-		internal EDBSchema(EDBConnection connection)
-		{
-			_connection = connection;
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Returns the MetaDataCollections that lists all possible collections.
 		/// </summary>
 		/// <returns>The MetaDataCollections</returns>
 		internal static DataTable GetMetaDataCollections()
         {
             DataSet ds = new DataSet();
+            ds.Locale = CultureInfo.InvariantCulture;
             using (Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Npgsql.NpgsqlMetaData.xml"))
             {
                 ds.ReadXml(xmlStream);
@@ -69,6 +60,7 @@ namespace EnterpriseDB.EDBClient
 		internal static DataTable GetRestrictions()
         {
             DataSet ds = new DataSet();
+            ds.Locale = CultureInfo.InvariantCulture;
             using (Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Npgsql.NpgsqlMetaData.xml"))
             {
                 ds.ReadXml(xmlStream);
@@ -76,14 +68,14 @@ namespace EnterpriseDB.EDBClient
             return ds.Tables["Restrictions"].Copy();
 		}
 
-        private EDBCommand BuildCommand(StringBuilder query, string[] restrictions, params string[] names)
+        private static EDBCommand BuildCommand(EDBConnection conn, StringBuilder query, string[] restrictions, params string[] names)
         {
-            return BuildCommand(query, restrictions, true, names);
+            return BuildCommand(conn, query, restrictions, true, names);
         }
 
-		private EDBCommand BuildCommand(StringBuilder query, string[] restrictions, bool addWhere, params string[] names)
-		{
-			EDBCommand command = new EDBCommand();
+        private static EDBCommand BuildCommand(EDBConnection conn, StringBuilder query, string[] restrictions, bool addWhere, params string[] names)
+        {
+            EDBCommand command = new EDBCommand();
 
 			if (restrictions != null && names != null)
 			{
@@ -111,12 +103,12 @@ namespace EnterpriseDB.EDBClient
 				}
 			}
 			command.CommandText = query.ToString();
-			command.Connection = _connection;
+            command.Connection = conn;
 
 			return command;
 		}
 
-        private string RemoveSpecialChars(string paramName)
+        private static string RemoveSpecialChars(string paramName)
         {
             return paramName.Replace("(", "").Replace(")", "").Replace(".", "");
         }
@@ -126,9 +118,10 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		/// <param name="restrictions">The restrictions to filter the collection.</param>
 		/// <returns>The Databases</returns>
-		internal DataTable GetDatabases(string[] restrictions)
+        internal static DataTable GetDatabases(EDBConnection conn, string[] restrictions)
 		{
 			DataTable databases = new DataTable("Databases");
+            databases.Locale = CultureInfo.InvariantCulture;
 
 			databases.Columns.AddRange(
 				new DataColumn[] {new DataColumn("database_name"), new DataColumn("owner"), new DataColumn("encoding")});
@@ -138,13 +131,13 @@ namespace EnterpriseDB.EDBClient
 			getDatabases.Append(
 				"SELECT d.datname AS database_name, u.usename AS owner, pg_catalog.pg_encoding_to_char(d.encoding) AS encoding FROM pg_catalog.pg_database d LEFT JOIN pg_catalog.pg_user u ON d.datdba = u.usesysid");
 
-			using (EDBCommand command = BuildCommand(getDatabases, restrictions, "datname"))
-			{
-				using (EDBDataAdapter adapter = new EDBDataAdapter(command))
-				{
-					adapter.Fill(databases);
-				}
-			}
+            using (EDBCommand command = BuildCommand(conn, getDatabases, restrictions, "datname"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    adapter.Fill(databases);
+                }
+            }
 
 			return databases;
 		}
@@ -154,9 +147,10 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		/// <param name="restrictions">The restrictions to filter the collection.</param>
 		/// <returns>The Tables</returns>
-		internal DataTable GetTables(string[] restrictions)
+        internal static DataTable GetTables(EDBConnection conn, string[] restrictions)
 		{
 			DataTable tables = new DataTable("Tables");
+            tables.Locale = CultureInfo.InvariantCulture;
 
 			tables.Columns.AddRange(
 				new DataColumn[]
@@ -169,15 +163,15 @@ namespace EnterpriseDB.EDBClient
 
 			getTables.Append("SELECT table_catalog, table_schema, table_name, table_type FROM information_schema.tables");
 
-			using (
-				EDBCommand command =
-					BuildCommand(getTables, restrictions, "table_catalog", "table_schema", "table_name", "table_type"))
-			{
-				using (EDBDataAdapter adapter = new EDBDataAdapter(command))
-				{
-					adapter.Fill(tables);
-				}
-			}
+            using (
+                EDBCommand command =
+                    BuildCommand(conn, getTables, restrictions, "table_catalog", "table_schema", "table_name", "table_type"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    adapter.Fill(tables);
+                }
+            }
 
 			return tables;
 		}
@@ -187,9 +181,10 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		/// <param name="restrictions">The restrictions to filter the collection.</param>
 		/// <returns>The Columns.</returns>
-		internal DataTable GetColumns(string[] restrictions)
+        internal static DataTable GetColumns(EDBConnection conn, string[] restrictions)
 		{
 			DataTable columns = new DataTable("Columns");
+            columns.Locale = CultureInfo.InvariantCulture;
 
 			columns.Columns.AddRange(
 				new DataColumn[]
@@ -209,15 +204,15 @@ namespace EnterpriseDB.EDBClient
 			getColumns.Append(
 				"SELECT table_catalog, table_schema, table_name, column_name, ordinal_position, column_default, is_nullable, udt_name AS data_type, character_maximum_length, character_octet_length, numeric_precision, numeric_precision_radix, numeric_scale, datetime_precision, character_set_catalog, character_set_schema, character_set_name, collation_catalog FROM information_schema.columns");
 
-			using (
-				EDBCommand command =
-					BuildCommand(getColumns, restrictions, "table_catalog", "table_schema", "table_name", "column_name"))
-			{
-				using (EDBDataAdapter adapter = new EDBDataAdapter(command))
-				{
-					adapter.Fill(columns);
-				}
-			}
+            using (
+                EDBCommand command =
+                    BuildCommand(conn, getColumns, restrictions, "table_catalog", "table_schema", "table_name", "column_name"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    adapter.Fill(columns);
+                }
+            }
 
 			return columns;
 		}
@@ -227,9 +222,10 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		/// <param name="restrictions">The restrictions to filter the collection.</param>
 		/// <returns>The Views</returns>
-		internal DataTable GetViews(string[] restrictions)
+        internal static DataTable GetViews(EDBConnection conn, string[] restrictions)
 		{
 			DataTable views = new DataTable("Views");
+            views.Locale = CultureInfo.InvariantCulture;
 
 			views.Columns.AddRange(
 				new DataColumn[]
@@ -243,13 +239,13 @@ namespace EnterpriseDB.EDBClient
 			getViews.Append(
 				"SELECT table_catalog, table_schema, table_name, check_option, is_updatable FROM information_schema.views");
 
-			using (EDBCommand command = BuildCommand(getViews, restrictions, "table_catalog", "table_schema", "table_name"))
-			{
-				using (EDBDataAdapter adapter = new EDBDataAdapter(command))
-				{
-					adapter.Fill(views);
-				}
-			}
+            using (EDBCommand command = BuildCommand(conn, getViews, restrictions, "table_catalog", "table_schema", "table_name"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    adapter.Fill(views);
+                }
+            }
 
 			return views;
 		}
@@ -259,9 +255,10 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		/// <param name="restrictions">The restrictions to filter the collection.</param>
 		/// <returns>The Users.</returns>
-		internal DataTable GetUsers(string[] restrictions)
+        internal static DataTable GetUsers(EDBConnection conn, string[] restrictions)
 		{
 			DataTable users = new DataTable("Users");
+            users.Locale = CultureInfo.InvariantCulture;
 
 			users.Columns.AddRange(new DataColumn[] {new DataColumn("user_name"), new DataColumn("user_sysid", typeof (int))});
 
@@ -269,20 +266,21 @@ namespace EnterpriseDB.EDBClient
 
 			getUsers.Append("SELECT usename as user_name, usesysid as user_sysid FROM pg_catalog.pg_user");
 
-			using (EDBCommand command = BuildCommand(getUsers, restrictions, "usename"))
-			{
-				using (EDBDataAdapter adapter = new EDBDataAdapter(command))
-				{
-					adapter.Fill(users);
-				}
-			}
+            using (EDBCommand command = BuildCommand(conn, getUsers, restrictions, "usename"))
+            {
+                using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+                {
+                    adapter.Fill(users);
+                }
+            }
 
 			return users;
 		}
 
-        internal DataTable GetIndexes(string[] restrictions)
+        internal static DataTable GetIndexes(EDBConnection conn, string[] restrictions)
         {
             DataTable indexes = new DataTable("Indexes");
+            indexes.Locale = CultureInfo.InvariantCulture;
 
             indexes.Columns.AddRange(
                 new DataColumn[]
@@ -314,7 +312,7 @@ where
 
             using (
                 EDBCommand command =
-                    BuildCommand(getIndexes, restrictions, false, "table_catalog", "table_schema", "table_name", "index_name"))
+                    BuildCommand(conn, getIndexes, restrictions, false, "current_database()", "n.nspname", "t.relname", "i.relname"))
             {
                 using (EDBDataAdapter adapter = new EDBDataAdapter(command))
                 {
@@ -325,9 +323,10 @@ where
             return indexes;
         }
 
-        internal DataTable GetIndexColumns(string[] restrictions)
+        internal static DataTable GetIndexColumns(EDBConnection conn, string[] restrictions)
         {
             DataTable indexColumns = new DataTable("IndexColumns");
+            indexColumns.Locale = CultureInfo.InvariantCulture;
 
             indexColumns.Columns.AddRange(
                 new DataColumn[]
@@ -359,7 +358,7 @@ where
 
             using (
                 EDBCommand command =
-                    BuildCommand(getIndexColumns, restrictions, false, "table_catalog", "table_schema", "table_name", "index_name", "column_name"))
+                    BuildCommand(conn, getIndexColumns, restrictions, false, "current_database()", "n.nspname", "t.relname", "i.relname", "a.attname"))
             {
                 using (EDBDataAdapter adapter = new EDBDataAdapter(command))
                 {
@@ -370,7 +369,7 @@ where
             return indexColumns;
         }
 
-        internal DataTable GetForeignKeys(string[] restrictions)
+        internal static DataTable GetForeignKeys(EDBConnection conn, string[] restrictions)
         {
             StringBuilder getForeignKeys = new StringBuilder();
 
@@ -394,7 +393,7 @@ where pgc.contype='f'
 
             using (
                 EDBCommand command =
-                    BuildCommand(getForeignKeys, restrictions, false, "current_database()", "pgtn.nspname", "pgt.relname", "pgc.conname"))
+                    BuildCommand(conn, getForeignKeys, restrictions, false, "current_database()", "pgtn.nspname", "pgt.relname", "pgc.conname"))
             {
                 using (EDBDataAdapter adapter = new EDBDataAdapter(command))
                 {
@@ -408,7 +407,7 @@ where pgc.contype='f'
 		internal static DataTable GetDataSourceInformation()
 		{
 			DataSet ds = new DataSet();
-			using (Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Npgsql.NpgsqlMetaData.xml"))
+			using (Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Npgsql.EDBMetaData.xml"))
 			{
 				ds.ReadXml(xmlStream);
 			}
@@ -418,6 +417,7 @@ where pgc.contype='f'
 	    public static DataTable GetReservedWords()
 	    {
 	        DataTable table = new DataTable("ReservedWords");
+            table.Locale = CultureInfo.InvariantCulture;
 	        table.Columns.Add("ReservedWord", typeof (string));
             // List of keywords taken from PostgreSQL 9.0 reserved words documentation.
 	        string[] keywords = new[]

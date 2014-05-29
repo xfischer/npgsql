@@ -31,13 +31,13 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Resources;
 using System.Text;
-using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -51,18 +51,14 @@ namespace EnterpriseDB.EDBClient
         private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         protected readonly static ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
         
-        
 
-        internal EDBState()
-        {
-        }
 
-        public virtual void Open(EDBConnector context)
+        public virtual void Open(EDBConnector context, Int32 timeout)
         {
             throw new InvalidOperationException("Internal Error! " + this);
         }
 
-        public virtual void Startup(EDBConnector context)
+        public virtual void Startup(EDBConnector context,EDBConnectionStringBuilder settings)
         {
             throw new InvalidOperationException("Internal Error! " + this);
         }
@@ -77,11 +73,14 @@ namespace EnterpriseDB.EDBClient
             throw new InvalidOperationException("Internal Error! " + this);
         }
 
-        public void Query(EDBConnector context, EDBCommand command)
+       /* public void Query(EDBConnector context, EDBCommand command)
         {
             IterateThroughAllResponses(QueryEnum(context, command));
+        }*/
+        public virtual void Query(EDBConnector context, EDBQuery query)
+        {
+            throw new InvalidOperationException("Internal Error! " + this);
         }
-
         public virtual void FunctionCall(EDBConnector context, EDBCommand command)
         {
             throw new InvalidOperationException("Internal Error! " + this);
@@ -107,10 +106,13 @@ namespace EnterpriseDB.EDBClient
             //ZA  Hnotifytest CNOTIFY Z
             //Qlisten notifytest;notify notifytest; 
             Stream stm = context.Stream;
-            string uuidString = "uuid" + Guid.NewGuid().ToString("N");
-            PGUtil.WriteString("Qlisten " + uuidString + ";notify " + uuidString + ";", stm);
+//            string uuidString = "uuid" + Guid.NewGuid().ToString("N");
+            string uuidString = string.Format("uuid{0:N}", Guid.NewGuid());
             Queue<byte> buffer = new Queue<byte>();
             byte[] convertBuffer = new byte[36];
+
+            PGUtil.WriteStringNullTerminated(stm, "Qlisten {0};notify {0};", uuidString);
+
             for (;;)
             {
                 int newByte = stm.ReadByte();
@@ -122,7 +124,7 @@ namespace EnterpriseDB.EDBClient
                 if (buffer.Count > 35)
                 {
                     buffer.CopyTo(convertBuffer, 0);
-                    if (ENCODING_UTF8.GetString(convertBuffer) == uuidString)
+                    if (BackendEncoding.UTF8Encoding.GetString(convertBuffer) == uuidString)
                     {
                         for (;;)
                         {
@@ -134,7 +136,7 @@ namespace EnterpriseDB.EDBClient
                                     //context.Query(new NpgsqlCommand("UNLISTEN *", context));
                                     using(EDBCommand cmd = new EDBCommand("UNLISTEN *", context))
                                     {
-                                        context.Query(cmd);
+                                        cmd.ExecuteBlind();
                                     }
                                     return;
                             }
@@ -166,7 +168,8 @@ namespace EnterpriseDB.EDBClient
         public void EmptySync(EDBConnector context)
         {
             Stream stm = context.Stream;
-            new EDBSync().WriteToStream(stm);
+            EDBSync.Default.WriteToStream(stm);
+
             stm.Flush();
             Queue<int> buffer = new Queue<int>();
             //byte[] compareBuffer = new byte[6];
@@ -347,6 +350,26 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
+        /// <summary>
+        /// Call ProcessBackendResponsesEnum(), and scan and discard all results.
+        /// </summary>
+        public void ProcessAndDiscardBackendResponses(EDBConnector context)
+        {
+            IEnumerable<IServerResponseObject> responseEnum;
+
+            // Flush and wait for responses.
+            responseEnum = ProcessBackendResponsesEnum(context);
+
+            // Discard each response.
+            foreach (IServerResponseObject response in responseEnum)
+            {
+                if (response is IDisposable)
+                {
+                    (response as IDisposable).Dispose();
+                }
+            }
+        }
+
         ///<summary>
         /// This method is responsible to handle all protocol messages sent from the backend.
         /// It holds all the logic to do it.
@@ -358,46 +381,46 @@ namespace EnterpriseDB.EDBClient
         {
             try
             {
-            // Process commandTimeout behavior.
+                // Flush buffers to the wire.
+                context.Stream.Flush();
 
-            if ((context.Mediator.CommandTimeout > 0) &&
-                (!context.Socket.Poll(1000000*context.Mediator.CommandTimeout, SelectMode.SelectRead)))
-            {
+                // Process commandTimeout behavior.
+
+              if ((context.Mediator.CommandTimeout > 0) &&
+                        (!CheckForContextSocketAvailability(context, SelectMode.SelectRead)))
+              {
                 // If timeout occurs when establishing the session with server then
                 // throw an exception instead of trying to cancel query. This helps to prevent loop as CancelRequest will also try to stablish a connection and sends commands.
                 if (!((this is EDBStartupState || this is EDBConnectedState)))
                 {
                     try
-                    {
-                        context.CancelRequest();
-                        foreach (IServerResponseObject obj in ProcessBackendResponsesEnum(context))
                         {
-                            if (obj is IDisposable)
-                            {
-                                (obj as IDisposable).Dispose();
-                            }
+                            context.CancelRequest();
+
+                            ProcessAndDiscardBackendResponses(context);
                         }
+                        catch(Exception)
+                        {
+                        }
+                        //We should have gotten an error from CancelRequest(). Whether we did or not, what we
+                        //really have is a timeout exception, and that will be less confusing to the user than
+                        //"operation cancelled by user" or similar, so whatever the case, that is what we'll throw.
+                        // Changed message again to report about the two possible timeouts: connection or command as the establishment timeout only was confusing users when the timeout was a command timeout.
                     }
-                    catch (Exception ex)
-                    {
-                    }
-                    //We should have gotten an error from CancelRequest(). Whether we did or not, what we
-                    //really have is a timeout exception, and that will be less confusing to the user than
-                    //"operation cancelled by user" or similar, so whatever the case, that is what we'll throw.
-                    // Changed message again to report about the two possible timeouts: connection or command as the establishment timeout only was confusing users when the timeout was a command timeout.
+
+                    throw new EDBException(resman.GetString("Exception_ConnectionOrCommandTimeout"));
                 }
-                throw new EDBException(resman.GetString("Exception_ConnectionOrCommandTimeout"));
-            }
-            switch (context.BackendProtocolVersion)
-            {
-                case ProtocolVersion.Version2:
-                    return ProcessBackendResponses_Ver_2(context);
-                case ProtocolVersion.Version3:
-                    return ProcessBackendResponses_Ver_3(context);
-                default:
-                    throw new EDBException(resman.GetString("Exception_UnknownProtocol"));
-            }
-            
+
+                switch (context.BackendProtocolVersion)
+                {
+                    case ProtocolVersion.Version2:
+                        return ProcessBackendResponses_Ver_2(context);
+                    case ProtocolVersion.Version3:
+                        return ProcessBackendResponses_Ver_3(context);
+                    default:
+                        throw new EDBException(resman.GetString("Exception_UnknownProtocol"));
+                }
+
             }
             
             catch(ThreadAbortException)
@@ -413,6 +436,49 @@ namespace EnterpriseDB.EDBClient
             }
                 
         }
+
+
+
+        /// <summary>
+        /// Checks for context socket availability.
+        /// Socket.Poll supports integer as microseconds parameter.
+        /// This limits the usable command timeout value
+        /// to 2,147 seconds: (2,147 x 1,000,000 less than  max_int).
+        /// In order to bypass this limit, the availability of
+        /// the socket is checked in 2,147 seconds cycles
+        /// </summary>
+        /// <returns><c>true</c>, if for context socket availability was checked, <c>false</c> otherwise.</returns>
+        /// <param name="context">Context.</param>
+        /// <param name="selectMode">Select mode.</param>
+        internal bool CheckForContextSocketAvailability(EDBConnector context, SelectMode selectMode)
+        {
+            /* Socket.Poll supports integer as microseconds parameter.
+             * This limits the usable command timeout value
+             * to 2,147 seconds: (2,147 x 1,000,000 < max_int).
+             */
+            const int limitOfSeconds = 2147;
+
+            bool socketPoolResponse = false;
+
+            // Because the backend's statement_timeout parameter has been set to context.Mediator.CommandTimeout,
+            // we will give an extra 5 seconds because we'd prefer to receive a timeout error from PG
+            // than to be forced to start a new connection and send a cancel request.
+            // The result is that a timeout could take 5 seconds too long to occur, but if everything
+            // is healthy, that shouldn't happen.
+            int secondsToWait = context.Mediator.CommandTimeout + 5;
+
+            /* In order to bypass this limit, the availability of
+             * the socket is checked in 2,147 seconds cycles
+             */
+            while ((secondsToWait > limitOfSeconds) && (!socketPoolResponse))
+            {
+                socketPoolResponse = context.Socket.Poll(1000000 * limitOfSeconds, selectMode);
+                secondsToWait -= limitOfSeconds;
+            }
+
+            return socketPoolResponse || context.Socket.Poll(1000000 * secondsToWait, selectMode);
+        }
+
 
         protected IEnumerable<IServerResponseObject> ProcessBackendResponses_Ver_2(EDBConnector context)
         {
@@ -737,7 +803,7 @@ namespace EnterpriseDB.EDBClient
 
                                     // 1.
                                     byte[] passwd = context.Password;
-                                    byte[] saltUserName = ENCODING_UTF8.GetBytes(context.UserName);
+                                    byte[] saltUserName = BackendEncoding.UTF8Encoding.GetBytes(context.UserName);
 
                                     byte[] crypt_buf = new byte[passwd.Length + saltUserName.Length];
 
@@ -755,7 +821,7 @@ namespace EnterpriseDB.EDBClient
 
                                     String prehash = sb.ToString();
 
-                                    byte[] prehashbytes = ENCODING_UTF8.GetBytes(prehash);
+                                    byte[] prehashbytes = BackendEncoding.UTF8Encoding.GetBytes(prehash);
                                     crypt_buf = new byte[prehashbytes.Length + 4];
 
 
@@ -774,7 +840,7 @@ namespace EnterpriseDB.EDBClient
                                         sb.Append(b.ToString("x2"));
                                     }
 
-                                    context.Authenticate(ENCODING_UTF8.GetBytes(sb.ToString()));
+                                    context.Authenticate(BackendEncoding.UTF8Encoding.GetBytes(sb.ToString()));
 
                                     break;
 #if WINDOWS && UNMANAGED
@@ -811,7 +877,7 @@ namespace EnterpriseDB.EDBClient
                                     }
 
 #endif
-
+                            
                                 default:
                                     // Only AuthenticationClearTextPassword and AuthenticationMD5Password supported for now.
                                     errors.Add(
@@ -819,7 +885,7 @@ namespace EnterpriseDB.EDBClient
                                                         String.Format(resman.GetString("Exception_AuthenticationMethodNotSupported"), authType)));
                                     throw new EDBException(errors);
                             }
-                            break;
+                              break;
                         case BackEndMessageCode.RowDescription:
                             lastRowDescription = new EDBRowDescriptionV3(stream, context.OidToNameMapping,context.CompatVersion);
                             /*
@@ -1115,6 +1181,32 @@ namespace EnterpriseDB.EDBClient
         protected static readonly Encoding UTF8Encoding = Encoding.UTF8;
         public abstract void WriteToStream(Stream outputStream);
     }
+
+    /// <summary>
+    /// For classes representing simple messages,
+    /// consisting only of a message code and length identifier,
+    /// sent from the client to the server.
+    /// </summary>
+    internal abstract class SimpleClientMessage : ClientMessage
+    {
+        private readonly byte[] _messageData;
+
+        protected SimpleClientMessage(FrontEndMessageCode MessageCode)
+        {
+            _messageData = new byte[5];
+            MemoryStream messageBuilder = new MemoryStream(_messageData);
+
+            messageBuilder
+                .WriteBytes((byte)MessageCode)
+                .WriteInt32(4);
+        }
+
+        public override void WriteToStream(Stream outputStream)
+        {
+            outputStream.WriteBytes(_messageData);
+        }
+    }
+
 
     /// <summary>
     /// Marker interface which identifies a class which represents part of
