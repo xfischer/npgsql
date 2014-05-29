@@ -45,10 +45,8 @@ namespace EnterpriseDB.EDBClient
         public override void Authenticate(EDBConnector context, byte[] password)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Authenticate");
-			EDBPasswordPacket pwpck = new EDBPasswordPacket(password, context.BackendProtocolVersion);
-			BufferedStream stream = new BufferedStream(context.Stream);
-			pwpck.WriteToStream(stream);
-			stream.Flush();
-		}
-	}
+            EDBPasswordPacket pwpck = new EDBPasswordPacket(password, context.BackendProtocolVersion);
+            pwpck.WriteToStream(context.Stream);
+        }
+    }
 }

@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="C:\Works\DNET\git_latest\Dev-V2\backup-V7\CON-DNET\EDBDataProvider2.0.2\EDBNunit\bin\Debug\EDBNunit.dll" total="15" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2014-05-28" time="17:32:58">
+  <environment nunit-version="2.6.3.13283" clr-version="2.0.50727.5420" os-version="Microsoft Windows NT 6.1.7601 Service Pack 1" platform="Win32NT" cwd="C:\Program Files\NUnit 2.6.3\bin" machine-name="WIN-M06VFFDLUO6" user="edb" user-domain="WIN-M06VFFDLUO6" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Assembly" name="C:\Works\DNET\git_latest\Dev-V2\backup-V7\CON-DNET\EDBDataProvider2.0.2\EDBNunit\bin\Debug\EDBNunit.dll" executed="True" result="Success" success="True" time="93.440" asserts="0">
+    <results>
+      <test-suite type="Namespace" name="DOTNET" executed="True" result="Success" success="True" time="93.440" asserts="0">
+        <results>
+          <test-suite type="TestFixture" name="DataAdapterTests" executed="True" result="Success" success="True" time="93.439" asserts="0">
+            <results>
+              <test-case name="DOTNET.DataAdapterTests._AdapFillSchemaMapped" executed="True" result="Success" success="True" time="0.396" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests._AdapFillSchemaSource" executed="True" result="Success" success="True" time="0.084" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.AdapFillSchemaDataTableSourceColumnNameAccess" executed="True" result="Success" success="True" time="15.077" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.AdapFillSchemaDataTableSourceColumnType" executed="True" result="Success" success="True" time="15.005" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.AdapFillSchemaDataTableSourcePrimaryKey" executed="True" result="Success" success="True" time="15.004" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FB8070_1" executed="True" result="Success" success="True" time="0.156" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FB8070_2" executed="True" result="Success" success="True" time="0.372" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FB8070_3" executed="True" result="Success" success="True" time="4.235" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FB8070_4" executed="True" result="Success" success="True" time="27.826" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FB8070_5" executed="True" result="Success" success="True" time="14.722" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FillWithDuplicateColumnName" executed="True" result="Success" success="True" time="0.006" asserts="0" />
+              <test-case name="DOTNET.DataAdapterTests.FillWithEmptyResultset" executed="True" result="Success" success="True" time="0.003" asserts="6" />
+              <test-case name="DOTNET.DataAdapterTests.InsertWithDataSet" executed="True" result="Success" success="True" time="0.385" asserts="3" />
+              <test-case name="DOTNET.DataAdapterTests.TestDSNotNull" executed="True" result="Success" success="True" time="0.022" asserts="1" />
+              <test-case name="DOTNET.DataAdapterTests.UpdateLettingNullFieldValue" executed="True" result="Success" success="True" time="0.085" asserts="1" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

@@ -36,6 +36,8 @@ namespace EnterpriseDB.EDBClient
 		private EDBTransactionCallbacks _callbacks;
         private IEDBResourceManager _rm;
         private bool _inTransaction;
+        internal bool InLocalTransaction { get { return _npgsqlTx != null; } }
+
 
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 

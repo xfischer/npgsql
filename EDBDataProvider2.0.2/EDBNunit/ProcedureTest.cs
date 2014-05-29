@@ -830,7 +830,7 @@ namespace DOTNET
 				
 				command.ExecuteNonQuery();
              	Assert.AreEqual(1.100001f,float.Parse(command.Parameters[0].Value.ToString()));
-				Assert.AreEqual(1.100001,float.Parse(command.Parameters[1].Value.ToString()));	
+				Assert.AreEqual(1.10000098f,float.Parse(command.Parameters[1].Value.ToString()));	
 				Assert.AreEqual(-2.2131f,float.Parse(command.Parameters[2].Value.ToString()));	
 			}
 			catch(EDBException e)

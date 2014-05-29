@@ -85,7 +85,7 @@ namespace DOTNET
 			Command.CommandText="select TestSequence.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
-			Assert.IsTrue(Reader.Read());
+			Reader.Read();
 			Assert.AreEqual("300",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
 

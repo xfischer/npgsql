@@ -320,12 +320,11 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Gets the value of a column as String.
 		/// </summary>
-		public override String GetString(Int32 i)
-		{
-			return GetValue(i).ToString();
+	    public override String GetString(Int32 i)
+        {
+            return GetValue(i).ToString();
             //return (String)GetValue(i);
-		}
-
+        }
 		/// <summary>
 		/// Gets the value of a column as Decimal.
 		/// </summary>
@@ -460,7 +459,7 @@ namespace EnterpriseDB.EDBClient
 		{
 			DataTable result = null;
 
-			if (CurrentDescription.NumFields > 0)
+            if (CurrentDescription != null && CurrentDescription.NumFields > 0)
 			{
 				result = new DataTable("SchemaTable");
 
@@ -861,14 +860,14 @@ namespace EnterpriseDB.EDBClient
 			public readonly string Catalog;
 			public readonly string Schema;
 			public readonly string Name;
-			public readonly long Id;
+            public readonly int Id;
 
 			public Table(IDataReader rdr)
 			{
 				Catalog = rdr.GetString(0);
 				Schema = rdr.GetString(1);
 				Name = rdr.GetString(2);
-				Id = rdr.GetInt64(3);
+                Id = rdr.GetInt32(3);
 			}
 		}
 
@@ -920,7 +919,7 @@ namespace EnterpriseDB.EDBClient
 		{
 			public readonly string Name;
 			public readonly bool NotNull;
-			public readonly long TableId;
+            public readonly int TableId;
 			public readonly short ColumnNum;
 			public readonly object ColumnDefault;
 
@@ -933,7 +932,7 @@ namespace EnterpriseDB.EDBClient
 			{
 				Name = rdr.GetString(0);
 				NotNull = rdr.GetBoolean(1);
-				TableId = rdr.GetInt64(2);
+                TableId = rdr.GetInt32(2);
 				ColumnNum = rdr.GetInt16(3);
 				ColumnDefault = rdr.GetValue(4);
 			}
@@ -1013,6 +1012,7 @@ namespace EnterpriseDB.EDBClient
 		private long? _lastInsertOID = null;
 		private long? _nextInsertOID = null;
 		internal bool _cleanedUp = false;
+        private bool _hasRows = false;
 		private readonly EDBConnector.NotificationThreadBlock _threadBlock;
 		private readonly bool _synchOnReadError; //maybe this should always be done?
 
@@ -1022,6 +1022,7 @@ namespace EnterpriseDB.EDBClient
 		//to Read(), so we need to be able to cache one of each.
 		private EDBRowDescription _pendingDescription = null;
 		private EDBRow _pendingRow = null;
+        private readonly bool _preparedStatement;
 
 		// Logging related values
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
@@ -1039,6 +1040,26 @@ namespace EnterpriseDB.EDBClient
 			NextResult();
 			//UpdateOutputParameters();
 		}
+		 internal ForwardsOnlyDataReader(IEnumerable<IServerResponseObject> dataEnumeration, CommandBehavior behavior,
+                                        EDBCommand command, EDBConnector.NotificationThreadBlock threadBlock,
+                                        bool preparedStatement = false, EDBRowDescription rowDescription = null)
+            : base(command, behavior)
+        {
+            _dataEnumerator = dataEnumeration.GetEnumerator();
+            _connector.CurrentReader = this;
+            _threadBlock = threadBlock;
+            _preparedStatement = preparedStatement;
+            _currentDescription = rowDescription;
+
+            // For un-prepared statements, the first response is always a row description.
+            // For prepared statements, we may be recycling a row description from a previous Execute.
+            if (CurrentDescription == null)
+            {
+                NextResultInternal();
+            }
+
+            UpdateOutputParameters();
+        }
 
 		internal override EDBRowDescription CurrentDescription
 		{
@@ -1074,13 +1095,13 @@ namespace EnterpriseDB.EDBClient
 						}
 					}
 				}
-				/*for (int i = 0; pending.Count != 0 && i != (row = row ?? ParameterUpdateRow).NumFields; ++i)
+				for (int i = 0; pending.Count != 0 && i != (row = row ?? ParameterUpdateRow).NumFields; ++i)
 				{
 					if (!taken.Contains(i))
 					{
 						pending.Dequeue().Value = row[i];
 					}
-				}*/
+				}
 			}
 		}
 
@@ -1094,7 +1115,8 @@ namespace EnterpriseDB.EDBClient
 			{
 				return null;
 			}
-			else if ((_behavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
+                fo.SetRowDescription(CurrentDescription);
+                if ((_behavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
 			{
 				return fo;
 			}
@@ -1124,7 +1146,82 @@ namespace EnterpriseDB.EDBClient
 		/// rows if appropriate).
 		/// </summary>
 		/// <returns>The next <see cref="IServerResponseObject"/> we will deal with.</returns>
-		private IServerResponseObject GetNextResponseObject()
+    /*    private IServerResponseObject GetNextResponseObject(bool cleanup = false)
+		{
+			try
+			{
+				CurrentRow = null;
+				if (_pendingRow != null)
+				{
+					_pendingRow.Dispose();
+				}
+				_pendingRow = null;
+				while (_dataEnumerator.MoveNext())
+				{
+					IServerResponseObject respNext = _dataEnumerator.Current;
+
+                    if (respNext is RowReader)
+                    {
+                        RowReader reader = respNext as RowReader;
+
+                        if (cleanup)
+                        {
+                            if (reader is StringRowReaderV2)
+                            {
+                                // V2 rows need to step through their data to dispose, so we have
+                                // to finish construction.
+                                EDBRow row;
+
+                                row = BuildRow(new ForwardsOnlyRow(reader));
+                                row.Dispose();
+
+                                return row;
+                            }
+                            else
+                            {
+                                // V3 rows can dispose by simply reading MessageLength bytes.
+                                reader.Dispose();
+
+                                return reader;
+                            }
+                        }
+                        else
+                        {
+                            return _pendingRow = BuildRow(new ForwardsOnlyRow(reader));
+                        }
+                    }
+                    else if (respNext is CompletedResponse)
+                    {
+                        CompletedResponse cr = respNext as CompletedResponse;
+                        if (cr.RowsAffected.HasValue)
+                        {
+                            _nextRecordsAffected = (_nextRecordsAffected ?? 0) + cr.RowsAffected.Value;
+                        }
+                        _nextInsertOID = cr.LastInsertedOID ?? _nextInsertOID;
+                    }
+                    else
+                    {
+                        return respNext;
+                    }
+                }
+                CleanUp(true);
+                return null;
+            }
+            catch
+            {
+                CleanUp(true);
+                throw;
+            }
+        }
+		*/
+	    /// <summary>
+		/// Iterate through the objects returned through from the server.
+		/// If it's a CompletedResponse the rowsaffected count is updated appropriately,
+		/// and we iterate again, otherwise we return it (perhaps updating our cache of pending
+		/// rows if appropriate).
+		/// </summary>
+		/// <returns>The next <see cref="IServerResponseObject"/> we will deal with.</returns>
+     private IServerResponseObject GetNextResponseObject()
 		{
 			try
 			{
@@ -1208,7 +1305,6 @@ namespace EnterpriseDB.EDBClient
                 _recordsAffected = _nextRecordsAffected;
 			
                         
-			_recordsAffected = _nextRecordsAffected;
 			_nextRecordsAffected = null;
 			_lastInsertOID = _nextInsertOID;
 			_nextInsertOID = null;
@@ -1264,7 +1360,12 @@ namespace EnterpriseDB.EDBClient
 				if (clearPending)
 				{
 					_pendingRow = null;
-				}
+                }
+                if (!_hasRows)
+                {
+                    // when rows are found, store that this result has rows.
+                    _hasRows = (ret != null);
+                }
 				return ret;
 			}
 			CurrentRow = null;
@@ -1283,7 +1384,11 @@ namespace EnterpriseDB.EDBClient
             {
                 Reader_iteration = 1;
             }
-            
+              if (!_hasRows)
+            {
+                // when rows are found, store that this result has rows.
+                _hasRows = objNext is EDBRow;
+            }
             return objNext as EDBRow;
 		}
 
@@ -1327,7 +1432,12 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		public override Boolean HasRows
 		{
-			get { return GetNextRow(false) != null; }
+            get
+            {
+                // Return true even after the last row has been read in this result.
+                // the first call to GetNextRow will set _hasRows to true if rows are found.
+                return _hasRows || (GetNextRow(false) != null);
+            }
 		}
 
 		private void CleanUp(bool finishedMessages)
@@ -1350,7 +1460,7 @@ namespace EnterpriseDB.EDBClient
 						return;
 					}
 				}
-				while (GetNextResponseObject() != null);
+                while (GetNextResponseObject() != null);
 			}
 			_connector.CurrentReader = null;
 			_threadBlock.Dispose();
@@ -1376,10 +1486,22 @@ namespace EnterpriseDB.EDBClient
 		/// <returns>True if the reader was advanced, otherwise false.</returns>
 		public override Boolean NextResult()
 		{
+            if (_preparedStatement)
+            {
+                // Prepared statements can never have multiple results.
+                return false;
+            }
+
+            return NextResultInternal();
+        }
+
+        private Boolean NextResultInternal()
+        {
             try
             {
                 CurrentRow = null;
                 _currentResultsetSchema = null;
+                _hasRows = false; // set to false and let the reading code determine if the set has rows.
                 return (_currentDescription = GetNextRowDescription()) != null;
             }
             catch (System.IO.IOException ex)
@@ -1527,6 +1649,7 @@ namespace EnterpriseDB.EDBClient
 		private ResultSet _currentResult;
 		private DataRow _currentRow;
 		private int _lastRecordsAffected;
+        private bool _hasRows;
 
 		public CachingDataReader(ForwardsOnlyDataReader reader, CommandBehavior behavior)
 			: base(reader._command, behavior)
@@ -1596,22 +1719,8 @@ namespace EnterpriseDB.EDBClient
 
 		public override bool HasRows
 		{
-			get
-			{
-				if (_currentRow != null || _currentResult.Count != 0)
-				{
-					return true;
-				}
-				foreach (ResultSet rs in _results)
-				{
-					if (rs.Count != 0)
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-		}
+            get { return _hasRows; }
+        }
 
 		public override int RecordsAffected
 		{
@@ -1681,9 +1790,11 @@ namespace EnterpriseDB.EDBClient
 			if (_results.Count == 0)
 			{
 				_currentResult = null;
+                _hasRows = false;
 				return false;
 			}
 			_lastRecordsAffected = (_currentResult = _results.Dequeue()).RecordsAffected;
+            _hasRows = _results.Count != 0;
 			return true;
 		}
 

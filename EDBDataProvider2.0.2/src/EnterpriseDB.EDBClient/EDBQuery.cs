@@ -38,14 +38,28 @@ namespace EnterpriseDB.EDBClient
 	{
 		private readonly EDBCommand _command;
 		private readonly ProtocolVersion _protocolVersion;
+        private readonly EDBConnector _connector;
+        private readonly byte[] commandText;
 
 		public EDBQuery(EDBCommand command, ProtocolVersion protocolVersion)
 		{
 			_command = command;
 			_protocolVersion = protocolVersion;
+       //     commandText = BackendEncoding.UTF8Encoding.GetBytes(command.CommandText);
 		}
 
-		public override void WriteToStream(Stream outputStream)
+           public EDBQuery(EDBConnector connector, byte[] command)
+        {
+            _connector = connector;
+            commandText = command;
+        }
+
+        public EDBQuery(EDBConnector connector, string command)
+        {
+            _connector = connector;
+            commandText = BackendEncoding.UTF8Encoding.GetBytes(command);
+        }
+		/*public override void WriteToStream(Stream outputStream)
 		{
             //EDBEventLog.LogMsg( this.ToString() + _commandText, LogLevel.Debug  );
 
@@ -87,6 +101,29 @@ namespace EnterpriseDB.EDBClient
 
             outputStream.Write(bytes, 0, bytes.Length);
 
-		}
+		}*/
+        public override void WriteToStream(Stream outputStream)
+        {
+            if (EDBEventLog.Level >= LogLevel.Debug)
+            {
+                // Log the string being sent.
+                PGUtil.LogStringWritten(BackendEncoding.UTF8Encoding.GetString(commandText));
+            }
+
+            // Tell to mediator what command is being sent.
+            _connector.Mediator.SetSqlSent(commandText);
+
+            // Send the query to server.
+            // Write the byte 'Q' to identify a query message.
+            outputStream.WriteByte((byte)FrontEndMessageCode.Query);
+
+            if (_connector.BackendProtocolVersion == ProtocolVersion.Version3)
+            {
+                // Write message length. Int32 + string length + null terminator.
+                PGUtil.WriteInt32(outputStream, 4 + commandText.Length + 1);
+            }
+
+            outputStream.WriteBytesNullTerminated(commandText);
+        }
 	}
 }

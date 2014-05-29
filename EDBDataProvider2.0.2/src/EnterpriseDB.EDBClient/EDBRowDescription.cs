@@ -125,11 +125,11 @@ namespace EnterpriseDB.EDBClient
 				protected set { _columnAttributeNumber = value; }
 			}
 
-			public FormatCode FormatCode
-			{
-				get { return _formatCode; }
-				protected set { _formatCode = value; }
-			}
+            public FormatCode FormatCode
+            {
+                get { return _formatCode; }
+                internal set { _formatCode = value; }
+            }
 
 			public EDBBackendTypeInfo TypeInfo
 			{

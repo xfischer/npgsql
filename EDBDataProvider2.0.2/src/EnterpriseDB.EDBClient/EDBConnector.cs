@@ -31,12 +31,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Mono.Security.Protocol.Tls;
 using EDBTypes;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -47,6 +49,13 @@ namespace EnterpriseDB.EDBClient
     /// <param name="certificates">A <see cref="System.Security.Cryptography.X509Certificates.X509CertificateCollection">X509CertificateCollection</see> to be filled with one or more client certificates.</param>
     public delegate void ProvideClientCertificatesCallback(X509CertificateCollection certificates);
 
+    /// <summary>
+    /// Represents the method that is called to validate the certificate provided by the server during an SSL handshake
+    /// </summary>
+    /// <param name="cert">The server's certificate</param>
+    /// <param name="chain">The certificate chain containing the certificate's CA and any intermediate authorities</param>
+    /// <param name="errors">Any errors that were detected</param>
+    public delegate bool ValidateRemoteCertificateCallback(X509Certificate cert, X509Chain chain, SslPolicyErrors errors);
     /// !!! Helper class, for compilation only.
     /// Connector implements the logic for the Connection Objects to
     /// access the physical connection to the database, and isolate
@@ -89,13 +98,22 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         internal event PrivateKeySelectionCallback PrivateKeySelectionCallback;
 
+        /// <summary>
+        /// Called to validate server's certificate during SSL handshake
+        /// </summary>
+        internal event ValidateRemoteCertificateCallback ValidateRemoteCertificateCallback;
+
         private ConnectionState _connection_state;
 
-        // The physical network connection to the backend.
-        private Stream _stream;
-
+        // The physical network connection socket and stream to the backend.
         private Socket _socket;
+        private EDBNetworkStream _baseStream;
 
+        // The top level stream to the backend.
+        // This is a BufferedStream.
+        // With SSL, this stream sits on top of the SSL stream, which sits on top of _baseStream.
+        // Otherwise, this stream sits directly on top of _baseStream.
+        private BufferedStream _stream;
         // Mediator which will hold data generated from backend.
         private readonly EDBMediator _mediator;
 
@@ -112,12 +130,19 @@ namespace EnterpriseDB.EDBClient
         private Boolean _supportsPrepare = false;
 
         private Boolean _supportCallable = false;  //EDB team . if it supports callable statments
-        
-        private Boolean _supportsSavepoint = false;
-
         private EDBBackendTypeMapping _oidToNameMapping = null;
         private EDBNativeTypeInfo native = null;
+        private Boolean _supportsSavepoint = false;
 
+        private Boolean _supportsDiscard = false;
+
+        private Boolean _supportsApplicationName = false;
+
+        private Boolean _supportsExtraFloatDigits3 = false;
+
+        private Boolean _supportsExtraFloatDigits = false;
+
+        private Boolean _supportsSslRenegotiationLimit = false;
         private Boolean _isInitialized;
 
         private readonly Boolean _pooled;
@@ -129,16 +154,14 @@ namespace EnterpriseDB.EDBClient
         private Int32 _planIndex;
         private Int32 _portalIndex;
 
-        private const String _planNamePrefix = "npgsqlplan";
-        private const String _portalNamePrefix = "npgsqlportal";
+        private const String _planNamePrefix = "s";
+        private const String _portalNamePrefix = "p";
 
+        private NativeToBackendTypeConverterOptions _NativeToBackendTypeConverterOptions;
 
         private Thread _notificationThread;
 
-        // The AutoResetEvent to synchronize processing threads.
-        internal AutoResetEvent _notificationAutoResetEvent;
-
-        // Counter of notification thread start/stop requests in order to 
+        // Counter of notification thread start/stop requests in order to
         internal Int16 _notificationThreadStopCount;
 
         private Exception _notificationException;
@@ -155,9 +178,12 @@ namespace EnterpriseDB.EDBClient
         
         // For IsValid test
         private readonly RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-        
-        // Did we already called cancelRequest?
-        private Boolean _cancelRequestCalled = false;
+
+        private string initQueries;
+
+        // The last command timeout sent via SET command_timeout.  By tracking this, we can avoid
+        // sending it redundantly.
+        private int _commandTimeoutSent = -1; // -1 means none sent.
 
 #if WINDOWS && UNMANAGED
 
@@ -171,6 +197,9 @@ namespace EnterpriseDB.EDBClient
 
 #endif
 
+        public EDBConnector(EDBConnection Connection)
+            : this(Connection.CopyConnectionStringBuilder(), Connection.Pooling, false)
+        {}
 
         /// <summary>
         /// Constructor.
@@ -185,11 +214,10 @@ namespace EnterpriseDB.EDBClient
             _isInitialized = false;
             _state = EDBClosedState.Instance;
             _mediator = new EDBMediator();
-            _oidToNameMapping = new EDBBackendTypeMapping();
+            _NativeToBackendTypeConverterOptions = NativeToBackendTypeConverterOptions.Default.Clone(new EDBBackendTypeMapping());
             _planIndex = 0;
             _portalIndex = 0;
             _notificationThreadStopCount = 1;
-            _notificationAutoResetEvent = new AutoResetEvent(true);
         }
 
         //Finalizer should never be used, but if some incident has left to a connector being abandoned (most likely
@@ -235,6 +263,13 @@ namespace EnterpriseDB.EDBClient
             get { return settings.SslMode; }
         }
 
+        internal static Boolean UseSslStream = false;
+
+        internal Boolean UseMonoSsl
+        {
+            get { return ValidateRemoteCertificateCallback == null; }
+        }
+
         internal Int32 ConnectionTimeout
         {
             get { return settings.Timeout; }
@@ -243,6 +278,12 @@ namespace EnterpriseDB.EDBClient
         internal Int32 CommandTimeout
         {
             get { return settings.CommandTimeout; }
+        }
+
+        internal Int32 CommandTimeoutSent
+        {
+            get { return _commandTimeoutSent; }
+            set { _commandTimeoutSent = value; }
         }
 
         internal Boolean Enlist
@@ -258,6 +299,11 @@ namespace EnterpriseDB.EDBClient
         internal Boolean IntegratedSecurity
         {
             get { return settings.IntegratedSecurity; }
+        }
+
+        internal Boolean AlwaysPrepare
+        {
+            get { return SupportsPrepare && settings.AlwaysPrepare; }
         }
 
         /// <summary>
@@ -284,9 +330,14 @@ namespace EnterpriseDB.EDBClient
         }
 
         // State
-        internal void Query(EDBCommand queryCommand)
+      /*  internal void Query(EDBCommand queryCommand)
         {
             CurrentState.Query(this, queryCommand);
+        }*/
+
+        internal void Query(EDBQuery query)
+        {
+            CurrentState.Query(this, query);
         }
 
         internal IEnumerable<IServerResponseObject> QueryEnum(EDBCommand queryCommand)
@@ -343,9 +394,14 @@ namespace EnterpriseDB.EDBClient
             CurrentState.Execute(this, execute);
         }
 
-        internal IEnumerable<IServerResponseObject> ExecuteEnum(EDBExecute execute)
+        internal void ProcessAndDiscardBackendResponses()
         {
-            return CurrentState.ExecuteEnum(this, execute);
+            CurrentState.ProcessAndDiscardBackendResponses(this);
+        }
+
+        internal IEnumerable<IServerResponseObject> ProcessBackendResponsesEnum()
+        {
+            return CurrentState.ProcessBackendResponsesEnum(this);
         }
 
 
@@ -366,7 +422,13 @@ namespace EnterpriseDB.EDBClient
                 
                 //Query(new NpgsqlCommand("select 1 as ConnectionTest", this));
                 string compareValue = string.Empty;
-                using(EDBCommand cmd = new EDBCommand("select '" + testValue + "'", this))
+                string sql = "select '" + testValue + "'";
+                // restore initial connection parameters resetted by "Discard ALL"
+                if (SupportsDiscard)
+                {
+                    sql = this.initQueries + sql;
+                }
+                using(EDBCommand cmd = new EDBCommand(sql, this))
                 {
                     compareValue = (string) cmd.ExecuteScalar();
                 }
@@ -393,9 +455,26 @@ namespace EnterpriseDB.EDBClient
         {
             if (_connection_state != ConnectionState.Closed)
             {
-                ReleasePlansPortals();
-                ReleaseRegisteredListen();
+                if (SupportsDiscard)
+                {
+                    ReleaseWithDiscard();
+                }
+                else
+                {
+                    ReleasePlansPortals();
+                    ReleaseRegisteredListen();
+                }
             }
+        }
+
+        internal void ReleaseWithDiscard()
+        {
+            using (EDBCommand cmd = new EDBCommand("DISCARD ALL", this, 60))
+            {
+                cmd.ExecuteBlind();
+            }
+
+            // The initial connection parameters will be restored via IsValid() when get connector from pool later 
         }
 
         internal void ReleaseRegisteredListen()
@@ -403,7 +482,7 @@ namespace EnterpriseDB.EDBClient
             //Query(new NpgsqlCommand("unlisten *", this));
             using(EDBCommand cmd = new EDBCommand("unlisten *", this))
             {
-                Query(cmd);
+                cmd.ExecuteBlind();
             }
         }
 
@@ -423,7 +502,7 @@ namespace EnterpriseDB.EDBClient
                         //Query(new NpgsqlCommand(String.Format("deallocate \"{0}\";", _planNamePrefix + i), this));
                         using(EDBCommand cmd = new EDBCommand(String.Format("deallocate \"{0}\";", _planNamePrefix + i.ToString()), this))
                         {
-                            Query(cmd);
+                            cmd.ExecuteBlind();
                         }
                     }
                     
@@ -522,6 +601,22 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
+
+
+        /// <summary>
+        /// Default SSL ValidateRemoteCertificateCallback implementation.
+        /// </summary>
+        internal bool DefaultValidateRemoteCertificateCallback(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors errors)
+        {
+            if (ValidateRemoteCertificateCallback != null)
+            {
+                return ValidateRemoteCertificateCallback(cert, chain, errors);
+            }
+            else
+            {
+                return false;
+            }
+        }
         /// <summary>
 
         /// <summary>
@@ -543,21 +638,30 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// The physical connection stream to the backend.
-        /// </summary>
-        internal Stream Stream
-        {
-            get { return _stream; }
-            set { _stream = value; }
-        }
-
-        /// <summary>
         /// The physical connection socket to the backend.
         /// </summary>
         internal Socket Socket
         {
             get { return _socket; }
             set { _socket = value; }
+        }
+
+        /// <summary>
+        /// The physical connection stream to the backend.
+        /// </summary>
+        internal EDBNetworkStream BaseStream
+        {
+            get { return _baseStream; }
+            set { _baseStream = value; }
+        }
+
+        /// <summary>
+        /// The top level stream to the backend.
+        /// </summary>
+        internal BufferedStream Stream
+        {
+            get { return _stream; }
+            set { _stream = value; }
         }
 
         /// <summary>
@@ -594,7 +698,7 @@ namespace EnterpriseDB.EDBClient
 
         internal EDBBackendTypeMapping OidToNameMapping
         {
-            get { return _oidToNameMapping; }
+            get { return _NativeToBackendTypeConverterOptions.OidToNameMapping; }
         }
 
         internal Version CompatVersion
@@ -604,7 +708,10 @@ namespace EnterpriseDB.EDBClient
                 return settings.Compatible;
             }
         }
-
+        internal IEnumerable<IServerResponseObject> ExecuteEnum(EDBExecute execute)
+        {
+            return CurrentState.ExecuteEnum(this, execute);
+        }
         /// <summary>
         /// The connection mediator.
         /// </summary>
@@ -624,7 +731,22 @@ namespace EnterpriseDB.EDBClient
 
         internal Boolean SupportsApplicationName
         {
-            get { return ServerVersion >= new Version(9, 0, 0); }
+            get { return _supportsApplicationName; }
+        }
+
+        internal Boolean SupportsExtraFloatDigits3
+        {
+            get { return _supportsExtraFloatDigits3; }
+        }
+
+        internal Boolean SupportsExtraFloatDigits
+        {
+            get { return _supportsExtraFloatDigits; }
+        }
+
+        internal Boolean SupportsSslRenegotiationLimit
+        {
+            get { return _supportsSslRenegotiationLimit; }
         }
 
         /// <summary>
@@ -642,7 +764,10 @@ namespace EnterpriseDB.EDBClient
             set { _supportsSavepoint = value; } 
           
         }
-
+        internal Boolean SupportsDiscard
+        {
+            get { return _supportsDiscard; }
+        }
         /// <summary>
         /// MANSOOR:
         /// Report whether the current connection can support Callable statement functionality.
@@ -658,21 +783,46 @@ namespace EnterpriseDB.EDBClient
                 _supportCallable = value;
             }
         }
-		 
-		 public Boolean CancelRequestCalled  {
-            get { return _cancelRequestCalled; }
+	
+		/// <summary>
+        /// Options that control certain aspects of native to backend conversions that depend
+        /// on backend version and status.
+        /// </summary>      
+        public NativeToBackendTypeConverterOptions NativeToBackendTypeConverterOptions
+        {
+            get
+            {
+                return _NativeToBackendTypeConverterOptions;
+            }
         }
-
         /// <summary>
         /// This method is required to set all the version dependent features flags.
         /// SupportsPrepare means the server can use prepared query plans (7.3+)
         /// </summary>
-        // FIXME - should be private
-        internal void ProcessServerVersion()
+        private void ProcessServerVersion()
         {
             this._supportsPrepare = (ServerVersion >= new Version(7, 3, 0));
             this._supportsSavepoint = (ServerVersion >= new Version(8, 0, 0));
             this._supportCallable = (ServerVersion >= new Version(8, 0, 3)); // EDB Team 
+			this._supportsDiscard = (ServerVersion >= new Version(8, 3, 0));
+            this._supportsApplicationName = (ServerVersion >= new Version(9, 0, 0));
+            this._supportsExtraFloatDigits3 =(ServerVersion >= new Version(9, 0, 0));
+            this._supportsExtraFloatDigits = (ServerVersion >= new Version(7, 4, 0)); 
+            this._supportsSslRenegotiationLimit = ((ServerVersion >= new Version(8, 4, 3)) ||
+                     (ServerVersion >= new Version(8, 3, 10) && ServerVersion < new Version(8, 4, 0)) ||
+                     (ServerVersion >= new Version(8, 2, 16) && ServerVersion < new Version(8, 3, 0)) ||
+                     (ServerVersion >= new Version(8, 1, 20) && ServerVersion < new Version(8, 2, 0)) ||
+                     (ServerVersion >= new Version(8, 0, 24) && ServerVersion < new Version(8, 1, 0)) ||
+                     (ServerVersion >= new Version(7, 4, 28) && ServerVersion < new Version(8, 0, 0)) );
+
+            // Per the PG documentation, E string literal prefix support appeared in PG version 8.1.
+            // Note that it is possible that support for this prefix will vanish in some future version
+            // of Postgres, in which case this test will need to be revised.
+            // At that time it may also be necessary to set UseConformantStrings = true here.
+            NativeToBackendTypeConverterOptions.Supports_E_StringPrefix = (ServerVersion >= new Version(8, 1, 0));
+
+            // Per the PG documentation, hex string encoding format support appeared in PG version 9.0.
+            NativeToBackendTypeConverterOptions.SupportsHexByteFormat = (ServerVersion >= new Version(9, 0, 0));
         }
 
         /*/// <value>Counts the numbers of Connections that share
@@ -698,15 +848,34 @@ namespace EnterpriseDB.EDBClient
             // Reset state to initialize new connector in pool.
             CurrentState = EDBClosedState.Instance;
 
+            // Keep track of time remaining; Even though there may be multiple timeout-able calls,
+            // this allows us to still respect the caller's timeout expectation.
+            int connectTimeRemaining = this.ConnectionTimeout * 1000;
+            DateTime attemptStart = DateTime.Now;
+
             // Get a raw connection, possibly SSL...
-            CurrentState.Open(this);
+            CurrentState.Open(this, connectTimeRemaining);
             try
             {
                 // Establish protocol communication and handle authentication...
-                CurrentState.Startup(this);
+                CurrentState.Startup(this, settings);
+
             }
             catch (EDBException ne)
             {
+                if (_stream != null)
+                {
+                    try
+                    {
+                        _stream.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                connectTimeRemaining -= Convert.ToInt32((DateTime.Now - attemptStart).TotalMilliseconds);
+
                 // Check for protocol not supported.  If we have been told what protocol to use,
                 // we will not try this step.
                 if (settings.Protocol != ProtocolVersion.Unknown)
@@ -718,7 +887,7 @@ namespace EnterpriseDB.EDBClient
                 {
                     throw;
                 }
-                EDBError Error0 = (EDBError) ne.Errors[0];
+                EDBError Error0 = (EDBError)ne.Errors[0];
 
                 // If EDBError..ctor() encounters a version 2 error,
                 // it will set its own protocol version to version 2.  That way, we can tell
@@ -733,14 +902,17 @@ namespace EnterpriseDB.EDBClient
                 CurrentState = EDBClosedState.Instance;
 
                 // Get a raw connection, possibly SSL...
-                CurrentState.Open(this);
+                CurrentState.Open(this, connectTimeRemaining);
                 // Establish protocol communication and handle authentication...
-                CurrentState.Startup(this);
+                CurrentState.Startup(this, this.settings);
             }
 
             // Change the state of connection to open and ready.
             _connection_state = ConnectionState.Open;
             CurrentState = EDBReadyState.Instance;
+
+            // After attachment, the stream will close the connector (this) when the stream gets disposed.
+            _baseStream.AttachConnector(this);
 
             // Fall back to the old way, SELECT VERSION().
             // This should not happen for protocol version 3+.
@@ -748,116 +920,139 @@ namespace EnterpriseDB.EDBClient
             {
                 //NpgsqlCommand command = new NpgsqlCommand("set DATESTYLE TO ISO;select version();", this);
                 //ServerVersion = new Version(PGUtil.ExtractServerVersion((string) command.ExecuteScalar()));
-                using(EDBCommand command = new EDBCommand("set DATESTYLE TO ISO;select version();", this))
+                using (EDBCommand command = new EDBCommand("set DATESTYLE TO ISO;select version();", this))
                 {
-                    ServerVersion = new Version(PGUtil.ExtractServerVersion((string) command.ExecuteScalar()));
+                    ServerVersion = new Version(PGUtil.ExtractServerVersion((string)command.ExecuteScalar()));
                 }
             }
 
-            // Adjust client encoding.
+            ProcessServerVersion();
 
-            EDBParameterStatus clientEncodingParam = null;
-            if(
-                !ServerParameters.TryGetValue("client_encoding", out clientEncodingParam) ||
-                (!string.Equals(clientEncodingParam.ParameterValue, "UTF8", StringComparison.OrdinalIgnoreCase) && !string.Equals(clientEncodingParam.ParameterValue, "UNICODE", StringComparison.OrdinalIgnoreCase))
-              )
-                new EDBCommand("SET CLIENT_ENCODING TO UTF8", this).ExecuteBlind();
+            StringBuilder sbInitQueries = new StringBuilder();
 
-            if (!string.IsNullOrEmpty(settings.SearchPath))
+            if (BackendProtocolVersion == ProtocolVersion.Version2)
             {
-                /*EDBParameter p = new EDBParameter("p", DbType.String);
-                p.Value = settings.SearchPath;
-                NpgsqlCommand commandSearchPath = new NpgsqlCommand("SET SEARCH_PATH TO :p,public", this);
-                commandSearchPath.Parameters.Add(p);
-                commandSearchPath.ExecuteNonQuery();*/
 
-                /*EDBParameter p = new EDBParameter("p", DbType.String);
-                p.Value = settings.SearchPath;
-                NpgsqlCommand commandSearchPath = new NpgsqlCommand("SET SEARCH_PATH TO :p,public", this);
-                commandSearchPath.Parameters.Add(p);
-                commandSearchPath.ExecuteNonQuery();*/
 
-                // TODO: Add proper message when finding a semicolon in search_path.
-                // This semicolon could lead to a sql injection security hole as someone could write in connection string:
-                // searchpath=public;delete from table; and it would be executed.
+                sbInitQueries.Append("set DATESTYLE TO ISO;");
 
-                if (settings.SearchPath.Contains(";"))
+                // Adjust client encoding.
+
+                EDBParameterStatus clientEncodingParam = null;
+                if (
+                    !ServerParameters.TryGetValue("client_encoding", out clientEncodingParam) ||
+                    (!string.Equals(clientEncodingParam.ParameterValue, "UTF8", StringComparison.OrdinalIgnoreCase) && !string.Equals(clientEncodingParam.ParameterValue, "UNICODE", StringComparison.OrdinalIgnoreCase))
+                  )
+                    sbInitQueries.Append("SET CLIENT_ENCODING TO UTF8;"); 
+
+                if (!string.IsNullOrEmpty(settings.SearchPath))
                 {
-                    throw new InvalidOperationException();
+                    // TODO: Add proper message when finding a semicolon in search_path.
+                    // This semicolon could lead to a sql injection security hole as someone could write in connection string:
+                    // searchpath=public;delete from table; and it would be executed.
+
+                    if (settings.SearchPath.Contains(";"))
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    // This is using string concatenation because set search_path doesn't allow type casting. ::text
+                    sbInitQueries.Append("SET SEARCH_PATH=")
+                                .Append(settings.SearchPath)
+                                .Append(";");
                 }
 
-                // This is using string concatenation because set search_path doesn't allow type casting. ::text    
-                EDBCommand commandSearchPath = new EDBCommand("SET SEARCH_PATH=" + settings.SearchPath, this);
-                commandSearchPath.ExecuteBlind();
+                if (!string.IsNullOrEmpty(settings.ApplicationName))
+                {
+                    if (!SupportsApplicationName)
+                    {
+                        //TODO
+                        //throw new InvalidOperationException(resman.GetString("Exception_ApplicationNameNotSupported"));
+                        throw new InvalidOperationException("ApplicationName not supported.");
+                    }
+
+                    if (settings.ApplicationName.Contains(";"))
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    sbInitQueries.Append("SET APPLICATION_NAME='")
+                                .Append(settings.ApplicationName)
+                                .Append("';");
+                }
+
+                /*
+                 * Try to set SSL negotiation to 0. As of 2010-03-29, recent problems in SSL library implementations made
+                 * postgresql to add a parameter to set a value when to do this renegotiation or 0 to disable it.
+                 * Currently, Npgsql has a problem with renegotiation so, we are trying to disable it here.
+                 * This only works on postgresql servers where the ssl renegotiation settings is supported of course.
+                 * See http://lists.pgfoundry.org/pipermail/npgsql-devel/2010-February/001065.html for more information.
+                 */
+
+                if (SupportsSslRenegotiationLimit)
+                {
+                    sbInitQueries.Append("SET ssl_renegotiation_limit=0;");
+                }
+
+
+
+                /*
+                 * Set precision digits to maximum value possible. For postgresql before 9 it was 2, after that, it is 3.
+                 * This way, we set first to 2 and then to 3. If there is an error because of 3, it will have been set to 2 at least.
+                 * Check bug report #1010992 for more information.
+                 */
+
+                if (SupportsExtraFloatDigits3)
+                {
+                    sbInitQueries.Append("SET extra_float_digits=3;");
+                }
+                else if (SupportsExtraFloatDigits)
+                {
+                    sbInitQueries.Append("SET extra_float_digits=2;");
+                }
+
+                /*
+                 * Set lc_monetary format to 'C' in order to get a culture agnostic representation of money.
+                 * I noticed that on Windows, even when the lc_monetary is English_United States.UTF-8, negative
+                 * money is formatted as ($value) with parentheses to indicate negative value.
+                 * By going with a culture agnostic format, we get a consistent behavior.
+                 */
+
+                sbInitQueries.Append("SET lc_monetary='C';");
+
             }
-            
-            if (!string.IsNullOrEmpty(settings.ApplicationName))
-             {
-                 if (!SupportsApplicationName)
-                 {
-                     //TODO
-                     //throw new InvalidOperationException(resman.GetString("Exception_ApplicationNameNotSupported"));
-                     throw new InvalidOperationException("ApplicationName not supported.");
-                 }
- 
-                 if (settings.ApplicationName.Contains(";"))
-                 {
-                     throw new InvalidOperationException();
-                 }
- 
-                 EDBCommand commandApplicationName = new EDBCommand("SET APPLICATION_NAME='" + settings.ApplicationName + "'", this);
-                 commandApplicationName.ExecuteBlind();
-             }
-
-            /*
-             * Try to set SSL negotiation to 0. As of 2010-03-29, recent problems in SSL library implementations made
-             * postgresql to add a parameter to set a value when to do this renegotiation or 0 to disable it.
-             * Currently, Npgsql has a problem with renegotiation so, we are trying to disable it here.
-             * This only works on postgresql servers where the ssl renegotiation settings is supported of course.
-             * See http://lists.pgfoundry.org/pipermail/npgsql-devel/2010-February/001065.html for more information.
-             */
-
-            try
+            else
             {
-                EDBCommand commandSslrenegotiation = new EDBCommand("SET ssl_renegotiation_limit=0", this);
-                commandSslrenegotiation.ExecuteBlind();
+                // Some connection parameters for protocol 3 had been sent in the startup packet.
+                // The rest will be setted here.
+                if (SupportsExtraFloatDigits3)
+                {
+                    sbInitQueries.Append("SET extra_float_digits=3;");
+                }
+
+                if (SupportsSslRenegotiationLimit)
+                {
+                    sbInitQueries.Append("SET ssl_renegotiation_limit=0;");
+                }
 
             }
-            catch {}
 
-			
-			
-			/*
-			 * Set precision digits to maximum value possible. For postgresql before 9 it was 2, after that, it is 3.
-			 * This way, we set first to 2 and then to 3. If there is an error because of 3, it will have been set to 2 at least.
-			 * Check bug report #1010992 for more information.
-			 */
-			
-			
-			try
-            {
-                EDBCommand commandSingleDoublePrecision = new EDBCommand("SET extra_float_digits=2;SET extra_float_digits=3;", this);
-                commandSingleDoublePrecision.ExecuteBlind();
+            initQueries = sbInitQueries.ToString();
 
-            }
-            catch {}
-
-			
+            EDBCommand initCommand = new EDBCommand(initQueries, this, 60);
+            initCommand.ExecuteBlind();
+           
 
             // Make a shallow copy of the type mapping that the connector will own.
             // It is possible that the connector may add types to its private
             // mapping that will not be valid to another connector, even
             // if connected to the same backend version.
-            _oidToNameMapping = EDBTypesHelper.CreateAndLoadInitialTypesMapping(this);
-           // native = EDBTypesHelper.GetNativeTypeInfo(DbType.Int16);
-            
-            ProcessServerVersion();
+            NativeToBackendTypeConverterOptions.OidToNameMapping = EDBTypesHelper.CreateAndLoadInitialTypesMapping(this).Clone();
 
             // The connector is now fully initialized. Beyond this point, it is
             // safe to release it back to the pool rather than closing it.
             IsInitialized = true;
         }
-
 
         /// <summary>
         /// Closes the physical connection to the server.
@@ -888,7 +1083,7 @@ namespace EnterpriseDB.EDBClient
             try
             {
                 // Get a raw connection, possibly SSL...
-                cancelConnector.CurrentState.Open(cancelConnector);
+                cancelConnector.CurrentState.Open(cancelConnector, cancelConnector.ConnectionTimeout * 1000);
 
                 // Cancel current request.
                 cancelConnector.CurrentState.CancelRequest(cancelConnector);
@@ -897,8 +1092,7 @@ namespace EnterpriseDB.EDBClient
             {
                 cancelConnector.CurrentState.Close(cancelConnector);
                 
-                _cancelRequestCalled = true;
-            }
+             }
             
         }
 
@@ -908,7 +1102,7 @@ namespace EnterpriseDB.EDBClient
         ///</summary>
         internal String NextPortalName()
         {
-            return _portalNamePrefix + Interlocked.Increment(ref _portalIndex).ToString();
+            return _portalNamePrefix + (++_portalIndex).ToString();
         }
 
 
@@ -917,30 +1111,30 @@ namespace EnterpriseDB.EDBClient
         ///</summary>
         internal String NextPlanName()
         {
-            return _planNamePrefix + Interlocked.Increment(ref _planIndex).ToString();
+            return _planNamePrefix + (++_planIndex).ToString();
         }
 
 
         internal void RemoveNotificationThread()
         {
             // Wait notification thread finish its work.
-            _notificationAutoResetEvent.WaitOne();
+            lock (_socket)
+            {
+                // Kill notification thread.
+                _notificationThread.Abort();
+                _notificationThread = null;
 
-            // Kill notification thread.
-            _notificationThread.Abort();
-            _notificationThread = null;
-
-            // Special case in order to not get problems with thread synchronization.
-            // It will be turned to 0 when synch thread is created.
-            _notificationThreadStopCount = 1;
+                // Special case in order to not get problems with thread synchronization.
+                // It will be turned to 0 when synch thread is created.
+                _notificationThreadStopCount = 1;
+            }
         }
 
         internal void AddNotificationThread()
         {
             _notificationThreadStopCount = 0;
-            _notificationAutoResetEvent.Set();
 
-            NpgsqlContextHolder contextHolder = new NpgsqlContextHolder(this, CurrentState);
+            EDBContextHolder contextHolder = new EDBContextHolder(this, CurrentState);
 
             _notificationThread = new Thread(new ThreadStart(contextHolder.ProcessServerMessages));
 
@@ -988,13 +1182,15 @@ namespace EnterpriseDB.EDBClient
             // first check to see if an exception has
             // been thrown by the notification thread.
             if (_notificationException != null)
+            {
                 throw _notificationException;
+            }
 
             _notificationThreadStopCount++;
 
             if (_notificationThreadStopCount == 1) // If this call was the first to increment.
             {
-                _notificationAutoResetEvent.WaitOne();
+                Monitor.Enter(_socket);
             }
         }
 
@@ -1004,8 +1200,7 @@ namespace EnterpriseDB.EDBClient
             if (_notificationThreadStopCount == 0)
             {
                 // Release the synchronization handle.
-
-                _notificationAutoResetEvent.Set();
+                Monitor.Exit(_socket);
             }
         }
 
@@ -1015,12 +1210,12 @@ namespace EnterpriseDB.EDBClient
         }
 
 
-        internal class NpgsqlContextHolder
+        internal class EDBContextHolder
         {
             private readonly EDBConnector connector;
             private readonly EDBState state;
 
-            internal NpgsqlContextHolder(EDBConnector connector, EDBState state)
+            internal EDBContextHolder(EDBConnector connector, EDBState state)
             {
                 this.connector = connector;
                 this.state = state;
@@ -1032,24 +1227,28 @@ namespace EnterpriseDB.EDBClient
                 {
                     while (true)
                     {
-                        Thread.Sleep(0);
-                        //To give runtime chance to release correctly the lock. See http://pgfoundry.org/forum/message.php?msg_id=1002650 for more information.
-                        this.connector._notificationAutoResetEvent.WaitOne();
+                        // Mono's implementation of System.Threading.Monitor does not appear to give threads
+                        // priority on a first come/first serve basis, as does Microsoft's.  As a result, 
+                        // under mono, this loop may execute many times even after another thread has attempted
+                        // to lock on _socket.  A short Sleep() seems to solve the problem effectively.
+                        // Note that Sleep(0) does not work.
+                        Thread.Sleep(1);
 
-                        if (this.connector.Socket.Poll(100, SelectMode.SelectRead))
+                        lock (connector._socket)
                         {
-                            // reset any responses just before getting new ones
-                            this.connector.Mediator.ResetResponses();
-                            this.state.ProcessBackendResponses(this.connector);
+                            // 20 millisecond timeout
+                            if (this.connector.Socket.Poll(20000, SelectMode.SelectRead))
+                            {
+                                // reset any responses just before getting new ones
+                                this.connector.Mediator.ResetResponses();
+                                this.connector.ProcessAndDiscardBackendResponses();
+                            }
                         }
-
-                        this.connector._notificationAutoResetEvent.Set();
                     }
                 }
                 catch (IOException ex)
                 {
                     this.connector._notificationException = ex;
-                    this.connector._notificationAutoResetEvent.Set();
                 }
 
             }

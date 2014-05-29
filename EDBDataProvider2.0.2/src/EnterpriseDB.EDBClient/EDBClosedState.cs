@@ -28,11 +28,11 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using Mono.Security.Protocol.Tls;
-using System.Reflection;
 using SecurityProtocolType=Mono.Security.Protocol.Tls.SecurityProtocolType;
 using System.Security.Cryptography.X509Certificates;
 
@@ -44,20 +44,25 @@ namespace EnterpriseDB.EDBClient
        EDBConnector mContext = null;
 
         
-        public EDBNetworkStream(EDBConnector context, Socket socket, Boolean owner)
+        public EDBNetworkStream(Socket socket, Boolean owner)
             : base(socket, owner)
+        {
+        }
+
+        public void AttachConnector(EDBConnector context)
         {
             mContext = context;
         }
-
-        
 
         protected override void Dispose(bool disposing)
         {
             if (!disposing)
             {
-                mContext.Close();
-                mContext = null;
+                if (mContext != null)
+                {
+                    mContext.Close();
+                    mContext = null;
+                }
             }
 
             base.Dispose(disposing);
@@ -97,142 +102,145 @@ namespace EnterpriseDB.EDBClient
 		{
 			return Dns.GetHostAddresses(HostName);
 		}
+ 
 
-		public override void Open(EDBConnector context)
-		{
+        public override void Open(EDBConnector context, int timeout)
+        {
 			try
 			{
 				EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
 
-				/*TcpClient tcpc = new TcpClient();
-                tcpc.Connect(new IPEndPoint(ResolveIPHost(context.Host), context.Port));
-                Stream stream = tcpc.GetStream();*/
+                IAsyncResult result;
+                // Keep track of time remaining; Even though there may be multiple timeout-able calls,
+                // this allows us to still respect the caller's timeout expectation.
+                DateTime attemptStart;
 
-				/*socket.SetSocketOption (SocketOptionLevel.Socket, SocketOptionName.SendTimeout, context.ConnectionTimeout*1000);*/
+                attemptStart = DateTime.Now;
 
-				//socket.Connect(new IPEndPoint(ResolveIPHost(context.Host), context.Port));
+                result = Dns.BeginGetHostAddresses(context.Host, null, null);
 
-
-				/*Socket socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-                
-                IAsyncResult result = socket.BeginConnect(new IPEndPoint(ResolveIPHost(context.Host), context.Port), null, null);
-
-                if (!result.AsyncWaitHandle.WaitOne(context.ConnectionTimeout*1000, false))
+                if (!result.AsyncWaitHandle.WaitOne(timeout, true))
                 {
-                    socket.Close();
-                    throw new Exception(resman.GetString("Exception_ConnectionTimeout"));
+                    // Timeout was used up attempting the Dns lookup
+                    throw new TimeoutException(resman.GetString("Exception_DnsLookupTimeout"));
                 }
 
-                try
+                timeout -= Convert.ToInt32((DateTime.Now - attemptStart).TotalMilliseconds);
+
+                IPAddress[] ips = Dns.EndGetHostAddresses(result);
+                Socket socket = null;
+                Exception lastSocketException = null;
+
+                // try every ip address of the given hostname, use the first reachable one
+                // make sure not to exceed the caller's timeout expectation by splitting the
+                // time we have left between all the remaining ip's in the list.
+                for (int i = 0 ; i < ips.Length ; i++)
                 {
-                    socket.EndConnect(result);
+                    EDBEventLog.LogMsg(resman, "Log_ConnectingTo", LogLevel.Debug, ips[i]);
+
+                    IPEndPoint ep = new IPEndPoint(ips[i], context.Port);
+                    socket = new Socket(ep.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                    attemptStart = DateTime.Now;
+
+                    try
+                    {
+                        result = socket.BeginConnect(ep, null, null);
+
+                        if (!result.AsyncWaitHandle.WaitOne(timeout / (ips.Length - i), true))
+                        {
+                            throw new TimeoutException(resman.GetString("Exception_ConnectionTimeout"));
+                        }
+
+                        socket.EndConnect(result);
+
+                        // connect was successful, leave the loop
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        EDBEventLog.LogMsg(resman, "Log_FailedConnection", LogLevel.Normal, ips[i]);
+
+                        timeout -= Convert.ToInt32((DateTime.Now - attemptStart).TotalMilliseconds);
+                        lastSocketException = e;
+
+                        socket.Close();
+                        socket = null;
+                    }
                 }
-                catch (Exception)
+
+                if (socket == null)
                 {
-                    socket.Close();
-                    throw;
+                    throw lastSocketException;
                 }
-                */
 
-				IPAddress[] ips = ResolveIPHost(context.Host);
-				Socket socket = null;
-
-				// try every ip address of the given hostname, use the first reachable one
-				foreach (IPAddress ip in ips)
-				{
-					EDBEventLog.LogMsg(resman, "Log_ConnectingTo", LogLevel.Debug, ip);
-
-					IPEndPoint ep = new IPEndPoint(ip, context.Port);
-					socket = new Socket(ep.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-					try
-					{
-						IAsyncResult result = socket.BeginConnect(ep, null, null);
-
-						if (!result.AsyncWaitHandle.WaitOne(context.ConnectionTimeout*1000, true))
-						{
-							socket.Close();
-							throw new Exception(resman.GetString("Exception_ConnectionTimeout"));
-						}
-
-						socket.EndConnect(result);
-
-						// connect was successful, leave the loop
-						break;
-					}
-					catch (Exception)
-					{
-						EDBEventLog.LogMsg(resman, "Log_FailedConnection", LogLevel.Normal, ip);
-						socket.Close();
-					}
-				}
-
-				if (socket == null || !socket.Connected)
-				{
-					throw new Exception(string.Format(resman.GetString("Exception_FailedConnection"), context.Host));
-				}
-
-				//Stream stream = new NetworkStream(socket, true);
-                Stream stream = new EDBNetworkStream(context, socket, true);
-
+                EDBNetworkStream baseStream = new EDBNetworkStream(socket, true);
+                Stream sslStream = null;
 				// If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
 				if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))
 				{
-					PGUtil.WriteInt32(stream, 8);
-					PGUtil.WriteInt32(stream, 80877103);
-					// Receive response
+                    baseStream
+                        .WriteInt32(8)
+                        .WriteInt32(80877103);
 
-					Char response = (Char) stream.ReadByte();
-					if (response == 'S')
-					{
+                    // Receive response
+                    Char response = (Char) baseStream.ReadByte();
+
+                    if (response == 'S')
+                    {
                         //create empty collection
                         X509CertificateCollection clientCertificates = new X509CertificateCollection();
 
                         //trigger the callback to fetch some certificates
                         context.DefaultProvideClientCertificatesCallback(clientCertificates);
 
-                        stream = new SslClientStream(
-                            stream,
+                        //if (context.UseMonoSsl)
+                        if (!EDBConnector.UseSslStream)
+                        {
+                            SslClientStream sslStreamPriv;
+                        sslStreamPriv = new SslClientStream(
+                                    baseStream,
                             context.Host,
                             true,
                             SecurityProtocolType.Default,
                             clientCertificates);
 
-						((SslClientStream) stream).ClientCertSelectionDelegate =
-							new CertificateSelectionCallback(context.DefaultCertificateSelectionCallback);
-						((SslClientStream) stream).ServerCertValidationDelegate =
-							new CertificateValidationCallback(context.DefaultCertificateValidationCallback);
-						((SslClientStream) stream).PrivateKeyCertSelectionDelegate =
-							new PrivateKeySelectionCallback(context.DefaultPrivateKeySelectionCallback);
-					}
-					else if (context.SslMode == SslMode.Require)
-					{
-						throw new InvalidOperationException(resman.GetString("Exception_Ssl_RequestError"));
-					}
-				}
+                            sslStreamPriv.ClientCertSelectionDelegate =
+                                    new CertificateSelectionCallback(context.DefaultCertificateSelectionCallback);
+                            sslStreamPriv.ServerCertValidationDelegate =
+                                    new CertificateValidationCallback(context.DefaultCertificateValidationCallback);
+                            sslStreamPriv.PrivateKeyCertSelectionDelegate =
+                                    new PrivateKeySelectionCallback(context.DefaultPrivateKeySelectionCallback);
+                            sslStream = sslStreamPriv;
+                        }
+                        else
+                        {
+                            SslStream sslStreamPriv;
 
-				context.Stream = new BufferedStream(stream);
-				context.Socket = socket;
+                            sslStreamPriv = new SslStream(baseStream, true, context.DefaultValidateRemoteCertificateCallback);
 
+                            sslStreamPriv.AuthenticateAsClient(context.Host, clientCertificates, System.Security.Authentication.SslProtocols.Default, false);
+                            sslStream = sslStreamPriv;
+                        }
+                    }
+                    else if (context.SslMode == SslMode.Require)
+                    {
+                        throw new InvalidOperationException(resman.GetString("Exception_Ssl_RequestError"));
+                    }
+                }
 
-				EDBEventLog.LogMsg(resman, "Log_ConnectedTo", LogLevel.Normal, context.Host, context.Port);
-				ChangeState(context, EDBConnectedState.Instance);
-			}
-				//FIXME: Exceptions that come from what we are handling should be wrapped - e.g. an error connecting to
-				//the server should definitely be presented to the uesr as an EDBError. Exceptions from userland should
-				//be passed untouched - e.g. ThreadAbortException because the user started this in a thread they created and
-				//then aborted should be passed through.
-				//Are there any others that should be pass through? Alternatively, are there a finite number that should
-				//be wrapped?
-			catch (ThreadAbortException)
-			{
-				throw;
-			}
-			catch (Exception e)
-			{
-				throw new EDBException(e.Message, e);
-			}
-		}
+                context.Socket = socket;
+                context.BaseStream = baseStream;
+                context.Stream = new BufferedStream(sslStream == null ? baseStream : sslStream, 8192);
+
+                EDBEventLog.LogMsg(resman, "Log_ConnectedTo", LogLevel.Normal, context.Host, context.Port);
+                ChangeState(context, EDBConnectedState.Instance);
+            }
+            catch (Exception e)
+            {
+                throw new EDBException(string.Format(resman.GetString("Exception_FailedConnection"), context.Host), e);
+            }
+        }
 
 		public override void Close(EDBConnector context)
 		{

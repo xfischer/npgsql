@@ -42,7 +42,7 @@ namespace EnterpriseDB.EDBClient
 		// Flush and Sync messages. It doesn't need to be created every time it is called.
 		private static readonly EDBFlush _flushMessage = new EDBFlush();
 
-		private static readonly EDBSync _syncMessage = new EDBSync();
+//		private static readonly EDBSync _syncMessage = new EDBSync();
 
         private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
@@ -50,6 +50,14 @@ namespace EnterpriseDB.EDBClient
 			: base()
 		{
 		}
+        
+        public override void Query(EDBConnector context, EDBQuery query)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Query");
+
+            query.WriteToStream(context.Stream);
+        }
+
 
 		public override IEnumerable<IServerResponseObject> QueryEnum(EDBConnector context, EDBCommand command)
 		{
@@ -101,8 +109,8 @@ namespace EnterpriseDB.EDBClient
 		public override IEnumerable<IServerResponseObject> SyncEnum(EDBConnector context)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Sync");
-			_syncMessage.WriteToStream(context.Stream);
-			context.Stream.Flush();
+            EDBSync.Default.WriteToStream(context.Stream);
+            context.Stream.Flush();
 			return ProcessBackendResponsesEnum(context);
 		}
 
@@ -110,7 +118,7 @@ namespace EnterpriseDB.EDBClient
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Flush");
 			_flushMessage.WriteToStream(context.Stream);
-			context.Stream.Flush();
+			 context.Stream.Flush();
 			ProcessBackendResponses(context);
 		}
 
@@ -121,7 +129,7 @@ namespace EnterpriseDB.EDBClient
 			Stream stream = context.Stream;
 
 			bind.WriteToStream(stream);
-			//stream.Flush();
+			  stream.Flush();
 		}
 
 		public override void Describe(EDBConnector context, EDBDescribe describe)
@@ -134,19 +142,51 @@ namespace EnterpriseDB.EDBClient
 		public override void Execute(EDBConnector context, EDBExecute execute)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Execute");
-			EDBDescribe describe = new EDBDescribe('P', execute.PortalName);
+	//		EDBDescribe describe = new EDBDescribe('P', execute.PortalName);
+            EDBDescribe describe = new EDBDescribePortal(execute.PortalName);
+		
 			Stream stream = context.Stream;
-			describe.WriteToStream(stream);
+		/*
+         * //	describe.WriteToStream(stream);
 			execute.WriteToStream(stream);
-			//stream.Flush();
+			//stream.Flush();*/
+
+
+            /*
+            * EDBTeam:
+            * Handling of parse of describe messages
+            */
+            if (isSupportCallable)	//EDB Team 
+            {
+                if (isEDBProtocol) //in case 'P' messege 
+                {
+                    describe.WriteToStream(stream);
+                    execute.WriteToStream(stream);
+                }
+                else //in case 'O' messege in Parse 
+                {
+                    describe.WriteToStream(stream);
+                    describe.WriteToStreamDescribeOut(stream);
+                    execute.WriteToStream(stream);
+                    execute.WriteToStreamExecuteOut(stream);
+                }
+
+            }
+            else
+            {
+                //  describe.WriteToStream(stream);
+                execute.WriteToStream(stream);
+            }
+           // stream.Flush();
 			Sync(context);
+            Sync(context); 
 		}
 
 		public override IEnumerable<IServerResponseObject> ExecuteEnum(EDBConnector context, EDBExecute execute)
 		{
             
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Execute");
-			EDBDescribe describe = new EDBDescribe('P', execute.PortalName);
+			EDBDescribe describe = new EDBDescribePortal(execute.PortalName);
 			Stream stream = context.Stream;
             /*
              * EDBTeam:
@@ -170,7 +210,7 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
-                describe.WriteToStream(stream);
+              //  describe.WriteToStream(stream);
                 execute.WriteToStream(stream);
             }
             return SyncEnum(context);
@@ -183,7 +223,8 @@ namespace EnterpriseDB.EDBClient
 			stream.WriteByte((byte) FrontEndMessageCode.Termination);
 			if (context.BackendProtocolVersion >= ProtocolVersion.Version3)
 			{
-				PGUtil.WriteInt32(stream, 4);
+                stream
+				.WriteInt32(4);
 			}
 			stream.Flush();
 
