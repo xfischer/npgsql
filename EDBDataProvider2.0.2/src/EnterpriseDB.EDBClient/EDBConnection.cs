@@ -30,13 +30,13 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Net.Security;
 using System.Reflection;
 using System.Resources;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Transactions;
 using Mono.Security.Protocol.Tls;
+using System.Reflection;
 using IsolationLevel = System.Data.IsolationLevel;
 
 #if WITHDESIGN
@@ -100,7 +100,6 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Mono.Security.Protocol.Tls.CertificateSelectionCallback delegate.
 		/// </summary>
-        [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
 		public event CertificateSelectionCallback CertificateSelectionCallback;
 
 		internal CertificateSelectionCallback CertificateSelectionCallbackDelegate;
@@ -108,7 +107,6 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Mono.Security.Protocol.Tls.CertificateValidationCallback delegate.
 		/// </summary>
-        [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
 		public event CertificateValidationCallback CertificateValidationCallback;
 
 		internal CertificateValidationCallback CertificateValidationCallbackDelegate;
@@ -116,21 +114,15 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Mono.Security.Protocol.Tls.PrivateKeySelectionCallback delegate.
 		/// </summary>
-        [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
 		public event PrivateKeySelectionCallback PrivateKeySelectionCallback;
 
 		internal PrivateKeySelectionCallback PrivateKeySelectionCallbackDelegate;
 
-        public event ValidateRemoteCertificateCallback ValidateRemoteCertificateCallback;
-        internal ValidateRemoteCertificateCallback ValidateRemoteCertificateCallbackDelegate;
 		// Set this when disposed is called.
 		private bool disposed = false;
 
 		// Used when we closed the connector due to an error, but are pretending it's open.
 		private bool _fakingOpen;
-        // (the actual close is postponed until the scope ends)
-        private bool _postponingClose;
-        private bool _postponingDispose;
 
 		// Strong-typed ConnectionString values
 		private EDBConnectionStringBuilder settings;
@@ -140,7 +132,6 @@ namespace EnterpriseDB.EDBClient
 
         private EDBPromotableSinglePhaseNotification promotable = null;
 
-        private string _connectionString;
 
 		/// <summary>
 		/// Initializes a new instance of the
@@ -151,16 +142,35 @@ namespace EnterpriseDB.EDBClient
 		{
 		}
 
-        private void Init()
-        {
-            NoticeDelegate = new NoticeEventHandler(OnNotice);
-            NotificationDelegate = new NotificationEventHandler(OnNotification);
+		/// <summary>
+		/// Initializes a new instance of the
+		/// <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see> class
+		/// and sets the <see cref="Npgsql.NpgsqlConnection.ConnectionString">ConnectionString</see>.
+		/// </summary>
+		/// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
+		public EDBConnection(String ConnectionString)
+		{
+			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "NpgsqlConnection()");
+
+			EDBConnectionStringBuilder builder = cache[ConnectionString];
+			if (builder == null)
+			{
+				settings = new EDBConnectionStringBuilder(ConnectionString);
+			}
+			else
+			{
+				settings = builder.Clone();
+			}
+
+			LogConnectionString();
+
+			NoticeDelegate = new NoticeEventHandler(OnNotice);
+			NotificationDelegate = new NotificationEventHandler(OnNotification);
 
             ProvideClientCertificatesCallbackDelegate = new ProvideClientCertificatesCallback(DefaultProvideClientCertificatesCallback);
 			CertificateValidationCallbackDelegate = new CertificateValidationCallback(DefaultCertificateValidationCallback);
 			CertificateSelectionCallbackDelegate = new CertificateSelectionCallback(DefaultCertificateSelectionCallback);
 			PrivateKeySelectionCallbackDelegate = new PrivateKeySelectionCallback(DefaultPrivateKeySelectionCallback);
-            ValidateRemoteCertificateCallbackDelegate = new ValidateRemoteCertificateCallback(DefaultValidateRemoteCertificateCallback);
 
 			// Fix authentication problems. See https://bugzilla.novell.com/show_bug.cgi?id=MONO77559 and 
 			// http://pgfoundry.org/forum/message.php?msg_id=1002377 for more info.
@@ -170,88 +180,63 @@ namespace EnterpriseDB.EDBClient
 		}
 
 		/// <summary>
-        public EDBConnection(String ConnectionString)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "EDBConnection()");
-
-            LoadConnectionStringBuilder(ConnectionString);
-
-            Init();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see> class
-        /// and sets the <see cref="Npgsql.NpgsqlConnection.ConnectionString">ConnectionString</see>.
-        /// </summary>
-        /// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
-        public EDBConnection(EDBConnectionStringBuilder ConnectionString)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "EDBConnection()");
-
-            LoadConnectionStringBuilder(ConnectionString);
-
-            Init();
-        }
-
-        /// <summary>
-        /// Gets or sets the string used to connect to a PostgreSQL database.
-        /// Valid values are:
-        /// <ul>
-        /// <li>
-        /// Server:             Address/Name of Postgresql Server;
-        /// </li>
-        /// <li>
-        /// Port:               Port to connect to;
-        /// </li>
-        /// <li>
-        /// Protocol:           Protocol version to use, instead of automatic; Integer 2 or 3;
-        /// </li>
-        /// <li>
-        /// Database:           Database name. Defaults to user name if not specified;
-        /// </li>
-        /// <li>
-        /// User Id:            User name;
-        /// </li>
-        /// <li>
-        /// Password:           Password for clear text authentication;
-        /// </li>
-        /// <li>
-        /// SSL:                True or False. Controls whether to attempt a secure connection. Default = False;
-        /// </li>
-        /// <li>
-        /// Pooling:            True or False. Controls whether connection pooling is used. Default = True;
-        /// </li>
-        /// <li>
-        /// MinPoolSize:        Min size of connection pool;
-        /// </li>
-        /// <li>
-        /// MaxPoolSize:        Max size of connection pool;
-        /// </li>
-        /// <li>
-        /// Timeout:            Time to wait for connection open in seconds. Default is 15.
-        /// </li>
-        /// <li>
-        /// CommandTimeout:     Time to wait for command to finish execution before throw an exception. In seconds. Default is 20.
-        /// </li>
-        /// <li>
-        /// Sslmode:            Mode for ssl connection control. Can be Prefer, Require, Allow or Disable. Default is Disable. Check user manual for explanation of values.
-        /// </li>
-        /// <li>
-        /// ConnectionLifeTime: Time to wait before closing unused connections in the pool in seconds. Default is 15.
-        /// </li>
-        /// <li>
-        /// SyncNotification:   Specifies if Npgsql should use synchronous notifications.
-        /// </li>
-        /// <li>
-        /// SearchPath: Changes search path to specified and public schemas.
-        /// </li>
-        /// </ul>
-        /// </summary>
-        /// <value>The connection string that includes the server name,
-        /// the database name, and other parameters needed to establish
-        /// the initial connection. The default value is an empty string.
-        /// </value>
+		/// Gets or sets the string used to connect to a PostgreSQL database.
+		/// Valid values are:
+		/// <ul>
+		/// <li>
+		/// Server:             Address/Name of Postgresql Server;
+		/// </li>
+		/// <li>
+		/// Port:               Port to connect to;
+		/// </li>
+		/// <li>
+		/// Protocol:           Protocol version to use, instead of automatic; Integer 2 or 3;
+		/// </li>
+		/// <li>
+		/// Database:           Database name. Defaults to user name if not specified;
+		/// </li>
+		/// <li>
+		/// User Id:            User name;
+		/// </li>
+		/// <li>
+		/// Password:           Password for clear text authentication;
+		/// </li>
+		/// <li>
+		/// SSL:                True or False. Controls whether to attempt a secure connection. Default = False;
+		/// </li>
+		/// <li>
+		/// Pooling:            True or False. Controls whether connection pooling is used. Default = True;
+		/// </li>
+		/// <li>
+		/// MinPoolSize:        Min size of connection pool;
+		/// </li>
+		/// <li>
+		/// MaxPoolSize:        Max size of connection pool;
+		/// </li>
+		/// <li>
+		/// Timeout:            Time to wait for connection open in seconds. Default is 15.
+		/// </li>
+		/// <li>
+		/// CommandTimeout:     Time to wait for command to finish execution before throw an exception. In seconds. Default is 20.
+		/// </li>
+		/// <li>
+		/// Sslmode:            Mode for ssl connection control. Can be Prefer, Require, Allow or Disable. Default is Disable. Check user manual for explanation of values.
+		/// </li>
+		/// <li>
+		/// ConnectionLifeTime: Time to wait before closing unused connections in the pool in seconds. Default is 15.
+		/// </li>
+		/// <li>
+		/// SyncNotification:   Specifies if Npgsql should use synchronous notifications.
+		/// </li>
+		/// <li>
+		/// SearchPath: Changes search path to specified and public schemas.
+		/// </li>
+		/// </ul>
+		/// </summary>
+		/// <value>The connection string that includes the server name,
+		/// the database name, and other parameters needed to establish
+		/// the initial connection. The default value is an empty string.
+		/// </value>
 
 #if WITHDESIGN
         [RefreshProperties(RefreshProperties.All), DefaultValue(""), RecommendedAsConfigurable(true)]
@@ -259,32 +244,27 @@ namespace EnterpriseDB.EDBClient
         [Editor(typeof(ConnectionStringEditor), typeof(System.Drawing.Design.UITypeEditor))]
 #endif
 
-        public override String ConnectionString
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_connectionString))
-                    RefreshConnectionString();
-                return settings.ConnectionString;
-            }
-            set
-            {
-                // Connection string is used as the key to the connector.  Because of this,
-                // we cannot change it while we own a connector.
-                CheckConnectionClosed();
-                EDBEventLog.LogPropertySet(LogLevel.Debug, CLASSNAME, "ConnectionString", value);
-                EDBConnectionStringBuilder builder = cache[value];
-                if (builder == null)
-                {
-                    settings = new EDBConnectionStringBuilder(value);
-                }
-                else
-                {
-                    settings = builder.Clone();
-                }
-                LoadConnectionStringBuilder(value);
-            }
-        }
+		public override String ConnectionString
+		{
+			get { return settings.ConnectionString; }
+			set
+			{
+				// Connection string is used as the key to the connector.  Because of this,
+				// we cannot change it while we own a connector.
+				CheckConnectionClosed();
+				EDBEventLog.LogPropertySet(LogLevel.Debug, CLASSNAME, "ConnectionString", value);
+				EDBConnectionStringBuilder builder = cache[value];
+				if (builder == null)
+				{
+					settings = new EDBConnectionStringBuilder(value);
+				}
+				else
+				{
+					settings = builder.Clone();
+				}
+				LogConnectionString();
+			}
+		}
 
 		/// <summary>
 		/// Backend server host name.
@@ -313,18 +293,11 @@ namespace EnterpriseDB.EDBClient
 			get { return settings.SSL; }
 		}
 
-
-        public Boolean UseSslStream
-        {
-            get { return EDBConnector.UseSslStream; }
-            set { EDBConnector.UseSslStream = value; }
-        }
-
-        /// <summary>
-        /// Gets the time to wait while trying to establish a connection
-        /// before terminating the attempt and generating an error.
-        /// </summary>
-        /// <value>The time (in seconds) to wait for a connection to open. The default value is 15 seconds.</value>
+		/// <summary>
+		/// Gets the time to wait while trying to establish a connection
+		/// before terminating the attempt and generating an error.
+		/// </summary>
+		/// <value>The time (in seconds) to wait for a connection to open. The default value is 15 seconds.</value>
 
 #if WITHDESIGN
         [NpgsqlSysDescription("Description_ConnectionTimeout", typeof(NpgsqlConnection))]
@@ -367,7 +340,7 @@ namespace EnterpriseDB.EDBClient
 		/// <value>The name of the current database or the name of the database to be
 		/// used after a connection is opened. The default value is the empty string.</value>
 #if WITHDESIGN
-        [EDBSysDescription("Description_Database", typeof(EDBConnection))]
+        [NpgsqlSysDescription("Description_Database", typeof(NpgsqlConnection))]
 #endif
 
 		public override String Database
@@ -409,18 +382,18 @@ namespace EnterpriseDB.EDBClient
 		{
 			get
 			{
-                //CheckNotDisposed();
+				CheckNotDisposed();
 
-                if (connector != null && !disposed)
-                {
-                    return connector.State;
-                }
-                else
-                {
-                    return ConnectionState.Closed;
-                }
-            }
-        }
+				if (connector != null)
+				{
+					return connector.State;
+				}
+				else
+				{
+					return ConnectionState.Closed;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets whether the current state of the connection is Open or Closed
@@ -436,7 +409,7 @@ namespace EnterpriseDB.EDBClient
         }
 
 
-        public Version EDBCompatibilityVersion
+        public Version NpgsqlCompatibilityVersion
         {
             get
             {
@@ -491,61 +464,19 @@ namespace EnterpriseDB.EDBClient
 			}
 		}
 
-        /// <summary>
-        /// Report whether the backend is expecting standard conformant strings.
-        /// In version 8.1, Postgres began reporting this value (false), but did not actually support standard conformant strings.
-        /// In version 8.2, Postgres began supporting standard conformant strings, but defaulted this flag to false.
-        /// As of version 9.1, this flag defaults to true.
-        /// </summary>
-        [Browsable(false)]
-        public Boolean UseConformantStrings
-        {
-            get
-            {
-                CheckConnectionOpen();
-                return connector.NativeToBackendTypeConverterOptions.UseConformantStrings;
-            }
-        }
-
-        /// <summary>
-        /// Report whether the backend understands the string literal E prefix (>= 8.1).
-        /// </summary>
-        [Browsable(false)]
-        public Boolean Supports_E_StringPrefix
-        {
-            get
-            {
-                CheckConnectionOpen();
-                return connector.NativeToBackendTypeConverterOptions.Supports_E_StringPrefix;
-            }
-        }
-
-        /// <summary>
-        /// Report whether the backend understands the hex byte format (>= 9.0).
-        /// </summary>
-        [Browsable(false)]
-        public Boolean SupportsHexByteFormat
-        {
-            get
-            {
-                CheckConnectionOpen();
-                return connector.NativeToBackendTypeConverterOptions.SupportsHexByteFormat;
-            }
-        }
-
-        /// <summary>
-        /// Begins a database transaction with the specified isolation level.
-        /// </summary>
-        /// <param name="isolationLevel">The <see cref="System.Data.IsolationLevel">isolation level</see> under which the transaction should run.</param>
-        /// <returns>An <see cref="System.Data.Common.DbTransaction">DbTransaction</see>
-        /// object representing the new transaction.</returns>
-        /// <remarks>
-        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
-        /// There's no support for nested transactions.
-        /// </remarks>
-        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginDbTransaction", isolationLevel);
+		/// <summary>
+		/// Begins a database transaction with the specified isolation level.
+		/// </summary>
+		/// <param name="isolationLevel">The <see cref="System.Data.IsolationLevel">isolation level</see> under which the transaction should run.</param>
+		/// <returns>An <see cref="System.Data.Common.DbTransaction">DbTransaction</see>
+		/// object representing the new transaction.</returns>
+		/// <remarks>
+		/// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
+		/// There's no support for nested transactions.
+		/// </remarks>
+		protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+		{
+			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginDbTransaction", isolationLevel);
 
 			return BeginTransaction(isolationLevel);
 		}
@@ -594,10 +525,6 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		public override void Open()
 		{
-            // If we're postponing a close (see doc on this variable), the connection is already
-            // open and can be silently reused
-            if (_postponingClose)
-                return;
 			CheckConnectionClosed();
 
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
@@ -614,23 +541,8 @@ namespace EnterpriseDB.EDBClient
 											EDBConnectionStringBuilder.GetKeyName(Keywords.UserName));
 			}
 
-            // Get a Connector, either from the pool or creating one ourselves.
-            if (Pooling)
-            {
-                connector = EDBConnectorPool.ConnectorPoolMgr.RequestConnector(this);
-            }
-            else
-            {
-                connector = new EDBConnector(this);
-
-                connector.ProvideClientCertificatesCallback += ProvideClientCertificatesCallbackDelegate;
-                connector.CertificateSelectionCallback += CertificateSelectionCallbackDelegate;
-                connector.CertificateValidationCallback += CertificateValidationCallbackDelegate;
-                connector.PrivateKeySelectionCallback += PrivateKeySelectionCallbackDelegate;
-                connector.ValidateRemoteCertificateCallback += ValidateRemoteCertificateCallbackDelegate;
-
-                connector.Open();
-            }
+			// Get a Connector.  The connector returned is guaranteed to be connected and ready to go.
+			connector = EDBConnectorPool.ConnectorPoolMgr.RequestConnector(this);
 
 			connector.Notice += NoticeDelegate;
 			connector.Notification += NotificationDelegate;
@@ -644,7 +556,6 @@ namespace EnterpriseDB.EDBClient
 			{
 				Promotable.Enlist(Transaction.Current);
 			}
-            this.OnStateChange (new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open));
 		}
 
 		/// <summary>
@@ -672,10 +583,7 @@ namespace EnterpriseDB.EDBClient
 
 			Close();
 
-            // Mutating the current `settings` object would invalidate the cached instance, so work on a copy instead.
-            settings = settings.Clone();
-            settings[Keywords.Database] = dbName;
-            _connectionString = null;
+			settings[Keywords.Database] = dbName;
 
 			Open();
 		}
@@ -693,25 +601,11 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Close");
 
-            if (connector == null)
-                return;
-
-            if (promotable != null && promotable.InLocalTransaction)
+            if (connector != null)
             {
-                _postponingClose = true;
-                return;
-            }
-
-            ReallyClose();
-        }
-
-        private void ReallyClose()
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ReallyClose");
-            _postponingClose = false;
-
-            // clear the way for another promotable transaction
-            promotable = null;
+                Promotable.Prepare();
+                // clear the way for another promotable transaction
+                promotable = null;
 
                 connector.Notification -= NotificationDelegate;
                 connector.Notice -= NoticeDelegate;
@@ -721,43 +615,13 @@ namespace EnterpriseDB.EDBClient
                     connector.RemoveNotificationThread();
                 }
 
-            if (Pooling)
-            {
                 EDBConnectorPool.ConnectorPoolMgr.ReleaseConnector(this, connector);
+
+
+                connector = null;
+
             }
-            else
-            {
-                Connector.ProvideClientCertificatesCallback -= ProvideClientCertificatesCallbackDelegate;
-                Connector.CertificateSelectionCallback -= CertificateSelectionCallbackDelegate;
-                Connector.CertificateValidationCallback -= CertificateValidationCallbackDelegate;
-                Connector.PrivateKeySelectionCallback -= PrivateKeySelectionCallbackDelegate;
-                Connector.ValidateRemoteCertificateCallback -= ValidateRemoteCertificateCallbackDelegate;
-
-                if (Connector.Transaction != null)
-                {
-                    Connector.Transaction.Cancel();
-                }
-
-                Connector.Close();
-            }
-
-            connector = null;
-
-            this.OnStateChange (new StateChangeEventArgs(ConnectionState.Open, ConnectionState.Closed));
-        }
-
-        /// <summary>
-        /// When a connection is closed within an enclosing TransactionScope and the transaction
-        /// hasn't been promoted, we defer the actual closing until the scope ends.
-        /// </summary>
-        internal void PromotableLocalTransactionEnded()
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "PromotableLocalTransactionEnded");
-            if (_postponingDispose)
-                Dispose(true);
-            else if (_postponingClose)
-                ReallyClose();
-        }
+		}
 
 		/// <summary>
 		/// Creates and returns a <see cref="System.Data.Common.DbCommand">DbCommand</see>
@@ -771,10 +635,10 @@ namespace EnterpriseDB.EDBClient
 		}
 
 		/// <summary>
-		/// Creates and returns a <see cref="EDB.EDBCommand">EDBCommand</see>
-		/// object associated with the <see cref="EDB.EDBConnection">EDBConnection</see>.
+		/// Creates and returns a <see cref="Npgsql.NpgsqlCommand">NpgsqlCommand</see>
+		/// object associated with the <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see>.
 		/// </summary>
-		/// <returns>A <see cref="EDB.EDBCommand">EDBCommand</see> object.</returns>
+		/// <returns>A <see cref="Npgsql.NpgsqlCommand">NpgsqlCommand</see> object.</returns>
 		public new EDBCommand CreateCommand()
 		{
 			CheckNotDisposed();
@@ -785,35 +649,37 @@ namespace EnterpriseDB.EDBClient
 
 		/// <summary>
 		/// Releases all resources used by the
-		/// <see cref="EDB.EDBConnection">EDBConnection</see>.
+		/// <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see>.
 		/// </summary>
 		/// <param name="disposing"><b>true</b> when called from Dispose();
 		/// <b>false</b> when being called from the finalizer.</param>
 		protected override void Dispose(bool disposing)
 		{
 			if (!disposed)
-                return;
-
-            _postponingDispose = false;
+			{
 				if (disposing)
 				{
 					EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Dispose");
 					Close();
-                if (_postponingClose)
-                {
-                    _postponingDispose = true;
-                    return;
-                }
-            }
+				}
+				else
+				{
+					if (FullState != ConnectionState.Closed)
+					{
+						EDBEventLog.LogMsg(resman, "Log_ConnectionLeaking", LogLevel.Debug);
+						EDBConnectorPool.ConnectorPoolMgr.FixPoolCountBecauseOfConnectionDisposeFalse(this);
+					}
+				}
 
-            base.Dispose(disposing);
-            disposed = true;
-        }
+				base.Dispose(disposing);
+				disposed = true;
+			}
+		}
 
 		/// <summary>
 		/// Create a new connection based on this one.
 		/// </summary>
-		/// <returns>A new EDBConnection object.</returns>
+		/// <returns>A new NpgsqlConnection object.</returns>
 		Object ICloneable.Clone()
 		{
 			return Clone();
@@ -822,7 +688,7 @@ namespace EnterpriseDB.EDBClient
 		/// <summary>
 		/// Create a new connection based on this one.
 		/// </summary>
-		/// <returns>A new EDBConnection object.</returns>
+		/// <returns>A new NpgsqlConnection object.</returns>
 		public EDBConnection Clone()
 		{
 			CheckNotDisposed();
@@ -858,25 +724,17 @@ namespace EnterpriseDB.EDBClient
 			}
 		}
 
-        /// <summary>
-        /// Returns a copy of the EDBConnectionStringBuilder that contains the parsed connection string values.
-        /// </summary>
-        internal EDBConnectionStringBuilder CopyConnectionStringBuilder()
-        {
-            return settings.Clone();
-        }
-
-        /// <summary>
-        /// The connector object connected to the backend.
-        /// </summary>
-        internal EDBConnector Connector
-        {
-            get { return connector; }
-        }
+		/// <summary>
+		/// The connector object connected to the backend.
+		/// </summary>
+		internal EDBConnector Connector
+		{
+			get { return connector; }
+		}
 
 
 		/// <summary>
-		/// Gets the EDBConnectionStringBuilder containing the parsed connection string values.
+		/// Gets the NpgsqlConnectionStringBuilder containing the parsed connection string values.
 		/// </summary>
 		internal EDBConnectionStringBuilder ConnectionStringValues
 		{
@@ -998,24 +856,10 @@ namespace EnterpriseDB.EDBClient
                 ProvideClientCertificatesCallback(certificates);
             }
         }
-//TOOO ZK checkme
-        /// <summary>
-        /// Default SSL ValidateRemoteCertificateCallback implementation.
-        /// </summary>
-        internal bool DefaultValidateRemoteCertificateCallback(X509Certificate cert, X509Chain chain, SslPolicyErrors errors)
-        {
-            if (ValidateRemoteCertificateCallback != null)
-            {
-                return ValidateRemoteCertificateCallback(cert, chain, errors);
-            }
-            else
-            {
-                return true;
-            }
-        }
 
-        //
-        // Private methods and properties
+
+		//
+		// Private methods and properties
         //
 
         private EDBPromotableSinglePhaseNotification Promotable
@@ -1029,50 +873,11 @@ namespace EnterpriseDB.EDBClient
 		/// </summary>
 		private void LogConnectionString()
 		{
-            if (LogLevel.Debug >= EDBEventLog.Level)
-                return;
-
 			foreach (string key in settings.Keys)
 			{
 				EDBEventLog.LogMsg(resman, "Log_ConnectionStringValues", LogLevel.Debug, key, settings[key]);
 			}
-        }
-
-        /// <summary>
-        /// Sets the `settings` ConnectionStringBuilder based on the given `connectionString`
-        /// </summary>
-        /// <param name="connectionString">The connection string to load the builder from</param>
-        private void LoadConnectionStringBuilder(string connectionString)
-        {
-            settings = cache[connectionString];
-            if (settings == null)
-            {
-                settings = new EDBConnectionStringBuilder(connectionString);
-                cache[connectionString] = settings;
-            }
-
-            RefreshConnectionString();
-            LogConnectionString();
-        }
-
-        /// <summary>
-        /// Sets the `settings` ConnectionStringBuilder based on the given `connectionString`
-        /// </summary>
-        /// <param name="connectionString">The connection string to load the builder from</param>
-        private void LoadConnectionStringBuilder(EDBConnectionStringBuilder connectionString)
-        {
-            settings = connectionString;
-            RefreshConnectionString();
-            LogConnectionString();
-        }
-
-        /// <summary>
-        /// Refresh the cached _connectionString whenever the builder settings change
-        /// </summary>
-        private void RefreshConnectionString()
-        {
-            _connectionString = settings.ConnectionString;
-        }
+		}
 
 		private void CheckConnectionOpen()
 		{
@@ -1097,11 +902,11 @@ namespace EnterpriseDB.EDBClient
 				_fakingOpen = false;
 			}
 
-            if (_postponingClose || connector == null)
-            {
-                throw new InvalidOperationException(resman.GetString("Exception_ConnNotOpen"));
-            }
-        }
+			if (connector == null)
+			{
+				throw new InvalidOperationException(resman.GetString("Exception_ConnNotOpen"));
+			}
+		}
 
 		private void CheckConnectionClosed()
 		{
@@ -1154,44 +959,41 @@ namespace EnterpriseDB.EDBClient
 		/// <returns>The collection specified.</returns>
 		public override DataTable GetSchema(string collectionName, string[] restrictions)
 		{
-            using (var tempConn = new EDBConnection(ConnectionString))
-            {
-                switch (collectionName)
-                {
-                    case "MetaDataCollections":
-                        return EDBSchema.GetMetaDataCollections();
-                    case "Restrictions":
-                        return EDBSchema.GetRestrictions();
-                    case "DataSourceInformation":
-                        return EDBSchema.GetDataSourceInformation();
-                    case "DataTypes":
-                        throw new NotSupportedException();
-                    case "ReservedWords":
-                        return EDBSchema.GetReservedWords();
-                        // custom collections for EDB
-                    case "Databases":
-                        return EDBSchema.GetDatabases(tempConn, restrictions);
-                    case "Tables":
-                        return EDBSchema.GetTables(tempConn, restrictions);
-                    case "Columns":
-                        return EDBSchema.GetColumns(tempConn, restrictions);
-                    case "Views":
-                        return EDBSchema.GetViews(tempConn, restrictions);
-                    case "Users":
-                        return EDBSchema.GetUsers(tempConn, restrictions);
-                    case "Indexes":
-                        return EDBSchema.GetIndexes(tempConn, restrictions);
-                    case "IndexColumns":
-                        return EDBSchema.GetIndexColumns(tempConn, restrictions);
-                    case "ForeignKeys":
-                        return EDBSchema.GetForeignKeys(tempConn, restrictions);
-                    default:
-                        throw new ArgumentOutOfRangeException("collectionName", collectionName, "Invalid collection name");
-                }
-            }
-        }
+			switch (collectionName)
+			{
+				case "MetaDataCollections":
+					return EDBSchema.GetMetaDataCollections();
+				case "Restrictions":
+					return EDBSchema.GetRestrictions();
+				case "DataSourceInformation":
+					return EDBSchema.GetDataSourceInformation();
+				case "DataTypes":
+                    throw new NotSupportedException();
+                case "ReservedWords":
+			        return EDBSchema.GetReservedWords();
+				// custom collections for npgsql
+				case "Databases":
+					return new EDBSchema(new EDBConnection(ConnectionString)).GetDatabases(restrictions);
+				case "Tables":
+					return new EDBSchema(new EDBConnection(ConnectionString)).GetTables(restrictions);
+				case "Columns":
+					return new EDBSchema(new EDBConnection(ConnectionString)).GetColumns(restrictions);
+				case "Views":
+					return new EDBSchema(new EDBConnection(ConnectionString)).GetViews(restrictions);
+				case "Users":
+					return new EDBSchema(new EDBConnection(ConnectionString)).GetUsers(restrictions);
+                case "Indexes":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetIndexes(restrictions);
+                case "IndexColumns":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetIndexColumns(restrictions);
+                case "ForeignKeys":
+                    return new EDBSchema(new EDBConnection(ConnectionString)).GetForeignKeys(restrictions);
+				default:
+					throw new NotSupportedException();
+			}
+		}
 
-		public  void ClearPool()
+		public void ClearPool()
 		{
 			EDBConnectorPool.ConnectorPoolMgr.ClearPool(this);
 		}
@@ -1211,7 +1013,7 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                return EDBFactory.Instance;
+                return NpgsqlFactory.Instance;
             }
         }
 #endif

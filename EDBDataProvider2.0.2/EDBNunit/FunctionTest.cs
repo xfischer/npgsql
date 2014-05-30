@@ -670,7 +670,7 @@ namespace DOTNET
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 
-			//////////////codef
+			//////////////code
 			try
 			{
 				command = new EDBCommand("FunctionWithFloat(:v_in,:v_inout,:v_out)",con);
@@ -1325,7 +1325,7 @@ namespace DOTNET
 				Assert.AreEqual("10000",command.Parameters[0].Value.ToString());
 				Console.WriteLine(command.Parameters[0].Value.ToString());
 				
-				Assert.AreEqual("10000",command.Parameters[1].Value.ToString());	
+				Assert.AreEqual("10000.00",command.Parameters[1].Value.ToString());	
 				Console.WriteLine(command.Parameters[1].Value.ToString());
 				Assert.AreEqual("-2.00",command.Parameters[2].Value.ToString());	
 				Console.WriteLine(command.Parameters[2].Value.ToString());

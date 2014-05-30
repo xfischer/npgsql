@@ -33,6 +33,7 @@ using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {

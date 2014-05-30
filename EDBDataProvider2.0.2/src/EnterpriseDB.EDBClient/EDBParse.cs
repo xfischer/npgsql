@@ -42,31 +42,22 @@ namespace EnterpriseDB.EDBClient
 		// Logging related values
         //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		private readonly byte[] _bPrepareName;
-        private readonly byte[] _bQueryString;
+		private readonly String _prepareName;
+		private readonly String _queryString;
 		private readonly Int32[] _parameterIDs;
         private String _commandType;
         private EDBParameterCollection _parameters;
 
 
-        public EDBParse(String prepareName, byte[] queryString, Int32[] parameterIDs, EDBParameterCollection parameters, EDBCommand command)
+        public EDBParse(String prepareName, String queryString, Int32[] parameterIDs, EDBParameterCollection parameters, EDBCommand command)
 		{
-		 _bPrepareName = BackendEncoding.UTF8Encoding.GetBytes(prepareName);
-            _bQueryString = queryString;
-
+			_prepareName = prepareName;
+			_queryString = queryString;
 			_parameterIDs = parameterIDs;
             _parameters = parameters;
             _commandType = command.CommandType.ToString();
 		}
-        public EDBParse(String prepareName, string queryString, Int32[] parameterIDs, EDBParameterCollection parameters, EDBCommand command)
-        {
-            _bPrepareName = BackendEncoding.UTF8Encoding.GetBytes(prepareName);
-            _bQueryString = BackendEncoding.UTF8Encoding.GetBytes(queryString); ;
 
-            _parameterIDs = parameterIDs;
-            _parameters = parameters;
-            _commandType = command.CommandType.ToString();
-        }
 		public override void WriteToStream(Stream outputStream)
 		{
 			outputStream.WriteByte((byte) FrontEndMessageCode.Parse);
@@ -77,20 +68,19 @@ namespace EnterpriseDB.EDBClient
 			// query string + 1 null string terminator
 			// + Int16
 			// + Int32 * number of parameters.
-			Int32 messageLength = 4 + _bPrepareName.Length + 1 +  _bQueryString.Length + 1 +
+			Int32 messageLength = 4 + UTF8Encoding.GetByteCount(_prepareName) + 1 + UTF8Encoding.GetByteCount(_queryString) + 1 +
 			                      2 + (_parameterIDs.Length*4);
 			//Int32 messageLength = 4 + _prepareName.Length + 1 + _queryString.Length + 1 + 2 + (_parameterIDs.Length * 4);
 
-		   outputStream
-                .WriteInt32(messageLength)
-                .WriteBytesNullTerminated(_bPrepareName)
-                .WriteBytesNullTerminated(_bQueryString)
-                .WriteInt16((Int16)_parameterIDs.Length);
+			PGUtil.WriteInt32(outputStream, messageLength);
+			PGUtil.WriteString(_prepareName, outputStream);
+			PGUtil.WriteString(_queryString, outputStream);
+			PGUtil.WriteInt16(outputStream, (Int16) _parameterIDs.Length);
 
 
 			for (Int32 i = 0; i < _parameterIDs.Length; i++)
 			{
-				 outputStream.WriteInt32(_parameterIDs[i]);
+				PGUtil.WriteInt32(outputStream, _parameterIDs[i]);
 			}
 		}
         /*
@@ -107,14 +97,11 @@ namespace EnterpriseDB.EDBClient
             // + Int16 (number of parameters)
             // + Int32 * number of parameters
             // + int16 * number of parameters
-            Int32 messageLength = 4 + _bPrepareName.Length + 1 + _bQueryString.Length + 1 + 2 + (_parameters.Count * 6);
-
-            outputStream
-                .WriteInt32(messageLength)
-                .WriteBytesNullTerminated(_bPrepareName)
-                .WriteBytesNullTerminated(_bQueryString)
-                .WriteInt16((Int16)_parameters.Count);
-
+            Int32 messageLength = 4 + UTF8Encoding.GetByteCount(_prepareName) + 1 + UTF8Encoding.GetByteCount(_queryString) + 1 + 2 + (_parameters.Count * 6);
+            PGUtil.WriteInt32(outputStream, messageLength);
+            PGUtil.WriteString(_prepareName, outputStream);
+            PGUtil.WriteString(_queryString, outputStream);
+            PGUtil.WriteInt16(outputStream, (Int16)_parameters.Count);
             //parameter OIDs
             //_parameters[i].TypeInfo.
             for (Int32 i = 0; i < _parameters.Count; i++)

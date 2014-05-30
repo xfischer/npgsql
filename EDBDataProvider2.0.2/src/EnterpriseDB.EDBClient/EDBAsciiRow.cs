@@ -80,10 +80,10 @@ namespace EnterpriseDB.EDBClient
 			{
 				if (field_descr.FormatCode == FormatCode.Text)
 				{
-	//ZK				char[] charBuffer = new char[UTF8Encoding.GetCharCount(buffer, 0, buffer.Length)];
-	//				UTF8Encoding.GetChars(buffer, 0, buffer.Length, charBuffer, 0);
+					char[] charBuffer = new char[UTF8Encoding.GetCharCount(buffer, 0, buffer.Length)];
+					UTF8Encoding.GetChars(buffer, 0, buffer.Length, charBuffer, 0);
 					return
-						EDBTypesHelper.ConvertBackendStringToSystemType(field_descr.TypeInfo, buffer,
+						EDBTypesHelper.ConvertBackendStringToSystemType(field_descr.TypeInfo, new string(charBuffer),
 						                                                   field_descr.TypeSize, field_descr.TypeModifier);
 				}
 				else
@@ -112,10 +112,9 @@ namespace EnterpriseDB.EDBClient
 			//and have the connector recovered later.
 			try
 			{
-                Stream
-                    .WriteBytes((byte)FrontEndMessageCode.Termination)
-                    .WriteInt32(4)
-                    .Flush();
+				Stream.WriteByte((byte) FrontEndMessageCode.Termination);
+				PGUtil.WriteInt32(Stream, 4);
+				Stream.Flush();
 			}
 			catch
 			{
@@ -207,12 +206,12 @@ namespace EnterpriseDB.EDBClient
 			Int32 field_value_size = PGUtil.ReadInt32(Stream) - 4;
 			byte[] buffer = new byte[field_value_size];
 			PGUtil.CheckedStreamRead(Stream, buffer, 0, field_value_size);
-//ZK TODO 			char[] charBuffer = new char[UTF8Encoding.GetCharCount(buffer, 0, buffer.Length)];
-//			UTF8Encoding.GetChars(buffer, 0, buffer.Length, charBuffer, 0);
+			char[] charBuffer = new char[UTF8Encoding.GetCharCount(buffer, 0, buffer.Length)];
+			UTF8Encoding.GetChars(buffer, 0, buffer.Length, charBuffer, 0);
 			try
 			{
 				return
-					EDBTypesHelper.ConvertBackendStringToSystemType(field_descr.TypeInfo, buffer,
+					EDBTypesHelper.ConvertBackendStringToSystemType(field_descr.TypeInfo, new string(charBuffer),
 					                                                   field_descr.TypeSize, field_descr.TypeModifier);
 			}
 			catch (InvalidCastException ice)

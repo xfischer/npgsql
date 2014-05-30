@@ -37,26 +37,27 @@ namespace EnterpriseDB.EDBClient
 		{
 		}
 
-        public override void Startup(EDBConnector context, EDBConnectionStringBuilder settings)
-        {
-          
-            EDBStartupPacket startupPacket = EDBStartupPacket.BuildStartupPacket(context.BackendProtocolVersion,
-                                                                                     context.Database, context.UserName, settings);
+		public override void Startup(EDBConnector context)
+		{
+			EDBStartupPacket startupPacket = new EDBStartupPacket(296, //Not used.
+			                                                            context.BackendProtocolVersion, context.Database,
+			                                                            context.UserName, "", "", "");
 
-            startupPacket.WriteToStream(context.Stream);
-            context.RequireReadyForQuery = false;
-            // This still makes part of the connection stablishment handling.
+			startupPacket.WriteToStream(new BufferedStream(context.Stream));
+			context.RequireReadyForQuery = false;
+            // This still makes part of the connection stablishment handling. 
             // So we use the connectiontimeout here too.
             context.Mediator.CommandTimeout = context.ConnectionTimeout;
-            ProcessAndDiscardBackendResponses(context);
-        }
+			context.Stream.Flush();
+			ProcessBackendResponses(context);
+		}
 
 		public override void CancelRequest(EDBConnector context)
 		{
 			EDBCancelRequest CancelRequestMessage = new EDBCancelRequest(context.BackEndKeyData);
 
-            CancelRequestMessage.WriteToStream(context.Stream);
-            context.Stream.Flush();
-        }
-    }
+
+			CancelRequestMessage.WriteToStream(context.Stream);
+		}
+	}
 }

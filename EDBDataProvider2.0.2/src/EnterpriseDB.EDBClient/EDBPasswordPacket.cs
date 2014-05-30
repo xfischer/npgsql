@@ -65,17 +65,19 @@ namespace EnterpriseDB.EDBClient
 					// Write the size of the packet.
 					// 4 + (passwordlength + 1) -> Int32 + NULL terminated string.
 					// output_stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(4 + (password.Length + 1))), 0, 4);
-                    outputStream
-                        .WriteInt32(4 + password.Length + 1)
-                        .WriteBytesNullTerminated(password);
+                    PGUtil.WriteInt32(outputStream, 4 + password.Length + 1);
+
+					// Write String.
+                    PGUtil.WriteBytes(password, outputStream);
 
 					break;
 
-                case ProtocolVersion.Version3:
-                    outputStream
-                        .WriteBytes((Byte)ASCIIBytes.p)
-                        .WriteInt32(4 + password.Length + 1)
-                        .WriteBytesNullTerminated(password);
+				case ProtocolVersion.Version3:
+					outputStream.WriteByte((Byte) 'p');
+                    PGUtil.WriteInt32(outputStream, 4 + password.Length + 1);
+
+					// Write String.
+                    PGUtil.WriteBytes(password, outputStream);
 
 					break;
 			}

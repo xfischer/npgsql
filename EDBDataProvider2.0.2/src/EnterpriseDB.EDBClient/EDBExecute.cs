@@ -39,24 +39,12 @@ namespace EnterpriseDB.EDBClient
 	{
 		private readonly String _portalName;
 		private readonly Int32 _maxRows;
-	    private readonly byte[] _messageData;
 
 
 		public EDBExecute(String portalName, Int32 maxRows)
 		{
 			_portalName = portalName;
 			_maxRows = maxRows;
-      int messageLength = 4 + portalName.Length + 1 + 4;
-            _messageData = new byte[messageLength + 1];
-            MemoryStream messageBuilder = new MemoryStream(_messageData);
-
-            _portalName = portalName;
-
-            messageBuilder
-                .WriteBytes((byte)FrontEndMessageCode.Execute)
-                .WriteInt32(messageLength)
-                .WriteStringNullTerminated(_portalName)
-                .WriteInt32(maxRows);
 		}
 
 		public String PortalName
@@ -66,17 +54,21 @@ namespace EnterpriseDB.EDBClient
 
 		public override void WriteToStream(Stream outputStream)
 		{
-		  outputStream.WriteBytes(_messageData);
+			outputStream.WriteByte((byte) FrontEndMessageCode.Execute);
 
+			PGUtil.WriteInt32(outputStream, 4 + UTF8Encoding.GetByteCount(_portalName) + 1 + 4);
+
+			PGUtil.WriteString(_portalName, outputStream);
+			PGUtil.WriteInt32(outputStream, _maxRows);
 		}
         public void WriteToStreamExecuteOut(Stream outputStream)
         {
             outputStream.WriteByte((Byte) FrontEndMessageCode.ExecuteOut);
-         //   outputStream.WriteInt32()
+
             PGUtil.WriteInt32(outputStream, 4 +
                 UTF8Encoding.GetByteCount(_portalName) + 1);
-            outputStream.WriteStringNullTerminated(_portalName);
-          //  PGUtil.WriteString(_portalName, outputStream);            
+
+            PGUtil.WriteString(_portalName, outputStream);            
 
         }
 	}

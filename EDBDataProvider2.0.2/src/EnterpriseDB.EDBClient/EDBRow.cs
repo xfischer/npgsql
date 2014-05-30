@@ -153,10 +153,6 @@ namespace EnterpriseDB.EDBClient
 				return _reader.GetNext();
 			}
 		}
-        public void SetRowDescription(EDBRowDescription rowDescr)
-        {
-            _reader.SetRowDescription(rowDescr);
-        }
 
 		public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
 		{
@@ -319,8 +315,8 @@ namespace EnterpriseDB.EDBClient
 		}
 
 		protected static readonly Encoding UTF8Encoding = Encoding.UTF8;
-        protected EDBRowDescription _rowDesc;
-    	private readonly Stream _stream;
+		private readonly EDBRowDescription _rowDesc;
+		private readonly Stream _stream;
 		private Streamer _streamer;
 		private int _currentField = -1;
 
@@ -342,10 +338,7 @@ namespace EnterpriseDB.EDBClient
 				_streamer = value;
 			}
 		}
-        public virtual void SetRowDescription(EDBRowDescription rowDesc)
-        {
-            _rowDesc = rowDesc;
-        }
+
 		public bool CurrentlyStreaming
 		{
 			get { return _streamer != null; }

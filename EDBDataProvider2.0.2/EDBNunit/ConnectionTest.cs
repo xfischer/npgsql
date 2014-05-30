@@ -21,7 +21,7 @@ namespace DOTNET
 		}
 
 		[Test]
-		public void _testConnecting()
+		public void testConnecting()
 		{
 			try 
 			{
@@ -34,11 +34,11 @@ namespace DOTNET
 		}
 
 		[Test]
-		public void _testConnectingWithoutPooling()
+		public void testConnectingWithoutPooling()
 		{
 			try 
 			{
-			//	con = TestUtil.openDBwithoutPooling();
+				con = TestUtil.openDBwithoutPooling();
 			}
 			catch(EDBException e)
 			{
@@ -50,7 +50,7 @@ namespace DOTNET
 		{
 			try
 			{
-				//con.Open();
+				con.Open();
 				//Assert.AreEqual("ConnectionOpen", ConnectionState.Open, con.State);
 			}
 			catch (Exception e)
@@ -154,9 +154,9 @@ namespace DOTNET
 		[Test]
 		public void TestDoubleClose()
 		{
-			//EDBConnection Con = TestUtil.openDB();
-			//Con.Close();
-			//Con.Close();
+			EDBConnection Con = TestUtil.openDB();
+			Con.Close();
+			Con.Close();
 			
 		}
 

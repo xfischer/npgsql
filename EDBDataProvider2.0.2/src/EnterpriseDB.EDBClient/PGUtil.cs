@@ -188,7 +188,7 @@ namespace EnterpriseDB.EDBClient
             if (EDBEventLog.Level >= LogLevel.Debug)
                 EDBEventLog.LogMsg(resman, "Log_StringRead", LogLevel.Debug, ENCODING_UTF8.GetString(buffer.ToArray()));
                 
-            return BackendEncoding.UTF8Encoding.GetString(buffer.ToArray());
+			return ENCODING_UTF8.GetString(buffer.ToArray());
 		}
 
 		public static char ReadChar(Stream stream)
@@ -330,168 +330,43 @@ namespace EnterpriseDB.EDBClient
             return count - (end - offset);
         }
 
-        /// <summary>
-        /// Reads requested number of bytes from <paramref name="src"/>.  If output matches <paramref name="src"/> exactly, and <paramref name="forceCopy"/> == false, <paramref name="src"/> is returned directly.
-        /// </summary>
-        /// <param name="src">Source array.</param>
-        /// <param name="offset">Starting position to read from <paramref name="src"/></param>
-        /// <param name="count">Number of bytes to read</param>
-        /// <param name="forceCopy">Force a copy, even if the output is an exact copy of <paramref name="src"/>.</param>
-        /// <returns>byte[] containing data requested.</returns>
-        public static byte[] ReadBytes(byte[] src, int offset, int count, bool forceCopy = false)
-        {
-            if (! forceCopy && offset == 0 && count == src.Length)
-            {
-                return src;
-            }
-            else
-            {
-                byte[] dst = new byte[count];
-                int sOfs, dOfs;
 
-                for (sOfs = offset, dOfs = 0 ; dOfs < count ; sOfs++, dOfs++)
-                {
-                    dst[dOfs] = src[sOfs];
-                }
+		//This is like Encoding.UTF8.GetCharCount() but it ignores a trailing incomplete
+		//character. See comments on ValidUTF8Ending()
+		public static int PessimisticGetCharCount(byte[] buffer, int index, int count)
+		{
+			return ENCODING_UTF8.GetCharCount(buffer, index, count) - (ValidUTF8Ending(buffer, index, count) ? 0 : 1);
+		}
 
-                return dst;
-            }
-        }
-
-        //This is like Encoding.UTF8.GetCharCount() but it ignores a trailing incomplete
-        //character. See comments on ValidUTF8Ending()
-        public static int PessimisticGetCharCount(byte[] buffer, int index, int count)
-        {
-            return BackendEncoding.UTF8Encoding.GetCharCount(buffer, index, count) - (ValidUTF8Ending(buffer, index, count) ? 0 : 1);
-        }
-
-		///<summary>
-        ///<summary>
-        /// This method writes a C NULL terminated string to the network stream.
-        /// It appends a NULL terminator to the end of the String.
-        /// </summary>
-        public static Stream WriteString(this Stream stream, String theString)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteStringNullTerminated");
-
-            EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
-
-            byte[] bytes = BackendEncoding.UTF8Encoding.GetBytes(theString);
-
-            stream.Write(bytes, 0, bytes.Length);
-
-            return stream;
-        }
 		///<summary>
 		/// This method writes a C NULL terminated string to the network stream.
 		/// It appends a NULL terminator to the end of the String.
 		/// </summary>
-        public static Stream WriteString(this Stream stream, String format, params object[] parameters)
+		///<summary>
+		/// This method writes a C NULL terminated string to the network stream.
+		/// It appends a NULL terminator to the end of the String.
+		/// </summary>
+		public static void WriteString(String the_string, Stream network_stream)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteString");
 
-            string theString = string.Format(format, parameters);
+			EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, the_string);
 
-            EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
+            byte[] bytes = ENCODING_UTF8.GetBytes(the_string + '\x00');
 
-            byte[] bytes = BackendEncoding.UTF8Encoding.GetBytes(theString);
-
-            stream.Write(bytes, 0, bytes.Length);
-
-            return stream;
-        }
-
-        ///<summary>
-        /// This method writes a C NULL terminated string to the network stream.
-        /// It appends a NULL terminator to the end of the String.
-        /// </summary>
-        public static Stream WriteStringNullTerminated(this Stream stream, String theString)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteStringNullTerminated");
-
-            EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
-
-            byte[] bytes = BackendEncoding.UTF8Encoding.GetBytes(theString);
-
-            stream.Write(bytes, 0, bytes.Length);
-            stream.WriteByte(0);
-
-            return stream;
-        }
-
-        ///<summary>
-        /// This method writes a C NULL terminated string to the network stream.
-        /// It appends a NULL terminator to the end of the String.
-        /// </summary>
-        public static Stream WriteStringNullTerminated(this Stream stream, String format, params object[] parameters)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteStringNullTerminated");
-
-            string theString = string.Format(format, parameters);
-
-            EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
-
-            byte[] bytes = BackendEncoding.UTF8Encoding.GetBytes(theString);
-
-            stream.Write(bytes, 0, bytes.Length);
-            stream.WriteByte(0);
-
-            return stream;
-        }
-
-        /// <summary>
-        /// This method writes a byte to the stream. It also enables logging of them.
-        /// </summary>
-        public static Stream WriteBytes(this Stream stream, byte the_byte)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteByte");
-            EDBEventLog.LogMsg(resman, "Log_BytesWritten", LogLevel.Debug, the_byte);
-
-            stream.WriteByte(the_byte);
-
-            return stream;
-        }
+            network_stream.Write(bytes, 0, bytes.Length);
+		}
 
         /// <summary>
         /// This method writes a set of bytes to the stream. It also enables logging of them.
         /// </summary>
-        public static Stream WriteBytesNullTerminated(this Stream stream, byte the_byte)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteByte");
-            EDBEventLog.LogMsg(resman, "Log_BytesWritten", LogLevel.Debug, the_byte);
-
-            stream.WriteByte(the_byte);
-            stream.WriteByte(0);
-
-            return stream;
-        }
-		
-		/// <summary>
-        /// This method writes a set of bytes to the stream. It also enables logging of them.
-        /// </summary>
-        public static Stream WriteBytesNullTerminated(this Stream stream, byte[] the_bytes)
+        public static void WriteBytes(byte[] the_bytes, Stream network_stream)
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteBytes");
             EDBEventLog.LogMsg(resman, "Log_BytesWritten", LogLevel.Debug, the_bytes);
 
-            stream.Write(the_bytes, 0, the_bytes.Length);
-            stream.WriteByte(0);
-            return stream;
-        }
-
-
-		    /// <summary>
-        /// This method writes a set of bytes to the stream. It also enables logging of them.
-        /// </summary>
-        public static Stream WriteBytes(this Stream stream, byte[] the_bytes)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteBytes");
-            EDBEventLog.LogMsg(resman, "Log_BytesWritten", LogLevel.Debug, the_bytes);
-
-            stream.Write(the_bytes, 0, the_bytes.Length);
-            
-
-            return stream;
+            network_stream.Write(the_bytes, 0, the_bytes.Length);
+            network_stream.Write(new byte[1], 0, 1);
         }
 
 		///<summary>
@@ -499,7 +374,7 @@ namespace EnterpriseDB.EDBClient
 		/// backend server.
 		/// It pads the string with null bytes to the size specified.
 		/// </summary>
-        public static Stream WriteLimString(this Stream network_stream, String the_string, Int32 n)
+		public static void WriteLimString(String the_string, Int32 n, Stream network_stream)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteLimString");
 
@@ -519,35 +394,7 @@ namespace EnterpriseDB.EDBClient
 				bytes = new byte[n - bytes.Length];
 				network_stream.Write(bytes, 0, bytes.Length);
 			}
-            return network_stream;
 		}
-		
-        ///<summary>
-        /// This method writes a C NULL terminated byte[] limited in length to the
-        /// backend server.
-        /// It pads the string with null bytes to the size specified.
-        /// </summary>
-        public static Stream WriteLimBytes(this Stream network_stream, byte[] bytes, Int32 n)
-        {
-            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "WriteLimBytes");
-
-            if (bytes.Length > n)
-            {
-                throw new ArgumentOutOfRangeException("bytes", bytes,
-                                                      string.Format(resman.GetString("LimStringWriteTooLarge"), bytes, n));
-            }
-
-            network_stream.Write(bytes, 0, bytes.Length);
-
-            //pad with zeros.
-            if (bytes.Length < n)
-            {
-                bytes = new byte[n - bytes.Length];
-                network_stream.Write(bytes, 0, bytes.Length);
-            }
-
-            return network_stream;
-        }
 
 		public static void CheckedStreamRead(Stream stream, Byte[] buffer, Int32 offset, Int32 size)
 		{
@@ -562,11 +409,11 @@ namespace EnterpriseDB.EDBClient
 			{
                 // chunked read of maxReadChunkSize
                 int readSize = (size > maxReadChunkSize) ? maxReadChunkSize : size;
-                bytes_from_stream = stream.Read(buffer, offset + total_bytes_read, readSize);
-                total_bytes_read += bytes_from_stream;
-                size -= bytes_from_stream;
-            }
-        }
+				bytes_from_stream = stream.Read(buffer, offset + total_bytes_read, size);
+				total_bytes_read += bytes_from_stream;
+				size -= bytes_from_stream;
+			}
+		}
 
 		public static void EatStreamBytes(Stream stream, int size)
 		{
@@ -649,16 +496,13 @@ namespace EnterpriseDB.EDBClient
 			return i;
 		}
 
-        /// <summary>
-        /// Write a 32-bit integer to the given stream in the correct byte order.
-        /// </summary>
-        public static Stream WriteInt32(this Stream stream, Int32 value)
-        {
-            stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 4);
-
-            return stream;
-        }
-
+		/// <summary>
+		/// Write a 32-bit integer to the given stream in the correct byte order.
+		/// </summary>
+		public static void WriteInt32(Stream stream, Int32 value)
+		{
+			stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 4);
+		}
 
 		/// <summary>
 		/// Read a 32-bit integer from the given stream in the correct byte order.
@@ -670,44 +514,28 @@ namespace EnterpriseDB.EDBClient
 			return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer, 0));
 		}
 
-        /// <summary>
-        /// Read a 32-bit integer from the given array in the correct byte order.
-        /// </summary>
-        public static Int32 ReadInt32(byte[] src, Int32 offset)
-        {
-            return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(src, offset));
-        }
+		/// <summary>
 		/// Write a 16-bit integer to the given stream in the correct byte order.
 		/// </summary>
-        public static Stream WriteInt16(this Stream stream, Int16 value)
+		public static void WriteInt16(Stream stream, Int16 value)
 		{
 			stream.Write(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value)), 0, 2);
-            return stream;
 		}
 
-        /// <summary>
-        /// Read a 16-bit integer from the given stream in the correct byte order.
-        /// </summary>
-        public static Int16 ReadInt16(Stream stream)
-        {
-            byte[] buffer = new byte[2];
-            CheckedStreamRead(stream, buffer, 0, 2);
-            return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(buffer, 0));
-        }
+		/// <summary>
+		/// Read a 16-bit integer from the given stream in the correct byte order.
+		/// </summary>
+		public static Int16 ReadInt16(Stream stream)
+		{
+			byte[] buffer = new byte[2];
+			CheckedStreamRead(stream, buffer, 0, 2);
+			return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(buffer, 0));
+		}
 
-        /// <summary>
-        /// Read a 16-bit integer from the given array in the correct byte order.
-        /// </summary>
-        public static Int16 ReadInt16(byte[] src, Int32 offset)
-        {
-            return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(src, offset));
-        }
-
-        public static int RotateShift(int val, int shift)
-        {
-            return (val << shift) | (val >> (sizeof (int) - shift));
-        }
-
+		public static int RotateShift(int val, int shift)
+		{
+			return (val << shift) | (val >> (sizeof (int) - shift));
+		}
         public static StringBuilder TrimStringBuilder(StringBuilder sb)
         {
             while (sb.Length != 0 && char.IsWhiteSpace(sb[0]))
@@ -720,56 +548,19 @@ namespace EnterpriseDB.EDBClient
         internal static void LogStringWritten(string theString)
         {
             EDBEventLog.LogMsg(resman, "Log_StringWritten", LogLevel.Debug, theString);
+            
         }
-        /// <summary>
-        /// Copy and possibly reverse a byte array, depending on host architecture endienness.
-        /// </summary>
-        /// <param name="src">Source byte array.</param>
-        /// <param name="forceCopy">Force a copy even if no swap is performed.</param>
-        /// <returns><paramref name="src"/>, reversed if on a little-endian architecture, copied if required.</returns>
-        internal static byte[] HostNetworkByteOrderSwap(byte[] src, bool forceCopy = false)
-        {
-            return HostNetworkByteOrderSwap(src, 0, src.Length, forceCopy);
-        }
+	}
 
-        /// <summary>
-        /// Copy and possibly reverse a byte array, depending on host architecture endienness.
-        /// </summary>
-        /// <param name="src">Source byte array.</param>
-        /// <param name="start">Starting offset in source array.</param>
-        /// <param name="length">Number of bytes to copy.</param>
-        /// <param name="forceCopy">Force a copy even if no swap is performed.</param>
-        /// <returns><paramref name="src"/>, reversed if on a little-endian architecture, copied if required.</returns>
-        internal static byte[] HostNetworkByteOrderSwap(byte[] src, int start, int length, bool forceCopy = false)
-        {
-            if (BitConverter.IsLittleEndian)
-            {
-                byte[] dst = new byte[length];
-                int end = start + length;
-
-                for (int i = start; i < end ; i++)
-                {
-                    dst[end - i - 1] = src[i];
-                }
-
-                return dst;
-            }
-            else
-            {
-                return ReadBytes(src, start, length, forceCopy);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Represent the frontend/backend protocol version.
-    /// </summary>
-    public enum ProtocolVersion
-    {
-        Unknown  = 0,
-        Version2 = 2,
-        Version3 = 3
-    }
+	/// <summary>
+	/// Represent the frontend/backend protocol version.
+	/// </summary>
+	public enum ProtocolVersion
+	{
+		Unknown,
+		Version2,
+		Version3
+	}
 
 	public enum ServerVersionCode
 	{

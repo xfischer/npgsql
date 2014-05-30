@@ -501,7 +501,7 @@ namespace EnterpriseDB.EDBClient.Web
 					columnStr.Append(data.ColumnName);
 					string valueParam = "@Value" + count;
 					valueStr.Append(valueParam);
-					cmd.Parameters.AddWithValue(valueParam, data.Value);
+					cmd.Parameters.Add(valueParam, data.Value);
 
 					if (data.DataType != EDBDbType.Timestamp)
 					{

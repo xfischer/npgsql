@@ -442,13 +442,13 @@ namespace DOTNET
 		}
 
 		[Test]
-		public void _AdapFillSchemaMapped()
+		public void AdapFillSchemaMapped()
 		{
 			_conn.Open();
 
-		/*	DataSet ds= new DataSet();
+			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Mapped);
@@ -459,20 +459,20 @@ namespace DOTNET
 				Assert.Fail(exp.Message);
 				_conn.Close();
 			}
-            */
+
 		}
 
 		[Test]
-		public void _AdapFillSchemaSource()
+		public void AdapFillSchemaSource()
 		{
 			_conn.Open();
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
 			try
 			{
-		//		da.FillSchema(ds,SchemaType.Source);
+				da.FillSchema(ds,SchemaType.Source);
 			}
 
 			catch(Exception exp)
@@ -492,7 +492,7 @@ namespace DOTNET
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);
@@ -519,7 +519,7 @@ namespace DOTNET
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);
@@ -556,7 +556,7 @@ namespace DOTNET
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp",_conn);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);

@@ -36,33 +36,25 @@ namespace EnterpriseDB.EDBClient
 	/// server.
 	/// </summary>
 	///
-	internal abstract class EDBDescribe : ClientMessage
+	internal sealed class EDBDescribe : ClientMessage
 	{
-        protected enum DescribeTypeCode : byte
-        {
-            Statement = ASCIIBytes.S,
-            Portal = ASCIIBytes.P
-        }
-        private readonly DescribeTypeCode _whatToDescribe;
-        private readonly byte[] _bPortalName;
-        private readonly int _messageLength;
+		private readonly Char _whatToDescribe;
+		private readonly String _portalName;
 
-        protected EDBDescribe(DescribeTypeCode whatToDescribe, String portalName)
-        {
-            _whatToDescribe = whatToDescribe;
-
-            _bPortalName = BackendEncoding.UTF8Encoding.GetBytes(portalName);
-
-            _messageLength = 4 + 1 + _bPortalName.Length + 1;
-        }
+		public EDBDescribe(Char whatToDescribe, String portalName)
+		{
+			_whatToDescribe = whatToDescribe;
+			_portalName = portalName;
+		}
 
 		public override void WriteToStream(Stream outputStream)
 		{
-            outputStream
-                .WriteBytes((byte)FrontEndMessageCode.Describe)
-                .WriteInt32(_messageLength)
-                .WriteBytes((byte)_whatToDescribe)
-                .WriteBytesNullTerminated(_bPortalName);
+			outputStream.WriteByte((byte) FrontEndMessageCode.Describe);
+
+			PGUtil.WriteInt32(outputStream, 4 + 1 + UTF8Encoding.GetByteCount(_portalName) + 1);
+
+			outputStream.WriteByte((Byte) _whatToDescribe);
+			PGUtil.WriteString(_portalName, outputStream);
 		}
         /*
          * EDBTeam:
@@ -71,35 +63,13 @@ namespace EnterpriseDB.EDBClient
 
         public void WriteToStreamDescribeOut(Stream outputStream)
         {
-            outputStream
-                .WriteBytes((byte)FrontEndMessageCode.DescribeOut)
-                .WriteInt32(_messageLength)
-                .WriteBytes((byte)_whatToDescribe)
-                .WriteBytesNullTerminated(_bPortalName);
+            outputStream.WriteByte((Byte) FrontEndMessageCode.DescribeOut);
+
+            PGUtil.WriteInt32(outputStream, 4 + 1 + UTF8Encoding.GetByteCount(_portalName) + 1);
+
+            outputStream.WriteByte((Byte)_whatToDescribe);
+            PGUtil.WriteString(_portalName, outputStream);
 
         }
 	}
-    /// <summary>
-    /// This class represents the Statement Describe message sent to PostgreSQL
-    /// server.
-    /// </summary>
-    ///
-    internal sealed class EDBDescribeStatement : EDBDescribe
-    {
-        public EDBDescribeStatement(String statementName)
-        : base(DescribeTypeCode.Statement, statementName)
-        {}
-    }
-
-    /// <summary>
-    /// This class represents the Portal Describe message sent to PostgreSQL
-    /// server.
-    /// </summary>
-    ///
-    internal sealed class EDBDescribePortal : EDBDescribe
-    {
-        public EDBDescribePortal(String portalName)
-        : base(DescribeTypeCode.Portal, portalName)
-        {}
-    }
 }

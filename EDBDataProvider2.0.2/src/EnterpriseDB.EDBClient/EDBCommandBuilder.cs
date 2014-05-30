@@ -31,6 +31,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Resources;
 using EDBTypes;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -42,6 +43,7 @@ namespace EnterpriseDB.EDBClient
 		// Logging related values
         //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         private readonly static ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
+		private NpgsqlRowUpdatingEventHandler rowUpdatingHandler;
 
 
 		public EDBCommandBuilder()

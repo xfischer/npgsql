@@ -846,14 +846,12 @@ namespace DOTNET
 			
 			command.Prepare();
 
-			EDBDataReader Reader=  command.ExecuteReader();
+			command.ExecuteReader();
 			int a= int.Parse(command.Parameters[0].Value.ToString());
 			if(a==29)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-
-            Reader.Close();
 		
 			
 		}	
@@ -1197,13 +1195,13 @@ namespace DOTNET
 			
 			command.Prepare();
 
-			EDBDataReader reader=  command.ExecuteReader();
+			command.ExecuteReader();
 			int a= int.Parse(command.Parameters[0].Value.ToString());
 			if(a==29)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-            reader.Close();
+		
 			
 		}	
 
@@ -1458,15 +1456,15 @@ namespace DOTNET
 			
 			command.Prepare();
 
-			EDBDataReader reader= command.ExecuteReader();
+			command.ExecuteReader();
 			int a= int.Parse(command.Parameters[1].Value.ToString());
 			
 			if(a==55)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
+			
 
-            reader.Close();
 			
 			
 		
@@ -1485,14 +1483,14 @@ namespace DOTNET
 
 			command.Prepare();
 
-			EDBDataReader reader= command.ExecuteReader();
+			command.ExecuteReader();
 		int a= int.Parse(command.Parameters[0].Value.ToString());
 			if(a==33)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
 
-            reader.Close();
+			
 		
 			
 		}	
@@ -1521,7 +1519,7 @@ namespace DOTNET
 			else
 				Assert.IsTrue(false);
 			
-              
+
 			
 			
 		
@@ -1540,13 +1538,12 @@ namespace DOTNET
 
 			command.Prepare();
 
-		  EDBDataReader reader = command.ExecuteReader();
+			command.ExecuteReader();
 			int a= int.Parse(command.Parameters[0].Value.ToString());
 			if(a==33)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-            reader.Close();
 
 			
 		

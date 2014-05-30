@@ -68,17 +68,15 @@ namespace EnterpriseDB.EDBClient
         private String m_Name = String.Empty;
         private String source_column = String.Empty;
         private DataRowVersion source_version = DataRowVersion.Current;
-        private Object value = null;
-        private Object npgsqlValue = null;
+        private Object value = DBNull.Value;
+		private Object npgsqlValue = null;
         private Boolean sourceColumnNullMapping;
-        private EDBParameterCollection collection = null;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
         private Boolean useCast = false;
-        private static readonly EDBNativeTypeInfo defaultTypeInfo = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
-        private bool bound = false;
 
-      
+        private static readonly EDBNativeTypeInfo defaultTypeInfo = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Npgsql.EDBParameter">EDBParameter</see> class.
         /// </summary>
@@ -120,21 +118,7 @@ namespace EnterpriseDB.EDBClient
             {
                 throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value.GetType()));
             }*/
-
-        }
-
-        /// <summary>
-        /// The collection to which this parameter belongs, if any.
-        /// </summary>
-        public EDBParameterCollection Collection
-        {
-            get { return collection; }
-
-            internal set
-            {
-                collection = value;
-                bound = false;
-            }
+           // }
         }
 
         /// <summary>
@@ -278,7 +262,6 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "Precision", value);
                 precision = value;
-                 bound = false;
             }
         }
         
@@ -321,7 +304,6 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "Scale", value);
                 scale = value;
-                bound = false;
             }
         }
 
@@ -343,7 +325,6 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "Size", value);
                 size = value;
-                bound = false;
             }
         }
 
@@ -368,8 +349,7 @@ namespace EnterpriseDB.EDBClient
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "DbType", value);
                 
                 useCast = value != DbType.Object;
-                bound = false;
-
+                
                 if (!EDBTypesHelper.TryGetNativeTypeInfo(value, out type_info))
                 {
                     throw new InvalidCastException(String.Format(resman.GetString("Exception_ImpossibleToCast"), value));
@@ -397,7 +377,6 @@ namespace EnterpriseDB.EDBClient
             {
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "NpgsqlDbType", value);
                 useCast = true;
-                bound = false;
                 if (value == EDBDbType.Array)
                 {
                     throw new ArgumentOutOfRangeException(resman.GetString("Exception_ParameterTypeIsOnlyArray"));
@@ -493,12 +472,6 @@ namespace EnterpriseDB.EDBClient
                 // no longer prefix with : so that the m_Name returned is the m_Name set
 
                 m_Name = m_Name.Trim();
-
-                if (collection != null)
-                {
-                    collection.InvalidateHashLookups();
-                    bound = false;
-                }
 
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "ParameterName", m_Name);
             }
@@ -625,8 +598,6 @@ namespace EnterpriseDB.EDBClient
                 {
                     this.npgsqlValue = backendTypeInfo.ConvertToProviderType(value);
                     this.value = backendTypeInfo.ConvertToFrameworkType(npgsqlValue);
-
-                    bound = false;
                 }
             }
         }
@@ -650,8 +621,7 @@ namespace EnterpriseDB.EDBClient
                 EDBEventLog.LogPropertySet(LogLevel.Normal, CLASSNAME, "NpgsqlValue", value);
 
                 Value = value;
-
-                bound = false;
+                
             }
         }
 
@@ -660,7 +630,6 @@ namespace EnterpriseDB.EDBClient
             //type_info = NpgsqlTypesHelper.GetNativeTypeInfo(typeof(String));
             type_info = null;
             this.Value = Value;
-            bound = false;
         }
 
         public override bool SourceColumnNullMapping
@@ -698,13 +667,6 @@ namespace EnterpriseDB.EDBClient
         object ICloneable.Clone()
         {
             return Clone();
-        }
-
-
-        internal bool Bound
-        {
-            get { return bound; }
-            set { bound = value; }
         }
         public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)
         {
@@ -867,5 +829,6 @@ namespace EnterpriseDB.EDBClient
         Polygon = 604,
         Unknown = 0
     }
+
 
 }

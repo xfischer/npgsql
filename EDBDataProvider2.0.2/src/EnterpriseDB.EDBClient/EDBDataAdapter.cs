@@ -54,6 +54,10 @@ namespace EnterpriseDB.EDBClient
 	/// </summary>
 	public sealed class EDBDataAdapter : DbDataAdapter, IDbDataAdapter
 	{
+		private EDBCommand _selectCommand;
+		private EDBCommand _updateCommand;
+		private EDBCommand _deleteCommand;
+		private EDBCommand _insertCommand;
 
 		// Log support
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
@@ -69,7 +73,7 @@ namespace EnterpriseDB.EDBClient
 		public EDBDataAdapter(EDBCommand selectCommand)
 		{
 			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
-            SelectCommand = selectCommand;
+			_selectCommand = selectCommand;
 		}
 
 		public EDBDataAdapter(String selectCommandText, EDBConnection selectConnection)
@@ -118,50 +122,83 @@ namespace EnterpriseDB.EDBClient
 			}
 		}
 
-        public new EDBCommand DeleteCommand
-        {
-            get
-            {
-                EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "NpgDataAdapter.DeleteCommand");
-                return (EDBCommand)base.DeleteCommand;
-            }
+		ITableMappingCollection IDataAdapter.TableMappings
+		{
+			get { return TableMappings; }
+		}
 
-            set { base.DeleteCommand = value; }
-        }
+		IDbCommand IDbDataAdapter.DeleteCommand
+		{
+			get
+			{
+				EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "IDbDataAdapter.DeleteCommand");
+				return DeleteCommand;
+			}
 
-        public new EDBCommand SelectCommand
-        {
-            get
-            {
-                EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "NpgDataAdapter.SelectCommand");
-                return (EDBCommand)base.SelectCommand;
-            }
+			set { DeleteCommand = (EDBCommand) value; }
+		}
 
-            set { base.SelectCommand = value; }
-        }
 
-        public new EDBCommand UpdateCommand
-        {
-            get
-            {
-                EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "NpgDataAdapter.UpdateCommand");
-                return (EDBCommand)base.UpdateCommand;
-            }
+		public new EDBCommand DeleteCommand
+		{
+			get { return _deleteCommand; }
 
-            set { base.UpdateCommand = value; }
-        }
+			set { _deleteCommand = value; }
+		}
 
-        public new EDBCommand InsertCommand
-        {
-            get
-            {
-                EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "NpgDataAdapter.InsertCommand");
-                return (EDBCommand)base.InsertCommand;
-            }
+		IDbCommand IDbDataAdapter.SelectCommand
+		{
+			get { return SelectCommand; }
 
-            set { base.InsertCommand = value; }
-        }
-    }
+			set { SelectCommand = (EDBCommand) value; }
+		}
+
+
+		public new EDBCommand SelectCommand
+		{
+			get { return _selectCommand; }
+
+			set { _selectCommand = value; }
+		}
+
+		IDbCommand IDbDataAdapter.UpdateCommand
+		{
+			get
+			{
+				EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "IDbDataAdapter.UpdateCommand");
+				return UpdateCommand;
+			}
+
+			set { UpdateCommand = (EDBCommand) value; }
+		}
+
+
+		public new EDBCommand UpdateCommand
+		{
+			get { return _updateCommand; }
+
+			set { _updateCommand = value; }
+		}
+
+		IDbCommand IDbDataAdapter.InsertCommand
+		{
+			get { return InsertCommand; }
+
+			set { InsertCommand = (EDBCommand) value; }
+		}
+
+
+		public new EDBCommand InsertCommand
+		{
+			get
+			{
+				EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "InsertCommand");
+				return _insertCommand;
+			}
+
+			set { _insertCommand = value; }
+		}
+	}
 }
 
 public class EDBRowUpdatingEventArgs : RowUpdatingEventArgs
