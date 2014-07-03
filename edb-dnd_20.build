@@ -48,6 +48,7 @@
                 <include name="System.Windows.Forms.dll" />
                 <include name="System.Drawing.dll" />
                 <include name="System.Design.dll" />
+		<include name="System.Web.ApplicationServices.dll" />
                 <include name="${parent_dir}/lib/Mono.Security.dll" />
             </references>            
             <sources>
@@ -75,13 +76,13 @@
 			<include name="${build.dir}/${assemblyname}.dll" />
 			<include name="${lib_dir}/nunit.framework.dll" />
 			<include name="System.Web.UI.WebControls" />
-			<include name="${interop_dir}/ADODB.dll" />
-            </references>            
+			<include name="System.Web.ApplicationServices.dll" />
+            <include name="${interop_dir}/ADODB.dll" />
+           </references>            
 	    <sources>
 		<include name="${parent_dir}/EDBNunit/*.cs" />
 	    </sources>
 	</csc>  
-     <call target="runtest"/>
     </target>
     
     <target name="runtest" >		
