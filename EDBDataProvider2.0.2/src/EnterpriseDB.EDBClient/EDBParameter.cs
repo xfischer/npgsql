@@ -236,10 +236,11 @@ namespace EnterpriseDB.EDBClient
             this.SourceVersion = sourceVersion;
             this.Value = value;
 
-            if (this.value == null && parameterType != EDBDbType.RefCursor)
+            if (this.value == null)
             {
                 this.value = DBNull.Value;
                 type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+                EDBDbType = parameterType; /* We need it for invoking callable statements */ 
             }
             else
             {
