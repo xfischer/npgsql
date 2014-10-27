@@ -1,24 +1,24 @@
 // created on 1/7/2003 at 20:03
-// Npgsql.EDBExecute.cs
+// EnterpriseDB.EDBClient.EDBExecute.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -30,23 +30,19 @@ using System.IO;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// This class represents the Parse message sent to PostgreSQL
-	/// server.
-	/// </summary>
-	///
-	internal sealed class EDBExecute : ClientMessage
-	{
-		private readonly String _portalName;
-		private readonly Int32 _maxRows;
-	    private readonly byte[] _messageData;
+    /// <summary>
+    /// This class represents the Execute message sent to PostgreSQL
+    /// server.
+    /// </summary>
+    ///
+    internal sealed class EDBExecute : ClientMessage
+    {
+        private readonly String _portalName;
+        private readonly byte[] _messageData;
 
-
-		public EDBExecute(String portalName, Int32 maxRows)
-		{
-			_portalName = portalName;
-			_maxRows = maxRows;
-      int messageLength = 4 + portalName.Length + 1 + 4;
+        public EDBExecute(String portalName, Int32 maxRows)
+        {
+            int messageLength = 4 + portalName.Length + 1 + 4;
             _messageData = new byte[messageLength + 1];
             MemoryStream messageBuilder = new MemoryStream(_messageData);
 
@@ -57,27 +53,16 @@ namespace EnterpriseDB.EDBClient
                 .WriteInt32(messageLength)
                 .WriteStringNullTerminated(_portalName)
                 .WriteInt32(maxRows);
-		}
-
-		public String PortalName
-		{
-			get { return _portalName; }
-		}
-
-		public override void WriteToStream(Stream outputStream)
-		{
-		  outputStream.WriteBytes(_messageData);
-
-		}
-        public void WriteToStreamExecuteOut(Stream outputStream)
-        {
-            outputStream.WriteByte((Byte) FrontEndMessageCode.ExecuteOut);
-         //   outputStream.WriteInt32()
-            PGUtil.WriteInt32(outputStream, 4 +
-                UTF8Encoding.GetByteCount(_portalName) + 1);
-            outputStream.WriteStringNullTerminated(_portalName);
-          //  PGUtil.WriteString(_portalName, outputStream);            
-
         }
-	}
+
+        public String PortalName
+        {
+            get { return _portalName; }
+        }
+
+        public override void WriteToStream(Stream outputStream)
+        {
+            outputStream.WriteBytes(_messageData);
+        }
+    }
 }

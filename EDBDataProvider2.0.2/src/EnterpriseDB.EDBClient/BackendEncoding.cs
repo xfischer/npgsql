@@ -1,9 +1,9 @@
-// Npgsql.BackendEncoding.cs
+// EnterpriseDB.EDBClient.BackendEncoding.cs
 //
 // Authors:
 //     Glen Parker         <glenebob@gmail.com>
 //
-//    Copyright (C) 2013 The Npgsql Development Team
+//    Copyright (C) 2013 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //

@@ -1,74 +1,121 @@
 // created on 29/11/2007
 
-
-// Npgsql.NpgsqlConnectionStringBuilder.cs
-
+// EnterpriseDB.EDBClient.EDBConnectionStringBuilder.cs
 //
-
 // Author:
-
-//	Glen Parker (glenebob@nwlink.com)
-
-//	Ben Sagal (bensagal@gmail.com)
-
-//	Tao Wang (dancefire@gmail.com)
-
+//    Glen Parker (glenebob@gmail.com)
+//    Ben Sagal (bensagal@gmail.com)
+//    Tao Wang (dancefire@gmail.com)
 //
-
-//	Copyright (C) 2007 The Npgsql Development Team
-
-//	npgsql-general@gborg.postgresql.org
-
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
-
+//    Copyright (C) 2007 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
-
 // Permission to use, copy, modify, and distribute this software and its
-
 // documentation for any purpose, without fee, and without a written
-
 // agreement is hereby granted, provided that the above copyright notice
-
 // and this paragraph and the following two paragraphs appear in all copies.
-
 // 
-
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
-
 // THE POSSIBILITY OF SUCH DAMAGE.
-
 // 
-
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-
 // ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
-
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
+using System.DirectoryServices;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Versioning;
+using System.Security.Principal;
 using System.Text;
+
+// Keep the xml comment warning quiet for this file.
+#pragma warning disable 1591
 
 namespace EnterpriseDB.EDBClient
 {
     public sealed class EDBConnectionStringBuilder : DbConnectionStringBuilder
     {
+
+        [AttributeUsage(AttributeTargets.Property)]
+        private sealed class EDBConnectionStringKeywordAttribute : Attribute {
+            public Keywords Keyword;
+            public string UnderlyingConnectionKeyword;
+            public bool IsInternal = false;
+            public EDBConnectionStringKeywordAttribute(Keywords keyword, bool is_internal = false) {
+                this.Keyword = keyword;
+                this.UnderlyingConnectionKeyword = keyword.ToString().ToUpperInvariant();
+                this.IsInternal = is_internal;
+            }
+            public EDBConnectionStringKeywordAttribute(Keywords keyword, string underlying_connection_keyword) {
+                this.Keyword = keyword;
+                this.UnderlyingConnectionKeyword = underlying_connection_keyword;
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+        private sealed class EDBConnectionStringAcceptableKeywordAttribute : Attribute {
+            public string Keyword;
+            public EDBConnectionStringAcceptableKeywordAttribute(string keyword) {
+                this.Keyword = keyword;
+            }
+        }
+
+        private sealed class EDBConnectionStringCategoryAttribute : CategoryAttribute {
+            public EDBConnectionStringCategoryAttribute(String category) : base(category) { }
+            protected override string GetLocalizedString(string value) {
+                return resman.GetString(value);
+            }
+        }
+
+        private sealed class EDBConnectionStringDisplayNameAttribute : DisplayNameAttribute {
+            public EDBConnectionStringDisplayNameAttribute(string resourceName)
+                : base(resourceName) {
+                try {
+                    string value = resman.GetString(resourceName);
+                    if (value != null)
+                        DisplayNameValue = value;
+                }
+                catch (Exception e) {
+                }
+            }
+        }
+
+        private sealed class EDBConnectionStringDescriptionAttribute : DescriptionAttribute {
+            public EDBConnectionStringDescriptionAttribute(string resourceName)
+                : base(resourceName) {
+                try {
+                    string value = resman.GetString(resourceName);
+                    if (value != null)
+                        DescriptionValue = value;
+                }
+                catch (Exception e) {
+                }
+            }
+        }
+
+        private sealed class EDBEnumConverter<T> : EnumConverter {
+            public EDBEnumConverter() : base(typeof(T)) { }
+            public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value) {
+                return value.ToString();
+            }
+            public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType) {
+                return (value != null) ? value.ToString() : String.Empty;
+            }
+        }
+
         private delegate string ValueNativeToString(object value);
 
         private class ValueDescription
@@ -149,6 +196,8 @@ namespace EnterpriseDB.EDBClient
         private const int POOL_SIZE_LIMIT = 1024;
         private const int TIMEOUT_LIMIT = 1024;
 
+        #region Constructors
+
         static EDBConnectionStringBuilder()
         {
             // Set up value descriptions.
@@ -157,7 +206,9 @@ namespace EnterpriseDB.EDBClient
             // implicit default.
             valueDescriptions.Add(Keywords.Host, new ValueDescription(typeof(string)));
             valueDescriptions.Add(Keywords.Port, new ValueDescription((Int32)5432));
-            valueDescriptions.Add(Keywords.Protocol, new ValueDescription(typeof(ProtocolVersion), true, ProtocolVersionToString));
+#pragma warning disable 618
+            valueDescriptions.Add(Keywords.Protocol, new ValueDescription(ProtocolVersion.Version3, false));
+#pragma warning restore 618
             valueDescriptions.Add(Keywords.Database, new ValueDescription(typeof(string)));
             valueDescriptions.Add(Keywords.UserName, new ValueDescription(typeof(string)));
             valueDescriptions.Add(Keywords.Password, new ValueDescription(typeof(string)));
@@ -178,6 +229,7 @@ namespace EnterpriseDB.EDBClient
             valueDescriptions.Add(Keywords.PreloadReader, new ValueDescription(typeof(bool)));
             valueDescriptions.Add(Keywords.UseExtendedTypes, new ValueDescription(typeof(bool)));
             valueDescriptions.Add(Keywords.IntegratedSecurity, new ValueDescription(typeof(bool)));
+            valueDescriptions.Add(Keywords.IncludeRealm, new ValueDescription(typeof(bool)));
             valueDescriptions.Add(Keywords.Compatible, new ValueDescription(THIS_VERSION));
             valueDescriptions.Add(Keywords.ApplicationName, new ValueDescription(typeof(string)));
             valueDescriptions.Add(Keywords.AlwaysPrepare, new ValueDescription(typeof(bool)));
@@ -197,6 +249,7 @@ namespace EnterpriseDB.EDBClient
             CheckValues();
         }
 
+        #endregion
 
         /// <summary>
         /// Return an exact copy of this EDBConnectionString.
@@ -234,41 +287,6 @@ namespace EnterpriseDB.EDBClient
             else
             {
                 return (SslMode) Enum.Parse(typeof (SslMode), value.ToString(), true);
-            }
-        }
-
-        private static ProtocolVersion ToProtocolVersion(object value)
-        {
-            if (value is ProtocolVersion)
-            {
-                return (ProtocolVersion) value;
-            }
-            else
-            {
-                int ver = Convert.ToInt32(value);
-
-                switch (ver)
-                {
-                    case 2:
-                        return ProtocolVersion.Version2;
-                    case 3:
-                        return ProtocolVersion.Version3;
-                    default:
-                        throw new InvalidCastException(value.ToString());
-                }
-            }
-        }
-
-        private static string ProtocolVersionToString(object protocolVersion)
-        {
-            switch ((ProtocolVersion)protocolVersion)
-            {
-                case ProtocolVersion.Version2:
-                    return "2";
-                case ProtocolVersion.Version3:
-                    return "3";
-                default:
-                    return string.Empty;
             }
         }
 
@@ -353,13 +371,18 @@ namespace EnterpriseDB.EDBClient
         }
 
         #endregion
-
         #region Properties
 
         private string _host;
         /// <summary>
         /// Gets or sets the backend server host name.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Source")]
+        [EDBConnectionStringKeyword(Keywords.Host)]
+        [EDBConnectionStringAcceptableKeyword("SERVER")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Host")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Host")]
+        [RefreshProperties(RefreshProperties.All)]
         public string Host
         {
             get { return _host; }
@@ -370,20 +393,16 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the backend server port.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Source")]
+        [EDBConnectionStringKeyword(Keywords.Port)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Port")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Port")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(5432)]
         public int Port
         {
             get { return _port; }
             set { SetValue(GetKeyName(Keywords.Port), Keywords.Port, value); }
-        }
-
-        private ProtocolVersion _protocol;
-        /// <summary>
-        /// Gets or sets the specified backend communication protocol version.
-        /// </summary>
-        public ProtocolVersion Protocol
-        {
-            get { return _protocol; }
-            set { SetValue(GetKeyName(Keywords.Protocol), Keywords.Protocol, value); }
         }
 
         private string _database;
@@ -392,48 +411,142 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <value>The name of the database to be
         /// used after a connection is opened.</value>
+        [EDBConnectionStringCategory("DataCategory_Source")]
+        [EDBConnectionStringKeyword(Keywords.Database)]
+        [EDBConnectionStringAcceptableKeyword("DB")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Database")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Database")]
+        [RefreshProperties(RefreshProperties.All)]
         public string Database
         {
             get { return _database; }
             set { SetValue(GetKeyName(Keywords.Database), Keywords.Database, value); }
         }
 
+    #region Integrated security
+        class CachedUpn {
+            public string Upn;
+            public DateTime ExpiryTimeUtc;
+        }
+
+        static Dictionary<SecurityIdentifier, CachedUpn> cachedUpns = new Dictionary<SecurityIdentifier,CachedUpn>();
+
+        private string GetIntegratedUserName()
+        {
+            // Side note: This maintains the hack fix mentioned before for https://github.com/npgsql/EnterpriseDB.EDBClient/issues/133.
+            // In a nutshell, starting with .NET 4.5 WindowsIdentity inherits from ClaimsIdentity
+            // which doesn't exist in mono, and calling a WindowsIdentity method bombs.
+            // The workaround is that this function that actually deals with WindowsIdentity never
+            // gets called on mono, so never gets JITted and the problem goes away.
+
+            // Gets the current user's username for integrated security purposes
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            CachedUpn cachedUpn = null;
+            string upn = null;
+
+            // Check to see if we already have this UPN cached
+            lock (cachedUpns)
+            {
+                if (cachedUpns.TryGetValue(identity.User, out cachedUpn))
+                {
+                    if (cachedUpn.ExpiryTimeUtc > DateTime.UtcNow)
+                        upn = cachedUpn.Upn;
+                    else
+                        cachedUpns.Remove(identity.User);
+                }
+            }
+
+            try
+            {
+                if (upn == null) {
+                    // Try to get the user's UPN in its correct case; this is what the
+                    // server will need to verify against a Kerberos/SSPI ticket
+
+                    // First, find a domain server we can talk to
+                    string domainHostName;
+
+                    using (DirectoryEntry rootDse = new DirectoryEntry("LDAP://rootDSE") { AuthenticationType = AuthenticationTypes.Secure })
+                    {
+                        domainHostName = (string) rootDse.Properties["dnsHostName"].Value;
+                    }
+
+                    // Query the domain server by the current user's SID
+                    using (DirectoryEntry entry = new DirectoryEntry("LDAP://" + domainHostName) { AuthenticationType = AuthenticationTypes.Secure })
+                    {
+                        DirectorySearcher search = new DirectorySearcher(entry,
+                            "(objectSid=" + identity.User.Value + ")", new string[] { "userPrincipalName" });
+
+                        SearchResult result = search.FindOne();
+
+                        upn = (string) result.Properties["userPrincipalName"][0];
+                    }
+                }
+
+                if (cachedUpn == null)
+                {
+                    // Save this value
+                    cachedUpn = new CachedUpn() { Upn = upn, ExpiryTimeUtc = DateTime.UtcNow.AddHours( 3.0 ) };
+
+                    lock (cachedUpns)
+                    {
+                        cachedUpns[identity.User] = cachedUpn;
+                    }
+                }
+
+                string[] upnParts = upn.Split('@');
+
+                if(_includeRealm)
+                {
+                    // Make it Kerberos-y by uppercasing the realm part
+                    return upnParts[0] + "@" + upnParts[1].ToUpperInvariant();
+                }
+                else
+                {
+                    return upnParts[0];
+                }
+            }
+            catch
+            {
+                // Querying the directory failed, so return the SAM name
+                // (which probably won't work, but it's better than nothing)
+                return identity.Name.Split('\\')[1];
+            }
+        }
+    #endregion
+
         private string _username;
         /// <summary>
         /// Gets or sets the login user name.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Security")]
+        [EDBConnectionStringKeyword(Keywords.UserName, "USER ID")]
+        [EDBConnectionStringAcceptableKeyword("USER NAME")]
+        [EDBConnectionStringAcceptableKeyword("USERID")]
+        [EDBConnectionStringAcceptableKeyword("USER ID")]
+        [EDBConnectionStringAcceptableKeyword("UID")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_UserName")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_UserName")]
+        [RefreshProperties(RefreshProperties.All)]
         public string UserName
         {
             get
             {
                 if ((_integrated_security) && (String.IsNullOrEmpty(_username)))
-                    _username = WindowsIdentityUserName;
+                {
+                    _username = GetIntegratedUserName();
+                }
+
                 return _username;
             }
 
             set { SetValue(GetKeyName(Keywords.UserName), Keywords.UserName, value); }
         }
 
-        /// <summary>
-        /// This is a pretty horrible hack to fix https://github.com/EDB/Npgsql/issues/133
-        /// In a nutshell, starting with .NET 4.5 WindowsIdentity inherits from ClaimsIdentity
-        /// which doesn't exist in mono, and calling UserName getter above bombs.
-        /// The workaround is that the function that actually deals with WindowsIdentity never
-        /// gets called on mono, so never gets JITted and the problem goes away.
-        /// </summary>
-        private string WindowsIdentityUserName
-        {
-            get
-            {
-                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-                return identity.Name.Split('\\')[1];                
-            }
-        }
-
         private PasswordBytes _password;
         /// <summary>
         /// Gets or sets the login password as a UTF8 encoded byte array.
         /// </summary>
+        [Browsable(false)]
         public byte[] PasswordAsByteArray
         {
             get { return _password.PasswordAsByteArray; }
@@ -450,8 +563,17 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Sets the login password as a string.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Security")]
+        [EDBConnectionStringKeyword(Keywords.Password)]
+        [EDBConnectionStringAcceptableKeyword("PSW")]
+        [EDBConnectionStringAcceptableKeyword("PWD")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Password")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Password")]
+        [RefreshProperties(RefreshProperties.All)]
+        [PasswordPropertyText(true)]
         public string Password
         {
+            get { return String.Empty; }
             set { SetValue(GetKeyName(Keywords.Password), Keywords.Password, value); }
         }
 
@@ -459,6 +581,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets a value indicating whether to attempt to use SSL.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Advanced")]
+        [EDBConnectionStringKeyword(Keywords.SSL)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_SSL")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_SSL")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(false)]
         public bool SSL
         {
             get { return _ssl; }
@@ -469,21 +597,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets a value indicating whether to attempt to use SSL.
         /// </summary>
+        [Browsable(false)]
         public SslMode SslMode
         {
             get { return _sslmode; }
             set { SetValue(GetKeyName(Keywords.SslMode), Keywords.SslMode, value); }
-        }
-
-        /// <summary>
-        /// Gets the backend encoding.  Always returns "UTF8".
-        /// </summary>
-        [Obsolete("UTF8 is always used regardless of this setting.")]
-        public string Encoding
-        {
-#pragma warning disable 618
-            get { return (string)valueDescriptions[Keywords.Encoding].ExplicitDefault; }
-#pragma warning restore 618
         }
 
         private int _timeout;
@@ -492,6 +610,12 @@ namespace EnterpriseDB.EDBClient
         /// before terminating the attempt and generating an error.
         /// </summary>
         /// <value>The time (in seconds) to wait for a connection to open. The default value is 15 seconds.</value>
+        [EDBConnectionStringCategory("DataCategory_Initialization")]
+        [EDBConnectionStringKeyword(Keywords.Timeout)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Timeout")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Timeout")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(15)]
         public int Timeout
         {
             get { return _timeout; }
@@ -502,6 +626,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the schema search path.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Context")]
+        [EDBConnectionStringKeyword(Keywords.SearchPath)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_SearchPath")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_SearchPath")]
+        [RefreshProperties(RefreshProperties.All)]
         public string SearchPath
         {
             get { return _searchpath; }
@@ -512,6 +641,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets a value indicating whether connection pooling should be used.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Pooling")]
+        [EDBConnectionStringKeyword(Keywords.Pooling)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Pooling")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Pooling")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(true)]
         public bool Pooling
         {
             get { return _pooling; }
@@ -530,6 +665,12 @@ namespace EnterpriseDB.EDBClient
         /// This strategy provide smooth change of connection count in the pool.
         /// </remarks>
         /// <value>The time (in seconds) to wait. The default value is 15 seconds.</value>
+        [EDBConnectionStringCategory("DataCategory_Pooling")]
+        [EDBConnectionStringKeyword(Keywords.ConnectionLifeTime)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_ConnectionLifeTime")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_ConnectionLifeTime")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(15)]
         public int ConnectionLifeTime
         {
             get { return _connection_life_time; }
@@ -540,6 +681,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the minimum connection pool size.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Pooling")]
+        [EDBConnectionStringKeyword(Keywords.MinPoolSize)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_MinPoolSize")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_MinPoolSize")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(1)]
         public int MinPoolSize
         {
             get { return _min_pool_size; }
@@ -550,6 +697,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the maximum connection pool size.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Pooling")]
+        [EDBConnectionStringKeyword(Keywords.MaxPoolSize)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_MaxPoolSize")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_MaxPoolSize")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(20)]
         public int MaxPoolSize
         {
             get { return _max_pool_size; }
@@ -560,6 +713,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets a value indicating whether to listen for notifications and report them between command activity.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Advanced")]
+        [EDBConnectionStringKeyword(Keywords.SyncNotification)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_SyncNotification")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_SyncNotification")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(false)]
         public bool SyncNotification
         {
             get { return _sync_notification; }
@@ -572,6 +731,12 @@ namespace EnterpriseDB.EDBClient
         /// before terminating the attempt and generating an error.
         /// </summary>
         /// <value>The time (in seconds) to wait for a command to complete. The default value is 20 seconds.</value>
+        [EDBConnectionStringCategory("DataCategory_Initialization")]
+        [EDBConnectionStringKeyword(Keywords.CommandTimeout)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_CommandTimeout")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_CommandTimeout")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(20)]
         public int CommandTimeout
         {
             get { return _command_timeout; }
@@ -579,6 +744,12 @@ namespace EnterpriseDB.EDBClient
         }
 
         private bool _enlist;
+        [EDBConnectionStringCategory("DataCategory_Pooling")]
+        [EDBConnectionStringKeyword(Keywords.Enlist)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_Enlist")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_Enlist")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(true)]
         public bool Enlist
         {
             get { return _enlist; }
@@ -589,6 +760,13 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets a value indicating whether datareaders are loaded in their entirety (for compatibility with earlier code).
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Advanced")]
+        [EDBConnectionStringKeyword(Keywords.PreloadReader)]
+        [EDBConnectionStringAcceptableKeyword("PRELOAD READER")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_PreloadReader")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_PreloadReader")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(true)]
         public bool PreloadReader
         {
             get { return _preloadReader; }
@@ -596,6 +774,13 @@ namespace EnterpriseDB.EDBClient
         }
 
         private bool _useExtendedTypes;
+        [EDBConnectionStringCategory("DataCategory_Advanced")]
+        [EDBConnectionStringKeyword(Keywords.UseExtendedTypes)]
+        [EDBConnectionStringAcceptableKeyword("USE EXTENDED TYPES")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_UseExtendedTypes")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_UseExtendedTypes")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(true)]
         public bool UseExtendedTypes
         {
             get { return _useExtendedTypes; }
@@ -603,6 +788,13 @@ namespace EnterpriseDB.EDBClient
         }
 
         private bool _integrated_security;
+        [EDBConnectionStringCategory("DataCategory_Security")]
+        [EDBConnectionStringKeyword(Keywords.IntegratedSecurity)]
+        [EDBConnectionStringAcceptableKeyword("INTEGRATED SECURITY")]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_IntegratedSecurity")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_IntegratedSecurity")]
+        [RefreshProperties(RefreshProperties.All)]
+        [DefaultValue(false)]
         public bool IntegratedSecurity
         {
             get { return _integrated_security; }
@@ -616,13 +808,20 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
-        /// see https://github.com/npgsql/Npgsql/issues/133
+        /// see https://github.com/npgsql/EnterpriseDB.EDBClient/issues/133
         /// </summary>
         [Conditional("NET45")]
         private static void CheckIntegratedSecuritySupport()
         {
             if (Type.GetType("Mono.Runtime") != null)
-                throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/npgsql/Npgsql/issues/133)");
+                throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/npgsql/EnterpriseDB.EDBClient/issues/133)");
+        }
+
+        private bool _includeRealm;
+        public bool IncludeRealm
+        {
+            get { return _includeRealm; }
+            set { SetValue(GetKeyName(Keywords.IncludeRealm), Keywords.IncludeRealm, value); }
         }
 
         private Version _compatible;
@@ -634,16 +833,22 @@ namespace EnterpriseDB.EDBClient
         /// Compatibilty version. When possible, behaviour caused by breaking changes will be preserved
         /// if this version is less than that where the breaking change was introduced.
         /// </summary>
+        [Browsable(false)]
         public Version Compatible
         {
             get { return _compatible; }
             set { SetValue(GetKeyName(Keywords.Compatible), Keywords.Compatible, value); }
         }
-
+        
         private string _application_name;
         /// <summary>
         /// Gets or sets the ootional application name parameter to be sent to the backend during connection initiation.
         /// </summary>
+        [EDBConnectionStringCategory("DataCategory_Context")]
+        [EDBConnectionStringKeyword(Keywords.ApplicationName)]
+        [EDBConnectionStringDisplayName("ConnectionProperty_Display_ApplicationName")]
+        [EDBConnectionStringDescription("ConnectionProperty_Description_ApplicationName")]
+        [RefreshProperties(RefreshProperties.All)]
         public string ApplicationName
         {
             get { return _application_name; }
@@ -661,6 +866,31 @@ namespace EnterpriseDB.EDBClient
         }
 
         #endregion
+        #region DeprecatedProperties
+
+        /// <summary>
+        /// Gets or sets the specified backend communication protocol version.
+        /// </summary>
+        [Obsolete("Protocol versio 3 is always used regardless of this setting.")]
+        public ProtocolVersion Protocol
+        {
+#pragma warning disable 618
+            get { return (ProtocolVersion)valueDescriptions[Keywords.Protocol].ExplicitDefault; }
+#pragma warning restore 618
+        }
+
+        /// <summary>
+        /// Gets the backend encoding.  Always returns "UTF8".
+        /// </summary>
+        [Obsolete("UTF8 is always used regardless of this setting.")]
+        public string Encoding
+        {
+#pragma warning disable 618
+            get { return (string)valueDescriptions[Keywords.Encoding].ExplicitDefault; }
+#pragma warning restore 618
+        }
+
+        #endregion
 
         private static Keywords GetKey(string key)
         {
@@ -672,7 +902,9 @@ namespace EnterpriseDB.EDBClient
                 case "PORT":
                     return Keywords.Port;
                 case "PROTOCOL":
+#pragma warning disable 618
                     return Keywords.Protocol;
+#pragma warning restore 618
                 case "DATABASE":
                 case "DB":
                     return Keywords.Database;
@@ -719,11 +951,13 @@ namespace EnterpriseDB.EDBClient
                 case "USEEXTENDEDTYPES":
                 case "USE EXTENDED TYPES":
                     return Keywords.UseExtendedTypes;
+                case "INTEGRATEDSECURITY":
                 case "INTEGRATED SECURITY":
                     return Keywords.IntegratedSecurity;
+                case "INCLUDEREALM":
+                    return Keywords.IncludeRealm;
                 case "COMPATIBLE":
                     return Keywords.Compatible;
-
                 case "APPLICATIONNAME":
                     return Keywords.ApplicationName;
                 case "ALWAYSPREPARE":
@@ -741,12 +975,14 @@ namespace EnterpriseDB.EDBClient
                     return "HOST";
                 case Keywords.Port:
                     return "PORT";
+#pragma warning disable 618
                 case Keywords.Protocol:
+#pragma warning restore 618
                     return "PROTOCOL";
                 case Keywords.Database:
                     return "DATABASE";
                 case Keywords.UserName:
-                   return "USER ID";
+                    return "USER ID";
                 case Keywords.Password:
                     return "PASSWORD";
                 case Keywords.SSL:
@@ -758,7 +994,7 @@ namespace EnterpriseDB.EDBClient
 #pragma warning restore 618
                     return "ENCODING";
                 case Keywords.Timeout:
-                     return "TIMEOUT";
+                    return "TIMEOUT";
                 case Keywords.SearchPath:
                     return "SEARCHPATH";
                 case Keywords.Pooling:
@@ -781,6 +1017,8 @@ namespace EnterpriseDB.EDBClient
                     return "USEEXTENDEDTYPES";
                 case Keywords.IntegratedSecurity:
                     return "INTEGRATED SECURITY";
+                case Keywords.IncludeRealm:
+                    return "INCLUDEREALM";
                 case Keywords.Compatible:
                     return "COMPATIBLE";
                 case Keywords.ApplicationName:
@@ -822,6 +1060,17 @@ namespace EnterpriseDB.EDBClient
         public bool ContainsKey(Keywords keyword)
         {
             return base.ContainsKey(GetKeyName(keyword));
+        }
+
+        public override bool TryGetValue(string keyword, out object value) {
+            try {
+                value = GetValue(GetKey(keyword));
+                return true;
+            }
+            catch (ArgumentException) {
+                value = null;
+                return false;
+            }
         }
 
         /// <summary>
@@ -874,7 +1123,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="value"></param>
         /// <returns>value, coerced as needed to the stored type.</returns>
         private object SetValue(Keywords keyword, object value)
-         {
+        {
             try
             {
                 switch (keyword)
@@ -883,8 +1132,10 @@ namespace EnterpriseDB.EDBClient
                         return this._host = Convert.ToString(value);
                     case Keywords.Port:
                         return this._port = Convert.ToInt32(value);
+#pragma warning disable 618
                     case Keywords.Protocol:
-                        return this._protocol = ToProtocolVersion(value);
+                        return Protocol;
+#pragma warning restore 618
                     case Keywords.Database:
                         return this._database = Convert.ToString(value);
                     case Keywords.UserName:
@@ -923,10 +1174,16 @@ namespace EnterpriseDB.EDBClient
                     case Keywords.UseExtendedTypes:
                         return this._useExtendedTypes = ToBoolean(value);
                     case Keywords.IntegratedSecurity:
-                        var v2 = ToIntegratedSecurity(value);
-                        if (v2 == true)
+                        bool iS = ToIntegratedSecurity(value);
+                        if (iS == true)
+                        {
                             CheckIntegratedSecuritySupport();
-                        return this._integrated_security = ToIntegratedSecurity(v2);
+                        }
+
+                        return this._integrated_security = ToIntegratedSecurity(iS);
+
+                    case Keywords.IncludeRealm:
+                        return this._includeRealm = ToBoolean(value);
                     case Keywords.Compatible:
                         Version ver = new Version(value.ToString());
                         if (ver > THIS_VERSION)
@@ -958,7 +1215,9 @@ namespace EnterpriseDB.EDBClient
                     case Keywords.SyncNotification:
                         exception_template = resman.GetString("Exception_InvalidBooleanKeyVal");
                         break;
+#pragma warning disable 618
                     case Keywords.Protocol:
+#pragma warning restore 618
                         exception_template = resman.GetString("Exception_InvalidProtocolVersionKeyVal");
                         break;
                 }
@@ -989,8 +1248,10 @@ namespace EnterpriseDB.EDBClient
                     return this._host;
                 case Keywords.Port:
                     return this._port;
+#pragma warning disable 618
                 case Keywords.Protocol:
-                    return this._protocol;
+                    return Protocol;
+#pragma warning restore 618
                 case Keywords.Database:
                     return this._database;
                 case Keywords.UserName:
@@ -1029,6 +1290,8 @@ namespace EnterpriseDB.EDBClient
                     return this._useExtendedTypes;
                 case Keywords.IntegratedSecurity:
                     return this._integrated_security;
+                case Keywords.IncludeRealm:
+                    return this._includeRealm;
                 case Keywords.Compatible:
                     return _compatible;
                 case Keywords.ApplicationName:
@@ -1100,16 +1363,18 @@ namespace EnterpriseDB.EDBClient
     {
         Host,
         Port,
+        [Obsolete("Protocol versio 3 is always used regardless of this setting.")]
         Protocol,
         Database,
         UserName,
         Password,
         SSL,
         SslMode,
-        [Obsolete("UTF-8 is always used regardless of this setting.")] Encoding,
+        [Obsolete("UTF-8 is always used regardless of this setting.")]
+        Encoding,
         Timeout,
         SearchPath,
-        //    These are for the connection pool
+        // These are for the connection pool
         Pooling,
         ConnectionLifeTime,
         MinPoolSize,
@@ -1124,7 +1389,8 @@ namespace EnterpriseDB.EDBClient
         IntegratedSecurity,
         Compatible,
         ApplicationName,
-        AlwaysPrepare
+        AlwaysPrepare,
+        IncludeRealm,
     }
 
     public enum SslMode
@@ -1135,3 +1401,5 @@ namespace EnterpriseDB.EDBClient
         Require = 1 << 3
     }
 }
+
+#pragma warning restore 1591

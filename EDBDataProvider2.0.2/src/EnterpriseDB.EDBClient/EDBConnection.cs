@@ -1,25 +1,25 @@
 // created on 10/5/2002 at 23:01
-// Npgsql.NpgsqlConnection.cs
+// EnterpriseDB.EDBClient.EDBConnection.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -45,49 +45,50 @@ using IsolationLevel = System.Data.IsolationLevel;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// Represents the method that handles the <see cref="Npgsql.NpgsqlConnection.Notification">Notice</see> events.
-	/// </summary>
-	/// <param name="e">A <see cref="Npgsql.EDBNoticeEventArgs">EDBNoticeEventArgs</see> that contains the event data.</param>
-	public delegate void NoticeEventHandler(Object sender, EDBNoticeEventArgs e);
+    /// <summary>
+    /// Represents the method that handles the <see cref="EnterpriseDB.EDBClient.EDBConnection.Notification">Notice</see> events.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">A <see cref="EnterpriseDB.EDBClient.EDBNoticeEventArgs">EDBNoticeEventArgs</see> that contains the event data.</param>
+    public delegate void NoticeEventHandler(Object sender, EDBNoticeEventArgs e);
 
-	/// <summary>
-	/// Represents the method that handles the <see cref="Npgsql.NpgsqlConnection.Notification">Notification</see> events.
-	/// </summary>
-	/// <param name="sender">The source of the event.</param>
-	/// <param name="e">A <see cref="Npgsql.EDBNotificationEventArgs">EDBNotificationEventArgs</see> that contains the event data.</param>
-	public delegate void NotificationEventHandler(Object sender, EDBNotificationEventArgs e);
+    /// <summary>
+    /// Represents the method that handles the <see cref="EnterpriseDB.EDBClient.EDBConnection.Notification">Notification</see> events.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">A <see cref="EnterpriseDB.EDBClient.EDBNotificationEventArgs">EDBNotificationEventArgs</see> that contains the event data.</param>
+    public delegate void NotificationEventHandler(Object sender, EDBNotificationEventArgs e);
 
-	/// <summary>
-	/// This class represents a connection to a
-	/// PostgreSQL server.
-	/// </summary>
+    /// <summary>
+    /// This class represents a connection to a
+    /// PostgreSQL server.
+    /// </summary>
 #if WITHDESIGN
-    [System.Drawing.ToolboxBitmapAttribute(typeof(NpgsqlConnection))]
+    [System.Drawing.ToolboxBitmapAttribute(typeof(EDBConnection))]
 #endif
 
-	public sealed class EDBConnection : DbConnection, ICloneable
-	{
-		// Logging related values
+    public sealed class EDBConnection : DbConnection, ICloneable
+    {
+        // Logging related values
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
-		// Parsed connection string cache
-		private static readonly Cache<EDBConnectionStringBuilder> cache = new Cache<EDBConnectionStringBuilder>();
+        // Parsed connection string cache
+        private static readonly Cache<EDBConnectionStringBuilder> cache = new Cache<EDBConnectionStringBuilder>();
 
-		/// <summary>
-		/// Occurs on NoticeResponses from the PostgreSQL backend.
-		/// </summary>
-		public event NoticeEventHandler Notice;
+        /// <summary>
+        /// Occurs on NoticeResponses from the PostgreSQL backend.
+        /// </summary>
+        public event NoticeEventHandler Notice;
 
-		internal NoticeEventHandler NoticeDelegate;
+        internal NoticeEventHandler NoticeDelegate;
 
-		/// <summary>
-		/// Occurs on NotificationResponses from the PostgreSQL backend.
-		/// </summary>
-		public event NotificationEventHandler Notification;
+        /// <summary>
+        /// Occurs on NotificationResponses from the PostgreSQL backend.
+        /// </summary>
+        public event NotificationEventHandler Notification;
 
-		internal NotificationEventHandler NotificationDelegate;
+        internal NotificationEventHandler NotificationDelegate;
 
         /// <summary>
         /// Called to provide client certificates for SSL handshake.
@@ -96,60 +97,66 @@ namespace EnterpriseDB.EDBClient
 
         internal ProvideClientCertificatesCallback ProvideClientCertificatesCallbackDelegate;
 
-
-		/// <summary>
-		/// Mono.Security.Protocol.Tls.CertificateSelectionCallback delegate.
-		/// </summary>
+        /// <summary>
+        /// Mono.Security.Protocol.Tls.CertificateSelectionCallback delegate.
+        /// </summary>
         [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
-		public event CertificateSelectionCallback CertificateSelectionCallback;
+        public event CertificateSelectionCallback CertificateSelectionCallback;
 
-		internal CertificateSelectionCallback CertificateSelectionCallbackDelegate;
+        internal CertificateSelectionCallback CertificateSelectionCallbackDelegate;
 
-		/// <summary>
-		/// Mono.Security.Protocol.Tls.CertificateValidationCallback delegate.
-		/// </summary>
+        /// <summary>
+        /// Mono.Security.Protocol.Tls.CertificateValidationCallback delegate.
+        /// </summary>
         [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
-		public event CertificateValidationCallback CertificateValidationCallback;
+        public event CertificateValidationCallback CertificateValidationCallback;
 
-		internal CertificateValidationCallback CertificateValidationCallbackDelegate;
+        internal CertificateValidationCallback CertificateValidationCallbackDelegate;
 
-		/// <summary>
-		/// Mono.Security.Protocol.Tls.PrivateKeySelectionCallback delegate.
-		/// </summary>
+        /// <summary>
+        /// Mono.Security.Protocol.Tls.PrivateKeySelectionCallback delegate.
+        /// </summary>
         [Obsolete("CertificateSelectionCallback, CertificateValidationCallback and PrivateKeySelectionCallback have been replaced with ValidateRemoteCertificateCallback.")]
-		public event PrivateKeySelectionCallback PrivateKeySelectionCallback;
+        public event PrivateKeySelectionCallback PrivateKeySelectionCallback;
 
-		internal PrivateKeySelectionCallback PrivateKeySelectionCallbackDelegate;
+        internal PrivateKeySelectionCallback PrivateKeySelectionCallbackDelegate;
 
+        /// <summary>
+        /// Called to validate server's certificate during SSL handshake
+        /// </summary>
         public event ValidateRemoteCertificateCallback ValidateRemoteCertificateCallback;
-        internal ValidateRemoteCertificateCallback ValidateRemoteCertificateCallbackDelegate;
-		// Set this when disposed is called.
-		private bool disposed = false;
 
-		// Used when we closed the connector due to an error, but are pretending it's open.
-		private bool _fakingOpen;
+        internal ValidateRemoteCertificateCallback ValidateRemoteCertificateCallbackDelegate;
+
+        // Set this when disposed is called.
+        private bool disposed = false;
+
+        // Used when we closed the connector due to an error, but are pretending it's open.
+        private bool _fakingOpen;
+        // Used when the connection is closed but an TransactionScope is still active
         // (the actual close is postponed until the scope ends)
         private bool _postponingClose;
         private bool _postponingDispose;
 
-		// Strong-typed ConnectionString values
-		private EDBConnectionStringBuilder settings;
+        // Strong-typed ConnectionString values
+        private EDBConnectionStringBuilder settings;
 
-		// Connector being used for the active connection.
-		private EDBConnector connector = null;
+        // Connector being used for the active connection.
+        private EDBConnector connector = null;
 
         private EDBPromotableSinglePhaseNotification promotable = null;
 
+        // A cached copy of the result of `settings.ConnectionString`
         private string _connectionString;
 
-		/// <summary>
-		/// Initializes a new instance of the
-		/// <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see> class.
-		/// </summary>
-		public EDBConnection()
-			: this(String.Empty)
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the
+        /// <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see> class.
+        /// </summary>
+        public EDBConnection()
+            : this(String.Empty)
+        {
+        }
 
         private void Init()
         {
@@ -157,19 +164,24 @@ namespace EnterpriseDB.EDBClient
             NotificationDelegate = new NotificationEventHandler(OnNotification);
 
             ProvideClientCertificatesCallbackDelegate = new ProvideClientCertificatesCallback(DefaultProvideClientCertificatesCallback);
-			CertificateValidationCallbackDelegate = new CertificateValidationCallback(DefaultCertificateValidationCallback);
-			CertificateSelectionCallbackDelegate = new CertificateSelectionCallback(DefaultCertificateSelectionCallback);
-			PrivateKeySelectionCallbackDelegate = new PrivateKeySelectionCallback(DefaultPrivateKeySelectionCallback);
+            CertificateValidationCallbackDelegate = new CertificateValidationCallback(DefaultCertificateValidationCallback);
+            CertificateSelectionCallbackDelegate = new CertificateSelectionCallback(DefaultCertificateSelectionCallback);
+            PrivateKeySelectionCallbackDelegate = new PrivateKeySelectionCallback(DefaultPrivateKeySelectionCallback);
             ValidateRemoteCertificateCallbackDelegate = new ValidateRemoteCertificateCallback(DefaultValidateRemoteCertificateCallback);
 
-			// Fix authentication problems. See https://bugzilla.novell.com/show_bug.cgi?id=MONO77559 and 
-			// http://pgfoundry.org/forum/message.php?msg_id=1002377 for more info.
-			RSACryptoServiceProvider.UseMachineKeyStore = true;
+            // Fix authentication problems. See https://bugzilla.novell.com/show_bug.cgi?id=MONO77559 and
+            // http://pgfoundry.org/forum/message.php?msg_id=1002377 for more info.
+            RSACryptoServiceProvider.UseMachineKeyStore = true;
 
-			promotable = new EDBPromotableSinglePhaseNotification(this);
-		}
+            promotable = new EDBPromotableSinglePhaseNotification(this);
+        }
 
-		/// <summary>
+        /// <summary>
+        /// Initializes a new instance of the
+        /// <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see> class
+        /// and sets the <see cref="EnterpriseDB.EDBClient.EDBConnection.ConnectionString">ConnectionString</see>.
+        /// </summary>
+        /// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
         public EDBConnection(String ConnectionString)
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "EDBConnection()");
@@ -181,8 +193,8 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Initializes a new instance of the
-        /// <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see> class
-        /// and sets the <see cref="Npgsql.NpgsqlConnection.ConnectionString">ConnectionString</see>.
+        /// <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see> class
+        /// and sets the <see cref="EnterpriseDB.EDBClient.EDBConnection.ConnectionString">ConnectionString</see>.
         /// </summary>
         /// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
         public EDBConnection(EDBConnectionStringBuilder ConnectionString)
@@ -241,7 +253,7 @@ namespace EnterpriseDB.EDBClient
         /// ConnectionLifeTime: Time to wait before closing unused connections in the pool in seconds. Default is 15.
         /// </li>
         /// <li>
-        /// SyncNotification:   Specifies if Npgsql should use synchronous notifications.
+        /// SyncNotification:   Specifies if EnterpriseDB.EDBClient should use synchronous notifications.
         /// </li>
         /// <li>
         /// SearchPath: Changes search path to specified and public schemas.
@@ -255,7 +267,7 @@ namespace EnterpriseDB.EDBClient
 
 #if WITHDESIGN
         [RefreshProperties(RefreshProperties.All), DefaultValue(""), RecommendedAsConfigurable(true)]
-        [NpgsqlSysDescription("Description_ConnectionString", typeof(NpgsqlConnection)), Category("Data")]
+        [EDBSysDescription("Description_ConnectionString", typeof(EDBConnection)), Category("Data")]
         [Editor(typeof(ConnectionStringEditor), typeof(System.Drawing.Design.UITypeEditor))]
 #endif
 
@@ -286,32 +298,32 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		/// <summary>
-		/// Backend server host name.
-		/// </summary>
-		[Browsable(true)]
-		public String Host
-		{
-			get { return settings.Host; }
-		}
+        /// <summary>
+        /// Backend server host name.
+        /// </summary>
+        [Browsable(true)]
+        public String Host
+        {
+            get { return settings.Host; }
+        }
 
-		/// <summary>
-		/// Backend server port.
-		/// </summary>
-		[Browsable(true)]
-		public Int32 Port
-		{
-			get { return settings.Port; }
-		}
+        /// <summary>
+        /// Backend server port.
+        /// </summary>
+        [Browsable(true)]
+        public Int32 Port
+        {
+            get { return settings.Port; }
+        }
 
-		/// <summary>
-		/// If true, the connection will attempt to use SSL.
-		/// </summary>
-		[Browsable(true)]
-		public Boolean SSL
-		{
-			get { return settings.SSL; }
-		}
+        /// <summary>
+        /// If true, the connection will attempt to use SSL.
+        /// </summary>
+        [Browsable(true)]
+        public Boolean SSL
+        {
+            get { return settings.SSL; }
+        }
 
 
         public Boolean UseSslStream
@@ -327,88 +339,88 @@ namespace EnterpriseDB.EDBClient
         /// <value>The time (in seconds) to wait for a connection to open. The default value is 15 seconds.</value>
 
 #if WITHDESIGN
-        [NpgsqlSysDescription("Description_ConnectionTimeout", typeof(NpgsqlConnection))]
+        [EDBSysDescription("Description_ConnectionTimeout", typeof(EDBConnection))]
 #endif
 
-		public override Int32 ConnectionTimeout
-		{
-			get { return settings.Timeout; }
-		}
+        public override Int32 ConnectionTimeout
+        {
+            get { return settings.Timeout; }
+        }
 
-		/// <summary>
-		/// Gets the time to wait while trying to execute a command
-		/// before terminating the attempt and generating an error.
-		/// </summary>
-		/// <value>The time (in seconds) to wait for a command to complete. The default value is 20 seconds.</value>
-		public Int32 CommandTimeout
-		{
-			get { return settings.CommandTimeout; }
-		}
+        /// <summary>
+        /// Gets the time to wait while trying to execute a command
+        /// before terminating the attempt and generating an error.
+        /// </summary>
+        /// <value>The time (in seconds) to wait for a command to complete. The default value is 20 seconds.</value>
+        public Int32 CommandTimeout
+        {
+            get { return settings.CommandTimeout; }
+        }
 
-		/// <summary>
-		/// Gets the time to wait before closing unused connections in the pool if the count
-		/// of all connections exeeds MinPoolSize.
-		/// </summary>
-		/// <remarks>
-		/// If connection pool contains unused connections for ConnectionLifeTime seconds,
-		/// the half of them will be closed. If there will be unused connections in a second
-		/// later then again the half of them will be closed and so on.
-		/// This strategy provide smooth change of connection count in the pool.
-		/// </remarks>
-		/// <value>The time (in seconds) to wait. The default value is 15 seconds.</value>
-		public Int32 ConnectionLifeTime
-		{
-			get { return settings.ConnectionLifeTime; }
-		}
+        /// <summary>
+        /// Gets the time to wait before closing unused connections in the pool if the count
+        /// of all connections exeeds MinPoolSize.
+        /// </summary>
+        /// <remarks>
+        /// If connection pool contains unused connections for ConnectionLifeTime seconds,
+        /// the half of them will be closed. If there will be unused connections in a second
+        /// later then again the half of them will be closed and so on.
+        /// This strategy provide smooth change of connection count in the pool.
+        /// </remarks>
+        /// <value>The time (in seconds) to wait. The default value is 15 seconds.</value>
+        public Int32 ConnectionLifeTime
+        {
+            get { return settings.ConnectionLifeTime; }
+        }
 
-		///<summary>
-		/// Gets the name of the current database or the database to be used after a connection is opened.
-		/// </summary>
-		/// <value>The name of the current database or the name of the database to be
-		/// used after a connection is opened. The default value is the empty string.</value>
+        ///<summary>
+        /// Gets the name of the current database or the database to be used after a connection is opened.
+        /// </summary>
+        /// <value>The name of the current database or the name of the database to be
+        /// used after a connection is opened. The default value is the empty string.</value>
 #if WITHDESIGN
         [EDBSysDescription("Description_Database", typeof(EDBConnection))]
 #endif
 
-		public override String Database
-		{
-			get { return settings.Database; }
-		}
+        public override String Database
+        {
+            get { return settings.Database; }
+        }
 
-		/// <summary>
-		/// Whether datareaders are loaded in their entirety (for compatibility with earlier code).
-		/// </summary>
-		public bool PreloadReader
-		{
-			get { return settings.PreloadReader; }
-		}
+        /// <summary>
+        /// Whether datareaders are loaded in their entirety (for compatibility with earlier code).
+        /// </summary>
+        public bool PreloadReader
+        {
+            get { return settings.PreloadReader; }
+        }
 
-		/// <summary>
-		/// Gets the database server name.
-		/// </summary>
-		public override string DataSource
-		{
-			get { return settings.Host; }
-		}
+        /// <summary>
+        /// Gets the database server name.
+        /// </summary>
+        public override string DataSource
+        {
+            get { return settings.Host; }
+        }
 
-		/// <summary>
-		/// Gets flag indicating if we are using Synchronous notification or not.
-		/// The default value is false.
-		/// </summary>
-		public Boolean SyncNotification
-		{
-			get { return settings.SyncNotification; }
-		}
+        /// <summary>
+        /// Gets flag indicating if we are using Synchronous notification or not.
+        /// The default value is false.
+        /// </summary>
+        public Boolean SyncNotification
+        {
+            get { return settings.SyncNotification; }
+        }
 
-		/// <summary>
-		/// Gets the current state of the connection.
-		/// </summary>
-		/// <value>A bitwise combination of the <see cref="System.Data.ConnectionState">ConnectionState</see> values. The default is <b>Closed</b>.</value>
-		[Browsable(false)]
-		public ConnectionState FullState
-		{
-			get
-			{
+        /// <summary>
+        /// Gets the current state of the connection.
+        /// </summary>
+        /// <value>A bitwise combination of the <see cref="System.Data.ConnectionState">ConnectionState</see> values. The default is <b>Closed</b>.</value>
+        [Browsable(false)]
+        public ConnectionState FullState
+        {
+            get
+            {
                 //CheckNotDisposed();
 
                 if (connector != null && !disposed)
@@ -422,11 +434,11 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		/// <summary>
-		/// Gets whether the current state of the connection is Open or Closed
-		/// </summary>
-		/// <value>ConnectionState.Open or ConnectionState.Closed</value>
-		[Browsable(false)]
+        /// <summary>
+        /// Gets whether the current state of the connection is Open or Closed
+        /// </summary>
+        /// <value>ConnectionState.Open or ConnectionState.Closed</value>
+        [Browsable(false)]
         public override ConnectionState State
         {
             get
@@ -435,7 +447,9 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-
+        /// <summary>
+        /// Compatibility version.
+        /// </summary>
         public Version EDBCompatibilityVersion
         {
             get
@@ -445,51 +459,55 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-		/// Version of the PostgreSQL backend.
-		/// This can only be called when there is an active connection.
-		/// </summary>
-		[Browsable(false)]
-		public Version PostgreSqlVersion
-		{
-			get
-			{
-				CheckConnectionOpen();
-				return connector.ServerVersion;
-			}
-		}
+        /// Version of the PostgreSQL backend.
+        /// This can only be called when there is an active connection.
+        /// </summary>
+        [Browsable(false)]
+        public Version PostgreSqlVersion
+        {
+            get
+            {
+                CheckConnectionOpen();
+                return connector.ServerVersion;
+            }
+        }
 
-		public override string ServerVersion
-		{
-			get { return PostgreSqlVersion.ToString(); }
-		}
+        /// <summary>
+        /// PostgreSQL server version.
+        /// </summary>
+        public override string ServerVersion
+        {
+            get { return PostgreSqlVersion.ToString(); }
+        }
 
-		/// <summary>
-		/// Protocol version in use.
-		/// This can only be called when there is an active connection.
-		/// </summary>
-		[Browsable(false)]
-		public ProtocolVersion BackendProtocolVersion
-		{
-			get
-			{
-				CheckConnectionOpen();
-				return connector.BackendProtocolVersion;
-			}
-		}
+        /// <summary>
+        /// Protocol version in use.
+        /// This can only be called when there is an active connection.
+        /// Always retuna Version3
+        /// </summary>
+        [Browsable(false)]
+        public ProtocolVersion BackendProtocolVersion
+        {
+            get
+            {
+                CheckConnectionOpen();
+                return ProtocolVersion.Version3;
+            }
+        }
 
-		/// <summary>
-		/// Process id of backend server.
-		/// This can only be called when there is an active connection.
-		/// </summary>
-		[Browsable(false)]
-		public Int32 ProcessID
-		{
-			get
-			{
-				CheckConnectionOpen();
-				return connector.BackEndKeyData.ProcessID;
-			}
-		}
+        /// <summary>
+        /// Process id of backend server.
+        /// This can only be called when there is an active connection.
+        /// </summary>
+        [Browsable(false)]
+        public Int32 ProcessID
+        {
+            get
+            {
+                CheckConnectionOpen();
+                return connector.BackEndKeyData.ProcessID;
+            }
+        }
 
         /// <summary>
         /// Report whether the backend is expecting standard conformant strings.
@@ -547,72 +565,73 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginDbTransaction", isolationLevel);
 
-			return BeginTransaction(isolationLevel);
-		}
+            return BeginTransaction(isolationLevel);
+        }
 
-		/// <summary>
-		/// Begins a database transaction.
-		/// </summary>
-		/// <returns>A <see cref="Npgsql.EDBTransaction">EDBTransaction</see>
-		/// object representing the new transaction.</returns>
-		/// <remarks>
-		/// Currently there's no support for nested transactions.
-		/// </remarks>
-		public new EDBTransaction BeginTransaction()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginTransaction");
-			return this.BeginTransaction(IsolationLevel.ReadCommitted);
-		}
+        /// <summary>
+        /// Begins a database transaction.
+        /// </summary>
+        /// <returns>A <see cref="EnterpriseDB.EDBClient.EDBTransaction">EDBTransaction</see>
+        /// object representing the new transaction.</returns>
+        /// <remarks>
+        /// Currently there's no support for nested transactions.
+        /// </remarks>
+        public new EDBTransaction BeginTransaction()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginTransaction");
+            return this.BeginTransaction(IsolationLevel.ReadCommitted);
+        }
 
-		/// <summary>
-		/// Begins a database transaction with the specified isolation level.
-		/// </summary>
-		/// <param name="level">The <see cref="System.Data.IsolationLevel">isolation level</see> under which the transaction should run.</param>
-		/// <returns>A <see cref="Npgsql.EDBTransaction">EDBTransaction</see>
-		/// object representing the new transaction.</returns>
-		/// <remarks>
-		/// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
-		/// There's no support for nested transactions.
-		/// </remarks>
-		public new EDBTransaction BeginTransaction(IsolationLevel level)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginTransaction", level);
+        /// <summary>
+        /// Begins a database transaction with the specified isolation level.
+        /// </summary>
+        /// <param name="level">The <see cref="System.Data.IsolationLevel">isolation level</see> under which the transaction should run.</param>
+        /// <returns>A <see cref="EnterpriseDB.EDBClient.EDBTransaction">EDBTransaction</see>
+        /// object representing the new transaction.</returns>
+        /// <remarks>
+        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
+        /// There's no support for nested transactions.
+        /// </remarks>
+        public new EDBTransaction BeginTransaction(IsolationLevel level)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "BeginTransaction", level);
 
-			CheckConnectionOpen();
+            CheckConnectionOpen();
 
-			if (connector.Transaction != null)
-			{
-				throw new InvalidOperationException(resman.GetString("Exception_NoNestedTransactions"));
-			}
+            if (connector.Transaction != null)
+            {
+                throw new InvalidOperationException(resman.GetString("Exception_NoNestedTransactions"));
+            }
 
-			return new EDBTransaction(this, level);
-		}
+            return new EDBTransaction(this, level);
+        }
 
-		/// <summary>
-		/// Opens a database connection with the property settings specified by the
-		/// <see cref="Npgsql.NpgsqlConnection.ConnectionString">ConnectionString</see>.
-		/// </summary>
-		public override void Open()
-		{
+        /// <summary>
+        /// Opens a database connection with the property settings specified by the
+        /// <see cref="EnterpriseDB.EDBClient.EDBConnection.ConnectionString">ConnectionString</see>.
+        /// </summary>
+        public override void Open()
+        {
             // If we're postponing a close (see doc on this variable), the connection is already
             // open and can be silently reused
             if (_postponingClose)
                 return;
-			CheckConnectionClosed();
 
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
+            CheckConnectionClosed();
 
-			// Check if there is any missing argument.
-			if (!settings.ContainsKey(Keywords.Host))
-			{
-				throw new ArgumentException(resman.GetString("Exception_MissingConnStrArg"),
-											EDBConnectionStringBuilder.GetKeyName(Keywords.Host));
-			}
-			if (!settings.ContainsKey(Keywords.UserName) && !settings.ContainsKey(Keywords.IntegratedSecurity))
-			{
-				throw new ArgumentException(resman.GetString("Exception_MissingConnStrArg"),
-											EDBConnectionStringBuilder.GetKeyName(Keywords.UserName));
-			}
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
+
+            // Check if there is any missing argument.
+            if (!settings.ContainsKey(Keywords.Host))
+            {
+                throw new ArgumentException(resman.GetString("Exception_MissingConnStrArg"),
+                                            Keywords.Host.ToString());
+            }
+            if (!settings.ContainsKey(Keywords.UserName) && !settings.ContainsKey(Keywords.IntegratedSecurity))
+            {
+                throw new ArgumentException(resman.GetString("Exception_MissingConnStrArg"),
+                                            Keywords.UserName.ToString());
+            }
 
             // Get a Connector, either from the pool or creating one ourselves.
             if (Pooling)
@@ -632,64 +651,66 @@ namespace EnterpriseDB.EDBClient
                 connector.Open();
             }
 
-			connector.Notice += NoticeDelegate;
-			connector.Notification += NotificationDelegate;
+            connector.Notice += NoticeDelegate;
+            connector.Notification += NotificationDelegate;
 
-			if (SyncNotification)
-			{
-				connector.AddNotificationThread();
-			}
+            if (SyncNotification)
+            {
+                connector.AddNotificationThread();
+            }
 
-			if (Enlist)
-			{
-				Promotable.Enlist(Transaction.Current);
-			}
+            if (Enlist)
+            {
+                Promotable.Enlist(Transaction.Current);
+            }
+
             this.OnStateChange (new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open));
-		}
 
-		/// <summary>
-		/// This method changes the current database by disconnecting from the actual
-		/// database and connecting to the specified.
-		/// </summary>
-		/// <param name="dbName">The name of the database to use in place of the current database.</param>
-		public override void ChangeDatabase(String dbName)
-		{
-			CheckNotDisposed();
+        }
 
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ChangeDatabase", dbName);
+        /// <summary>
+        /// This method changes the current database by disconnecting from the actual
+        /// database and connecting to the specified.
+        /// </summary>
+        /// <param name="dbName">The name of the database to use in place of the current database.</param>
+        public override void ChangeDatabase(String dbName)
+        {
+            CheckNotDisposed();
 
-			if (dbName == null)
-			{
-				throw new ArgumentNullException("dbName");
-			}
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "ChangeDatabase", dbName);
 
-			if (string.IsNullOrEmpty(dbName))
-			{
-				throw new ArgumentOutOfRangeException(String.Format(resman.GetString("Exception_InvalidDbName"), dbName), "dbName");
-			}
+            if (dbName == null)
+            {
+                throw new ArgumentNullException("dbName");
+            }
 
-			String oldDatabaseName = Database;
+            if (string.IsNullOrEmpty(dbName))
+            {
+                throw new ArgumentOutOfRangeException("dbName", dbName, String.Format(resman.GetString("Exception_InvalidDbName")));
+            }
 
-			Close();
+            String oldDatabaseName = Database;
+
+            Close();
 
             // Mutating the current `settings` object would invalidate the cached instance, so work on a copy instead.
             settings = settings.Clone();
             settings[Keywords.Database] = dbName;
             _connectionString = null;
 
-			Open();
-		}
+            Open();
+        }
 
-		internal void EmergencyClose()
-		{
-			_fakingOpen = true;
-		}
+        internal void EmergencyClose()
+        {
+            _fakingOpen = true;
+        }
 
-		/// <summary>
-		/// Releases the connection to the database.  If the connection is pooled, it will be
-		///	made available for re-use.  If it is non-pooled, the actual connection will be shutdown.
-		/// </summary>
-		public override void Close()
+        /// <summary>
+        /// Releases the connection to the database.  If the connection is pooled, it will be
+        ///    made available for re-use.  If it is non-pooled, the actual connection will be shutdown.
+        /// </summary>
+        public override void Close()
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Close");
 
@@ -713,13 +734,13 @@ namespace EnterpriseDB.EDBClient
             // clear the way for another promotable transaction
             promotable = null;
 
-                connector.Notification -= NotificationDelegate;
-                connector.Notice -= NoticeDelegate;
+            connector.Notification -= NotificationDelegate;
+            connector.Notice -= NoticeDelegate;
 
-                if (SyncNotification)
-                {
-                    connector.RemoveNotificationThread();
-                }
+            if (SyncNotification)
+            {
+                connector.RemoveNotificationThread();
+            }
 
             if (Pooling)
             {
@@ -759,46 +780,46 @@ namespace EnterpriseDB.EDBClient
                 ReallyClose();
         }
 
-		/// <summary>
-		/// Creates and returns a <see cref="System.Data.Common.DbCommand">DbCommand</see>
-		/// object associated with the <see cref="System.Data.Common.DbConnection">IDbConnection</see>.
-		/// </summary>
-		/// <returns>A <see cref="System.Data.Common.DbCommand">DbCommand</see> object.</returns>
-		protected override DbCommand CreateDbCommand()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CreateDbCommand");
-			return CreateCommand();
-		}
+        /// <summary>
+        /// Creates and returns a <see cref="System.Data.Common.DbCommand">DbCommand</see>
+        /// object associated with the <see cref="System.Data.Common.DbConnection">IDbConnection</see>.
+        /// </summary>
+        /// <returns>A <see cref="System.Data.Common.DbCommand">DbCommand</see> object.</returns>
+        protected override DbCommand CreateDbCommand()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CreateDbCommand");
+            return CreateCommand();
+        }
 
-		/// <summary>
-		/// Creates and returns a <see cref="EDB.EDBCommand">EDBCommand</see>
-		/// object associated with the <see cref="EDB.EDBConnection">EDBConnection</see>.
-		/// </summary>
-		/// <returns>A <see cref="EDB.EDBCommand">EDBCommand</see> object.</returns>
-		public new EDBCommand CreateCommand()
-		{
-			CheckNotDisposed();
+        /// <summary>
+        /// Creates and returns a <see cref="EnterpriseDB.EDBClient.EDBCommand">EDBCommand</see>
+        /// object associated with the <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see>.
+        /// </summary>
+        /// <returns>A <see cref="EnterpriseDB.EDBClient.EDBCommand">EDBCommand</see> object.</returns>
+        public new EDBCommand CreateCommand()
+        {
+            CheckNotDisposed();
 
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CreateCommand");
-			return new EDBCommand("", this);
-		}
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CreateCommand");
+            return new EDBCommand("", this);
+        }
 
-		/// <summary>
-		/// Releases all resources used by the
-		/// <see cref="EDB.EDBConnection">EDBConnection</see>.
-		/// </summary>
-		/// <param name="disposing"><b>true</b> when called from Dispose();
-		/// <b>false</b> when being called from the finalizer.</param>
-		protected override void Dispose(bool disposing)
-		{
-			if (!disposed)
+        /// <summary>
+        /// Releases all resources used by the
+        /// <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see>.
+        /// </summary>
+        /// <param name="disposing"><b>true</b> when called from Dispose();
+        /// <b>false</b> when being called from the finalizer.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposed)
                 return;
 
             _postponingDispose = false;
-				if (disposing)
-				{
-					EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Dispose");
-					Close();
+            if (disposing)
+            {
+                EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Dispose");
+                Close();
                 if (_postponingClose)
                 {
                     _postponingDispose = true;
@@ -810,53 +831,53 @@ namespace EnterpriseDB.EDBClient
             disposed = true;
         }
 
-		/// <summary>
-		/// Create a new connection based on this one.
-		/// </summary>
-		/// <returns>A new EDBConnection object.</returns>
-		Object ICloneable.Clone()
-		{
-			return Clone();
-		}
+        /// <summary>
+        /// Create a new connection based on this one.
+        /// </summary>
+        /// <returns>A new EDBConnection object.</returns>
+        Object ICloneable.Clone()
+        {
+            return Clone();
+        }
 
-		/// <summary>
-		/// Create a new connection based on this one.
-		/// </summary>
-		/// <returns>A new EDBConnection object.</returns>
-		public EDBConnection Clone()
-		{
-			CheckNotDisposed();
+        /// <summary>
+        /// Create a new connection based on this one.
+        /// </summary>
+        /// <returns>A new EDBConnection object.</returns>
+        public EDBConnection Clone()
+        {
+            CheckNotDisposed();
 
-			EDBConnection C = new EDBConnection(ConnectionString);
+            EDBConnection C = new EDBConnection(ConnectionString);
 
-			C.Notice += this.Notice;
+            C.Notice += this.Notice;
 
-			if (connector != null)
-			{
-				C.Open();
-			}
+            if (connector != null)
+            {
+                C.Open();
+            }
 
-			return C;
-		}
+            return C;
+        }
 
-		//
-		// Internal methods and properties
-		//
-		internal void OnNotice(object O, EDBNoticeEventArgs E)
-		{
-			if (Notice != null)
-			{
-				Notice(this, E);
-			}
-		}
+        //
+        // Internal methods and properties
+        //
+        internal void OnNotice(object O, EDBNoticeEventArgs E)
+        {
+            if (Notice != null)
+            {
+                Notice(this, E);
+            }
+        }
 
-		internal void OnNotification(object O, EDBNotificationEventArgs E)
-		{
-			if (Notification != null)
-			{
-				Notification(this, E);
-			}
-		}
+        internal void OnNotification(object O, EDBNotificationEventArgs E)
+        {
+            if (Notification != null)
+            {
+                Notification(this, E);
+            }
+        }
 
         /// <summary>
         /// Returns a copy of the EDBConnectionStringBuilder that contains the parsed connection string values.
@@ -874,119 +895,120 @@ namespace EnterpriseDB.EDBClient
             get { return connector; }
         }
 
+        /// <summary>
+        /// Gets the EDBConnectionStringBuilder containing the parsed connection string values.
+        /// </summary>
+        internal EDBConnectionStringBuilder ConnectionStringValues
+        {
+            get { return settings; }
+        }
 
-		/// <summary>
-		/// Gets the EDBConnectionStringBuilder containing the parsed connection string values.
-		/// </summary>
-		internal EDBConnectionStringBuilder ConnectionStringValues
-		{
-			get { return settings; }
-		}
+        /// <summary>
+        /// User name.
+        /// </summary>
+        internal String UserName
+        {
+            get { return settings.UserName; }
+        }
 
-		/// <summary>
-		/// User name.
-		/// </summary>
-		internal String UserName
-		{
-			get { return settings.UserName; }
-		}
+        /// <summary>
+        /// Use extended types.
+        /// </summary>
+        public bool UseExtendedTypes
+        {
+            get
+            {
+                bool ext = settings.UseExtendedTypes;
+                return ext;
+            }
+        }
 
-		public bool UseExtendedTypes
-		{
-			get
-			{
-				bool ext = settings.UseExtendedTypes;
-				return ext;
-			}
-		}
-
-		/// <summary>
-		/// Password.
-		/// </summary>
+        /// <summary>
+        /// Password.
+        /// </summary>
         internal byte[] Password
-		{
-			get { return settings.PasswordAsByteArray; }
-		}
+        {
+            get { return settings.PasswordAsByteArray; }
+        }
 
-		/// <summary>
-		/// Determine if connection pooling will be used for this connection.
-		/// </summary>
-		internal Boolean Pooling
-		{
-			get { return (settings.Pooling && (settings.MaxPoolSize > 0)); }
-		}
+        /// <summary>
+        /// Determine if connection pooling will be used for this connection.
+        /// </summary>
+        internal Boolean Pooling
+        {
+            get { return (settings.Pooling && (settings.MaxPoolSize > 0)); }
+        }
 
-		internal Int32 MinPoolSize
-		{
-			get { return settings.MinPoolSize; }
-		}
+        internal Int32 MinPoolSize
+        {
+            get { return settings.MinPoolSize; }
+        }
 
-		internal Int32 MaxPoolSize
-		{
-			get { return settings.MaxPoolSize; }
-		}
+        internal Int32 MaxPoolSize
+        {
+            get { return settings.MaxPoolSize; }
+        }
 
-		internal Int32 Timeout
-		{
-			get { return settings.Timeout; }
-		}
+        internal Int32 Timeout
+        {
+            get { return settings.Timeout; }
+        }
 
-		internal Boolean Enlist
-		{
-			get { return settings.Enlist; }
-		}
+        internal Boolean Enlist
+        {
+            get { return settings.Enlist; }
+        }
 
+        //
+        // Event handlers
+        //
 
-		//
-		// Event handlers
-		//
+        /// <summary>
+        /// Default SSL CertificateSelectionCallback implementation.
+        /// </summary>
+        internal X509Certificate DefaultCertificateSelectionCallback(X509CertificateCollection clientCertificates,
+                                                                     X509Certificate serverCertificate, string targetHost,
+                                                                     X509CertificateCollection serverRequestedCertificates)
+        {
+            if (CertificateSelectionCallback != null)
+            {
+                return CertificateSelectionCallback(clientCertificates, serverCertificate, targetHost, serverRequestedCertificates);
+            }
+            else
+            {
+                return null;
+            }
+        }
 
-		/// <summary>
-		/// Default SSL CertificateSelectionCallback implementation.
-		/// </summary>
-		internal X509Certificate DefaultCertificateSelectionCallback(X509CertificateCollection clientCertificates,
-																	 X509Certificate serverCertificate, string targetHost,
-		                                                             X509CertificateCollection serverRequestedCertificates)
-		{
-			if (CertificateSelectionCallback != null)
-			{
-				return CertificateSelectionCallback(clientCertificates, serverCertificate, targetHost, serverRequestedCertificates);
-			}
-			else
-			{
-				return null;
-			}
-		}
+        /// <summary>
+        /// Default SSL CertificateValidationCallback implementation.
+        /// </summary>
+        internal bool DefaultCertificateValidationCallback(X509Certificate certificate, int[] certificateErrors)
+        {
+            if (CertificateValidationCallback != null)
+            {
+                return CertificateValidationCallback(certificate, certificateErrors);
+            }
+            else
+            {
+                return true;
+            }
+        }
 
-		/// <summary>
-		/// Default SSL CertificateValidationCallback implementation.
-		/// </summary>
-		internal bool DefaultCertificateValidationCallback(X509Certificate certificate, int[] certificateErrors)
-		{
-			if (CertificateValidationCallback != null)
-			{
-				return CertificateValidationCallback(certificate, certificateErrors);
-			}
-			else
-			{
-				return true;
-			}
-		}
-
-		/// <summary>
-		/// Default SSL PrivateKeySelectionCallback implementation.
-		/// </summary>
-		internal AsymmetricAlgorithm DefaultPrivateKeySelectionCallback(X509Certificate certificate, string targetHost)
-		{
-			if (PrivateKeySelectionCallback != null)
-			{
-				return PrivateKeySelectionCallback(certificate, targetHost);
-			}
-			else
-			{
-				return null;
-			}
-		}
+        /// <summary>
+        /// Default SSL PrivateKeySelectionCallback implementation.
+        /// </summary>
+        internal AsymmetricAlgorithm DefaultPrivateKeySelectionCallback(X509Certificate certificate, string targetHost)
+        {
+            if (PrivateKeySelectionCallback != null)
+            {
+                return PrivateKeySelectionCallback(certificate, targetHost);
+            }
+            else
+            {
+                return null;
+            }
+        }
 
         /// <summary>
         /// Default SSL ProvideClientCertificatesCallback implementation.
@@ -998,7 +1020,7 @@ namespace EnterpriseDB.EDBClient
                 ProvideClientCertificatesCallback(certificates);
             }
         }
-//TOOO ZK checkme
+
         /// <summary>
         /// Default SSL ValidateRemoteCertificateCallback implementation.
         /// </summary>
@@ -1023,19 +1045,18 @@ namespace EnterpriseDB.EDBClient
             get { return promotable ?? (promotable = new EDBPromotableSinglePhaseNotification(this)); }
         }
 
-
-		/// <summary>
-		/// Write each key/value pair in the connection string to the log.
-		/// </summary>
-		private void LogConnectionString()
-		{
+        /// <summary>
+        /// Write each key/value pair in the connection string to the log.
+        /// </summary>
+        private void LogConnectionString()
+        {
             if (LogLevel.Debug >= EDBEventLog.Level)
                 return;
 
-			foreach (string key in settings.Keys)
-			{
-				EDBEventLog.LogMsg(resman, "Log_ConnectionStringValues", LogLevel.Debug, key, settings[key]);
-			}
+            foreach (string key in settings.Keys)
+            {
+                EDBEventLog.LogMsg(resman, "Log_ConnectionStringValues", LogLevel.Debug, key, settings[key]);
+            }
         }
 
         /// <summary>
@@ -1044,15 +1065,14 @@ namespace EnterpriseDB.EDBClient
         /// <param name="connectionString">The connection string to load the builder from</param>
         private void LoadConnectionStringBuilder(string connectionString)
         {
-            settings = cache[connectionString];
-            if (settings == null)
+            EDBConnectionStringBuilder newSettings = cache[connectionString];
+            if (newSettings == null)
             {
-                settings = new EDBConnectionStringBuilder(connectionString);
-                cache[connectionString] = settings;
+                newSettings = new EDBConnectionStringBuilder(connectionString);
+                cache[connectionString] = newSettings;
             }
 
-            RefreshConnectionString();
-            LogConnectionString();
+            LoadConnectionStringBuilder(newSettings);
         }
 
         /// <summary>
@@ -1061,7 +1081,13 @@ namespace EnterpriseDB.EDBClient
         /// <param name="connectionString">The connection string to load the builder from</param>
         private void LoadConnectionStringBuilder(EDBConnectionStringBuilder connectionString)
         {
-            settings = connectionString;
+            // Clone the settings, because if Integrated Security is enabled, user ID can be different
+            settings = connectionString.Clone();
+
+            // Set the UserName explicitly to freeze any Integrated Security-determined names
+            if (settings.IntegratedSecurity)
+               settings.UserName = settings.UserName;
+
             RefreshConnectionString();
             LogConnectionString();
         }
@@ -1074,28 +1100,28 @@ namespace EnterpriseDB.EDBClient
             _connectionString = settings.ConnectionString;
         }
 
-		private void CheckConnectionOpen()
-		{
-			if (disposed)
-			{
-				throw new ObjectDisposedException(CLASSNAME);
-			}
+        private void CheckConnectionOpen()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(CLASSNAME);
+            }
 
-			if (_fakingOpen)
-			{
-				if (connector != null)
-				{
-					try
-					{
-						Close();
-					}
-					catch
-					{
-					}
-				}
-				Open();
-				_fakingOpen = false;
-			}
+            if (_fakingOpen)
+            {
+                if (connector != null)
+                {
+                    try
+                    {
+                        Close();
+                    }
+                    catch
+                    {
+                    }
+                }
+                Open();
+                _fakingOpen = false;
+            }
 
             if (_postponingClose || connector == null)
             {
@@ -1103,57 +1129,56 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		private void CheckConnectionClosed()
-		{
-			if (disposed)
-			{
-				throw new ObjectDisposedException(CLASSNAME);
-			}
+        private void CheckConnectionClosed()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(CLASSNAME);
+            }
 
-			if (connector != null)
-			{
-				throw new InvalidOperationException(resman.GetString("Exception_ConnOpen"));
-			}
-		}
+            if (connector != null)
+            {
+                throw new InvalidOperationException(resman.GetString("Exception_ConnOpen"));
+            }
+        }
 
-		private void CheckNotDisposed()
-		{
-			if (disposed)
-			{
-				throw new ObjectDisposedException(CLASSNAME);
-			}
-		}
+        private void CheckNotDisposed()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(CLASSNAME);
+            }
+        }
 
+        /// <summary>
+        /// Returns the supported collections
+        /// </summary>
+        public override DataTable GetSchema()
+        {
+            return EDBSchema.GetMetaDataCollections();
+        }
 
-		/// <summary>
-		/// Returns the supported collections
-		/// </summary>
-		public override DataTable GetSchema()
-		{
-			return EDBSchema.GetMetaDataCollections();
-		}
+        /// <summary>
+        /// Returns the schema collection specified by the collection name.
+        /// </summary>
+        /// <param name="collectionName">The collection name.</param>
+        /// <returns>The collection specified.</returns>
+        public override DataTable GetSchema(string collectionName)
+        {
+            return GetSchema(collectionName, null);
+        }
 
-		/// <summary>
-		/// Returns the schema collection specified by the collection name.
-		/// </summary>
-		/// <param name="collectionName">The collection name.</param>
-		/// <returns>The collection specified.</returns>
-		public override DataTable GetSchema(string collectionName)
-		{
-			return GetSchema(collectionName, null);
-		}
-
-		/// <summary>
-		/// Returns the schema collection specified by the collection name filtered by the restrictions.
-		/// </summary>
-		/// <param name="collectionName">The collection name.</param>
-		/// <param name="restrictions">
-		/// The restriction values to filter the results.  A description of the restrictions is contained
-		/// in the Restrictions collection.
-		/// </param>
-		/// <returns>The collection specified.</returns>
-		public override DataTable GetSchema(string collectionName, string[] restrictions)
-		{
+        /// <summary>
+        /// Returns the schema collection specified by the collection name filtered by the restrictions.
+        /// </summary>
+        /// <param name="collectionName">The collection name.</param>
+        /// <param name="restrictions">
+        /// The restriction values to filter the results.  A description of the restrictions is contained
+        /// in the Restrictions collection.
+        /// </param>
+        /// <returns>The collection specified.</returns>
+        public override DataTable GetSchema(string collectionName, string[] restrictions)
+        {
             using (var tempConn = new EDBConnection(ConnectionString))
             {
                 switch (collectionName)
@@ -1168,9 +1193,11 @@ namespace EnterpriseDB.EDBClient
                         throw new NotSupportedException();
                     case "ReservedWords":
                         return EDBSchema.GetReservedWords();
-                        // custom collections for EDB
+                        // custom collections for npgsql
                     case "Databases":
                         return EDBSchema.GetDatabases(tempConn, restrictions);
+                    case "Schemata":
+                        return EDBSchema.GetSchemata(tempConn, restrictions);
                     case "Tables":
                         return EDBSchema.GetTables(tempConn, restrictions);
                     case "Columns":
@@ -1183,30 +1210,48 @@ namespace EnterpriseDB.EDBClient
                         return EDBSchema.GetIndexes(tempConn, restrictions);
                     case "IndexColumns":
                         return EDBSchema.GetIndexColumns(tempConn, restrictions);
+                    case "Constraints":
+                    case "PrimaryKey":
+                    case "UniqueKeys":
                     case "ForeignKeys":
-                        return EDBSchema.GetForeignKeys(tempConn, restrictions);
+                        return EDBSchema.GetConstraints(tempConn, restrictions, collectionName);
+                    case "ConstraintColumns":
+                        return EDBSchema.GetConstraintColumns(tempConn, restrictions);
                     default:
                         throw new ArgumentOutOfRangeException("collectionName", collectionName, "Invalid collection name");
                 }
             }
         }
 
-		public  void ClearPool()
-		{
-			EDBConnectorPool.ConnectorPoolMgr.ClearPool(this);
-		}
+        /// <summary>
+        /// Clear connection pool.
+        /// </summary>
+        public void ClearPool()
+        {
+            EDBConnectorPool.ConnectorPoolMgr.ClearPool(this);
+        }
 
-		public static void ClearAllPools()
-		{
-			EDBConnectorPool.ConnectorPoolMgr.ClearAllPools();
-		}
+        /// <summary>
+        /// Clear all connection pools.
+        /// </summary>
+        public static void ClearAllPools()
+        {
+            EDBConnectorPool.ConnectorPoolMgr.ClearAllPools();
+        }
 
-		public override void EnlistTransaction(Transaction transaction)
-		{
-			Promotable.Enlist(transaction);
-		}
+        /// <summary>
+        /// Enlist transation.
+        /// </summary>
+        /// <param name="transaction"></param>
+        public override void EnlistTransaction(Transaction transaction)
+        {
+            Promotable.Enlist(transaction);
+        }
 
 #if NET35
+        /// <summary>
+        /// DB provider factory.
+        /// </summary>
         protected override DbProviderFactory DbProviderFactory
         {
             get
@@ -1215,5 +1260,5 @@ namespace EnterpriseDB.EDBClient
             }
         }
 #endif
-	}
+    }
 }

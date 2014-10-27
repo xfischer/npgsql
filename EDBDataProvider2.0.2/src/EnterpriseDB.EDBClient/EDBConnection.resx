@@ -110,7 +110,7 @@
 		<value>ConnectionString Option: {0} = {1}</value>
 	</data>
 	<data name="Log_ConnectionLeaking">
-		<value>NpgsqlConnection leaking! Fixing pool count...</value>
+		<value>EDBConnection leaking! Fixing pool count...</value>
 	</data>
 	<data name="Exception_NoNestedTransactions">
 		<value>Nested/Concurrent transactions aren't supported.</value>

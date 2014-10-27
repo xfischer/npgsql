@@ -1,9 +1,9 @@
-// Npgsql.ASCIIBytes.cs
+// EnterpriseDB.EDBClient.ASCIIBytes.cs
 //
 // Authors:
 //    Glen Parker         <glenebob@gmail.com>
 //
-//    Copyright (C) 2013 The Npgsql Development Team
+//    Copyright (C) 2013 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
@@ -66,9 +66,12 @@ namespace EnterpriseDB.EDBClient
         D = (byte)'D',
         E = (byte)'E',
         F = (byte)'F',
+        N = (byte)'N',
         P = (byte)'P',
+        R = (byte)'R',
         S = (byte)'S',
         T = (byte)'T',
+        V = (byte)'V',
         X = (byte)'X',
 
         BraceSquareLeft = (byte)'[',
@@ -83,9 +86,12 @@ namespace EnterpriseDB.EDBClient
         d = (byte)'d',
         e = (byte)'e',
         f = (byte)'f',
+        n = (byte)'n',
         p = (byte)'p',
-        s = (byte)'a',
+        r = (byte)'r',
+        s = (byte)'s',
         t = (byte)'t',
+        v = (byte)'v',
         x = (byte)'x',
 
         BraceCurlyLeft = (byte)'{',
@@ -105,5 +111,6 @@ namespace EnterpriseDB.EDBClient
         internal static readonly byte[] INFINITY        = BackendEncoding.UTF8Encoding.GetBytes("INFINITY");
         internal static readonly byte[] NEG_INFINITY    = BackendEncoding.UTF8Encoding.GetBytes("-INFINITY");
         internal static readonly byte[] LineTerminator  = BackendEncoding.UTF8Encoding.GetBytes("\r\n");
+        internal static readonly byte[] NAN_QUOTED      = BackendEncoding.UTF8Encoding.GetBytes("'NaN'");
     }
 }

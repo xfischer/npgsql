@@ -90,7 +90,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions */       
-		[Test]
+	//	[Test]
 		public void testfunctionsanity()
 		{
 			try 
@@ -129,7 +129,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions without parameters*/       
-		[Test]
+		//[Test]
 		public void testemptyfunction()
 		{
 			try 

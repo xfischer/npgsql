@@ -816,7 +816,7 @@ namespace DOTNET
 			
 		}	
 
-		[Test]
+//		[Test]
 		public void DefaultInAsReturn()
 		{
 			
@@ -835,7 +835,7 @@ namespace DOTNET
 			
 		}	
 
-		[Test]
+	//	[Test]
 		public void DefaultInAsOutProc()
 		{
 			

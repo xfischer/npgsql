@@ -1,25 +1,25 @@
 // created on 29/6/2003 at 13:28
 
-// Npgsql.NpgsqlBind.cs
+// EnterpriseDB.EDBClient.EDBBind.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -31,28 +31,26 @@ using System.IO;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// This class represents the Bind message sent to PostgreSQL
-	/// server.
-	/// </summary>
-	///
-	internal sealed class EDBBind : ClientMessage
-	{
-		private readonly String _portalName;
+    /// <summary>
+    /// This class represents the Bind message sent to PostgreSQL
+    /// server.
+    /// </summary>
+    ///
+    internal sealed class EDBBind : ClientMessage
+    {
+        private readonly String _portalName;
         private readonly byte[] _bPortalName;
-		private readonly String _preparedStatementName;
+        private readonly String _preparedStatementName;
         private readonly byte[] _bPreparedStatementName;
         private Int16[] _parameterFormatCodes;
         private byte[][] _parameterValues;
         private Int16[] _resultFormatCodes;
         private int _messageLength = 0;
-        private int proc_fmtcode = 1;
 
         public EDBBind(String portalName, String preparedStatementName, Int16[] parameterFormatCodes,
                           byte[][] parameterValues, Int16[] resultFormatCodes)
         {
             _portalName = portalName;
-            
             _bPortalName = BackendEncoding.UTF8Encoding.GetBytes(_portalName);
 
             _preparedStatementName = preparedStatementName;
@@ -63,19 +61,20 @@ namespace EnterpriseDB.EDBClient
             _resultFormatCodes = resultFormatCodes;
         }
 
-		public String PortalName
-		{
-			get { return _portalName; }
-		}
+        public String PortalName
+        {
+            get { return _portalName; }
+        }
 
-		public String PreparedStatementName
-		{
-			get { return _preparedStatementName; }
-		}
+        public String PreparedStatementName
+        {
+            get { return _preparedStatementName; }
+        }
 
-		public Int16[] ResultFormatCodes
-		{
-			get { return _resultFormatCodes; }
+        public Int16[] ResultFormatCodes
+        {
+            get { return _resultFormatCodes; }
+
             set
             {
                 _resultFormatCodes = value;
@@ -83,9 +82,9 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		public Int16[] ParameterFormatCodes
-		{
-			get { return _parameterFormatCodes; }
+        public Int16[] ParameterFormatCodes
+        {
+            get { return _parameterFormatCodes; }
 
             set
             {
@@ -94,9 +93,9 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		public byte[][] ParameterValues
-		{
-			get { return _parameterValues; }
+        public byte[][] ParameterValues
+        {
+            get { return _parameterValues; }
 
             set
             {
@@ -144,7 +143,6 @@ namespace EnterpriseDB.EDBClient
 
             foreach (short code in _parameterFormatCodes)
             {
-                    
                 PGUtil.WriteInt16(outputStream, code);
             }
 

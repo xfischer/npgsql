@@ -58,7 +58,6 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-
 	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
 		<xsd:element name="root" msdata:IsDataSet="true">
 			<xsd:complexType>
@@ -99,9 +98,9 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
 	<data name="Log_ExceptionOccured">
-		<value>An NpgsqlException occured: {0}.</value>
+		<value>An EDBException occured: {0}.</value>
 	</data>
 	<data name="Log_BackendExceptionOccured">
-		<value>An NpgsqlBackendException occured: {0}.</value>
+		<value>An EDBBackendException occured: {0}.</value>
 	</data>
 </root>

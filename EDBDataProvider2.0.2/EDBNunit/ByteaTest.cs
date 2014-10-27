@@ -159,7 +159,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-				fs = new FileStream(@"C:\WINDOWS\Web\tips.gif", FileMode.Open, FileAccess.Read);
+                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -192,7 +192,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-				fs = new FileStream(@"C:\WINDOWS\Web\tips.gif", FileMode.Open, FileAccess.Read);
+                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -225,7 +225,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-				fs = new FileStream(@"C:\WINDOWS\Web\tips.gif", FileMode.Open, FileAccess.Read);
+                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -259,7 +259,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-				fs = new FileStream(@"C:\WINDOWS\Web\tips.gif", FileMode.Open, FileAccess.Read);
+                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -287,7 +287,7 @@ namespace DOTNET
 		[Test]
 		public void testa_bytea_out()
 		{
-			try
+			/*try
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
@@ -302,27 +302,31 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
 					fs.Close(); 
-				} 
-		
+				}
+                while(reader.Read());
+
+                reader.Close();
 				//conn.Close();
 
 				Console.WriteLine("Image Saved"); 
 			}
 			catch(Exception ex)
 			{
+
 				Console.WriteLine(ex.ToString());
-			}
+			}*/
+          
 		}
 
 		[Test]
 		public void testa_bytea_out_two()
 		{
-			try
+			/*try
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out_two(:imgout,:imgout1)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
@@ -338,13 +342,13 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout1.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout1.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
 					fs.Close(); 
-				} 
-		
+				}
+                while (reader.Read()) ;
 				//conn.Close();
 
 				Console.WriteLine("Image Saved"); 
@@ -352,13 +356,13 @@ namespace DOTNET
 			catch(Exception ex)
 			{
 				Console.WriteLine(ex.ToString());
-			}
+			}*/
 
 		}
 		[Test]
 		public void testa_bytea_out_two_with_num()
 		{
-			try
+			/*try
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num(:imgout,:imgout1,:num)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
@@ -375,7 +379,7 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
@@ -385,7 +389,7 @@ namespace DOTNET
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
-						FileStream("C:\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image1.Length;i++) 
 						fs1.WriteByte(image[i]); 
@@ -393,8 +397,8 @@ namespace DOTNET
 				
 				
 				
-				} 
-		
+				}
+                while (reader.Read()) ;
 				//conn.Close();
 
 				Console.WriteLine("Image Saved"); 
@@ -402,7 +406,7 @@ namespace DOTNET
 			catch(Exception ex)
 			{
 				Console.WriteLine(ex.ToString());
-			}
+			}*/
 		
 		}
 
@@ -411,7 +415,7 @@ namespace DOTNET
 		{
 		
 		
-			try
+		/*	try
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num_varchar(:imgout,:imgout1,:num,:var)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
@@ -429,7 +433,7 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
@@ -439,7 +443,7 @@ namespace DOTNET
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
-						FileStream("C:\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image1.Length;i++) 
 						fs1.WriteByte(image[i]); 
@@ -447,8 +451,8 @@ namespace DOTNET
 				
 					Console.WriteLine(cmd.Parameters[3].Value.ToString());
 				
-				} 
-		
+				}
+                while (reader.Read()) ;
 //				conn.Close();
 
 				Console.WriteLine("Image Saved"); 
@@ -457,7 +461,7 @@ namespace DOTNET
 			{
 				Console.WriteLine(ex.ToString());
 			}
-		
+		*/
 		}
 		public void testa_bytea_out_two_with_num_varchar1()
 		{
@@ -480,7 +484,7 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
@@ -490,7 +494,7 @@ namespace DOTNET
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
-						FileStream("C:\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image1.Length;i++) 
 						fs1.WriteByte(image[i]); 
@@ -498,11 +502,12 @@ namespace DOTNET
 				
 					Console.WriteLine(cmd.Parameters[3].Value.ToString());
 					Console.WriteLine(cmd.Parameters[2].Value.ToString());
-				
+                    while (reader.Read()) ;
 					EDBCommand commd = new EDBCommand("DROP table test_bytea_three_with_numeric",conn);				
 			
 					commd.ExecuteNonQuery();
 			} 
+
 		
 //				conn.Close();
 
@@ -535,7 +540,7 @@ namespace DOTNET
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
-						FileStream("C:\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
@@ -545,7 +550,7 @@ namespace DOTNET
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
-						FileStream("C:\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image1.Length;i++) 
 						fs1.WriteByte(image[i]); 
@@ -553,8 +558,8 @@ namespace DOTNET
 				
 					Console.WriteLine(cmd.Parameters[3].Value.ToString());
 					Console.WriteLine(cmd.Parameters[2].Value.ToString());
-				} 
-		
+				}
+                while (reader.Read()) ;
 //				conn.Close();
 
 				Console.WriteLine("Image Saved"); 

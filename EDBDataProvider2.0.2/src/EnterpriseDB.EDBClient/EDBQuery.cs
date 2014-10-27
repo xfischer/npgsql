@@ -1,29 +1,28 @@
-// Npgsql.EDBQuery.cs
+// EnterpriseDB.EDBClient.EDBQuery.cs
 //
 // Author:
-// 	Dave Joyner <d4ljoyn@yahoo.com>
+//     Dave Joyner <d4ljoyn@yahoo.com>
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
 // ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
 
 using System;
 using System.IO;
@@ -31,99 +30,82 @@ using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// Summary description for EDBQuery
-	/// </summary>
-	internal sealed class EDBQuery : ClientMessage
-	{
-		private readonly EDBCommand _command;
-		private readonly ProtocolVersion _protocolVersion;
-        private readonly EDBConnector _connector;
-        private readonly byte[] commandText;
+    /// <summary>
+    /// Summary description for EDBQuery
+    /// </summary>
+    internal sealed class EDBQuery : ClientMessage
+    {
+        private byte[] commandBytes = null;
+        private string commandText = null;
+        private readonly byte[] pgCommandBytes;
 
-		public EDBQuery(EDBCommand command, ProtocolVersion protocolVersion)
-		{
-			_command = command;
-			_protocolVersion = protocolVersion;
-       //     commandText = BackendEncoding.UTF8Encoding.GetBytes(command.CommandText);
-		}
+        public static readonly EDBQuery BeginTransRepeatableRead = new EDBQuery("BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;");
+        public static readonly EDBQuery BeginTransSerializable = new EDBQuery("BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;");
+        public static readonly EDBQuery BeginTransReadCommitted = new EDBQuery("BEGIN; SET TRANSACTION ISOLATION LEVEL READ COMMITTED;");
+        public static readonly EDBQuery CommitTransaction = new EDBQuery("COMMIT");
+        public static readonly EDBQuery RollbackTransaction = new EDBQuery("ROLLBACK");
+        public static readonly EDBQuery DiscardAll = new EDBQuery("DISCARD ALL");
+        public static readonly EDBQuery UnlistenAll = new EDBQuery("UNLISTEN *");
+        public static readonly EDBQuery SetStmtTimeout10Sec = new EDBQuery("SET statement_timeout = 10000");
+        public static readonly EDBQuery SetStmtTimeout20Sec = new EDBQuery("SET statement_timeout = 20000");
+        public static readonly EDBQuery SetStmtTimeout30Sec = new EDBQuery("SET statement_timeout = 30000");
+        public static readonly EDBQuery SetStmtTimeout60Sec = new EDBQuery("SET statement_timeout = 60000");
+        public static readonly EDBQuery SetStmtTimeout90Sec = new EDBQuery("SET statement_timeout = 90000");
+        public static readonly EDBQuery SetStmtTimeout120Sec = new EDBQuery("SET statement_timeout = 120000");
 
-           public EDBQuery(EDBConnector connector, byte[] command)
+        public EDBQuery(byte[] command)
         {
-            _connector = connector;
+            // Message length: Inr32 + command length + null terminator.
+            int len = 4 + command.Length + 1;
+
+            // Length + command code ('Q').
+            pgCommandBytes = new byte[1 + len];
+
+            MemoryStream commandWriter = new MemoryStream(pgCommandBytes);
+         
+            commandWriter
+                .WriteBytes((byte)FrontEndMessageCode.Query)
+                .WriteInt32(len)
+                .WriteBytesNullTerminated(command);
+
+            commandBytes = command;
+        }
+
+        public EDBQuery(string command)
+        {
+            // Message length: Inr32 + command length + null terminator.
+            int len = 4 + command.Length + 1;
+
+            // Length + command code ('Q').
+            pgCommandBytes = new byte[1 + len];
+
+            MemoryStream commandWriter = new MemoryStream(pgCommandBytes);
+
+            commandWriter
+                .WriteBytes((byte)FrontEndMessageCode.Query)
+                .WriteInt32(len)
+                .WriteStringNullTerminated(command);
+
             commandText = command;
         }
 
-        public EDBQuery(EDBConnector connector, string command)
-        {
-            _connector = connector;
-            commandText = BackendEncoding.UTF8Encoding.GetBytes(command);
-        }
-		/*public override void WriteToStream(Stream outputStream)
-		{
-            //EDBEventLog.LogMsg( this.ToString() + _commandText, LogLevel.Debug  );
-
-
-            StringBuilder commandText = _command.GetCommandText();
-
-            // Log the string being sent.
-
-            if (EDBEventLog.Level >= LogLevel.Debug)
-                PGUtil.LogStringWritten(commandText.ToString());
-
-            // This method needs refactory.
-            // The code below which deals with writing string to stream needs to be redone to use
-            // PGUtil.WriteString() as before. The problem is that WriteString is using too much strings (concatenation).
-            // Find a way to optimize that. 
-            
-            
-
-			// Tell to mediator what command is being sent.
-
-            _command.Connector.Mediator.SetSqlSent(commandText);
-
-            // Workaround for seek exceptions when running under ms.net. TODO: Check why Npgsql may be letting behind data in the stream.
-            outputStream.Flush();
-
-            // Send the query to server.
-            // Write the byte 'Q' to identify a query message.
-            outputStream.WriteByte((byte)FrontEndMessageCode.Query);
-
-            //Work out the encoding of the string (null-terminated) once and take the length from having done so
-            //rather than doing so repeatedly.
-            byte[] bytes = UTF8Encoding.GetBytes(commandText.Append('\x00').ToString());
-
-            if (_protocolVersion == ProtocolVersion.Version3)
-            {
-                // Write message length. Int32 + string length + null terminator.
-                PGUtil.WriteInt32(outputStream, 4 + bytes.Length);
-            }
-
-            outputStream.Write(bytes, 0, bytes.Length);
-
-		}*/
         public override void WriteToStream(Stream outputStream)
         {
             if (EDBEventLog.Level >= LogLevel.Debug)
             {
                 // Log the string being sent.
-                PGUtil.LogStringWritten(BackendEncoding.UTF8Encoding.GetString(commandText));
+                // If (this) was constructed with a byte[], then commandText has to be
+                // initialized before the first Log call.
+                if (commandText == null)
+                {
+                    commandText = BackendEncoding.UTF8Encoding.GetString(commandBytes);
+                    commandBytes = null;
+                }
+
+                PGUtil.LogStringWritten(commandText);
             }
 
-            // Tell to mediator what command is being sent.
-            _connector.Mediator.SetSqlSent(commandText);
-
-            // Send the query to server.
-            // Write the byte 'Q' to identify a query message.
-            outputStream.WriteByte((byte)FrontEndMessageCode.Query);
-
-            if (_connector.BackendProtocolVersion == ProtocolVersion.Version3)
-            {
-                // Write message length. Int32 + string length + null terminator.
-                PGUtil.WriteInt32(outputStream, 4 + commandText.Length + 1);
-            }
-
-            outputStream.WriteBytesNullTerminated(commandText);
+            outputStream.WriteBytes(pgCommandBytes);
         }
-	}
+    }
 }

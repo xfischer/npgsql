@@ -1,25 +1,25 @@
 // created on 22/6/2003 at 18:33
 
-// Npgsql.EDBParse.cs
+// EnterpriseDB.EDBClient.EDBParse.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -28,36 +28,35 @@
 
 using System;
 using System.IO;
-using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// This class represents the Parse message sent to PostgreSQL
-	/// server.
-	/// </summary>
-	///
-	internal sealed class EDBParse : ClientMessage
-	{
-		// Logging related values
+    /// <summary>
+    /// This class represents the Parse message sent to PostgreSQL
+    /// server.
+    /// </summary>
+    ///
+    internal sealed class EDBParse : ClientMessage
+    {
+        // Logging related values
         //private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		private readonly byte[] _bPrepareName;
+        private readonly byte[] _bPrepareName;
         private readonly byte[] _bQueryString;
-		private readonly Int32[] _parameterIDs;
-        private String _commandType;
+        private readonly Int32[] _parameterIDs;
+
+        /* EnterpriseDB Team */
         private EDBParameterCollection _parameters;
+        private String _commandType;
+    
 
-
-        public EDBParse(String prepareName, byte[] queryString, Int32[] parameterIDs, EDBParameterCollection parameters, EDBCommand command)
-		{
-		 _bPrepareName = BackendEncoding.UTF8Encoding.GetBytes(prepareName);
+        public EDBParse(String prepareName, byte[] queryString, Int32[] parameterIDs)
+        {
+            _bPrepareName = BackendEncoding.UTF8Encoding.GetBytes(prepareName);
             _bQueryString = queryString;
 
-			_parameterIDs = parameterIDs;
-            _parameters = parameters;
-            _commandType = command.CommandType.ToString();
-		}
+            _parameterIDs = parameterIDs;
+        }
         public EDBParse(String prepareName, string queryString, Int32[] parameterIDs, EDBParameterCollection parameters, EDBCommand command)
         {
             _bPrepareName = BackendEncoding.UTF8Encoding.GetBytes(prepareName);
@@ -67,64 +66,30 @@ namespace EnterpriseDB.EDBClient
             _parameters = parameters;
             _commandType = command.CommandType.ToString();
         }
-		public override void WriteToStream(Stream outputStream)
-		{
-			outputStream.WriteByte((byte) FrontEndMessageCode.Parse);
-
-			// message length =
-			// Int32 self
-			// name of prepared statement + 1 null string terminator +
-			// query string + 1 null string terminator
-			// + Int16
-			// + Int32 * number of parameters.
-			Int32 messageLength = 4 + _bPrepareName.Length + 1 +  _bQueryString.Length + 1 +
-			                      2 + (_parameterIDs.Length*4);
-			//Int32 messageLength = 4 + _prepareName.Length + 1 + _queryString.Length + 1 + 2 + (_parameterIDs.Length * 4);
-
-		   outputStream
-                .WriteInt32(messageLength)
-                .WriteBytesNullTerminated(_bPrepareName)
-                .WriteBytesNullTerminated(_bQueryString)
-                .WriteInt16((Int16)_parameterIDs.Length);
-
-
-			for (Int32 i = 0; i < _parameterIDs.Length; i++)
-			{
-				 outputStream.WriteInt32(_parameterIDs[i]);
-			}
-		}
-        /*
-         * EDBTeam:
-         * Added out parameter support. Parse command
-         */
-        public void WriteToStreamParseOut(Stream outputStream)
+	
+        public override void WriteToStream(Stream outputStream)
         {
-            outputStream.WriteByte((byte)FrontEndMessageCode.ParseOut);
+            outputStream.WriteByte((byte)FrontEndMessageCode.Parse);
+
             // message length =
             // Int32 self
             // name of prepared statement + 1 null string terminator +
             // query string + 1 null string terminator
-            // + Int16 (number of parameters)
-            // + Int32 * number of parameters
-            // + int16 * number of parameters
-            Int32 messageLength = 4 + _bPrepareName.Length + 1 + _bQueryString.Length + 1 + 2 + (_parameters.Count * 6);
+            // + Int16
+            // + Int32 * number of parameters.
+            Int32 messageLength = 4 + _bPrepareName.Length + 1 + _bQueryString.Length + 1 +
+                                  2 + (_parameterIDs.Length * 4);
 
             outputStream
                 .WriteInt32(messageLength)
                 .WriteBytesNullTerminated(_bPrepareName)
                 .WriteBytesNullTerminated(_bQueryString)
-                .WriteInt16((Int16)_parameters.Count);
+                .WriteInt16((Int16)_parameterIDs.Length);
 
-            //parameter OIDs
-            //_parameters[i].TypeInfo.
-            for (Int32 i = 0; i < _parameters.Count; i++)
-                PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
-            //EDBOids.ParamOid.int4
-            for (Int32 i = 0; i < _parameters.Count; i++)
+            for (Int32 i = 0; i < _parameterIDs.Length; i++)
             {
-                PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction)));
-
+                outputStream.WriteInt32(_parameterIDs[i]);
             }
         }
-	}
+    }
 }

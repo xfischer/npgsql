@@ -1,13 +1,13 @@
-// Npgsql.NpgsqlCopyFormat.cs
+// EnterpriseDB.EDBClient.EDBCopyFormat.cs
 //
 // Author:
-// 	Kalle Hallivuori <kato@iki.fi>
+//     Kalle Hallivuori <kato@iki.fi>
 //
-//	Copyright (C) 2007 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2007 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
-//  Copyright (c) 2002-2007, The Npgsql Development Team
+//  Copyright (c) 2002-2007, The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,50 +26,49 @@
 // ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-
 using System;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// Represents information about COPY operation data transfer format as returned by server.
-	/// </summary>
-	public sealed class EDBCopyFormat
-	{
-		private readonly byte _copyFormat;
-		private readonly Int16[] _copyFieldFormats;
+    /// <summary>
+    /// Represents information about COPY operation data transfer format as returned by server.
+    /// </summary>
+    public sealed class EDBCopyFormat
+    {
+        private readonly byte _copyFormat;
+        private readonly Int16[] _copyFieldFormats;
 
-		/// <summary>
-		/// Only created when a CopyInResponse or CopyOutResponse is received by EDBState.ProcessBackendResponses()
-		/// </summary>
-		internal EDBCopyFormat(byte copyFormat, Int16[] fieldFormats)
-		{
-			_copyFormat = copyFormat;
-			_copyFieldFormats = fieldFormats;
-		}
+        /// <summary>
+        /// Only created when a CopyInResponse or CopyOutResponse is received by EDBState.ProcessBackendResponses()
+        /// </summary>
+        internal EDBCopyFormat(byte copyFormat, Int16[] fieldFormats)
+        {
+            _copyFormat = copyFormat;
+            _copyFieldFormats = fieldFormats;
+        }
 
-		/// <summary>
-		/// Returns true if this operation is currently active and in binary format.
-		/// </summary>
-		public bool IsBinary
-		{
-			get { return _copyFormat != 0; }
-		}
+        /// <summary>
+        /// Returns true if this operation is currently active and in binary format.
+        /// </summary>
+        public bool IsBinary
+        {
+            get { return _copyFormat != 0; }
+        }
 
-		/// <summary>
-		/// Returns true if this operation is currently active and field at given location is in binary format.
-		/// </summary>
-		public bool FieldIsBinary(int fieldNumber)
-		{
-			return _copyFieldFormats[fieldNumber] != 0;
-		}
+        /// <summary>
+        /// Returns true if this operation is currently active and field at given location is in binary format.
+        /// </summary>
+        public bool FieldIsBinary(int fieldNumber)
+        {
+            return _copyFieldFormats[fieldNumber] != 0;
+        }
 
-		/// <summary>
-		/// Returns number of fields if this operation is currently active, otherwise -1
-		/// </summary>
-		public int FieldCount
-		{
-			get { return _copyFieldFormats.Length; }
-		}
-	}
+        /// <summary>
+        /// Returns number of fields if this operation is currently active, otherwise -1
+        /// </summary>
+        public int FieldCount
+        {
+            get { return _copyFieldFormats.Length; }
+        }
+    }
 }

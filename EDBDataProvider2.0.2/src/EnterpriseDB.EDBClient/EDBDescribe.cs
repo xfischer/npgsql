@@ -1,25 +1,25 @@
 // created on 1/7/2003 at 20:48
 
-// Npgsql.EDBDescribe.cs
+// EnterpriseDB.EDBClient.EDBDescribe.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -28,21 +28,22 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
-	/// <summary>
-	/// This class represents the Parse message sent to PostgreSQL
-	/// server.
-	/// </summary>
-	///
-	internal abstract class EDBDescribe : ClientMessage
-	{
+    /// <summary>
+    /// This is the base class for EDBDescribeStatement and EDBDescribePortal.
+    /// </summary>
+    ///
+    internal abstract class EDBDescribe : ClientMessage
+    {
         protected enum DescribeTypeCode : byte
         {
             Statement = ASCIIBytes.S,
             Portal = ASCIIBytes.P
         }
+
         private readonly DescribeTypeCode _whatToDescribe;
         private readonly byte[] _bPortalName;
         private readonly int _messageLength;
@@ -56,29 +57,16 @@ namespace EnterpriseDB.EDBClient
             _messageLength = 4 + 1 + _bPortalName.Length + 1;
         }
 
-		public override void WriteToStream(Stream outputStream)
-		{
+        public override void WriteToStream(Stream outputStream)
+        {
             outputStream
                 .WriteBytes((byte)FrontEndMessageCode.Describe)
                 .WriteInt32(_messageLength)
                 .WriteBytes((byte)_whatToDescribe)
                 .WriteBytesNullTerminated(_bPortalName);
-		}
-        /*
-         * EDBTeam:
-         * Send Describe Command
-         */
-
-        public void WriteToStreamDescribeOut(Stream outputStream)
-        {
-            outputStream
-                .WriteBytes((byte)FrontEndMessageCode.DescribeOut)
-                .WriteInt32(_messageLength)
-                .WriteBytes((byte)_whatToDescribe)
-                .WriteBytesNullTerminated(_bPortalName);
-
         }
-	}
+    }
+
     /// <summary>
     /// This class represents the Statement Describe message sent to PostgreSQL
     /// server.

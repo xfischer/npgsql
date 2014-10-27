@@ -1,27 +1,27 @@
 // EDBTypes.EDBTypesHelper.cs
 //
 // Author:
-//	Francisco Jr. (fxjrlists@yahoo.com.br)
+//    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//	Copyright (C) 2002 The EDB Development Team
-//	EDB-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/EDB/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+//
+// IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+//
+// THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 using System;
@@ -39,7 +39,7 @@ using EnterpriseDB.EDBClient;
 namespace EDBTypes
 {
     /// <summary>
-    ///	This class contains helper methods for type conversion between
+    ///    This class contains helper methods for type conversion between
     /// the .Net type system and postgresql.
     /// </summary>
     internal static class EDBTypesHelper
@@ -72,7 +72,7 @@ namespace EDBTypes
             {
                 //Note that Dictionary<T, U> will call IEquatable<T>.Equals() when possible.
                 //This is included for completeness (that and second-guessing Mono while coding on .NET!).
-                return obj != null && obj is MappingKey && Equals((MappingKey)obj);
+                return obj != null && obj is MappingKey && Equals((MappingKey) obj);
             }
 
             public override int GetHashCode()
@@ -94,8 +94,6 @@ namespace EDBTypes
 
         private static readonly Dictionary<string, EDBBackendTypeInfo> DefaultBackendInfoMapping = PrepareDefaultBackendInfoMapping();
 
-
-
         private static Dictionary<string, EDBBackendTypeInfo> PrepareDefaultBackendInfoMapping()
         {
             Dictionary<string, EDBBackendTypeInfo> NameIndex = new Dictionary<string, EDBBackendTypeInfo>();
@@ -107,12 +105,10 @@ namespace EDBTypes
                 //do the same for the equivalent array type.
                 NameIndex.Add("_" + TypeInfo.Name, ArrayTypeInfo(TypeInfo));
 
-
             }
 
             return NameIndex;
         }
-
 
         /// <summary>
         /// Find a EDBNativeTypeInfo in the default types map that can handle objects
@@ -123,7 +119,6 @@ namespace EDBTypes
             return DefaultBackendInfoMapping.TryGetValue(BackendTypeName, out TypeInfo);
 
         }
-
 
         /// <summary>
         /// Find a EDBNativeTypeInfo in the default types map that can handle objects
@@ -163,7 +158,7 @@ namespace EDBTypes
             //then the interface clearly isn't an IEnumerable<T>.
             foreach (Type iface in type.GetInterfaces())
             {
-                if (iface.IsGenericType && iface.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
+                if (iface.IsGenericType && iface.GetGenericTypeDefinition().Equals(typeof (IEnumerable<>)))
                 {
                     typeOut = iface.GetGenericArguments()[0];
                     return true;
@@ -172,7 +167,6 @@ namespace EDBTypes
             typeOut = null;
             return false;
         }
-
 
         /// <summary>
         /// Find a EDBNativeTypeInfo in the default types map that can handle objects
@@ -205,14 +199,14 @@ namespace EDBTypes
             return TryGetNativeTypeInfo(Type, out ret) ? ret : null;
         }
 
-
         public static bool DefinedType(Type type)
+
         {
             return NativeTypeMapping.ContainsType(type);
         }
 
-
         public static bool DefinedType(object item)
+
         {
             return DefinedType(item.GetType());
         }
@@ -252,7 +246,6 @@ namespace EDBTypes
             if (TypeInfo != null)
             {
                 return TypeInfo.ConvertBackendTextToNative(data, typeSize, typeModifier);
-
             }
             else
             {
@@ -269,13 +262,12 @@ namespace EDBTypes
         {
             EDBNativeTypeMapping nativeTypeMapping = new EDBNativeTypeMapping();
 
-
             nativeTypeMapping.AddType("name", EDBDbType.Name, DbType.String, true, null);
 
-			nativeTypeMapping.AddType("oidvector", EDBDbType.Oidvector, DbType.String, true, null);
+            nativeTypeMapping.AddType("oidvector", EDBDbType.Oidvector, DbType.String, true, null);
 
             // Conflicting types should have mapped first the non default mappings.
-            // For example, char, varchar and text map to DbType.String. As the most 
+            // For example, char, varchar and text map to DbType.String. As the most
             // common is to use text with string, it has to be the last mapped, in order
             // to type mapping has the last entry, in this case, text, as the map value
             // for DbType.String.
@@ -292,11 +284,13 @@ namespace EDBTypes
                                             BasicNativeToBackendTypeConverter.StringToTextText,
                                             BasicNativeToBackendTypeConverter.StringToTextBinary);
 
+            nativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, true, null);
+
             // Dummy type that facilitates non-binary string conversions for types that are treated as
             // text but which are not really text.  Those types cause problems if they are encoded as binary.
             // The mapping EDBDbType.Text => text_nonbinary is removed when text is mapped.
             // DBType.Object will be re-mapped to this type at the end.
-            nativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, true, null);
+            nativeTypeMapping.AddType("unknown", EDBDbType.Text, DbType.Object, true);
 
             nativeTypeMapping.AddType("text", EDBDbType.Text, DbType.String, false,
                                             BasicNativeToBackendTypeConverter.StringToTextText,
@@ -338,13 +332,9 @@ namespace EDBTypes
             nativeTypeMapping.AddTypeAlias("int2", typeof(Byte));
 
             nativeTypeMapping.AddType("int4", EDBDbType.Integer, DbType.Int32, false,
-                                            BasicNativeToBackendTypeConverter.ToBasicType<Int32>,
+                                            BasicNativeToBackendTypeConverter.ToBasicType<int>,
                                             BasicNativeToBackendTypeConverter.Int32ToInt4Binary);
-            
-          /*  nativeTypeMapping.AddType("int4", EDBDbType.Integer, DbType.Int64, false,
-                                           BasicNativeToBackendTypeConverter.ToBasicType<long>,
-                                           BasicNativeToBackendTypeConverter.Int64ToInt8Binary);*/
-            
+
             nativeTypeMapping.AddTypeAlias("int4", typeof(Int32));
 
             nativeTypeMapping.AddType("int8", EDBDbType.Bigint, DbType.Int64, false,
@@ -353,19 +343,22 @@ namespace EDBTypes
 
             nativeTypeMapping.AddTypeAlias("int8", typeof(Int64));
 
-          /*  nativeTypeMapping.AddType("float4", EDBDbType.Real, DbType.Single, false,
-                                            BasicNativeToBackendTypeConverter.SingleDoubleToFloat4Float8Text,
-                                            BasicNativeToBackendTypeConverter.SingleToFloat4Binary);*/
-           
+         /*   TODO ZK 
+          * 
+           nativeTypeMapping.AddType("float4", EDBDbType.Real, DbType.Single, false,
+                                            BasicNativeToBackendTypeConverter.SingleToFloat4Text,
+                                            BasicNativeToBackendTypeConverter.SingleToFloat4Binary);
+          */
+
             nativeTypeMapping.AddType("float4", EDBDbType.Float, DbType.Single, false,
-                                           BasicNativeToBackendTypeConverter.SingleDoubleToFloat4Float8Text,
-                                           BasicNativeToBackendTypeConverter.SingleToFloat4Binary);
+                                       BasicNativeToBackendTypeConverter.SingleToFloat4Text,
+                                       BasicNativeToBackendTypeConverter.SingleToFloat4Binary);
 
-
+            
             nativeTypeMapping.AddTypeAlias("float4", typeof(Single));
 
             nativeTypeMapping.AddType("float8", EDBDbType.Double, DbType.Double, false,
-                                            BasicNativeToBackendTypeConverter.SingleDoubleToFloat4Float8Text,
+                                            BasicNativeToBackendTypeConverter.DoubleToFloat8Text,
                                             BasicNativeToBackendTypeConverter.DoubleToFloat8Binary);
 
             nativeTypeMapping.AddTypeAlias("float8", typeof(Double));
@@ -398,11 +391,7 @@ namespace EDBTypes
 
             nativeTypeMapping.AddTypeAlias("timestamptz", typeof(EDBTimeStampTZ));
 
-
-
             nativeTypeMapping.AddDbTypeAlias("timestamptz", DbType.DateTimeOffset);
-
-
 
             nativeTypeMapping.AddTypeAlias("timestamptz", typeof(DateTimeOffset));
 
@@ -460,7 +449,9 @@ namespace EDBTypes
             nativeTypeMapping.AddType("uuid", EDBDbType.Uuid, DbType.Guid, true);
             nativeTypeMapping.AddTypeAlias("uuid", typeof (Guid));
 
-            nativeTypeMapping.AddType("xml", EDBDbType.Xml, DbType.Xml, true);
+            nativeTypeMapping.AddType("xml", EDBDbType.Xml, DbType.Xml, false,
+                                            BasicNativeToBackendTypeConverter.StringToTextText,
+                                            BasicNativeToBackendTypeConverter.StringToTextBinary);
 
             nativeTypeMapping.AddType("interval", EDBDbType.Interval, DbType.Object, true,
                                             ExtendedNativeToBackendTypeConverter.ToInterval);
@@ -468,8 +459,19 @@ namespace EDBTypes
             nativeTypeMapping.AddTypeAlias("interval", typeof (EDBInterval));
             nativeTypeMapping.AddTypeAlias("interval", typeof (TimeSpan));
 
-			nativeTypeMapping.AddDbTypeAlias("text", DbType.Object);
+            nativeTypeMapping.AddType("json", EDBDbType.Json, DbType.Object, false,
+                BasicNativeToBackendTypeConverter.StringToTextText,
+                BasicNativeToBackendTypeConverter.StringToTextBinary);
 
+            nativeTypeMapping.AddType("jsonb", EDBDbType.Jsonb, DbType.Object, false,
+                BasicNativeToBackendTypeConverter.StringToTextText,
+                BasicNativeToBackendTypeConverter.StringToTextBinary);
+
+            nativeTypeMapping.AddType("hstore", EDBDbType.Hstore, DbType.Object, false,
+                BasicNativeToBackendTypeConverter.StringToTextText,
+                BasicNativeToBackendTypeConverter.StringToTextBinary);
+
+            nativeTypeMapping.AddDbTypeAlias("unknown", DbType.Object);
 
             return nativeTypeMapping;
         }
@@ -496,11 +498,11 @@ namespace EDBTypes
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
 
-
             yield return new EDBBackendTypeInfo(0, "varchar2", EDBDbType.Varchar2, DbType.String, typeof(String),
-                                            null,
-                                            BasicBackendToNativeTypeConverter.TextBinaryToString);
-            
+                                         null,
+                                         BasicBackendToNativeTypeConverter.TextBinaryToString);
+
+
             yield return new EDBBackendTypeInfo(0, "text", EDBDbType.Text, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
@@ -554,13 +556,13 @@ namespace EDBTypes
                                             ExtendedBackendToNativeTypeConverter.ToInet,
                                             typeof(IPAddress),
                                             ipaddress => (IPAddress)(EDBInet)ipaddress,
-                                            EDBinet => (EDBinet is IPAddress ? (EDBInet)(IPAddress) EDBinet : EDBinet));
+                                            npgsqlinet => (npgsqlinet is IPAddress ? (EDBInet)(IPAddress) npgsqlinet : npgsqlinet));
             yield return
                 new EDBBackendTypeInfo(0, "macaddr", EDBDbType.MacAddr, DbType.Object, typeof(EDBMacAddress),
                                             ExtendedBackendToNativeTypeConverter.ToMacAddress,
                                             typeof(PhysicalAddress),
                                             macAddress => (PhysicalAddress)(EDBMacAddress)macAddress,
-                                            EDBmacaddr => (EDBmacaddr is PhysicalAddress ? (EDBMacAddress)(PhysicalAddress)EDBmacaddr : EDBmacaddr));
+                                            npgsqlmacaddr => (npgsqlmacaddr is PhysicalAddress ? (EDBMacAddress)(PhysicalAddress)npgsqlmacaddr : npgsqlmacaddr));
 
             yield return
                 new EDBBackendTypeInfo(0, "money", EDBDbType.Money, DbType.Currency, typeof (Decimal),
@@ -593,7 +595,19 @@ namespace EDBTypes
             yield return new EDBBackendTypeInfo(0, "uuid", EDBDbType.Uuid, DbType.Guid, typeof (Guid),
                                             ExtendedBackendToNativeTypeConverter.ToGuid);
 
-            yield return new EDBBackendTypeInfo(0, "xml", EDBDbType.Xml, DbType.Xml, typeof(String), null);
+            yield return new EDBBackendTypeInfo(0, "xml", EDBDbType.Xml, DbType.Xml, typeof (String), null);
+
+            yield return new EDBBackendTypeInfo(0, "json", EDBDbType.Json, DbType.Object, typeof(String),
+                null,
+                BasicBackendToNativeTypeConverter.TextBinaryToString);
+
+            yield return new EDBBackendTypeInfo(0, "jsonb", EDBDbType.Jsonb, DbType.Object, typeof(String),
+                null,
+                BasicBackendToNativeTypeConverter.TextBinaryToString);
+
+            yield return new EDBBackendTypeInfo(0, "hstore", EDBDbType.Hstore, DbType.Object, typeof(String),
+                null,
+                BasicBackendToNativeTypeConverter.TextBinaryToString);
 
             if (useExtendedTypes)
             {
@@ -649,54 +663,55 @@ namespace EDBTypes
                                             ExtendedBackendToNativeTypeConverter.ToDate,
                                             typeof(DateTime),
                                             date => (DateTime)(EDBDate)date,
-                                            EDBDate => (EDBDate is DateTime ? (EDBDate)(DateTime) EDBDate : EDBDate));
+                                            npgsqlDate => (npgsqlDate is DateTime ? (EDBDate)(DateTime) npgsqlDate : npgsqlDate));
 
                 yield return
                     new EDBBackendTypeInfo(0, "time", EDBDbType.Time, DbType.Time, typeof (EDBTime),
                                             ExtendedBackendToNativeTypeConverter.ToTime,
                                             typeof(DateTime),
                                             time => time is DateTime ? time : (DateTime)(EDBTime)time,
-                                            EDBTime => (EDBTime is TimeSpan ? (EDBTime)(TimeSpan) EDBTime : EDBTime));
+                                            npgsqlTime => (npgsqlTime is TimeSpan ? (EDBTime)(TimeSpan) npgsqlTime : npgsqlTime));
 
                 yield return
                     new EDBBackendTypeInfo(0, "timetz", EDBDbType.TimeTZ, DbType.Time, typeof (EDBTimeTZ),
                                             ExtendedBackendToNativeTypeConverter.ToTimeTZ,
                                             typeof(DateTime),
                                             timetz => (DateTime)(EDBTimeTZ)timetz,
-                                            EDBTimetz => (EDBTimetz is TimeSpan ? (EDBTimeTZ)(TimeSpan) EDBTimetz : EDBTimetz));
+                                            npgsqlTimetz => (npgsqlTimetz is TimeSpan ? (EDBTimeTZ)(TimeSpan) npgsqlTimetz : npgsqlTimetz));
 
                 yield return
                     new EDBBackendTypeInfo(0, "timestamp", EDBDbType.Timestamp, DbType.DateTime, typeof (EDBTimeStamp),
                                             ExtendedBackendToNativeTypeConverter.ToTimeStamp,
                                             typeof(DateTime),
                                             timestamp => (DateTime)(EDBTimeStamp)timestamp,
-                                            EDBTimestamp => (EDBTimestamp is DateTime ? (EDBTimeStamp)(DateTime) EDBTimestamp : EDBTimestamp));
+                                            npgsqlTimestamp => (npgsqlTimestamp is DateTime ? (EDBTimeStamp)(DateTime) npgsqlTimestamp : npgsqlTimestamp));
 
                 yield return
                     new EDBBackendTypeInfo(0, "abstime", EDBDbType.Abstime, DbType.DateTime, typeof(EDBTimeStampTZ),
                                             ExtendedBackendToNativeTypeConverter.ToTimeStampTZ,
                                             typeof(DateTime),
                                             timestamp => (DateTime)(EDBTimeStampTZ)timestamp,
-                                            EDBTimestampTZ => (EDBTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime) EDBTimestampTZ : EDBTimestampTZ));
+                                            npgsqlTimestampTZ => (npgsqlTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime) npgsqlTimestampTZ : npgsqlTimestampTZ));
 
                 yield return
                     new EDBBackendTypeInfo(0, "timestamptz", EDBDbType.TimestampTZ, DbType.DateTime, typeof (EDBTimeStampTZ),
                                             ExtendedBackendToNativeTypeConverter.ToTimeStampTZ,
                                             typeof(DateTime),
                                             timestamptz => ((DateTime)(EDBTimeStampTZ)timestamptz).ToLocalTime(),
-                                            EDBTimestampTZ => (EDBTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime)EDBTimestampTZ : EDBTimestampTZ is DateTimeOffset ? (EDBTimeStampTZ)(DateTimeOffset)EDBTimestampTZ : EDBTimestampTZ));
+                                            npgsqlTimestampTZ => (npgsqlTimestampTZ is DateTime ? (EDBTimeStampTZ)(DateTime)npgsqlTimestampTZ : npgsqlTimestampTZ is DateTimeOffset ? (EDBTimeStampTZ)(DateTimeOffset)npgsqlTimestampTZ : npgsqlTimestampTZ));
             }
         }
 
         ///<summary>
-        /// This method creates (or retrieves from cache) a mapping between type and OID 
+        /// This method creates (or retrieves from cache) a mapping between type and OID
         /// of all natively supported postgresql data types.
         /// This is needed as from one version to another, this mapping can be changed and
         /// so we avoid hardcoding them.
         /// </summary>
         /// <returns>EDBTypeMapping containing all known data types.  The mapping must be
         /// cloned before it is modified because it is cached; changes made by one connection may
-        /// effect another connection.</returns>
+        /// effect another connection.
+        /// </returns>
         public static EDBBackendTypeMapping CreateAndLoadInitialTypesMapping(EDBConnector conn)
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "LoadTypesMapping");
@@ -705,7 +720,7 @@ namespace EDBTypes
             // Check the cache for an initial types map.
             EDBBackendTypeMapping oidToNameMapping = null;
 
-            if (BackendTypeMappingCache.TryGetValue(key, out oidToNameMapping))
+            if(BackendTypeMappingCache.TryGetValue(key, out oidToNameMapping))
                 return oidToNameMapping;
 
             // Not in cache, create a new one.
@@ -730,12 +745,12 @@ namespace EDBTypes
             //threads the extra work.
             EDBBackendTypeMapping mappingCheck = null;
             //First check without acquiring the lock; don't lock if we don't have to.
-            if (BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
+            if(BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
                 return mappingCheck;
-            lock (BackendTypeMappingCache)
+            lock(BackendTypeMappingCache)
             {
                 //Final check. We have the lock now so if this fails it'll continue to fail.
-                if (BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
+                if(BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
                     return mappingCheck;
                 // Add this mapping to the per-server-version cache so we don't have to
                 // do these expensive queries on every connection startup.
@@ -814,7 +829,7 @@ namespace EDBTypes
 
                         TypeInfo._OID = Convert.ToInt32(dr[1]);
 
-                      TypeMappings.AddType(TypeInfo);
+                        TypeMappings.AddType(TypeInfo);
                     }
                 }
             }

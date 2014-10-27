@@ -3,7 +3,7 @@
 // Author:
 //    Glen Parker <glenebob@nwlink.com>
 //
-//    Copyright (C) 2004 The Npgsql Development Team
+//    Copyright (C) 2004 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
@@ -11,13 +11,13 @@
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -34,6 +34,9 @@ using System.Net;
 using System.Net.NetworkInformation;
 using EnterpriseDB.EDBClient;
 
+// Keep the xml comment warning quiet for this file.
+#pragma warning disable 1591
+
 namespace EDBTypes
 {
     /// <summary>
@@ -49,33 +52,32 @@ namespace EDBTypes
             _x = x;
             _y = y;
         }
-        
+
         public Single X
         {
             get
             {
                 return _x;
             }
-            
+
             set
             {
                 _x = value;
             }
         }
-        
+
         public Single Y
         {
             get
             {
                 return _y;
             }
-            
+
             set
             {
                 _y = value;
             }
         }
-
 
         public bool Equals(EDBPoint other)
         {
@@ -105,10 +107,10 @@ namespace EDBTypes
 
     public struct EDBBox : IEquatable<EDBBox>
     {
-        
+
         private EDBPoint _upperRight;
         private EDBPoint _lowerLeft;
-        
+
         public EDBBox(EDBPoint upperRight, EDBPoint lowerLeft)
         {
             _upperRight = upperRight;
@@ -126,28 +128,28 @@ namespace EDBTypes
             {
                 return _upperRight;
             }
-            
+
             set
             {
                 _upperRight = value;
             }
-            
+
         }
-        
+
         public EDBPoint LowerLeft
         {
             get
             {
                 return _lowerLeft;
             }
-            
+
             set
             {
                 _lowerLeft = value;
             }
-            
+
         }
-        
+
         public float Left
         {
             get { return LowerLeft.X; }
@@ -211,7 +213,6 @@ namespace EDBTypes
                 PGUtil.RotateShift(LowerLeft.GetHashCode(), sizeof (int)*3/4);
         }
     }
-
 
     /// <summary>
     /// Represents a PostgreSQL Line Segment type.
@@ -278,7 +279,7 @@ namespace EDBTypes
             : this(points, false)
         {
         }
-        
+
         public EDBPath(EDBPoint[] points) : this((IEnumerable<EDBPoint>)points, false)
         {
         }
@@ -299,14 +300,14 @@ namespace EDBTypes
             : this(capacity, false)
         {
         }
-        
+
         public bool Open
         {
             get
             {
                 return _open;
             }
-            
+
             set
             {
                 _open = value;
@@ -383,7 +384,7 @@ namespace EDBTypes
         {
             if (Open != other.Open || Count != other.Count)
                 return false;
-            else if (ReferenceEquals(_points, other._points))//Short cut for shallow copies.
+            else if(ReferenceEquals(_points, other._points))//Short cut for shallow copies.
                 return true;
             for (int i = 0; i != Count; ++i)
             {
@@ -418,7 +419,7 @@ namespace EDBTypes
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
                 //but one that will be the same on subsequent calls.
-                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret % sizeof(int));
+                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret%sizeof (int));
             }
             return Open ? ret : -ret;
         }
@@ -435,7 +436,7 @@ namespace EDBTypes
         {
             _points = new List<EDBPoint>(points);
         }
-        
+
         public EDBPolygon(EDBPoint[] points) : this ((IEnumerable<EDBPoint>) points)
         {
         }
@@ -510,7 +511,7 @@ namespace EDBTypes
         {
             if (Count != other.Count)
                 return false;
-            else if (ReferenceEquals(_points, _points))//Shortcut for copies of each other.
+            else if(ReferenceEquals(_points, _points))//Shortcut for copies of each other.
                 return true;
             for (int i = 0; i != Count; ++i)
             {
@@ -524,7 +525,7 @@ namespace EDBTypes
 
         public override bool Equals(object obj)
         {
-            return obj is EDBPolygon && Equals((EDBPolygon)obj);
+            return obj is EDBPolygon && Equals((EDBPolygon) obj);
         }
 
         public static bool operator ==(EDBPolygon x, EDBPolygon y)
@@ -545,7 +546,7 @@ namespace EDBTypes
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
                 //but one that will be the same on subsequent calls.
-                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret % sizeof(int));
+                ret ^= PGUtil.RotateShift(point.GetHashCode(), ret%sizeof (int));
             }
             return ret;
         }
@@ -572,7 +573,7 @@ namespace EDBTypes
 
         public override bool Equals(object obj)
         {
-            return obj is EDBCircle && Equals((EDBCircle)obj);
+            return obj is EDBCircle && Equals((EDBCircle) obj);
         }
 
         public override String ToString()
@@ -597,7 +598,6 @@ namespace EDBTypes
                 PGUtil.RotateShift(Radius.GetHashCode(), sizeof (int)/2);
         }
     }
-
 
     /// <summary>
     /// Represents a PostgreSQL inet type.
@@ -645,22 +645,23 @@ namespace EDBTypes
                 return string.Format("{0}/{1}", addr, mask);
             }
                 return addr.ToString();
-            
+
         }
 
-        public static implicit operator IPAddress(EDBInet x)
+        public static explicit operator IPAddress(EDBInet x)
         {
             if (x.mask != 32)
             {
                 throw new InvalidCastException("Cannot cast CIDR network to address");
             }
                 return x.addr;
-            
+
         }
+
         public static implicit operator EDBInet(IPAddress ipaddress)
         {
             return new EDBInet(ipaddress);
-            
+
         }
 
         public bool Equals(EDBInet other)
@@ -702,7 +703,7 @@ namespace EDBTypes
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="macAddr">The macAddr parameter must contain a string that can only consist of numbers
         /// and upper-case letters as hexadecimal digits. (See PhysicalAddress.Parse method on MSDN)</param>
@@ -769,3 +770,5 @@ namespace EDBTypes
         }
     }
 }
+
+#pragma warning restore 1591

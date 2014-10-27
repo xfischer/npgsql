@@ -1,24 +1,24 @@
-// Npgsql.NpgsqlClosedState.cs
+// EnterpriseDB.EDBClient.EDBClosedState.cs
 //
 // Authors:
-// 	Dave Joyner			<d4ljoyn@yahoo.com>
-//	Daniel Nauck		<dna(at)mono-project.de>
+//     Dave Joyner            <d4ljoyn@yahoo.com>
+//    Daniel Nauck        <dna(at)mono-project.de>
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -41,9 +41,8 @@ namespace EnterpriseDB.EDBClient
 
     internal class EDBNetworkStream : NetworkStream
     {
-       EDBConnector mContext = null;
+        EDBConnector mContext = null;
 
-        
         public EDBNetworkStream(Socket socket, Boolean owner)
             : base(socket, owner)
         {
@@ -71,44 +70,30 @@ namespace EnterpriseDB.EDBClient
 
     }
 
-	internal sealed class EDBClosedState : EDBState
-	{
-		private static readonly EDBClosedState _instance = new EDBClosedState();
+    internal sealed class EDBClosedState : EDBState
+    {
+        private static readonly EDBClosedState _instance = new EDBClosedState();
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-
-		private EDBClosedState()
-			: base()
-		{
-		}
-
-		public static EDBClosedState Instance
-		{
-			get
-			{
-				EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "Instance");
-				return _instance;
-			}
-		}
-
-
-		/// <summary>
-		/// Resolve a host name or IP address.
-		/// This is needed because if you call Dns.Resolve() with an IP address, it will attempt
-		/// to resolve it as a host name, when it should just convert it to an IP address.
-		/// </summary>
-		/// <param name="HostName"></param>
-		private static IPAddress[] ResolveIPHost(String HostName)
-		{
-			return Dns.GetHostAddresses(HostName);
-		}
- 
-
-        public override void Open(EDBConnector context, int timeout)
+        private EDBClosedState()
+            : base()
         {
-			try
-			{
-				EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
+        }
+
+        public static EDBClosedState Instance
+        {
+            get
+            {
+                EDBEventLog.LogPropertyGet(LogLevel.Debug, CLASSNAME, "Instance");
+                return _instance;
+            }
+        }
+
+        public override void Open(EDBConnector context, Int32 timeout)
+        {
+            try
+            {
+                EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Open");
 
                 IAsyncResult result;
                 // Keep track of time remaining; Even though there may be multiple timeout-able calls,
@@ -176,9 +161,10 @@ namespace EnterpriseDB.EDBClient
 
                 EDBNetworkStream baseStream = new EDBNetworkStream(socket, true);
                 Stream sslStream = null;
-				// If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
-				if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))
-				{
+
+                // If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
+                if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))
+                {
                     baseStream
                         .WriteInt32(8)
                         .WriteInt32(80877103);
@@ -198,12 +184,13 @@ namespace EnterpriseDB.EDBClient
                         if (!EDBConnector.UseSslStream)
                         {
                             SslClientStream sslStreamPriv;
-                        sslStreamPriv = new SslClientStream(
+
+                            sslStreamPriv = new SslClientStream(
                                     baseStream,
-                            context.Host,
-                            true,
-                            SecurityProtocolType.Default,
-                            clientCertificates);
+                                    context.Host,
+                                    true,
+                                    SecurityProtocolType.Default,
+                                    clientCertificates);
 
                             sslStreamPriv.ClientCertSelectionDelegate =
                                     new CertificateSelectionCallback(context.DefaultCertificateSelectionCallback);
@@ -242,9 +229,9 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-		public override void Close(EDBConnector context)
-		{
-			//DO NOTHING.
-		}
-	}
+        public override void Close(EDBConnector context)
+        {
+            //DO NOTHING.
+        }
+    }
 }

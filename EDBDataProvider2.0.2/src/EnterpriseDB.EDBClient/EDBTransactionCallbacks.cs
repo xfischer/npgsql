@@ -3,19 +3,19 @@
 // Author:
 //  Josh Cooley <jbnpgsql@tuxinthebox.net>
 //
-// Copyright (C) 2007, The Npgsql Development Team
+// Copyright (C) 2007, The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -28,118 +28,115 @@ using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
-	internal interface IEDBTransactionCallbacks : IDisposable
-	{
-		string GetName();
-		void PrepareTransaction();
-		void CommitTransaction();
-		void RollbackTransaction();
-	}
+    internal interface IEDBTransactionCallbacks : IDisposable
+    {
+        string GetName();
+        void PrepareTransaction();
+        void CommitTransaction();
+        void RollbackTransaction();
+    }
 
-	internal class EDBTransactionCallbacks : MarshalByRefObject, IEDBTransactionCallbacks
-	{
-		private EDBConnection _connection;
-		private readonly string _connectionString;
-		private bool _closeConnectionRequired;
-		private bool _prepared;
-		private readonly string _txName = Guid.NewGuid().ToString();
+    internal class EDBTransactionCallbacks : MarshalByRefObject, IEDBTransactionCallbacks
+    {
+        private EDBConnection _connection;
+        private readonly string _connectionString;
+        private bool _closeConnectionRequired;
+        private bool _prepared;
+        private readonly string _txName = Guid.NewGuid().ToString();
 
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		public EDBTransactionCallbacks(EDBConnection connection)
-		{
-			_connection = connection;
-			_connectionString = _connection.ConnectionString;
-			_connection.Disposed += new EventHandler(_connection_Disposed);
-		}
+        public EDBTransactionCallbacks(EDBConnection connection)
+        {
+            _connection = connection;
+            _connectionString = _connection.ConnectionString;
+            _connection.Disposed += new EventHandler(_connection_Disposed);
+        }
 
-		private void _connection_Disposed(object sender, EventArgs e)
-		{
-			// TODO: what happens if this is called from another thread?
-			// connections should not be shared across threads while in a transaction
-			_connection.Disposed -= new EventHandler(_connection_Disposed);
-			_connection = null;
-		}
+        private void _connection_Disposed(object sender, EventArgs e)
+        {
+            // TODO: what happens if this is called from another thread?
+            // connections should not be shared across threads while in a transaction
+            _connection.Disposed -= new EventHandler(_connection_Disposed);
+            _connection = null;
+        }
 
-		private EDBConnection GetConnection()
-		{
-			if (_connection == null || (_connection.FullState & ConnectionState.Open) != ConnectionState.Open)
-			{
-				_connection = new EDBConnection(_connectionString);
-				_connection.Open();
-				_closeConnectionRequired = true;
-				return _connection;
-			}
-			else
-			{
-				return _connection;
-			}
-		}
+        private EDBConnection GetConnection()
+        {
+            if (_connection == null || (_connection.FullState & ConnectionState.Open) != ConnectionState.Open)
+            {
+                _connection = new EDBConnection(_connectionString);
+                _connection.Open();
+                _closeConnectionRequired = true;
+                return _connection;
+            }
+            else
+            {
+                return _connection;
+            }
+        }
 
-		#region IEDBTransactionCallbacks Members
+        #region IEDBTransactionCallbacks Members
 
-		public string GetName()
-		{
-			return _txName;
-		}
+        public string GetName()
+        {
+            return _txName;
+        }
 
-		public void CommitTransaction()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CommitTransaction");
-			EDBConnection connection = GetConnection();
-			EDBCommand command = null;
-			if (_prepared)
-			{
-				command = new EDBCommand(string.Format("COMMIT PREPARED '{0}'", _txName), connection);
-			}
-			else
-			{
-				command = new EDBCommand("COMMIT", connection);
-			}
-			command.ExecuteBlind();
-		}
+        public void CommitTransaction()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CommitTransaction");
+            EDBConnection connection = GetConnection();
 
-		public void PrepareTransaction()
-		{
+            if (_prepared)
+            {
+                EDBCommand.ExecuteBlind(connection.Connector, string.Format("COMMIT PREPARED '{0}'", _txName));
+            }
+            else
+            {
+                EDBCommand.ExecuteBlind(connection.Connector, EDBQuery.CommitTransaction);
+            }
+        }
+
+        public void PrepareTransaction()
+        {
             if (!_prepared)
             {
                 EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "PrepareTransaction");
                 EDBConnection connection = GetConnection();
-                EDBCommand command = new EDBCommand(string.Format("PREPARE TRANSACTION '{0}'", _txName), connection);
-                command.ExecuteBlind();
+                EDBCommand.ExecuteBlind(connection.Connector, string.Format("PREPARE TRANSACTION '{0}'", _txName));
                 _prepared = true;
             }
-		}
+        }
 
-		public void RollbackTransaction()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "RollbackTransaction");
-			EDBConnection connection = GetConnection();
-			EDBCommand command = null;
-			if (_prepared)
-			{
-				command = new EDBCommand(string.Format("ROLLBACK PREPARED '{0}'", _txName), connection);
-			}
-			else
-			{
-				command = new EDBCommand("ROLLBACK", connection);
-			}
-			command.ExecuteBlind();
-		}
+        public void RollbackTransaction()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "RollbackTransaction");
+            EDBConnection connection = GetConnection();
 
-		#endregion
+            if (_prepared)
+            {
+                EDBCommand.ExecuteBlind(connection.Connector, string.Format("ROLLBACK PREPARED '{0}'", _txName));
+            }
+            else
+            {
+                EDBCommand.ExecuteBlind(connection.Connector, EDBQuery.RollbackTransaction);
+            }
+        }
 
-		#region IDisposable Members
+        #endregion
 
-		public void Dispose()
-		{
-			if (_closeConnectionRequired)
-			{
-				_connection.Close();
-			}
-			_closeConnectionRequired = false;
-		}
+        #region IDisposable Members
 
-		#endregion
-	}
+        public void Dispose()
+        {
+            if (_closeConnectionRequired)
+            {
+                _connection.Close();
+            }
+            _closeConnectionRequired = false;
+        }
+
+        #endregion
+    }
 }

@@ -98,7 +98,7 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
 	<data name="Exception_WrongType">
-		<value>NpgsqlParameterへ {0} を割り当てることができません</value>
+		<value>EDBParameterへ {0} を割り当てることができません</value>
 	</data>
     <data name="Exception_InvalidParameterName">
         <value>無効なパラメーター名: {0}</value>

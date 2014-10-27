@@ -191,11 +191,11 @@ namespace DOTNET
             }
             catch (EDBException edbException)
             {
-                Assert.IsTrue(true);
+                throw new Exception(edbException.Message.ToString());
             }
             catch (Exception exp)
             {
-                Assert.IsTrue(false);
+                throw new Exception(exp.Message.ToString());
             }
         }
 

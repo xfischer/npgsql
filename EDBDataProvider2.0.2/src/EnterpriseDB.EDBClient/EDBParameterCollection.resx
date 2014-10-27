@@ -98,7 +98,7 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
 	<data name="Exception_WrongType">
-		<value>Can't cast {0} into NpgsqlParameter</value>
+		<value>Can't cast {0} into EDBParameter</value>
 	</data>
     <data name="Exception_InvalidParameterName">
         <value>Invalid parameter name: {0}</value>

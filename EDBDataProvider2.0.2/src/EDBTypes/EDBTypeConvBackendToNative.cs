@@ -1,9 +1,9 @@
-// NpgsqlTypes.NpgsqlTypeConvBackendToNative.cs
+// EDBTypes.EDBTypeConvBackendToNative.cs
 //
 // Author:
 //    Glen Parker <glenebob@gmail.com>
 //
-//    Copyright (C) 2004 The Npgsql Development Team
+//    Copyright (C) 2004 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //

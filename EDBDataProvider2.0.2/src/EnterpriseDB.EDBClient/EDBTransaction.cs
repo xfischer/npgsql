@@ -1,11 +1,11 @@
 // created on 17/11/2002 at 19:04
 
-// Npgsql.EDBTransaction.cs
+// EnterpriseDB.EDBClient.EDBTransaction.cs
 //
 // Author:
 //    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//    Copyright (C) 2002 The Npgsql Development Team
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
@@ -13,27 +13,26 @@
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
 // ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Threading;
-using System.Reflection;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -44,7 +43,6 @@ namespace EnterpriseDB.EDBClient
     {
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
-
 
         private EDBConnection _conn = null;
         private readonly IsolationLevel _isolation = IsolationLevel.ReadCommitted;
@@ -57,49 +55,45 @@ namespace EnterpriseDB.EDBClient
 
         internal EDBTransaction(EDBConnection conn, IsolationLevel isolation)
         {
-
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
 
             _conn = conn;
             _isolation = isolation;
 
-            StringBuilder commandText = new StringBuilder("BEGIN; SET TRANSACTION ISOLATION LEVEL ");
-
             if (isolation == IsolationLevel.RepeatableRead)
             {
-            	commandText.Append("REPEATABLE READ");
+                EDBCommand.ExecuteBlind(conn.Connector, EDBQuery.BeginTransRepeatableRead);
             }
             else if ((isolation == IsolationLevel.Serializable) ||
                 (isolation == IsolationLevel.Snapshot))
             {
-                commandText.Append("SERIALIZABLE");
+                EDBCommand.ExecuteBlind(conn.Connector, EDBQuery.BeginTransSerializable);
             }
             else
             {
                 // Set isolation level default to read committed.
                 _isolation = IsolationLevel.ReadCommitted;
-                commandText.Append("READ COMMITTED");
+                EDBCommand.ExecuteBlind(conn.Connector, EDBQuery.BeginTransReadCommitted);
             }
 
-            commandText.Append(";");
-
-            EDBCommand command = new EDBCommand(commandText.ToString(), conn.Connector);
-            command.ExecuteBlind();
             _conn.Connector.Transaction = this;
         }
 
         /// <summary>
-        /// Gets the <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see>
+        /// Gets the <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see>
         /// object associated with the transaction, or a null reference if the
         /// transaction is no longer valid.
         /// </summary>
-        /// <value>The <see cref="Npgsql.NpgsqlConnection">NpgsqlConnection</see>
+        /// <value>The <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see>
         /// object associated with the transaction.</value>
         public new EDBConnection Connection
         {
             get { return _conn; }
         }
 
+        /// <summary>
+        /// DB connection.
+        /// </summary>
         protected override DbConnection DbConnection
         {
             get { return Connection; }
@@ -123,6 +117,10 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        /// <param name="disposing"></param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && this._conn != null)
@@ -163,8 +161,8 @@ namespace EnterpriseDB.EDBClient
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Commit");
 
-            EDBCommand command = new EDBCommand("COMMIT", _conn.Connector);
-            command.ExecuteBlind();
+            EDBCommand.ExecuteBlind(_conn.Connector, EDBQuery.CommitTransaction);
+
             _conn.Connector.Transaction = null;
             _conn = null;
         }
@@ -183,75 +181,66 @@ namespace EnterpriseDB.EDBClient
 
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Rollback");
 
-            EDBCommand command = new EDBCommand("ROLLBACK", _conn.Connector);
-            command.ExecuteBlind();
+            EDBCommand.ExecuteBlindSuppressTimeout(_conn.Connector, EDBQuery.RollbackTransaction);
             _conn.Connector.Transaction = null;
             _conn = null;
         }
-        
+
         /// <summary>
         /// Rolls back a transaction from a pending savepoint state.
         /// </summary>
         public void Rollback(String savePointName)
         {
-            
+
             CheckDisposed();
 
             if (_conn == null)
             {
                 throw new InvalidOperationException(resman.GetString("Exception_NoTransaction"));
             }
-            
+
             if (!_conn.Connector.SupportsSavepoint)
             {
                 throw new InvalidOperationException(resman.GetString("Exception_SavePointNotSupported"));
             }
-                
-            
-            
+
             if (savePointName.Contains(";"))
             {
                 throw new InvalidOperationException(resman.GetString("Exception_SavePointWithSemicolon"));
-                      
+
             }
-            
-            
-            EDBCommand command = new EDBCommand("ROLLBACK TO SAVEPOINT " + savePointName, _conn.Connector);
-            command.ExecuteBlind();
-            
+
+            EDBCommand.ExecuteBlind(_conn.Connector, string.Format("ROLLBACK TO SAVEPOINT {0}", savePointName));
         }
-        
+
         /// <summary>
         /// Creates a transaction save point.
         /// </summary>
-
         public void Save(String savePointName)
         {
-            
+
             CheckDisposed();
 
             if (_conn == null)
             {
                 throw new InvalidOperationException(resman.GetString("Exception_NoTransaction"));
             }
-            
+
             if (!_conn.Connector.SupportsSavepoint)
             {
                 throw new InvalidOperationException(resman.GetString("Exception_SavePointNotSupported"));
             }
-                
-            
+
             if (savePointName.Contains(";"))
             {
                 throw new InvalidOperationException(resman.GetString("Exception_SavePointWithSemicolon"));
-                      
+
             }
-            
-            
-            EDBCommand command = new EDBCommand("SAVEPOINT " + savePointName, _conn.Connector);
-            command.ExecuteBlind();
-            
+
+            EDBCommand.ExecuteBlind(_conn.Connector, string.Format("SAVEPOINT {0}", savePointName));
+
         }
+
         /// <summary>
         /// Cancel the transaction without telling the backend about it.  This is
         /// used to make the transaction go away when closing a connection.
@@ -271,7 +260,6 @@ namespace EnterpriseDB.EDBClient
         {
             get { return _disposed; }
         }
-
 
         internal void CheckDisposed()
         {

@@ -1,9 +1,9 @@
-// NpgsqlTypes.NpgsqlTypeMappings.cs
+// EDBTypes.EDBTypeMappings.cs
 //
 // Author:
 //    Francisco Jr. (fxjrlists@yahoo.com.br)
 //
-//    Copyright (C) 2002 The Npgsql Development Team
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //

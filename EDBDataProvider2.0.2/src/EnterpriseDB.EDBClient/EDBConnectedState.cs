@@ -1,24 +1,24 @@
-// Npgsql.NpgsqlConnectedState.cs
+// EnterpriseDB.EDBClient.EDBConnectedState.cs
 //
 // Author:
-// 	Dave Joyner <d4ljoyn@yahoo.com>
+//     Dave Joyner <d4ljoyn@yahoo.com>
 //
-//	Copyright (C) 2002 The Npgsql Development Team
-//	npgsql-general@gborg.postgresql.org
-//	http://gborg.postgresql.org/project/npgsql/projdisplay.php
+//    Copyright (C) 2002 The EnterpriseDB.EDBClient Development Team
+//    npgsql-general@gborg.postgresql.org
+//    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -29,31 +29,27 @@ using System.IO;
 
 namespace EnterpriseDB.EDBClient
 {
-	internal sealed class EDBConnectedState : EDBState
-	{
-		public static readonly EDBConnectedState Instance = new EDBConnectedState();
+    internal sealed class EDBConnectedState : EDBState
+    {
+        public static readonly EDBConnectedState Instance = new EDBConnectedState();
 
-		private EDBConnectedState()
-		{
-		}
-
-        public override void Startup(EDBConnector context, EDBConnectionStringBuilder settings)
+        private EDBConnectedState()
         {
-          
-            EDBStartupPacket startupPacket = EDBStartupPacket.BuildStartupPacket(context.BackendProtocolVersion,
-                                                                                     context.Database, context.UserName, settings);
+        }
+
+        public override void Startup(EDBConnector context,EDBConnectionStringBuilder settings)
+        {
+            EDBStartupPacket startupPacket = new EDBStartupPacket(context.Database, context.UserName, settings);
 
             startupPacket.WriteToStream(context.Stream);
             context.RequireReadyForQuery = false;
-            // This still makes part of the connection stablishment handling.
-            // So we use the connectiontimeout here too.
-            context.Mediator.CommandTimeout = context.ConnectionTimeout;
+
             ProcessAndDiscardBackendResponses(context);
         }
 
-		public override void CancelRequest(EDBConnector context)
-		{
-			EDBCancelRequest CancelRequestMessage = new EDBCancelRequest(context.BackEndKeyData);
+        public override void CancelRequest(EDBConnector context)
+        {
+            EDBCancelRequest CancelRequestMessage = new EDBCancelRequest(context.BackEndKeyData);
 
             CancelRequestMessage.WriteToStream(context.Stream);
             context.Stream.Flush();

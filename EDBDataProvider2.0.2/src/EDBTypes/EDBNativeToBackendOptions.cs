@@ -1,9 +1,9 @@
-// NpgsqlTypes.NpgsqlNativeToBackendOptions.cs
+// EDBTypes.EDBNativeToBackendOptions.cs
 //
 // Author:
 //    Glen Parker <glenebob@gmail.com>
 //
-//    Copyright (C) 2004 The Npgsql Development Team
+//    Copyright (C) 2004 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
@@ -34,7 +34,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using  EnterpriseDB.EDBClient;
+using EnterpriseDB.EDBClient;
 
 namespace EDBTypes
 {

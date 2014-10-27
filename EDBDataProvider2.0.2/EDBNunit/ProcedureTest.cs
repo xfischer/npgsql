@@ -2796,15 +2796,15 @@ namespace DOTNET
 
 
 
-                Assert.AreEqual("7369", Convert.ToString(rst.GetString(0)));
+                Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
 
                 Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
 
                 Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
 
-                Assert.AreEqual("7902", Convert.ToString(rst.GetString(3)));
+                Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("800.00", Convert.ToString(rst.GetString(5)));
+                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 
 
 
@@ -2820,15 +2820,15 @@ namespace DOTNET
 
                 rst.Read();
 
-                Assert.AreEqual("7521", Convert.ToString(rst.GetString(0)));
+                Assert.AreEqual("7521", Convert.ToString(rst[0].ToString()));
 
                 Assert.AreEqual("WARD", Convert.ToString(rst.GetString(1)));
 
                 Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
 
-                Assert.AreEqual("7698", Convert.ToString(rst.GetString(3)));
+                Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250.00", Convert.ToString(rst.GetString(5)));
+                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 
 
 

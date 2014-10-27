@@ -3,19 +3,19 @@
 // Author:
 //  Josh Cooley <jbnpgsql@tuxinthebox.net>
 //
-// Copyright (C) 2007, The Npgsql Development Team
+// Copyright (C) 2007, The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -23,58 +23,57 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 using System;
-using System.Transactions;
 using System.Reflection;
+using System.Transactions;
 
 namespace EnterpriseDB.EDBClient
 {
-	internal class EDBPromotableSinglePhaseNotification : IPromotableSinglePhaseNotification
-	{
-		private readonly EDBConnection _connection;
-		private IsolationLevel _isolationLevel;
-		private EDBTransaction _npgsqlTx;
-		private EDBTransactionCallbacks _callbacks;
+    internal class EDBPromotableSinglePhaseNotification : IPromotableSinglePhaseNotification
+    {
+        private readonly EDBConnection _connection;
+        private IsolationLevel _isolationLevel;
+        private EDBTransaction _npgsqlTx;
+        private EDBTransactionCallbacks _callbacks;
         private IEDBResourceManager _rm;
         private bool _inTransaction;
-        internal bool InLocalTransaction { get { return _npgsqlTx != null; } }
-
+        internal bool InLocalTransaction { get { return _npgsqlTx != null;  } }
 
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
-		public EDBPromotableSinglePhaseNotification(EDBConnection connection)
-		{
-			_connection = connection;
-		}
+        public EDBPromotableSinglePhaseNotification(EDBConnection connection)
+        {
+            _connection = connection;
+        }
 
-		public void Enlist(Transaction tx)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Enlist");
-			if (tx != null)
-			{
-				_isolationLevel = tx.IsolationLevel;
-				if (!tx.EnlistPromotableSinglePhase(this))
-				{
-					// must already have a durable resource
-					// start transaction
-					_npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
+        public void Enlist(Transaction tx)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Enlist");
+            if (tx != null)
+            {
+                _isolationLevel = tx.IsolationLevel;
+                if (!tx.EnlistPromotableSinglePhase(this))
+                {
+                    // must already have a durable resource
+                    // start transaction
+                    _npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
                     _inTransaction = true;
                     _rm = CreateResourceManager();
                     _callbacks = new EDBTransactionCallbacks(_connection);
                     _rm.Enlist(_callbacks, TransactionInterop.GetTransmitterPropagationToken(tx));
-					// enlisted in distributed transaction
-					// disconnect and cleanup local transaction
-					_npgsqlTx.Cancel();
-					_npgsqlTx.Dispose();
-					_npgsqlTx = null;
-				}
-			}
-		}
+                    // enlisted in distributed transaction
+                    // disconnect and cleanup local transaction
+                    _npgsqlTx.Cancel();
+                    _npgsqlTx.Dispose();
+                    _npgsqlTx = null;
+                }
+            }
+        }
 
-		/// <summary>
-		/// Used when a connection is closed
-		/// </summary>
-		public void Prepare()
-		{
+        /// <summary>
+        /// Used when a connection is closed
+        /// </summary>
+        public void Prepare()
+        {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Prepare");
             if (_inTransaction)
             {
@@ -91,32 +90,34 @@ namespace EnterpriseDB.EDBClient
                     _npgsqlTx.Cancel();
                     _npgsqlTx.Dispose();
                     _npgsqlTx = null;
+                    _connection.PromotableLocalTransactionEnded();
                 }
             }
-		}
+        }
 
-		#region IPromotableSinglePhaseNotification Members
+        #region IPromotableSinglePhaseNotification Members
 
-		public void Initialize()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Initialize");
-			_npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
+        public void Initialize()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Initialize");
+            _npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
             _inTransaction = true;
-		}
+        }
 
-		public void Rollback(SinglePhaseEnlistment singlePhaseEnlistment)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Rollback");
+        public void Rollback(SinglePhaseEnlistment singlePhaseEnlistment)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Rollback");
             // try to rollback the transaction with either the
             // ADO.NET transaction or the callbacks that managed the
             // two phase commit transaction.
-			if (_npgsqlTx != null)
-			{
-				_npgsqlTx.Rollback();
-				_npgsqlTx.Dispose();
+            if (_npgsqlTx != null)
+            {
+                _npgsqlTx.Rollback();
+                _npgsqlTx.Dispose();
                 _npgsqlTx = null;
                 singlePhaseEnlistment.Aborted();
-			}
+                _connection.PromotableLocalTransactionEnded();
+            }
             else if (_callbacks != null)
             {
                 if (_rm != null)
@@ -132,20 +133,21 @@ namespace EnterpriseDB.EDBClient
                 _callbacks = null;
             }
             _inTransaction = false;
-		}
+        }
 
-		public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "SinglePhaseCommit");
-			if (_npgsqlTx != null)
-			{
-				_npgsqlTx.Commit();
-				_npgsqlTx.Dispose();
-				_npgsqlTx = null;
-				singlePhaseEnlistment.Committed();
-			}
-			else if (_callbacks != null)
-			{
+        public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "SinglePhaseCommit");
+            if (_npgsqlTx != null)
+            {
+                _npgsqlTx.Commit();
+                _npgsqlTx.Dispose();
+                _npgsqlTx = null;
+                singlePhaseEnlistment.Committed();
+                _connection.PromotableLocalTransactionEnded();
+            }
+            else if (_callbacks != null)
+            {
                 if (_rm != null)
                 {
                     _rm.CommitWork(_callbacks.GetName());
@@ -157,17 +159,17 @@ namespace EnterpriseDB.EDBClient
                     singlePhaseEnlistment.Committed();
                 }
                 _callbacks = null;
-			}
+            }
             _inTransaction = false;
-		}
+        }
 
-		#endregion
+        #endregion
 
-		#region ITransactionPromoter Members
+        #region ITransactionPromoter Members
 
-		public byte[] Promote()
-		{
-			EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Promote");
+        public byte[] Promote()
+        {
+            EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Promote");
             _rm = CreateResourceManager();
             // may not be null if Prepare or Enlist is called first
             if (_callbacks == null)
@@ -183,53 +185,53 @@ namespace EnterpriseDB.EDBClient
                 _npgsqlTx.Cancel();
                 _npgsqlTx.Dispose();
                 _npgsqlTx = null;
+                _connection.PromotableLocalTransactionEnded();
             }
-			return token;
-		}
+            return token;
+        }
 
-		#endregion
+        #endregion
 
-		private static IEDBResourceManager _resourceManager;
-
+        private static IEDBResourceManager _resourceManager;
         private static System.Runtime.Remoting.Lifetime.ClientSponsor _sponser;
 
-		private static IEDBResourceManager CreateResourceManager()
-		{
-			// TODO: create network proxy for resource manager
-			if (_resourceManager == null)
-			{
+        private static IEDBResourceManager CreateResourceManager()
+        {
+            // TODO: create network proxy for resource manager
+            if (_resourceManager == null)
+            {
                 _sponser = new System.Runtime.Remoting.Lifetime.ClientSponsor();
-				AppDomain rmDomain = AppDomain.CreateDomain("NpgsqlResourceManager", AppDomain.CurrentDomain.Evidence, AppDomain.CurrentDomain.SetupInformation);
-				_resourceManager =
-					(IEDBResourceManager)
-					rmDomain.CreateInstanceAndUnwrap(typeof (EDBResourceManager).Assembly.FullName,
-					                                 typeof (EDBResourceManager).FullName);
+                AppDomain rmDomain = AppDomain.CreateDomain("EDBResourceManager", AppDomain.CurrentDomain.Evidence, AppDomain.CurrentDomain.SetupInformation);
+                _resourceManager =
+                    (IEDBResourceManager)
+                    rmDomain.CreateInstanceAndUnwrap(typeof (EDBResourceManager).Assembly.FullName,
+                                                     typeof (EDBResourceManager).FullName);
                 _sponser.Register((MarshalByRefObject)_resourceManager);
-			}
-			return _resourceManager;
-			//return new EDBResourceManager();
-		}
+            }
+            return _resourceManager;
+            //return new EDBResourceManager();
+        }
 
-		private static System.Data.IsolationLevel ConvertIsolationLevel(IsolationLevel _isolationLevel)
-		{
-			switch (_isolationLevel)
-			{
-				case IsolationLevel.Chaos:
-					return System.Data.IsolationLevel.Chaos;
-				case IsolationLevel.ReadCommitted:
-					return System.Data.IsolationLevel.ReadCommitted;
-				case IsolationLevel.ReadUncommitted:
-					return System.Data.IsolationLevel.ReadUncommitted;
-				case IsolationLevel.RepeatableRead:
-					return System.Data.IsolationLevel.RepeatableRead;
-				case IsolationLevel.Serializable:
-					return System.Data.IsolationLevel.Serializable;
-				case IsolationLevel.Snapshot:
-					return System.Data.IsolationLevel.Snapshot;
-				case IsolationLevel.Unspecified:
-				default:
-					return System.Data.IsolationLevel.Unspecified;
-			}
-		}
-	}
+        private static System.Data.IsolationLevel ConvertIsolationLevel(IsolationLevel _isolationLevel)
+        {
+            switch (_isolationLevel)
+            {
+                case IsolationLevel.Chaos:
+                    return System.Data.IsolationLevel.Chaos;
+                case IsolationLevel.ReadCommitted:
+                    return System.Data.IsolationLevel.ReadCommitted;
+                case IsolationLevel.ReadUncommitted:
+                    return System.Data.IsolationLevel.ReadUncommitted;
+                case IsolationLevel.RepeatableRead:
+                    return System.Data.IsolationLevel.RepeatableRead;
+                case IsolationLevel.Serializable:
+                    return System.Data.IsolationLevel.Serializable;
+                case IsolationLevel.Snapshot:
+                    return System.Data.IsolationLevel.Snapshot;
+                case IsolationLevel.Unspecified:
+                default:
+                    return System.Data.IsolationLevel.Unspecified;
+            }
+        }
+    }
 }

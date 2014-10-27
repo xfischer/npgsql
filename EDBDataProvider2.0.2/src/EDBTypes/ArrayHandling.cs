@@ -3,7 +3,7 @@
 // Author:
 //    Jon Hanna. (jon@hackcraft.net)
 //
-//    Copyright (C) 2007-2008 The EDB Development Team
+//    Copyright (C) 2007-2008 The EnterpriseDB.EDBClient Development Team
 //    npgsql-general@gborg.postgresql.org
 //    http://gborg.postgresql.org/project/npgsql/projdisplay.php
 //
@@ -11,13 +11,13 @@
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
-// 
+//
 // IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
 // DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
@@ -129,7 +129,7 @@ namespace EDBTypes
 
                 return true;
             }
-            
+
         }
 
         private bool WriteArrayText(EDBNativeTypeInfo TypeInfo, Array ar, MemoryStream array, Boolean forExtendedQuery, NativeToBackendTypeConverterOptions options)
@@ -198,18 +198,16 @@ namespace EDBTypes
 
             return writtenSomething;
         }
-       // NativeToBackendTypeConverterOptions
+
         /// <summary>
         /// Convert a System.Array to PG binary format.
         /// Write the array header and prepare to write array data to the stream.
         /// </summary>
-        /// 
-//TODO ZK checkme
         public byte[] ArrayToArrayBinary(EDBNativeTypeInfo TypeInfo, object oNativeData, NativeToBackendTypeConverterOptions options)
         {
             Array NativeData = (Array)oNativeData;
             MemoryStream dst = new MemoryStream();
-           
+
             // Write the number of dimensions in the array.
             PGUtil.WriteInt32(dst, NativeData.Rank);
             // Placeholder for null bitmap flag, which isn't used?
@@ -280,27 +278,20 @@ namespace EDBTypes
                     }
                 }
             }
-        
         }
 
         private bool WriteEnumeration(EDBNativeTypeInfo TypeInfo, IEnumerable col, MemoryStream array, Boolean forExtendedQuery, NativeToBackendTypeConverterOptions options)
         {
-            // As this prcedure handles both prepared and plain query representations, in order to not keep if's inside the loops
-            // we simply set a placeholder here for both openElement ( '{' or '[' ) and closeElement ( '}', or ']' )
-            byte openElement = (byte)(forExtendedQuery ? ASCIIBytes.BraceCurlyLeft : ASCIIBytes.BraceSquareLeft);
-            byte closeElement = (byte)(forExtendedQuery ? ASCIIBytes.BraceCurlyRight : ASCIIBytes.BraceSquareRight);
-
-
             bool writtenSomething = false;
             bool firstItem = true;
 
-            array.WriteByte(openElement);
 
             //write each item with a comma between them.
             foreach (object item in col)
             {
                 if (firstItem)
                 {
+                    array.WriteByte((byte)ASCIIBytes.BraceCurlyLeft);
                     firstItem = false;
                 }
                 else
@@ -310,11 +301,13 @@ namespace EDBTypes
 
                 writtenSomething |= WriteItemText(TypeInfo, item, array, forExtendedQuery, options);
             }
+
             if (writtenSomething)
             {
-                array.WriteByte(closeElement);
-                
+                array.WriteByte((byte)ASCIIBytes.BraceCurlyRight);
+
             }
+
             return writtenSomething;
         }
     }
@@ -424,9 +417,9 @@ namespace EDBTypes
         /// <summary>
         /// Takes an array of ints and treats them like the limits of a set of counters.
         /// Retains a matching set of ints that is set to all zeros on the first ++
-        /// On a ++ it increments the "right-most" int. If that int reaches it's 
+        /// On a ++ it increments the "right-most" int. If that int reaches it's
         /// limit it is set to zero and the one before it is incremented, and so on.
-        /// 
+        ///
         /// Making this a more general purpose class is pretty straight-forward, but we'll just put what we need here.
         /// </summary>
         private class IntSetIterator
@@ -511,7 +504,7 @@ namespace EDBTypes
         }
 
         /// <summary>
-        /// Creates an array from pg representation.
+        /// Creates an array from pg text representation.
         /// </summary>
         public object ArrayTextToArray(EDBBackendTypeInfo TypeInfo, byte[] bBackendData, Int16 TypeSize, Int32 TypeModifier)
         {
@@ -556,9 +549,10 @@ namespace EDBTypes
 
         /// <summary>
         /// Creates an n-dimensional array from an ArrayList of ArrayLists or
-        /// a 1-dimensional array from something else. 
+        /// a 1-dimensional array from something else.
         /// </summary>
         /// <param name="list"><see cref="ArrayList"/> to convert</param>
+        /// <param name="elementType">Type of the elements in the list</param>
         /// <returns><see cref="Array"/> produced.</returns>
         private static Array ToArray(ArrayList list, Type elementType)
         {
