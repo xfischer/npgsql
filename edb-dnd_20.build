@@ -48,14 +48,15 @@
                 <include name="System.Windows.Forms.dll" />
                 <include name="System.Drawing.dll" />
                 <include name="System.Design.dll" />
-		<include name="System.Web.ApplicationServices.dll" />
-                <include name="${parent_dir}/lib/Mono.Security.dll" />
+		            <include name="System.Web.ApplicationServices.dll" />
+                <include name="System.DirectoryServices" />
+            <include name="${parent_dir}/lib/Mono.Security.dll" />
             </references>            
             <sources>
                 <include name="${parent_dir}/src/EDBTypes/*.cs"/>
                 <include name="${parent_dir}/src/EnterpriseDB.EDBClient/*.cs"/>
 				<include name="${parent_dir}/src/EnterpriseDB.EDBClient/SqlGenerators/*.cs"/>
-				<include name="${parent_dir}/src/EnterpriseDB.EDBClient/Web/*.cs"/>
+			<!-- <include name="${parent_dir}/src/EnterpriseDB.EDBClient/Web/*.cs"/> -->
             </sources>
 			<resources>
 				<include name="${parent_dir}/src/EnterpriseDB.EDBClient/*.resx"/>
