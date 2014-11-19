@@ -2055,7 +2055,7 @@ namespace DOTNET
 			}
 
 			Console.WriteLine(Reader.GetValue(0).ToString());
-            Assert.AreEqual("0800.2b01.0203", Reader.GetValue(0).ToString());
+            Assert.AreEqual("08002b010203", Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
             Assert.AreEqual("06-20-1a-23-02-21", Reader.GetValue(0).ToString());

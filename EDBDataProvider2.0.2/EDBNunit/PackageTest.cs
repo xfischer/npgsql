@@ -1841,15 +1841,15 @@ namespace DOTNET
 
 
 
-                Assert.AreEqual("7369", Convert.ToString(rst.GetString(0)));
+                Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
 
-                Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
+                Assert.AreEqual("SMITH", Convert.ToString(rst[1].ToString()));
 
-                Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
+                Assert.AreEqual("CLERK", Convert.ToString(rst[2].ToString()));
 
-                Assert.AreEqual("7902", Convert.ToString(rst.GetString(3)));
+                Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("800.00", Convert.ToString(rst.GetString(5)));
+                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 
 
 
@@ -1865,15 +1865,15 @@ namespace DOTNET
 
                 rst.Read();
 
-                Assert.AreEqual("7521", Convert.ToString(rst.GetString(0)));
+                Assert.AreEqual("7521", Convert.ToString(rst[0].ToString()));
 
-                Assert.AreEqual("WARD", Convert.ToString(rst.GetString(1)));
+                Assert.AreEqual("WARD", Convert.ToString(rst[1].ToString()));
 
-                Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
+                Assert.AreEqual("SALESMAN", Convert.ToString(rst[2].ToString()));
 
-                Assert.AreEqual("7698", Convert.ToString(rst.GetString(3)));
+                Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250.00", Convert.ToString(rst.GetString(5)));
+                Assert.AreEqual("1250.00", Convert.ToString(rst[4].ToString()));
 
 
 
@@ -2017,15 +2017,15 @@ namespace DOTNET
 
 
 
-                Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
+                Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
 
-                Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
+                Assert.AreEqual("ALLEN", Convert.ToString(reader[1].ToString()));
 
-                Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
+                Assert.AreEqual("SALESMAN", Convert.ToString(reader[2].ToString()));
 
-                Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
+                Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 
-                Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
+                Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 
 
 

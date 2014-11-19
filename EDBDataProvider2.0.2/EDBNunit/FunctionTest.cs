@@ -1327,7 +1327,7 @@ namespace DOTNET
 				
 				Assert.AreEqual("10000",command.Parameters[1].Value.ToString());	
 				Console.WriteLine(command.Parameters[1].Value.ToString());
-				Assert.AreEqual("-2.00",command.Parameters[2].Value.ToString());	
+				Assert.AreEqual("-2",command.Parameters[2].Value.ToString());	
 				Console.WriteLine(command.Parameters[2].Value.ToString());
 				Assert.AreEqual("1234.00",command.Parameters[3].Value.ToString());	
 				Console.WriteLine(command.Parameters[3].Value.ToString());

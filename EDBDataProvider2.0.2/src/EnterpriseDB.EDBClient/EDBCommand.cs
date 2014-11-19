@@ -175,11 +175,12 @@ namespace EnterpriseDB.EDBClient
             if (this.connection != null)
             {
                 this.m_Connector = connection.Connector;
-                this.m_Connector.Mediator.Type = System.Data.CommandType.Text;
+         
                 if (m_Connector != null && m_Connector.AlwaysPrepare)
                 {
                     CommandTimeout = m_Connector.DefaultCommandTimeout;
                     prepared = PrepareStatus.NeedsPrepare;
+                    m_Connector.Mediator.Type = System.Data.CommandType.Text;
                 }
             }
 

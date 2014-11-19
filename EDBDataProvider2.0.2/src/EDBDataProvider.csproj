@@ -65,6 +65,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -96,6 +97,16 @@
     <Compile Include="EDBTypes\LargeObjectManager.cs" />
     <Compile Include="EDBTypes\EDBTypes.cs" />
     <Compile Include="EDBTypes\EDBTypesHelper.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\EDBCommand.PrepareExecute.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EnterpriseDB.EDBClient\EDBCommand.Rewrite.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EnterpriseDB.EDBClient\EDBDescribeOut.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\EDBExecuteOut.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\EDBParseOut.cs" />
+    <Compile Include="EnterpriseDB.EDBClient\EDBState.BackendResponse.cs" />
     <Compile Include="EnterpriseDB.EDBClient\SSPIHandler.cs" />
     <Compile Include="Npgsql\Design\*.cs" />
     <Compile Include="EnterpriseDB.EDBClient\HashAlgorithm.cs">
@@ -251,15 +262,6 @@
     <Compile Include="EnterpriseDB.EDBClient\SqlGenerators\SqlSelectGenerator.cs" />
     <Compile Include="EnterpriseDB.EDBClient\SqlGenerators\SqlUpdateGenerator.cs" />
     <Compile Include="EnterpriseDB.EDBClient\SqlGenerators\VisitedExpression.cs" />
-    <Compile Include="EnterpriseDB.EDBClient\Web\EDBMembershipProvider.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="EnterpriseDB.EDBClient\Web\EDBProfileProvider.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="EnterpriseDB.EDBClient\Web\EDBRoleProvider.cs">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="EDBTypes\EDBTypesHelper.ja.resx">
@@ -521,6 +523,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="EnterpriseDB.EDBClient\EDB.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="EnterpriseDB.EDBClient\Web\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.        Other similar extension points exist, see Microsoft.Common.targets.  <Target Name="BeforeBuild">  </Target>  <Target Name="AfterBuild">  </Target>  -->

@@ -227,10 +227,10 @@ namespace DOTNET
 					rst.Read();
 					Console.WriteLine(rst.GetString(0));
 					Assert.AreEqual("7369",Convert.ToString(rst[0].ToString()));
-					Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
+					Assert.AreEqual("SMITH", Convert.ToString(rst[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(rst[2].ToString()));
                     Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
-					Assert.AreEqual("800.00", Convert.ToString(rst.GetString(5)));
+					Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 				
 					
 					tran.Commit();
@@ -1460,25 +1460,25 @@ namespace DOTNET
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("SMITH", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("ALLEN", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("WARD", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("JONES", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("MANAGER", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
 
 					tran.Commit();	
 				}
@@ -1622,25 +1622,25 @@ namespace DOTNET
 					Assert.AreEqual("True",Convert.ToString(command.Parameters[1].Value.ToString()));
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("SMITH", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("ALLEN", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("WARD", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("JONES", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("MANAGER", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
 
 					tran.Commit();	
 				}
@@ -1780,25 +1780,25 @@ namespace DOTNET
 					Assert.AreEqual("2.9863",Convert.ToString(command.Parameters[1].Value.ToString()));
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("SMITH", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("ALLEN", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("WARD", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+					Assert.AreEqual("JONES", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("MANAGER", Convert.ToString(cur[2].ToString()));
+					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
 
 					tran.Commit();	
 				}
@@ -2041,23 +2041,23 @@ namespace DOTNET
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("SMITH", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("ALLEN", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("WARD", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("JONES", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("MANAGER", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
 
 					tran.Commit();	
@@ -2093,23 +2093,23 @@ namespace DOTNET
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("SMITH", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("CLERK", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("ALLEN", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("WARD", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("SALESMAN", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
 					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+					Assert.AreEqual("JONES", Convert.ToString(cur[1].ToString()));
+					Assert.AreEqual("MANAGER", Convert.ToString(cur[2].ToString()));
 					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
 
 					tran.Commit();	
