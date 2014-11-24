@@ -1873,7 +1873,7 @@ namespace DOTNET
 
                 Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250.00", Convert.ToString(rst[4].ToString()));
+                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 
 
 

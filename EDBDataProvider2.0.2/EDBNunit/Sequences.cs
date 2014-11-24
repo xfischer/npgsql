@@ -41,7 +41,7 @@ namespace DOTNET
 		public void CreateSequenceSimple()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceSimple";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -52,7 +52,7 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceSimple.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Assert.IsNotNull(Reader.Read());
@@ -60,7 +60,7 @@ namespace DOTNET
 
 			Reader.Close();
 
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceSimple";
 			Command.ExecuteNonQuery();
 
 		}
@@ -71,7 +71,7 @@ namespace DOTNET
 		public void CreateSequenceStartWith()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 300";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceStartWith START WITH 300";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -82,7 +82,7 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceStartWith.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Reader.Read();
@@ -91,7 +91,7 @@ namespace DOTNET
 
 			Reader.Close();
 
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceStartWith";
 			Command.ExecuteNonQuery();
 
 		}
@@ -103,7 +103,7 @@ namespace DOTNET
 		public void CreateSequencePositiveIncrementBy()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence INCREMENT BY 2";
+            Command.CommandText = "CREATE SEQUENCE CreateSequencePositiveIncrementBy INCREMENT BY 2";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -114,14 +114,14 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequencePositiveIncrementBy.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual("1",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
             Reader.Close();
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequencePositiveIncrementBy.NextVal from dual";
 
 			Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
@@ -130,7 +130,7 @@ namespace DOTNET
 
 			Reader.Close();
 
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequencePositiveIncrementBy";
 			Command.ExecuteNonQuery();
 
 		}
@@ -142,7 +142,7 @@ namespace DOTNET
 		public void CreateSequenceNegativeIncrementBy()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence INCREMENT BY -2";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceNegativeIncrementBy INCREMENT BY -2";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -153,14 +153,14 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceNegativeIncrementBy.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual("-1",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
             Reader.Close();
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceNegativeIncrementBy.NextVal from dual";
 
 			Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
@@ -169,7 +169,7 @@ namespace DOTNET
 
 			Reader.Close();
 
-				Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceNegativeIncrementBy";
 				Command.ExecuteNonQuery();
 
 		}
@@ -182,7 +182,7 @@ namespace DOTNET
 		public void CreateSequenceMaxValPositiveIncrementBy()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence MAXVALUE 2 START WITH 1";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceMaxValPositiveIncrementBy MAXVALUE 2 START WITH 1";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -193,14 +193,14 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceMaxValPositiveIncrementBy.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual("1",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
             Reader.Close();
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceMaxValPositiveIncrementBy.NextVal from dual";
             try
             {
                 Reader = Command.ExecuteReader();
@@ -227,7 +227,7 @@ namespace DOTNET
 			
 			Reader.Close();*/
 
-				Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceMaxValPositiveIncrementBy";
 				Command.ExecuteNonQuery();
 
 		}
@@ -238,7 +238,7 @@ namespace DOTNET
 		public void CreateSequenceMaxValNegativeIncrementBy()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence MAXVALUE 150 START WITH 150 INCREMENT BY -5";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceMaxValNegativeIncrementBy MAXVALUE 150 START WITH 150 INCREMENT BY -5";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -249,7 +249,7 @@ namespace DOTNET
 				throw new Exception(exp.ToString());
 			}
 
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceMaxValNegativeIncrementBy.NextVal from dual";
 
 			EDBDataReader Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
@@ -257,7 +257,7 @@ namespace DOTNET
 			Console.WriteLine(Reader.GetValue(0).ToString());
 
             Reader.Close();
-			Command.CommandText="select TestSequence.NextVal from dual";
+            Command.CommandText = "select CreateSequenceMaxValNegativeIncrementBy.NextVal from dual";
 
 			Reader=Command.ExecuteReader();
 			Assert.IsTrue(Reader.Read());
@@ -268,7 +268,7 @@ namespace DOTNET
 			
 			Reader.Close();
 
-				Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceMaxValNegativeIncrementBy";
 				Command.ExecuteNonQuery();
 
 		}
@@ -280,7 +280,7 @@ namespace DOTNET
 		public void CreateSequenceStartWithMaxVal()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 MAXVALUE 5";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceStartWithMaxVal START WITH 1 MAXVALUE 5";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -293,7 +293,7 @@ namespace DOTNET
 			EDBDataReader Reader=null;
 			for(int i=0;i<5;i++)
 			{
-				Command.CommandText="select TestSequence.NextVal from dual";
+                Command.CommandText = "select CreateSequenceStartWithMaxVal.NextVal from dual";
 
 				Reader=Command.ExecuteReader();
                 Reader.Close();
@@ -302,7 +302,7 @@ namespace DOTNET
 			
 			try
 			{
-				Command.CommandText="select TestSequence.NextVal from dual";
+                Command.CommandText = "select CreateSequenceStartWithMaxVal.NextVal from dual";
 
 				Reader=Command.ExecuteReader();
 
@@ -315,8 +315,8 @@ namespace DOTNET
 			
 			}
 			//Reader.Close();
-			
-				Command.CommandText="DROP SEQUENCE TestSequence";
+
+            Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxVal";
 				Command.ExecuteNonQuery();
 
 		}
@@ -330,7 +330,7 @@ namespace DOTNET
 		public void CreateSequenceStartWithMaxValCycle()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 MAXVALUE 5 CYCLE;";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceStartWithMaxValCycle START WITH 1 MAXVALUE 5 CYCLE;";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -338,12 +338,12 @@ namespace DOTNET
 
 			catch(EDBException exp)
 			{
-				Command.CommandText="DROP SEQUENCE TestSequence";
+                Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycle";
 				Command.ExecuteNonQuery();
 
 				Assert.Fail("Error creating sequence");
 			}
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycle";
 			Command.ExecuteNonQuery();
 
 			
@@ -383,7 +383,7 @@ namespace DOTNET
 		public void CreateSequenceStartWithMaxValCycleCache()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 MAXVALUE 5 CYCLE CACHE 4;";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceStartWithMaxValCycleCache START WITH 1 MAXVALUE 5 CYCLE CACHE 4;";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -391,14 +391,14 @@ namespace DOTNET
 
 			catch(EDBException exp)
 			{
-				Command.CommandText="DROP SEQUENCE TestSequence";
+                Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycleCache";
 				Command.ExecuteNonQuery();
 
 				Assert.Fail("Error creating sequence");
 
 			}
 
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycleCache";
 			Command.ExecuteNonQuery();
 
 			
@@ -410,7 +410,7 @@ namespace DOTNET
 		public void CreateSequenceCache()
 		{
 			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="CREATE SEQUENCE TestSequence CACHE 100;";
+            Command.CommandText = "CREATE SEQUENCE CreateSequenceCache CACHE 100;";
 			try
 			{
 				Command.ExecuteNonQuery();
@@ -418,13 +418,13 @@ namespace DOTNET
 
 			catch(EDBException exp)
 			{
-				Command.CommandText="DROP SEQUENCE TestSequence";
+                Command.CommandText = "DROP SEQUENCE CreateSequenceCache";
 				Command.ExecuteNonQuery();
 
 				Assert.Fail("Error creating sequence");
 			}
 
-			Command.CommandText="DROP SEQUENCE TestSequence";
+            Command.CommandText = "DROP SEQUENCE CreateSequenceCache";
 			Command.ExecuteNonQuery();
 
 			
