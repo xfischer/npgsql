@@ -3529,7 +3529,7 @@ namespace DOTNET
 				Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 				Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 				Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
-				Assert.AreEqual("2/3/2005 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+				Assert.AreEqual("2/3/2005 12:00:00 AM", Convert.ToString(cur[12].ToString()));
 				Assert.AreEqual("Great", Convert.ToString(cur.GetString(13)));
 				
 				cur.Read();

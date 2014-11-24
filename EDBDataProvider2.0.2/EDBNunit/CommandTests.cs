@@ -2053,12 +2053,12 @@ namespace DOTNET
 			{
 				throw new Exception(exp.ToString());
 			}
-
+                
 			Console.WriteLine(Reader.GetValue(0).ToString());
             Assert.AreEqual("08002B010203", Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
-            Assert.AreEqual("06-20-1a-23-02-21", Reader.GetValue(0).ToString());
+            Assert.AreEqual("06201A230221", Reader.GetValue(0).ToString());
 			Reader.Close();
 				
 			command.CommandText="drop table tbl_macadd;";
