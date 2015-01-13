@@ -1329,7 +1329,7 @@ namespace DOTNET
 				Console.WriteLine(command.Parameters[1].Value.ToString());
 				Assert.AreEqual("-2",command.Parameters[2].Value.ToString());	
 				Console.WriteLine(command.Parameters[2].Value.ToString());
-				Assert.AreEqual("1234.00",command.Parameters[3].Value.ToString());	
+				Assert.AreEqual("1234",command.Parameters[3].Value.ToString());	
 				Console.WriteLine(command.Parameters[3].Value.ToString());
 			}
 			catch(EDBException e)

@@ -1527,13 +1527,13 @@ namespace DOTNET
 					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
 
 					cur.Read();
-					Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
-					cur.Read();
-					Assert.AreEqual("2/3/2005 12:00:00 AM", Convert.ToString(cur.GetString(12)));
-					cur.Read();
-					Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
-					cur.Read();
-					Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur.GetString(12)));
+                    Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[12].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("2/3/2005 12:00:00 AM", Convert.ToString(cur[12].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[12].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[12].ToString()));
 					tran.Commit();	
 					com.CommandText = "DROP TABLE TestCursorTable;";
 					com.ExecuteNonQuery();
