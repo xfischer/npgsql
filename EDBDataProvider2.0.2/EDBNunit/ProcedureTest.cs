@@ -2938,15 +2938,16 @@ namespace DOTNET
 
 
 
-                Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
+                Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
 
-                Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
+                Assert.AreEqual("ALLEN", Convert.ToString(reader[1].ToString()));
 
-                Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
+                Assert.AreEqual("SALESMAN", Convert.ToString(reader[2].ToString()));
 
-                Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
+                Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 
-                Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
+                Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
+
 
 
 
@@ -2962,7 +2963,7 @@ namespace DOTNET
 
 
 
-                Assert.AreEqual("ADAMS", Convert.ToString(reader.GetString(0)));
+                Assert.AreEqual("ADAMS", Convert.ToString(reader[0].ToString()));
 
                 tran.Commit();
 

@@ -856,23 +856,23 @@ namespace DOTNET
 					EDBCommand com = new EDBCommand("",con);
 					com.CommandType = CommandType.Text;
 
-					string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+                    string CursorTable = "CREATE TABLE PackFuncRefCursorOutParameter (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
 					com.CommandText = CursorTable;
 					com.ExecuteNonQuery();
 
-					string CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
+                    string CursorInsert1 = "INSERT INTO PackFuncRefCursorOutParameter VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
 					com.CommandText = CursorInsert1;
 					com.ExecuteNonQuery();
 
-					string CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
+                    string CursorInsert2 = "INSERT INTO PackFuncRefCursorOutParameter VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
 					com.CommandText = CursorInsert2;
 					com.ExecuteNonQuery();
 
-					string CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
+                    string CursorInsert3 = "INSERT INTO PackFuncRefCursorOutParameter VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
 					com.CommandText = CursorInsert3;
 					com.ExecuteNonQuery();
 
-					string CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
+                    string CursorInsert4 = "INSERT INTO PackFuncRefCursorOutParameter VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
 					com.CommandText = CursorInsert4;
 					com.ExecuteNonQuery();
 
@@ -950,9 +950,9 @@ namespace DOTNET
 					Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[12].ToString()));
 					Assert.AreEqual("Endnews", Convert.ToString(cur[13].ToString()));
 
-					tran.Commit();	
+					tran.Commit();
 
-					com.CommandText = "DROP TABLE TestCursorTable;";
+                    com.CommandText = "DROP TABLE PackFuncRefCursorOutParameter;";
 					com.ExecuteNonQuery();
 				}
 				catch(EDBException e)
