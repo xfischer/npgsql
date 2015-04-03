@@ -324,16 +324,18 @@ namespace EnterpriseDB.EDBClient
                     throw new InvalidOperationException(resman.GetString("Exception_SetConnectionInTransaction"));
                 }
 
+                if (connection != null) {
+                    connection.StateChange -= OnConnectionStateChange;
+                }
                 this.connection = value;
+                if (connection != null) {
+                    connection.StateChange += OnConnectionStateChange;
+                }
                 Transaction = null;
                 if (this.connection != null)
                 {
                     m_Connector = this.connection.Connector;
-
-                    if (m_Connector != null && m_Connector.AlwaysPrepare)
-                    {
-                        prepared = PrepareStatus.NeedsPrepare;
-                    }
+                    prepared = m_Connector != null && m_Connector.AlwaysPrepare ? PrepareStatus.NeedsPrepare : PrepareStatus.NotPrepared;
                 }
 
                 SetCommandTimeout();
@@ -352,6 +354,32 @@ namespace EnterpriseDB.EDBClient
                 }
 
                 return m_Connector;
+            }
+        }
+
+        void OnConnectionStateChange(object sender, StateChangeEventArgs stateChangeEventArgs)
+        {
+            switch (stateChangeEventArgs.CurrentState)
+            {
+                case ConnectionState.Broken:
+                case ConnectionState.Closed:
+                    prepared = PrepareStatus.NotPrepared;
+                    break;
+                case ConnectionState.Open:
+                    switch (stateChangeEventArgs.OriginalState)
+                    {
+                        case ConnectionState.Closed:
+                        case ConnectionState.Broken:
+                            prepared = m_Connector != null && m_Connector.AlwaysPrepare ? PrepareStatus.NeedsPrepare : PrepareStatus.NotPrepared;
+                            break;
+                    }
+                    break;
+                case ConnectionState.Connecting:
+                case ConnectionState.Executing:
+                case ConnectionState.Fetching:
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -470,7 +498,27 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Attempts to cancel the execution of a <see cref="EnterpriseDB.EDBClient.EDBCommand">EDBCommand</see>.
+        /// Returns whether this query will execute as a prepared (compiled) query.
+        /// </summary>
+        public bool IsPrepared
+        {
+            get
+            {
+                switch (prepared)
+                {
+                    case PrepareStatus.NotPrepared:
+                        return false;
+                    case PrepareStatus.NeedsPrepare:
+                    case PrepareStatus.Prepared:
+                        return true;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to cancel the execution of a <see cref="Npgsql.NpgsqlCommand">NpgsqlCommand</see>.
         /// </summary>
         /// <remarks>This Method isn't implemented yet.</remarks>
         public override void Cancel()
@@ -569,7 +617,8 @@ namespace EnterpriseDB.EDBClient
                 if (prepared == PrepareStatus.Prepared)
                     ExecuteBlind(m_Connector, "DEALLOCATE " + planName);
             }
-
+            Transaction = null;
+            Connection = null;
             disposed = true;
             base.Dispose(disposing);
         }

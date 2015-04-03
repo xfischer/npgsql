@@ -72,7 +72,13 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        internal static void ExecuteBlindSuppressTimeout(EDBConnector connector, EDBQuery query)
+        internal static void ExecuteBlindSuppressTimeout(EDBConnector connector, string command)
+        {
+            // Bypass cpmmand parsing overhead and send command verbatim.
+            ExecuteBlindSuppressTimeout(connector, new EDBQuery(command));
+        }
+
+        internal static void ExecuteBlindSuppressTimeout(NpgsqlConnector connector, NpgsqlQuery query)
         {
             // Block the notification thread before writing anything to the wire.
             using (var blocker = connector.BlockNotificationThread())

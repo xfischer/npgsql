@@ -81,7 +81,7 @@ namespace EDBTypes
         /// </summary>
         internal static Object ByteaTextToByteArray(EDBBackendTypeInfo TypeInfo, byte[] BackendData, Int16 TypeSize, Int32 TypeModifier)
         {
-            Int32 byteALength = BackendData.Length;
+            Int32 byteALength = BackendData.Length;       
             Int32 byteAPosition = 0;
 
             if (byteALength >= 2 && BackendData[0] == (byte)ASCIIBytes.BackSlash && BackendData[1] == (byte)ASCIIBytes.x)
