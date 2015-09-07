@@ -751,14 +751,16 @@ namespace EnterpriseDB.EDBClient
             this._supportsDiscard = (ServerVersion >= new Version(8, 3, 0));
             this._supportsApplicationName = (ServerVersion >= new Version(9, 0, 0));
             this._supportsExtraFloatDigits3 =(ServerVersion >= new Version(9, 0, 0));
-            this._supportsExtraFloatDigits = (ServerVersion >= new Version(7, 4, 0)); 
-            this._supportsSslRenegotiationLimit = ((ServerVersion >= new Version(8, 4, 3)) ||
+            this._supportsExtraFloatDigits = (ServerVersion >= new Version(7, 4, 0));
+            this._supportsSslRenegotiationLimit =
+                     ((ServerVersion >= new Version(8, 4, 3) && ServerVersion < new Version(9, 5, 0)) ||
                      (ServerVersion >= new Version(8, 3, 10) && ServerVersion < new Version(8, 4, 0)) ||
                      (ServerVersion >= new Version(8, 2, 16) && ServerVersion < new Version(8, 3, 0)) ||
                      (ServerVersion >= new Version(8, 1, 20) && ServerVersion < new Version(8, 2, 0)) ||
                      (ServerVersion >= new Version(8, 0, 24) && ServerVersion < new Version(8, 1, 0)) ||
-                     (ServerVersion >= new Version(7, 4, 28) && ServerVersion < new Version(8, 0, 0)) );
-
+                     (ServerVersion >= new Version(7, 4, 28) && ServerVersion < new Version(8, 0, 0)));
+                     
+                             
             // Per the PG documentation, E string literal prefix support appeared in PG version 8.1.
             // Note that it is possible that support for this prefix will vanish in some future version
             // of Postgres, in which case this test will need to be revised.
