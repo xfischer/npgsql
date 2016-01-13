@@ -478,7 +478,7 @@ namespace EnterpriseDB.EDBClient
         #region IList Member
 
         /// <summary>
-        /// Report whether the collection is read only.  Always false.
+        /// Report whether the collection is read only.  Always Clearalse.
         /// </summary>
         public override bool IsReadOnly
         {
@@ -606,6 +606,13 @@ namespace EnterpriseDB.EDBClient
             {
                 // clean up the parameter so it can be added to another command if required.
                 toRemove.Collection = null;
+            }
+            
+            /* clear return parameter */
+            if (this.ReturnParam != null)
+            {
+                this.return_param = null;
+                this.return_index = -1;
             }
             this.InternalList.Clear();
             this.InvalidateHashLookups();
