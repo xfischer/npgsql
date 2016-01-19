@@ -42,7 +42,7 @@ using System.Resources;
 [assembly : AssemblyConfiguration("")]
 [assembly : AssemblyCompany("EnterpriseDB")]
 [assembly : AssemblyProduct("Postgres Plus Advanced Server")]
-[assembly : AssemblyCopyright("Portions Copyright (c) 2004-2015 - EnterpriseDB Corporation.  All Rights Reserved.")]
+[assembly : AssemblyCopyright("Portions Copyright (c) 2004-2016 - EnterpriseDB Corporation.  All Rights Reserved.")]
 [assembly : AssemblyTrademark("")]
 [assembly : AssemblyCulture("")]
 [assembly : NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
@@ -54,7 +54,7 @@ using System.Resources;
 // You can specify all values by your own or you can build default build and revision
 // numbers with the '*' character (the default):
 
-[assembly : AssemblyVersion("2.2.4.3")]
+[assembly : AssemblyVersion("2.2.4.4")]
 
 
 
