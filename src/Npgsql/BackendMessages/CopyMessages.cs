@@ -1,0 +1,133 @@
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace  EnterpriseDB.EDBClient.BackendMessages
+{
+    abstract class CopyResponseMessageBase : IBackendMessage
+    {
+        public abstract BackendMessageCode Code { get; }
+
+        internal bool IsBinary { get; private set; }
+        internal short NumColumns { get; private set; }
+        internal List<FormatCode> ColumnFormatCodes { get; private set; }
+
+        internal CopyResponseMessageBase()
+        {
+            ColumnFormatCodes = new List<FormatCode>();
+        }
+
+        internal void Load(EDBBuffer buf)
+        {
+            ColumnFormatCodes.Clear();
+
+            var binaryIndicator = buf.ReadByte();
+            switch (binaryIndicator) {
+            case 0:
+                IsBinary = false;
+                break;
+            case 1:
+                IsBinary = true;
+                break;
+            default:
+                throw new Exception("Invalid binary indicator in CopyInResponse message: " + binaryIndicator);
+            }
+
+            NumColumns = buf.ReadInt16();
+            for (var i = 0; i < NumColumns; i++)
+                ColumnFormatCodes.Add((FormatCode)buf.ReadInt16());
+        }
+    }
+
+    class CopyInResponseMessage : CopyResponseMessageBase
+    {
+        public override BackendMessageCode Code { get { return BackendMessageCode.CopyInResponse; } }
+
+        internal new CopyInResponseMessage Load(EDBBuffer buf)
+        {
+            base.Load(buf);
+            return this;
+        }
+    }
+
+    class CopyOutResponseMessage : CopyResponseMessageBase
+    {
+        public override BackendMessageCode Code { get { return BackendMessageCode.CopyOutResponse; } }
+
+        internal new CopyOutResponseMessage Load(EDBBuffer buf)
+        {
+            base.Load(buf);
+            return this;
+        }
+    }
+
+    class CopyBothResponseMessage : CopyResponseMessageBase
+    {
+        public override BackendMessageCode Code { get { return BackendMessageCode.CopyBothResponse; } }
+
+        internal new CopyBothResponseMessage Load(EDBBuffer buf)
+        {
+            base.Load(buf);
+            return this;
+        }
+    }
+
+    /// <summary>
+    /// Note that this message doesn't actually contain the data, but only the length. Data is processed
+    /// directly from the connector's buffer.
+    /// </summary>
+    class CopyDataMessage : IBackendMessage
+    {
+        public BackendMessageCode Code { get { return BackendMessageCode.CopyData; } }
+
+        public int Length { get; private set; }
+
+        internal CopyDataMessage Load(int len)
+        {
+            Length = len;
+            return this;
+        }
+    }
+
+    /// <remarks>
+    /// Note: This message is both a frontend and a backend message
+    /// </remarks>
+    class CopyDoneMessage : SimpleFrontendMessage, IBackendMessage
+    {
+        public BackendMessageCode Code { get { return BackendMessageCode.CopyDone; } }
+        internal static readonly CopyDoneMessage Instance = new CopyDoneMessage();
+        CopyDoneMessage() { }
+
+        internal override int Length { get { return 5; } }
+
+        internal override void Write(EDBBuffer buf)
+        {
+            buf.WriteByte((byte)BackendMessageCode.CopyDone);
+            buf.WriteInt32(4);
+        }
+    }
+}

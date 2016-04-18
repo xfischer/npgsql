@@ -1,0 +1,559 @@
+#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Text;
+using  EnterpriseDB.EDBClient;
+
+#pragma warning disable 1591
+
+// ReSharper disable once CheckNamespace
+namespace EDBTypes
+{
+#if !DNXCORE50
+    [Serializable]
+#endif
+    public struct EDBDate : IEquatable<EDBDate>, IComparable<EDBDate>, IComparable, IComparer<EDBDate>,
+                               IComparer
+    {
+        //Number of days since January 1st CE (January 1st EV). 1 Jan 1 CE = 0, 2 Jan 1 CE = 1, 31 Dec 1 BCE = -1, etc.
+        readonly int _daysSinceEra;
+        readonly InternalType _type;
+
+        #region Constants
+
+        static readonly int[] CommonYearDays = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 };
+        static readonly int[] LeapYearDays = { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 };
+        static readonly int[] CommonYearMaxes = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        static readonly int[] LeapYearMaxes = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+        /// <summary>
+        /// Represents the date 1970-01-01
+        /// </summary>
+        public static readonly EDBDate Epoch = new EDBDate(1970, 1, 1);
+
+        /// <summary>
+        /// Represents the date 0001-01-01
+        /// </summary>
+        public static readonly EDBDate Era = new EDBDate(0);
+
+        public const int MaxYear = 5874897;
+        public const int MinYear = -4714;
+        public static readonly EDBDate MaxCalculableValue = new EDBDate(MaxYear, 12, 31);
+        public static readonly EDBDate MinCalculableValue = new EDBDate(MinYear, 11, 24);
+
+        public static readonly EDBDate Infinity = new EDBDate(InternalType.Infinity);
+        public static readonly EDBDate NegativeInfinity = new EDBDate(InternalType.NegativeInfinity);
+
+        const int DaysInYear = 365; //Common years
+        const int DaysIn4Years = 4 * DaysInYear + 1; //Leap year every 4 years.
+        const int DaysInCentury = 25 * DaysIn4Years - 1; //Except no leap year every 100.
+        const int DaysIn4Centuries = 4 * DaysInCentury + 1; //Except leap year every 400.
+
+        #endregion
+
+        #region Constructors
+
+        EDBDate(InternalType type)
+        {
+            _type = type;
+            _daysSinceEra = 0;
+        }
+
+        internal EDBDate(int days)
+        {
+            _type = InternalType.Finite;
+            _daysSinceEra = days;
+        }
+
+        public EDBDate(DateTime dateTime) : this((int) (dateTime.Ticks/TimeSpan.TicksPerDay)) {}
+
+        public EDBDate(EDBDate copyFrom) : this(copyFrom._daysSinceEra) {}
+
+        public EDBDate(int year, int month, int day)
+        {
+            _type = InternalType.Finite;
+            if (year == 0 || year < MinYear || year > MaxYear || month < 1 || month > 12 || day < 1 ||
+                (day > (IsLeap(year) ? 366 : 365)))
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            _daysSinceEra = DaysForYears(year) + (IsLeap(year) ? LeapYearDays : CommonYearDays)[month - 1] + day - 1;
+        }
+
+        #endregion
+
+        #region String Conversions
+
+        public override string ToString()
+        {
+            switch (_type)
+            {
+            case InternalType.Infinity:
+                return "infinity";
+            case InternalType.NegativeInfinity:
+                return "-infinity";
+            default:
+                //Format of yyyy-MM-dd with " BC" for BCE and optional " AD" for CE which we omit here.
+                return
+                    new StringBuilder(Math.Abs(Year).ToString("D4")).Append('-').Append(Month.ToString("D2")).Append('-').Append(
+                        Day.ToString("D2")).Append(_daysSinceEra < 0 ? " BC" : "").ToString();
+            }
+        }
+
+        public static EDBDate Parse(string str)
+        {
+
+            if (str == null) {
+                throw new ArgumentNullException("str");
+            }
+
+            if (str == "infinity")
+                return Infinity;
+
+            if (str == "-infinity")
+                return NegativeInfinity;
+
+            str = str.Trim();
+            try {
+                int idx = str.IndexOf('-');
+                if (idx == -1) {
+                    throw new FormatException();
+                }
+                int year = int.Parse(str.Substring(0, idx));
+                int idxLast = idx + 1;
+                if ((idx = str.IndexOf('-', idxLast)) == -1) {
+                    throw new FormatException();
+                }
+                int month = int.Parse(str.Substring(idxLast, idx - idxLast));
+                idxLast = idx + 1;
+                if ((idx = str.IndexOf(' ', idxLast)) == -1) {
+                    idx = str.Length;
+                }
+                int day = int.Parse(str.Substring(idxLast, idx - idxLast));
+                if (str.Contains("BC")) {
+                    year = -year;
+                }
+                return new EDBDate(year, month, day);
+            } catch (OverflowException) {
+                throw;
+            } catch (Exception) {
+                throw new FormatException();
+            }
+        }
+
+        public static bool TryParse(string str, out EDBDate date)
+        {
+            try {
+                date = Parse(str);
+                return true;
+            } catch {
+                date = Era;
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Public Properties
+
+        public static EDBDate Now { get { return new EDBDate(DateTime.Now); } }
+        public static EDBDate Today { get { return Now; } }
+        public static EDBDate Yesterday { get { return Now.AddDays(-1); } }
+        public static EDBDate Tomorrow { get { return Now.AddDays(1); } }
+
+        public int DayOfYear { get { return _daysSinceEra - DaysForYears(Year) + 1; } }
+
+        public int Year
+        {
+            get
+            {
+                int guess = (int) Math.Round(_daysSinceEra/365.2425);
+                int test = guess - 1;
+                while (DaysForYears(++test) <= _daysSinceEra)
+                {
+                    ;
+                }
+                return test - 1;
+            }
+        }
+
+        public int Month
+        {
+            get
+            {
+                int i = 1;
+                int target = DayOfYear;
+                int[] array = IsLeapYear ? LeapYearDays : CommonYearDays;
+                while (target > array[i])
+                {
+                    ++i;
+                }
+                return i;
+            }
+        }
+
+        public int Day
+        {
+            get { return DayOfYear - (IsLeapYear ? LeapYearDays : CommonYearDays)[Month - 1]; }
+        }
+
+        public DayOfWeek DayOfWeek { get { return (DayOfWeek) ((_daysSinceEra + 1)%7); } }
+
+        internal int DaysSinceEra { get { return _daysSinceEra; } }
+
+        public bool IsLeapYear { get { return IsLeap(Year); } }
+
+        public bool IsInfinity { get { return _type == InternalType.Infinity; } }
+        public bool IsNegativeInfinity { get { return _type == InternalType.NegativeInfinity; } }
+
+        public bool IsFinite
+        {
+            get
+            {
+                switch (_type) {
+                case InternalType.Finite:
+                    return true;
+                case InternalType.Infinity:
+                case InternalType.NegativeInfinity:
+                    return false;
+                default:
+                    throw PGUtil.ThrowIfReached();
+                }
+            }
+        }
+
+        #endregion
+
+        #region Internals
+
+        static int DaysForYears(int years)
+        {
+            //Number of years after 1CE (0 for 1CE, -1 for 1BCE, 1 for 2CE).
+            int calcYear = years < 1 ? years : years - 1;
+
+            return calcYear / 400 * DaysIn4Centuries //Blocks of 400 years with their leap and common years
+                   + calcYear % 400 / 100 * DaysInCentury //Remaining blocks of 100 years with their leap and common years
+                   + calcYear % 100 / 4 * DaysIn4Years //Remaining blocks of 4 years with their leap and common years
+                   + calcYear % 4 * DaysInYear //Remaining years, all common
+                   + (calcYear < 0 ? -1 : 0); //And 1BCE is leap.
+        }
+
+        static bool IsLeap(int year)
+        {
+            //Every 4 years is a leap year
+            //Except every 100 years isn't a leap year.
+            //Except every 400 years is.
+            if (year < 1)
+            {
+                year = year + 1;
+            }
+            return (year%4 == 0) && ((year%100 != 0) || (year%400 == 0));
+        }
+
+        #endregion
+
+        #region Arithmetic
+
+        [Pure]
+        public EDBDate AddDays(int days)
+        {
+            switch (_type)
+            {
+            case InternalType.Infinity:
+                return Infinity;
+            case InternalType.NegativeInfinity:
+                return NegativeInfinity;
+            case InternalType.Finite:
+                return new EDBDate(_daysSinceEra + days);
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+        }
+
+        [Pure]
+        public EDBDate AddYears(int years)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return Infinity;
+            case InternalType.NegativeInfinity:
+                return NegativeInfinity;
+            case InternalType.Finite:
+                break;
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+
+            int newYear = Year + years;
+            if (newYear >= 0 && _daysSinceEra < 0) //cross 1CE/1BCE divide going up
+            {
+                ++newYear;
+            }
+            else if (newYear <= 0 && _daysSinceEra >= 0) //cross 1CE/1BCE divide going down
+            {
+                --newYear;
+            }
+            return new EDBDate(newYear, Month, Day);
+        }
+
+        [Pure]
+        public EDBDate AddMonths(int months)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return Infinity;
+            case InternalType.NegativeInfinity:
+                return NegativeInfinity;
+            case InternalType.Finite:
+                break;
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+
+            int newYear = Year;
+            int newMonth = Month + months;
+
+            while (newMonth > 12)
+            {
+                newMonth -= 12;
+                newYear += 1;
+            };
+            while (newMonth < 1)
+            {
+                newMonth += 12;
+                newYear -= 1;
+            };
+            int maxDay = (IsLeap(newYear) ? LeapYearMaxes : CommonYearMaxes)[newMonth - 1];
+            int newDay = Day > maxDay ? maxDay : Day;
+            return new EDBDate(newYear, newMonth, newDay);
+
+        }
+
+        [Pure]
+        public EDBDate Add(EDBTimeSpan interval)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return Infinity;
+            case InternalType.NegativeInfinity:
+                return NegativeInfinity;
+            case InternalType.Finite:
+                break;
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+
+            return AddMonths(interval.Months).AddDays(interval.Days);
+        }
+
+        [Pure]
+        internal EDBDate Add(EDBTimeSpan interval, int carriedOverflow)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return Infinity;
+            case InternalType.NegativeInfinity:
+                return NegativeInfinity;
+            case InternalType.Finite:
+                break;
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+
+            return AddMonths(interval.Months).AddDays(interval.Days + carriedOverflow);
+        }
+
+        #endregion
+
+        #region Comparison
+
+        public int Compare(EDBDate x, EDBDate y)
+        {
+            return x.CompareTo(y);
+        }
+
+        public int Compare(object x, object y)
+        {
+            if (x == null)
+            {
+                return y == null ? 0 : -1;
+            }
+            if (y == null)
+            {
+                return 1;
+            }
+            if (!(x is IComparable) || !(y is IComparable))
+            {
+                throw new ArgumentException();
+            }
+            return ((IComparable) x).CompareTo(y);
+        }
+
+        public bool Equals(EDBDate other)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return other._type == InternalType.Infinity;
+            case InternalType.NegativeInfinity:
+                return other._type == InternalType.NegativeInfinity;
+            case InternalType.Finite:
+                return other._type == InternalType.Finite && _daysSinceEra == other._daysSinceEra;
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is EDBDate && Equals((EDBDate) obj);
+        }
+
+        public int CompareTo(EDBDate other)
+        {
+            switch (_type) {
+            case InternalType.Infinity:
+                return other._type == InternalType.Infinity ? 0 : 1;
+            case InternalType.NegativeInfinity:
+                return other._type == InternalType.NegativeInfinity ? 0 : -1;
+            default:
+                switch (other._type) {
+                case InternalType.Infinity:
+                    return -1;
+                case InternalType.NegativeInfinity:
+                    return 1;
+                default:
+                    return _daysSinceEra.CompareTo(other._daysSinceEra);
+                }
+            }
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null)
+            {
+                return 1;
+            }
+            if (obj is EDBDate)
+            {
+                return CompareTo((EDBDate) obj);
+            }
+            throw new ArgumentException();
+        }
+
+        public override int GetHashCode()
+        {
+            return _daysSinceEra;
+        }
+
+        #endregion
+
+        #region Operators
+
+        public static bool operator ==(EDBDate x, EDBDate y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(EDBDate x, EDBDate y)
+        {
+            return !(x == y);
+        }
+
+        public static bool operator <(EDBDate x, EDBDate y)
+        {
+            return x.CompareTo(y) < 0;
+        }
+
+        public static bool operator >(EDBDate x, EDBDate y)
+        {
+            return x.CompareTo(y) > 0;
+        }
+
+        public static bool operator <=(EDBDate x, EDBDate y)
+        {
+            return x.CompareTo(y) <= 0;
+        }
+
+        public static bool operator >=(EDBDate x, EDBDate y)
+        {
+            return x.CompareTo(y) >= 0;
+        }
+
+        public static explicit operator DateTime(EDBDate date)
+        {
+            switch (date._type)
+            {
+            case InternalType.Infinity:
+            case InternalType.NegativeInfinity:
+                throw new InvalidCastException("Infinity values can't be cast to DateTime");
+            case InternalType.Finite:
+                try { return new DateTime(date._daysSinceEra*EDBTimeSpan.TicksPerDay); }
+                catch { throw new InvalidCastException(); }
+            default:
+                throw PGUtil.ThrowIfReached();
+            }
+        }
+
+        public static explicit operator EDBDate(DateTime date)
+        {
+            return new EDBDate((int) (date.Ticks/EDBTimeSpan.TicksPerDay));
+        }
+
+        public static EDBDate operator +(EDBDate date, EDBTimeSpan interval)
+        {
+            return date.Add(interval);
+        }
+
+        public static EDBDate operator +(EDBTimeSpan interval, EDBDate date)
+        {
+            return date.Add(interval);
+        }
+
+        public static EDBDate operator -(EDBDate date, EDBTimeSpan interval)
+        {
+            return date.Add(-interval);
+        }
+
+        public static EDBTimeSpan operator -(EDBDate dateX, EDBDate dateY)
+        {
+            if (dateX._type != InternalType.Finite || dateY._type != InternalType.Finite)
+                throw new ArgumentException("Can't subtract infinity date values");
+
+            return new EDBTimeSpan(0, dateX._daysSinceEra - dateY._daysSinceEra, 0);
+        }
+
+        #endregion
+
+        enum InternalType
+        {
+            Finite,
+            Infinity,
+            NegativeInfinity
+        }
+    }
+}

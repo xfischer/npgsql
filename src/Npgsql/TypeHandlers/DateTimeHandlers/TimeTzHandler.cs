@@ -1,0 +1,111 @@
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
+using  EnterpriseDB.EDBClient.BackendMessages;
+using EDBTypes;
+
+namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
+{
+    /// <remarks>
+    /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
+    /// </remarks>
+    [TypeMapping("timetz", EDBDbType.TimeTZ)]
+    internal class TimeTzHandler : TypeHandler<DateTimeOffset>,
+        ISimpleTypeReader<DateTimeOffset>, ISimpleTypeReader<DateTime>, ISimpleTypeReader<TimeSpan>,
+        ISimpleTypeWriter
+    {
+        // Binary Format: int64 expressing microseconds, int32 expressing timezone in seconds, negative
+
+        DateTimeOffset ISimpleTypeReader<DateTimeOffset>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        {
+            // Adjust from 1 microsecond to 100ns. Time zone (in seconds) is inverted.
+            var ticks = buf.ReadInt64() * 10;
+            var offset = new TimeSpan(0, 0, -buf.ReadInt32());
+            return new DateTimeOffset(ticks, offset);
+        }
+
+        DateTime ISimpleTypeReader<DateTime>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        {
+            return Read<DateTimeOffset>(buf, len, fieldDescription).LocalDateTime;
+        }
+
+        TimeSpan ISimpleTypeReader<TimeSpan>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        {
+            return Read<DateTimeOffset>(buf, len, fieldDescription).LocalDateTime.TimeOfDay;
+        }
+
+        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        {
+            if (!(value is DateTimeOffset) && !(value is DateTime) && !(value is TimeSpan))
+            {
+                throw CreateConversionException(value.GetType());
+            }
+            return 12;
+        }
+
+        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        {
+            if (value is DateTimeOffset)
+            {
+                var dto = (DateTimeOffset) value;
+                buf.WriteInt64(dto.TimeOfDay.Ticks / 10);
+                buf.WriteInt32(-(int)(dto.Offset.Ticks / TimeSpan.TicksPerSecond));
+                return;
+            }
+
+            if (value is DateTime)
+            {
+                var dt = (DateTime) value;
+
+                buf.WriteInt64(dt.TimeOfDay.Ticks / 10);
+
+                switch (dt.Kind)
+                {
+                case DateTimeKind.Utc:
+                    buf.WriteInt32(0);
+                    break;
+                case DateTimeKind.Unspecified:
+                    // Treat as local...
+                case DateTimeKind.Local:
+                    buf.WriteInt32(-(int)(TimeZoneInfo.Local.BaseUtcOffset.Ticks / TimeSpan.TicksPerSecond));
+                    break;
+                default:
+                    throw PGUtil.ThrowIfReached();
+                }
+
+                return;
+            }
+
+            if (value is TimeSpan)
+            {
+                var ts = (TimeSpan)value;
+                buf.WriteInt64(ts.Ticks / 10);
+                buf.WriteInt32(-(int)(TimeZoneInfo.Local.BaseUtcOffset.Ticks / TimeSpan.TicksPerSecond));
+                return;
+            }
+
+            throw PGUtil.ThrowIfReached();
+        }
+    }
+}
