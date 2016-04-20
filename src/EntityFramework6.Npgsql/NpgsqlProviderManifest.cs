@@ -34,11 +34,11 @@ using System.Data.Metadata.Edm;
 using System.Xml;
 using System.Data;
 
-namespace Npgsql
+namespace EnterpriseDB.EDBClient
 {
-    internal class NpgsqlProviderManifest : DbXmlEnabledProviderManifest
+    internal class EDBProviderManifest : DbXmlEnabledProviderManifest
     {
-        public NpgsqlProviderManifest(string serverVersion)
+        public EDBProviderManifest(string serverVersion)
             : base(CreateXmlReaderForResource("Npgsql.NpgsqlProviderManifest.Manifest.xml"))
         {
         }
@@ -338,7 +338,7 @@ namespace Npgsql
 
         private static XmlReader CreateXmlReaderForResource(string resourceName)
         {
-            return XmlReader.Create(System.Reflection.Assembly.GetAssembly(typeof(NpgsqlProviderManifest)).GetManifestResourceStream(resourceName));
+            return XmlReader.Create(System.Reflection.Assembly.GetAssembly(typeof(EDBProviderManifest)).GetManifestResourceStream(resourceName));
         }
 
         public override bool SupportsEscapingLikeArgument(out char escapeCharacter)

@@ -30,12 +30,12 @@ using System.Text;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Spatial;
 
-namespace Npgsql
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Used to generate migration sql
     /// </summary>
-    public class NpgsqlMigrationSqlGenerator : MigrationSqlGenerator
+    public class EDBMigrationSqlGenerator : MigrationSqlGenerator
     {
         List<MigrationStatement> migrationStatments;
         private List<string> addedSchemas;
@@ -165,7 +165,7 @@ namespace Npgsql
         {
             foreach (var command in historyOperation.CommandTrees)
             {
-                AddStatment(NpgsqlServices.Instance.CreateDbCommand(command).CommandText);
+                AddStatment(EDBServices.Instance.CreateDbCommand(command).CommandText);
             }
         }
 
@@ -759,14 +759,14 @@ namespace Npgsql
         private void AppendValue(DateTime value, StringBuilder sql)
         {
             sql.Append("'");
-            sql.Append(new NpgsqlTypes.NpgsqlDateTime(value));
+            sql.Append(new EDBTypes.EDBDateTime(value));
             sql.Append("'");
         }
 
         private void AppendValue(DateTimeOffset value, StringBuilder sql)
         {
             sql.Append("'");
-            sql.Append(new NpgsqlTypes.NpgsqlDateTime(value.UtcDateTime));
+            sql.Append(new EDBTypes.EDBDateTime(value.UtcDateTime));
             sql.Append("'");
         }
 
@@ -787,7 +787,7 @@ namespace Npgsql
         private void AppendValue(TimeSpan value, StringBuilder sql)
         {
             sql.Append("'");
-            sql.Append(new NpgsqlTypes.NpgsqlTimeSpan(value).ToString());
+            sql.Append(new EDBTypes.EDBTimeSpan(value).ToString());
             sql.Append("'");
         }
 

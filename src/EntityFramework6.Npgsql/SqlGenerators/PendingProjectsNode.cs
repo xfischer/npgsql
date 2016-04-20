@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     /// <summary>
     /// Represents an InputExpression and what alias it will have when used in a FROM clause

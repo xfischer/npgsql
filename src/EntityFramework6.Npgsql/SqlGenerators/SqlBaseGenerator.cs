@@ -33,7 +33,7 @@ using System.Data.Metadata.Edm;
 #endif
 using System.Linq;
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     internal abstract class SqlBaseGenerator : DbExpressionVisitor<VisitedExpression>
     {

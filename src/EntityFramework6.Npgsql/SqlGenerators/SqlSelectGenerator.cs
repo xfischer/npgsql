@@ -30,7 +30,7 @@ using System.Data.Entity.Core.Common.CommandTrees;
 using System.Data.Common.CommandTrees;
 #endif
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     internal class SqlSelectGenerator : SqlBaseGenerator
     {
@@ -115,7 +115,7 @@ namespace Npgsql.SqlGenerators
 
         public override void BuildCommand(DbCommand command)
         {
-            System.Diagnostics.Debug.Assert(command is NpgsqlCommand);
+            System.Diagnostics.Debug.Assert(command is EDBCommand);
             System.Diagnostics.Debug.Assert(_commandTree.Query is DbProjectExpression);
             VisitedExpression ve = _commandTree.Query.Accept(this);
             System.Diagnostics.Debug.Assert(ve is InputExpression);

@@ -6,8 +6,8 @@
     <ProjectGuid>{3EC85CBA-5B79-11E3-8104-0022198AB089}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>EntityFramework6.Npgsql</AssemblyName>
-    <RootNamespace>Npgsql</RootNamespace>
+    <AssemblyName>EntityFramework6.EnterpriseDB.EDBClient</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Npgsql.snk</AssemblyOriginatorKeyFile>
@@ -22,7 +22,7 @@
     <DefineConstants>TRACE;DEBUG;NET45;ENTITIES6</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\EntityFramework6.Npgsql.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\EntityFramework6.EnterpriseDB.EDBClient.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
@@ -33,7 +33,7 @@
     <DefineConstants>TRACE;NET45;ENTITIES6</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\EntityFramework6.Npgsql.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\EntityFramework6.EnterpriseDB.EDBClient.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <LangVersion>5</LangVersion>
   </PropertyGroup>

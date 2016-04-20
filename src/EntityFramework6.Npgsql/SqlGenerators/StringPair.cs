@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     /// <summary>
     /// Used for lookup in a Dictionary, since Tuple is not available in .NET 3.5

@@ -35,29 +35,30 @@ using System.Data.Entity.Infrastructure.DependencyResolution;
 
 #else
 using System.Data.Common.CommandTrees;
+using System.Data.Common;
 using System.Data.Metadata.Edm;
 #endif
-using Npgsql.SqlGenerators;
+using EnterpriseDB.EDBClient.SqlGenerators;
 
-namespace Npgsql
+namespace EnterpriseDB.EDBClient
 {
 #if ENTITIES6
-    public class NpgsqlServices : DbProviderServices
+    public class  EDBServices : DbProviderServices
 #else
-    internal class NpgsqlServices : DbProviderServices
+    internal class EDBServices : DbProviderServices
 #endif
     {
-        private static readonly NpgsqlServices _instance = new NpgsqlServices();
+        private static readonly EDBServices _instance = new EDBServices();
 
 #if ENTITIES6
-        public NpgsqlServices()
+        public EDBServices()
         {
             AddDependencyResolver(new SingletonDependencyResolver<Func<MigrationSqlGenerator>>(
-                () => new NpgsqlMigrationSqlGenerator(), "Npgsql"));
+                () => new EDBMigrationSqlGenerator(), "EnterpriseDB.EDBClient"));
         }
 #endif
 
-        public static NpgsqlServices Instance
+        public static EDBServices Instance
         {
             get { return _instance; }
         }
@@ -72,13 +73,13 @@ namespace Npgsql
             if (commandTree == null)
                 throw new ArgumentNullException("commandTree");
 
-            DbCommand command = NpgsqlFactory.Instance.CreateCommand();
+            DbCommand command = EDBFactory.Instance.CreateCommand();
 
             foreach (KeyValuePair<string, TypeUsage> parameter in commandTree.Parameters)
             {
                 DbParameter dbParameter = command.CreateParameter();
                 dbParameter.ParameterName = parameter.Key;
-                dbParameter.DbType = NpgsqlProviderManifest.GetDbType(((PrimitiveType)parameter.Value.EdmType).PrimitiveTypeKind);
+                dbParameter.DbType = EDBProviderManifest.GetDbType(((PrimitiveType)parameter.Value.EdmType).PrimitiveTypeKind);
                 command.Parameters.Add(dbParameter);
             }
 
@@ -125,7 +126,7 @@ namespace Npgsql
             if (connection == null)
                 throw new ArgumentNullException("connection");
             string serverVersion = "";
-            UsingPostgresDBConnection((NpgsqlConnection)connection, conn =>
+            UsingPostgresDBConnection((EDBConnection)connection, conn =>
             {
                 serverVersion = conn.ServerVersion;
             });
@@ -136,16 +137,16 @@ namespace Npgsql
         {
             if (versionHint == null)
                 throw new ArgumentNullException("versionHint");
-            return new NpgsqlProviderManifest(versionHint);
+            return new EDBProviderManifest(versionHint);
         }
 
 #if ENTITIES6
         protected override bool DbDatabaseExists(DbConnection connection, int? commandTimeout, StoreItemCollection storeItemCollection)
         {
             bool exists = false;
-            UsingPostgresDBConnection((NpgsqlConnection)connection, conn =>
+            UsingPostgresDBConnection((EDBConnection)connection, conn =>
             {
-                using (NpgsqlCommand command = new NpgsqlCommand("select count(*) from pg_catalog.pg_database where datname = '" + connection.Database + "';", conn))
+                using (EDBCommand command = new EDBCommand("select count(*) from pg_catalog.pg_database where datname = '" + connection.Database + "';", conn))
                 {
                     exists = Convert.ToInt32(command.ExecuteScalar()) > 0;
                 }
@@ -155,12 +156,13 @@ namespace Npgsql
 
         protected override void DbCreateDatabase(DbConnection connection, int? commandTimeout, StoreItemCollection storeItemCollection)
         {
-            UsingPostgresDBConnection((NpgsqlConnection)connection, conn =>
+            UsingPostgresDBConnection((EDBConnection)connection, conn =>
             {
                 var sb = new StringBuilder();
                 sb.Append("CREATE DATABASE \"");
                 sb.Append(connection.Database);
                 sb.Append("\"");
+                
                 if (conn.EntityTemplateDatabase != null)
                 {
                     sb.Append(" TEMPLATE \"");
@@ -168,7 +170,7 @@ namespace Npgsql
                     sb.Append("\"");
                 }
 
-                using (NpgsqlCommand command = new NpgsqlCommand(sb.ToString(), conn))
+                using (EDBCommand command = new EDBCommand(sb.ToString(), conn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -177,11 +179,11 @@ namespace Npgsql
 
         protected override void DbDeleteDatabase(DbConnection connection, int? commandTimeout, StoreItemCollection storeItemCollection)
         {
-            UsingPostgresDBConnection((NpgsqlConnection)connection, conn =>
+            UsingPostgresDBConnection((EDBConnection)connection, conn =>
             {
                 //Close all connections in pool or exception "database used by another user appears"
-                NpgsqlConnection.ClearAllPools();
-                using (NpgsqlCommand command = new NpgsqlCommand("DROP DATABASE \"" + connection.Database + "\";", conn))
+                EDBConnection.ClearAllPools();
+                using (EDBCommand command = new EDBCommand("DROP DATABASE \"" + connection.Database + "\";", conn))
                 {
                     command.ExecuteNonQuery();
                 }
@@ -189,15 +191,15 @@ namespace Npgsql
         }
 #endif
 
-        private static void UsingPostgresDBConnection(EDBConnection connection, Action<NpgsqlConnection> action)
+        private static void UsingPostgresDBConnection(EDBConnection connection, Action<EDBConnection> action)
         {
-            var connectionBuilder = new NpgsqlConnectionStringBuilder(connection.ConnectionString)
+            var connectionBuilder = new EDBConnectionStringBuilder(connection.ConnectionString)
             {
                 Database = "template1",
                 Pooling = false
             };
 
-            using (var masterConnection = new NpgsqlConnection(connectionBuilder.ConnectionString))
+            using (var masterConnection = new EDBConnection(connectionBuilder.ConnectionString))
             {
                 masterConnection.Open();//using's Dispose will close it even if exception...
                 action(masterConnection);

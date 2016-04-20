@@ -24,12 +24,12 @@
 using System.Data.Common;
 using System.Data.Entity.Infrastructure;
 
-namespace Npgsql
+namespace  EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Instances of this class are used to create DbConnection objects for Postgresql
     /// </summary>
-    public class NpgsqlConnectionFactory : IDbConnectionFactory
+    public class EDBConnectionFactory : IDbConnectionFactory
     {
         /// <summary>
         /// Creates a connection for Postgresql for the given connection string.
@@ -38,7 +38,7 @@ namespace Npgsql
         /// <returns>An initialized DbConnection.</returns>
         public DbConnection CreateConnection(string nameOrConnectionString)
         {
-            return new NpgsqlConnection(nameOrConnectionString);
+            return new EDBConnection(nameOrConnectionString);
         }
     }
 }

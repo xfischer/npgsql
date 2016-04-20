@@ -32,11 +32,12 @@ using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Metadata.Edm;
 using System.Data.Common.CommandTrees;
 #endif
-using NpgsqlTypes;
+using EnterpriseDB.EDBClient;
+using EnterpriseDB;
 using System.Data;
 using System.Globalization;
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     internal abstract class VisitedExpression
     {
@@ -245,7 +246,7 @@ namespace Npgsql.SqlGenerators
                     sqlText.Append("E'").Append(((string)_value).Replace(@"\", @"\\").Replace("'", @"\'")).Append("'");
                     break;
                 case PrimitiveTypeKind.Time:
-                    sqlText.AppendFormat(ni, "INTERVAL '{0}'", (NpgsqlTimeSpan)(TimeSpan)_value);
+                    sqlText.AppendFormat(ni, "INTERVAL '{0}'", (EDBTypes.EDBTimeSpan)(TimeSpan)_value);
                     break;
                 default:
                     // TODO: must support more constant value types.

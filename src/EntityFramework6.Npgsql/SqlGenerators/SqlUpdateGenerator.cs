@@ -30,7 +30,7 @@ using System.Data.Entity.Core.Common.CommandTrees;
 using System.Data.Common.CommandTrees;
 #endif
 
-namespace Npgsql.SqlGenerators
+namespace EnterpriseDB.EDBClient.SqlGenerators
 {
     class SqlUpdateGenerator : SqlBaseGenerator
     {
