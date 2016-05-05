@@ -1517,7 +1517,6 @@ namespace  EnterpriseDB.EDBClient
         T ReadColumnWithoutCache<T>(int ordinal)
         {
             _row.SeekToColumnStart(ordinal);
-            Row.CheckNotNull();
             var fieldDescription = _rowDescription[ordinal];
             try
             {

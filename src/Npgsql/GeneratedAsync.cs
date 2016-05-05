@@ -1049,7 +1049,6 @@ namespace EnterpriseDB.EDBClient
         async Task<T> ReadColumnWithoutCacheAsync<T>(int ordinal)
         {
             _row.SeekToColumnStart(ordinal);
-            Row.CheckNotNull();
             var fieldDescription = _rowDescription[ordinal];
             try
             {
