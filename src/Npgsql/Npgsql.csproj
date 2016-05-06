@@ -6,8 +6,8 @@
     <ProjectGuid>{9D13B739-62B1-4190-B386-7A9547304EB3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Npgsql</AssemblyName>
-    <RootNamespace>Npgsql</RootNamespace>
+    <AssemblyName>EnterpriseDB.Client</AssemblyName>
+    <RootNamespace>EnterpriseDB.Client</RootNamespace>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\Npgsql.snk</AssemblyOriginatorKeyFile>
@@ -25,7 +25,7 @@
     <DefineConstants>TRACE;DEBUG;NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Npgsql.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\EnterpriseDB.Client.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>5</LangVersion>
@@ -81,7 +81,7 @@
     <DefineConstants>TRACE;NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Npgsql.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\EnterpriseDB.Client.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>5</LangVersion>

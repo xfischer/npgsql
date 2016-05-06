@@ -353,7 +353,7 @@ namespace  EnterpriseDB.EDBClient
         internal int Timeout { get { return Settings.Timeout; } }
         internal bool Enlist { get { return Settings.Enlist; } }
         internal int BufferSize { get { return Settings.BufferSize; } }
-        internal string EntityTemplateDatabase { get { return Settings.EntityTemplateDatabase; } }
+        public string EntityTemplateDatabase { get { return Settings.EntityTemplateDatabase; } }
 
         #endregion Configuration settings
 
