@@ -631,10 +631,13 @@ namespace  EnterpriseDB.EDBClient
 
         internal int ValidateAndGetLength()
         {
-            if (_value == null) {
-                throw new InvalidCastException(string.Format("Parameter {0} must be set", ParameterName));
+            if (Direction == ParameterDirection.Input)
+            {
+                if (_value == null)
+                {
+                    throw new InvalidCastException(string.Format("Parameter {0} must be set", ParameterName));
+                }
             }
-
             if (_value is DBNull) {
                 return 0;
             }
