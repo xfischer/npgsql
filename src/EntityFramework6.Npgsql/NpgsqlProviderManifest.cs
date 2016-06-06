@@ -39,7 +39,7 @@ namespace EnterpriseDB.EDBClient
     internal class EDBProviderManifest : DbXmlEnabledProviderManifest
     {
         public EDBProviderManifest(string serverVersion)
-            : base(CreateXmlReaderForResource("Npgsql.NpgsqlProviderManifest.Manifest.xml"))
+            : base(CreateXmlReaderForResource("EnterpriseDB.EDBClient.NpgsqlProviderManifest.Manifest.xml"))
         {
         }
 

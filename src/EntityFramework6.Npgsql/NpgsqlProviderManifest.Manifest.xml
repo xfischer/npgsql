@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ProviderManifest Namespace="Npgsql" xmlns="http://schemas.microsoft.com/ado/2006/04/edm/providermanifest">
+<ProviderManifest Namespace="EnterpriseDB.EDBClient" xmlns="http://schemas.microsoft.com/ado/2006/04/edm/providermanifest">
   <Types>
     <Type Name="bool" PrimitiveTypeKind="Boolean"/>
     <Type Name="int2" PrimitiveTypeKind="Int16"/>
