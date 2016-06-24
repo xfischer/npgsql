@@ -123,10 +123,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EnterpriseDB.Client">
-      <HintPath>..\Npgsql\bin\x86\Release\EnterpriseDB.Client.dll</HintPath>
+      <HintPath>..\Npgsql\bin\$(Platform)\$(Configuration)\EnterpriseDB.Client.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
-      <HintPath>C:\nant-0.92\bin\lib\common\2.0\nunit.framework.dll</HintPath>
+      <HintPath>$(NUnitPath)\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
