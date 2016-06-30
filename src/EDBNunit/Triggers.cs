@@ -302,6 +302,7 @@ namespace DOTNET
 				Assert.AreEqual("1",Reader.GetValue(0).ToString());
 				Console.WriteLine("values read");
 			}
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -354,6 +355,7 @@ namespace DOTNET
 				Assert.AreEqual("1",Reader.GetValue(0).ToString());
 				Console.WriteLine("values read");
 			}
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -468,6 +470,7 @@ namespace DOTNET
 				Assert.AreEqual("1",Reader.GetValue(0).ToString());
 				Console.WriteLine("values read");
 			}
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -585,6 +588,7 @@ namespace DOTNET
 				Assert.AreEqual("1",Reader.GetValue(0).ToString());
 				Console.WriteLine("values read");
 			}
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -754,6 +758,7 @@ namespace DOTNET
 
 			Assert.AreEqual("1",Reader.GetValue(0).ToString());
 			Assert.IsFalse(Reader.Read());
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -813,6 +818,7 @@ namespace DOTNET
 
 			Assert.AreEqual("1",Reader.GetValue(0).ToString());
 			Assert.IsFalse(Reader.Read());
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -875,6 +881,7 @@ namespace DOTNET
 
 			Assert.AreEqual("5",Reader.GetValue(0).ToString());
 			Assert.IsFalse(Reader.Read());
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -933,6 +940,7 @@ namespace DOTNET
 
 			Assert.AreEqual("2",Reader.GetValue(0).ToString());
 			Assert.IsFalse(Reader.Read());
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -1010,6 +1018,7 @@ namespace DOTNET
 
 			Assert.AreEqual("2",Reader.GetValue(0).ToString());
 			Assert.IsFalse(Reader.Read());
+            Reader.Close();
 			Command.CommandText=DropTrigger;
 			Command.ExecuteNonQuery();
 			Command.CommandText=DropSourcestr;
@@ -1167,7 +1176,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+	//	[Test]
 		public void RulesMultiTabsUpdateDoAlso( )
 		{
 
@@ -1243,7 +1252,7 @@ namespace DOTNET
 		}
 
 		
-		[Test]
+		//[Test]
 		public void RulesMultiTabsOnInsertDoInsteadWithJoins( )
 		{
 

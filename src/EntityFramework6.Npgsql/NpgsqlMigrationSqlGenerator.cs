@@ -29,6 +29,7 @@ using System.Globalization;
 using System.Text;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Spatial;
+using System.Linq;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -62,7 +63,7 @@ namespace EnterpriseDB.EDBClient
 
         #region General
 
-        private void Convert(IEnumerable<MigrationOperation> operations)
+        protected virtual void Convert(IEnumerable<MigrationOperation> operations)
         {
             foreach (var migrationOperation in operations)
             {
@@ -143,7 +144,7 @@ namespace EnterpriseDB.EDBClient
 
         private void AddStatment(string sql, bool suppressTransacion = false)
         {
-            migrationStatments.Add(new MigrationStatement()
+            migrationStatments.Add(new MigrationStatement
             {
                 Sql = sql,
                 SuppressTransaction = suppressTransacion,
@@ -161,11 +162,13 @@ namespace EnterpriseDB.EDBClient
 
         #region History
 
-        private void Convert(HistoryOperation historyOperation)
+        protected virtual void Convert(HistoryOperation historyOperation)
         {
             foreach (var command in historyOperation.CommandTrees)
             {
-                AddStatment(EDBServices.Instance.CreateDbCommand(command).CommandText);
+                var npgsqlCommand = new EDBCommand();
+                EDBServices.Instance.TranslateCommandTree(serverVersion, command, npgsqlCommand, false);
+                AddStatment(npgsqlCommand.CommandText);
             }
         }
 
@@ -173,10 +176,15 @@ namespace EnterpriseDB.EDBClient
 
         #region Tables
 
-        private void Convert(CreateTableOperation createTableOperation)
+        protected virtual void Convert(CreateTableOperation createTableOperation)
         {
             StringBuilder sql = new StringBuilder();
-            CreateSchema(createTableOperation.Name);
+            int dotIndex = createTableOperation.Name.IndexOf('.');
+            if (dotIndex != -1)
+            {
+                CreateSchema(createTableOperation.Name.Remove(dotIndex));
+            }
+
             sql.Append("CREATE TABLE ");
             AppendTableName(createTableOperation.Name, sql);
             sql.Append('(');
@@ -185,7 +193,8 @@ namespace EnterpriseDB.EDBClient
                 AppendColumn(column, sql);
                 sql.Append(",");
             }
-            sql.Remove(sql.Length - 1, 1);
+            if (createTableOperation.Columns.Any())
+                sql.Remove(sql.Length - 1, 1);
             if (createTableOperation.PrimaryKey != null)
             {
                 sql.Append(",");
@@ -208,7 +217,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(DropTableOperation dropTableOperation)
+        protected virtual void Convert(DropTableOperation dropTableOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("DROP TABLE ");
@@ -216,7 +225,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(RenameTableOperation renameTableOperation)
+        protected virtual void Convert(RenameTableOperation renameTableOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -228,10 +237,7 @@ namespace EnterpriseDB.EDBClient
 
         private void CreateSchema(string schemaName)
         {
-            int dotIndex = schemaName.IndexOf('.');
-            if (dotIndex != -1)
-                schemaName = schemaName.Remove(dotIndex);
-            if (addedSchemas.Contains(schemaName))
+            if (schemaName == "public" || addedSchemas.Contains(schemaName))
                 return;
             addedSchemas.Add(schemaName);
             if (serverVersion.Major > 9 || (serverVersion.Major == 9 && serverVersion.Minor >= 3))
@@ -257,7 +263,7 @@ namespace EnterpriseDB.EDBClient
         //    }
         //}
 
-        private void Convert(MoveTableOperation moveTableOperation)
+        protected virtual void Convert(MoveTableOperation moveTableOperation)
         {
             StringBuilder sql = new StringBuilder();
             var newSchema = moveTableOperation.NewSchema ?? "dbo";
@@ -282,7 +288,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(DropColumnOperation dropColumnOperation)
+        protected virtual void Convert(DropColumnOperation dropColumnOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -293,7 +299,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(AlterColumnOperation alterColumnOperation)
+        protected virtual void Convert(AlterColumnOperation alterColumnOperation)
         {
             StringBuilder sql = new StringBuilder();
 
@@ -365,7 +371,7 @@ namespace EnterpriseDB.EDBClient
             sql.Append('"');
         }
 
-        private void Convert(RenameColumnOperation renameColumnOperation)
+        protected virtual void Convert(RenameColumnOperation renameColumnOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -382,7 +388,7 @@ namespace EnterpriseDB.EDBClient
 
         #region Keys and indexes
 
-        private void Convert(AddForeignKeyOperation addForeignKeyOperation)
+        protected virtual void Convert(AddForeignKeyOperation addForeignKeyOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -416,7 +422,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(DropForeignKeyOperation dropForeignKeyOperation)
+        protected virtual void Convert(DropForeignKeyOperation dropForeignKeyOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -430,7 +436,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(CreateIndexOperation createIndexOperation)
+        protected virtual void Convert(CreateIndexOperation createIndexOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("CREATE ");
@@ -477,7 +483,7 @@ namespace EnterpriseDB.EDBClient
                 return tableName;
         }
 
-        private void Convert(DropIndexOperation dropIndexOperation)
+        protected virtual void Convert(DropIndexOperation dropIndexOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("DROP INDEX IF EXISTS ");
@@ -488,7 +494,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(AddPrimaryKeyOperation addPrimaryKeyOperation)
+        protected virtual void Convert(AddPrimaryKeyOperation addPrimaryKeyOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");
@@ -509,7 +515,7 @@ namespace EnterpriseDB.EDBClient
             AddStatment(sql);
         }
 
-        private void Convert(DropPrimaryKeyOperation dropPrimaryKeyOperation)
+        protected virtual void Convert(DropPrimaryKeyOperation dropPrimaryKeyOperation)
         {
             StringBuilder sql = new StringBuilder();
             sql.Append("ALTER TABLE ");

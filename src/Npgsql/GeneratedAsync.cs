@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 using System.Net.Sockets;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Logging;

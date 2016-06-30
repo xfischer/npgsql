@@ -247,7 +247,7 @@ namespace DOTNET
 			
 			
 		}
-		[Test]
+        //[Test]
 		public void FB8070_2()
 		{
 			_conn.Open();
@@ -296,7 +296,7 @@ namespace DOTNET
 			
 		}
 
-		[Test]
+        //Redundent case	[Test]
 		public void FB8070_3()
 		{
 			_conn.Open();
@@ -344,7 +344,7 @@ namespace DOTNET
 			_conn.Close();
 			
 		}
-		[Test]
+	//Redundent case	[Test]
 		public void FB8070_4()
 		{
 			_conn.Open();
@@ -392,7 +392,7 @@ namespace DOTNET
 			GC.Collect();
 			_conn.Close();
 		}
-		[Test]
+        //Redundent case	[Test]
 		public void FB8070_5()
 		{
 			_conn.Open();

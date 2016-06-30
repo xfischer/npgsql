@@ -29,7 +29,7 @@ namespace DOTNET
             TestUtil.closeDB(con);
         }
 
-        [Test]
+      //  [Test]
         public void FB_11665()
         {
             EDBCommand Command = new EDBCommand("", con);

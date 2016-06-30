@@ -1069,7 +1069,7 @@ namespace  EnterpriseDB.EDBClient
             Contract.Ensures(Contract.Result<TextReader>() != null);
 
             var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as TextHandler;
+            var handler = fieldDescription.Handler as ITextReaderHandler;
             if (handler == null)
             {
                 throw new InvalidCastException("GetTextReader() not supported for type " + fieldDescription.Name);
@@ -1079,7 +1079,8 @@ namespace  EnterpriseDB.EDBClient
             row.SeekToColumnStart(ordinal);
             row.CheckNotNull();
 
-            return new StreamReader(row.GetStream());
+            return handler.GetTextReader(row.GetStream());
+          //ZK  return new StreamReader(row.GetStream());
         }
 
         #endregion
@@ -1229,6 +1230,20 @@ namespace  EnterpriseDB.EDBClient
             } catch {
                 _connector.Break();
                 throw;
+            }
+
+            // Used for Entity Framework <= 6 compability
+            if (Command.ObjectResultTypes != null && Command.ObjectResultTypes[ordinal] != null && result != null)
+            {
+                var type = Command.ObjectResultTypes[ordinal];
+                if (type == typeof(DateTimeOffset))
+                {
+                    result = new DateTimeOffset((DateTime)result);
+                }
+                else
+                {
+                    result = Convert.ChangeType(result, type);
+                }
             }
 
             if (IsCaching)

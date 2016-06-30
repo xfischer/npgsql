@@ -33,6 +33,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Net.Sockets;
 using AsyncRewriter;
 using  EnterpriseDB.EDBClient.BackendMessages;
@@ -358,6 +359,18 @@ namespace  EnterpriseDB.EDBClient
         }
 
         bool[] _unknownResultTypeList;
+
+        #endregion
+
+        #region Result Types Management
+
+        /// <summary>
+        /// Marks result types to be used when using GetValue on a data reader, on a column-by-column basis.
+        /// Used for Entity Framework 5-6 compability.
+        /// Only primitive numerical types and DateTimeOffset are supported.
+        /// Set the whole array or just a value to null to use default type.
+        /// </summary>
+        public Type[] ObjectResultTypes { get; set; }
 
         #endregion
 
@@ -1289,12 +1302,53 @@ namespace  EnterpriseDB.EDBClient
         /// </remarks>
         void FixupRowDescription(RowDescriptionMessage rowDescription, bool isFirst)
         {
-            for (var i = 0; i < rowDescription.NumFields; i++) {
-                rowDescription[i].FormatCode =
+            for (var i = 0; i < rowDescription.NumFields; i++)
+            {
+                var field = rowDescription[i];
+                field.FormatCode =
                     (UnknownResultTypeList == null || !isFirst ? AllResultTypesAreUnknown : UnknownResultTypeList[i])
                     ? FormatCode.Text
                     : FormatCode.Binary;
+                if (field.FormatCode == FormatCode.Text)
+                {
+                    field.Handler = Connection.Connector.TypeHandlerRegistry.UnrecognizedTypeHandler;
+                }
             }
+        }
+
+        void LogCommand()
+        {
+            if (!Log.IsEnabled(EDBLogLevel.Debug))
+            {
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("Executing statement(s):");
+            foreach (var s in _queries)
+            {
+                sb
+                    .AppendLine()
+                    .Append("\t")
+                    .Append(s.SQL);
+            }
+
+            if (EDBLogManager.IsParameterLoggingEnabled && Parameters.Any())
+            {
+                sb
+                    .AppendLine()
+                    .AppendLine("Parameters:");
+                for (var i = 0; i < Parameters.Count; i++)
+                {
+                    sb
+                        .Append("\t$")
+                        .Append(i + 1)
+                        .Append(": ")
+                        .Append(Convert.ToString(Parameters[i].Value, CultureInfo.InvariantCulture));
+                }
+            }
+
+            Log.Debug(sb.ToString(), Connection.Connector.Id);
         }
 
 #if !DNXCORE50
@@ -1320,7 +1374,10 @@ namespace  EnterpriseDB.EDBClient
             {
                 CommandTimeout = CommandTimeout,
                 CommandType = CommandType,
-                DesignTimeVisible = DesignTimeVisible
+                DesignTimeVisible = DesignTimeVisible,
+                _allResultTypesAreUnknown = _allResultTypesAreUnknown,
+                _unknownResultTypeList = _unknownResultTypeList,
+                ObjectResultTypes = ObjectResultTypes
             };
             foreach (EDBParameter parameter in Parameters)
             {

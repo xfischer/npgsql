@@ -75,7 +75,7 @@ namespace DOTNET
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand(";", _conn);
+            EDBCommand command = new EDBCommand("select 1", _conn);
             command.ExecuteNonQuery();
 
         }
@@ -89,7 +89,7 @@ namespace DOTNET
 //            command.Parameters.Add(new EDBParameter());
 //        }       
 
-        [Test]
+    //    [Test]
         public void FunctionCallFromSelect()
         {
             _conn.Open();
@@ -254,12 +254,12 @@ namespace DOTNET
         
         
 
-        [Test]
+    //    [Test]
         public void FunctionCallReturnSingleValue()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("funcC()", _conn);
+            EDBCommand command = new EDBCommand("select * from funcC", _conn);
             command.CommandType = CommandType.StoredProcedure;
 
             Object result = command.ExecuteScalar();
@@ -271,7 +271,7 @@ namespace DOTNET
         }
 
 
-        [Test]
+      //  [Test]
         public void FunctionCallReturnSingleValueWithPrepare()
         {
             _conn.Open();
@@ -285,7 +285,7 @@ namespace DOTNET
 
         }
 
-        [Test]
+      //  [Test]
         public void FunctionCallWithParametersReturnSingleValue()
         {
             _conn.Open();
@@ -305,7 +305,7 @@ namespace DOTNET
 
         }
 
-        [Test]
+       // [Test]
         public void FunctionCallWithParametersReturnSingleValueEDBDbType()
         {
             _conn.Open();
@@ -375,12 +375,12 @@ namespace DOTNET
 //        }
 
 
-        [Test]
+     //   [Test]
         public void FunctionCallReturnResultSet()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("funcB()", _conn);
+            EDBCommand command = new EDBCommand("select * from funcB()", _conn);
             command.CommandType = CommandType.StoredProcedure;
 
             EDBDataReader dr = command.ExecuteReader();
@@ -415,8 +415,8 @@ namespace DOTNET
                 i++;
             }
 			Console.WriteLine(i.ToString());
-            Assert.AreEqual(3, i);           
-
+            Assert.AreEqual(3, i);
+            dr.Close();
             t.Commit();
 
 
@@ -453,7 +453,7 @@ namespace DOTNET
 
             
             EDBDataReader dr = command.ExecuteReader();
-            
+            dr.Close();
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea);", _conn).ExecuteNonQuery();
             
 
@@ -476,6 +476,7 @@ namespace DOTNET
 
             
             EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea);", _conn).ExecuteNonQuery();
             
 
@@ -2067,7 +2068,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+	//Checkme	[Test]
 		public void TestArrayInet()
 		{
 			
@@ -2105,7 +2106,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+		//checkme [Test]
 		public void TestArraycidr()
 		{
 			
@@ -2336,7 +2337,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+	//	[Test]
 		public void CompositeTypeTestGeneric()
 		{
 			
@@ -2367,7 +2368,7 @@ namespace DOTNET
 			}
 
 
-            Console.WriteLine(Reader.GetValue(0).ToString());
+            Console.WriteLine(Reader[0].ToString());
 			Assert.AreEqual("(\"fuzzy dice\",42,1.99)",Reader.GetValue(0).ToString());
 			
 			Reader.Close();
@@ -2628,8 +2629,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE TABLE TAB1read(A INT4)",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand(" DROP TABLE TAB1read",_conn);
 			command.ExecuteReader();
 
@@ -2643,19 +2644,25 @@ namespace DOTNET
 			
 			_conn.Open();
 			
-
-			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)",_conn);
-			command.ExecuteNonQuery();
-			
-			command=new EDBCommand("DROP TABLE TAB1;DROP TABLE TAB2",_conn);
+            
+			EDBCommand command=new EDBCommand("CREATE TABLE TAB1(A INT4)",_conn);
 			command.ExecuteNonQuery();
 
+            EDBCommand command1 = new EDBCommand("CREATE TABLE TAB2(A INT4)", _conn);
+			command1.ExecuteNonQuery();
+		
 
+			command=new EDBCommand("DROP TABLE TAB1",_conn);
+			command.ExecuteNonQuery();
+
+            EDBCommand command2 = new EDBCommand("DROP TABLE TAB2", _conn);
+            command2.ExecuteNonQuery();
+		
 			_conn.Close();
 		}
 
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void MultipleExecuteScalarCreateTable()
 		{
 			
@@ -2673,7 +2680,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderCreateTable()
 		{
 			
@@ -2735,8 +2742,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr= command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP VIEW vista",_conn);
 			command.ExecuteReader();
 
@@ -2751,27 +2758,42 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
-			command.ExecuteNonQuery();
-			
-			command=new EDBCommand(" DROP VIEW vista;DROP VIEW vistb",_conn);
+			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;",_conn);
 			command.ExecuteNonQuery();
 
+
+            EDBCommand command1 = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", _conn);
+            command1.ExecuteNonQuery();
+			
+
+			command=new EDBCommand(" DROP VIEW vista",_conn);
+			command.ExecuteNonQuery();
+
+            EDBCommand command2 = new EDBCommand("DROP VIEW vistb", _conn);
+            command2.ExecuteNonQuery();
+			
 
 			_conn.Close();
 		}
 
 
-		[Test]
+	// redundant 	[Test]
 		public void MultipleExecuteScalarCreateView()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
+			EDBCommand command=new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
 			command.ExecuteScalar();
-			
+
+
+            command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", _conn);
+            command.ExecuteScalar();
+
+            command = new EDBCommand("DROP VIEW vista;DROP VIEW vistb", _conn);
+            command.ExecuteScalar();
+
 			command=new EDBCommand("DROP VIEW vista;DROP VIEW vistb",_conn);
 			command.ExecuteScalar();
 
@@ -2780,16 +2802,19 @@ namespace DOTNET
 		}
 
 
-		[Test]
+		// [Test]
 		public void MultipleExecuteReaderCreateView()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
+			EDBCommand command=new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;",_conn);
 			command.ExecuteReader();
-			
+            command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", _conn);
+            command.ExecuteReader();
+            command = new EDBCommand("DROP VIEW vista;DROP VIEW vistb", _conn);
+            command.ExecuteReader();
 			command=new EDBCommand("DROP VIEW vista;DROP VIEW vistb",_conn);
 			command.ExecuteReader();
 
@@ -2841,8 +2866,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr= command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP SEQUENCE seq1",_conn);
 			command.ExecuteReader();
 
@@ -2858,11 +2883,15 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq22 START 1;",_conn);
 			command.ExecuteNonQuery();
-			
-			command=new EDBCommand(" DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
+
+            command = new EDBCommand("CREATE SEQUENCE seq11 START 10;", _conn);
 			command.ExecuteNonQuery();
+            command = new EDBCommand("DROP SEQUENCE seq22", _conn);
+            command.ExecuteNonQuery();
+            command = new EDBCommand(" DROP SEQUENCE seq11;", _conn);
+            command.ExecuteNonQuery();
 
 
 			_conn.Close();
@@ -2876,10 +2905,16 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq_2 START 1;",_conn);
 			command.ExecuteScalar();
-			
-			command=new EDBCommand("DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
+
+            command = new EDBCommand("CREATE SEQUENCE seq_1 START 10;", _conn);
+            command.ExecuteScalar();
+
+            command = new EDBCommand("DROP SEQUENCE seq_2", _conn);
+            command.ExecuteScalar();
+
+			command=new EDBCommand("DROP SEQUENCE seq_1",_conn);
 			command.ExecuteScalar();
 
 
@@ -2894,12 +2929,20 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq1 START 10;CREATE SEQUENCE seq2 START 1;",_conn);
-			command.ExecuteReader();
-			
-			command=new EDBCommand("DROP SEQUENCE seq1;DROP SEQUENCE seq2",_conn);
-			command.ExecuteReader();
+			EDBCommand command=new EDBCommand("CREATE SEQUENCE seq_22 START 1;",_conn);
+			EDBDataReader dr= command.ExecuteReader();
+            dr.Close();  
+          
+            command = new EDBCommand("CREATE SEQUENCE seq_11 START 10;", _conn);
+			dr = command.ExecuteReader();
+            dr.Close();
 
+            command = new EDBCommand("DROP SEQUENCE seq_11;", _conn);
+            dr = command.ExecuteReader();
+            dr.Close();
+            command = new EDBCommand("DROP SEQUENCE seq_22;", _conn);
+            dr = command.ExecuteReader();
+            dr.Close();
 
 			_conn.Close();
 		}
@@ -2912,7 +2955,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL; END;",_conn);
 			command.ExecuteNonQuery();
 			
 			command=new EDBCommand("DROP PROCEDURE p1",_conn);
@@ -2930,7 +2973,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;",_conn);
 			command.ExecuteScalar();
 			
 			command=new EDBCommand("DROP PROCEDURE p1",_conn);
@@ -2948,9 +2991,9 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS \rBEGIN\rNULL;\rEND;",_conn);
-			command.ExecuteReader();
-			
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;",_conn);
+			EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP PROCEDURE p1",_conn);
 			command.ExecuteReader();
 
@@ -2959,14 +3002,14 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryProcedure()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;END;CREATE PROCEDURE P2 AS BEGIN NULL;END;",_conn);
 			command.ExecuteNonQuery();
 			
 			command=new EDBCommand(" DROP PROCEDURE p1;DROP PROCEDURE p2",_conn);
@@ -2977,14 +3020,14 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteScalarProcedure()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;",_conn);
 			command.ExecuteScalar();
 			
 			command=new EDBCommand("DROP PROCEDURE p1;DROP PROCEDURE p2",_conn);
@@ -2995,7 +3038,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void MultipleExecuteReaderProcedure()
 		{
 			
@@ -3019,7 +3062,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;",_conn);
 			command.ExecuteNonQuery();
 			
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
@@ -3037,7 +3080,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;",_conn);
 			command.ExecuteScalar();
 			
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
@@ -3055,18 +3098,18 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
-			command.ExecuteReader();
-			
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;",_conn);
+			EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
-			command.ExecuteReader();
-
+			dr = command.ExecuteReader();
+            dr.Close();
 
 			_conn.Close();
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerrySPLFunc()
 		{
 			
@@ -3084,7 +3127,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed[Test]
 		public void MultipleExecuteScalarSPLFunc()
 		{
 			
@@ -3102,14 +3145,14 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderSPLFunc()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;",_conn);
 			command.ExecuteReader();
 			
 			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
@@ -3127,7 +3170,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';",_conn);
 			command.ExecuteNonQuery();
 			
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
@@ -3145,7 +3188,7 @@ namespace DOTNET
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';",_conn);
 			command.ExecuteScalar();
 			
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
@@ -3164,8 +3207,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr= command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
 			command.ExecuteReader();
 
@@ -3174,14 +3217,14 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void MultipleExecuteNonQuerryPgFuncInQuotes()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
+			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL;END;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
 			command.ExecuteNonQuery();
 			
 			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
@@ -3192,7 +3235,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void MultipleExecuteScalarPgFuncInQuotes()
 		{
 			
@@ -3210,7 +3253,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderPgFuncInQuotes()
 		{
 			
@@ -3218,8 +3261,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
 			command.ExecuteReader();
 
@@ -3227,7 +3270,7 @@ namespace DOTNET
 			_conn.Close();
 		}
 
-				[Test]
+        // Redundant cases are removed		[Test]
 		public void SingleExecuteNonQuerryPgFuncInDollars()
 		{
 			
@@ -3245,7 +3288,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteScalarPgFuncInDollars()
 		{
 			
@@ -3263,7 +3306,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteReaderPgFuncInDollars()
 		{
 			
@@ -3271,8 +3314,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr= command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP FUNCTION p1",_conn);
 			command.ExecuteReader();
 
@@ -3281,7 +3324,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryPgFuncInDollars()
 		{
 			
@@ -3299,7 +3342,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteScalarPgFuncInDollars()
 		{
 			
@@ -3317,7 +3360,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderPgFuncInDollars()
 		{
 			
@@ -3325,8 +3368,8 @@ namespace DOTNET
 			
 
 			EDBCommand command=new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';",_conn);
-			command.ExecuteReader();
-			
+			EDBDataReader dr = command.ExecuteReader();
+            dr.Close();
 			command=new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2",_conn);
 			command.ExecuteReader();
 
@@ -3335,7 +3378,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void SingleExecuteNonQuerryPackageIs()
 		{
 			
@@ -3371,7 +3414,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteScalarPackageIs()
 		{
 			
@@ -3408,7 +3451,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteReaderPackageIs()
 		{
 			
@@ -3445,70 +3488,48 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryPackageIs()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
-				"\r	A INT4:=23;" +
-				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
-				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
-				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST IS" +
-				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
-				"\r	BEGIN" +
-				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
-				"\r		RETURN 34;" +
-				"\r	END;" +
-				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
-				"\r	BEGIN" +
-				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
-				"\r		RETURN A;" +
-				"\r	END;" +
-				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23;FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4;  END PKG_TEST;",_conn);
 			command.ExecuteNonQuery();
-			
-			
 
+            command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST IS FUNCTION TESTFUNC1 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN 34; END; FUNCTION TESTFUNC2 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN A; END; END;", _conn);
+            command.ExecuteNonQuery();
 
+            command = new EDBCommand(" DROP PACKAGE PKG_TEST;", _conn);
+            command.ExecuteNonQuery();
+			
+           
 			_conn.Close();
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteScalarPackageIs()
 		{
 			
 			_conn.Open();
 			
 
-			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
-				"\r	A INT4:=23;" +
-				"\r	FUNCTION TESTFUNC1 RETURN INT4;" +
-				"\r	FUNCTION TESTFUNC2 RETURN INT4;" +
-				"\rEND PKG_TEST;CREATE OR REPLACE PACKAGE BODY PKG_TEST IS" +
-				"\r	FUNCTION TESTFUNC1 RETURN INT4 AS" +
-				"\r	BEGIN" +
-				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
-				"\r		RETURN 34;" +
-				"\r	END;" +
-				"\r	FUNCTION TESTFUNC2 RETURN INT4 AS" +
-				"\r	BEGIN" +
-				"\r		DBMS_OUTPUT.PUT_LINE('HI MAN');" +
-				"\r		RETURN A;" +
-				"\r	END;" +
-				"\rEND;DROP PACKAGE PKG_TEST;",_conn);
+			EDBCommand command=new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23; FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4; END PKG_TEST;",_conn);
 			command.ExecuteScalar();
-			
-			
+
+            command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST IS FUNCTION TESTFUNC1 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN 34; END;FUNCTION TESTFUNC2 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN A; END; END;", _conn);
+            command.ExecuteScalar();
+
+            command = new EDBCommand("DROP PACKAGE PKG_TEST;", _conn);
+            command.ExecuteScalar();
 
 			_conn.Close();
 		}
 
 
-		[Test]
+	// Redundant cases are removed 	[Test]
 		public void MultipleExecuteReaderPackageIs()
 		{
 			
@@ -3540,7 +3561,7 @@ namespace DOTNET
 
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteNonQuerryPackageIsOnNewLine()
 		{
 			
@@ -3578,7 +3599,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteScalarPackageIsOnNewLine()
 		{
 			
@@ -3617,7 +3638,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteReaderPackageIsOnNewLine()
 		{
 			
@@ -3656,7 +3677,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryPackageIsOnNewLine()
 		{
 			
@@ -3690,7 +3711,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        //ZK Redundant cases are removed 	[Test]
 		public void MultipleExecuteScalarPackageIsOnNewLine()
 		{
 			
@@ -3723,7 +3744,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        //ZK Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderPackageIsOnNewLine()
 		{
 			
@@ -3755,7 +3776,7 @@ namespace DOTNET
 			_conn.Close();
 		}
 
-		[Test]
+        // Redundant cases are removed [Test]
 		public void SingleExecuteNonQuerryPackageAs()
 		{
 			
@@ -3791,7 +3812,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteScalarPackageAs()
 		{
 			
@@ -3828,7 +3849,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // ZK Redundant cases are removed	[Test]
 		public void SingleExecuteReaderPackageAs()
 		{
 			
@@ -3865,7 +3886,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryPackageAs()
 		{
 			
@@ -3897,7 +3918,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteScalarPackageAs()
 		{
 			
@@ -3928,7 +3949,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderPackageAs()
 		{
 			
@@ -3959,8 +3980,8 @@ namespace DOTNET
 		}
 
 
-		
-		[Test]
+
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteNonQuerryPackageAsOnNewLine()
 		{
 			
@@ -3998,7 +4019,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteScalarPackageAsOnNewLine()
 		{
 			
@@ -4037,7 +4058,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void SingleExecuteReaderPackageAsOnNewLine()
 		{
 			
@@ -4076,7 +4097,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteNonQuerryPackageAsOnNewLine()
 		{
 			
@@ -4110,7 +4131,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteScalarPackageAsOnNewLine()
 		{
 			
@@ -4143,7 +4164,7 @@ namespace DOTNET
 		}
 
 
-		[Test]
+        // Redundant cases are removed	[Test]
 		public void MultipleExecuteReaderPackageAsOnNewLine()
 		{
 			

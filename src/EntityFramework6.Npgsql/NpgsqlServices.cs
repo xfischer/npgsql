@@ -39,6 +39,8 @@ using System.Data.Common;
 using System.Data.Metadata.Edm;
 #endif
 using EnterpriseDB.EDBClient.SqlGenerators;
+using System.Data;
+using EDBTypes;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -65,10 +67,10 @@ namespace EnterpriseDB.EDBClient
 
         protected override DbCommandDefinition CreateDbCommandDefinition(DbProviderManifest providerManifest, DbCommandTree commandTree)
         {
-            return CreateCommandDefinition(CreateDbCommand(commandTree));
+            return CreateCommandDefinition(CreateDbCommand(((EDBProviderManifest)providerManifest).Version, commandTree));
         }
 
-        internal DbCommand CreateDbCommand(DbCommandTree commandTree)
+        internal DbCommand CreateDbCommand(Version serverVersion, DbCommandTree commandTree)
         {
             if (commandTree == null)
                 throw new ArgumentNullException("commandTree");
@@ -77,18 +79,18 @@ namespace EnterpriseDB.EDBClient
 
             foreach (KeyValuePair<string, TypeUsage> parameter in commandTree.Parameters)
             {
-                DbParameter dbParameter = command.CreateParameter();
+                EDBParameter dbParameter = new EDBParameter();
                 dbParameter.ParameterName = parameter.Key;
-                dbParameter.DbType = EDBProviderManifest.GetDbType(((PrimitiveType)parameter.Value.EdmType).PrimitiveTypeKind);
+                dbParameter.EDBDbType = EDBProviderManifest.GetEDBDbType(((PrimitiveType)parameter.Value.EdmType).PrimitiveTypeKind);
                 command.Parameters.Add(dbParameter);
             }
 
-            TranslateCommandTree(commandTree, command);
+            TranslateCommandTree(serverVersion, commandTree, command);
 
             return command;
         }
 
-        private void TranslateCommandTree(DbCommandTree commandTree, DbCommand command)
+        internal void TranslateCommandTree(Version serverVersion, DbCommandTree commandTree, DbCommand command, bool createParametersForNonSelect = true)
         {
             SqlBaseGenerator sqlGenerator = null;
 
@@ -117,6 +119,9 @@ namespace EnterpriseDB.EDBClient
                 // TODO: get a message (unsupported DbCommandTree type)
                 throw new ArgumentException();
             }
+            sqlGenerator._createParametersForConstants = select != null ? false : createParametersForNonSelect;
+            sqlGenerator._command = (EDBCommand)command;
+            sqlGenerator.Version = serverVersion;
 
             sqlGenerator.BuildCommand(command);
         }
@@ -195,7 +200,7 @@ namespace EnterpriseDB.EDBClient
         {
             var connectionBuilder = new EDBConnectionStringBuilder(connection.ConnectionString)
             {
-                Database = "template1",
+                Database = connection.EntityAdminDatabase ?? "template1",
                 Pooling = false
             };
 

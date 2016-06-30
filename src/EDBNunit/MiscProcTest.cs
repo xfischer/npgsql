@@ -2032,7 +2032,7 @@ namespace DOTNET
 			Console.WriteLine(rst);
 			Reader.Close();
 			
-			Assert.AreEqual(a,(Int64[])rst);	
+			Assert.AreEqual(a,(Int64)rst);	
 			command=new EDBCommand("drop table tblTest5;",con);
 			
 			

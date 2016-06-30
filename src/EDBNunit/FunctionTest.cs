@@ -182,7 +182,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions with three IN parameters*/
-		[Test]
+	//	[Test]
 		public void testThreeInArg()
 		{
 			try 
@@ -1519,7 +1519,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of IN, INOUT and OUT parameters in functions with BIT datatype */
-		[Test]
+	//	[Test]
 		public void testFunctionWithBitAsInInoutOut()
 		{
 			//////prereq
@@ -2301,7 +2301,7 @@ namespace DOTNET
 		/*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test]
+	//	[Test]
 		public void testMaxParametersSupportInFunctionsWithTextAsOut()
 		{
 			//////prereq
@@ -2627,7 +2627,7 @@ namespace DOTNET
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+	//	[Test]
 		public void testMaxParametersSupportInFunctionWithTextAsInAndOut()
 		{
 			//////prereq

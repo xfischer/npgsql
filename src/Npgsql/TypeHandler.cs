@@ -29,6 +29,7 @@ using System.Text;
 using  EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using System.IO;
 using System.Diagnostics.CodeAnalysis;
 using AsyncRewriter;
 
@@ -274,6 +275,14 @@ namespace  EnterpriseDB.EDBClient
         }
     }
 
+    /// <summary>
+    /// Implemented by handlers which support <see cref="EDBDataReader.GetTextReader"/>, returns a standard
+    /// TextReader given a binary Stream.
+    /// </summary>
+    interface ITextReaderHandler
+    {
+        TextReader GetTextReader(Stream stream);
+    }
     struct DirectBuffer
     {
         public byte[] Buffer;

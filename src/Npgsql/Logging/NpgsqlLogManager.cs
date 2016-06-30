@@ -55,15 +55,21 @@ namespace  EnterpriseDB.EDBClient.Logging
             }
         }
 
+        /// <summary>
+        /// Determines whether parameter contents will be logged alongside SQL statements - this may reveal sensitive information.
+        /// Defaults to false.
+        /// </summary>
+        public static bool IsParameterLoggingEnabled { get; set; }
+
         static IEDBLoggingProvider _provider;
         static bool _providerRetrieved;
 
-        static internal EDBLogger CreateLogger(string name)
+        internal static EDBLogger CreateLogger(string name)
         {
             return Provider.CreateLogger(name);
         }
 
-        static internal EDBLogger GetCurrentClassLogger()
+        internal static EDBLogger GetCurrentClassLogger()
         {
             return CreateLogger(GetClassFullName());
         }

@@ -354,6 +354,7 @@ namespace  EnterpriseDB.EDBClient
         internal bool Enlist { get { return Settings.Enlist; } }
         internal int BufferSize { get { return Settings.BufferSize; } }
         public string EntityTemplateDatabase { get { return Settings.EntityTemplateDatabase; } }
+        public string EntityAdminDatabase { get { return Settings.EntityAdminDatabase; } }
 
         #endregion Configuration settings
 

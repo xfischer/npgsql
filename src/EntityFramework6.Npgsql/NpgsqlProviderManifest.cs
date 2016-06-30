@@ -33,14 +33,23 @@ using System.Data.Metadata.Edm;
 #endif
 using System.Xml;
 using System.Data;
+using EDBTypes;
 
 namespace EnterpriseDB.EDBClient
 {
     internal class EDBProviderManifest : DbXmlEnabledProviderManifest
     {
+        private Version _version;
+
+        public Version Version { get { return _version; } }
+
         public EDBProviderManifest(string serverVersion)
             : base(CreateXmlReaderForResource("EnterpriseDB.EDBClient.NpgsqlProviderManifest.Manifest.xml"))
         {
+            if (!Version.TryParse(serverVersion, out _version))
+            {
+                _version = new Version(9, 5);
+            }
         }
 
         protected override XmlReader GetDbInformation(string informationType)
@@ -49,17 +58,17 @@ namespace EnterpriseDB.EDBClient
 
             if (informationType == StoreSchemaDefinition)
             {
-                xmlReader = CreateXmlReaderForResource("Npgsql.NpgsqlSchema.ssdl");
+                xmlReader = CreateXmlReaderForResource("EnterpriseDB.EDBClient.NpgsqlSchema.ssdl");
             }
 #if !NET40
             else if (informationType == StoreSchemaDefinitionVersion3)
             {
-                xmlReader = CreateXmlReaderForResource("Npgsql.NpgsqlSchemaV3.ssdl");
+                xmlReader = CreateXmlReaderForResource("EnterpriseDB.EDBClient.NpgsqlSchemaV3.ssdl");
             }
 #endif
             else if (informationType == StoreSchemaMapping)
             {
-                xmlReader = CreateXmlReaderForResource("Npgsql.NpgsqlSchema.msl");
+                xmlReader = CreateXmlReaderForResource("EnterpriseDB.EDBClient.NpgsqlSchema.msl");
             }
 
             if (xmlReader == null)
@@ -73,42 +82,41 @@ namespace EnterpriseDB.EDBClient
         private const string PrecisionFacet = "Precision";
         private const string FixedLengthFacet = "FixedLength";
 
-        internal static DbType GetDbType(PrimitiveTypeKind _primitiveType)
+        internal static EDBDbType GetEDBDbType(PrimitiveTypeKind _primitiveType)
         {
             switch (_primitiveType)
             {
                 case PrimitiveTypeKind.Binary:
-                    return DbType.Binary;
+                    return EDBDbType.Bytea;
                 case PrimitiveTypeKind.Boolean:
-                    return DbType.Boolean;
+                    return EDBDbType.Boolean;
                 case PrimitiveTypeKind.Byte:
-                    return DbType.Byte;
                 case PrimitiveTypeKind.SByte:
-                    return DbType.SByte;
-                case PrimitiveTypeKind.DateTime:
-                    return DbType.DateTime;
-                case PrimitiveTypeKind.DateTimeOffset:
-                    return DbType.DateTimeOffset;
-                case PrimitiveTypeKind.Decimal:
-                    return DbType.Decimal;
-                case PrimitiveTypeKind.Double:
-                    return DbType.Double;
                 case PrimitiveTypeKind.Int16:
-                    return DbType.Int16;
+                    return EDBDbType.Smallint;
+                case PrimitiveTypeKind.DateTime:
+                    return EDBDbType.Timestamp;
+                case PrimitiveTypeKind.DateTimeOffset:
+                    return EDBDbType.TimestampTZ;
+                case PrimitiveTypeKind.Decimal:
+                    return EDBDbType.Numeric;
+                case PrimitiveTypeKind.Double:
+                    return EDBDbType.Double;
                 case PrimitiveTypeKind.Int32:
-                    return DbType.Int32;
+                    return EDBDbType.Integer;
                 case PrimitiveTypeKind.Int64:
-                    return DbType.Int64;
+                    return EDBDbType.Bigint;
                 case PrimitiveTypeKind.Single:
-                    return DbType.Single;
+                    return EDBDbType.Real;
                 case PrimitiveTypeKind.Time:
-                    return DbType.Time;
+                    return EDBDbType.Interval;
                 case PrimitiveTypeKind.Guid:
-                    return DbType.Guid;
+                    return EDBDbType.Uuid;
                 case PrimitiveTypeKind.String:
-                    return DbType.String;
+                    // Send strings as unknowns to be compatible with other datatypes than text
+                    return EDBDbType.Unknown;
                 default:
-                    return DbType.Object;
+                    return EDBDbType.Unknown;
             }
         }
 

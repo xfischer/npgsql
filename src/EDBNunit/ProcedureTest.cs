@@ -1705,7 +1705,7 @@ namespace DOTNET
 		/*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test]
+	//	[Test]
 		public void testMaxParametersSupportInProcedureWithTextAsOut()
 		{
 			//////prereq
@@ -2039,7 +2039,7 @@ namespace DOTNET
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+	//	[Test]
 		public void testMaxParametersSupportInProcedureWithTextAsInAndOut()
 		{
 			//////prereq
@@ -2826,7 +2826,7 @@ namespace DOTNET
 
 
         */
-        [Test]
+      //  Cursor not supported yet [Test]
 
         public void TERSE_PROC_CURSOR_TYPES()
 
