@@ -16,7 +16,7 @@ namespace EDBClientTest
 		
 		static void Main(string[] args)
 		{
-            EDBConnection con = new EDBConnection("Server=172.16.20.143;Port=5444;User Id=enterprisedb;Password=edb;Database=edb;");			
+            EDBConnection con = new EDBConnection("Server=172.16.20.143;Port=5444;User Id=edb;Password=edb;Database=edb;");			
 			
 			try
 			{

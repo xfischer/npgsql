@@ -1288,7 +1288,7 @@ namespace DOTNET
 //        [Test]
 //        public void AmbiguousFunctionParameterType()
 //        {
-//            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=enterprisedb;Password=enterprisedb");
+//            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=edb;Password=edb");
 //
 //
 //            EDBCommand command = new EDBCommand("ambiguousParameterType(:a, :b, :c, :d, :e, :f)", conn);
