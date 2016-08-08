@@ -2165,7 +2165,7 @@ namespace DOTNET
 
             //EDBTypes.EDBInterval[] a = { EDBTypes.EDBInterval.Parse("-23:00:00"), EDBTypes.EDBInterval.Parse("2 days 01:23:34"),
             //EDBTypes.EDBInterval.Parse("1 day -01:00:00"),EDBTypes.EDBInterval.Parse("21 days")};
-            //Command.CommandText = "SELECT * FROM ArraysInterval2;";
+            Command.CommandText = "SELECT * FROM ArraysInterval2;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			
 			//	while(Reader.Read())
@@ -2196,7 +2196,7 @@ namespace DOTNET
 
 
 
-            Command.CommandText = "INSERT INTO ArraySelect (a[1:5],b, c, e, f, g) " +
+            Command.CommandText = "INSERT INTO ArraySelect (a,b, c, e, f, g) " +
   			 " VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
 			Command.ExecuteNonQuery();
 
@@ -2240,7 +2240,7 @@ namespace DOTNET
 
 
 
-            Command.CommandText = "INSERT INTO ArrayUpdate (a[1:5],b, c, e, f, g) " +
+            Command.CommandText = "INSERT INTO ArrayUpdate (a,b, c, e, f, g) " +
 				" VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
 			Command.ExecuteNonQuery();
 

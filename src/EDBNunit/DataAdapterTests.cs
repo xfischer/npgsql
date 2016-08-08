@@ -29,6 +29,59 @@ namespace DOTNET
                 _conn.Close();
         }
 
+
+        [Test]
+        public void FB8070_1()
+        {
+            _conn.Open();
+            EDBCommand com = new EDBCommand("", _conn);
+
+            com.CommandText = "create table Quote(id int4, b char)";
+            com.ExecuteNonQuery();
+            com = new EDBCommand("", _conn);
+
+            com.CommandText = "create or replace procedure quoteproc(abc in integer)\n"
+                + "is\n"
+                + "declare\n"
+                + "i integer:=0;\n"
+                + "begin\n"
+                + "while i < abc loop\n"
+                + "insert into Quote values(1, 't');\n"
+                + "i := i+1;\n"
+                + "end loop;\n"
+                + "end;\n";
+
+            com.ExecuteNonQuery();
+
+            com = new EDBCommand("quoteproc(:a)", _conn);
+            com.CommandType = CommandType.StoredProcedure;
+
+            com.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+            com.Parameters[0].Value = 2000;
+            com.Prepare();
+            com.ExecuteNonQuery();
+
+            Console.WriteLine("Data inserted");
+            DataSet ds = new DataSet();
+            Console.WriteLine("selecting data");
+            EDBDataAdapter da = new EDBDataAdapter("select * from Quote", _conn);
+            da.Fill(ds);
+            Console.WriteLine("selected data");
+            Console.WriteLine("filled data=" + ds.Tables[0].Rows.Count);
+
+            Console.WriteLine("Values selected");
+            com = new EDBCommand("drop table Quote", _conn);
+            com.ExecuteNonQuery();
+
+            com = new EDBCommand("drop procedure quoteproc", _conn);
+            com.ExecuteNonQuery();
+            GC.Collect();
+            _conn.Close();
+
+
+        }
+
+
         [Test]
         public void InsertWithDataSet()
         {
@@ -197,56 +250,6 @@ namespace DOTNET
         }
 
 
-		[Test]
-		public void FB8070_1()
-		{
-			_conn.Open();
-			EDBCommand com=new EDBCommand("",_conn);
-
-			com.CommandText="create table Quote(id int4, b char)";
-			com.ExecuteNonQuery();
-			com=new EDBCommand("",_conn);
-
-			com.CommandText="create or replace procedure quoteproc(abc in integer)\n"
-				+"is\n"
-				+"declare\n"
-				+"i integer:=0;\n"
-				+"begin\n"
-				+"while i < abc loop\n"
-				+"insert into Quote values(1, 't');\n"
-				+"i := i+1;\n"
-				+"end loop;\n"
-				+"end;\n";
-
-			com.ExecuteNonQuery();
-			
-			com=new EDBCommand("quoteproc(:a)",_conn);
-			com.CommandType=CommandType.StoredProcedure;
-			
-			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
-			com.Parameters[0].Value=2000;
-			com.Prepare();
-			com.ExecuteNonQuery();
-			
-			Console.WriteLine("Data inserted");
-			DataSet ds=new DataSet();
-			Console.WriteLine("selecting data");
-			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",_conn);
-			da.Fill(ds);
-			Console.WriteLine("selected data");
-			Console.WriteLine("filled data="+ ds.Tables[0].Rows.Count);
-
-			Console.WriteLine("Values selected");
-			com=new EDBCommand("drop table Quote",_conn);
-			com.ExecuteNonQuery();
-
-			com=new EDBCommand("drop procedure quoteproc",_conn);
-			com.ExecuteNonQuery();
-			GC.Collect();
-			_conn.Close();
-			
-			
-		}
         //[Test]
 		public void FB8070_2()
 		{

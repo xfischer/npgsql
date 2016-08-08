@@ -677,10 +677,13 @@ namespace DOTNET
 
             EDBCommand command = new EDBCommand("select field_time from tablec where field_serial = 2;", _conn);
 
-            DateTime d = (DateTime)command.ExecuteScalar();
+            //   DateTime d = command.ExecuteScalar();
+            TimeSpan tm = (TimeSpan)command.ExecuteScalar();
+
+            Console.WriteLine(tm.ToString());
 
 
-            Assert.AreEqual("10:03:45.345", d.ToString("HH:mm:ss.fff"));
+            Assert.AreEqual("10:03:45.3450000", tm.ToString());
 
         }
 
@@ -1249,7 +1252,7 @@ namespace DOTNET
             command.ExecuteScalar();
 
 
-            Assert.AreEqual(7, result);
+            Assert.AreEqual(6, result);
 
 
         }
@@ -1273,14 +1276,14 @@ namespace DOTNET
         [ExpectedException(typeof(EDBException))]
         public void InvalidConnectionString()
         {
-            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests");
+            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
-
-            command.Connection.Open();
-            command.ExecuteReader();
-            command.Connection.Close();
-
+               command.Connection.Open();
+                command.ExecuteReader();
+                command.Connection.Close();
+       
+       //     Assert("Either password must be specified or IntegratedSecurity must be on",);
 
         }
 
@@ -1288,7 +1291,7 @@ namespace DOTNET
 //        [Test]
 //        public void AmbiguousFunctionParameterType()
 //        {
-//            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=edb;Password=edb");
+//            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=enterprisedb;Password=enterprisedb");
 //
 //
 //            EDBCommand command = new EDBCommand("ambiguousParameterType(:a, :b, :c, :d, :e, :f)", conn);
@@ -1589,12 +1592,14 @@ namespace DOTNET
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("10.1.2.3/32",Reader.GetValue(0).ToString());
+            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
+			Assert.AreEqual("10.1.2.3",Reader.GetValue(0).ToString());
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Read();
 			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("10.0.0.0/32",Reader.GetValue(0).ToString());
+            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
+		    Assert.AreEqual("10.0.0.0",Reader.GetValue(0).ToString());
 
 			Reader.Close();
 		
@@ -1930,14 +1935,17 @@ namespace DOTNET
 			Console.WriteLine(Reader.GetValue(0).ToString());
 			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("10.1.2.3/32",Reader.GetValue(0).ToString());
+            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
+		    Assert.AreEqual("10.1.2.3",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
 			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("10.0.0.0/32",Reader.GetValue(0).ToString());
+            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
+		
+            Assert.AreEqual("10.0.0.0",Reader.GetValue(0).ToString());
 
 			Reader.Close();
 		
@@ -2301,9 +2309,9 @@ namespace DOTNET
 			//tran.Commit();
 			command = new EDBCommand("insert into derived (i) values ('abc');", _conn);
 			command.ExecuteNonQuery();
-			
-			command.CommandText="select derived::base from derived ;";
-		
+            /*ZK: refer to http://www.npgsql.org/doc/faq.html for details*/
+			command.CommandText="select derived::TEXT from derived ;";
+		    
 			EDBDataReader Reader=command.ExecuteReader();
 
 			
