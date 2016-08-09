@@ -171,6 +171,7 @@ namespace  EnterpriseDB.EDBClient
                     ? "select proargnames, proargtypes, proallargtypes, proargmodes from pg_proc where proname = :proname"
                     : "select proargnames, proargtypes from pg_proc where proname = :proname";
                 procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
+                procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
             }
 
             using (var c = new EDBCommand(query, command.Connection))
@@ -223,7 +224,7 @@ namespace  EnterpriseDB.EDBClient
                     param.EDBDbType = edbDbType;
 
                     if (names != null && i < names.Length)
-                        param.ParameterName = ":" + names[i];
+                        param.ParameterName = "parameter" + (i + 1);
                     else
                         param.ParameterName = "parameter" + (i + 1);
 

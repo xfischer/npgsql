@@ -67,8 +67,7 @@ namespace DOTNET
             EDBDataAdapter da = new EDBDataAdapter("select * from Quote", _conn);
             da.Fill(ds);
             Console.WriteLine("selected data");
-            Console.WriteLine("filled data=" + ds.Tables[0].Rows.Count);
-
+  
             Console.WriteLine("Values selected");
             com = new EDBCommand("drop table Quote", _conn);
             com.ExecuteNonQuery();
