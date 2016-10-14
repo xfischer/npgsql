@@ -5,8 +5,8 @@ using System.Reflection;
 
 // Additional assembly attributes are defined in GlobalAssemblyInfo.cs
 
-[assembly: AssemblyTitleAttribute(" EnterpriseDB.EDBClient - .Net Data Provider for PostgreSQL")]
-[assembly: AssemblyDescriptionAttribute(".Net Data Provider for PostgreSQL")]
+[assembly: AssemblyTitleAttribute(" EnterpriseDB.EDBClient - .Net Data Provider for EDB Postgres")]
+[assembly: AssemblyDescriptionAttribute(".Net Data Provider for EDB Postgres")]
 
 [assembly: InternalsVisibleTo("EntityFramework6. EnterpriseDB.EDBClient, PublicKey=" +
 "0024000004800000940000000602000000240000525341310004000001000100" +
