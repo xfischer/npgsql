@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -47,9 +47,9 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             _errorMessageLen = PGUtil.UTF8Encoding.GetByteCount(_errorMessage);
         }
 
-        internal override int Length { get { return 1 + 4 + (_errorMessageLen + 1); } }
+        internal override int Length => 1 + 4 + (_errorMessageLen + 1);
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
             buf.WriteByte(Code);
             buf.WriteInt32(Length - 1);

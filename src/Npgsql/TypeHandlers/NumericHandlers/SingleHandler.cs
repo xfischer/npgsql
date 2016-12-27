@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,21 +36,21 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
     [TypeMapping("float4", EDBDbType.Real, DbType.Single, typeof(float))]
-    internal class SingleHandler : TypeHandler<float>,
-        ISimpleTypeReader<float>, ISimpleTypeWriter,
-        ISimpleTypeReader<double>
+    internal class SingleHandler : SimpleTypeHandler<float>, ISimpleTypeHandler<double>
     {
-        public float Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal SingleHandler(IBackendType backendType) : base(backendType) { }
+
+        public override float Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return buf.ReadSingle();
         }
 
-        double ISimpleTypeReader<double>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is float))
             {
@@ -64,9 +64,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             return 4;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null) {
                 value = parameter.ConvertedValue;
             }
             buf.WriteSingle((float)value);

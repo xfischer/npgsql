@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,11 +32,12 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
     [TypeMapping("timestamptz", EDBDbType.TimestampTZ, DbType.DateTimeOffset, typeof(DateTimeOffset))]
-    internal class TimeStampTzHandler : TimeStampHandler, ISimpleTypeReader<EDBDateTime>, ISimpleTypeReader<DateTimeOffset>
+    internal class TimeStampTzHandler : TimeStampHandler, ISimpleTypeHandler<DateTimeOffset>
     {
-        public TimeStampTzHandler(TypeHandlerRegistry registry) : base(registry) {}
+        public TimeStampTzHandler(IBackendType backendType, TypeHandlerRegistry registry)
+            : base(backendType, registry) {}
 
-        public override DateTime Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
             var ts = ReadTimeStamp(buf, len, fieldDescription);
@@ -54,13 +55,13 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        EDBDateTime ISimpleTypeReader<EDBDateTime>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal override EDBDateTime ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             var ts = ReadTimeStamp(buf, len, fieldDescription);
             return new EDBDateTime(ts.Date, ts.Time, DateTimeKind.Utc).ToLocalTime();
         }
 
-        DateTimeOffset ISimpleTypeReader<DateTimeOffset>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        DateTimeOffset ISimpleTypeHandler<DateTimeOffset>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             try
             {
@@ -70,7 +71,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public override void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             if (parameter != null && parameter.ConvertedValue != null) {
                 value = parameter.ConvertedValue;

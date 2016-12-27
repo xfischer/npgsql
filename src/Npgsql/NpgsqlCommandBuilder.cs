@@ -1,9 +1,7 @@
-﻿#if !DNXCORE50
-
-#region License
+﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,6 +20,8 @@
 // ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
+
+#if NET45 || NET451
 
 using System;
 using System.Data;
@@ -55,11 +55,10 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="adapter">The adapter.</param>
         public EDBCommandBuilder(EDBDataAdapter adapter)
-            : base()
         {
             DataAdapter = adapter;
-            this.QuotePrefix = "\"";
-            this.QuoteSuffix = "\"";
+            QuotePrefix = "\"";
+            QuoteSuffix = "\"";
         }
 
         /// <summary>
@@ -171,7 +170,6 @@ namespace  EnterpriseDB.EDBClient
                     ? "select proargnames, proargtypes, proallargtypes, proargmodes from pg_proc where proname = :proname"
                     : "select proargnames, proargtypes from pg_proc where proname = :proname";
                 procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
-                procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
             }
 
             using (var c = new EDBCommand(query, command.Connection))
@@ -209,7 +207,7 @@ namespace  EnterpriseDB.EDBClient
                         }
                     }
                     else
-                        throw new InvalidOperationException(string.Format("{0} does not exist in pg_proc", command.CommandText));
+                        throw new InvalidOperationException($"{command.CommandText} does not exist in pg_proc");
                 }
 
                 command.Parameters.Clear();
@@ -218,13 +216,13 @@ namespace  EnterpriseDB.EDBClient
                     var param = new EDBParameter();
 
                     // TODO: Fix enums, composite types
-                    var edbDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].EDBDbType;
-                    if (edbDbType == EDBDbType.Unknown)
-                        throw new InvalidOperationException(string.Format("Invalid parameter type: {0}", types[i]));
-                    param.EDBDbType = edbDbType;
+                    var npgsqlDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].BackendType.EDBDbType;
+                    if (!npgsqlDbType.HasValue)
+                        throw new InvalidOperationException($"Invalid parameter type: {types[i]}");
+                    param.EDBDbType = npgsqlDbType.Value;
 
                     if (names != null && i < names.Length)
-                        param.ParameterName = "parameter" + (i + 1);
+                        param.ParameterName = ":" + names[i];
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -238,6 +236,7 @@ namespace  EnterpriseDB.EDBClient
                                 param.Direction = ParameterDirection.Input;
                                 break;
                             case 'o':
+                            case 't':
                                 param.Direction = ParameterDirection.Output;
                                 break;
                             case 'b':
@@ -245,8 +244,6 @@ namespace  EnterpriseDB.EDBClient
                                 break;
                             case 'v':
                                 throw new NotImplementedException("Cannot derive function parameter of type VARIADIC");
-                            case 't':
-                                throw new NotImplementedException("Cannot derive function parameter of type TABLE");
                             default:
                                 throw new ArgumentOutOfRangeException("proargmode", modes[i],
                                     "Unknown code in proargmodes while deriving: " + modes[i]);
@@ -425,15 +422,15 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="adapter">The <see cref="T:System.Data.Common.DbDataAdapter" /> to be used for the update.</param>
         protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
-            var EDBAdapter = adapter as EDBDataAdapter;
-            if (EDBAdapter == null)
-                throw new ArgumentException("adapter needs to be a EDBDataAdapter", "adapter");
+            var npgsqlAdapter = adapter as EDBDataAdapter;
+            if (npgsqlAdapter == null)
+                throw new ArgumentException("adapter needs to be a EDBDataAdapter", nameof(adapter));
 
             // Being called twice for the same adapter means unregister
             if (adapter == DataAdapter)
-                EDBAdapter.RowUpdating -= RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating -= RowUpdatingHandler;
             else
-                EDBAdapter.RowUpdating += RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating += RowUpdatingHandler;
         }
 
         /// <summary>
@@ -463,10 +460,10 @@ namespace  EnterpriseDB.EDBClient
             if (unquotedIdentifier == null)
 
             {
-                throw new ArgumentNullException("unquotedIdentifier", "Unquoted identifier parameter cannot be null");
+                throw new ArgumentNullException(nameof(unquotedIdentifier), "Unquoted identifier parameter cannot be null");
             }
 
-            return String.Format("{0}{1}{2}", QuotePrefix, unquotedIdentifier.Replace(QuotePrefix, QuotePrefix + QuotePrefix), QuoteSuffix);
+            return $"{QuotePrefix}{unquotedIdentifier.Replace(QuotePrefix, QuotePrefix + QuotePrefix)}{QuoteSuffix}";
         }
 
         /// <summary>
@@ -486,18 +483,18 @@ namespace  EnterpriseDB.EDBClient
             if (quotedIdentifier == null)
 
             {
-                throw new ArgumentNullException("quotedIdentifier", "Quoted identifier parameter cannot be null");
+                throw new ArgumentNullException(nameof(quotedIdentifier), "Quoted identifier parameter cannot be null");
             }
 
             var unquotedIdentifier = quotedIdentifier.Trim().Replace(QuotePrefix + QuotePrefix, QuotePrefix);
 
-            if (unquotedIdentifier.StartsWith(this.QuotePrefix))
+            if (unquotedIdentifier.StartsWith(QuotePrefix))
 
             {
                 unquotedIdentifier = unquotedIdentifier.Remove(0, 1);
             }
 
-            if (unquotedIdentifier.EndsWith(this.QuoteSuffix))
+            if (unquotedIdentifier.EndsWith(QuoteSuffix))
 
             {
                 unquotedIdentifier = unquotedIdentifier.Remove(unquotedIdentifier.Length - 1, 1);

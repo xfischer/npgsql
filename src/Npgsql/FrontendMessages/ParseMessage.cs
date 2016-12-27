@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,7 +29,7 @@ using System.Text;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
-    class ParseMessage : ChunkingFrontendMessage
+    class ParseMessage : FrontendMessage
     {
         /// <summary>
         /// The query string to be parsed.
@@ -42,44 +42,49 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         string Statement { get; set; }
 
         // ReSharper disable once InconsistentNaming
-        internal List<uint> ParameterTypeOIDs { get; private set; }
+        List<uint> ParameterTypeOIDs { get; }
+
+        readonly Encoding _encoding;
 
         byte[] _statementNameBytes;
         int _queryLen;
         char[] _queryChars;
         int _charPos;
+        int _parameterTypePos;
 
         State _state;
 
         const byte Code = (byte)'P';
 
-        internal ParseMessage()
+        internal ParseMessage(Encoding encoding)
         {
+            _encoding = encoding;
             ParameterTypeOIDs = new List<uint>();
         }
 
         internal ParseMessage Populate(EDBStatement statement, TypeHandlerRegistry typeHandlerRegistry)
         {
             _state = State.WroteNothing;
+            _parameterTypePos = 0;
             ParameterTypeOIDs.Clear();
             Query = statement.SQL;
             Statement = statement.PreparedStatementName ?? "";
             foreach (var inputParam in statement.InputParameters) {
                 inputParam.ResolveHandler(typeHandlerRegistry);
-                ParameterTypeOIDs.Add(inputParam.Handler.OID);
+                ParameterTypeOIDs.Add(inputParam.Handler.BackendType.OID);
             }
             return this;
         }
 
-        internal override bool Write(EDBBuffer buf, ref DirectBuffer directBuf)
+        internal override bool Write(WriteBuffer buf)
         {
-            Contract.Requires(Statement != null && Statement.All(c => c < 128));
+            Contract.Requires(Statement != null);
 
             switch (_state)
             {
                 case State.WroteNothing:
-                    _statementNameBytes = PGUtil.UTF8Encoding.GetBytes(Statement);
-                    _queryLen = PGUtil.UTF8Encoding.GetByteCount(Query);
+                    _statementNameBytes = Statement.Length == 0 ? PGUtil.EmptyBuffer : _encoding.GetBytes(Statement);
+                    _queryLen = _encoding.GetByteCount(Query);
                     if (buf.WriteSpaceLeft < 1 + 4 + _statementNameBytes.Length + 1) {
                         return false;
                     }
@@ -132,14 +137,22 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
                 case State.WroteQuery:
                     _state = State.WroteQuery;
-                    if (buf.WriteSpaceLeft < 1 + 2 + ParameterTypeOIDs.Count * 4) {
+                    if (buf.WriteSpaceLeft < 1 + 2) {
                         return false;
                     }
                     buf.WriteByte(0); // Null terminator for the query
                     buf.WriteInt16((short)ParameterTypeOIDs.Count);
+                    goto case State.WritingParameterTypes;
 
-                    foreach (var t in ParameterTypeOIDs) {
-                        buf.WriteInt32((int)t);
+                case State.WritingParameterTypes:
+                    _state = State.WritingParameterTypes;
+                    for (; _parameterTypePos < ParameterTypeOIDs.Count; _parameterTypePos++)
+                    {
+                        if (buf.WriteSpaceLeft < 4)
+                        {
+                            return false;
+                        }
+                        buf.WriteInt32((int)ParameterTypeOIDs[_parameterTypePos]);
                     }
 
                     _state = State.WroteAll;
@@ -152,7 +165,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         public override string ToString()
         {
-            return String.Format("[Parse(Statement={0},NumParams={1}]", Statement, ParameterTypeOIDs.Count);
+            return $"[Parse(Statement={Statement},NumParams={ParameterTypeOIDs.Count}]";
         }
 
         private enum State
@@ -161,6 +174,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             WroteHeader,
             WritingQuery,
             WroteQuery,
+            WritingParameterTypes,
             WroteAll
         }
     }

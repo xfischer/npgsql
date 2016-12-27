@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,11 +36,10 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
     [TypeMapping("numeric", EDBDbType.Numeric, new[] { DbType.Decimal, DbType.VarNumeric }, typeof(decimal), DbType.Decimal)]
-    internal class NumericHandler : TypeHandler<decimal>,
-        ISimpleTypeReader<decimal>, ISimpleTypeWriter,
-        ISimpleTypeReader<byte>, ISimpleTypeReader<short>, ISimpleTypeReader<int>, ISimpleTypeReader<long>,
-        ISimpleTypeReader<float>, ISimpleTypeReader<double>,
-        ISimpleTypeReader<string>
+    internal class NumericHandler : SimpleTypeHandler<decimal>,
+        ISimpleTypeHandler<byte>, ISimpleTypeHandler<short>, ISimpleTypeHandler<int>, ISimpleTypeHandler<long>,
+        ISimpleTypeHandler<float>, ISimpleTypeHandler<double>,
+        ISimpleTypeHandler<string>
     {
         static readonly decimal[] Decimals = new decimal[] {
             0.0000000000000000000000000001M,
@@ -60,7 +59,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             10000000000000000000000000000M
         };
 
-        public decimal Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal NumericHandler(IBackendType backendType) : base(backendType) { }
+
+        public override decimal Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             var numGroups = (ushort)buf.ReadInt16();
             var weightFirstGroup = buf.ReadInt16(); // 10000^weight
@@ -99,37 +100,37 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             return sign == 0x4000 ? -result : result;
         }
 
-        byte ISimpleTypeReader<byte>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (byte)Read(buf, len, fieldDescription);
         }
 
-        short ISimpleTypeReader<short>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        short ISimpleTypeHandler<short>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (short)Read(buf, len, fieldDescription);
         }
 
-        int ISimpleTypeReader<int>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        int ISimpleTypeHandler<int>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (int)Read(buf, len, fieldDescription);
         }
 
-        long ISimpleTypeReader<long>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (long)Read(buf, len, fieldDescription);
         }
 
-        float ISimpleTypeReader<float>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        float ISimpleTypeHandler<float>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (float)Read(buf, len, fieldDescription);
         }
 
-        double ISimpleTypeReader<double>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (double)Read(buf, len, fieldDescription);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
@@ -160,7 +161,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             numGroups = integerGroups + fractionGroups;
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             decimal num;
             if (value is decimal)
@@ -190,12 +191,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             return 4 * sizeof(short) + numGroups * sizeof(short);
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            var num = (decimal)(parameter != null && parameter.ConvertedValue != null
-                ? parameter.ConvertedValue
-                : value);
-
+            var num = (decimal) (parameter?.ConvertedValue ?? value);
             if (num == 0M)
             {
                 buf.WriteInt64(0);

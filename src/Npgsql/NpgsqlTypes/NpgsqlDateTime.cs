@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -38,7 +38,7 @@ namespace EDBTypes
     /// DateTime is capable of storing values from year 1 to 9999 at 100-nanosecond precision,
     /// while PostgreSQL's timestamps store values from 4713BC to 5874897AD with 1-microsecond precision.
     /// </summary>
-#if !DNXCORE50
+#if NET45 || NET451
     [Serializable]
 #endif
     public struct EDBDateTime : IEquatable<EDBDateTime>, IComparable<EDBDateTime>, IComparable,
@@ -73,7 +73,7 @@ namespace EDBTypes
         EDBDateTime(InternalType type, EDBDate date, TimeSpan time)
         {
             if (!date.IsFinite && type != InternalType.Infinity && type != InternalType.NegativeInfinity)
-                throw new ArgumentException("Can't construct an EDBDateTime with a non-finite date, use Infinity and NegativeInfinity instead", "date");
+                throw new ArgumentException("Can't construct an EDBDateTime with a non-finite date, use Infinity and NegativeInfinity instead", nameof(date));
             Contract.EndContractBlock();
 
             _type = type;
@@ -106,22 +106,22 @@ namespace EDBTypes
 
         #region Public Properties
 
-        public EDBDate Date { get { return _date; } }
-        public TimeSpan Time { get { return _time; } }
-        public int DayOfYear { get { return _date.DayOfYear; } }
-        public int Year { get { return _date.Year; } }
-        public int Month { get { return _date.Month; } }
-        public int Day { get { return _date.Day; } }
-        public DayOfWeek DayOfWeek { get { return _date.DayOfWeek; } }
-        public bool IsLeapYear { get { return _date.IsLeapYear; } }
+        public EDBDate Date => _date;
+        public TimeSpan Time => _time;
+        public int DayOfYear => _date.DayOfYear;
+        public int Year => _date.Year;
+        public int Month => _date.Month;
+        public int Day => _date.Day;
+        public DayOfWeek DayOfWeek => _date.DayOfWeek;
+        public bool IsLeapYear => _date.IsLeapYear;
 
-        public long Ticks { get { return _date.DaysSinceEra * EDBTimeSpan.TicksPerDay + _time.Ticks; } }
-        public int Millisecond { get { return _time.Milliseconds; } }
-        public int Second { get { return _time.Seconds; } }
-        public int Minute { get { return _time.Minutes; } }
-        public int Hour { get { return _time.Hours; } }
-        public bool IsInfinity { get { return _type == InternalType.Infinity; } }
-        public bool IsNegativeInfinity { get { return _type == InternalType.NegativeInfinity; } }
+        public long Ticks => _date.DaysSinceEra * EDBTimeSpan.TicksPerDay + _time.Ticks;
+        public int Millisecond => _time.Milliseconds;
+        public int Second => _time.Seconds;
+        public int Minute => _time.Minutes;
+        public int Hour => _time.Hours;
+        public bool IsInfinity => _type == InternalType.Infinity;
+        public bool IsNegativeInfinity => _type == InternalType.NegativeInfinity;
 
         public bool IsFinite
         {
@@ -199,7 +199,7 @@ namespace EDBTypes
                 if (_date.DaysSinceEra >= 1 && _date.DaysSinceEra <= MaxDateTimeDay - 1)
                 {
                     // Day between 0001-01-02 and 9999-12-30, so we can use DateTime and it will always succeed
-                    return new EDBDateTime(Subtract(TimeZoneInfo.Local.GetUtcOffset(new DateTime(this.DateTime.Ticks, DateTimeKind.Local))).Ticks, DateTimeKind.Utc);
+                    return new EDBDateTime(Subtract(TimeZoneInfo.Local.GetUtcOffset(new DateTime(DateTime.Ticks, DateTimeKind.Local))).Ticks, DateTimeKind.Utc);
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
                 return new EDBDateTime(Subtract(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Utc);
@@ -230,7 +230,7 @@ namespace EDBTypes
                 if (_date.DaysSinceEra >= 1 && _date.DaysSinceEra <= MaxDateTimeDay - 1)
                 {
                     // Day between 0001-01-02 and 9999-12-30, so we can use DateTime and it will always succeed
-                    return new EDBDateTime(TimeZoneInfo.ConvertTimeFromUtc(new DateTime(this.DateTime.Ticks, DateTimeKind.Utc), TimeZoneInfo.Local));
+                    return new EDBDateTime(TimeZoneInfo.ConvertTime(new DateTime(DateTime.Ticks, DateTimeKind.Utc), TimeZoneInfo.Local));
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
                 return new EDBDateTime(Add(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Local);
@@ -243,7 +243,7 @@ namespace EDBTypes
             }
         }
 
-        public static EDBDateTime Now { get { return new EDBDateTime(DateTime.Now); } }
+        public static EDBDateTime Now => new EDBDateTime(DateTime.Now);
 
         #endregion
 
@@ -257,7 +257,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return "-infinity";
             default:
-                return string.Format("{0} {1}", _date, _time);
+                return $"{_date} {_time}";
             }
         }
 
@@ -503,7 +503,7 @@ namespace EDBTypes
             switch (timestamp._type) {
             case InternalType.Infinity:
             case InternalType.NegativeInfinity:
-                throw new ArgumentOutOfRangeException("timestamp", "You cannot subtract infinity timestamps");
+                throw new ArgumentOutOfRangeException(nameof(timestamp), "You cannot subtract infinity timestamps");
             }
             return new EDBTimeSpan(0, _date.DaysSinceEra - timestamp._date.DaysSinceEra, _time.Ticks - timestamp._time.Ticks);
         }
@@ -579,11 +579,11 @@ namespace EDBTypes
         /// <summary>
         /// Explicit cast of an <see cref="EDBDateTime"/> to a <see cref="DateTime"/>.
         /// </summary>
-        /// <param name="EDBDateTime">An <see cref="EDBDateTime"/>.</param>
+        /// <param name="npgsqlDateTime">An <see cref="EDBDateTime"/>.</param>
         /// <returns>An equivalent <see cref="DateTime"/>.</returns>
-        public static explicit operator DateTime(EDBDateTime EDBDateTime)
+        public static explicit operator DateTime(EDBDateTime npgsqlDateTime)
         {
-            return EDBDateTime.DateTime;
+            return npgsqlDateTime.DateTime;
         }
 
         #endregion

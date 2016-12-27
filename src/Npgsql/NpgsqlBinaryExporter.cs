@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -27,6 +27,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using  EnterpriseDB.EDBClient.BackendMessages;
 using  EnterpriseDB.EDBClient.FrontendMessages;
+using  EnterpriseDB.EDBClient.TypeHandlers;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient
@@ -40,7 +41,7 @@ namespace  EnterpriseDB.EDBClient
         #region Fields and Properties
 
         EDBConnector _connector;
-        EDBBuffer _buf;
+        ReadBuffer _buf;
         TypeHandlerRegistry _registry;
         bool _isConsumed, _isDisposed;
         int _leftToReadInDataMsg, _columnLen;
@@ -50,7 +51,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The number of columns, as returned from the backend in the CopyInResponse.
         /// </summary>
-        internal int NumColumns { get; private set; }
+        internal int NumColumns { get; }
 
         #endregion
 
@@ -59,19 +60,19 @@ namespace  EnterpriseDB.EDBClient
         internal EDBBinaryExporter(EDBConnector connector, string copyToCommand)
         {
             _connector = connector;
-            _buf = connector.Buffer;
+            _buf = connector.ReadBuffer;
             _registry = connector.TypeHandlerRegistry;
             _columnLen = int.MinValue;   // Mark that the (first) column length hasn't been read yet
             _column = -1;
 
             try
             {
-                _connector.SendSingleMessage(new QueryMessage(copyToCommand));
+                _connector.SendQuery(copyToCommand);
 
                 // TODO: Failure will break the connection (e.g. if we get CopyOutResponse), handle more gracefully
                 var copyOutResponse = _connector.ReadExpecting<CopyOutResponseMessage>();
                 if (!copyOutResponse.IsBinary) {
-                    throw new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed", "copyToCommand");
+                    throw new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed", nameof(copyToCommand));
                 }
                 NumColumns = copyOutResponse.NumColumns;
                 ReadHeader();
@@ -89,7 +90,7 @@ namespace  EnterpriseDB.EDBClient
             var headerLen = EDBRawCopyStream.BinarySignature.Length + 4 + 4;
             _buf.Ensure(headerLen);
             if (EDBRawCopyStream.BinarySignature.Any(t => _buf.ReadByte() != t)) {
-                throw new Exception("Invalid COPY binary signature at beginning!");
+                throw new EDBException("Invalid COPY binary signature at beginning!");
             }
             var flags = _buf.ReadInt32();
             if (flags != 0) {
@@ -195,11 +196,40 @@ namespace  EnterpriseDB.EDBClient
         {
             try {
                 ReadColumnLenIfNeeded();
-                if (_columnLen == -1) {
+                if (_columnLen == -1)
                     throw new InvalidCastException("Column is null");
+
+                // TODO: Duplication with EDBDataReader.GetFieldValueInternal
+
+                T result;
+
+                // The type handler supports the requested type directly
+                var tHandler = handler as ITypeHandler<T>;
+                if (tHandler != null)
+                    result = handler.ReadFully<T>(_buf, _columnLen);
+                else
+                {
+                    var t = typeof(T);
+                    if (!t.IsArray)
+                        throw new InvalidCastException($"Can't cast database type {handler.PgDisplayName} to {typeof(T).Name}");
+
+                    // Getting an array
+
+                    // We need to treat this as an actual array type, these need special treatment because of
+                    // typing/generics reasons (there is no way to express "array of X" with generics
+                    var elementType = t.GetElementType();
+                    var arrayHandler = handler as ArrayHandler;
+                    if (arrayHandler == null)
+                        throw new InvalidCastException($"Can't cast database type {handler.PgDisplayName} to {typeof(T).Name}");
+
+                    if (arrayHandler.GetElementFieldType() == elementType)
+                        result = (T)handler.ReadValueAsObjectFully(_buf, _columnLen);
+                    else if (arrayHandler.GetElementPsvType() == elementType)
+                        result = (T)handler.ReadPsvAsObjectFully(_buf, _columnLen);
+                    else
+                        throw new InvalidCastException($"Can't cast database type {handler.PgDisplayName} to {typeof(T).Name}");
                 }
 
-                var result = handler.Read<T>(_buf, _columnLen);
                 _leftToReadInDataMsg -= _columnLen;
                 _columnLen = int.MinValue;   // Mark that the (next) column length hasn't been read yet
                 _column++;
@@ -285,7 +315,7 @@ namespace  EnterpriseDB.EDBClient
                 _connector.ReadExpecting<ReadyForQueryMessage>();
             }
 
-            _connector.State = ConnectorState.Ready;
+            _connector.EndUserAction();
             Cleanup();
         }
 

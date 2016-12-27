@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,11 +40,11 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-uuid.html
     /// </remarks>
     [TypeMapping("uuid", EDBDbType.Uuid, DbType.Guid, typeof(Guid))]
-    internal class UuidHandler : TypeHandler<Guid>,
-        ISimpleTypeReader<Guid>, ISimpleTypeWriter,
-        ISimpleTypeReader<string>
+    internal class UuidHandler : SimpleTypeHandler<Guid>, ISimpleTypeHandler<string>
     {
-        public Guid Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal UuidHandler(IBackendType backendType) : base(backendType) { }
+
+        public override Guid Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             buf.Ensure(16);
             var a = buf.ReadInt32();
@@ -55,14 +55,14 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return new Guid(a, b, c, d);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
 
         #region Write
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             var asString = value as string;
             if (value is string)
@@ -81,9 +81,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return 16;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null) {
                 value = parameter.ConvertedValue;
             }
 

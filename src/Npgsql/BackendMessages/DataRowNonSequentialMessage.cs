@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,9 +25,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
@@ -41,36 +41,16 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         List<IDisposable> _streams;
 
-     //   public isReturnRow = false;
-        internal override DataRowMessage Load(EDBBuffer buf)
-        {
-            _InternalreadPosition = buf.ReadPosition;
-            buf._tempReadposition = buf.ReadPosition;
-            NumColumns = buf.ReadInt16();
-            Buffer = buf;
-            Column = -1;
-            ColumnLen = -1;
-            PosInColumn = 0;
-            // TODO: Recycle message objects rather than recreating for each row
-            _columnOffsets = new List<int>(NumColumns);
-            for (var i = 0; i < NumColumns; i++)
-            {
-                _columnOffsets.Add(buf.ReadPosition);
-                var len = buf.ReadInt32();
-                if (len != -1)
-                {
-                    buf.Seek(len, SeekOrigin.Current);
-                }
-            }
-            _endOffset = buf.ReadPosition;
-            return this;
-        }
-
         internal override DataRowMessage Add(DataRowMessage retRow)
         {
 
-            EDBBuffer buf_new = new EDBBuffer(Buffer.Underlying, Buffer.Size + 100, Buffer.TextEncoding);
+            //   ReadBuffer buf_new = new ReadBuffer(Buffer.Connector, Buffer.Connector.Connection. + 100, Buffer.TextEncoding);
+            ReadBuffer rd = new ReadBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
+            WriteBuffer wt = new WriteBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
+
             int buf_new_length = Buffer.Size;// retRow.Buffer.Size - sizeof(Int16);
+
+            //TODO     retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
 
             retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
 
@@ -78,10 +58,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
             int RetRowNumColumns = (int)retRow.Buffer.ReadInt16();
             int OutParamNumColumns = (int)_columnOffsets.Count;
-            int TotalNumColumns =  OutParamNumColumns + RetRowNumColumns;
+            int TotalNumColumns = OutParamNumColumns + RetRowNumColumns;
             NumColumns = TotalNumColumns;
 
-            buf_new.WriteInt16(TotalNumColumns);
+            wt.WriteInt16(TotalNumColumns);
 
             // Get length of the buffer retRow
             Column = -1;
@@ -94,107 +74,108 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
             for (var i = 0; i < OutParamNumColumns; i++)
             {
-                AllColumnOffsets.Add(buf_new.WritePosition);
+
+                AllColumnOffsets.Add(wt.WritePosition);
                 Buffer.Seek(_columnOffsets[i], SeekOrigin.Begin);
                 var len = Buffer.ReadInt32();
-                buf_new.WriteInt32(len);
+                wt.WriteInt32(len);
 
                 if (len != -1)
                 {
                     byte[] output_data = new byte[len + 1];
 
                     Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                    buf_new.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                    wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
                 }
             }
 
             for (var i = 0; i < RetRowNumColumns; i++)
             {
-                AllColumnOffsets.Add(buf_new.WritePosition);
+                AllColumnOffsets.Add(wt.WritePosition);
                 retRow.Buffer.Seek(((DataRowNonSequentialMessage)retRow)._columnOffsets[i], SeekOrigin.Begin);
                 var len = retRow.Buffer.ReadInt32();
-                buf_new.WriteInt32(len);
+                wt.WriteInt32(len);
 
                 if (len != -1)
                 {
                     byte[] output_data = new byte[len + 1];
 
                     retRow.Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                    buf_new.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                    wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
                 }
             }
 
-            _endOffset = buf_new.WritePosition;
-            buf_new.SetFilledBytes = _endOffset;
-            
-            Buffer = buf_new;
+            _endOffset = wt.WritePosition;
+            //TODO   buf_new.SetFilledBytes = _endOffset;
+
+            Buffer._buf = wt._buf;
+
             _columnOffsets = AllColumnOffsets;
 
             // Both buffers start at 108 bytes
             // We need to preserve _columnOffsets for outparams
 
-/*
-            retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
+            /*
+                        retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
 
-            EDBBuffer buf_new = new EDBBuffer(Buffer.Underlying, Buffer.Size + 100, Buffer.TextEncoding);
-            int buf_new_length = Buffer.Size + 100;// retRow.Buffer.Size - sizeof(Int16);
+                        EDBBuffer buf_new = new EDBBuffer(Buffer.Underlying, Buffer.Size + 100, Buffer.TextEncoding);
+                        int buf_new_length = Buffer.Size + 100;// retRow.Buffer.Size - sizeof(Int16);
 
-            int TotalNumColumns = NumColumns + 1;  // add 1 ret param
-            //  buf_new = buf_new.EnsureOrAllocateTemp(buf_new_length);
-            NumColumns = NumColumns + 1;
-          
-            Column = -1;
-            ColumnLen = -1;
-            PosInColumn = 0;
-            // TODO: Recycle message objects rather than recreating for each row
-            _columnOffsets = new List<int>(TotalNumColumns);
-            for (var i = 0; i < 1 ; i++)
-            {
-                int tmpColumn = retRow.Buffer.ReadInt16();
-                _columnOffsets.Add(retRow.Buffer.ReadPosition);
-                var len = retRow.Buffer.ReadInt32();
-                Buffer.WriteInt32(len);
+                        int TotalNumColumns = NumColumns + 1;  // add 1 ret param
+                        //  buf_new = buf_new.EnsureOrAllocateTemp(buf_new_length);
+                        NumColumns = NumColumns + 1;
 
-                if (len != -1)
-                {
-                    byte[] output_data = new byte[len+1];
+                        Column = -1;
+                        ColumnLen = -1;
+                        PosInColumn = 0;
+                        // TODO: Recycle message objects rather than recreating for each row
+                        _columnOffsets = new List<int>(TotalNumColumns);
+                        for (var i = 0; i < 1 ; i++)
+                        {
+                            int tmpColumn = retRow.Buffer.ReadInt16();
+                            _columnOffsets.Add(retRow.Buffer.ReadPosition);
+                            var len = retRow.Buffer.ReadInt32();
+                            Buffer.WriteInt32(len);
 
-                    retRow.Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                    Buffer.WriteBytes(output_data, (int)SeekOrigin.Current, len);
-                }
-            }
-        //    Buffer = buf_new;
-*/
+                            if (len != -1)
+                            {
+                                byte[] output_data = new byte[len+1];
+
+                                retRow.Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
+                                Buffer.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                            }
+                        }
+                    //    Buffer = buf_new;
+            */
 
 
 
             return this;
         }
 
-/*
-        internal override DataRowMessage Add(DataRowMessage retRow)
+        internal override DataRowMessage Load(ReadBuffer buf)
         {
-            NumColumns += retRow.NumColumns;// uf.ReadInt16();
-            Buffer = retRow.Buffer;
+            _InternalreadPosition = buf.ReadPosition;
+            NumColumns = buf.ReadInt16();
+            Buffer = buf;
             Column = -1;
             ColumnLen = -1;
             PosInColumn = 0;
             // TODO: Recycle message objects rather than recreating for each row
-            _columnOffsets = new List<int>(NumColumns );
+            _columnOffsets = new List<int>(NumColumns);
             for (var i = 0; i < NumColumns; i++)
             {
-                _columnOffsets.Add(retRow.Buffer.ReadPosition);
-                var len = retRow.Buffer.ReadInt32();
+                _columnOffsets.Add(buf.ReadPosition);
+                var len = buf.ReadInt32();
+              
                 if (len != -1)
                 {
-                    retRow.Buffer.Seek(len, SeekOrigin.Current);
+                    buf.Seek(len, SeekOrigin.Current);
                 }
             }
-            _endOffset = retRow.Buffer.ReadPosition;
+            _endOffset = buf.ReadPosition;
             return this;
         }
-*/
-
 
         internal override void SeekToColumn(int column)
         {
@@ -209,7 +190,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             }
         }
 
-        internal override Task SeekToColumnAsync(int column)
+        internal override Task SeekToColumnAsync(int column, CancellationToken cancellationToken)
         {
             SeekToColumn(column);
             return PGUtil.CompletedTask;
@@ -248,7 +229,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             }
         }
 
-        internal override Task ConsumeAsync()
+        internal override Task ConsumeAsync(CancellationToken cancellationToken)
         {
             Consume();
             return PGUtil.CompletedTask;

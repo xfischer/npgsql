@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -27,6 +27,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using  EnterpriseDB.EDBClient.TypeHandlers;
 
@@ -34,20 +35,23 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 {
     abstract class DataRowMessage : IBackendMessage
     {
-        public BackendMessageCode Code { get { return BackendMessageCode.DataRow; } }
+        public BackendMessageCode Code => BackendMessageCode.DataRow;
+        internal abstract DataRowMessage Add(DataRowMessage buf);//ZK
 
-        internal EDBBuffer Buffer { get; set; } //protected
+        protected internal ReadBuffer Buffer { get; protected set; }
 
-        /// <summary>
-        /// The number of columns in the current row
-        /// </summary>
-        internal bool  _isReturnRow = true;
-        internal int _InternalreadPosition;
         /// <summary>
         /// The number of columns in the current row
         /// </summary>
         internal int NumColumns;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        internal bool _isReturnRow = true;
+     /// <summary>
+     /// 
+     /// </summary>
+        internal int _InternalreadPosition;
         /// <summary>
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1
@@ -66,19 +70,17 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal int ColumnLen;
 
-        internal bool IsColumnNull { get { return ColumnLen == -1; } }
+        internal bool IsColumnNull => ColumnLen == -1;
 
-        internal abstract DataRowMessage Load(EDBBuffer buf);
-
-        internal abstract DataRowMessage Add(DataRowMessage buf);//ZK
-
+        internal abstract DataRowMessage Load(ReadBuffer buf);
+   //     internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
 
         /// <summary>
         /// Places our position at the beginning of the given column, after the 4-byte length.
         /// The length is available in ColumnLen.
         /// </summary>
         internal abstract void SeekToColumn(int column);
-        internal abstract Task SeekToColumnAsync(int column);
+        internal abstract Task SeekToColumnAsync(int column, CancellationToken cancellationToken);
         internal abstract void SeekInColumn(int posInColumn);
 
         /// <summary>
@@ -94,7 +96,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// <summary>
         /// Consumes the current row asynchronously, allowing the reader to read in the next one.
         /// </summary>
-        internal abstract Task ConsumeAsync();
+        internal abstract Task ConsumeAsync(CancellationToken token);
 
         internal void SeekToColumnStart(int column)
         {
@@ -106,8 +108,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         #region Checks
 
+        // ReSharper disable once UnusedParameter.Global
         protected void CheckColumnIndex(int column)
         {
+
             if (column < 0 || column >= NumColumns)
             {
                 throw new IndexOutOfRangeException("Column index out of range");

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,7 +22,6 @@
 #endregion
 
 using System;
-using System.CodeDom;
 using  EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
@@ -32,8 +31,8 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("time", EDBDbType.Time, DbType.Time, typeof(TimeSpan))]
-    internal class TimeHandler : TypeHandler<TimeSpan>, ISimpleTypeReader<TimeSpan>, ISimpleTypeWriter
+    [TypeMapping("time", EDBDbType.Time, new[] { DbType.Time })]
+    internal class TimeHandler : SimpleTypeHandler<TimeSpan>
     {
         /// <summary>
         /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
@@ -41,12 +40,15 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         readonly bool _integerFormat;
 
-        public TimeHandler(TypeHandlerRegistry registry)
+        public TimeHandler(IBackendType backendType, TypeHandlerRegistry registry)
+            : base(backendType)
         {
-            _integerFormat = registry.Connector.BackendParams["integer_datetimes"] == "on";
+            // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
+            string s;
+            _integerFormat = !registry.Connector.BackendParams.TryGetValue("integer_datetimes", out s) || s == "on";
         }
 
-        TimeSpan ISimpleTypeReader<TimeSpan>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override TimeSpan Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             if (!_integerFormat) {
                 throw new NotSupportedException("Old floating point representation for timestamps not supported");
@@ -56,7 +58,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             return new TimeSpan(buf.ReadInt64() * 10);
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             var asString = value as string;
             if (asString != null)
@@ -75,7 +77,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             return 8;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             if (parameter != null && parameter.ConvertedValue != null) {
                 value = parameter.ConvertedValue;

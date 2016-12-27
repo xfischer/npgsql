@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 {
@@ -38,12 +39,13 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
         typeof(EDBTsQuery), typeof(EDBTsQueryAnd), typeof(EDBTsQueryEmpty),
         typeof(EDBTsQueryLexeme), typeof(EDBTsQueryNot), typeof(EDBTsQueryOr), typeof(EDBTsQueryBinOp) })
     ]
-    internal class TsQueryHandler : TypeHandler<EDBTsQuery>, IChunkingTypeReader<EDBTsQuery>, IChunkingTypeWriter
+    internal class TsQueryHandler : ChunkingTypeHandler<EDBTsQuery>
     {
         // 1 (type) + 1 (weight) + 1 (is prefix search) + 2046 (max str len) + 1 (null terminator)
         const int MaxSingleTokenBytes = 2050;
 
-        EDBBuffer _buf;
+        ReadBuffer  _readBuf;
+        WriteBuffer _writeBuf;
         Stack<Tuple<EDBTsQuery, int>> _nodes;
         int _numTokens;
         int _tokenPos;
@@ -52,23 +54,25 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 
         Stack<EDBTsQuery> _stack;
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal TsQueryHandler(IBackendType backendType) : base(backendType) { }
+
+        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
-            _buf = buf;
+            _readBuf = buf;
             _nodes = new Stack<Tuple<EDBTsQuery, int>>();
             _tokenPos = -1;
             _bytesLeft = len;
         }
 
-        public bool Read(out EDBTsQuery result)
+        public override bool Read([CanBeNull] out EDBTsQuery result)
         {
             result = null;
 
             if (_tokenPos == -1)
             {
-                if (_buf.ReadBytesLeft < 4)
+                if (_readBuf.ReadBytesLeft < 4)
                     return false;
-                _numTokens = _buf.ReadInt32();
+                _numTokens = _readBuf.ReadInt32();
                 _bytesLeft -= 4;
                 _tokenPos = 0;
             }
@@ -76,22 +80,22 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             if (_numTokens == 0)
             {
                 result = new EDBTsQueryEmpty();
-                _buf = null;
+                _readBuf = null;
                 _nodes = null;
                 return true;
             }
 
             for (; _tokenPos < _numTokens; _tokenPos++)
             {
-                if (_buf.ReadBytesLeft < Math.Min(_bytesLeft, MaxSingleTokenBytes))
+                if (_readBuf.ReadBytesLeft < Math.Min(_bytesLeft, MaxSingleTokenBytes))
                     return false;
 
-                int readPos = _buf.ReadPosition;
+                int readPos = _readBuf.ReadPosition;
 
-                bool isOper = _buf.ReadByte() == 2;
+                bool isOper = _readBuf.ReadByte() == 2;
                 if (isOper)
                 {
-                    EDBTsQuery.NodeKind operKind = (EDBTsQuery.NodeKind)_buf.ReadByte();
+                    EDBTsQuery.NodeKind operKind = (EDBTsQuery.NodeKind)_readBuf.ReadByte();
                     if (operKind == EDBTsQuery.NodeKind.Not)
                     {
                         var node = new EDBTsQueryNot(null);
@@ -117,20 +121,20 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                 }
                 else
                 {
-                    EDBTsQueryLexeme.Weight weight = (EDBTsQueryLexeme.Weight)_buf.ReadByte();
-                    bool prefix = _buf.ReadByte() != 0;
-                    string str = _buf.ReadNullTerminatedString();
+                    EDBTsQueryLexeme.Weight weight = (EDBTsQueryLexeme.Weight)_readBuf.ReadByte();
+                    bool prefix = _readBuf.ReadByte() != 0;
+                    string str = _readBuf.ReadNullTerminatedString();
                     InsertInTree(new EDBTsQueryLexeme(str, weight, prefix));
                 }
 
-                _bytesLeft -= _buf.ReadPosition - readPos;
+                _bytesLeft -= _readBuf.ReadPosition - readPos;
             }
 
             if (_nodes.Count != 0)
                 PGUtil.ThrowIfReached();
 
             result = _value;
-            _buf = null;
+            _readBuf = null;
             _nodes = null;
             _value = null;
             return true;
@@ -154,7 +158,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             }
         }
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             var vec = value as EDBTsQuery;
             if (vec == null) {
@@ -188,9 +192,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             }
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
         {
-            _buf = buf;
+            _writeBuf = buf;
             _value = (EDBTsQuery)value;
             _numTokens = GetTokenCount(_value);
         }
@@ -212,17 +216,17 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             return -1;
         }
 
-        public bool Write(ref DirectBuffer directBuf)
+        public override bool Write(ref DirectBuffer directBuf)
         {
             if (_stack == null)
             {
-                if (_buf.WriteSpaceLeft < 4)
+                if (_writeBuf.WriteSpaceLeft < 4)
                     return false;
-                _buf.WriteInt32(_numTokens);
+                _writeBuf.WriteInt32(_numTokens);
 
                 if (_numTokens == 0)
                 {
-                    _buf = null;
+                    _writeBuf = null;
                     _value = null;
                     return true;
                 }
@@ -232,17 +236,17 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 
             while (_stack.Count > 0)
             {
-                if (_buf.WriteSpaceLeft < 2)
+                if (_writeBuf.WriteSpaceLeft < 2)
                     return false;
 
-                if (_stack.Peek().Kind == EDBTsQuery.NodeKind.Lexeme && _buf.WriteSpaceLeft < MaxSingleTokenBytes)
+                if (_stack.Peek().Kind == EDBTsQuery.NodeKind.Lexeme && _writeBuf.WriteSpaceLeft < MaxSingleTokenBytes)
                     return false;
 
                 var node = _stack.Pop();
-                _buf.WriteByte(node.Kind == EDBTsQuery.NodeKind.Lexeme ? (byte)1 : (byte)2);
+                _writeBuf.WriteByte(node.Kind == EDBTsQuery.NodeKind.Lexeme ? (byte)1 : (byte)2);
                 if (node.Kind != EDBTsQuery.NodeKind.Lexeme)
                 {
-                    _buf.WriteByte((byte)node.Kind);
+                    _writeBuf.WriteByte((byte)node.Kind);
                     if (node.Kind == EDBTsQuery.NodeKind.Not)
                         _stack.Push(((EDBTsQueryNot)node).Child);
                     else
@@ -254,14 +258,14 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                 else
                 {
                     var lexemeNode = (EDBTsQueryLexeme)node;
-                    _buf.WriteByte((byte)lexemeNode.Weights);
-                    _buf.WriteByte(lexemeNode.IsPrefixSearch ? (byte)1 : (byte)0);
-                    _buf.WriteString(lexemeNode.Text);
-                    _buf.WriteByte(0);
+                    _writeBuf.WriteByte((byte)lexemeNode.Weights);
+                    _writeBuf.WriteByte(lexemeNode.IsPrefixSearch ? (byte)1 : (byte)0);
+                    _writeBuf.WriteString(lexemeNode.Text);
+                    _writeBuf.WriteByte(0);
                 }
             }
 
-            _buf = null;
+            _writeBuf = null;
             _value = null;
             _stack = null;
             return true;

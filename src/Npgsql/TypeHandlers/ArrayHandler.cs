@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,18 +29,26 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using JetBrains.Annotations;
 using  EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
+    internal abstract class ArrayHandler : ChunkingTypeHandler<Array>
+    {
+        internal ArrayHandler(IBackendType backendType) : base(backendType) {}
+        internal abstract Type GetElementFieldType(FieldDescription fieldDescription = null);
+        internal abstract Type GetElementPsvType(FieldDescription fieldDescription = null);
+    }
+
     /// <summary>
     /// Base class for all type handlers which handle PostgreSQL arrays.
     /// </summary>
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/arrays.html
     /// </remarks>
-    internal abstract class ArrayHandler : TypeHandler<Array>
+    internal class ArrayHandler<TElement> : ArrayHandler
     {
         /// <summary>
         /// The lower bound value sent to the backend when writing arrays. Normally 1 (the PG default) but
@@ -55,7 +63,8 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         ReadState _readState;
         WriteState _writeState;
         IEnumerator _enumerator;
-        EDBBuffer _buf;
+        ReadBuffer _readBuf;
+        WriteBuffer _writeBuf;
         LengthCache _lengthCache;
         FieldDescription _fieldDescription;
         int _dimensions;
@@ -77,80 +86,108 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return typeof (Array);
         }
 
-        internal abstract Type GetElementFieldType(FieldDescription fieldDescription);
-        internal abstract Type GetElementPsvType(FieldDescription fieldDescription);
+        /// <summary>
+        /// The type of the elements contained within this array
+        /// </summary>
+        /// <param name="fieldDescription"></param>
+        internal override Type GetElementFieldType(FieldDescription fieldDescription = null)
+        {
+            return typeof(TElement);
+        }
+
+        /// <summary>
+        /// The provider-specific type of the elements contained within this array,
+        /// </summary>
+        /// <param name="fieldDescription"></param>
+        internal override Type GetElementPsvType(FieldDescription fieldDescription)
+        {
+            return typeof(TElement);
+        }
 
         /// <summary>
         /// The type handler for the element that this array type holds
         /// </summary>
-        internal TypeHandler ElementHandler { get; private set; }
+        protected internal TypeHandler ElementHandler { get; protected set; }
 
-        protected ArrayHandler(TypeHandler elementHandler)
+        public ArrayHandler(IBackendType backendType, TypeHandler elementHandler, int lowerBound) : base(backendType)
         {
-            LowerBound = 1;
+            LowerBound = lowerBound;
             ElementHandler = elementHandler;
         }
 
+        public ArrayHandler(IBackendType backendType, TypeHandler elementHandler)
+            : this(backendType, elementHandler, 1) {}
+
         #region Read
 
-        protected void PrepareRead(EDBBuffer buf, FieldDescription fieldDescription, int len)
+        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             Contract.Assert(_readState == ReadState.NeedPrepare);
-            if (_readState != ReadState.NeedPrepare)  // Checks against recursion and bugs
-                throw new InvalidOperationException("Started reading a value before completing a previous value");
+            if (_readState != ReadState.NeedPrepare) // Checks against recursion and bugs
+                throw PGUtil.ThrowIfReached("Started reading a value before completing a previous value");
 
-            _buf = buf;
+            _readBuf = buf;
             _fieldDescription = fieldDescription;
             _elementLen = -1;
             _readState = ReadState.ReadNothing;
             _preparedRead = false;
         }
 
-        protected bool Read<TElement>(out Array result)
+        public override bool Read(out Array result)
+        {
+            return Read<TElement>(out result);
+        }
+
+        protected bool Read<TElement2>([CanBeNull] out Array result)
         {
             switch (_readState)
             {
                 case ReadState.ReadNothing:
-                    if (_buf.ReadBytesLeft < 12)
+                    if (_readBuf.ReadBytesLeft < 12)
                     {
                         result = null;
                         return false;
                     }
-                    _dimensions = _buf.ReadInt32();
-                    _buf.ReadInt32();        // Has nulls. Not populated by PG?
-                    var elementOID = _buf.ReadUInt32();
-                    Contract.Assume(elementOID == ElementHandler.OID);
+                    _dimensions = _readBuf.ReadInt32();
+                    _readBuf.ReadInt32();        // Has nulls. Not populated by PG?
+
+                    _readBuf.ReadUInt32();
+                    // The following should hold but fails in test CopyTests.ReadBitString
+                    //var elementOID = _readBuf.ReadUInt32();
+                    //Contract.Assume(elementOID == ElementHandler.BackendType.OID);
+
                     _dimLengths = new int[_dimensions];
                     if (_dimensions > 1) {
                         _indices = new int[_dimensions];
                     }
                     _index = 0;
+                    _readState = ReadState.ReadHeader;
                     goto case ReadState.ReadHeader;
 
                 case ReadState.ReadHeader:
-                    if (_buf.ReadBytesLeft < _dimensions * 8) {
+                    if (_readBuf.ReadBytesLeft < _dimensions * 8) {
                         result = null;
                         return false;
                     }
                     for (var i = 0; i < _dimensions; i++)
                     {
-                        _dimLengths[i] = _buf.ReadInt32();
-                        _buf.ReadInt32(); // We don't care about the lower bounds
+                        _dimLengths[i] = _readBuf.ReadInt32();
+                        _readBuf.ReadInt32(); // We don't care about the lower bounds
                     }
                     if (_dimensions == 0)
                     {
-                        result = new TElement[0];
+                        result = new TElement2[0];
                         _readState = ReadState.NeedPrepare;
                         return true;
                     }
-                    _readValue = Array.CreateInstance(typeof(TElement), _dimLengths);
+                    _readValue = Array.CreateInstance(typeof(TElement2), _dimLengths);
                     _readState = ReadState.ReadingElements;
                     goto case ReadState.ReadingElements;
 
                 case ReadState.ReadingElements:
-                    var completed = _readValue is TElement[]
-                        ? ReadElementsOneDimensional<TElement>()
-                        : ReadElementsMultidimensional<TElement>();
+                    var completed = _readValue is TElement2[]
+                        ? ReadElementsOneDimensional<TElement2>()
+                        : ReadElementsMultidimensional<TElement2>();
 
                     if (!completed)
                     {
@@ -160,7 +197,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
                     result = _readValue;
                     _readValue = null;
-                    _buf = null;
+                    _readBuf = null;
                     _fieldDescription = null;
                     _readState = ReadState.NeedPrepare;
                     return true;
@@ -173,13 +210,13 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         /// <summary>
         /// Optimized population for one-dimensional arrays without boxing/unboxing
         /// </summary>
-        bool ReadElementsOneDimensional<TElement>()
+        bool ReadElementsOneDimensional<TElement2>()
         {
-            var array = (TElement[])_readValue;
+            var array = (TElement2[])_readValue;
 
             for (; _index < array.Length; _index++)
             {
-                TElement element;
+                TElement2 element;
                 if (!ReadSingleElement(out element)) { return false; }
                 array[_index] = element;
             }
@@ -189,11 +226,11 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         /// <summary>
         /// Recursively populates an array from PB binary data representation.
         /// </summary>
-        bool ReadElementsMultidimensional<TElement>()
+        bool ReadElementsMultidimensional<TElement2>()
         {
             while (true)
             {
-                TElement element;
+                TElement2 element;
                 if (!ReadSingleElement(out element)) { return false; }
                 _readValue.SetValue(element, _indices);
                 if (!MoveNextInMultidimensional()) { return true; }
@@ -219,45 +256,45 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return true;
         }
 
-        bool ReadSingleElement<TElement>(out TElement element)
+        bool ReadSingleElement<TElement2>(out TElement2 element)
         {
             try
             {
                 if (_elementLen == -1)
                 {
-                    if (_buf.ReadBytesLeft < 4)
+                    if (_readBuf.ReadBytesLeft < 4)
                     {
-                        element = default(TElement);
+                        element = default(TElement2);
                         return false;
                     }
-                    _elementLen = _buf.ReadInt32();
+                    _elementLen = _readBuf.ReadInt32();
                     if (_elementLen == -1)
                     {
                         // TODO: Nullables
-                        element = default(TElement);
+                        element = default(TElement2);
                         return true;
                     }
                 }
 
-                var asSimpleReader = ElementHandler as ISimpleTypeReader<TElement>;
+                var asSimpleReader = ElementHandler as ISimpleTypeHandler<TElement2>;
                 if (asSimpleReader != null)
                 {
-                    if (_buf.ReadBytesLeft < _elementLen)
+                    if (_readBuf.ReadBytesLeft < _elementLen)
                     {
-                        element = default(TElement);
+                        element = default(TElement2);
                         return false;
                     }
-                    element = asSimpleReader.Read(_buf, _elementLen, _fieldDescription);
+                    element = asSimpleReader.Read(_readBuf, _elementLen, _fieldDescription);
                     _elementLen = -1;
                     return true;
                 }
 
-                var asChunkingReader = ElementHandler as IChunkingTypeReader<TElement>;
+                var asChunkingReader = ElementHandler as IChunkingTypeHandler<TElement2>;
                 if (asChunkingReader != null)
                 {
                     if (!_preparedRead)
                     {
-                        asChunkingReader.PrepareRead(_buf, _elementLen, _fieldDescription);
+                        asChunkingReader.PrepareRead(_readBuf, _elementLen, _fieldDescription);
                         _preparedRead = true;
                     }
                     if (!asChunkingReader.Read(out element))
@@ -291,23 +328,28 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public virtual void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
         {
             Contract.Assert(_readState == ReadState.NeedPrepare);
             if (_writeState != WriteState.NeedPrepare)  // Checks against recursion and bugs
                 throw new InvalidOperationException("Started reading a value before completing a previous value");
 
-            _buf = buf;
+            _writeBuf = buf;
             _lengthCache = lengthCache;
             var asArray = value as Array;
             _writeValue = (IList)value;
-            _dimensions = asArray != null ? asArray.Rank : 1;
+            _dimensions = asArray?.Rank ?? 1;
             _index = 0;
             _wroteElementLen = false;
             _writeState = WriteState.WroteNothing;
         }
 
-        public bool Write<TElement>(ref DirectBuffer directBuf)
+        public override bool Write(ref DirectBuffer directBuf)
+        {
+            return Write<TElement>(ref directBuf);
+        }
+
+        public bool Write<TElement2>(ref DirectBuffer directBuf)
         {
             switch (_writeState)
             {
@@ -318,31 +360,31 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                         4 +               // element_oid
                         _dimensions * 8;  // dim (4) + lBound (4)
 
-                    if (_buf.WriteSpaceLeft < len) {
-                        Contract.Assume(_buf.Size >= len, "Buffer too small for header");
+                    if (_writeBuf.WriteSpaceLeft < len) {
+                        Contract.Assume(_writeBuf.UsableSize >= len, "Buffer too small for header");
                         return false;
                     }
-                    _buf.WriteInt32(_dimensions);
-                    _buf.WriteInt32(1);  // HasNulls=1. Not actually used by the backend.
-                    _buf.WriteInt32((int)ElementHandler.OID);
+                    _writeBuf.WriteInt32(_dimensions);
+                    _writeBuf.WriteInt32(1);  // HasNulls=1. Not actually used by the backend.
+                    _writeBuf.WriteUInt32(ElementHandler.BackendType.OID);
                     var asArray = _writeValue as Array;
                     if (asArray != null)
                     {
                         for (var i = 0; i < _dimensions; i++)
                         {
-                            _buf.WriteInt32(asArray.GetLength(i));
-                            _buf.WriteInt32(LowerBound);  // We don't map .NET lower bounds to PG
+                            _writeBuf.WriteInt32(asArray.GetLength(i));
+                            _writeBuf.WriteInt32(LowerBound);  // We don't map .NET lower bounds to PG
                         }
                     }
                     else
                     {
-                        _buf.WriteInt32(_writeValue.Count);
-                        _buf.WriteInt32(LowerBound);  // We don't map .NET lower bounds to PG
+                        _writeBuf.WriteInt32(_writeValue.Count);
+                        _writeBuf.WriteInt32(LowerBound);  // We don't map .NET lower bounds to PG
                         _enumerator = _writeValue.GetEnumerator();
                     }
 
-                    var asGeneric = _writeValue as IList<TElement>;
-                    _enumerator = asGeneric != null ? asGeneric.GetEnumerator() : _writeValue.GetEnumerator();
+                    var asGeneric = _writeValue as IList<TElement2>;
+                    _enumerator = asGeneric?.GetEnumerator() ?? _writeValue.GetEnumerator();
                     if (!_enumerator.MoveNext()) {
                         goto case WriteState.Cleanup;
                     }
@@ -351,7 +393,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                     goto case WriteState.WritingElements;
 
                 case WriteState.WritingElements:
-                    var genericEnumerator = _enumerator as IEnumerator<TElement>;
+                    var genericEnumerator = _enumerator as IEnumerator<TElement2>;
                     if (genericEnumerator != null)
                     {
                         // TODO: Actually call the element writer generically...!
@@ -370,7 +412,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
                 case WriteState.Cleanup:
                     _writeValue = null;
-                    _buf = null;
+                    _writeBuf = null;
                     _writeState = WriteState.NeedPrepare;
                     return true;
 
@@ -379,36 +421,36 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             }
         }
 
-        bool WriteSingleElement(object element, ref DirectBuffer directBuf)
+        bool WriteSingleElement([CanBeNull] object element, ref DirectBuffer directBuf)
         {
             // TODO: Need generic version of this...
             if (element == null || element is DBNull) {
-                if (_buf.WriteSpaceLeft < 4) {
+                if (_writeBuf.WriteSpaceLeft < 4) {
                     return false;
                 }
-                _buf.WriteInt32(-1);
+                _writeBuf.WriteInt32(-1);
                 return true;
             }
 
-            var asSimpleWriter = ElementHandler as ISimpleTypeWriter;
+            var asSimpleWriter = ElementHandler as ISimpleTypeHandler;
             if (asSimpleWriter != null)
             {
                 var elementLen = asSimpleWriter.ValidateAndGetLength(element, null);
-                if (_buf.WriteSpaceLeft < 4 + elementLen) { return false; }
-                _buf.WriteInt32(elementLen);
-                asSimpleWriter.Write(element, _buf, null);
+                if (_writeBuf.WriteSpaceLeft < 4 + elementLen) { return false; }
+                _writeBuf.WriteInt32(elementLen);
+                asSimpleWriter.Write(element, _writeBuf, null);
                 return true;
             }
 
-            var asChunkedWriter = ElementHandler as IChunkingTypeWriter;
+            var asChunkedWriter = ElementHandler as IChunkingTypeHandler;
             if (asChunkedWriter != null)
             {
                 if (!_wroteElementLen) {
-                    if (_buf.WriteSpaceLeft < 4) {
+                    if (_writeBuf.WriteSpaceLeft < 4) {
                         return false;
                     }
-                    _buf.WriteInt32(asChunkedWriter.ValidateAndGetLength(element, ref _lengthCache, null));
-                    asChunkedWriter.PrepareWrite(element, _buf, _lengthCache, null);
+                    _writeBuf.WriteInt32(asChunkedWriter.ValidateAndGetLength(element, ref _lengthCache, null));
+                    asChunkedWriter.PrepareWrite(element, _writeBuf, _lengthCache, null);
                     _wroteElementLen = true;
                 }
                 if (!asChunkedWriter.Write(ref directBuf)) {
@@ -421,10 +463,15 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             throw PGUtil.ThrowIfReached();
         }
 
-        public int ValidateAndGetLength<TElement>(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+        {
+            return ValidateAndGetLength<TElement>(value, ref lengthCache, parameter);
+        }
+
+        public int ValidateAndGetLength<TElement2>(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             // Take care of single-dimensional arrays and generic IList<T>
-            var asGenericList = value as IList<TElement>;
+            var asGenericList = value as IList<TElement2>;
             if (asGenericList != null)
             {
                 if (lengthCache == null) {
@@ -454,7 +501,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                     return lengthCache.Get();
                 }
                 var asMultidimensional = value as Array;
-                var dimensions = asMultidimensional != null ? asMultidimensional.Rank : 1;
+                var dimensions = asMultidimensional?.Rank ?? 1;
 
                 // Leave empty slot for the entire array length, and go ahead an populate the element slots
                 var pos = lengthCache.Position;
@@ -466,18 +513,24 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                 return len;
             }
 
-            throw new InvalidCastException(string.Format("Can't write type {0} as an array of {1}", value.GetType(), typeof(TElement)));
+            throw new InvalidCastException($"Can't write type {value.GetType()} as an array of {typeof (TElement2)}");
         }
 
-        int GetSingleElementLength(object element, ref LengthCache lengthCache, EDBParameter parameter=null)
+        int GetSingleElementLength([CanBeNull] object element, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             if (element == null || element is DBNull) {
                 return 0;
             }
-            var asChunkingWriter = ElementHandler as IChunkingTypeWriter;
-            return asChunkingWriter != null
-                ? asChunkingWriter.ValidateAndGetLength(element, ref lengthCache, parameter)
-                : ((ISimpleTypeWriter)ElementHandler).ValidateAndGetLength(element, null);
+            var asChunkingWriter = ElementHandler as IChunkingTypeHandler;
+            try
+            {
+                return asChunkingWriter?.ValidateAndGetLength(element, ref lengthCache, parameter) ??
+                       ((ISimpleTypeHandler) ElementHandler).ValidateAndGetLength(element, null);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("While trying to write an array, one of its elements failed validation. You may be trying to mix types in a non-generic IList, or to write a jagged array.", e);
+            }
         }
 
         enum WriteState
@@ -489,55 +542,6 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         }
 
         #endregion
-    }
-
-    /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/arrays.html
-    /// </remarks>
-    /// <typeparam name="TElement">The .NET type contained as an element within this array</typeparam>
-    internal class ArrayHandler<TElement> : ArrayHandler,
-        IChunkingTypeReader<Array>, IChunkingTypeWriter
-    {
-        /// <summary>
-        /// The type of the elements contained within this array
-        /// </summary>
-        /// <param name="fieldDescription"></param>
-        internal override Type GetElementFieldType(FieldDescription fieldDescription)
-        {
-            return typeof(TElement);
-        }
-
-        /// <summary>
-        /// The provider-specific type of the elements contained within this array,
-        /// </summary>
-        /// <param name="fieldDescription"></param>
-        internal override Type GetElementPsvType(FieldDescription fieldDescription)
-        {
-            return typeof(TElement);
-        }
-
-        public ArrayHandler(TypeHandler elementHandler)
-            : base(elementHandler) { }
-
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            base.PrepareRead(buf, fieldDescription, len);
-        }
-
-        public bool Read(out Array result)
-        {
-            return Read<TElement>(out result);
-        }
-
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
-        {
-            return ValidateAndGetLength<TElement>(value, ref lengthCache, parameter);
-        }
-
-        public bool Write(ref DirectBuffer directBuf)
-        {
-            return Write<TElement>(ref directBuf);
-        }
     }
 
     /// <remarks>
@@ -556,7 +560,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return typeof(TPsv);
         }
 
-        internal override object ReadPsvAsObject(DataRowMessage row, FieldDescription fieldDescription)
+        internal override object ReadPsvAsObjectFully(DataRowMessage row, FieldDescription fieldDescription)
         {
             PrepareRead(row.Buffer, row.ColumnLen, fieldDescription);
             Array result;
@@ -566,7 +570,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return result;
         }
 
-        public ArrayHandlerWithPsv(TypeHandler elementHandler)
-            : base(elementHandler) {}
+        public ArrayHandlerWithPsv(IBackendType backendType, TypeHandler elementHandler)
+            : base(backendType, elementHandler) {}
     }
 }

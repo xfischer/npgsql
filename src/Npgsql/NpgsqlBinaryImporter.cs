@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,7 +26,9 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
+using JetBrains.Annotations;
 using  EnterpriseDB.EDBClient.BackendMessages;
 using  EnterpriseDB.EDBClient.FrontendMessages;
 using EDBTypes;
@@ -45,7 +47,7 @@ namespace  EnterpriseDB.EDBClient
         #region Fields and Properties
 
         EDBConnector _connector;
-        EDBBuffer _buf;
+        WriteBuffer _buf;
         TypeHandlerRegistry _registry;
         LengthCache _lengthCache;
         bool _isDisposed;
@@ -59,13 +61,13 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The number of columns, as returned from the backend in the CopyInResponse.
         /// </summary>
-        internal int NumColumns { get; private set; }
+        internal int NumColumns { get; }
 
         /// <summary>
         /// EDBParameter instance needed in order to pass the <see cref="EDBParameter.ConvertedValue"/> from
         /// the validation phase to the writing phase.
         /// </summary>
-        EDBParameter _dummyParam;
+        readonly EDBParameter _dummyParam;
 
         #endregion
 
@@ -74,7 +76,7 @@ namespace  EnterpriseDB.EDBClient
         internal EDBBinaryImporter(EDBConnector connector, string copyFromCommand)
         {
             _connector = connector;
-            _buf = connector.Buffer;
+            _buf = connector.WriteBuffer;
             _registry = connector.TypeHandlerRegistry;
             _lengthCache = new LengthCache();
             _column = -1;
@@ -82,16 +84,19 @@ namespace  EnterpriseDB.EDBClient
 
             try
             {
-                _connector.SendSingleMessage(new QueryMessage(copyFromCommand));
+                _connector.SendQuery(copyFromCommand);
 
                 // TODO: Failure will break the connection (e.g. if we get CopyOutResponse), handle more gracefully
                 var copyInResponse = _connector.ReadExpecting<CopyInResponseMessage>();
                 if (!copyInResponse.IsBinary)
                 {
-                    throw new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed", "copyFromCommand");
+                    throw new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed", nameof(copyFromCommand));
                 }
                 NumColumns = copyInResponse.NumColumns;
                 WriteHeader();
+
+                // We will be sending CopyData messages from now on, deduct the header from the buffer's usable size
+                _buf.UsableSize -= 5;
             }
             catch
             {
@@ -141,9 +146,10 @@ namespace  EnterpriseDB.EDBClient
         public void Write<T>(T value)
         {
             CheckDisposed();
-            if (_column == -1) {
+            if (_column == -1)
                 throw new InvalidOperationException("A row hasn't been started");
-            }
+            if (typeof(T) == typeof(DBNull))
+                throw new ArgumentException($"Can't write DBValue.Null, use {nameof(WriteNull)}() or the overload that accepts an EDBDbType");
 
             var handler = _registry[value];
             DoWrite(handler, value);
@@ -163,15 +169,20 @@ namespace  EnterpriseDB.EDBClient
         public void Write<T>(T value, EDBDbType type)
         {
             CheckDisposed();
-            if (_column == -1) {
+            if (_column == -1)
                 throw new InvalidOperationException("A row hasn't been started");
+
+            if (typeof(T) == typeof(DBNull))
+            {
+                WriteNull();
+                return;
             }
 
             var handler = _registry[type];
             DoWrite(handler, value);
         }
 
-        void DoWrite<T>(TypeHandler handler, T value)
+        void DoWrite<T>(TypeHandler handler, [CanBeNull] T value)
         {
             try
             {
@@ -190,7 +201,7 @@ namespace  EnterpriseDB.EDBClient
 
                 _dummyParam.ConvertedValue = null;
 
-                var asSimple = handler as ISimpleTypeWriter;
+                var asSimple = handler as ISimpleTypeHandler;
                 if (asSimple != null)
                 {
                     var len = asSimple.ValidateAndGetLength(asObject, _dummyParam);
@@ -205,7 +216,7 @@ namespace  EnterpriseDB.EDBClient
                     return;
                 }
 
-                var asChunking = handler as IChunkingTypeWriter;
+                var asChunking = handler as IChunkingTypeHandler;
                 if (asChunking != null)
                 {
                     _lengthCache.Clear();
@@ -235,7 +246,7 @@ namespace  EnterpriseDB.EDBClient
                             _buf.WriteInt32(len + 4);
                             _buf.Flush();
                             _writingDataMsg = false;
-                            _buf.Underlying.Write(directBuf.Buffer, directBuf.Offset, len);
+                            _buf.DirectWrite(directBuf.Buffer, directBuf.Offset, len);
                             directBuf.Buffer = null;
                             directBuf.Size = 0;
                         }
@@ -308,7 +319,7 @@ namespace  EnterpriseDB.EDBClient
         {
             if (_writingDataMsg) { return; }
 
-        //ZK    Contract.Assert(_buf.WritePosition == 0);
+            Contract.Assert(_buf.WritePosition == 0);
             _buf.WriteByte((byte)BackendMessageCode.CopyData);
             // Leave space for the message length
             _buf.WriteInt32(0);
@@ -326,14 +337,14 @@ namespace  EnterpriseDB.EDBClient
         {
             _isDisposed = true;
             _buf.Clear();
-            _connector.SendSingleMessage(new CopyFailMessage());
+            _connector.SendMessage(new CopyFailMessage());
             try {
-                var msg = _connector.ReadSingleMessage();
+                var msg = _connector.ReadMessage(DataRowLoadingMode.NonSequential);
                 // The CopyFail should immediately trigger an exception from the read above.
                 _connector.Break();
-                throw new Exception("Expected ErrorResponse when cancelling COPY but got: " + msg.Code);
-            } catch (EDBException e) {
-                if (e.Code == "57014") { return; }
+                throw new EDBException("Expected ErrorResponse when cancelling COPY but got: " + msg.Code);
+            } catch (PostgresException e) {
+                if (e.SqlState == "57014") { return; }
                 throw;
             }
         }
@@ -346,6 +357,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Completes the import process and signals to the database to write everything.
         /// </summary>
+        [PublicAPI]
         public void Close()
         {
             if (_isDisposed) { return; }
@@ -355,7 +367,7 @@ namespace  EnterpriseDB.EDBClient
             }
             WriteTrailer();
 
-            _connector.SendSingleMessage(CopyDoneMessage.Instance);
+            _connector.SendMessage(CopyDoneMessage.Instance);
             _connector.ReadExpecting<CommandCompleteMessage>();
             _connector.ReadExpecting<ReadyForQueryMessage>();
             _connector.CurrentCopyOperation = null;
@@ -368,6 +380,7 @@ namespace  EnterpriseDB.EDBClient
         {
             _connector = null;
             _registry = null;
+            _buf.UsableSize = _buf.Size;
             _buf = null;
             _isDisposed = true;
         }

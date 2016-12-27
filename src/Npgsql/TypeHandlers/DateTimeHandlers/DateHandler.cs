@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,8 +32,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
     [TypeMapping("date", EDBDbType.Date, DbType.Date, typeof(EDBDate))]
-    internal class DateHandler : TypeHandlerWithPsv<DateTime, EDBDate>,
-        ISimpleTypeReader<DateTime>, ISimpleTypeReader<EDBDate>, ISimpleTypeWriter
+    internal class DateHandler : SimpleTypeHandlerWithPsv<DateTime, EDBDate>
     {
         internal const int PostgresEpochJdate = 2451545; // == date2j(2000, 1, 1)
         internal const int MonthsPerYear = 12;
@@ -44,21 +43,22 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         readonly bool _convertInfinityDateTime;
 
-        public DateHandler(TypeHandlerRegistry registry)
+        public DateHandler(IBackendType backendType, TypeHandlerRegistry registry)
+            : base(backendType)
         {
             _convertInfinityDateTime = registry.Connector.ConvertInfinityDateTime;
         }
 
-        public DateTime Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             // TODO: Convert directly to DateTime without passing through EDBDate?
-            var EDBDate = ((ISimpleTypeReader<EDBDate>) this).Read(buf, len, fieldDescription);
+            var npgsqlDate = ((ISimpleTypeHandler<EDBDate>) this).Read(buf, len, fieldDescription);
             try {
-                if (EDBDate.IsFinite)
-                    return (DateTime)EDBDate;
+                if (npgsqlDate.IsFinite)
+                    return (DateTime)npgsqlDate;
                 if (!_convertInfinityDateTime)
                     throw new InvalidCastException("Can't convert infinite date values to DateTime");
-                if (EDBDate.IsInfinity)
+                if (npgsqlDate.IsInfinity)
                     return DateTime.MaxValue;
                 return DateTime.MinValue;
             } catch (Exception e) {
@@ -69,7 +69,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// <remarks>
         /// Copied wholesale from Postgresql backend/utils/adt/datetime.c:j2date
         /// </remarks>
-        EDBDate ISimpleTypeReader<EDBDate>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal override EDBDate ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             var binDate = buf.ReadInt32();
 
@@ -84,7 +84,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is DateTime) && !(value is EDBDate))
             {
@@ -98,7 +98,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             return 4;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             if (parameter != null && parameter.ConvertedValue != null) {
                 value = parameter.ConvertedValue;

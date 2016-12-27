@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,35 +40,37 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("path", EDBDbType.Path, typeof(EDBPath))]
-    internal class PathHandler : TypeHandler<EDBPath>,
-        IChunkingTypeReader<EDBPath>, IChunkingTypeWriter
+    internal class PathHandler : ChunkingTypeHandler<EDBPath>
     {
         #region State
 
         EDBPath _value;
-        EDBBuffer _buf;
+        ReadBuffer _readBuf;
+        WriteBuffer _writeBuf;
         int _index;
 
         #endregion
 
+        internal PathHandler(IBackendType backendType) : base(backendType) { }
+
         #region Read
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
-            _buf = buf;
+            _readBuf = buf;
             _index = -1;
         }
 
-        public bool Read(out EDBPath result)
+        public override bool Read(out EDBPath result)
         {
             result = default(EDBPath);
 
             if (_index == -1)
             {
-                if (_buf.ReadBytesLeft < 5) { return false; }
+                if (_readBuf.ReadBytesLeft < 5) { return false; }
 
                 bool open;
-                var openByte = _buf.ReadByte();
+                var openByte = _readBuf.ReadByte();
                 switch (openByte) {
                     case 1:
                         open = false;
@@ -79,19 +81,19 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
                     default:
                         throw new Exception("Error decoding binary geometric path: bad open byte");
                 }
-                var numPoints = _buf.ReadInt32();
+                var numPoints = _readBuf.ReadInt32();
                 _value = new EDBPath(numPoints, open);
                 _index = 0;
             }
 
             for (; _index < _value.Capacity; _index++)
             {
-                if (_buf.ReadBytesLeft < 16) { return false; }
-                _value.Add(new EDBPoint(_buf.ReadDouble(), _buf.ReadDouble()));
+                if (_readBuf.ReadBytesLeft < 16) { return false; }
+                _value.Add(new EDBPoint(_readBuf.ReadDouble(), _readBuf.ReadDouble()));
             }
             result = _value;
             _value = default(EDBPath);
-            _buf = null;
+            _readBuf = null;
             return true;
         }
 
@@ -99,38 +101,38 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             if (!(value is EDBPath))
                     throw CreateConversionException(value.GetType());
             return 5 + ((EDBPath)value).Count * 16;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
         {
-            _buf = buf;
+            _writeBuf = buf;
             _value = (EDBPath)value;
             _index = -1;
         }
 
-        public bool Write(ref DirectBuffer directBuf)
+        public override bool Write(ref DirectBuffer directBuf)
         {
             if (_index == -1)
             {
-                if (_buf.WriteSpaceLeft < 5) { return false; }
-                _buf.WriteByte((byte)(_value.Open ? 0 : 1));
-                _buf.WriteInt32(_value.Count);
+                if (_writeBuf.WriteSpaceLeft < 5) { return false; }
+                _writeBuf.WriteByte((byte)(_value.Open ? 0 : 1));
+                _writeBuf.WriteInt32(_value.Count);
                 _index = 0;
             }
 
             for (; _index < _value.Count; _index++)
             {
-                if (_buf.WriteSpaceLeft < 16) { return false; }
+                if (_writeBuf.WriteSpaceLeft < 16) { return false; }
                 var p = _value[_index];
-                _buf.WriteDouble(p.X);
-                _buf.WriteDouble(p.Y);
+                _writeBuf.WriteDouble(p.X);
+                _writeBuf.WriteDouble(p.Y);
             }
-            _buf = null;
+            _writeBuf = null;
             _value = default(EDBPath);
             return true;
         }

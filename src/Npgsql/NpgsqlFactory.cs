@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -33,7 +33,7 @@ namespace  EnterpriseDB.EDBClient
     /// <summary>
     /// A factory to create instances of various  EnterpriseDB.EDBClient objects.
     /// </summary>
-#if !DNXCORE50
+#if NET45 || NET451
     [Serializable]
 #endif
     public sealed class EDBFactory : DbProviderFactory, IServiceProvider
@@ -68,7 +68,7 @@ namespace  EnterpriseDB.EDBClient
             return new EDBConnectionStringBuilder();
         }
 
-#if !DNXCORE50
+#if NET45 || NET451
         public override DbCommandBuilder CreateCommandBuilder()
         {
             return new EDBCommandBuilder();
@@ -93,22 +93,22 @@ namespace  EnterpriseDB.EDBClient
                 if (_legacyEntityFrameworkServices != null)
                     return _legacyEntityFrameworkServices;
 
-                // First time, attempt to find the  EnterpriseDB.EDBClient.EntityFrameworkLegacy assembly and load the type via reflection
+                // First time, attempt to find the EntityFramework5. EnterpriseDB.EDBClient assembly and load the type via reflection
                 var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-                assemblyName.Name = " EnterpriseDB.EDBClient.EntityFrameworkLegacy";
-                Assembly EDBEfAssembly;
+                assemblyName.Name = "EntityFramework5. EnterpriseDB.EDBClient";
+                Assembly npgsqlEfAssembly;
                 try {
-                    EDBEfAssembly = Assembly.Load(assemblyName.FullName);
+                    npgsqlEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
                 } catch (Exception e) {
-                    throw new Exception("Could not load  EnterpriseDB.EDBClient.EntityFrameworkLegacy assembly, is it installed?", e);
+                    throw new Exception("Could not load EntityFramework5. EnterpriseDB.EDBClient assembly, is it installed?", e);
                 }
 
-                Type EDBServicesType;
-                if ((EDBServicesType = EDBEfAssembly.GetType(" EnterpriseDB.EDBClient.EDBServices")) == null ||
-                    EDBServicesType.GetProperty("Instance") == null)
-                    throw new Exception(" EnterpriseDB.EDBClient.EntityFrameworkLegacy assembly does not seem to contain the correct type!");
+                Type npgsqlServicesType;
+                if ((npgsqlServicesType = npgsqlEfAssembly.GetType(" EnterpriseDB.EDBClient.EDBServices")) == null ||
+                    npgsqlServicesType.GetProperty("Instance") == null)
+                    throw new Exception("EntityFramework5. EnterpriseDB.EDBClient assembly does not seem to contain the correct type!");
 
-                return _legacyEntityFrameworkServices = EDBServicesType.InvokeMember("Instance", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetProperty, null, null, new object[0]);
+                return _legacyEntityFrameworkServices = npgsqlServicesType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetMethod.Invoke(null, new object[0]);
             }
 
             return null;

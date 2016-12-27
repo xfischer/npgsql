@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,15 +32,16 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-boolean.html
     /// </remarks>
     [TypeMapping("bool", EDBDbType.Boolean, DbType.Boolean, typeof(bool))]
-    internal class BoolHandler : TypeHandler<bool>,
-        ISimpleTypeReader<bool>, ISimpleTypeWriter
+    internal class BoolHandler : SimpleTypeHandler<bool>
     {
-        public bool Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal BoolHandler(IBackendType backendType) : base(backendType) {}
+
+        public override bool Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return buf.ReadByte() != 0;
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is bool))
             {
@@ -54,9 +55,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return 1;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null) {
                 value = parameter.ConvertedValue;
             }
             buf.WriteByte(((bool)value) ? (byte)1 : (byte)0);

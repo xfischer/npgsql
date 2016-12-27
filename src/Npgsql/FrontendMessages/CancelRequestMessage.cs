@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -31,8 +31,8 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
     class CancelRequestMessage : SimpleFrontendMessage
     {
-        internal int BackendProcessId { get; set; }
-        internal int BackendSecretKey { get; set; }
+        internal int BackendProcessId { get; }
+        internal int BackendSecretKey { get; }
 
         const int CancelRequestCode = 1234 << 16 | 5678;
 
@@ -42,12 +42,9 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             BackendSecretKey = backendSecretKey;
         }
 
-        internal override int Length
-        {
-            get { return 16; }
-        }
+        internal override int Length => 16;
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
             Contract.Requires(BackendProcessId != 0);
 
@@ -59,7 +56,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         public override string ToString()
         {
-            return String.Format("[CancelRequest(BackendProcessId={0})]", BackendProcessId);
+            return $"[CancelRequest(BackendProcessId={BackendProcessId})]";
         }
     }
 }

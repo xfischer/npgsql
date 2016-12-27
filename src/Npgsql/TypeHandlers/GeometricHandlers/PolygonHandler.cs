@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,44 +40,46 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("polygon", EDBDbType.Polygon, typeof(EDBPolygon))]
-    internal class PolygonHandler : TypeHandler<EDBPolygon>,
-        IChunkingTypeReader<EDBPolygon>, IChunkingTypeWriter
+    internal class PolygonHandler : ChunkingTypeHandler<EDBPolygon>
     {
         #region State
 
         EDBPolygon _value;
-        EDBBuffer _buf;
+        ReadBuffer _readBuf;
+        WriteBuffer _writeBuf;
         int _index;
 
         #endregion
 
+        internal PolygonHandler(IBackendType backendType) : base(backendType) { }
+
         #region Read
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
-            _buf = buf;
+            _readBuf = buf;
             _index = -1;
         }
 
-        public bool Read(out EDBPolygon result)
+        public override bool Read(out EDBPolygon result)
         {
             result = default(EDBPolygon);
 
             if (_index == -1)
             {
-                if (_buf.ReadBytesLeft < 4) { return false; }
-                var numPoints = _buf.ReadInt32();
+                if (_readBuf.ReadBytesLeft < 4) { return false; }
+                var numPoints = _readBuf.ReadInt32();
                 _value = new EDBPolygon(numPoints);
                 _index = 0;
             }
 
             for (; _index < _value.Capacity; _index++) {
-                if (_buf.ReadBytesLeft < 16) { return false; }
-                _value.Add(new EDBPoint(_buf.ReadDouble(), _buf.ReadDouble()));
+                if (_readBuf.ReadBytesLeft < 16) { return false; }
+                _value.Add(new EDBPoint(_readBuf.ReadDouble(), _readBuf.ReadDouble()));
             }
             result = _value;
             _value = default(EDBPolygon);
-            _buf = null;
+            _readBuf = null;
             return true;
         }
 
@@ -85,37 +87,37 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             if (!(value is EDBPolygon))
                 throw CreateConversionException(value.GetType());
             return 4 + ((EDBPolygon)value).Count * 16;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
         {
-            _buf = buf;
+            _writeBuf = buf;
             _value = (EDBPolygon)value;
             _index = -1;
         }
 
-        public bool Write(ref DirectBuffer directBuf)
+        public override bool Write(ref DirectBuffer directBuf)
         {
             if (_index == -1)
             {
-                if (_buf.WriteSpaceLeft < 4) { return false; }
-                _buf.WriteInt32(_value.Count);
+                if (_writeBuf.WriteSpaceLeft < 4) { return false; }
+                _writeBuf.WriteInt32(_value.Count);
                 _index = 0;
             }
 
             for (; _index < _value.Count; _index++)
             {
-                if (_buf.WriteSpaceLeft < 16) { return false; }
+                if (_writeBuf.WriteSpaceLeft < 16) { return false; }
                 var p = _value[_index];
-                _buf.WriteDouble(p.X);
-                _buf.WriteDouble(p.Y);
+                _writeBuf.WriteDouble(p.X);
+                _writeBuf.WriteDouble(p.Y);
             }
-            _buf = null;
+            _writeBuf = null;
             _value = default(EDBPolygon);
             return true;
         }

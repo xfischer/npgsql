@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -181,6 +181,12 @@ namespace EDBTypes
         Name = 32,
 
         /// <summary>
+        /// Corresponds to the PostgreSQL "citext" type for the citext module.
+        /// </summary>
+        /// <remarks>See http://www.postgresql.org/docs/current/static/citext.html</remarks>
+        Citext = 51,
+
+        /// <summary>
         /// Corresponds to the PostgreSQL "char" type.
         /// </summary>
         /// <remarks>
@@ -189,17 +195,6 @@ namespace EDBTypes
         /// See http://www.postgresql.org/docs/current/static/datatype-text.html
         /// </remarks>
         InternalChar = 38,
-
-        /// <summary>
-        /// Corresponds to the PostgreSQL "RefCursor" type.
-        /// </summary>
-        /// <remarks>
-        /// This is an internal field and should normally not be used for regular applications.
-        ///
-        /// 
-        /// </remarks>
-        Refcursor = 1790,
-
 
         #endregion
 
@@ -407,13 +402,18 @@ namespace EDBTypes
         /// <summary>
         /// Corresponds to the PostgreSQL "refcursor" type.
         /// </summary>
-        RefCursor = 1790,
+        Refcursor = 23,
 
         /// <summary>
         /// Corresponds to the PostgreSQL internal "oidvector" type.
         /// </summary>
         /// <remarks>See http://www.postgresql.org/docs/current/static/datatype-oid.html</remarks>
         Oidvector = 29,
+
+        /// <summary>
+        /// Corresponds to the PostgreSQL internal "int2vector" type.
+        /// </summary>
+        Int2Vector = 52,
 
         /// <summary>
         /// Corresponds to the PostgreSQL "oid" type.
@@ -433,6 +433,16 @@ namespace EDBTypes
         /// <remarks>See http://www.postgresql.org/docs/current/static/datatype-oid.html</remarks>
         Cid = 43,
 
+        /// <summary>
+        /// Corresponds to the PostgreSQL "regtype" type, a numeric (OID) ID of a type in the pg_type table.
+        /// </summary>
+        Regtype = 49,
+
+        /// <summary>
+        /// Corresponds to the PostgreSQL "tid" type, a tuple id identifying the physical location of a row within its table.
+        /// </summary>
+        Tid = 53,
+
         #endregion
 
         #region Special
@@ -447,6 +457,15 @@ namespace EDBTypes
         /// unsupported by  EnterpriseDB.EDBClient.
         /// </remarks>
         Unknown = 40,
+
+        #endregion
+
+        #region Postgis
+
+        /// <summary>
+        /// The geometry type for postgresql spatial extension postgis.
+        /// </summary>
+        Geometry = 50
 
         #endregion
     }

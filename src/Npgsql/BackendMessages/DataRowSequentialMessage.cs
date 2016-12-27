@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -41,7 +41,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         IDisposable _stream;
 
-        internal override DataRowMessage Load(EDBBuffer buf)
+        internal override DataRowMessage Load(ReadBuffer buf)
         {
             buf.Ensure(sizeof(short));
             NumColumns = buf.ReadInt16();
@@ -54,24 +54,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         internal override DataRowMessage Add(DataRowMessage retRow)
         {
-            NumColumns += retRow.NumColumns;// uf.ReadInt16();
-            Buffer = retRow.Buffer;
-            Column = -1;
-            ColumnLen = -1;
-            PosInColumn = 0;
-            //// TODO: Recycle message objects rather than recreating for each row
-            //_columnOffsets = new List<int>(NumColumns);
-            //for (var i = 0; i < NumColumns; i++)
-            //{
-            //    _columnOffsets.Add(retRow.Buffer.ReadPosition);
-            //    var len = retRow.Buffer.ReadInt32();
-            //    if (len != -1)
-            //    {
-            //        retRow.Buffer.Seek(len, SeekOrigin.Current);
-            //    }
-            //}
-            //_endOffset = retRow.Buffer.ReadPosition;
-            return this;
+            return null;
         }
 
         /// <summary>
@@ -85,7 +68,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
             if (column < Column)
             {
-                throw new InvalidOperationException(string.Format("Invalid attempt to read from column ordinal '{0}'. With CommandBehavior.SequentialAccess, you may only read from column ordinal '{1}' or greater.", column, Column));
+                throw new InvalidOperationException(
+                    $"Invalid attempt to read from column ordinal '{column}'. With CommandBehavior.SequentialAccess, you may only read from column ordinal '{Column}' or greater.");
             }
 
             if (column == Column)

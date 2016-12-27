@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,9 @@
 
 using  EnterpriseDB.EDBClient.BackendMessages;
 using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using EDBTypes;
 using System.Diagnostics.Contracts;
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -40,23 +37,28 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/rangetypes.html
     /// </remarks>
     /// <typeparam name="TElement">the range subtype</typeparam>
-    internal class RangeHandler<TElement> : TypeHandler<EDBRange<TElement>>,
-        IChunkingTypeReader<EDBRange<TElement>>, IChunkingTypeWriter
+    class RangeHandler<TElement> : ChunkingTypeHandler<EDBRange<TElement>>
     {
         /// <summary>
         /// The type handler for the element that this range type holds
         /// </summary>
-        public TypeHandler ElementHandler { get; private set; }
+        public TypeHandler ElementHandler { get; }
 
-        public RangeHandler(TypeHandler<TElement> elementHandler, string name)
+        public RangeHandler(IBackendType backendType, TypeHandler<TElement> elementHandler)
+            : base(backendType)
         {
             ElementHandler = elementHandler;
-            PgName = name;
+        }
+
+        internal override TypeHandler CreateRangeHandler(IBackendType backendType)
+        {
+            throw new Exception("Can't create range handler of range types, this is an  EnterpriseDB.EDBClient bug, please report.");
         }
 
         #region State
 
-        EDBBuffer _buf;
+        ReadBuffer _readBuf;
+        WriteBuffer _writeBuf;
         LengthCache _lengthCache;
         EDBRange<TElement> _value;
         State _state;
@@ -67,7 +69,8 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         void CleanupState()
         {
-            _buf = null;
+            _readBuf = null;
+            _writeBuf = null;
             _value = default(EDBRange<TElement>);
             _fieldDescription = null;
             _state = State.Done;
@@ -77,23 +80,23 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         #region Read
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            _buf = buf;
+            _readBuf = buf;
             _state = State.Flags;
             _elementLen = -1;
         }
 
-        public bool Read(out EDBRange<TElement> result)
+        public override bool Read(out EDBRange<TElement> result)
         {
             switch (_state) {
             case State.Flags:
-                if (_buf.ReadBytesLeft < 1)
+                if (_readBuf.ReadBytesLeft < 1)
                 {
                     result = default(EDBRange<TElement>);
                     return false;
                 }
-                var flags = (RangeFlags)_buf.ReadByte();
+                var flags = (RangeFlags)_readBuf.ReadByte();
 
                 _value = new EDBRange<TElement>(flags);
                 if (_value.IsEmpty) {
@@ -144,34 +147,34 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             }
         }
 
-        bool ReadSingleElement(out TElement element)
+        bool ReadSingleElement([CanBeNull] out TElement element)
         {
             try {
                 if (_elementLen == -1) {
-                    if (_buf.ReadBytesLeft < 4) {
+                    if (_readBuf.ReadBytesLeft < 4) {
                         element = default(TElement);
                         return false;
                     }
-                    _elementLen = _buf.ReadInt32();
+                    _elementLen = _readBuf.ReadInt32();
                     Contract.Assume(_elementLen != -1);
                 }
 
-                var asSimpleReader = ElementHandler as ISimpleTypeReader<TElement>;
+                var asSimpleReader = ElementHandler as ISimpleTypeHandler<TElement>;
                 if (asSimpleReader != null) {
-                    if (_buf.ReadBytesLeft < _elementLen) {
+                    if (_readBuf.ReadBytesLeft < _elementLen) {
                         element = default(TElement);
                         return false;
                     }
-                    element = asSimpleReader.Read(_buf, _elementLen, _fieldDescription);
+                    element = asSimpleReader.Read(_readBuf, _elementLen, _fieldDescription);
                     _elementLen = -1;
                     return true;
                 }
 
-                var asChunkingReader = ElementHandler as IChunkingTypeReader<TElement>;
+                var asChunkingReader = ElementHandler as IChunkingTypeHandler<TElement>;
                 if (asChunkingReader != null) {
                     if (!_preparedRead)
                     {
-                        asChunkingReader.PrepareRead(_buf, _elementLen, _fieldDescription);
+                        asChunkingReader.PrepareRead(_readBuf, _elementLen, _fieldDescription);
                         _preparedRead = true;
                     }
                     if (!asChunkingReader.Read(out element)) {
@@ -194,7 +197,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, [CanBeNull] EDBParameter parameter)
         {
             if (!(value is EDBRange<TElement>))
                 throw CreateConversionException(value.GetType());
@@ -202,20 +205,22 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             var range = (EDBRange<TElement>)value;
             var totalLen = 1;
 
-            var lengthCachePos = lengthCache != null ? lengthCache.Position : 0;
+            var lengthCachePos = lengthCache?.Position ?? 0;
             if (!range.IsEmpty)
             {
-                var asChunkingWriter = ElementHandler as IChunkingTypeWriter;
+                var asChunkingWriter = ElementHandler as IChunkingTypeHandler;
                 if (!range.LowerBoundInfinite) {
-                    totalLen += 4 + (asChunkingWriter != null
-                        ? asChunkingWriter.ValidateAndGetLength(range.LowerBound, ref lengthCache, null)
-                        : ((ISimpleTypeWriter)ElementHandler).ValidateAndGetLength(range.LowerBound, null));
+                    totalLen += 4 + (
+                        asChunkingWriter?.ValidateAndGetLength(range.LowerBound, ref lengthCache, null)
+                        ?? ((ISimpleTypeHandler)ElementHandler).ValidateAndGetLength(range.LowerBound, null)
+                    );
                 }
 
                 if (!range.UpperBoundInfinite) {
-                    totalLen += 4 + (asChunkingWriter != null
-                        ? asChunkingWriter.ValidateAndGetLength(range.UpperBound, ref lengthCache, null)
-                        : ((ISimpleTypeWriter)ElementHandler).ValidateAndGetLength(range.UpperBound, null));
+                    totalLen += 4 + (
+                        asChunkingWriter?.ValidateAndGetLength(range.UpperBound, ref lengthCache, null)
+                        ?? ((ISimpleTypeHandler)ElementHandler).ValidateAndGetLength(range.UpperBound, null)
+                    );
                 }
             }
 
@@ -228,22 +233,21 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return totalLen;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter)
+        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, [CanBeNull] EDBParameter parameter)
         {
-            _buf = buf;
+            _writeBuf = buf;
             _lengthCache = lengthCache;
             _value = (EDBRange<TElement>)value;
             _state = State.Flags;
         }
 
-        public bool Write(ref DirectBuffer directBuf)
+        public override bool Write(ref DirectBuffer directBuf)
         {
-            var asChunkingWriter = ElementHandler as IChunkingTypeWriter;
             switch (_state)
             {
             case State.Flags:
-                if (_buf.WriteSpaceLeft < 1) { return false; }
-                _buf.WriteByte((byte)_value.Flags);
+                if (_writeBuf.WriteSpaceLeft < 1) { return false; }
+                _writeBuf.WriteByte((byte)_value.Flags);
                 if (_value.IsEmpty)
                 {
                     CleanupState();
@@ -277,36 +281,36 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         }
 
         // TODO: Duplicated from ArrayHandler... Refactor...
-        bool WriteSingleElement(object element, ref DirectBuffer directBuf)
+        bool WriteSingleElement([CanBeNull] object element, ref DirectBuffer directBuf)
         {
             if (element == null || element is DBNull)
             {
-                if (_buf.WriteSpaceLeft < 4)
+                if (_writeBuf.WriteSpaceLeft < 4)
                 {
                     return false;
                 }
-                _buf.WriteInt32(-1);
+                _writeBuf.WriteInt32(-1);
                 return true;
             }
 
-            var asSimpleWriter = ElementHandler as ISimpleTypeWriter;
+            var asSimpleWriter = ElementHandler as ISimpleTypeHandler;
             if (asSimpleWriter != null)
             {
                 var elementLen = asSimpleWriter.ValidateAndGetLength(element, null);
-                if (_buf.WriteSpaceLeft < 4 + elementLen) { return false; }
-                _buf.WriteInt32(elementLen);
-                asSimpleWriter.Write(element, _buf, null);
+                if (_writeBuf.WriteSpaceLeft < 4 + elementLen) { return false; }
+                _writeBuf.WriteInt32(elementLen);
+                asSimpleWriter.Write(element, _writeBuf, null);
                 return true;
             }
 
-            var asChunkedWriter = ElementHandler as IChunkingTypeWriter;
+            var asChunkedWriter = ElementHandler as IChunkingTypeHandler;
             if (asChunkedWriter != null)
             {
                 if (!_wroteElementLen)
                 {
-                    if (_buf.WriteSpaceLeft < 4) { return false; }
-                    _buf.WriteInt32(asChunkedWriter.ValidateAndGetLength(element, ref _lengthCache, null));
-                    asChunkedWriter.PrepareWrite(element, _buf, _lengthCache, null);
+                    if (_writeBuf.WriteSpaceLeft < 4) { return false; }
+                    _writeBuf.WriteInt32(asChunkedWriter.ValidateAndGetLength(element, ref _lengthCache, null));
+                    asChunkedWriter.PrepareWrite(element, _writeBuf, _lengthCache, null);
                     _wroteElementLen = true;
                 }
                 if (!asChunkedWriter.Write(ref directBuf))

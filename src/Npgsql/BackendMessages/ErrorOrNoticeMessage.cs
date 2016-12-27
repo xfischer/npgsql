@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,16 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Runtime.Serialization;
 using  EnterpriseDB.EDBClient.Logging;
+#if NET45 || NET451
+using System.Runtime.Serialization;
+#endif
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
+#if NET45 || NET451
     [Serializable]
+#endif
     class ErrorOrNoticeMessage
     {
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
@@ -51,10 +55,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         internal string Line { get; private set; }
         internal string Routine { get; private set; }
 
-        ErrorOrNoticeMessage(SerializationInfo info, StreamingContext context) { }
-
         // ReSharper disable once FunctionComplexityOverflow
-        internal ErrorOrNoticeMessage(EDBBuffer buf)
+        internal ErrorOrNoticeMessage(ReadBuffer buf)
         {
             while (true)
             {

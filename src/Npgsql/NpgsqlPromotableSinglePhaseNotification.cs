@@ -1,8 +1,8 @@
-#if !DNXCORE50
+#if NET45 || NET451
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -33,11 +33,11 @@ namespace  EnterpriseDB.EDBClient
     {
         private readonly EDBConnection _connection;
         private IsolationLevel _isolationLevel;
-        private EDBTransaction _EDBTx;
+        private EDBTransaction _npgsqlTx;
         private EDBTransactionCallbacks _callbacks;
         private IEDBResourceManager _rm;
         private bool _inTransaction;
-        internal bool InLocalTransaction { get { return _EDBTx != null;  } }
+        internal bool InLocalTransaction => _npgsqlTx != null;
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
@@ -56,7 +56,7 @@ namespace  EnterpriseDB.EDBClient
                 {
                     // must already have a durable resource
                     // start transaction
-                    _EDBTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
+                    _npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
                     _inTransaction = true;
                     _rm = CreateResourceManager();
                     _callbacks = new EDBTransactionCallbacks(_connection);
@@ -64,8 +64,8 @@ namespace  EnterpriseDB.EDBClient
                     // enlisted in distributed transaction
                     // disconnect and cleanup local transaction
                     _connection.Connector.ClearTransaction();
-                    _EDBTx.Dispose();
-                    _EDBTx = null;
+                    _npgsqlTx.Dispose();
+                    _npgsqlTx = null;
                 }
             }
         }
@@ -84,24 +84,24 @@ namespace  EnterpriseDB.EDBClient
                     _callbacks = new EDBTransactionCallbacks(_connection);
                 }
                 _callbacks.PrepareTransaction();
-                if (_EDBTx != null)
+                if (_npgsqlTx != null)
                 {
                     // cancel the EDBTransaction since this will
                     // be handled by a two phase commit.
                     _connection.Connector.ClearTransaction();
-                    _EDBTx.Dispose();
-                    _EDBTx = null;
+                    _npgsqlTx.Dispose();
+                    _npgsqlTx = null;
                     _connection.PromotableLocalTransactionEnded();
                 }
             }
         }
 
-        #region IPromotableSinglePhaseNotification Members
+#region IPromotableSinglePhaseNotification Members
 
         public void Initialize()
         {
             Log.Debug("Initialize");
-            _EDBTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
+            _npgsqlTx = _connection.BeginTransaction(ConvertIsolationLevel(_isolationLevel));
             _inTransaction = true;
         }
 
@@ -111,11 +111,11 @@ namespace  EnterpriseDB.EDBClient
             // try to rollback the transaction with either the
             // ADO.NET transaction or the callbacks that managed the
             // two phase commit transaction.
-            if (_EDBTx != null)
+            if (_npgsqlTx != null)
             {
-                _EDBTx.Rollback();
-                _EDBTx.Dispose();
-                _EDBTx = null;
+                _npgsqlTx.Rollback();
+                _npgsqlTx.Dispose();
+                _npgsqlTx = null;
                 singlePhaseEnlistment.Aborted();
                 _connection.PromotableLocalTransactionEnded();
             }
@@ -139,11 +139,11 @@ namespace  EnterpriseDB.EDBClient
         public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
         {
             Log.Debug("Single Phase Commit");
-            if (_EDBTx != null)
+            if (_npgsqlTx != null)
             {
-                _EDBTx.Commit();
-                _EDBTx.Dispose();
-                _EDBTx = null;
+                _npgsqlTx.Commit();
+                _npgsqlTx.Dispose();
+                _npgsqlTx = null;
                 singlePhaseEnlistment.Committed();
                 _connection.PromotableLocalTransactionEnded();
             }
@@ -164,9 +164,9 @@ namespace  EnterpriseDB.EDBClient
             _inTransaction = false;
         }
 
-        #endregion
+#endregion
 
-        #region ITransactionPromoter Members
+#region ITransactionPromoter Members
 
         public byte[] Promote()
         {
@@ -179,19 +179,19 @@ namespace  EnterpriseDB.EDBClient
             }
             byte[] token = _rm.Promote(_callbacks);
             // mostly likely case for this is the transaction has been prepared.
-            if (_EDBTx != null)
+            if (_npgsqlTx != null)
             {
                 // cancel the EDBTransaction since this will
                 // be handled by a two phase commit.
                 _connection.Connector.ClearTransaction();
-                _EDBTx.Dispose();
-                _EDBTx = null;
+                _npgsqlTx.Dispose();
+                _npgsqlTx = null;
                 _connection.PromotableLocalTransactionEnded();
             }
             return token;
         }
 
-        #endregion
+#endregion
 
         private static IEDBResourceManager _resourceManager;
         private static System.Runtime.Remoting.Lifetime.ClientSponsor _sponser;

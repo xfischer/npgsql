@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,28 +40,28 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("point", EDBDbType.Point, typeof(EDBPoint))]
-    internal class PointHandler : TypeHandler<EDBPoint>,
-        ISimpleTypeReader<EDBPoint>, ISimpleTypeWriter,
-        ISimpleTypeReader<string>
+    internal class PointHandler : SimpleTypeHandler<EDBPoint>, ISimpleTypeHandler<string>
     {
-        public EDBPoint Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal PointHandler(IBackendType backendType) : base(backendType) { }
+
+        public override EDBPoint Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return new EDBPoint(buf.ReadDouble(), buf.ReadDouble());
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is EDBPoint))
                 throw CreateConversionException(value.GetType());
             return 16;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             var v = (EDBPoint)value;
             buf.WriteDouble(v.X);

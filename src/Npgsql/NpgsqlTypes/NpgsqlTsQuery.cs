@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -87,7 +87,7 @@ namespace EDBTypes
         public static EDBTsQuery Parse(string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             Contract.EndContractBlock();
 
             Stack<EDBTsQuery> valStack = new Stack<EDBTsQuery>();
@@ -295,7 +295,7 @@ namespace EDBTypes
             set
             {
                 if (string.IsNullOrEmpty(value))
-                    throw new ArgumentException("Text is null or empty string", "value");
+                    throw new ArgumentException("Text is null or empty string", nameof(value));
                 Contract.EndContractBlock();
 
                 _text = value;
@@ -316,7 +316,7 @@ namespace EDBTypes
             set
             {
                 if (((byte)value >> 4) != 0)
-                    throw new ArgumentOutOfRangeException("value", "Illegal weights");
+                    throw new ArgumentOutOfRangeException(nameof(value), "Illegal weights");
                 Contract.EndContractBlock();
 
                 _weights = value;

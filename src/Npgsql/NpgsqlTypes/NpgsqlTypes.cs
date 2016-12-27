@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -257,17 +257,14 @@ namespace EDBTypes
         public EDBBox(double top, double right, double bottom, double left)
             : this(new EDBPoint(right, top), new EDBPoint(left, bottom)) { }
 
-        public double Left   { get { return LowerLeft.X;  } }
-        public double Right  { get { return UpperRight.X; } }
-        public double Bottom { get { return LowerLeft.Y;  } }
-        public double Top    { get { return UpperRight.Y; } }
-        public double Width  { get { return Right - Left; } }
-        public double Height { get { return Top - Bottom; } }
+        public double Left => LowerLeft.X;
+        public double Right => UpperRight.X;
+        public double Bottom => LowerLeft.Y;
+        public double Top => UpperRight.Y;
+        public double Width => Right - Left;
+        public double Height => Top - Bottom;
 
-        public bool IsEmpty
-        {
-            get { return Width == 0 || Height == 0; }
-        }
+        public bool IsEmpty => Width == 0 || Height == 0;
 
         public bool Equals(EDBBox other)
         {
@@ -351,9 +348,9 @@ namespace EDBTypes
             set { _points[index] = value; }
         }
 
-        public int Capacity { get { return _points.Capacity; } }
-        public int Count { get { return _points.Count; } }
-        public bool IsReadOnly { get { return false; } }
+        public int Capacity => _points.Capacity;
+        public int Count => _points.Count;
+        public bool IsReadOnly => false;
 
         public int IndexOf(EDBPoint item)
         {
@@ -520,9 +517,10 @@ namespace EDBTypes
             set { _points[index] = value; }
         }
 
-        public int Capacity { get { return _points.Capacity; } }
-        public int Count { get { return _points.Count; } }
-        public bool IsReadOnly { get { return false; } }
+        public int Capacity => _points.Capacity;
+        public int Count => _points.Count;
+        public bool IsReadOnly => false;
+
         public int IndexOf(EDBPoint item)
         {
             return _points.IndexOf(item);
@@ -746,7 +744,7 @@ namespace EDBTypes
         public EDBInet(IPAddress address, int netmask)
         {
             if (address.AddressFamily != AddressFamily.InterNetwork && address.AddressFamily != AddressFamily.InterNetworkV6)
-                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", "address");
+                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", nameof(address));
             Contract.EndContractBlock();
 
             Address = address;
@@ -756,7 +754,7 @@ namespace EDBTypes
         public EDBInet(IPAddress address)
         {
             if (address.AddressFamily != AddressFamily.InterNetwork && address.AddressFamily != AddressFamily.InterNetworkV6)
-                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", "address");
+                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", nameof(address));
             Contract.EndContractBlock();
 
             Address = address;
@@ -781,12 +779,14 @@ namespace EDBTypes
             }
         }
 
-        public override String ToString()
+        public override string ToString()
         {
-            if (Netmask != 32) {
-                return string.Format("{0}/{1}", Address, Netmask);
+            if ((Address.AddressFamily == AddressFamily.InterNetwork   && Netmask == 32) ||
+                (Address.AddressFamily == AddressFamily.InterNetworkV6 && Netmask == 128))
+            {
+                return Address.ToString();
             }
-            return Address.ToString();
+            return $"{Address}/{Netmask}";
         }
 
         public static explicit operator IPAddress(EDBInet x)
@@ -799,7 +799,9 @@ namespace EDBTypes
 
         public static implicit operator EDBInet(IPAddress ipaddress)
         {
-            return new EDBInet(ipaddress);
+            return ReferenceEquals(ipaddress, null)
+                ? default(EDBInet)
+                : new EDBInet(ipaddress);
         }
 
         public bool Equals(EDBInet other)
@@ -825,6 +827,36 @@ namespace EDBTypes
         public static bool operator !=(EDBInet x, EDBInet y)
         {
             return !(x == y);
+        }
+    }
+
+    /// <summary>
+    /// Represents a PostgreSQL tid value
+    /// </summary>
+    /// <remarks>
+    /// http://www.postgresql.org/docs/current/static/datatype-oid.html
+    /// </remarks>
+    public struct EDBTid
+    {
+        /// <summary>
+        /// Block number
+        /// </summary>
+        public uint BlockNumber;
+
+        /// <summary>
+        /// Tuple index within block
+        /// </summary>
+        public ushort OffsetNumber;
+
+        public EDBTid(uint blockNumber, ushort offsetNumber)
+        {
+            BlockNumber = blockNumber;
+            OffsetNumber = offsetNumber;
+        }
+
+        public override string ToString()
+        {
+            return "(" + BlockNumber + "," + OffsetNumber + ")";
         }
     }
 }

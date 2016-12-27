@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -37,25 +37,26 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
     [TypeMapping("cidr", EDBDbType.Cidr)]
-    internal class CidrHandler : TypeHandler<EDBInet>,
-        ISimpleTypeReader<EDBInet>, ISimpleTypeWriter, ISimpleTypeReader<string>
+    internal class CidrHandler : SimpleTypeHandler<EDBInet>, ISimpleTypeHandler<string>
     {
-        public EDBInet Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal CidrHandler(IBackendType backendType) : base(backendType) { }
+
+        public override EDBInet Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return InetHandler.DoRead(buf, fieldDescription, len, true);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             return InetHandler.DoValidateAndGetLength(value);
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             InetHandler.DoWrite(value, buf, true);
         }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,54 +36,60 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
-    [TypeMapping("int2", EDBDbType.Smallint, new[] { DbType.Int16, DbType.Byte }, new[] { typeof(short), typeof(byte) }, DbType.Int16)]
-    internal class Int16Handler : TypeHandler<short>,
-        ISimpleTypeReader<short>, ISimpleTypeWriter,
-        ISimpleTypeReader<byte>, ISimpleTypeReader<int>, ISimpleTypeReader<long>,
-        ISimpleTypeReader<float>, ISimpleTypeReader<double>, ISimpleTypeReader<decimal>,
-        ISimpleTypeReader<string>
+    [TypeMapping("int2", EDBDbType.Smallint, new[] { DbType.Int16, DbType.Byte, DbType.SByte }, new[] { typeof(short), typeof(byte), typeof(sbyte) }, DbType.Int16)]
+    internal class Int16Handler : SimpleTypeHandler<short>,
+        ISimpleTypeHandler<byte>, ISimpleTypeHandler<sbyte>, ISimpleTypeHandler<int>, ISimpleTypeHandler<long>,
+        ISimpleTypeHandler<float>, ISimpleTypeHandler<double>, ISimpleTypeHandler<decimal>,
+        ISimpleTypeHandler<string>
     {
-        public short Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal Int16Handler(IBackendType backendType) : base(backendType) { }
+
+        public override short Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return buf.ReadInt16();
         }
 
-        byte ISimpleTypeReader<byte>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (byte)Read(buf, len, fieldDescription);
         }
 
-        int ISimpleTypeReader<int>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        sbyte ISimpleTypeHandler<sbyte>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
+        {
+            return (sbyte)Read(buf, len, fieldDescription);
+        }
+
+        int ISimpleTypeHandler<int>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        long ISimpleTypeReader<long>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        float ISimpleTypeReader<float>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        float ISimpleTypeHandler<float>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        double ISimpleTypeReader<double>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        decimal ISimpleTypeReader<decimal>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        decimal ISimpleTypeHandler<decimal>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is short))
             {
@@ -97,9 +103,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             return 2;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null) {
                 value = parameter.ConvertedValue;
             }
             buf.WriteInt16((short)value);

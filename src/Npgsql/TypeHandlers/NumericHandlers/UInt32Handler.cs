@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -37,15 +37,17 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     [TypeMapping("oid", EDBDbType.Oid)]
     [TypeMapping("xid", EDBDbType.Xid)]
     [TypeMapping("cid", EDBDbType.Cid)]
-    internal class UInt32Handler : TypeHandler<uint>,
-        ISimpleTypeReader<uint>, ISimpleTypeWriter
+    [TypeMapping("regtype", EDBDbType.Regtype)]
+    internal class UInt32Handler : SimpleTypeHandler<uint>
     {
-        public uint Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal UInt32Handler(IBackendType backendType) : base(backendType) { }
+
+        public override uint Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return (uint)buf.ReadInt32();
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is uint))
             {
@@ -59,9 +61,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             return 4;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null) {
                 value = parameter.ConvertedValue;
             }
             buf.WriteInt32((int)(uint)value);

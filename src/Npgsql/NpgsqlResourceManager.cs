@@ -1,8 +1,8 @@
-#if !DNXCORE50
+#if NET45 || NET451
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,7 +40,7 @@ namespace  EnterpriseDB.EDBClient
     {
         private readonly Dictionary<string, CommittableTransaction> _transactions = new Dictionary<string, CommittableTransaction>();
 
-        #region IEDBTransactionManager Members
+#region IEDBTransactionManager Members
 
         public byte[] Promote(IEDBTransactionCallbacks callbacks)
         {
@@ -81,7 +81,7 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
-        #endregion
+#endregion
 
         private class DurableResourceManager : ISinglePhaseNotification
         {
@@ -112,7 +112,7 @@ namespace  EnterpriseDB.EDBClient
                 }
             }
 
-            #region IEnlistmentNotification Members
+#region IEnlistmentNotification Members
 
             public void Commit(Enlistment enlistment)
             {
@@ -143,9 +143,9 @@ namespace  EnterpriseDB.EDBClient
                 _callbacks.Dispose();
             }
 
-            #endregion
+#endregion
 
-            #region ISinglePhaseNotification Members
+#region ISinglePhaseNotification Members
 
             public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
             {
@@ -154,7 +154,7 @@ namespace  EnterpriseDB.EDBClient
                 _callbacks.Dispose();
             }
 
-            #endregion
+#endregion
 
             private static readonly Guid rmGuid = new Guid("9e1b6d2d-8cdb-40ce-ac37-edfe5f880716");
 

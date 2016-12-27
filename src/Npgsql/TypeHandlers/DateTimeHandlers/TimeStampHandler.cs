@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,8 +32,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
     [TypeMapping("timestamp", EDBDbType.Timestamp, new[] { DbType.DateTime, DbType.DateTime2 }, new [] { typeof(EDBDateTime), typeof(DateTime) }, DbType.DateTime)]
-    internal class TimeStampHandler : TypeHandlerWithPsv<DateTime, EDBDateTime>,
-        ISimpleTypeReader<DateTime>, ISimpleTypeReader<EDBDateTime>, ISimpleTypeWriter
+    internal class TimeStampHandler : SimpleTypeHandlerWithPsv<DateTime, EDBDateTime>
     {
         /// <summary>
         /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
@@ -47,13 +46,16 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         protected readonly bool _convertInfinityDateTime;
 
-        public TimeStampHandler(TypeHandlerRegistry registry)
+        internal TimeStampHandler(IBackendType backendType, TypeHandlerRegistry registry)
+            : base(backendType)
         {
-            _integerFormat = registry.Connector.BackendParams["integer_datetimes"] == "on";
+            // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
+            string s;
+            _integerFormat = !registry.Connector.BackendParams.TryGetValue("integer_datetimes", out s) || s == "on";
             _convertInfinityDateTime = registry.Connector.ConvertInfinityDateTime;
         }
 
-        public virtual DateTime Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
             var ts = ReadTimeStamp(buf, len, fieldDescription);
@@ -73,12 +75,12 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        EDBDateTime ISimpleTypeReader<EDBDateTime>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal override EDBDateTime ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return ReadTimeStamp(buf, len, fieldDescription);
         }
 
-        protected EDBDateTime ReadTimeStamp(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        protected EDBDateTime ReadTimeStamp(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             if (!_integerFormat) {
                 throw new NotSupportedException("Old floating point representation for timestamps not supported");
@@ -112,7 +114,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is DateTime) && !(value is EDBDateTime) && !(value is DateTimeOffset))
             {
@@ -126,7 +128,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             return 8;
         }
 
-        public virtual void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             if (parameter != null && parameter.ConvertedValue != null) {
                 value = parameter.ConvertedValue;

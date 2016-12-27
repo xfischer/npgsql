@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,6 +26,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Text;
+using JetBrains.Annotations;
 using  EnterpriseDB.EDBClient;
 
 #pragma warning disable 1591
@@ -33,7 +34,7 @@ using  EnterpriseDB.EDBClient;
 // ReSharper disable once CheckNamespace
 namespace EDBTypes
 {
-#if !DNXCORE50
+#if NET45 || NET451
     [Serializable]
 #endif
     public struct EDBDate : IEquatable<EDBDate>, IComparable<EDBDate>, IComparable, IComparer<EDBDate>,
@@ -60,9 +61,13 @@ namespace EDBTypes
         /// </summary>
         public static readonly EDBDate Era = new EDBDate(0);
 
+        [PublicAPI]
         public const int MaxYear = 5874897;
+        [PublicAPI]
         public const int MinYear = -4714;
+        [PublicAPI]
         public static readonly EDBDate MaxCalculableValue = new EDBDate(MaxYear, 12, 31);
+        [PublicAPI]
         public static readonly EDBDate MinCalculableValue = new EDBDate(MinYear, 11, 24);
 
         public static readonly EDBDate Infinity = new EDBDate(InternalType.Infinity);
@@ -129,7 +134,7 @@ namespace EDBTypes
         {
 
             if (str == null) {
-                throw new ArgumentNullException("str");
+                throw new ArgumentNullException(nameof(str));
             }
 
             if (str == "infinity")
@@ -166,6 +171,7 @@ namespace EDBTypes
             }
         }
 
+        [PublicAPI]
         public static bool TryParse(string str, out EDBDate date)
         {
             try {
@@ -181,28 +187,25 @@ namespace EDBTypes
 
         #region Public Properties
 
-        public static EDBDate Now { get { return new EDBDate(DateTime.Now); } }
-        public static EDBDate Today { get { return Now; } }
-        public static EDBDate Yesterday { get { return Now.AddDays(-1); } }
-        public static EDBDate Tomorrow { get { return Now.AddDays(1); } }
+        [PublicAPI] public static EDBDate Now => new EDBDate(DateTime.Now);
+        [PublicAPI] public static EDBDate Today => Now;
+        [PublicAPI] public static EDBDate Yesterday => Now.AddDays(-1);
+        [PublicAPI] public static EDBDate Tomorrow => Now.AddDays(1);
 
-        public int DayOfYear { get { return _daysSinceEra - DaysForYears(Year) + 1; } }
+        [PublicAPI] public int DayOfYear => _daysSinceEra - DaysForYears(Year) + 1;
 
-        public int Year
+        [PublicAPI] public int Year
         {
             get
             {
-                int guess = (int) Math.Round(_daysSinceEra/365.2425);
-                int test = guess - 1;
-                while (DaysForYears(++test) <= _daysSinceEra)
-                {
-                    ;
-                }
+                var guess = (int)Math.Round(_daysSinceEra/365.2425);
+                var test = guess - 1;
+                while (DaysForYears(++test) <= _daysSinceEra) {}
                 return test - 1;
             }
         }
 
-        public int Month
+        [PublicAPI] public int Month
         {
             get
             {
@@ -217,21 +220,18 @@ namespace EDBTypes
             }
         }
 
-        public int Day
-        {
-            get { return DayOfYear - (IsLeapYear ? LeapYearDays : CommonYearDays)[Month - 1]; }
-        }
+        [PublicAPI] public int Day => DayOfYear - (IsLeapYear ? LeapYearDays : CommonYearDays)[Month - 1];
 
-        public DayOfWeek DayOfWeek { get { return (DayOfWeek) ((_daysSinceEra + 1)%7); } }
+        [PublicAPI] public DayOfWeek DayOfWeek => (DayOfWeek) ((_daysSinceEra + 1)%7);
 
-        internal int DaysSinceEra { get { return _daysSinceEra; } }
+        internal int DaysSinceEra => _daysSinceEra;
 
-        public bool IsLeapYear { get { return IsLeap(Year); } }
+        [PublicAPI] public bool IsLeapYear => IsLeap(Year);
 
-        public bool IsInfinity { get { return _type == InternalType.Infinity; } }
-        public bool IsNegativeInfinity { get { return _type == InternalType.NegativeInfinity; } }
+        [PublicAPI] public bool IsInfinity => _type == InternalType.Infinity;
+        [PublicAPI] public bool IsNegativeInfinity => _type == InternalType.NegativeInfinity;
 
-        public bool IsFinite
+        [PublicAPI] public bool IsFinite
         {
             get
             {
@@ -279,7 +279,7 @@ namespace EDBTypes
 
         #region Arithmetic
 
-        [Pure]
+        [PublicAPI, Pure]
         public EDBDate AddDays(int days)
         {
             switch (_type)
@@ -295,7 +295,7 @@ namespace EDBTypes
             }
         }
 
-        [Pure]
+        [PublicAPI, Pure]
         public EDBDate AddYears(int years)
         {
             switch (_type) {
@@ -321,7 +321,7 @@ namespace EDBTypes
             return new EDBDate(newYear, Month, Day);
         }
 
-        [Pure]
+        [PublicAPI, Pure]
         public EDBDate AddMonths(int months)
         {
             switch (_type) {
@@ -342,19 +342,20 @@ namespace EDBTypes
             {
                 newMonth -= 12;
                 newYear += 1;
-            };
+            }
             while (newMonth < 1)
             {
                 newMonth += 12;
                 newYear -= 1;
-            };
-            int maxDay = (IsLeap(newYear) ? LeapYearMaxes : CommonYearMaxes)[newMonth - 1];
-            int newDay = Day > maxDay ? maxDay : Day;
+            }
+            var maxDay = (IsLeap(newYear) ? LeapYearMaxes : CommonYearMaxes)[newMonth - 1];
+            var newDay = Day > maxDay ? maxDay : Day;
             return new EDBDate(newYear, newMonth, newDay);
 
         }
 
         [Pure]
+        [PublicAPI]
         public EDBDate Add(EDBTimeSpan interval)
         {
             switch (_type) {
@@ -372,6 +373,7 @@ namespace EDBTypes
         }
 
         [Pure]
+        [PublicAPI]
         internal EDBDate Add(EDBTimeSpan interval, int carriedOverflow)
         {
             switch (_type) {
@@ -397,7 +399,7 @@ namespace EDBTypes
             return x.CompareTo(y);
         }
 
-        public int Compare(object x, object y)
+        public int Compare([CanBeNull] object x, [CanBeNull] object y)
         {
             if (x == null)
             {
@@ -428,7 +430,7 @@ namespace EDBTypes
             }
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals([CanBeNull] object obj)
         {
             return obj is EDBDate && Equals((EDBDate) obj);
         }
@@ -452,7 +454,7 @@ namespace EDBTypes
             }
         }
 
-        public int CompareTo(object obj)
+        public int CompareTo([CanBeNull] object obj)
         {
             if (obj == null)
             {

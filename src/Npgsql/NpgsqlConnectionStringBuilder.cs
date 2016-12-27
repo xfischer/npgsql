@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,10 +26,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
-using System.DirectoryServices;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
+#if NET45 || NET451
+using System.DirectoryServices;
 using System.Security.Principal;
+#endif
 
 namespace  EnterpriseDB.EDBClient
 {
@@ -68,11 +71,13 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public EDBConnectionStringBuilder() { Init(); }
 
+#if NET45 || NET451
         /// <summary>
         /// Initializes a new instance of the EDBConnectionStringBuilder class, optionally using ODBC rules for quoting values.
         /// </summary>
         /// <param name="useOdbcRules">true to use {} to delimit fields; false to use quotation marks.</param>
         public EDBConnectionStringBuilder(bool useOdbcRules) : base(useOdbcRules) { Init(); }
+#endif
 
         /// <summary>
         /// Initializes a new instance of the EDBConnectionStringBuilder class and sets its <see cref="DbConnectionStringBuilder.ConnectionString"/>.
@@ -85,10 +90,12 @@ namespace  EnterpriseDB.EDBClient
 
         void Init()
         {
-            foreach (var kv in PropertyDefaults) {
+            // Set the strongly-typed properties to their default values
+            foreach (var kv in PropertyDefaults)
                 kv.Key.SetValue(this, kv.Value);
-                base.Clear();
-            }
+            // Setting the strongly-typed properties here also set the string-based properties in the base class.
+            // Clear them (default settings = empty connection string)
+            base.Clear();
         }
 
         #endregion
@@ -129,7 +136,7 @@ namespace  EnterpriseDB.EDBClient
                 p => p,
                 p => p.GetCustomAttribute<DefaultValueAttribute>() != null
                     ? p.GetCustomAttribute<DefaultValueAttribute>().Value
-                    : (p.PropertyType.IsValueType ? Activator.CreateInstance(p.PropertyType) : null)
+                    : (p.PropertyType.GetTypeInfo().IsValueType ? Activator.CreateInstance(p.PropertyType) : null)
             );
         }
 
@@ -148,7 +155,7 @@ namespace  EnterpriseDB.EDBClient
             {
                 object value;
                 if (!TryGetValue(keyword, out value)) {
-                    throw new ArgumentException("Keyword not supported: " + keyword, "keyword");
+                    throw new ArgumentException("Keyword not supported: " + keyword, nameof(keyword));
                 }
                 return value;
             }
@@ -162,10 +169,10 @@ namespace  EnterpriseDB.EDBClient
                 var p = GetProperty(keyword);
                 try {
                     object convertedValue;
-                    if (p.PropertyType.IsEnum && value is string) {
+                    if (p.PropertyType.GetTypeInfo().IsEnum && value is string) {
                         convertedValue = Enum.Parse(p.PropertyType, (string)value);
                     } else {
-                        convertedValue = Convert.ChangeType(value, Type.GetTypeCode(p.PropertyType));
+                        convertedValue = Convert.ChangeType(value, p.PropertyType);
                     }
                     p.SetValue(this, convertedValue);
                 } catch (Exception e) {
@@ -182,10 +189,11 @@ namespace  EnterpriseDB.EDBClient
         public override bool Remove(string keyword)
         {
             var p = GetProperty(keyword);
-            var removed = base.ContainsKey(p.Name);
+            string cannonicalName = PropertyNameToCanonicalKeyword[p.Name];
+            var removed = base.ContainsKey(cannonicalName);
             // Note that string property setters call SetValue, which itself calls base.Remove().
             p.SetValue(this, PropertyDefaults[p]);
-            base.Remove(p.Name);
+            base.Remove(cannonicalName);
             return removed;
         }
 
@@ -208,7 +216,7 @@ namespace  EnterpriseDB.EDBClient
         public override bool ContainsKey(string keyword)
         {
             if (keyword == null)
-                throw new ArgumentNullException("keyword");
+                throw new ArgumentNullException(nameof(keyword));
             Contract.EndContractBlock();
 
             return PropertiesByKeyword.ContainsKey(keyword.ToUpperInvariant());
@@ -218,7 +226,7 @@ namespace  EnterpriseDB.EDBClient
         {
             PropertyInfo p;
             if (!PropertiesByKeyword.TryGetValue(keyword.ToUpperInvariant(), out p)) {
-                throw new ArgumentException("Keyword not supported: " + keyword, "keyword");
+                throw new ArgumentException("Keyword not supported: " + keyword, nameof(keyword));
             }
             return p;
         }
@@ -229,10 +237,10 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="keyword">The key of the item to retrieve.</param>
         /// <param name="value">The value corresponding to the key.</param>
         /// <returns><b>true</b> if keyword was found within the connection string, <b>false</b> otherwise.</returns>
-        public override bool TryGetValue(string keyword, out object value)
+        public override bool TryGetValue(string keyword, [CanBeNull] out object value)
         {
             if (keyword == null)
-                throw new ArgumentNullException("keyword");
+                throw new ArgumentNullException(nameof(keyword));
             Contract.EndContractBlock();
 
             PropertyInfo p;
@@ -247,13 +255,18 @@ namespace  EnterpriseDB.EDBClient
 
         }
 
-        void SetValue(string propertyName, object value)
+        void SetValue(string propertyName, [CanBeNull] object value)
         {
             var canonicalKeyword = PropertyNameToCanonicalKeyword[propertyName];
             if (value == null) {
                 base.Remove(canonicalKeyword);
             } else {
                 base[canonicalKeyword] = value;
+            }
+
+            lock (_connectionStringWithoutPasswordLocker)
+            {
+                _connectionStringWithoutPassword = null;
             }
         }
 
@@ -264,20 +277,18 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The hostname or IP address of the PostgreSQL server to connect to.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Host")]
         [Description("The hostname or IP address of the PostgreSQL server to connect to.")]
-#endif
+        [DisplayName("Host")]
         [EDBConnectionStringProperty("Server")]
+        [CanBeNull]
         public string Host
         {
             get { return _host; }
             set
             {
                 _host = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Host", value);
+                SetValue(nameof(Host), value);
             }
         }
         string _host;
@@ -285,25 +296,22 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The TCP/IP port of the PostgreSQL server.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Port")]
         [Description("The TCP port of the PostgreSQL server.")]
-        [DefaultValue(EDBConnection.DefaultPort)]
-#endif
+        [DisplayName("Port")]
         [EDBConnectionStringProperty]
+        [DefaultValue(EDBConnection.DefaultPort)]
         public int Port
         {
             get { return _port; }
             set
             {
                 if (value <= 0)
-                    throw new ArgumentOutOfRangeException("value", value, "Invalid port: " + value);
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Invalid port: " + value);
                 Contract.EndContractBlock();
 
                 _port = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Port", value);
+                SetValue(nameof(Port), value);
             }
         }
         int _port;
@@ -311,11 +319,9 @@ namespace  EnterpriseDB.EDBClient
         ///<summary>
         /// The PostgreSQL database to connect to.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Database")]
         [Description("The PostgreSQL database to connect to.")]
-#endif
+        [DisplayName("Database")]
         [EDBConnectionStringProperty("DB")]
         public string Database
         {
@@ -323,8 +329,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _database = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Database", value);
+                SetValue(nameof(Database), value);
             }
         }
         string _database;
@@ -332,30 +337,17 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The username to connect with. Not required if using IntegratedSecurity.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Username")]
         [Description("The username to connect with. Not required if using IntegratedSecurity.")]
-#endif
+        [DisplayName("Username")]
         [EDBConnectionStringProperty("User Name", "UserId", "User Id", "UID")]
         public string Username
         {
-            get
-            {
-#if !DNXCORE50
-                if ((_integratedSecurity) && (String.IsNullOrEmpty(_username))) {
-                    _username = GetIntegratedUserName();
-                }
-#endif
-
-                return _username;
-            }
-
+            get { return _username; }
             set
             {
                 _username = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Username", value);
+                SetValue(nameof(Username), value);
             }
         }
         string _username;
@@ -363,12 +355,10 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The password to connect with. Not required if using IntegratedSecurity.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Password")]
         [Description("The password to connect with. Not required if using IntegratedSecurity.")]
         [PasswordPropertyText(true)]
-#endif
+        [DisplayName("Password")]
         [EDBConnectionStringProperty("PSW", "PWD")]
         public string Password
         {
@@ -376,8 +366,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _password = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Password", value);
+                SetValue(nameof(Password), value);
             }
         }
         string _password;
@@ -385,11 +374,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The optional application name parameter to be sent to the backend during connection initiation.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Application Name")]
         [Description("The optional application name parameter to be sent to the backend during connection initiation")]
-#endif
+        [DisplayName("Application Name")]
         [EDBConnectionStringProperty]
         public string ApplicationName
         {
@@ -397,8 +384,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _applicationName = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("ApplicationName", value);
+                SetValue(nameof(ApplicationName), value);
             }
         }
         string _applicationName;
@@ -406,11 +392,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Whether to enlist in an ambient TransactionScope.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Enlist")]
         [Description("Whether to enlist in an ambient TransactionScope.")]
-#endif
+        [DisplayName("Enlist")]
         [EDBConnectionStringProperty]
         public bool Enlist
         {
@@ -418,8 +402,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _enlist = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Enlist", value);
+                SetValue(nameof(Enlist), value);
             }
         }
         bool _enlist;
@@ -427,11 +410,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the schema search path.
         /// </summary>
-#if !DNXCORE50
         [Category("Connection")]
-        [DisplayName("Search Path")]
         [Description("Gets or sets the schema search path.")]
-#endif
+        [DisplayName("Search Path")]
         [EDBConnectionStringProperty]
         public string SearchPath
         {
@@ -439,11 +420,47 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _searchpath = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("SearchPath", value);
+                SetValue(nameof(SearchPath), value);
             }
         }
         string _searchpath;
+
+        /// <summary>
+        /// Gets or sets the schema search path.
+        /// </summary>
+        [Category("Connection")]
+        [Description("Gets or sets the client_encoding parameter.")]
+        [DisplayName("Client Encoding")]
+        [EDBConnectionStringProperty]
+        public string ClientEncoding
+        {
+            get { return _clientEncoding; }
+            set
+            {
+                _clientEncoding = value;
+                SetValue(nameof(ClientEncoding), value);
+            }
+        }
+        string _clientEncoding;
+
+        /// <summary>
+        /// Gets or sets the client_encoding parameter.
+        /// </summary>
+        [Category("Connection")]
+        [Description("Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.")]
+        [DisplayName("Encoding")]
+        [DefaultValue("UTF8")]
+        [EDBConnectionStringProperty]
+        public string Encoding
+        {
+            get { return _encoding; }
+            set
+            {
+                _encoding = value;
+                SetValue(nameof(Encoding), value);
+            }
+        }
+        string _encoding;
 
         #endregion
 
@@ -452,11 +469,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Controls whether SSL is required, disabled or preferred, depending on server support.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("SSL Mode")]
         [Description("Controls whether SSL is required, disabled or preferred, depending on server support.")]
-#endif
+        [DisplayName("SSL Mode")]
         [EDBConnectionStringProperty]
         public SslMode SslMode
         {
@@ -464,8 +479,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _sslmode = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("SslMode", value);
+                SetValue(nameof(SslMode), value);
             }
         }
         SslMode _sslmode;
@@ -473,11 +487,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Whether to trust the server certificate without validating it.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("Trust Server Certificate")]
         [Description("Whether to trust the server certificate without validating it.")]
-#endif
+        [DisplayName("Trust Server Certificate")]
         [EDBConnectionStringProperty]
         public bool TrustServerCertificate
         {
@@ -485,8 +497,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _trustServerCertificate = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("TrustServerCertificate", value);
+                SetValue(nameof(TrustServerCertificate), value);
             }
         }
         bool _trustServerCertificate;
@@ -494,11 +505,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         ///  EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("Use SSL Stream")]
         [Description(" EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.")]
-#endif
+        [DisplayName("Use SSL Stream")]
         [EDBConnectionStringProperty]
         public bool UseSslStream
         {
@@ -506,8 +515,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _useSslStream = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("UseSslStream", value);
+                SetValue(nameof(UseSslStream), value);
             }
         }
         bool _useSslStream;
@@ -515,24 +523,21 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Whether to use Windows integrated security to log in.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("Integrated Security")]
         [Description("Whether to use Windows integrated security to log in.")]
-#endif
+        [DisplayName("Integrated Security")]
         [EDBConnectionStringProperty]
         public bool IntegratedSecurity
         {
             get { return _integratedSecurity; }
             set
             {
-#if !NET40
-                if (value)
-                    CheckIntegratedSecuritySupport();
-#endif
+                // No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
+                // see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/issues/133
+                if (value && Type.GetType("Mono.Runtime") != null)
+                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/issues/133)");
                 _integratedSecurity = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("IntegratedSecurity", value);
+                SetValue(nameof(IntegratedSecurity), value);
             }
         }
         bool _integratedSecurity;
@@ -540,20 +545,18 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The Kerberos service name to be used for authentication.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("Kerberos Service Name")]
         [Description("The Kerberos service name to be used for authentication.")]
-#endif
+        [DisplayName("Kerberos Service Name")]
         [EDBConnectionStringProperty("Krbsrvname")]
+        [DefaultValue("postgres")]
         public string KerberosServiceName
         {
             get { return _kerberosServiceName; }
             set
             {
                 _kerberosServiceName = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("KerberosServiceName", value);
+                SetValue(nameof(KerberosServiceName), value);
             }
         }
         string _kerberosServiceName;
@@ -561,11 +564,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The Kerberos realm to be used for authentication.
         /// </summary>
-#if !DNXCORE50
         [Category("Security")]
-        [DisplayName("Include Realm")]
         [Description("The Kerberos realm to be used for authentication.")]
-#endif
+        [DisplayName("Include Realm")]
         [EDBConnectionStringProperty]
         public bool IncludeRealm
         {
@@ -573,11 +574,28 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _includeRealm = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("IncludeRealm", value);
+                SetValue(nameof(IncludeRealm), value);
             }
         }
         bool _includeRealm;
+
+        /// <summary>
+        /// Gets or sets a Boolean value that indicates if security-sensitive information, such as the password, is not returned as part of the connection if the connection is open or has ever been in an open state.
+        /// </summary>
+        [Category("Security")]
+        [Description("Gets or sets a Boolean value that indicates if security-sensitive information, such as the password, is not returned as part of the connection if the connection is open or has ever been in an open state.")]
+        [DisplayName("Persist Security Info")]
+        [EDBConnectionStringProperty]
+        public bool PersistSecurityInfo
+        {
+            get { return _persistSecurityInfo; }
+            set
+            {
+                _persistSecurityInfo = value;
+                SetValue(nameof(PersistSecurityInfo), value);
+            }
+        }
+        bool _persistSecurityInfo;
 
         #endregion
 
@@ -586,21 +604,18 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Whether connection pooling should be used.
         /// </summary>
-#if !DNXCORE50
         [Category("Pooling")]
-        [DisplayName("Pooling")]
         [Description("Whether connection pooling should be used.")]
-        [DefaultValue(true)]
-#endif
+        [DisplayName("Pooling")]
         [EDBConnectionStringProperty]
+        [DefaultValue(true)]
         public bool Pooling
         {
             get { return _pooling; }
             set
             {
                 _pooling = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Pooling", value);
+                SetValue(nameof(Pooling), value);
             }
         }
         bool _pooling;
@@ -608,25 +623,22 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The minimum connection pool size.
         /// </summary>
-#if !DNXCORE50
         [Category("Pooling")]
-        [DisplayName("Minimum Pool Size")]
         [Description("The minimum connection pool size.")]
-        [DefaultValue(1)]
-#endif
+        [DisplayName("Minimum Pool Size")]
         [EDBConnectionStringProperty]
+        [DefaultValue(1)]
         public int MinPoolSize
         {
             get { return _minPoolSize; }
             set
             {
-                if (value < 0 || value > EDBConnectorPool.PoolSizeLimit)
-                    throw new ArgumentOutOfRangeException("value", value, "MinPoolSize must be between 0 and " + EDBConnectorPool.PoolSizeLimit);
+                if (value < 0 || value > PoolManager.PoolSizeLimit)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "MinPoolSize must be between 0 and " + PoolManager.PoolSizeLimit);
                 Contract.EndContractBlock();
 
                 _minPoolSize = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("MinPoolSize", value);
+                SetValue(nameof(MinPoolSize), value);
             }
         }
         int _minPoolSize;
@@ -634,58 +646,67 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The maximum connection pool size.
         /// </summary>
-#if !DNXCORE50
         [Category("Pooling")]
-        [DisplayName("Maximum Pool Size")]
         [Description("The maximum connection pool size.")]
-        [DefaultValue(20)]
-#endif
+        [DisplayName("Maximum Pool Size")]
         [EDBConnectionStringProperty]
+        [DefaultValue(100)]
         public int MaxPoolSize
         {
             get { return _maxPoolSize; }
             set
             {
-                if (value < 0 || value > EDBConnectorPool.PoolSizeLimit)
-                    throw new ArgumentOutOfRangeException("value", value, "MaxPoolSize must be between 0 and " + EDBConnectorPool.PoolSizeLimit);
+                if (value < 0 || value > PoolManager.PoolSizeLimit)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "MaxPoolSize must be between 0 and " + PoolManager.PoolSizeLimit);
                 Contract.EndContractBlock();
 
                 _maxPoolSize = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("MaxPoolSize", value);
+                SetValue(nameof(MaxPoolSize), value);
             }
         }
         int _maxPoolSize;
 
         /// <summary>
-        /// The time to wait before closing unused connections in the pool if the count
-        /// of all connections exeeds MinPoolSize.
+        /// The time to wait before closing idle connections in the pool if the count
+        /// of all connections exceeds MinPoolSize.
         /// </summary>
-        /// <remarks>
-        /// If connection pool contains unused connections for ConnectionLifeTime seconds,
-        /// the half of them will be closed. If there will be unused connections in a second
-        /// later then again the half of them will be closed and so on.
-        /// This strategy provide smooth change of connection count in the pool.
-        /// </remarks>
-        /// <value>The time (in seconds) to wait. The default value is 15 seconds.</value>
-#if !DNXCORE50
+        /// <value>The time (in seconds) to wait. The default value is 300.</value>
         [Category("Pooling")]
-        [DisplayName("Connection Lifetime")]
         [Description("The time to wait before closing unused connections in the pool if the count of all connections exeeds MinPoolSize.")]
-        [DefaultValue(15)]
-#endif
+        [DisplayName("Connection Idle Lifetime")]
         [EDBConnectionStringProperty]
-        public int ConnectionLifeTime
+        [DefaultValue(300)]
+        public int ConnectionIdleLifetime
         {
-            get { return _connectionLifeTime; }
+            get { return _connectionIdleLifetime; }
             set
             {
-                _connectionLifeTime = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("ConnectionLifeTime", value);
+                _connectionIdleLifetime = value;
+                SetValue(nameof(ConnectionIdleLifetime), value);
             }
         }
-        int _connectionLifeTime;
+        int _connectionIdleLifetime;
+
+        /// <summary>
+        /// How many seconds the pool waits before attempting to prune idle connections that are beyond
+        /// idle lifetime (<see cref="ConnectionIdleLifetime"/>.
+        /// </summary>
+        /// <value>The interval (in seconds). The default value is 10.</value>
+        [Category("Pooling")]
+        [Description("How many seconds the pool waits before attempting to prune idle connections that are beyond idle lifetime.")]
+        [DisplayName("Connection Pruning Interval")]
+        [EDBConnectionStringProperty]
+        [DefaultValue(10)]
+        public int ConnectionPruningInterval
+        {
+            get { return _connectionPruningInterval; }
+            set
+            {
+                _connectionPruningInterval = value;
+                SetValue(nameof(ConnectionPruningInterval), value);
+            }
+        }
+        int _connectionPruningInterval;
 
         #endregion
 
@@ -695,25 +716,22 @@ namespace  EnterpriseDB.EDBClient
         /// The time to wait (in seconds) while trying to establish a connection before terminating the attempt and generating an error.
         /// Defaults to 15 seconds.
         /// </summary>
-#if !DNXCORE50
         [Category("Timeouts")]
-        [DisplayName("Timeout")]
         [Description("The time to wait (in seconds) while trying to establish a connection before terminating the attempt and generating an error.")]
-        [DefaultValue(15)]
-#endif
+        [DisplayName("Timeout")]
         [EDBConnectionStringProperty]
+        [DefaultValue(15)]
         public int Timeout
         {
             get { return _timeout; }
             set
             {
                 if (value < 0 || value > EDBConnection.TimeoutLimit)
-                    throw new ArgumentOutOfRangeException("value", value, "Timeout must be between 0 and " + EDBConnection.TimeoutLimit);
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Timeout must be between 0 and " + EDBConnection.TimeoutLimit);
                 Contract.EndContractBlock();
 
                 _timeout = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("Timeout", value);
+                SetValue(nameof(Timeout), value);
             }
         }
         int _timeout;
@@ -722,25 +740,22 @@ namespace  EnterpriseDB.EDBClient
         /// The time to wait (in seconds) while trying to execute a command before terminating the attempt and generating an error.
         /// Defaults to 30 seconds.
         /// </summary>
-#if !DNXCORE50
         [Category("Timeouts")]
-        [DisplayName("Command Timeout")]
         [Description("The time to wait (in seconds) while trying to execute a command before terminating the attempt and generating an error. Set to zero for infinity.")]
-        [DefaultValue(EDBCommand.DefaultTimeout)]
-#endif
+        [DisplayName("Command Timeout")]
         [EDBConnectionStringProperty]
+        [DefaultValue(EDBCommand.DefaultTimeout)]
         public int CommandTimeout
         {
             get { return _commandTimeout; }
             set
             {
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value", value, "CommandTimeout can't be negative");
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "CommandTimeout can't be negative");
                 Contract.EndContractBlock();
 
                 _commandTimeout = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("CommandTimeout", value);
+                SetValue(nameof(CommandTimeout), value);
             }
         }
         int _commandTimeout;
@@ -748,51 +763,26 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The time to wait (in seconds) while trying to execute a an internal command before terminating the attempt and generating an error.
         /// </summary>
-#if !DNXCORE50
         [Category("Timeouts")]
-        [DisplayName("Internal Command Timeout")]
         [Description("The time to wait (in seconds) while trying to execute a an internal command before terminating the attempt and generating an error. -1 uses CommandTimeout, 0 means no timeout.")]
-        [DefaultValue(-1)]
-#endif
+        [DisplayName("Internal Command Timeout")]
         [EDBConnectionStringProperty]
+        [DefaultValue(-1)]
         public int InternalCommandTimeout
         {
             get { return _internalCommandTimeout; }
             set
             {
                 if (value != 0 && value != -1 && value < EDBConnector.MinimumInternalCommandTimeout)
-                    throw new ArgumentOutOfRangeException("value", value, string.Format("InternalCommandTimeout must be >= {0}, 0 (infinite) or -1 (use CommandTimeout)", EDBConnector.MinimumInternalCommandTimeout));
+                    throw new ArgumentOutOfRangeException(nameof(value), value,
+                        $"InternalCommandTimeout must be >= {EDBConnector.MinimumInternalCommandTimeout}, 0 (infinite) or -1 (use CommandTimeout)");
                 Contract.EndContractBlock();
 
                 _internalCommandTimeout = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("InternalCommandTimeout", value);
+                SetValue(nameof(InternalCommandTimeout), value);
             }
         }
         int _internalCommandTimeout;
-
-        /// <summary>
-        /// Whether to have the backend enforce <see cref="CommandTimeout"/> and <see cref="InternalCommandTimeout"/>
-        /// via the statement_timeout variable. Defaults to true.
-        /// </summary>
-#if !DNXCORE50
-        [Category("Timeouts")]
-        [DisplayName("Backend Timeouts")]
-        [Description("Whether to have the backend enforce CommandTimeout and InternalCommandTimeout via the statement_timeout variable.")]
-        [DefaultValue(true)]
-#endif
-        [EDBConnectionStringProperty]
-        public bool BackendTimeouts
-        {
-            get { return _backendTimeouts; }
-            set
-            {
-                _backendTimeouts = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("BackendTimeouts", value);
-            }
-        }
-        bool _backendTimeouts;
 
         #endregion
 
@@ -805,11 +795,9 @@ namespace  EnterpriseDB.EDBClient
         /// <remarks>
         /// http://www.postgresql.org/docs/current/static/manage-ag-templatedbs.html
         /// </remarks>
-#if !DNXCORE50
         [Category("Entity Framework")]
-        [DisplayName("EF Template Database")]
         [Description("The database template to specify when creating a database in Entity Framework. If not specified, PostgreSQL defaults to \"template1\".")]
-#endif
+        [DisplayName("EF Template Database")]
         [EDBConnectionStringProperty]
         public string EntityTemplateDatabase
         {
@@ -817,21 +805,18 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _entityTemplateDatabase = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("EntityTemplateDatabase", value);
+                SetValue(nameof(EntityTemplateDatabase), value);
             }
         }
         string _entityTemplateDatabase;
 
         /// <summary>
         /// The database admin to specify when creating and dropping a database in Entity Framework. This is needed because
-        /// Npgsql needs to connect to a database in order to send the create/drop database command.
-        /// If not specified, defaults to "template1". Check NpgsqlServices.UsingPostgresDBConnection for more information.
+        ///  EnterpriseDB.EDBClient needs to connect to a database in order to send the create/drop database command.
+        /// If not specified, defaults to "template1". Check EDBServices.UsingPostgresDBConnection for more information.
         /// </summary>
-#if !DNXCORE50
         [Category("Entity Framework")]
         [Description("The database admin to specify when creating and dropping a database in Entity Framework. If not specified, defaults to \"template1\".")]
-#endif
         [DisplayName("EF Admin Database")]
         [EDBConnectionStringProperty]
         public string EntityAdminDatabase
@@ -840,8 +825,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _entityAdminDatabase = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("EntityAdminDatabase", value);
+                SetValue(nameof(EntityAdminDatabase), value);
             }
         }
         string _entityAdminDatabase;
@@ -851,35 +835,12 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Advanced
 
         /// <summary>
-        /// Whether to process messages that arrive between command activity.
-        /// </summary>
-#if !DNXCORE50
-        [Category("Advanced")]
-        [DisplayName("Continuous Processing")]
-        [Description("Whether to process messages that arrive between command activity.")]
-#endif
-        [EDBConnectionStringProperty("SyncNotification")]
-        public bool ContinuousProcessing
-        {
-            get { return _continuousProcessing; }
-            set
-            {
-                _continuousProcessing = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("ContinuousProcessing", value);
-            }
-        }
-        bool _continuousProcessing;
-
-        /// <summary>
         /// The number of seconds of connection inactivity before  EnterpriseDB.EDBClient sends a keepalive query.
         /// Set to 0 (the default) to disable.
         /// </summary>
-#if !DNXCORE50
         [Category("Advanced")]
-        [DisplayName("Keepalive")]
         [Description("The number of seconds of connection inactivity before  EnterpriseDB.EDBClient sends a keepalive query.")]
-#endif
+        [DisplayName("Keepalive")]
         [EDBConnectionStringProperty]
         public int KeepAlive
         {
@@ -887,12 +848,11 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value", value, "KeepAlive can't be negative");
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "KeepAlive can't be negative");
                 Contract.EndContractBlock();
 
                 _keepAlive = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("KeepAlive", value);
+                SetValue(nameof(KeepAlive), value);
             }
         }
         int _keepAlive;
@@ -900,21 +860,18 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Gets or sets the buffer size.
         /// </summary>
-#if !DNXCORE50
         [Category("Advanced")]
-        [DisplayName("Buffer Size")]
         [Description("Determines the size of the internal buffer  EnterpriseDB.EDBClient uses when reading or writing. Increasing may improve performance if transferring large values from the database.")]
-        [DefaultValue(EDBBuffer.DefaultBufferSize)]
-#endif
+        [DisplayName("Buffer Size")]
         [EDBConnectionStringProperty]
+        [DefaultValue(ReadBuffer.DefaultBufferSize)]
         public int BufferSize
         {
             get { return _bufferSize; }
             set
             {
                 _bufferSize = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("BufferSize", value);
+                SetValue(nameof(BufferSize), value);
             }
         }
         int _bufferSize;
@@ -926,11 +883,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// A compatibility mode for special PostgreSQL server types.
         /// </summary>
-#if !DNXCORE50
         [Category("Compatibility")]
-        [DisplayName("Server Compatibility Mode")]
         [Description("A compatibility mode for special PostgreSQL server types.")]
-#endif
+        [DisplayName("Server Compatibility Mode")]
         [EDBConnectionStringProperty]
         public ServerCompatibilityMode ServerCompatibilityMode
         {
@@ -938,8 +893,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _serverCompatibilityMode = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("ServerCompatibilityMode", value);
+                SetValue(nameof(ServerCompatibilityMode), value);
             }
         }
         ServerCompatibilityMode _serverCompatibilityMode;
@@ -947,11 +901,9 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Makes MaxValue and MinValue timestamps and dates readable as infinity and negative infinity.
         /// </summary>
-#if !DNXCORE50
         [Category("Compatibility")]
-        [DisplayName("Convert Infinity DateTime")]
         [Description("Makes MaxValue and MinValue timestamps and dates readable as infinity and negative infinity.")]
-#endif
+        [DisplayName("Convert Infinity DateTime")]
         [EDBConnectionStringProperty]
         public bool ConvertInfinityDateTime
         {
@@ -959,8 +911,7 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 _convertInfinityDateTime = value;
-                // TODO: Replace literal name with nameof operator in C# 6.0
-                SetValue("ConvertInfinityDateTime", value);
+                SetValue(nameof(ConvertInfinityDateTime), value);
             }
         }
         bool _convertInfinityDateTime;
@@ -970,163 +921,125 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Obsolete
 
         /// <summary>
-        /// Obsolete, see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/PreloadReader-Removal
+        /// Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html
         /// </summary>
-#if !DNXCORE50
         [Category("Obsolete")]
+        [Description("Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html")]
+        [DisplayName("Connection Lifetime")]
+        [EDBConnectionStringProperty]
+        [Obsolete]
+        public int ConnectionLifeTime
+        {
+            get { return 0; }
+            set { throw new NotSupportedException("The ConnectionLifeTime parameter is no longer supported. Please see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html"); }
+        }
+
+        /// <summary>
+        /// Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html
+        /// </summary>
+        [Category("Obsolete")]
+        [Description("Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html")]
+        [DisplayName("Continuous Processing")]
+        [EDBConnectionStringProperty]
+        [Obsolete]
+        public bool ContinuousProcessing
+        {
+            get { return false; }
+            set { throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html"); }
+        }
+
+        /// <summary>
+        /// Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html
+        /// </summary>
+        [Category("Obsolete")]
+        [Description("Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html")]
+        [DisplayName("Backend Timeouts")]
+        [EDBConnectionStringProperty]
+        [Obsolete]
+        public bool BackendTimeouts
+        {
+            get { return false; }
+            set { throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see http://www. EnterpriseDB.EDBClient.org/doc/3.1/migration.html"); }
+        }
+
+        /// <summary>
+        /// Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html
+        /// </summary>
+        [Category("Obsolete")]
+        [Description("Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html")]
         [DisplayName("Preload Reader")]
-        [Description("Obsolete, see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/PreloadReader-Removal")]
-#endif
         [EDBConnectionStringProperty]
         [Obsolete]
         public bool PreloadReader
         {
             get { return false; }
-            set { throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/PreloadReader-Removal"); }
+            set { throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html"); }
         }
 
         /// <summary>
-        /// Obsolete, see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/UseExtendedTypes-Removal
+        /// Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html
         /// </summary>
-#if !DNXCORE50
         [Category("Obsolete")]
+        [Description("Obsolete, see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html")]
         [DisplayName("Use Extended Types")]
-        [Description("Obsolete, see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/UseExtendedTypes-Removal")]
-#endif
         [EDBConnectionStringProperty]
         [Obsolete]
         public bool UseExtendedTypes
         {
             get { return false; }
-            set { throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/wiki/UseExtendedTypes-Removal"); }
+            set { throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see http://www. EnterpriseDB.EDBClient.org/doc/3.0/migration.html"); }
         }
-
-        #endregion
-
-        #region Integrated security support
-
-        /// <summary>
-        /// No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
-        /// see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/issues/133
-        /// </summary>
-        static void CheckIntegratedSecuritySupport()
-        {
-            if (Type.GetType("Mono.Runtime") != null)
-                throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/issues/133)");
-        }
-
-#if !DNXCORE50
-
-        class CachedUpn
-        {
-            public string Upn;
-            public DateTime ExpiryTimeUtc;
-        }
-
-        static Dictionary<SecurityIdentifier, CachedUpn> cachedUpns = new Dictionary<SecurityIdentifier, CachedUpn>();
-
-        private string GetWindowsIdentityUserName()
-        {
-            var identity = WindowsIdentity.GetCurrent();
-            return identity == null ? string.Empty : identity.Name.Split('\\')[1];
-        }
-
-        private string GetIntegratedUserName()
-        {
-            // Side note: This maintains the hack fix mentioned before for https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/issues/133.
-            // In a nutshell, starting with .NET 4.5 WindowsIdentity inherits from ClaimsIdentity
-            // which doesn't exist in mono, and calling a WindowsIdentity method bombs.
-            // The workaround is that this function that actually deals with WindowsIdentity never
-            // gets called on mono, so never gets JITted and the problem goes away.
-
-            // Gets the current user's username for integrated security purposes
-            WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            CachedUpn cachedUpn = null;
-            string upn = null;
-
-            // Check to see if we already have this UPN cached
-            lock (cachedUpns) {
-                if (cachedUpns.TryGetValue(identity.User, out cachedUpn)) {
-                    if (cachedUpn.ExpiryTimeUtc > DateTime.UtcNow)
-                        upn = cachedUpn.Upn;
-                    else
-                        cachedUpns.Remove(identity.User);
-                }
-            }
-
-            try {
-                if (upn == null) {
-                    // Try to get the user's UPN in its correct case; this is what the
-                    // server will need to verify against a Kerberos/SSPI ticket
-
-                    // If the computer does not belong to a domain, returns Empty.
-                    string domainName = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
-                    if (domainName.Equals(string.Empty))
-                    {
-                        return GetWindowsIdentityUserName();
-                    }
-
-                    // First, find a domain server we can talk to
-                    string domainHostName;
-
-                    using (DirectoryEntry rootDse = new DirectoryEntry("LDAP://rootDSE") { AuthenticationType = AuthenticationTypes.Secure }) {
-                        domainHostName = (string)rootDse.Properties["dnsHostName"].Value;
-                    }
-
-                    // Query the domain server by the current user's SID
-                    using (DirectoryEntry entry = new DirectoryEntry("LDAP://" + domainHostName) { AuthenticationType = AuthenticationTypes.Secure }) {
-                        DirectorySearcher search = new DirectorySearcher(entry,
-                            "(objectSid=" + identity.User.Value + ")", new string[] { "userPrincipalName" });
-
-                        SearchResult result = search.FindOne();
-
-                        upn = (string)result.Properties["userPrincipalName"][0];
-                    }
-                }
-
-                if (cachedUpn == null) {
-                    // Save this value
-                    cachedUpn = new CachedUpn() { Upn = upn, ExpiryTimeUtc = DateTime.UtcNow.AddHours(3.0) };
-
-                    lock (cachedUpns) {
-                        cachedUpns[identity.User] = cachedUpn;
-                    }
-                }
-
-                string[] upnParts = upn.Split('@');
-
-                if (_includeRealm) {
-                    // Make it Kerberos-y by uppercasing the realm part
-                    return upnParts[0] + "@" + upnParts[1].ToUpperInvariant();
-                } else {
-                    return upnParts[0];
-                }
-            } catch {
-                // Querying the directory failed, so return the SAM name
-                // (which probably won't work, but it's better than nothing)
-                return GetWindowsIdentityUserName();
-            }
-        }
-
-#endif
 
         #endregion
 
         #region Misc
 
-        internal EDBConnectionStringBuilder Clone()
+        internal string ToStringWithoutPassword()
         {
-            return new EDBConnectionStringBuilder(ConnectionString);
+            lock (_connectionStringWithoutPasswordLocker)
+            {
+                if (_connectionStringWithoutPassword != null)
+                {
+                    return _connectionStringWithoutPassword;
+                }
+
+                var clone = Clone();
+                clone.Password = null;
+                _connectionStringWithoutPassword = clone.ToString();
+                return _connectionStringWithoutPassword;
+            }
         }
+
+        readonly object _connectionStringWithoutPasswordLocker = new object();
+        [CanBeNull]
+        string _connectionStringWithoutPassword;
+
+        internal EDBConnectionStringBuilder Clone() => new EDBConnectionStringBuilder(ConnectionString);
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        public override bool Equals(object obj)
+        {
+            var o = obj as EDBConnectionStringBuilder;
+            return o != null && EquivalentTo(o);
+        }
+
+        /// <summary>
+        /// Hash function.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode() => Host?.GetHashCode() ?? 0;
 
         #endregion
 
         #region Attributes
 
         [AttributeUsage(AttributeTargets.Property)]
+        [MeansImplicitUse]
         class EDBConnectionStringPropertyAttribute : Attribute
         {
-            internal string[] Aliases { get; private set; }
+            internal string[] Aliases { get; }
 
             internal EDBConnectionStringPropertyAttribute()
             {
@@ -1139,6 +1052,14 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
+#if NETSTANDARD1_3
+        [AttributeUsage(AttributeTargets.Property)]
+        class DescriptionAttribute : Attribute
+        {
+            internal DescriptionAttribute(string description) { }
+        }
+#endif
+
         #endregion
     }
 
@@ -1147,6 +1068,7 @@ namespace  EnterpriseDB.EDBClient
     /// <summary>
     /// An option specified in the connection string that activates special compatibility features.
     /// </summary>
+    [PublicAPI]
     public enum ServerCompatibilityMode
     {
         /// <summary>
@@ -1162,6 +1084,7 @@ namespace  EnterpriseDB.EDBClient
     /// <summary>
     /// Specifies how to manage SSL.
     /// </summary>
+    [PublicAPI]
     public enum SslMode
     {
         /// <summary>

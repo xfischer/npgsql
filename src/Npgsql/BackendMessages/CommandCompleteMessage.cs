@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -37,7 +37,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
-        internal CommandCompleteMessage Load(EDBBuffer buf, int len)
+        internal CommandCompleteMessage Load(ReadBuffer buf, int len)
         {
             Rows = 0;
             OID = 0;
@@ -45,6 +45,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             var tag = buf.ReadString(len-1);
             buf.Skip(1);   // Null terminator
             var tokens = tag.Split();
+
+            if (tokens.Length == 0) {
+                return this;
+            }
 
             switch (tokens[0])
             {
@@ -94,7 +98,9 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
             case "COPY":
                 StatementType = StatementType.Copy;
-                ParseRows(tokens[1]);
+                if (tokens.Length > 1) {
+                    ParseRows(tokens[1]);
+                }
                 break;
 
             case "CREATE":
@@ -126,6 +132,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             }
         }
 
-        public BackendMessageCode Code { get { return BackendMessageCode.CompletedResponse; } }
+        public BackendMessageCode Code => BackendMessageCode.CompletedResponse;
     }
 }

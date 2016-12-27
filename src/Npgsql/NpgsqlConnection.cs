@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,14 +29,19 @@ using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-#if !DNXCORE50
+using System.Threading.Tasks;
+using AsyncRewriter;
+using JetBrains.Annotations;
+#if NET45 || NET451
 using System.Transactions;
 #endif
 using  EnterpriseDB.EDBClient.Logging;
+using EDBTypes;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace  EnterpriseDB.EDBClient
@@ -47,11 +52,12 @@ namespace  EnterpriseDB.EDBClient
 #if WITHDESIGN
     [System.Drawing.ToolboxBitmapAttribute(typeof(EDBConnection))]
 #endif
-#if DNXCORE50
-    public sealed class EDBConnection : DbConnection
+#if NETSTANDARD1_3
+    public sealed partial class EDBConnection : DbConnection
 #else
+    // ReSharper disable once RedundantNameQualifier
     [System.ComponentModel.DesignerCategory("")]
-    public sealed class EDBConnection : DbConnection
+    public sealed partial class EDBConnection : DbConnection, ICloneable
 #endif
     {
         #region Fields
@@ -69,11 +75,12 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// The parsed connection string set by the user
         /// </summary>
-        internal EDBConnectionStringBuilder Settings { get; private set; }
+        EDBConnectionStringBuilder _settings;
 
         /// <summary>
         /// The actual string provided by the user for the connection string
         /// </summary>
+        [CanBeNull]
         string _connectionString;
 
         /// <summary>
@@ -88,27 +95,30 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         internal int OpenCounter { get; private set; }
 
-        internal bool WasBroken { get; set; }
+        bool _wasBroken;
 
-#if !DNXCORE50
-        EDBPromotableSinglePhaseNotification Promotable
-        {
-            get { return _promotable ?? (_promotable = new EDBPromotableSinglePhaseNotification(this)); }
-        }
+        /// <summary>
+        /// Used to implement proper Persist Security Info behavior - the returned connection string should
+        /// contain the password until the first Open() has been called.
+        /// </summary>
+        bool _alreadyOpened;
+
+        static readonly ConcurrentDictionary<string, EDBConnectionStringBuilder> CsbCache = new ConcurrentDictionary<string, EDBConnectionStringBuilder>();
+
+#if NET45 || NET451
+        EDBPromotableSinglePhaseNotification Promotable => _promotable ?? (_promotable = new EDBPromotableSinglePhaseNotification(this));
         EDBPromotableSinglePhaseNotification _promotable;
 #endif
 
         /// <summary>
         /// The default TCP/IP port for PostgreSQL.
         /// </summary>
-        public const int DefaultPort = 5444;
+        public const int DefaultPort = 5432;
 
         /// <summary>
         /// Maximum value for connection timeout.
         /// </summary>
         internal const int TimeoutLimit = 1024;
-
-        static readonly ConcurrentDictionary<string, EDBConnectionStringBuilder> BuilderCache = new ConcurrentDictionary<string, EDBConnectionStringBuilder>();
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
@@ -120,34 +130,37 @@ namespace  EnterpriseDB.EDBClient
         /// Initializes a new instance of the
         /// <see cref="EDBConnection">EDBConnection</see> class.
         /// </summary>
-        public EDBConnection() : this(String.Empty) {}
+        public EDBConnection() : this(CsbCache.GetOrAdd("", s => new EDBConnectionStringBuilder())) {}
 
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="EDBConnection">EDBConnection</see> class
-        /// and sets the <see cref="EDBConnection.ConnectionString">ConnectionString</see>.
+        /// Initializes a new instance of <see cref="EDBConnection"/> with the given strongly-typed
+        /// connection string.
         /// </summary>
         /// <param name="builder">The connection used to open the PostgreSQL database.</param>
-        public EDBConnection(EDBConnectionStringBuilder builder) : this(builder.ConnectionString) { }
+        public EDBConnection(EDBConnectionStringBuilder builder)
+        {
+            GC.SuppressFinalize(this);
+            Settings = builder;
+            Init();
+        }
 
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="EDBConnection">EDBConnection</see> class
-        /// and sets the <see cref="EDBConnection.ConnectionString">ConnectionString</see>.
+        /// Initializes a new instance of <see cref="EDBConnection"/> with the given connection string.
         /// </summary>
         /// <param name="connectionString">The connection used to open the PostgreSQL database.</param>
         public EDBConnection(string connectionString)
         {
+            GC.SuppressFinalize(this);
             ConnectionString = connectionString;
             Init();
         }
 
         void Init()
         {
-            NoticeDelegate = OnNotice;
-            NotificationDelegate = OnNotification;
+            _noticeDelegate = OnNotice;
+            _notificationDelegate = OnNotification;
 
-#if !DNXCORE50
+#if NET45 || NET451
             // Fix authentication problems. See https://bugzilla.novell.com/show_bug.cgi?id=MONO77559 and
             // http://pgfoundry.org/forum/message.php?msg_id=1002377 for more info.
             RSACryptoServiceProvider.UseMachineKeyStore = true;
@@ -160,17 +173,26 @@ namespace  EnterpriseDB.EDBClient
         /// Opens a database connection with the property settings specified by the
         /// <see cref="EDBConnection.ConnectionString">ConnectionString</see>.
         /// </summary>
-        public override void Open()
+        public override void Open() => OpenInternal();
+
+        /// <summary>
+        /// This is the asynchronous version of <see cref="Open"/>.
+        /// </summary>
+        /// <remarks>
+        /// Do not invoke other methods and properties of the <see cref="EDBConnection"/> object until the returned Task is complete.
+        /// </remarks>
+        /// <param name="cancellationToken">The cancellation instruction.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public override Task OpenAsync(CancellationToken cancellationToken) => OpenInternalAsync(cancellationToken);
+
+        [RewriteAsync]
+        void OpenInternal()
         {
             if (string.IsNullOrWhiteSpace(Host))
                 throw new ArgumentException("Host can't be null");
-            if (string.IsNullOrWhiteSpace(UserName) && !IntegratedSecurity)
-                throw new ArgumentException("Either Username must be specified or IntegratedSecurity must be on");
-            if (Settings.Password == null && !IntegratedSecurity)
-                throw new ArgumentException("Either password must be specified or IntegratedSecurity must be on");
-            if (ContinuousProcessing && UseSslStream)
-                throw new ArgumentException("ContinuousProcessing can't be turned on with UseSslStream");
             Contract.EndContractBlock();
+
+            var timeout = new EDBTimeout(TimeSpan.FromSeconds(ConnectionTimeout));
 
             // If we're postponing a close (see doc on this variable), the connection is already
             // open and can be silently reused
@@ -179,32 +201,32 @@ namespace  EnterpriseDB.EDBClient
 
             CheckConnectionClosed();
 
-            Log.Debug("Opening connnection");
+            Log.Trace("Opening connnection");
 
-            WasBroken = false;
+            _wasBroken = false;
 
             try
             {
                 // Get a Connector, either from the pool or creating one ourselves.
-                if (Pooling)
+                if (Settings.Pooling)
                 {
-                    Connector = EDBConnectorPool.ConnectorPoolMgr.RequestConnector(this);
+                    Connector = PoolManager.GetOrAdd(Settings).Allocate(this, timeout);
+
+                    // Since this pooled connector was opened, global enum/composite mappings may have
+                    // changed. Bring this up to date if needed.
+                    Connector.TypeHandlerRegistry.ActivateGlobalMappings();
                 }
                 else
                 {
-                    Connector = new EDBConnector(this) {
-                        ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
-                        UserCertificateValidationCallback = UserCertificateValidationCallback
-                    };
-
-                    Connector.Open();
+                    Connector = new EDBConnector(this);
+                    Connector.Open(timeout);
                 }
 
-                Connector.Notice += NoticeDelegate;
-                Connector.Notification += NotificationDelegate;
+                Connector.Notice += _noticeDelegate;
+                Connector.Notification += _notificationDelegate;
 
-#if !DNXCORE50
-                if (Enlist)
+#if NET45 || NET451
+                if (Settings.Enlist)
                 {
                     Promotable.Enlist(Transaction.Current);
                 }
@@ -216,6 +238,7 @@ namespace  EnterpriseDB.EDBClient
                 throw;
             }
             OpenCounter++;
+            _alreadyOpened = true;
             OnStateChange(new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open));
         }
 
@@ -237,20 +260,37 @@ namespace  EnterpriseDB.EDBClient
 #endif
         public override string ConnectionString
         {
-            get { return _connectionString; }
+            get
+            {
+                if (_connectionString != null)
+                    return _connectionString;
+                if (!_alreadyOpened)   // If not yet opened, return the full connstring but don't cache
+                    return Settings.ToString();
+                if (!_settings.PersistSecurityInfo)
+                    return Settings.ToStringWithoutPassword();
+
+                _connectionString = Settings.ToString();
+                return _connectionString;
+            }
             set
             {
-                if (value == null) {
+                if (value == null)
                     value = string.Empty;
-                }
-                EDBConnectionStringBuilder settings;
-                if (!BuilderCache.TryGetValue(value, out settings)) {
-                    BuilderCache[value] = settings = new EDBConnectionStringBuilder(value);
-                }
-                Settings = settings;
-                // Note that settings.ConnectionString is canonical and may therefore be different from
-                // the provided value
-                _connectionString = settings.ConnectionString;
+                Settings = CsbCache.GetOrAdd(value, s => new EDBConnectionStringBuilder(value));
+            }
+        }
+
+        /// <summary>
+        /// The parsed connection string set by the user
+        /// </summary>
+        internal EDBConnectionStringBuilder Settings
+        {
+            get { return _settings; }
+            private set
+            {
+                _settings = value;
+                _connectionString = null;
+                _alreadyOpened = false;
             }
         }
 
@@ -261,23 +301,22 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Backend server host name.
         /// </summary>
-#if !DNXCORE50
         [Browsable(true)]
-#endif
-        public string Host { get { return Settings.Host; } }
+        [PublicAPI]
+        public string Host => Settings.Host;
 
         /// <summary>
         /// Backend server port.
         /// </summary>
-#if !DNXCORE50
         [Browsable(true)]
-#endif
-        public int Port { get { return Settings.Port; } }
+        [PublicAPI]
+        public int Port => Settings.Port;
 
         /// <summary>
         /// If true, the connection will attempt to use SslStream instead of an internal TlsClientStream.
         /// </summary>
-        public bool UseSslStream { get { return Settings.UseSslStream; } }
+        [PublicAPI]
+        public bool UseSslStream => Settings.UseSslStream;
 
         /// <summary>
         /// Gets the time to wait while trying to establish a connection
@@ -289,27 +328,14 @@ namespace  EnterpriseDB.EDBClient
         [EDBSysDescription("Description_ConnectionTimeout", typeof(EDBConnection))]
 #endif
 
-        public override int ConnectionTimeout { get { return Settings.Timeout; } }
+        public override int ConnectionTimeout => Settings.Timeout;
 
         /// <summary>
         /// Gets the time to wait while trying to execute a command
         /// before terminating the attempt and generating an error.
         /// </summary>
         /// <value>The time (in seconds) to wait for a command to complete. The default value is 20 seconds.</value>
-        public int CommandTimeout { get { return Settings.CommandTimeout; } }
-
-        /// <summary>
-        /// Gets the time to wait before closing unused connections in the pool if the count
-        /// of all connections exeeds MinPoolSize.
-        /// </summary>
-        /// <remarks>
-        /// If connection pool contains unused connections for ConnectionLifeTime seconds,
-        /// the half of them will be closed. If there will be unused connections in a second
-        /// later then again the half of them will be closed and so on.
-        /// This strategy provide smooth change of connection count in the pool.
-        /// </remarks>
-        /// <value>The time (in seconds) to wait. The default value is 15 seconds.</value>
-        public int ConnectionLifeTime { get { return Settings.ConnectionLifeTime; } }
+        public int CommandTimeout => Settings.CommandTimeout;
 
         ///<summary>
         /// Gets the name of the current database or the database to be used after a connection is opened.
@@ -320,41 +346,32 @@ namespace  EnterpriseDB.EDBClient
         [EDBSysDescription("Description_Database", typeof(EDBConnection))]
 #endif
 
-        public override string Database { get { return Settings.Database; } }
+        public override string Database => Settings.Database;
 
         /// <summary>
-        /// Gets the database server name.
+        /// Gets the string identifying the database server (host and port)
         /// </summary>
-        public override string DataSource { get { return Settings.Host; } }
-
-        /// <summary>
-        /// Gets flag indicating if we are using Synchronous notification or not.
-        /// The default value is false.
-        /// </summary>
-        public bool ContinuousProcessing { get { return Settings.ContinuousProcessing; } }
+        public override string DataSource => $"tcp://{Host}:{Port}";
 
         /// <summary>
         /// Whether to use Windows integrated security to log in.
         /// </summary>
-        public bool IntegratedSecurity { get { return Settings.IntegratedSecurity; } }
+        [PublicAPI]
+        public bool IntegratedSecurity => Settings.IntegratedSecurity;
 
         /// <summary>
         /// User name.
         /// </summary>
-        public string UserName { get { return Settings.Username; } }
+        [PublicAPI]
+        public string UserName => Settings.Username;
 
-        /// <summary>
-        /// Determine if connection pooling will be used for this connection.
-        /// </summary>
-        internal bool Pooling { get { return Settings.Pooling; } }
-
-        internal int MinPoolSize { get { return Settings.MinPoolSize; } }
-        internal int MaxPoolSize { get { return Settings.MaxPoolSize; } }
-        internal int Timeout { get { return Settings.Timeout; } }
-        internal bool Enlist { get { return Settings.Enlist; } }
-        internal int BufferSize { get { return Settings.BufferSize; } }
-        public string EntityTemplateDatabase { get { return Settings.EntityTemplateDatabase; } }
-        public string EntityAdminDatabase { get { return Settings.EntityAdminDatabase; } }
+        internal string Password => Settings.Password;
+        internal int MinPoolSize => Settings.MinPoolSize;
+        internal int MaxPoolSize => Settings.MaxPoolSize;
+        internal int Timeout => Settings.Timeout;
+        internal int BufferSize => Settings.BufferSize;
+        internal string EntityTemplateDatabase => Settings.EntityTemplateDatabase;
+        internal string EntityAdminDatabase => Settings.EntityAdminDatabase;
 
         #endregion Configuration settings
 
@@ -364,16 +381,14 @@ namespace  EnterpriseDB.EDBClient
         /// Gets the current state of the connection.
         /// </summary>
         /// <value>A bitwise combination of the <see cref="System.Data.ConnectionState">ConnectionState</see> values. The default is <b>Closed</b>.</value>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
         public ConnectionState FullState
         {
             get
             {
                 if (Connector == null || _disposed)
                 {
-                    return WasBroken ? ConnectionState.Broken : ConnectionState.Closed;
+                    return _wasBroken ? ConnectionState.Broken : ConnectionState.Closed;
                 }
 
                 switch (Connector.State)
@@ -386,12 +401,12 @@ namespace  EnterpriseDB.EDBClient
                         return ConnectionState.Open;
                     case ConnectorState.Executing:
                         return ConnectionState.Open | ConnectionState.Executing;
+                    case ConnectorState.Copy:
                     case ConnectorState.Fetching:
+                    case ConnectorState.Waiting:
                         return ConnectionState.Open | ConnectionState.Fetching;
                     case ConnectorState.Broken:
                         return ConnectionState.Broken;
-                    case ConnectorState.Copy:
-                        return ConnectionState.Open | ConnectionState.Fetching;
                     default:
                         throw PGUtil.ThrowIfReached("Unknown connector state: " + Connector.State);
                 }
@@ -402,9 +417,7 @@ namespace  EnterpriseDB.EDBClient
         /// Gets whether the current state of the connection is Open or Closed
         /// </summary>
         /// <value>ConnectionState.Open, ConnectionState.Closed or ConnectionState.Connecting</value>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
         public override ConnectionState State
         {
             get
@@ -468,10 +481,11 @@ namespace  EnterpriseDB.EDBClient
         /// <returns>A <see cref="EDBTransaction">EDBTransaction</see>
         /// object representing the new transaction.</returns>
         /// <remarks>
-        /// Currently there's no support for nested transactions.
+        /// Currently there's no support for nested transactions. Transactions created by this method will have Read Committed isolation level.
         /// </remarks>
         public new EDBTransaction BeginTransaction()
         {
+            // ReSharper disable once IntroduceOptionalParameters.Global
             return BeginTransaction(IsolationLevel.Unspecified);
         }
 
@@ -490,16 +504,15 @@ namespace  EnterpriseDB.EDBClient
             if (level == IsolationLevel.Chaos)
                 throw new NotSupportedException("Unsupported IsolationLevel: " + level);
             Contract.EndContractBlock();
+            var connector = CheckReadyAndGetConnector();
 
             // Note that beginning a transaction doesn't actually send anything to the backend
             // (only prepends), so strictly speaking we don't have to start a user action.
             // However, we do this for consistency as if we did (for the checks and exceptions)
-            using (Connector.StartUserAction())
+            using (connector.StartUserAction())
             {
-                if (Connector.InTransaction)
-                {
+                if (connector.InTransaction)
                     throw new NotSupportedException("Nested/Concurrent transactions aren't supported.");
-                }
 
                 Log.Debug("Beginning transaction with isolation level " + level, Connector.Id);
 
@@ -519,13 +532,18 @@ namespace  EnterpriseDB.EDBClient
                 ReallyClose();
         }
 
-#if !DNXCORE50
+#if NET45 || NET451
         /// <summary>
         /// Enlist transation.
         /// </summary>
         /// <param name="transaction"></param>
+        // ReSharper disable once ImplicitNotNullOverridesUnknownExternalMember
         public override void EnlistTransaction(Transaction transaction)
         {
+            if (transaction == null)
+                throw new ArgumentNullException(nameof(transaction));
+            Contract.EndContractBlock();
+
             Promotable.Enlist(transaction);
         }
 #endif
@@ -533,11 +551,6 @@ namespace  EnterpriseDB.EDBClient
         #endregion
 
         #region Close
-
-        internal void EmergencyClose()
-        {
-            _fakingOpen = true;
-        }
 
         /// <summary>
         /// Releases the connection to the database.  If the connection is pooled, it will be
@@ -548,9 +561,9 @@ namespace  EnterpriseDB.EDBClient
             if (Connector == null)
                 return;
 
-            Log.Debug("Closing connection", Connector.Id);
+            Log.Trace("Closing connection", Connector.Id);
 
-#if !DNXCORE50
+#if NET45 || NET451
             if (_promotable != null && _promotable.InLocalTransaction)
             {
                 _postponingClose = true;
@@ -561,32 +574,33 @@ namespace  EnterpriseDB.EDBClient
             ReallyClose();
         }
 
-        internal void ReallyClose()
+        internal void ReallyClose(bool wasBroken=false)
         {
-            Log.Trace("Really closing connection", Connector.Id);
+            var connectorId = Connector.Id;
+            Log.Trace("Really closing connection", connectorId);
             _postponingClose = false;
+            _wasBroken = wasBroken;
 
-#if !DNXCORE50
+#if NET45 || NET451
             // clear the way for another promotable transaction
             _promotable = null;
 #endif
 
-            Connector.Notification -= NotificationDelegate;
-            Connector.Notice -= NoticeDelegate;
+            Connector.Notification -= _notificationDelegate;
+            Connector.Notice -= _noticeDelegate;
 
             CloseOngoingOperations();
 
-            if (Pooling)
+            if (Settings.Pooling)
             {
-                EDBConnectorPool.ConnectorPoolMgr.ReleaseConnector(this, Connector);
+                PoolManager.GetOrAdd(Settings).Release(Connector);
             }
             else
             {
                 Connector.Close();
-
-                Connector.ProvideClientCertificatesCallback = null;
-                Connector.UserCertificateValidationCallback = null;
             }
+
+            Log.Debug("Connection closed", Connector.Id);
 
             Connector = null;
 
@@ -605,12 +619,10 @@ namespace  EnterpriseDB.EDBClient
             }
 
             if (Connector.CurrentReader != null)
-            {
-                Connector.CurrentReader.Close();
-            }
+                Connector.CurrentReader.Close(true);
             else if (Connector.State == ConnectorState.Copy)
             {
-           //ZK     Contract.Assert(Connector.CurrentCopyOperation != null);
+                Contract.Assert(Connector.CurrentCopyOperation != null);
 
                 // Note: we only want to cancel import operations, since in these cases cancel is safe.
                 // Export cancellations go through the PostgreSQL "asynchronous" cancel mechanism and are
@@ -674,31 +686,25 @@ namespace  EnterpriseDB.EDBClient
         /// Occurs on NoticeResponses from the PostgreSQL backend.
         /// </summary>
         public event NoticeEventHandler Notice;
-        internal NoticeEventHandler NoticeDelegate;
+        NoticeEventHandler _noticeDelegate;
 
         /// <summary>
         /// Occurs on NotificationResponses from the PostgreSQL backend.
         /// </summary>
         public event NotificationEventHandler Notification;
-        internal NotificationEventHandler NotificationDelegate;
+        NotificationEventHandler _notificationDelegate;
 
         //
         // Internal methods and properties
         //
-        internal void OnNotice(object o, EDBNoticeEventArgs e)
+        void OnNotice(object o, EDBNoticeEventArgs e)
         {
-            if (Notice != null)
-            {
-                Notice(this, e);
-            }
+            Notice?.Invoke(this, e);
         }
 
-        internal void OnNotification(object o, EDBNotificationEventArgs e)
+        void OnNotification(object o, EDBNotificationEventArgs e)
         {
-            if (Notification != null)
-            {
-                Notification(this, e);
-            }
+            Notification?.Invoke(this, e);
         }
 
         #endregion Notifications
@@ -742,9 +748,7 @@ namespace  EnterpriseDB.EDBClient
         /// Version of the PostgreSQL backend.
         /// This can only be called when there is an active connection.
         /// </summary>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
         public Version PostgreSqlVersion
         {
             get
@@ -757,28 +761,13 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// PostgreSQL server version.
         /// </summary>
-        public override string ServerVersion
-        {
-            get { return PostgreSqlVersion.ToString(); }
-        }
-
-        internal bool IsRedshift
-        {
-            get
-            {
-                CheckConnectionOpen();
-                return Connector.IsRedshift;
-            }
-        }
-
+        public override string ServerVersion => PostgreSqlVersion.ToString();
 
         /// <summary>
         /// Process id of backend server.
         /// This can only be called when there is an active connection.
         /// </summary>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
         // ReSharper disable once InconsistentNaming
         public int ProcessID
         {
@@ -795,9 +784,8 @@ namespace  EnterpriseDB.EDBClient
         /// In version 8.2, Postgres began supporting standard conformant strings, but defaulted this flag to false.
         /// As of version 9.1, this flag defaults to true.
         /// </summary>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
+        [PublicAPI]
         public bool UseConformantStrings
         {
             get
@@ -810,31 +798,14 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Report whether the backend understands the string literal E prefix (>= 8.1).
         /// </summary>
-#if !DNXCORE50
         [Browsable(false)]
-#endif
-            // ReSharper disable once InconsistentNaming
-        public bool Supports_E_StringPrefix
+        [PublicAPI]
+        public bool SupportsEStringPrefix
         {
             get
             {
                 CheckConnectionOpen();
                 return Connector.SupportsEStringPrefix;
-            }
-        }
-
-        /// <summary>
-        /// Report whether the backend understands the hex byte format (>= 9.0).
-        /// </summary>
-#if !DNXCORE50
-        [Browsable(false)]
-#endif
-        public bool SupportsHexByteFormat
-        {
-            get
-            {
-                CheckConnectionOpen();
-                return Connector.SupportsHexByteFormat;
             }
         }
 
@@ -853,32 +824,30 @@ namespace  EnterpriseDB.EDBClient
         public EDBBinaryImporter BeginBinaryImport(string copyFromCommand)
         {
             if (copyFromCommand == null)
-                throw new ArgumentNullException("copyFromCommand");
+                throw new ArgumentNullException(nameof(copyFromCommand));
             if (!copyFromCommand.TrimStart().ToUpper().StartsWith("COPY"))
-                throw new ArgumentException("Must contain a COPY FROM STDIN command!", "copyFromCommand");
+                throw new ArgumentException("Must contain a COPY FROM STDIN command!", nameof(copyFromCommand));
             Contract.EndContractBlock();
 
-            CheckConnectionOpen();
-            Connector.StartUserAction(ConnectorState.Copy);
+            var connector = CheckReadyAndGetConnector();
+            connector.StartUserAction(ConnectorState.Copy);
             try
             {
-                var importer = new EDBBinaryImporter(Connector, copyFromCommand);
-                Connector.CurrentCopyOperation = importer;
+                var importer = new EDBBinaryImporter(connector, copyFromCommand);
+                connector.CurrentCopyOperation = importer;
                 return importer;
             }
             catch
             {
-                if (Connector != null) {  // Connector may have been broken
-                    Connector.EndUserAction();
-                }
+                connector.EndUserAction();
                 throw;
             }
         }
 
         /// <summary>
-        /// Begins a binary COPY TO STDIN operation, a high-performance data export mechanism from a PostgreSQL table.
+        /// Begins a binary COPY TO STDOUT operation, a high-performance data export mechanism from a PostgreSQL table.
         /// </summary>
-        /// <param name="copyToCommand">A COPY TO STDIN SQL command</param>
+        /// <param name="copyToCommand">A COPY TO STDOUT SQL command</param>
         /// <returns>A <see cref="EDBBinaryExporter"/> which can be used to read rows and columns</returns>
         /// <remarks>
         /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
@@ -886,25 +855,22 @@ namespace  EnterpriseDB.EDBClient
         public EDBBinaryExporter BeginBinaryExport(string copyToCommand)
         {
             if (copyToCommand == null)
-                throw new ArgumentNullException("copyToCommand");
+                throw new ArgumentNullException(nameof(copyToCommand));
             if (!copyToCommand.TrimStart().ToUpper().StartsWith("COPY"))
-                throw new ArgumentException("Must contain a COPY TO STDIN command!", "copyToCommand");
+                throw new ArgumentException("Must contain a COPY TO STDOUT command!", nameof(copyToCommand));
             Contract.EndContractBlock();
 
-            CheckConnectionOpen();
-            Connector.StartUserAction(ConnectorState.Copy);
+            var connector = CheckReadyAndGetConnector();
+            connector.StartUserAction(ConnectorState.Copy);
             try
             {
                 var exporter = new EDBBinaryExporter(Connector, copyToCommand);
                 Connector.CurrentCopyOperation = exporter;
                 return exporter;
-
             }
             catch
             {
-                if (Connector != null) {  // Connector may have been broken
-                    Connector.EndUserAction();
-                }
+                connector.EndUserAction();
                 throw;
             }
         }
@@ -923,24 +889,32 @@ namespace  EnterpriseDB.EDBClient
         public TextWriter BeginTextImport(string copyFromCommand)
         {
             if (copyFromCommand == null)
-                throw new ArgumentNullException("copyFromCommand");
+                throw new ArgumentNullException(nameof(copyFromCommand));
             if (!copyFromCommand.TrimStart().ToUpper().StartsWith("COPY"))
-                throw new ArgumentException("Must contain a COPY IN command!", "copyFromCommand");
+                throw new ArgumentException("Must contain a COPY FROM STDIN command!", nameof(copyFromCommand));
             Contract.EndContractBlock();
 
-            CheckConnectionOpen();
-            Connector.StartUserAction(ConnectorState.Copy);
-            var writer = new EDBCopyTextWriter(new EDBRawCopyStream(Connector, copyFromCommand));
-            Connector.CurrentCopyOperation = writer;
-            return writer;
+            var connector = CheckReadyAndGetConnector();
+            connector.StartUserAction(ConnectorState.Copy);
+            try
+            {
+                var writer = new EDBCopyTextWriter(new EDBRawCopyStream(connector, copyFromCommand));
+                connector.CurrentCopyOperation = writer;
+                return writer;
+            }
+            catch
+            {
+                connector.EndUserAction();
+                throw;
+            }
         }
 
         /// <summary>
-        /// Begins a textual COPY FROM STDIN operation, a data import mechanism to a PostgreSQL table.
+        /// Begins a textual COPY TO STDOUT operation, a data export mechanism from a PostgreSQL table.
         /// It is the user's responsibility to parse the textual input according to the format specified
         /// in <paramref name="copyToCommand"/>.
         /// </summary>
-        /// <param name="copyToCommand">A COPY TO STDIN SQL command</param>
+        /// <param name="copyToCommand">A COPY TO STDOUT SQL command</param>
         /// <returns>
         /// A TextReader that can be used to read textual data.</returns>
         /// <remarks>
@@ -949,25 +923,33 @@ namespace  EnterpriseDB.EDBClient
         public TextReader BeginTextExport(string copyToCommand)
         {
             if (copyToCommand == null)
-                throw new ArgumentNullException("copyToCommand");
+                throw new ArgumentNullException(nameof(copyToCommand));
             if (!copyToCommand.TrimStart().ToUpper().StartsWith("COPY"))
-                throw new ArgumentException("Must contain a COPY OUT command!", "copyToCommand");
+                throw new ArgumentException("Must contain a COPY TO STDOUT command!", nameof(copyToCommand));
             Contract.EndContractBlock();
 
-            CheckConnectionOpen();
-            Connector.StartUserAction(ConnectorState.Copy);
-            var reader = new EDBCopyTextReader(new EDBRawCopyStream(Connector, copyToCommand));
-            Connector.CurrentCopyOperation = reader;
-            return reader;
+            var connector = CheckReadyAndGetConnector();
+            connector.StartUserAction(ConnectorState.Copy);
+            try
+            {
+                var reader = new EDBCopyTextReader(new EDBRawCopyStream(connector, copyToCommand));
+                connector.CurrentCopyOperation = reader;
+                return reader;
+            }
+            catch
+            {
+                connector.EndUserAction();
+                throw;
+            }
         }
 
         /// <summary>
-        /// Begins a raw binary COPY operation (TO or FROM), a high-performance data export/import mechanism to a PostgreSQL table.
+        /// Begins a raw binary COPY operation (TO STDOUT or FROM STDIN), a high-performance data export/import mechanism to a PostgreSQL table.
         /// Note that unlike the other COPY API methods, <see cref="BeginRawBinaryCopy"/> doesn't implement any encoding/decoding
         /// and is unsuitable for structured import/export operation. It is useful mainly for exporting a table as an opaque
         /// blob, for the purpose of importing it back later.
         /// </summary>
-        /// <param name="copyCommand">A COPY FROM STDIN or COPY TO STDIN SQL command</param>
+        /// <param name="copyCommand">A COPY TO STDOUT or COPY FROM STDIN SQL command</param>
         /// <returns>A <see cref="EDBRawCopyStream"/> that can be used to read or write raw binary data.</returns>
         /// <remarks>
         /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
@@ -975,95 +957,293 @@ namespace  EnterpriseDB.EDBClient
         public EDBRawCopyStream BeginRawBinaryCopy(string copyCommand)
         {
             if (copyCommand == null)
-                throw new ArgumentNullException("copyCommand");
+                throw new ArgumentNullException(nameof(copyCommand));
             if (!copyCommand.TrimStart().ToUpper().StartsWith("COPY"))
-                throw new ArgumentException("Must contain a COPY IN command!", "copyCommand");
+                throw new ArgumentException("Must contain a COPY TO STDOUT OR COPY FROM STDIN command!", nameof(copyCommand));
             Contract.EndContractBlock();
 
-            CheckConnectionOpen();
-            Connector.StartUserAction(ConnectorState.Copy);
+            var connector = CheckReadyAndGetConnector();
+            connector.StartUserAction(ConnectorState.Copy);
             try
             {
-                var stream = new EDBRawCopyStream(Connector, copyCommand);
+                var stream = new EDBRawCopyStream(connector, copyCommand);
                 if (!stream.IsBinary)
                 {
                     // TODO: Stop the COPY operation gracefully, no breaking
                     Connector.Break();
-                    throw new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed", "copyCommand");
+                    throw new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed", nameof(copyCommand));
                 }
-                Connector.CurrentCopyOperation = stream;
+                connector.CurrentCopyOperation = stream;
                 return stream;
             }
             catch
             {
-                if (Connector != null) {  // Connector may have been broken
-                    Connector.EndUserAction();
-                }
+                connector.EndUserAction();
                 throw;
             }
         }
 
         #endregion
 
-        #region Enum registration
+        #region Enum mapping
 
         /// <summary>
-        /// Registers an enum type for use with this connection.
-        ///
-        /// Enum labels are mapped by string. The .NET enum labels must correspond exactly to the PostgreSQL labels;
-        /// if another label is used in the database, this can be specified for each label with a EnumLabelAttribute.
+        /// Maps a CLR enum to a PostgreSQL enum type for use with this connection.
+        /// </summary>
+        /// <remarks>
+        /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+        /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+        /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
         /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
         /// an exception will be raised.
         ///
-        /// Can only be invoked on an open connection; if the connection is closed the registration is lost.
-        /// </summary>
-        /// <remarks>
-        /// To avoid registering the type for each connection, use the <see cref="RegisterEnumGlobally{T}"/> method.
+        /// Can only be invoked on an open connection; if the connection is closed the mapping is lost.
+        ///
+        /// To avoid mapping the type for each connection, use the <see cref="MapEnumGlobally{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
         /// A PostgreSQL type name for the corresponding enum type in the database.
-        /// If null, the .NET type's name in lowercase will be used
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
-        /// <typeparam name="TEnum">The .NET enum type to be registered</typeparam>
-        public void RegisterEnum<TEnum>(string pgName = null) where TEnum : struct
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        /// <typeparam name="TEnum">The .NET enum type to be mapped</typeparam>
+        [PublicAPI]
+        public void MapEnum<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct
         {
             if (!typeof(TEnum).GetTypeInfo().IsEnum)
                 throw new ArgumentException("An enum type must be provided");
             if (pgName != null && pgName.Trim() == "")
-                throw new ArgumentException("pgName can't be empty", "pgName");
+                throw new ArgumentException("pgName can't be empty", nameof(pgName));
             if (State != ConnectionState.Open)
                 throw new InvalidOperationException("Connection must be open and idle to perform registration");
             Contract.EndContractBlock();
 
-            Connector.TypeHandlerRegistry.RegisterEnumType<TEnum>(pgName ?? typeof(TEnum).Name.ToLower());
+            Connector.TypeHandlerRegistry.MapEnum<TEnum>(pgName, nameTranslator);
         }
 
         /// <summary>
-        /// Registers an enum type for use with all connections created from now on. Existing connections aren't affected.
-        ///
-        /// Enum labels are mapped by string. The .NET enum labels must correspond exactly to the PostgreSQL labels;
-        /// if another label is used in the database, this can be specified for each label with a EnumLabelAttribute.
-        /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
-        /// an exception will be raised.
+        /// Maps a CLR enum to a PostgreSQL enum type for use with all connections created from now on. Existing connections aren't affected.
         /// </summary>
         /// <remarks>
-        /// To register the type for a specific connection, use the <see cref="RegisterEnum{T}"/> method.
+        /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+        /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+        /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
+        /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
+        /// an exception will be raised.
+        ///
+        /// To map the type for a specific connection, use the <see cref="MapEnum{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
         /// A PostgreSQL type name for the corresponding enum type in the database.
-        /// If null, the .NET type's name in lowercase will be used
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
-        /// <typeparam name="TEnum">The .NET enum type to be associated</typeparam>
-        public static void RegisterEnumGlobally<TEnum>(string pgName = null) where TEnum : struct
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        /// <typeparam name="TEnum">The .NET enum type to be mapped</typeparam>
+        [PublicAPI]
+        public static void MapEnumGlobally<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct
         {
             if (!typeof(TEnum).GetTypeInfo().IsEnum)
                 throw new ArgumentException("An enum type must be provided");
             if (pgName != null && pgName.Trim() == "")
-                throw new ArgumentException("pgName can't be empty", "pgName");
+                throw new ArgumentException("pgName can't be empty", nameof(pgName));
             Contract.EndContractBlock();
 
-            TypeHandlerRegistry.RegisterEnumTypeGlobally<TEnum>(pgName ?? typeof(TEnum).Name.ToLower());
+            TypeHandlerRegistry.MapEnumGlobally<TEnum>(pgName, nameTranslator);
         }
+
+        /// <summary>
+        /// Removes a previous global enum mapping.
+        /// </summary>
+        /// <param name="pgName">
+        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
+        /// </param>
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        public static void UnmapEnumGlobally<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct
+        {
+            if (!typeof(TEnum).GetTypeInfo().IsEnum)
+                throw new ArgumentException("An enum type must be provided");
+            if (pgName != null && pgName.Trim() == "")
+                throw new ArgumentException("pgName can't be empty", nameof(pgName));
+            Contract.EndContractBlock();
+
+            TypeHandlerRegistry.UnmapEnumGlobally<TEnum>(pgName, nameTranslator);
+        }
+
+        #endregion
+
+        #region Composite registration
+
+        /// <summary>
+        /// Maps a CLR type to a PostgreSQL composite type for use with this connection.
+        /// </summary>
+        /// <remarks>
+        /// CLR fields and properties by string to PostgreSQL enum labels.
+        /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+        /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a PostgreSQL enum label.
+        /// If there is a discrepancy between the .NET and database labels while a composite is read or written,
+        /// an exception will be raised.
+        ///
+        /// Can only be invoked on an open connection; if the connection is closed the mapping is lost.
+        ///
+        /// To avoid mapping the type for each connection, use the <see cref="MapCompositeGlobally{T}"/> method.
+        /// </remarks>
+        /// <param name="pgName">
+        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
+        /// </param>
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        /// <typeparam name="T">The .NET type to be mapped</typeparam>
+        public void MapComposite<T>(string pgName = null, IEDBNameTranslator nameTranslator = null) where T : new()
+        {
+            if (pgName != null && pgName.Trim() == "")
+                throw new ArgumentException("pgName can't be empty", nameof(pgName));
+            if (State != ConnectionState.Open)
+                throw new InvalidOperationException("Connection must be open and idle to perform registration");
+            Contract.EndContractBlock();
+
+            Connector.TypeHandlerRegistry.MapComposite<T>(pgName, nameTranslator);
+        }
+
+        /// <summary>
+        /// Maps a CLR type to a PostgreSQL composite type for use with all connections created from now on. Existing connections aren't affected.
+        /// </summary>
+        /// <remarks>
+        /// CLR fields and properties by string to PostgreSQL enum labels.
+        /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+        /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a PostgreSQL enum label.
+        /// If there is a discrepancy between the .NET and database labels while a composite is read or written,
+        /// an exception will be raised.
+        ///
+        /// To map the type for a specific connection, use the <see cref="MapEnum{T}"/> method.
+        /// </remarks>
+        /// <param name="pgName">
+        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
+        /// </param>
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        /// <typeparam name="T">The .NET type to be mapped</typeparam>
+        public static void MapCompositeGlobally<T>(string pgName = null, IEDBNameTranslator nameTranslator = null) where T : new()
+        {
+            if (pgName != null && pgName.Trim() == "")
+                throw new ArgumentException("pgName can't be empty", nameof(pgName));
+            Contract.EndContractBlock();
+
+            TypeHandlerRegistry.MapCompositeGlobally<T>(pgName, nameTranslator);
+        }
+
+        /// <summary>
+        /// Removes a previous global enum mapping.
+        /// </summary>
+        /// <param name="pgName">
+        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
+        /// </param>
+        /// <param name="nameTranslator">
+        /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+        /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
+        /// </param>
+        public static void UnmapCompositeGlobally<T>(string pgName, IEDBNameTranslator nameTranslator = null) where T : new()
+        {
+            TypeHandlerRegistry.UnmapCompositeGlobally<T>(pgName, nameTranslator);
+        }
+
+        #endregion
+
+        #region Wait
+
+        /// <summary>
+        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// exits immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
+        /// <param name="timeout">
+        /// The time-out value, in milliseconds, passed to <see cref="Socket.ReceiveTimeout"/>.
+        /// The default value is 0, which indicates an infinite time-out period.
+        /// Specifying -1 also indicates an infinite time-out period.
+        /// </param>
+        /// <returns>true if an asynchronous message was received, false if timed out.</returns>
+        public bool Wait(int timeout)
+        {
+            if (timeout != -1 && timeout < 0)
+                throw new ArgumentException("Argument must be -1, 0 or positive", nameof(timeout));
+            Contract.EndContractBlock();
+
+            CheckConnectionOpen();
+            Log.Debug($"Starting to wait (timeout={timeout})", Connector.Id);
+
+            using (Connector.StartUserAction(ConnectorState.Waiting))
+            {
+                Connector.UserTimeout = timeout;
+                try
+                {
+                    Connector.ReadAsyncMessage();
+                }
+                catch (TimeoutException)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// exits immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
+        /// <param name="timeout">
+        /// The time-out value is passed to <see cref="Socket.ReceiveTimeout"/>.
+        /// </param>
+        /// <returns>true if an asynchronous message was received, false if timed out.</returns>
+        public bool Wait(TimeSpan timeout) => Wait((int)timeout.TotalMilliseconds);
+
+        /// <summary>
+        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// exits immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
+        public void Wait() => Wait(0);
+
+        /// <summary>
+        /// Waits asynchronously until an asynchronous PostgreSQL messages (e.g. a notification)
+        /// arrives, and exist immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
+        public async Task WaitAsync(CancellationToken cancellationToken)
+        {
+            CheckConnectionOpen();
+            Log.Debug("Starting to wait async", Connector.Id);
+
+            using (Connector.StartUserAction(ConnectorState.Waiting))
+                await Connector.ReadAsyncMessageAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Waits asynchronously until an asynchronous PostgreSQL messages (e.g. a notification)
+        /// arrives, and exist immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
+        public Task WaitAsync() => WaitAsync(CancellationToken.None);
 
         #endregion
 
@@ -1100,37 +1280,36 @@ namespace  EnterpriseDB.EDBClient
 
         void CheckConnectionClosed()
         {
-            if (_disposed) {
+            if (_disposed)
                 throw new ObjectDisposedException(typeof(EDBConnection).Name);
-            }
-
-            if (Connector != null) {
+            if (Connector != null)
                 throw new InvalidOperationException("Connection already open");
-            }
         }
 
         void CheckNotDisposed()
         {
-            if (_disposed) {
+            if (_disposed)
                 throw new ObjectDisposedException(typeof(EDBConnection).Name);
-            }
         }
 
-        internal void CheckReady()
+        internal EDBConnector CheckReadyAndGetConnector()
         {
-            if (_disposed) {
+            if (_disposed)
                 throw new ObjectDisposedException(typeof(EDBConnection).Name);
-            }
 
-            if (Connector == null) {
+            // This method gets called outside any lock, and might be in a race condition
+            // with an ongoing keepalive, which may break the connector (setting the connection's
+            // Connector to null). We capture the connector to the stack and return it here.
+            var conn = Connector;
+            if (conn == null)
                 throw new InvalidOperationException("Connection is not open");
-            }
+            return conn;
         }
 
         #endregion State checks
 
         #region Schema operations
-#if !DNXCORE50
+#if NET45 || NET451
         /// <summary>
         /// Returns the supported collections
         /// </summary>
@@ -1144,7 +1323,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="collectionName">The collection name.</param>
         /// <returns>The collection specified.</returns>
-        public override DataTable GetSchema(string collectionName)
+        public override DataTable GetSchema([CanBeNull] string collectionName)
         {
             return GetSchema(collectionName, null);
         }
@@ -1158,7 +1337,7 @@ namespace  EnterpriseDB.EDBClient
         /// in the Restrictions collection.
         /// </param>
         /// <returns>The collection specified.</returns>
-        public override DataTable GetSchema(string collectionName, string[] restrictions)
+        public override DataTable GetSchema([CanBeNull] string collectionName, [CanBeNull] string[] restrictions)
         {
             switch (collectionName)
             {
@@ -1197,7 +1376,7 @@ namespace  EnterpriseDB.EDBClient
                 case "ConstraintColumns":
                     return EDBSchema.GetConstraintColumns(this, restrictions);
                 default:
-                    throw new ArgumentOutOfRangeException("collectionName", collectionName, "Invalid collection name");
+                    throw new ArgumentOutOfRangeException(nameof(collectionName), collectionName, "Invalid collection name");
             }
         }
 
@@ -1207,39 +1386,73 @@ namespace  EnterpriseDB.EDBClient
         #region Misc
 
         /// <summary>
+        /// Creates a closed connection with the connection string and authentication details of this message.
+        /// </summary>
+#if NET45 || NET451
+        object ICloneable.Clone()
+#else
+        public EDBConnection Clone()
+#endif
+        {
+            CheckNotDisposed();
+            var conn = new EDBConnection(Settings) {
+                ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
+                UserCertificateValidationCallback = UserCertificateValidationCallback,
+                _alreadyOpened = _alreadyOpened,
+                _connectionString = _connectionString
+            };
+            return conn;
+        }
+
+        /// <summary>
+        /// Clones this connection, replacing its connection string with the given one.
+        /// This allows creating a new connection with the same security information
+        /// (password, SSL callbacks) while changing other connection parameters (e.g.
+        /// database or pooling)
+        /// </summary>
+        public EDBConnection CloneWith(string connectionString)
+        {
+            CheckNotDisposed();
+            var csb = new EDBConnectionStringBuilder(connectionString);
+            if (csb.Password == null && Password != null)
+            {
+                csb.Password = Password;
+            }
+            return new EDBConnection(csb) {
+                ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
+                UserCertificateValidationCallback = UserCertificateValidationCallback
+            };
+        }
+
+        /// <summary>
         /// This method changes the current database by disconnecting from the actual
         /// database and connecting to the specified.
         /// </summary>
         /// <param name="dbName">The name of the database to use in place of the current database.</param>
-        public override void ChangeDatabase(String dbName)
+        public override void ChangeDatabase(string dbName)
         {
             if (dbName == null)
-                throw new ArgumentNullException("dbName");
+                throw new ArgumentNullException(nameof(dbName));
             if (string.IsNullOrEmpty(dbName))
-                throw new ArgumentOutOfRangeException("dbName", dbName, String.Format("Invalid database name: {0}", dbName));
+                throw new ArgumentOutOfRangeException(nameof(dbName), dbName, $"Invalid database name: {dbName}");
             Contract.EndContractBlock();
 
-            CheckNotDisposed();
+            CheckConnectionOpen();
             Log.Debug("Changing database to " + dbName, Connector.Id);
 
             Close();
 
-            // Mutating the current `settings` object would invalidate the cached instance, so work on a copy instead.
             Settings = Settings.Clone();
             Settings.Database = dbName;
-            _connectionString = Settings.ConnectionString;
 
             Open();
         }
 
-#if !DNXCORE50
+#if NET45 || NET451
         /// <summary>
         /// DB provider factory.
         /// </summary>
-        protected override DbProviderFactory DbProviderFactory
-        {
-            get { return EDBFactory.Instance; }
-        }
+        protected override DbProviderFactory DbProviderFactory => EDBFactory.Instance;
 #endif
 
         /// <summary>
@@ -1247,25 +1460,25 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public static void ClearPool(EDBConnection connection)
         {
-            EDBConnectorPool.ConnectorPoolMgr.ClearPool(connection);
+            ConnectorPool pool;
+            if (PoolManager.Pools.TryGetValue(connection.Settings, out pool))
+                pool.Clear();
         }
 
         /// <summary>
         /// Clear all connection pools.
         /// </summary>
-        public static void ClearAllPools()
-        {
-            EDBConnectorPool.ConnectorPoolMgr.ClearAllPools();
-        }
+        public static void ClearAllPools() => PoolManager.ClearAll();
 
         /// <summary>
         /// Flushes the type cache for this connection's connection string and reloads the
         /// types for this connection only.
         /// </summary>
-        internal void ReloadTypes()
+        public void ReloadTypes()
         {
-            TypeHandlerRegistry.ClearBackendTypeCache(ConnectionString);
-            TypeHandlerRegistry.Setup(Connector);
+            var conn = CheckReadyAndGetConnector();
+            TypeHandlerRegistry.ClearBackendTypeCache(Settings.ConnectionString);
+            TypeHandlerRegistry.Setup(conn, new EDBTimeout(TimeSpan.FromSeconds(ConnectionTimeout)));
         }
 
         #endregion Misc

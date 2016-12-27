@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,28 +40,28 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("line", EDBDbType.Line, typeof(EDBLine))]
-    internal class LineHandler : TypeHandler<EDBLine>, ISimpleTypeWriter,
-        ISimpleTypeReader<EDBLine>,
-        ISimpleTypeReader<string>
+    internal class LineHandler : SimpleTypeHandler<EDBLine>, ISimpleTypeHandler<string>
     {
-        public EDBLine Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal LineHandler(IBackendType backendType) : base(backendType) { }
+
+        public override EDBLine Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return new EDBLine(buf.ReadDouble(), buf.ReadDouble(), buf.ReadDouble());
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
             return Read(buf, len, fieldDescription).ToString();
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter)
         {
             if (!(value is EDBLine))
                 throw CreateConversionException(value.GetType());
             return 24;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
         {
             var v = (EDBLine)value;
             buf.WriteDouble(v.A);

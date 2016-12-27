@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -31,42 +31,68 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
     /// <summary>
     /// A simple query message.
-    ///
-    /// Note that since this is only used to send some specific control messages (e.g. start transaction)
-    /// and never arbitrary-length user-provided queries, this message is treated as simple and not chunking,
-    /// and only ASCII is supported.
     /// </summary>
-    class QueryMessage : SimpleFrontendMessage
+    class QueryMessage : FrontendMessage
     {
-        string Query { get; set; }
+        readonly Encoding _encoding;
+        string _query;
+        char[] _queryChars;
+        int _charPos;
 
-        internal const byte Code = (byte)'Q';
+        const byte Code = (byte)'Q';
 
-        internal QueryMessage(string query)
+        internal QueryMessage(Encoding encoding)
         {
-            Contract.Requires(query != null && query.All(c => c < 128), "Not ASCII");
-            Contract.Requires(PGUtil.UTF8Encoding.GetByteCount(query) + 5 < EDBBuffer.MinimumBufferSize, "Too long");
-
-            Query = query;
+            _encoding = encoding;
         }
 
-        internal override int Length
+        internal QueryMessage Populate(string query)
         {
-            get { return 1 + 4 + (Query.Length + 1); }
+            Contract.Requires(query != null);
+
+            _query = query;
+            _charPos = -1;
+            return this;
         }
 
-        internal override void Write(EDBBuffer buf)
+        internal override bool Write(WriteBuffer buf)
         {
-            Contract.Requires(Query != null && Query.All(c => c < 128));
+            if (_charPos == -1)
+            {
+                // Start new query
+                if (buf.WriteSpaceLeft < 1 + 4)
+                    return false;
+                _charPos = 0;
+                var queryByteLen = _encoding.GetByteCount(_query);
+                _queryChars = _query.ToCharArray();
+                buf.WriteByte(Code);
+                buf.WriteInt32(4 +            // Message length (including self excluding code)
+                               queryByteLen + // Query byte length
+                               1);            // Null terminator
+            }
 
-            buf.WriteByte(Code);
-            buf.WriteInt32(Length - 1);
-            buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Query));
+            if (_charPos < _queryChars.Length)
+            {
+                int charsUsed;
+                bool completed;
+                buf.WriteStringChunked(_queryChars, _charPos, _queryChars.Length - _charPos, true,
+                                       out charsUsed, out completed);
+                _charPos += charsUsed;
+                if (!completed)
+                    return false;
+            }
+
+            if (buf.WriteSpaceLeft < 1)
+                return false;
+            buf.WriteByte(0);
+
+            _charPos = -1;
+            return true;
         }
 
         public override string ToString()
         {
-            return String.Format("[Query={0}]", Query);
+            return $"[Query={_query}]";
         }
     }
 }

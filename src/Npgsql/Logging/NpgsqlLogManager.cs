@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -77,6 +77,7 @@ namespace  EnterpriseDB.EDBClient.Logging
         // Copied from NLog
         static string GetClassFullName()
         {
+#if NET45 || NET451
             string className;
             Type declaringType;
             int framesToSkip = 2;
@@ -99,6 +100,9 @@ namespace  EnterpriseDB.EDBClient.Logging
             } while (declaringType.Module.Name.Equals("mscorlib.dll", StringComparison.OrdinalIgnoreCase));
 
             return className;
+#else
+            return "<UNKNOWN>";
+#endif
         }
 
         static EDBLogManager()
