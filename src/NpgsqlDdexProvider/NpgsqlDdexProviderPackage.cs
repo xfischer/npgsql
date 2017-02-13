@@ -6,6 +6,7 @@ using System.ComponentModel.Design;
 using Microsoft.Win32;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace Npgsql.VisualStudio.Provider
 {
@@ -25,6 +26,8 @@ namespace Npgsql.VisualStudio.Provider
     // This attribute is used to register the information needed to show this package
     // in the Help/About dialog of Visual Studio.
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
+    // This attribute is needed to let the shell know that this package exposes some menus.
+    [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideService(typeof(NpgsqlProviderObjectFactory), ServiceName = "PostgreSQL Provider Object Factory")]
     [NpgsqlDataProviderRegistration]
     [Guid(GuidList.guidNpgsqlDdexProviderPkgString)]
@@ -42,8 +45,6 @@ namespace Npgsql.VisualStudio.Provider
 
         }
 
-
-
         /////////////////////////////////////////////////////////////////////////////
         // Overridden Package Implementation
         #region Package Members
@@ -57,7 +58,7 @@ namespace Npgsql.VisualStudio.Provider
             ((IServiceContainer)this).AddService(typeof(NpgsqlProviderObjectFactory), new NpgsqlProviderObjectFactory(), true);
             base.Initialize();
         }
-        #endregion
 
+        #endregion
     }
 }
