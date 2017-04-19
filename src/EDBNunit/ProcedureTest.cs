@@ -2880,9 +2880,9 @@ namespace DOTNET
 
                 //REFCUSOR CommandBehavior.SequentialAccess
 
-                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.RefCursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.RefCursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
 
@@ -3014,9 +3014,9 @@ namespace DOTNET
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.RefCursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.RefCursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
 
 
