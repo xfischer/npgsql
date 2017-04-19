@@ -43,7 +43,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         internal override DataRowMessage Add(DataRowMessage retRow)
         {
-
+            _InternalActaullReadPosition = Buffer.ReadPosition;
             //   ReadBuffer buf_new = new ReadBuffer(Buffer.Connector, Buffer.Connector.Connection. + 100, Buffer.TextEncoding);
             ReadBuffer rd = new ReadBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
             WriteBuffer wt = new WriteBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);

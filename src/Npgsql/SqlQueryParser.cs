@@ -45,10 +45,13 @@ namespace  EnterpriseDB.EDBClient
         {
             Contract.Requires(sql != null);
             Contract.Requires(queries != null && !queries.Any());
-
+            //      bool endtok = false;
+            bool edbsupport = false;
             var currCharOfs = 0;
             var end = sql.Length;
             var ch = '\0';
+            var ch1 = '\0';
+            var ch2 = '\0';
             int dollarTagStart;
             int dollarTagEnd;
             var currTokenBeg = 0;
@@ -61,7 +64,11 @@ namespace  EnterpriseDB.EDBClient
             var currentSql = new StringWriter();
             var currentParameters = new List<EDBParameter>();
 
-        None:
+            ch1 = sql[0];
+            ch2 = sql[1];
+            if ((ch1 == 'C' || ch1 == 'c') && (ch2 == 'R' || ch2 == 'r'))
+                edbsupport = true;
+            None:
             if (currCharOfs >= end) {
                 goto Finish;
             }
@@ -70,6 +77,7 @@ namespace  EnterpriseDB.EDBClient
         NoneContinue:
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
                 switch (ch) {
+                
                 case '/':
                     goto BlockCommentBegin;
                 case '-':
@@ -106,8 +114,8 @@ namespace  EnterpriseDB.EDBClient
                 case ')':
                     parenthesisLevel--;
                     break;
-                case 'e':
-                case 'E':
+               case 'x':
+                case 'X':
                     if (!IsLetter(lastChar))
                         goto EscapedStart;
                     else
@@ -335,7 +343,7 @@ namespace  EnterpriseDB.EDBClient
                 }
             }
             goto Finish;
-
+           
         BlockCommentBegin:
             while (currCharOfs < end) {
                 ch = sql[currCharOfs++];
@@ -380,7 +388,28 @@ namespace  EnterpriseDB.EDBClient
             }
             goto Finish;
 
-        SemiColon:
+            SemiColon:
+          
+
+            if (edbsupport == true)
+            {
+                currCharOfs++;
+                //      ch = sql[currCharOfs];
+                //     if (ch == 'E')
+                //   {
+                //      endtok = true;
+                goto None;
+               // }
+            }
+         /*   while (char.IsWhiteSpace(ch))
+            {
+                ch = sql[currCharOfs];
+                if (ch == 'E')
+                {
+                    return;
+                }
+            }
+       */
             currentSql.Write(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
             queries.Add(new EDBStatement(currentSql.ToString(), currentParameters));
             while (currCharOfs < end) {
@@ -403,7 +432,7 @@ namespace  EnterpriseDB.EDBClient
             currentSql.Write(sql.Substring(currTokenBeg, end - currTokenBeg));
             queries.Add(new EDBStatement(currentSql.ToString(), currentParameters));
         }
-
+        
         static bool IsLetter(char ch)
         {
             return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z';

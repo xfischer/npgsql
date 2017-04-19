@@ -267,12 +267,13 @@ namespace  EnterpriseDB.EDBClient
                             throw new ArgumentOutOfRangeException("Unexpected message type while populating output parameter: " + msg.Code);
                     }
             }
-            //  if(Command.Parameters[0].)
+            byte[] tmp = new byte[8500];
             if (Command.CommandType == CommandType.StoredProcedure)
             {
                 _rowDescription = _callable_descrition;
                 if (Command.Parameters._hasReturnParam)
                 {
+                     Array.Copy(_row.Buffer._buf, tmp, Row.Buffer._buf.Length);
                     Command.Parameters.Insert(Command.Parameters.ReturnIndex, Command.Parameters.ReturnParam);
                     _rowDescription.AddReturnData((FieldDescription)_callable_descrition[0]);
                   _row.Add(_tempDataRow); // ZK
@@ -307,8 +308,23 @@ namespace  EnterpriseDB.EDBClient
                     // TODO: Need to get the provider-specific value based on the out param's type
                     pending.Dequeue().Value = GetValue(i);
                     //   Console.WriteLine((string)pending.Dequeue().Value.ToString());
+                   }
+               }
+
+
+            if (Command.Parameters._hasReturnParam)
+            {
+                _row.Buffer._buf = tmp;
+                _row.Buffer.Seek(_row._InternalActaullReadPosition, SeekOrigin.Begin);
+                var msg = _connector.ReadMessage(DataRowLoadingMode.NonSequential);
+                _state = ReaderState.Consumed;
+                //     if (msg.Code == BackendMessageCode.CompletedResponse )
+                {
+             //       _state = ReaderState.Consumed;
+
                 }
             }
+            // _state = ReaderState.Consumed;
         }
 
         #region Read
@@ -593,9 +609,11 @@ namespace  EnterpriseDB.EDBClient
                     PopulateOutputParameters();
                 }
                 else
+                {
                     _pendingMessage = _connector.ReadMessage(IsSequential ? DataRowLoadingMode.Sequential : DataRowLoadingMode.NonSequential);
 
-                _state = ReaderState.InResult;
+                    _state = ReaderState.InResult;
+                }
                 return true;
             }
 

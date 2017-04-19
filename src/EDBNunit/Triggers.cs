@@ -1429,7 +1429,7 @@ namespace DOTNET
 			Assert.AreEqual("10",Reader.GetValue(1).ToString());
 			Reader.Close();
 			
-			Command.CommandText="DROP VIEW V1;DROP TABLE GeoPathLog4;DROP TABLE GeoPath4";
+			Command.CommandText="DROP VIEW V1; DROP TABLE GeoPathLog4; DROP TABLE GeoPath4";
 			Command.ExecuteNonQuery();
 		}
 		

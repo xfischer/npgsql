@@ -1167,7 +1167,7 @@ namespace  EnterpriseDB.EDBClient
 
             while (true) {
                 var msg = ReadMessage(DataRowLoadingMode.Skip);
-                Contract.Assert(!(msg is DataRowMessage));
+         //       Contract.Assert(!(msg is DataRowMessage));
                 if (msg.Code == stopAt1 || msg.Code == stopAt2) {
                     return msg;
                 }

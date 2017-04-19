@@ -370,8 +370,14 @@ namespace  EnterpriseDB.EDBClient
         internal int MaxPoolSize => Settings.MaxPoolSize;
         internal int Timeout => Settings.Timeout;
         internal int BufferSize => Settings.BufferSize;
-        internal string EntityTemplateDatabase => Settings.EntityTemplateDatabase;
-        internal string EntityAdminDatabase => Settings.EntityAdminDatabase;
+        /// <summary>
+        /// EntityTemplateDatabase
+        /// </summary>
+        public string EntityTemplateDatabase => Settings.EntityTemplateDatabase;
+        /// <summary>
+        /// EntityAdminDatabase
+        /// </summary>
+        public string EntityAdminDatabase => Settings.EntityAdminDatabase;
 
         #endregion Configuration settings
 

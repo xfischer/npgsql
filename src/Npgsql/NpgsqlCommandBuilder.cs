@@ -170,6 +170,7 @@ namespace  EnterpriseDB.EDBClient
                     ? "select proargnames, proargtypes, proallargtypes, proargmodes from pg_proc where proname = :proname"
                     : "select proargnames, proargtypes from pg_proc where proname = :proname";
                 procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
+                procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
             }
 
             using (var c = new EDBCommand(query, command.Connection))
@@ -221,7 +222,7 @@ namespace  EnterpriseDB.EDBClient
                         throw new InvalidOperationException($"Invalid parameter type: {types[i]}");
                     param.EDBDbType = npgsqlDbType.Value;
 
-                    if (names != null && i < names.Length)
+                    if (names != null && i < names.Length && command.CommandType != CommandType.StoredProcedure)
                         param.ParameterName = ":" + names[i];
                     else
                         param.ParameterName = "parameter" + (i + 1);

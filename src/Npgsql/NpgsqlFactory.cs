@@ -83,11 +83,15 @@ namespace  EnterpriseDB.EDBClient
         #region IServiceProvider Members
 
         public object GetService(Type serviceType) {
+
+            if (serviceType == null)
+                throw new ArgumentNullException(nameof(serviceType));
+
             // In legacy Entity Framework, this is the entry point for obtaining  EnterpriseDB.EDBClient's
             // implementation of DbProviderServices. We use reflection for all types to
             // avoid any dependencies on EF stuff in this project.
 
-            if (serviceType != null && serviceType.FullName == "System.Data.Common.DbProviderServices")
+           if (serviceType.FullName == "System.Data.Common.DbProviderServices")
             {
                 // User has requested a legacy EF DbProviderServices implementation. Check our cache first.
                 if (_legacyEntityFrameworkServices != null)
@@ -95,19 +99,20 @@ namespace  EnterpriseDB.EDBClient
 
                 // First time, attempt to find the EntityFramework5. EnterpriseDB.EDBClient assembly and load the type via reflection
                 var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-                assemblyName.Name = "EntityFramework5. EnterpriseDB.EDBClient";
+                assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
                 Assembly npgsqlEfAssembly;
                 try {
                     npgsqlEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
+                   
                 } catch (Exception e) {
-                    throw new Exception("Could not load EntityFramework5. EnterpriseDB.EDBClient assembly, is it installed?", e);
+                    throw new Exception("Could not load EntityFramework5-----V6.EnterpriseDB.EDBClient assembly, is it installed?",e);
                 }
-
+                
                 Type npgsqlServicesType;
-                if ((npgsqlServicesType = npgsqlEfAssembly.GetType(" EnterpriseDB.EDBClient.EDBServices")) == null ||
-                    npgsqlServicesType.GetProperty("Instance") == null)
-                    throw new Exception("EntityFramework5. EnterpriseDB.EDBClient assembly does not seem to contain the correct type!");
-
+                if ((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null ) 
+                    throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- NULL EnterprirDEB.EDBServices!");
+               if( npgsqlServicesType.GetProperty("Instance") == null)
+                    throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- GetProperty(Instance) is NULL !");
                 return _legacyEntityFrameworkServices = npgsqlServicesType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetMethod.Invoke(null, new object[0]);
             }
 

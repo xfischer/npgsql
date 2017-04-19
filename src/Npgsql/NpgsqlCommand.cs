@@ -370,7 +370,10 @@ namespace  EnterpriseDB.EDBClient
         /// Only primitive numerical types and DateTimeOffset are supported.
         /// Set the whole array or just a value to null to use default type.
         /// </summary>
-        internal Type[] ObjectResultTypes { get; set; }
+        /// 
+
+      
+        public Type[] ObjectResultTypes { get; set; }
 
         #endregion
 
@@ -931,9 +934,17 @@ namespace  EnterpriseDB.EDBClient
                     _sendState = SendState.Bind;
                     goto case SendState.Bind;
 
-                case SendState.Bind:
-                    if (!_connector.BindOutMessage.Write(buf, ref directBuf))
-                        return false;
+            case SendState.Bind:
+                        if (_connector._isCallableStmt == true)
+                        {
+                            if (!_connector.BindOutMessage.Write(buf, ref directBuf))
+                                return false;
+                        }
+                        else
+                        {
+                            if (!_connector.BindMessage.Write(buf, ref directBuf))
+                                return false;
+                        }
                     var execute = _connector.ExecuteMessage;
                     execute.Populate();
                     _sendState = SendState.Execute;

@@ -52,6 +52,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
      /// 
      /// </summary>
         internal int _InternalreadPosition;
+        internal int _InternalActaullReadPosition;
         /// <summary>
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1

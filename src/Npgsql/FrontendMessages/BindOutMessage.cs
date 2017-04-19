@@ -138,13 +138,15 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
                         buf.WriteInt16((short)FormatCode.Binary);
                     }
                     else if (_formatCodeListLength > 1)
-                   //     for (; _paramIndex < _parameters.Count; _paramIndex++)
-            //            {
-                            if (buf.WriteSpaceLeft < 2)
-                                return false;
-                            foreach (var code in _parameters.Select(p => p.FormatCode))
-                                buf.WriteInt16((short)code);
-                //        }
+                    {
+                        //       //     for (; _paramIndex < _parameters.Count; _paramIndex++)
+                        ////            {
+                        //                if (buf.WriteSpaceLeft < 2)
+                        //                    return false;
+                        foreach (var code in _parameters.Select(p => p.FormatCode))
+                            buf.WriteInt16((short)code);
+                        //        }
+                    }
                     _state = State.ParameterCount;
                     goto case State.ParameterCount;
 
