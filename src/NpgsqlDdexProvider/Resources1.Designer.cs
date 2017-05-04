@@ -61,6 +61,16 @@ namespace Npgsql.VisualStudio.Provider {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        public static System.Drawing.Icon edb_logo {
+            get {
+                object obj = ResourceManager.GetObject("edb_logo", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Columns.
         /// </summary>
         public static string Node_Columns {
@@ -115,7 +125,7 @@ namespace Npgsql.VisualStudio.Provider {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Npgsql Ddex Provider.
+        ///   Looks up a localized string similar to EDB Ddex Provider.
         /// </summary>
         public static string Provider_Display {
             get {
@@ -124,7 +134,7 @@ namespace Npgsql.VisualStudio.Provider {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Npgsql Ddex Provider.
+        ///   Looks up a localized string similar to EDB Ddex Provider.
         /// </summary>
         public static string Provider_ShortDisplayName {
             get {

@@ -97,7 +97,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\Package.ico</ApplicationIcon>
+    <ApplicationIcon>edb_logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -118,6 +118,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="edb_logo.ico" />
     <Content Include="License.rtf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -126,12 +127,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\edb_logo.ico" />
     <EmbeddedResource Include="NpgsqlDataObjectSupport.xml" />
     <EmbeddedResource Include="NpgsqlDataViewSupport.xml" />
-    <Content Include="Resources\Package.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Service References\" />
@@ -145,6 +143,7 @@
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +189,7 @@
       <HintPath>..\..\packages\VSSDK.Shell.Interop.10.10.0.0\lib\net20\Microsoft.VisualStudio.Shell.Interop.9.0.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
