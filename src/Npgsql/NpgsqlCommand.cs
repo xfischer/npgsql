@@ -935,7 +935,7 @@ namespace  EnterpriseDB.EDBClient
                     goto case SendState.Bind;
 
             case SendState.Bind:
-                        if (_connector._isCallableStmt == true)
+                      if (CommandType == CommandType.StoredProcedure)
                         {
                             if (!_connector.BindOutMessage.Write(buf, ref directBuf))
                                 return false;

@@ -625,7 +625,8 @@ namespace  EnterpriseDB.EDBClient
 
         internal int ValidateAndGetLength()
         {
-            if (_value == null) {
+            if (Direction == ParameterDirection.Input)
+                if (_value == null) {
                 throw new InvalidCastException($"Parameter {ParameterName} must be set");
             }
 
