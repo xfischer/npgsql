@@ -122,7 +122,7 @@ namespace  EnterpriseDB.EDBClient
         public static Exception ThrowIfReached(string message = null)
         {
             Contract.Requires(false);
-            return message == null ? new Exception("An internal  EnterpriseDB.EDBClient occured, please open an issue to support.enterprisedb.com with this exception's stack trace") : new Exception(message);
+            return message == null ? new Exception("An internal  EnterpriseDB.EDBClient occured, please open an issue to support@enterprisedb.com with this exception's stack trace") : new Exception(message);
         }
 
         internal static bool IsWindows =>
