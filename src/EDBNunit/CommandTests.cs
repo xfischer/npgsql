@@ -1252,7 +1252,7 @@ namespace DOTNET
             command.ExecuteScalar();
 
 
-            Assert.AreEqual(6, result);
+            Assert.AreEqual(7, result);
 
 
         }
