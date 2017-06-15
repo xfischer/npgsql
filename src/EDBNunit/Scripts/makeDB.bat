@@ -66,3 +66,9 @@ echo Adding test data...
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
+
+echo Adding sample...
+
+%PSQL% %NPGSQL_TEST_STRING% -f edb-sample.sql >> %NPGSQL_TESTS_LOG% 2>&1
+
+if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
