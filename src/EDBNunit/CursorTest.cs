@@ -25,7 +25,7 @@ namespace DOTNET
 							+ "IS\n"
 //							+ "v_id number;\n"
 							+ "v_name varchar2(20);\n"
-							+ "CURSOR c_name IS SELECT EMPNO,ENAME FROM EMP;\n"
+							+ "CURSOR c_name IS SELECT EMPNO,ENAME FROM EMP where EMPNO=7521;\n"
 							+ "BEGIN\n"
 							+ "OPEN c_name;\n"
 							+ "FETCH c_name into v_id,v_name;\n"
@@ -49,28 +49,22 @@ namespace DOTNET
 
 			TestUtil.closeDB(con);
 		}
+
 		[Test]
 		public void testSelect() //Have to change the dependancy on emp table
 		{
-			/*try 
-			{
-				EDBCommand command = new EDBCommand("CUR_TEST(:v_id)",con);
-				command.CommandType = CommandType.StoredProcedure;
+			EDBCommand command = new EDBCommand("CUR_TEST(:v_id)",con);
+			command.CommandType = CommandType.StoredProcedure;
 
-				command.Parameters.Add(new EDBParameter("v_id", 
-					EDBTypes.EDBDbType.Numeric,10,"v_id",
-					ParameterDirection.Output,false ,2,2,
-					System.Data.DataRowVersion.Current,1));
+			command.Parameters.Add(new EDBParameter("v_id", 
+				EDBTypes.EDBDbType.Numeric,10,"v_id",
+				ParameterDirection.Output,false ,2,2,
+				System.Data.DataRowVersion.Current,1));
 
-				command.Prepare();
-				command.ExecuteNonQuery();
+			command.Prepare();
+			command.ExecuteNonQuery();
 
-				Assert.AreEqual(7521,int.Parse(command.Parameters[0].Value.ToString()));
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}*/
+			Assert.AreEqual(7521,int.Parse(command.Parameters[0].Value.ToString()));
 		}
 	}
 }
