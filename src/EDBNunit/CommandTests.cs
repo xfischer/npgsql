@@ -1420,7 +1420,7 @@ namespace DOTNET
         public void TestOpenPathSupport()
         {
 
-           /* _conn.Open();
+            _conn.Open();
 
             EDBCommand command = new EDBCommand("select field_path from tablee where field_serial = 5", _conn);
 
@@ -1431,7 +1431,7 @@ namespace DOTNET
             Assert.AreEqual(4, path[0].X);
             Assert.AreEqual(3, path[0].Y);
             Assert.AreEqual(5, path[1].X);
-            Assert.AreEqual(4, path[1].Y);*/
+            Assert.AreEqual(4, path[1].Y);
 
 
         }
@@ -1442,7 +1442,7 @@ namespace DOTNET
         public void TestPolygonSupport()
         {
 
-            /*_conn.Open();
+            _conn.Open();
 
             EDBCommand command = new EDBCommand("select field_polygon from tablee where field_serial = 6", _conn);
 
@@ -1452,7 +1452,7 @@ namespace DOTNET
             Assert.AreEqual(4, polygon[0].X);
             Assert.AreEqual(3, polygon[0].Y);
             Assert.AreEqual(5, polygon[1].X);
-            Assert.AreEqual(4, polygon[1].Y);*/
+            Assert.AreEqual(4, polygon[1].Y);
 
 
         }
@@ -1462,7 +1462,7 @@ namespace DOTNET
         public void TestCircleSupport()
         {
 
-           /* _conn.Open();
+            _conn.Open();
 
             EDBCommand command = new EDBCommand("select field_circle from tablee where field_serial = 7", _conn);
 
@@ -1470,7 +1470,7 @@ namespace DOTNET
 
             Assert.AreEqual(4, circle.Center.X);
             Assert.AreEqual(3, circle.Center.Y);
-            Assert.AreEqual(5, circle.Radius);*/
+            Assert.AreEqual(5, circle.Radius);
 
 
 

@@ -13,10 +13,11 @@ namespace DOTNET
 	public class BaseDataSourceTest
 	{
 		EDBConnection con = null;
+		String conString = "Server=127.0.0.1;Port=5444; UserId=edb;Password=edb;Database=edb";
 		[SetUp]
 		public void Init()
 		{
-            con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Password=edb;Database=edb");
+            con = new EDBConnection(conString);
 			con.Open();
 			/*TestUtil.createTempTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 			EDBCommand Command = new EDBCommand("",con);
@@ -46,7 +47,7 @@ namespace DOTNET
 		{
 			try
 			{
-                con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Password=edb;Database=edb");
+                con = new EDBConnection(conString);
 				//con = new EDBConnection("Server={127.0.0.1};Trusted_Connection={Yes};Database={edb};");
 				
 				con.Open();
@@ -102,7 +103,7 @@ namespace DOTNET
 		{
 			try
 			{
-                con = new EDBConnection("Server=127.0.0.1;Port=5444; UserId=edb;Password=edb;Database=edb");
+                con = new EDBConnection(conString);
 				con.Open();
 				Console.WriteLine(con.ConnectionString);
 				
