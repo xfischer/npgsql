@@ -139,6 +139,8 @@
     </Compile>
     <Compile Include="EDBBoxTest.cs" />
     <Compile Include="EDBCircleTest.cs" />
+    <Compile Include="EDBPathTest.cs" />
+    <Compile Include="EDBPolygonTest.cs" />
     <Compile Include="FBs.cs" />
     <Compile Include="FunctionTest.cs">
       <SubType>Code</SubType>
@@ -147,6 +149,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="EDBLineTest.cs" />
+    <Compile Include="LargeObjectTest.cs" />
     <Compile Include="MiscTest.cs">
       <SubType>Code</SubType>
     </Compile>
