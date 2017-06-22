@@ -20,123 +20,78 @@ namespace DOTNET
 		{
 			//write setup for following test cases
 			con = TestUtil.openDB();
-
 		}
+
 		[Test]
 		public void testSingleRecord()
 		{
-			/*try 
-			{
+			EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept where deptno=10",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
 
-				EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept where deptno=10",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
-                      
-				Assert.IsTrue(drDept.Read(),"No data returned from Select");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}*/
+			Assert.IsTrue(drDept.Read(),"No data returned from Select");
 		}
+
 		[Test]
 		public void testWholeTable()
 		{
-			/*try 
-			{
-				EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
-                      
-				Assert.IsTrue(drDept.Read(),"No data returned from Select");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}*/
+			EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
+
+			Assert.IsTrue(drDept.Read(),"No data returned from Select");
 		}
+
 		[Test]
 		public void testTwoTables()
 		{
-			/*try 
-			{
-				EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept,emp",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
-                      
-				Assert.IsTrue(drDept.Read(),"No data returned from Select");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}*/
+			EDBCommand cmdSelect = new EDBCommand("SELECT * FROM dept,emp",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
+
+			Assert.IsTrue(drDept.Read(),"No data returned from Select");
 		}
 
+		[Test]
 		public void testView()
 		{
-			try 
-			{
-				EDBCommand cmdSelect = new EDBCommand("SELECT * FROM salesemp",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
+			EDBCommand cmdSelect = new EDBCommand("SELECT * FROM salesemp",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
 
-				Assert.IsTrue(drDept.Read(),"No data returned from Select");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
+			Assert.IsTrue(drDept.Read(),"No data returned from Select");
 		}
+
 		//------------------------------------------17AUG06---------------
+		[Test]
 		public void testCount()
 		{
-			try 
-			{
-				EDBCommand cmdSelect = new EDBCommand("SELECT count(*) FROM emp",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
+			EDBCommand cmdSelect = new EDBCommand("SELECT count(*) FROM emp",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
 
-				Assert.IsTrue(drDept.Read(),"14");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
-		}	
-		
-
-		public void testCountWithFiled()
-		{
-			try 
-			{
-				EDBCommand cmdSelect = new EDBCommand("SELECT count(empno) FROM emp",con); 
-				cmdSelect.CommandType = CommandType.Text;
-				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
-
-				Assert.IsTrue(drDept.Read(),"14");
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
+			Assert.IsTrue(drDept.Read(),"14");
 		}
 		
-//		public void testCount()
-//		{
-//			try 
-//			{
-//				EDBCommand cmdSelect = new EDBCommand("SELECT MAX(sal) FROM emp",con); 
-//				cmdSelect.CommandType = CommandType.Text;
-//				EDBDataReader drDept = cmdSelect.ExecuteReader(); 
-//
-//				Assert.IsTrue(drDept.Read(),"14");
-//			}
-//			catch(EDBException e)
-//			{
-//				throw new Exception(e.ToString());
-//			}
-//		}
+		[Test]
+		public void testCountWithFiled()
+		{
+			EDBCommand cmdSelect = new EDBCommand("SELECT count(empno) FROM emp",con); 
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader(); 
 
+			Assert.IsTrue(drDept.Read(),"14");
+		}
+
+		[Test]
+		public void testCountMax()
+		{
+			EDBCommand cmdSelect = new EDBCommand("SELECT MAX(sal) FROM emp", con);
+			cmdSelect.CommandType = CommandType.Text;
+			EDBDataReader drDept = cmdSelect.ExecuteReader();
+
+			Assert.IsTrue(drDept.Read(), "14");
+		}
 
 		[TearDown] 
 		public void Dispose()
