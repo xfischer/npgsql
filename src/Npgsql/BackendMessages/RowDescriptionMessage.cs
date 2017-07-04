@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using  EnterpriseDB.EDBClient.TypeHandlers;
-using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
@@ -38,9 +36,9 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/protocol-message-formats.html
     /// </remarks>
-    internal sealed class RowDescriptionMessage : IBackendMessage
+    sealed class RowDescriptionMessage : IBackendMessage
     {
-        public List<FieldDescription> Fields { get; private set; }
+        public List<FieldDescription> Fields { get; }
         readonly Dictionary<string, int> _nameIndex;
         readonly Dictionary<string, int> _caseInsensitiveNameIndex;
 
@@ -61,28 +59,28 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             if (isCallableStmt != true)
             {
                 for (var i = 0; i != numFields; ++i)
-                {
-                    // TODO: Recycle
-                    var field = new FieldDescription();
-                    field.Populate(
-                        typeHandlerRegistry,
-                        buf.ReadNullTerminatedString(),  // Name
-                        buf.ReadUInt32(),                // TableOID
-                        buf.ReadInt16(),                 // ColumnAttributeNumber
-                        buf.ReadUInt32(),                // TypeOID
-                        buf.ReadInt16(),                 // TypeSize
-                        buf.ReadInt32(),                 // TypeModifier
-                        (FormatCode)buf.ReadInt16()      // FormatCode
-                    );
+            {
+                // TODO: Recycle
+                var field = new FieldDescription();
+                field.Populate(
+                    typeHandlerRegistry,
+                    buf.ReadNullTerminatedString(),  // Name
+                    buf.ReadUInt32(),                // TableOID
+                    buf.ReadInt16(),                 // ColumnAttributeNumber
+                    buf.ReadUInt32(),                // TypeOID
+                    buf.ReadInt16(),                 // TypeSize
+                    buf.ReadInt32(),                 // TypeModifier
+                    (FormatCode)buf.ReadInt16()      // FormatCode
+                );
 
-                    Fields.Add(field);
-                    if (!_nameIndex.ContainsKey(field.Name))
-                    {
-                        _nameIndex.Add(field.Name, i);
-                        if (!_caseInsensitiveNameIndex.ContainsKey(field.Name))
-                            _caseInsensitiveNameIndex.Add(field.Name, i);
-                    }
+                Fields.Add(field);
+                if (!_nameIndex.ContainsKey(field.Name))
+                {
+                    _nameIndex.Add(field.Name, i);
+                    if (!_caseInsensitiveNameIndex.ContainsKey(field.Name))
+                        _caseInsensitiveNameIndex.Add(field.Name, i);
                 }
+            }
             }
             else
             {
@@ -90,23 +88,23 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                 {
                     // TODO: Recycle
                     var field = new FieldDescription();
-                       field.PopulateCallableStmt(
-                        typeHandlerRegistry,
-                        buf.ReadNullTerminatedString(),  // Name
-                        buf.ReadInt16(),                // Returing index
-                        buf.ReadUInt32(),                 // TypeOID
-                        buf.ReadInt16(),                // TypeSize
-                        buf.ReadInt32(),                 // TypeModifier
-                        (FormatCode)buf.ReadInt16()      // FormatCode
-                        );
+                    field.PopulateCallableStmt(
+                     typeHandlerRegistry,
+                     buf.ReadNullTerminatedString(),  // Name
+                     buf.ReadInt16(),                // Returing index
+                     buf.ReadUInt32(),                 // TypeOID
+                     buf.ReadInt16(),                // TypeSize
+                     buf.ReadInt32(),                 // TypeModifier
+                     (FormatCode)buf.ReadInt16()      // FormatCode
+                     );
 
-                        //Name = buf.ReadNullTerminatedString(),
-                        //ReturningIndex = buf.ReadInt16(),
-                        //OID = buf.ReadUInt32(),
-                        //TypeSize = buf.ReadInt16(),
-                        //TypeModifier = buf.ReadInt32(),
-                        //FormatCode = (FormatCode)buf.ReadInt16()
-                 
+                    //Name = buf.ReadNullTerminatedString(),
+                    //ReturningIndex = buf.ReadInt16(),
+                    //OID = buf.ReadUInt32(),
+                    //TypeSize = buf.ReadInt16(),
+                    //TypeModifier = buf.ReadInt32(),
+                    //FormatCode = (FormatCode)buf.ReadInt16()
+
                     // If we get the exact unknown type in return, it was a literal string written in the query string
                     field.Handler = typeHandlerRegistry[field.TypeOID];
                     //  Fields.Add()
@@ -127,8 +125,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             return this;
         }
 
-
-
         public void AddReturnData(FieldDescription fd)
         {
 
@@ -148,9 +144,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             //  Fields =(FieldDescription) fdData;
         }
 
-
-
-
         internal FieldDescription this[int index] => Fields[index];
 
         internal int NumFields => Fields.Count;
@@ -160,9 +153,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal int GetFieldIndex(string name)
         {
-            
-            int ret;
-            if (_nameIndex.TryGetValue(name, out ret) || _caseInsensitiveNameIndex.TryGetValue(name, out ret))
+            if (_nameIndex.TryGetValue(name, out var ret) || _caseInsensitiveNameIndex.TryGetValue(name, out ret))
                 return ret;
             throw new IndexOutOfRangeException("Field not found in row: " + name);
         }
@@ -171,10 +162,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// Given a string name, returns the field's ordinal index in the row.
         /// </summary>
         internal bool TryGetFieldIndex(string name, out int fieldIndex)
-        {
-            return _nameIndex.TryGetValue(name, out fieldIndex) ||
-                   _caseInsensitiveNameIndex.TryGetValue(name, out fieldIndex);
-        }
+            => _nameIndex.TryGetValue(name, out fieldIndex) ||
+               _caseInsensitiveNameIndex.TryGetValue(name, out fieldIndex);
 
         public BackendMessageCode Code => BackendMessageCode.RowDescription;
 
@@ -182,38 +171,34 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         static readonly CompareInfo CompareInfo = CultureInfo.InvariantCulture.CompareInfo;
 
-        private sealed class KanaWidthInsensitiveComparer : IEqualityComparer<string>
+        sealed class KanaWidthInsensitiveComparer : IEqualityComparer<string>
         {
             public static readonly KanaWidthInsensitiveComparer Instance = new KanaWidthInsensitiveComparer();
-            private KanaWidthInsensitiveComparer() { }
-            public bool Equals(string x, string y)
-            {
-                return CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth) == 0;
-            }
-            public int GetHashCode(string obj)
+            KanaWidthInsensitiveComparer() { }
+            public bool Equals([NotNull] string x, [NotNull] string y)
+                => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth) == 0;
+            public int GetHashCode([NotNull] string o)
             {
 #if NET45 || NET451
-                return CompareInfo.GetSortKey(obj, CompareOptions.IgnoreWidth).GetHashCode();
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth).GetHashCode();
 #else
-                return CompareInfo.GetHashCode(obj, CompareOptions.IgnoreWidth);
+                return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth);
 #endif
             }
         }
 
-        private sealed class KanaWidthCaseInsensitiveComparer : IEqualityComparer<string>
+        sealed class KanaWidthCaseInsensitiveComparer : IEqualityComparer<string>
         {
             public static readonly KanaWidthCaseInsensitiveComparer Instance = new KanaWidthCaseInsensitiveComparer();
-            private KanaWidthCaseInsensitiveComparer() { }
-            public bool Equals(string x, string y)
-            {
-                return CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
-            }
-            public int GetHashCode(string obj)
+            KanaWidthCaseInsensitiveComparer() { }
+            public bool Equals([NotNull] string x, [NotNull] string y)
+                => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
+            public int GetHashCode([NotNull] string o)
             {
 #if NET45 || NET451
-                return CompareInfo.GetSortKey(obj, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
 #else
-                return CompareInfo.GetHashCode(obj, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
+                return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
 #endif
             }
         }
@@ -225,7 +210,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     /// A descriptive record on a single field received from PostgreSQL.
     /// See RowDescription in http://www.postgresql.org/docs/current/static/protocol-message-formats.html
     /// </summary>
-    internal sealed class FieldDescription
+    sealed class FieldDescription
     {
         internal void Populate(
             TypeHandlerRegistry typeHandlerRegistry, string name, uint tableOID, short columnAttributeNumber,
@@ -263,8 +248,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             ResolveHandler();
         }
 
-
-
         /// <summary>
         /// The field name.
         /// </summary>
@@ -273,7 +256,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// <summary>
         /// The object ID of the field's data type.
         /// </summary>
-        internal uint TypeOID { get; set; }
+        internal uint TypeOID { get; private set; }
 
         /// <summary>
         /// The data type size (see pg_type.typlen). Note that negative values denote variable-width types.
@@ -291,7 +274,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         internal uint TableOID { get; set; }
 
         /// <summary>
-        /// Incase of callable statements we should store the returning index on returned parameters.
+        /// /// Incase of callable statements we should store the returning index on returned parameters.
         /// </summary>
         internal short ReturningIndex { get; set; }
 
@@ -319,7 +302,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         /// <summary>
         /// The  EnterpriseDB.EDBClient type handler assigned to handle this field.
-        /// Returns <see cref="UnrecognizedTypeHandler"/> for fields with format text.
+        /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
         public TypeHandler Handler { get; set; }
 
@@ -328,7 +311,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal TypeHandler RealHandler { get; private set; }
 
-        public string DataTypeName => RealHandler.PgDisplayName;
+        internal PostgresType PostgresType => RealHandler.PostgresType;
         public Type FieldType => Handler.GetFieldType(this);
 
         void ResolveHandler()

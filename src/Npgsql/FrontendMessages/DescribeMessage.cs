@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,7 +23,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -53,17 +53,14 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         internal override void WriteFully(WriteBuffer buf)
         {
-            Contract.Requires(Name != null && Name.All(c => c < 128));
+            Debug.Assert(Name != null && Name.All(c => c < 128));
 
             buf.WriteByte(Code);
             buf.WriteInt32(Length - 1);
             buf.WriteByte((byte)StatementOrPortal);
-            buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Name));
+            buf.WriteNullTerminatedString(Name);
         }
 
-        public override string ToString()
-        {
-            return $"[Describe({StatementOrPortal}={Name})]";
-        }
+        public override string ToString() => $"[Describe({StatementOrPortal}={Name})]";
     }
 }

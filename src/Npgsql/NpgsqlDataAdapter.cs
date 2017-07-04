@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -27,7 +27,6 @@ using System;
 using System.Data;
 using System.Data.Common;
 using JetBrains.Annotations;
-using  EnterpriseDB.EDBClient.Logging;
 
 namespace  EnterpriseDB.EDBClient
 {
@@ -62,8 +61,6 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public event EDBRowUpdatingEventHandler RowUpdating;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
-
         /// <summary>
         /// Default constructor.
         /// </summary>
@@ -75,7 +72,6 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="selectCommand"></param>
         public EDBDataAdapter(EDBCommand selectCommand)
         {
-            Log.Trace("Create EDBDataAdapter");
             SelectCommand = selectCommand;
         }
 
@@ -102,7 +98,6 @@ namespace  EnterpriseDB.EDBClient
                                                                      System.Data.StatementType statementType,
                                                                      [NotNull] DataTableMapping tableMapping)
         {
-            Log.Trace("CreateRowUpdatedEvent");
             return new EDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
         }
 
@@ -113,7 +108,6 @@ namespace  EnterpriseDB.EDBClient
                                                                        System.Data.StatementType statementType,
                                                                        [NotNull] DataTableMapping tableMapping)
         {
-            Log.Trace("CreateRowUpdatingEvent");
             return new EDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
         }
 
@@ -123,7 +117,6 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="value"></param>
         protected override void OnRowUpdated([NotNull] RowUpdatedEventArgs value)
         {
-            Log.Trace("OnRowUpdated");
             //base.OnRowUpdated(value);
             if (RowUpdated != null && value is EDBRowUpdatedEventArgs)
                 RowUpdated(this, (EDBRowUpdatedEventArgs)value);
@@ -135,7 +128,6 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="value"></param>
         protected override void OnRowUpdating([NotNull] RowUpdatingEventArgs value)
         {
-            Log.Trace("OnRowUpdating");
             if (RowUpdating != null && value is EDBRowUpdatingEventArgs)
                 RowUpdating(this, (EDBRowUpdatingEventArgs) value);
         }

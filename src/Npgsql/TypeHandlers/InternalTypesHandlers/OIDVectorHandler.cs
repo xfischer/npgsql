@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,14 +21,9 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
+using EnterpriseDB.EDBClient.Logging;
 using EDBTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.Logging;
-using  EnterpriseDB.EDBClient.BackendMessages;
-using  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.InternalTypesHandlers
 {
@@ -37,12 +32,12 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.InternalTypesHandlers
     /// be 0 (we send 1 for regular arrays).
     /// </summary>
     [TypeMapping("oidvector", EDBDbType.Oidvector)]
-    internal class OIDVectorHandler : ArrayHandler<uint>
+    class OIDVectorHandler : ArrayHandler<uint>
     {
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
-        public OIDVectorHandler(IBackendType backendType, TypeHandlerRegistry registry)
-            : base(backendType, null, 0)
+        public OIDVectorHandler(PostgresType postgresType, TypeHandlerRegistry registry)
+            : base(postgresType, null, 0)
         {
             // The pg_type SQL query makes sure that the oid type comes before oidvector, so we can
             // depend on it already being in the registry

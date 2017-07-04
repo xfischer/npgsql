@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,14 +22,9 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using  EnterpriseDB.EDBClient.TypeHandlers;
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
@@ -44,13 +39,14 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// The number of columns in the current row
         /// </summary>
         internal int NumColumns;
+
         /// <summary>
         /// 
         /// </summary>
         internal bool _isReturnRow = true;
-     /// <summary>
-     /// 
-     /// </summary>
+        /// <summary>
+        /// 
+        /// </summary>
         internal int _InternalreadPosition;
         internal int _InternalActaullReadPosition;
         /// <summary>
@@ -73,16 +69,18 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         internal bool IsColumnNull => ColumnLen == -1;
 
+      //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
+
         internal abstract DataRowMessage Load(ReadBuffer buf);
-   //     internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
+      //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
+
 
         /// <summary>
         /// Places our position at the beginning of the given column, after the 4-byte length.
         /// The length is available in ColumnLen.
         /// </summary>
-        internal abstract void SeekToColumn(int column);
-        internal abstract Task SeekToColumnAsync(int column, CancellationToken cancellationToken);
-        internal abstract void SeekInColumn(int posInColumn);
+        internal abstract Task SeekToColumn(int column, bool async);
+        internal abstract Task SeekInColumn(int posInColumn, bool async);
 
         /// <summary>
         /// Returns a stream for the current column.
@@ -92,19 +90,14 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// <summary>
         /// Consumes the current row, allowing the reader to read in the next one.
         /// </summary>
-        internal abstract void Consume();
+        internal abstract Task Consume(bool async);
 
-        /// <summary>
-        /// Consumes the current row asynchronously, allowing the reader to read in the next one.
-        /// </summary>
-        internal abstract Task ConsumeAsync(CancellationToken token);
-
-        internal void SeekToColumnStart(int column)
+        // TODO: Possibly make this non-async for NonSequential
+        internal async Task SeekToColumnStart(int column, bool async)
         {
-            SeekToColumn(column);
-            if (PosInColumn != 0) {
-                SeekInColumn(0);
-            }
+            await SeekToColumn(column, async);
+            if (PosInColumn != 0)
+                await SeekInColumn(0, async);
         }
 
         #region Checks
@@ -112,7 +105,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         // ReSharper disable once UnusedParameter.Global
         protected void CheckColumnIndex(int column)
         {
-
             if (column < 0 || column >= NumColumns)
             {
                 throw new IndexOutOfRangeException("Column index out of range");

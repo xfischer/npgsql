@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,11 +23,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
@@ -46,225 +47,129 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         List<EDBParameter> InputParameters { get; set; }
         internal List<FormatCode> ResultFormatCodes { get; private set; }
         internal bool AllResultTypesAreUnknown { get; set; }
+        [CanBeNull]
         internal bool[] UnknownResultTypeList { get; set; }
+        EDBParameterCollection _parameters;
 
-        State _state;
-        int _paramIndex;
-        int _formatCodeListLength= 0 ;
-        bool _wroteParamLen;
-		EDBParameterCollection _parameters;
         const byte Code = (byte)'B';
 
-        internal BindOutMessage Populate(TypeHandlerRegistry typeHandlerRegistry, List<EDBParameter> inputParameters,EDBParameterCollection parameters,
-                             string portal="", string statement="")
+        internal BindOutMessage Populate(List<EDBParameter> inputParameters, EDBParameterCollection parameters, string portal = "", string statement = "")
         {
-            Contract.Requires(inputParameters != null && inputParameters.All(p => p.IsInputDirection));
-            Contract.Requires(portal != null);
-            Contract.Requires(statement != null);
+            Debug.Assert(inputParameters != null && inputParameters.All(p => p.IsInputDirection));
+            Debug.Assert(portal != null);
+            Debug.Assert(statement != null);
+
             AllResultTypesAreUnknown = false;
             UnknownResultTypeList = null;
             Portal = portal;
             Statement = statement;
             InputParameters = inputParameters;
-			_parameters = parameters;
-            _state = State.Header;
-            _paramIndex = 0;
-            _wroteParamLen = false;
+            _parameters = parameters;
             return this;
         }
 
-        /// <summary>
-        /// Bind is a special message in that it supports the "direct buffer" optimization, which allows us to write
-        /// user byte[] data directly to the stream rather than copying it into our buffer. It therefore has its own
-        /// special overload of Write below.
-        /// </summary>
-        /// <param name="buf"></param>
-        /// <returns></returns>
-        internal override bool Write(WriteBuffer buf)
+        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
         {
-            throw new NotSupportedException($"Internal error, call the overload of {nameof(Write)} which accepts a {nameof(DirectBuffer)}");
-        }
-
-        internal bool Write(WriteBuffer buf, ref DirectBuffer directBuf)
-        {
-            Contract.Requires(Statement != null && Statement.All(c => c < 128));
-            Contract.Requires(Portal != null && Portal.All(c => c < 128));
-
-            switch (_state)
+            Debug.Assert(Statement != null && Statement.All(c => c < 128));
+            Debug.Assert(Portal != null && Portal.All(c => c < 128));
+            var formatCodesSum = 0;
+            var paramsLength = 0;
+            foreach (EDBParameter p in InputParameters)
             {
-                case State.Header:
-                    var formatCodesSum = _parameters.Select(p => p.FormatCode).Sum(c => (int)c);
-                     _formatCodeListLength = _parameters.Count; // formatCodesSum == 0 ? 0 : formatCodesSum == _parameters.Count ? 1 : _parameters.Count;
-
-                    var headerLength =
-                        1 +                        // Message code
-                        4 +                        // Message length
-                        Portal.Length + 1 +
-                        Statement.Length + 1 +
-                        2 +                        // Number of parameter format codes that follow
-                        2 * _formatCodeListLength + // List of format codes
-                        2;                         // Number of parameters
-
-                    if (buf.WriteSpaceLeft < headerLength)
-                    {
-                        Contract.Assume(buf.Size >= headerLength, "Buffer too small for Bind header");
-                        return false;
-                    }
-
-                    foreach (var c in _parameters.Select(p => p.LengthCache).Where(c => c != null))
-                        c.Rewind();
-                    var messageLength = headerLength +
-                        4 * _parameters.Count +                                     // Parameter lengths
-                        InputParameters.Select(p => p.ValidateAndGetLength()).Sum() +   // Parameter values
-                        2 +                                                             // Number of result format codes
-                        2 * (UnknownResultTypeList == null ? 1 : UnknownResultTypeList.Length);  // Result format codes
-
-                    buf.WriteByte(Code);
-                    buf.WriteInt32(messageLength-1);
-                    buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Portal));
-                    buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Statement));
-                    buf.WriteInt16(_formatCodeListLength);
-                    _paramIndex = 0;
-
-                    _state = State.ParameterFormatCodes;
-                    goto case State.ParameterFormatCodes;
-
-                case State.ParameterFormatCodes:
-                    // 0 length implicitly means all-text, 1 means all-binary, >1 means mix-and-match
-                    if (_formatCodeListLength == 1)
-                    {
-                        if (buf.WriteSpaceLeft < 2)
-                            return false;
-                        buf.WriteInt16((short)FormatCode.Binary);
-                    }
-                    else if (_formatCodeListLength > 1)
-                    {
-                        //       //     for (; _paramIndex < _parameters.Count; _paramIndex++)
-                        ////            {
-                        //                if (buf.WriteSpaceLeft < 2)
-                        //                    return false;
-                        foreach (var code in _parameters.Select(p => p.FormatCode))
-                            buf.WriteInt16((short)code);
-                        //        }
-                    }
-                    _state = State.ParameterCount;
-                    goto case State.ParameterCount;
-
-                case State.ParameterCount:
-                    if (buf.WriteSpaceLeft < 2)
-                        return false;
-
-                    buf.WriteInt16(_parameters.Count);
-                    _paramIndex = 0;
-
-                    _state = State.ParameterValues;
-                    goto case State.ParameterValues;
-
-                case State.ParameterValues:
-                    if (!WriteParameters(buf, ref directBuf))
-                        return false;
-                    _state = State.ResultFormatCodes;
-                    goto case State.ResultFormatCodes;
-
-                case State.ResultFormatCodes:
-                    if (UnknownResultTypeList != null)
-                    {
-                        if (buf.WriteSpaceLeft < 2 + UnknownResultTypeList.Length * 2)
-                            return false;
-                        buf.WriteInt16(UnknownResultTypeList.Length);
-                        foreach (var t in UnknownResultTypeList)
-                            buf.WriteInt16(t ? 0 : 1);
-                    }
-                    else
-                    {
-                        if (buf.WriteSpaceLeft < 4)
-                            return false;
-                        buf.WriteInt16(1);
-                        buf.WriteInt16(AllResultTypesAreUnknown ? 0 : 1);
-                    }
-
-                    _state = State.Done;
-                    return true;
-
-                default:
-                    throw PGUtil.ThrowIfReached();
+                formatCodesSum += (int)p.FormatCode;
+                p.LengthCache?.Rewind();
+                paramsLength += p.ValidateAndGetLength();
             }
-        }
 
-        bool WriteParameters(WriteBuffer buf, ref DirectBuffer directBuf)
-        {
-            var len =0;
-            for (; _paramIndex < _parameters.Count; _paramIndex++)
+            var formatCodeListLength =  _parameters.Count;
+
+            var headerLength =
+                1 +                        // Message code
+                4 +                        // Message length
+                1 +                        // Portal is always empty (only a null terminator)
+                Statement.Length + 1 + 2 +                        // Number of parameter format codes that follow
+                2 * formatCodeListLength + // List of format codes
+                2;     // Number of parameter format codes that follow
+
+            if (buf.WriteSpaceLeft < headerLength)
             {
-                var param = _parameters[_paramIndex];
+                Debug.Assert(buf.Size >= headerLength, "Buffer too small for Bind header");
+                await buf.Flush(async, cancellationToken);
+            }
 
-                if (!_wroteParamLen)
+
+            
+            var messageLength = headerLength +
+                4 * _parameters.Count +                                    // Parameter lengths
+                paramsLength +                                                  // Parameter values
+                2 +                                                             // Number of result format codes
+                2 * (UnknownResultTypeList == null ? 1 : UnknownResultTypeList.Length);  // Result format codes
+            buf.WriteByte(Code);
+            buf.WriteInt32(messageLength - 1);
+            Debug.Assert(Portal == string.Empty);
+            buf.WriteByte(0);  // Portal is always empty
+            
+            buf.WriteNullTerminatedString(Statement);
+            buf.WriteInt16(formatCodeListLength);
+
+            // 0 length implicitly means all-text, 1 means all-binary, >1 means mix-and-match
+            if (formatCodeListLength == 1)
+            {
+                if (buf.WriteSpaceLeft < 2)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt16((short)FormatCode.Binary);
+            }
+            else if (formatCodeListLength > 1)
+            {
+                foreach (EDBParameter p in _parameters)
                 {
-                    if (param.Value is DBNull)
+               //     if (buf.WriteSpaceLeft < 2)
+               //         await buf.Flush(async, cancellationToken);
+                    buf.WriteInt16((short)p.FormatCode);
+                }
+            }
+
+            if (buf.WriteSpaceLeft < 2)
+                await buf.Flush(async, cancellationToken);
+
+            buf.WriteInt16(_parameters.Count);
+
+            foreach (EDBParameter param in _parameters)
+            {
+                try
+                {
+                    param.LengthCache?.Rewind();
+                    if (param.Handler == null)
                     {
-                        if (buf.WriteSpaceLeft < 4) { return false; }
                         buf.WriteInt32(-1);
                         continue;
                     }
-
-                    param.LengthCache?.Rewind();
-                }
-
-                var handler = param.Handler;
-
-                var asChunkingWriter = handler as IChunkingTypeHandler;
-                if (asChunkingWriter != null)
+                    await param.WriteWithLength(buf, async, cancellationToken);
+                } catch (Exception e)
                 {
-                    if (!_wroteParamLen)
-                    {
-                        if (buf.WriteSpaceLeft < 4) { return false; }
-                        buf.WriteInt32(param.ValidateAndGetLength());
-                        asChunkingWriter.PrepareWrite(param.Value, buf, param.LengthCache, param);
-                        _wroteParamLen = true;
-                    }
-                    if (!asChunkingWriter.Write(ref directBuf)) {
-                        return false;
-                    }
-                    _wroteParamLen = false;
-                    continue;
+                    e.ToString();
                 }
-                if (param.Direction != System.Data.ParameterDirection.Output)
-                    len = param.ValidateAndGetLength();
-                else
-                    len = 0;
-
-                var asSimpleWriter = (ISimpleTypeHandler)handler;
-                if (buf.WriteSpaceLeft < len + 4)
-                {
-                    Contract.Assume(buf.Size >= len + 4);
-                    return false;
-                }
-
-                if (param.Direction != System.Data.ParameterDirection.Output)
-                {
-                    buf.WriteInt32(len);
-                    asSimpleWriter.Write(param.Value, buf, param);
-                }
-                else
-                    buf.WriteInt32(-1);
-
+               
             }
-            return true;
+
+            if (UnknownResultTypeList != null)
+            {
+                if (buf.WriteSpaceLeft < 2 + UnknownResultTypeList.Length * 2)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt16(UnknownResultTypeList.Length);
+                foreach (var t in UnknownResultTypeList)
+                    buf.WriteInt16(t ? 0 : 1);
+            }
+            else
+            {
+                if (buf.WriteSpaceLeft < 4)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt16(1);
+                buf.WriteInt16(AllResultTypesAreUnknown ? 0 : 1);
+            }
         }
 
         public override string ToString()
-        {
-            return $"[Bind(Portal={Portal},Statement={Statement},NumParams={InputParameters.Count}]";
-        }
-
-        private enum State
-        {
-            Header,
-            ParameterFormatCodes,
-            ParameterCount,
-            ParameterValues,
-            ResultFormatCodes,
-            Done
-        }
+            => $"[Bind(Portal={Portal},Statement={Statement},NumParams={InputParameters.Count}]";
     }
 }

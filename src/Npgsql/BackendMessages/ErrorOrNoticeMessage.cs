@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,8 +22,7 @@
 #endregion
 
 using System;
-using System.Diagnostics.Contracts;
-using  EnterpriseDB.EDBClient.Logging;
+using EnterpriseDB.EDBClient.Logging;
 #if NET45 || NET451
 using System.Runtime.Serialization;
 #endif
@@ -35,8 +34,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 #endif
     class ErrorOrNoticeMessage
     {
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
-
         internal string Severity { get; private set; }
         internal string Code { get; private set; }
         internal string Message { get; private set; }
@@ -54,6 +51,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         internal string File { get; private set; }
         internal string Line { get; private set; }
         internal string Routine { get; private set; }
+
+        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
         // ReSharper disable once FunctionComplexityOverflow
         internal ErrorOrNoticeMessage(ReadBuffer buf)
@@ -82,8 +81,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                     break;
                 case ErrorFieldTypeCode.Position:
                     var positionStr = buf.ReadNullTerminatedString();
-                    int position;
-                    if (!int.TryParse(positionStr, out position)) {
+                    if (!int.TryParse(positionStr, out var position)) {
                         Log.Warn("Non-numeric position in ErrorResponse: " + positionStr);
                         continue;
                     }
@@ -91,8 +89,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                     break;
                 case ErrorFieldTypeCode.InternalPosition:
                     var internalPositionStr = buf.ReadNullTerminatedString();
-                    int internalPosition;
-                    if (!Int32.TryParse(internalPositionStr, out internalPosition)) {
+                    if (!Int32.TryParse(internalPositionStr, out var internalPosition)) {
                         Log.Warn("Non-numeric position in ErrorResponse: " + internalPositionStr);
                         continue;
                     }
@@ -134,13 +131,6 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                     break;
                 }
             }
-        }
-
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(Code != null);
-            Contract.Invariant(Message != null);
         }
 
         /// <summary>

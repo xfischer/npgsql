@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -72,16 +72,12 @@ namespace  EnterpriseDB.EDBClient.Logging
             _printConnectorId = printConnectorId;
         }
 
-        public override bool IsEnabled(EDBLogLevel level)
-        {
-            return level >= _minLevel;
-        }
+        public override bool IsEnabled(EDBLogLevel level) => level >= _minLevel;
 
         public override void Log(EDBLogLevel level, int connectorId, string msg, Exception exception = null)
         {
-            if (!IsEnabled(level)) {
+            if (!IsEnabled(level))
                 return;
-            }
 
             var sb = new StringBuilder();
             if (_printLevel) {
@@ -99,9 +95,7 @@ namespace  EnterpriseDB.EDBClient.Logging
             sb.AppendLine(msg);
 
             if (exception != null)
-            {
                 sb.AppendLine(exception.ToString());
-            }
 
             Console.Error.Write(sb.ToString());
         }

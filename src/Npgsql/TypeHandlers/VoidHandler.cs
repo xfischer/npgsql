@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,9 +22,10 @@
 #endregion
 
 using System;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -34,7 +35,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     [TypeMapping("void")]
     class VoidHandler : SimpleTypeHandler<DBNull>
     {
-        internal VoidHandler(IBackendType backendType) : base(backendType) {}
+        internal VoidHandler(PostgresType postgresType) : base(postgresType) {}
 
         public override DBNull Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => DBNull.Value;
@@ -44,7 +45,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             throw new NotSupportedException();
         }
 
-        public override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
             throw new NotSupportedException();
         }

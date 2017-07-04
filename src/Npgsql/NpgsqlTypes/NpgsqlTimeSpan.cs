@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,9 +24,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using  EnterpriseDB.EDBClient;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient;
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes
@@ -49,7 +49,7 @@ namespace EDBTypes
     /// with them a call to <see cref="System.Data.IDataRecord.GetValue(int)"/> on a field containing an
     /// <see cref="EDBTimeSpan"/> value will return a <see cref="TimeSpan"/> rather than an
     /// <see cref="EDBTimeSpan"/>. If you need the extra functionality of <see cref="EDBTimeSpan"/>
-    /// then use <see cref="EDBDataReader.GetInterval(Int32)"/>.</para>
+    /// then use <see cref="EDBDataReader.GetInterval(int)"/>.</para>
     /// </remarks>
     /// <seealso cref="Ticks"/>
     /// <seealso cref="JustifyDays"/>
@@ -392,80 +392,56 @@ namespace EDBTypes
         /// </summary>
         /// <param name="ticks">The number of ticks (100ns units) in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of ticks.</returns>
-        public static EDBTimeSpan FromTicks(long ticks)
-        {
-            return new EDBTimeSpan(ticks).Canonicalize();
-        }
+        public static EDBTimeSpan FromTicks(long ticks) => new EDBTimeSpan(ticks).Canonicalize();
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of microseconds.
         /// </summary>
         /// <param name="micro">The number of microseconds in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of microseconds.</returns>
-        public static EDBTimeSpan FromMicroseconds(double micro)
-        {
-            return FromTicks((long)(micro * TicksPerMicrosecond));
-        }
+        public static EDBTimeSpan FromMicroseconds(double micro) => FromTicks((long)(micro * TicksPerMicrosecond));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of milliseconds.
         /// </summary>
         /// <param name="milli">The number of milliseconds in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of milliseconds.</returns>
-        public static EDBTimeSpan FromMilliseconds(double milli)
-        {
-            return FromTicks((long)(milli * TicksPerMillsecond));
-        }
+        public static EDBTimeSpan FromMilliseconds(double milli) => FromTicks((long)(milli * TicksPerMillsecond));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of seconds.
         /// </summary>
         /// <param name="seconds">The number of seconds in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of seconds.</returns>
-        public static EDBTimeSpan FromSeconds(double seconds)
-        {
-            return FromTicks((long)(seconds * TicksPerSecond));
-        }
+        public static EDBTimeSpan FromSeconds(double seconds) => FromTicks((long)(seconds * TicksPerSecond));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of minutes.
         /// </summary>
         /// <param name="minutes">The number of minutes in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of minutes.</returns>
-        public static EDBTimeSpan FromMinutes(double minutes)
-        {
-            return FromTicks((long)(minutes * TicksPerMinute));
-        }
+        public static EDBTimeSpan FromMinutes(double minutes) => FromTicks((long)(minutes * TicksPerMinute));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of hours.
         /// </summary>
         /// <param name="hours">The number of hours in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of hours.</returns>
-        public static EDBTimeSpan FromHours(double hours)
-        {
-            return FromTicks((long)(hours * TicksPerHour));
-        }
+        public static EDBTimeSpan FromHours(double hours) => FromTicks((long)(hours * TicksPerHour));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of days.
         /// </summary>
         /// <param name="days">The number of days in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of days.</returns>
-        public static EDBTimeSpan FromDays(double days)
-        {
-            return FromTicks((long)(days * TicksPerDay));
-        }
+        public static EDBTimeSpan FromDays(double days) => FromTicks((long)(days * TicksPerDay));
 
         /// <summary>
         /// Creates an <see cref="EDBTimeSpan"/> from a number of months.
         /// </summary>
         /// <param name="months">The number of months in the interval.</param>
         /// <returns>A <see cref="Canonicalize()"/>d <see cref="EDBTimeSpan"/> with the given number of months.</returns>
-        public static EDBTimeSpan FromMonths(double months)
-        {
-            return FromTicks((long)(months * TicksPerMonth));
-        }
+        public static EDBTimeSpan FromMonths(double months) => FromTicks((long)(months * TicksPerMonth));
 
         #endregion
 
@@ -477,9 +453,7 @@ namespace EDBTypes
         /// <param name="interval">An <see cref="EDBTimeSpan"/> to add to this instance.</param>
         /// <returns>An <see cref="EDBTimeSpan"></see> whose values are the sums of the two instances.</returns>
         public EDBTimeSpan Add(EDBTimeSpan interval)
-        {
-            return new EDBTimeSpan(Months + interval.Months, Days + interval.Days, Ticks + interval.Ticks);
-        }
+            => new EDBTimeSpan(Months + interval.Months, Days + interval.Days, Ticks + interval.Ticks);
 
         /// <summary>
         /// Subtracts another interval from this instance and returns the result.
@@ -487,18 +461,13 @@ namespace EDBTypes
         /// <param name="interval">An <see cref="EDBTimeSpan"/> to subtract from this instance.</param>
         /// <returns>An <see cref="EDBTimeSpan"></see> whose values are the differences of the two instances.</returns>
         public EDBTimeSpan Subtract(EDBTimeSpan interval)
-        {
-            return new EDBTimeSpan(Months - interval.Months, Days - interval.Days, Ticks - interval.Ticks);
-        }
+            => new EDBTimeSpan(Months - interval.Months, Days - interval.Days, Ticks - interval.Ticks);
 
         /// <summary>
         /// Returns an <see cref="EDBTimeSpan"/> whose value is the negated value of this instance.
         /// </summary>
         /// <returns>An <see cref="EDBTimeSpan"/> whose value is the negated value of this instance.</returns>
-        public EDBTimeSpan Negate()
-        {
-            return new EDBTimeSpan(-Months, -Days, -Ticks);
-        }
+        public EDBTimeSpan Negate() => new EDBTimeSpan(-Months, -Days, -Ticks);
 
         /// <summary>
         /// This absolute value of this instance. In the case of some, but not all, components being negative,
@@ -506,9 +475,7 @@ namespace EDBTypes
         /// </summary>
         /// <returns>An <see cref="EDBTimeSpan"/> whose value is the absolute value of this instance.</returns>
         public EDBTimeSpan Duration()
-        {
-            return UnjustifyInterval().Ticks < 0 ? Negate() : this;
-        }
+            => UnjustifyInterval().Ticks < 0 ? Negate() : this;
 
         #endregion
 
@@ -607,10 +574,12 @@ namespace EDBTypes
         /// </summary>
         /// <param name="timespan">A <see cref="TimeSpan"/></param>
         /// <returns>An eqivalent, canonical, <see cref="EDBTimeSpan"/>.</returns>
-        public static implicit operator EDBTimeSpan(TimeSpan timespan)
-        {
-            return new EDBTimeSpan(timespan).Canonicalize();
-        }
+        public static implicit operator EDBTimeSpan(TimeSpan timespan) => ToEDBTimeSpan(timespan);
+
+        /// <summary>
+        /// Casts a <see cref="TimeSpan"/> to an <see cref="EDBTimeSpan"/>.
+        /// </summary>
+        public static EDBTimeSpan ToEDBTimeSpan(TimeSpan timespan) => new EDBTimeSpan(timespan).Canonicalize();
 
         /// <summary>
         /// Explicit cast of an <see cref="EDBTimeSpan"/> to a <see cref="TimeSpan"/>.
@@ -618,9 +587,13 @@ namespace EDBTypes
         /// <param name="interval">A <see cref="EDBTimeSpan"/>.</param>
         /// <returns>An equivalent <see cref="TimeSpan"/>.</returns>
         public static explicit operator TimeSpan(EDBTimeSpan interval)
-        {
-            return new TimeSpan(interval.Ticks + interval.Days * TicksPerDay + interval.Months * DaysPerMonth * TicksPerDay);
-        }
+            => ToTimeSpan(interval);
+
+        /// <summary>
+        /// Casts an <see cref="EDBTimeSpan"/> to a <see cref="TimeSpan"/>.
+        /// </summary>
+        public static TimeSpan ToTimeSpan(EDBTimeSpan interval)
+            => new TimeSpan(interval.Ticks + interval.Days * TicksPerDay + interval.Months * DaysPerMonth * TicksPerDay);
 
         #endregion
 
@@ -641,16 +614,11 @@ namespace EDBTypes
         /// Returns true if another object is an <see cref="EDBTimeSpan"/>, that is exactly the same as
         /// this instance
         /// </summary>
-        /// <param name="obj">An <see cref="Object"/> for comparison.</param>
+        /// <param name="obj">An <see cref="object"/> for comparison.</param>
         /// <returns>true if the argument is an <see cref="EDBTimeSpan"/> and is exactly the same
         /// as this one, false otherwise.</returns>
-        public override bool Equals(object obj)
-        {
-            if (obj is EDBTimeSpan) {
-                return Equals((EDBTimeSpan)obj);
-            }
-            return false;
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBTimeSpan && Equals((EDBTimeSpan)obj);
 
         /// <summary>
         /// Compares two <see cref="EDBTimeSpan"/> instances.
@@ -669,14 +637,12 @@ namespace EDBTypes
             return x.CompareTo(y);
         }
 
-        int IComparer.Compare(object x, object y)
+        int IComparer.Compare([CanBeNull] object x, [CanBeNull] object y)
         {
-            if (x == null) {
+            if (x == null)
                 return y == null ? 0 : 1;
-            }
-            if (y == null) {
+            if (y == null)
                 return -1;
-            }
             try {
                 return ((IComparable)x).CompareTo(y);
             } catch (Exception) {
@@ -716,15 +682,13 @@ namespace EDBTypes
         /// is greater than the instance.</returns>
         /// A value greater than zero if the argument is null.
         /// <exception cref="ArgumentException">The argument is not an <see cref="EDBTimeSpan"/>.</exception>
-        public int CompareTo(object other)
+        public int CompareTo([CanBeNull] object other)
         {
-            if (other == null) {
+            if (other == null)
                 return 1;
-            } else if (other is EDBTimeSpan) {
+            if (other is EDBTimeSpan)
                 return CompareTo((EDBTimeSpan)other);
-            } else {
-                throw new ArgumentException();
-            }
+            throw new ArgumentException(nameof(other));
         }
 
         #endregion
@@ -732,10 +696,10 @@ namespace EDBTypes
         #region String Conversions
 
         /// <summary>
-        /// Parses a <see cref="String"/> and returns a <see cref="EDBTimeSpan"/> instance.
+        /// Parses a <see cref="string"/> and returns a <see cref="EDBTimeSpan"/> instance.
         /// Designed to use the formats generally returned by PostgreSQL.
         /// </summary>
-        /// <param name="str">The <see cref="String"/> to parse.</param>
+        /// <param name="str">The <see cref="string"/> to parse.</param>
         /// <returns>An <see cref="EDBTimeSpan"/> represented by the argument.</returns>
         /// <exception cref="ArgumentNullException">The string was null.</exception>
         /// <exception cref="OverflowException">A value obtained from parsing the string exceeded the values allowed for the relevant component.</exception>
@@ -747,13 +711,13 @@ namespace EDBTypes
             }
             str = str.Replace('s', ' '); //Quick and easy way to catch plurals.
             try {
-                int years = 0;
-                int months = 0;
-                int days = 0;
-                int hours = 0;
-                int minutes = 0;
-                decimal seconds = 0m;
-                int idx = str.IndexOf("year");
+                var years = 0;
+                var months = 0;
+                var days = 0;
+                var hours = 0;
+                var minutes = 0;
+                var seconds = 0m;
+                var idx = str.IndexOf("year");
                 if (idx > 0) {
                     years = int.Parse(str.Substring(0, idx));
                     str = SafeSubstring(str, idx + 5);
@@ -769,8 +733,8 @@ namespace EDBTypes
                     str = SafeSubstring(str, idx + 4).Trim();
                 }
                 if (str.Length > 0) {
-                    bool isNegative = str[0] == '-';
-                    string[] parts = str.Split(':');
+                    var isNegative = str[0] == '-';
+                    var parts = str.Split(':');
                     switch (parts.Length) //One of those times that fall-through would actually be good.
                     {
                     case 1:
@@ -791,7 +755,7 @@ namespace EDBTypes
                         seconds *= -1;
                     }
                 }
-                long ticks = hours * TicksPerHour + minutes * TicksPerMinute + (long)(seconds * TicksPerSecond);
+                var ticks = hours * TicksPerHour + minutes * TicksPerMinute + (long)(seconds * TicksPerSecond);
                 return new EDBTimeSpan(years * MonthsPerYear + months, days, ticks);
             } catch (OverflowException) {
                 throw;
@@ -809,9 +773,9 @@ namespace EDBTypes
         }
 
         /// <summary>
-        /// Attempt to parse a <see cref="String"/> to produce an <see cref="EDBTimeSpan"/>.
+        /// Attempt to parse a <see cref="string"/> to produce an <see cref="EDBTimeSpan"/>.
         /// </summary>
-        /// <param name="str">The <see cref="String"/> to parse.</param>
+        /// <param name="str">The <see cref="string"/> to parse.</param>
         /// <param name="result">(out) The <see cref="EDBTimeSpan"/> produced, or <see cref="Zero"/> if the parsing failed.</param>
         /// <returns>true if the parsing succeeded, false otherwise.</returns>
         public static bool TryParse(string str, out EDBTimeSpan result)
@@ -826,7 +790,7 @@ namespace EDBTypes
         }
 
         /// <summary>
-        /// Create a <see cref="String"/> representation of the <see cref="EDBTimeSpan"/> instance.
+        /// Create a <see cref="string"/> representation of the <see cref="EDBTimeSpan"/> instance.
         /// The format returned is of the form:
         /// [M mon[s]] [d day[s]] [HH:mm:ss[.f[f[f[f[f[f[f[f[f]]]]]]]]]]
         /// A zero <see cref="EDBTimeSpan"/> is represented as 00:00:00
@@ -837,10 +801,10 @@ namespace EDBTypes
         /// and also makes this ToString() more applicable to any other use-case.
         /// </remarks>
         /// </summary>
-        /// <returns>The <see cref="String"/> representation.</returns>
+        /// <returns>The <see cref="string"/> representation.</returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             if (Months != 0) {
                 sb.Append(Months).Append(Math.Abs(Months) == 1 ? " mon " : " mons ");
             }
@@ -857,7 +821,7 @@ namespace EDBTypes
                     sb.Append('+');
                 }
                 // calculate total seconds and then subtract total whole minutes in seconds to get just the seconds and fractional part
-                decimal seconds = _ticks / (decimal)TicksPerSecond - (_ticks / TicksPerMinute) * 60;
+                var seconds = _ticks / (decimal)TicksPerSecond - (_ticks / TicksPerMinute) * 60;
                 sb.Append(Math.Abs(Hours).ToString("D2")).Append(':').Append(Math.Abs(Minutes).ToString("D2")).Append(':').Append(Math.Abs(seconds).ToString("0#.######", System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
 
             }
@@ -962,22 +926,19 @@ namespace EDBTypes
         /// <summary>
         /// Returns the instance.
         /// </summary>
-        /// <param name="x">An <see cref="EDBTimeSpan"/>.</param>
-        /// <returns>The argument.</returns>
-        public static EDBTimeSpan operator +(EDBTimeSpan x)
-        {
-            return x;
-        }
+        public static EDBTimeSpan operator +(EDBTimeSpan x) => Plus(x);
+
+        /// <summary>
+        /// Returns the instance.
+        /// </summary>
+        public static EDBTimeSpan Plus(EDBTimeSpan x) => x;
 
         /// <summary>
         /// Negates an <see cref="EDBTimeSpan"/> instance.
         /// </summary>
         /// <param name="x">An <see cref="EDBTimeSpan"/>.</param>
         /// <returns>The negation of the argument.</returns>
-        public static EDBTimeSpan operator -(EDBTimeSpan x)
-        {
-            return x.Negate();
-        }
+        public static EDBTimeSpan operator -(EDBTimeSpan x) => x.Negate();
 
         #endregion
     }

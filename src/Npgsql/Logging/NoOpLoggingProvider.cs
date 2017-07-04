@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2016 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,18 +22,12 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace  EnterpriseDB.EDBClient.Logging
 {
     class NoOpLoggingProvider : IEDBLoggingProvider
     {
-        public EDBLogger CreateLogger(string name)
-        {
-            return NoOpLogger.Instance;
-        }
+        public EDBLogger CreateLogger(string name) => NoOpLogger.Instance;
     }
 
     class NoOpLogger : EDBLogger
@@ -41,12 +35,7 @@ namespace  EnterpriseDB.EDBClient.Logging
         internal static NoOpLogger Instance = new NoOpLogger();
 
         NoOpLogger() {}
-
-        public override bool IsEnabled(EDBLogLevel level)
-        {
-            return false;
-        }
-
+        public override bool IsEnabled(EDBLogLevel level) => false;
         public override void Log(EDBLogLevel level, int connectorId, string msg, Exception exception = null)
         {
         }

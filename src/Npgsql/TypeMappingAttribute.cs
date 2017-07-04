@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ namespace  EnterpriseDB.EDBClient
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     [MeansImplicitUse]
-    internal class TypeMappingAttribute : Attribute
+    class TypeMappingAttribute : Attribute
     {
         /// <summary>
         /// Maps an  EnterpriseDB.EDBClient type handler to a PostgreSQL type.
@@ -42,7 +41,6 @@ namespace  EnterpriseDB.EDBClient
         {
             if (String.IsNullOrWhiteSpace(pgName))
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
-            Contract.EndContractBlock();
 
             PgName = pgName;
             EDBDbType = npgsqlDbType;
@@ -51,51 +49,51 @@ namespace  EnterpriseDB.EDBClient
             InferredDbType = inferredDbType;
         }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType inferredDbType)
-            : this(pgName, (EDBDbType?)npgsqlDbType, dbTypes, clrTypes, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType inferredDbType)
+            : this(pgName, (EDBDbType?)EDBDbType, dbTypes, clrTypes, inferredDbType)
         { }
 
-        //internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes=null, Type type=null)
-        //    : this(pgName, npgsqlDbType, dbTypes, type == null ? null : new[] { type }) {}
+        //internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes=null, Type type=null)
+        //    : this(pgName, EDBDbType, dbTypes, type == null ? null : new[] { type }) {}
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType)
-            : this(pgName, npgsqlDbType, new DbType[0], new Type[0], null)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType)
+            : this(pgName, EDBDbType, new DbType[0], new Type[0], null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType inferredDbType)
-            : this(pgName, npgsqlDbType, new DbType[0], new Type[0], inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType inferredDbType)
+            : this(pgName, EDBDbType, new DbType[0], new Type[0], inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes, Type clrType, DbType inferredDbType)
-            : this(pgName, npgsqlDbType, dbTypes, new[] { clrType }, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, Type clrType, DbType inferredDbType)
+            : this(pgName, EDBDbType, dbTypes, new[] { clrType }, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes)
-            : this(pgName, npgsqlDbType, dbTypes, new Type[0], null)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes)
+            : this(pgName, EDBDbType, dbTypes, new Type[0], null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType dbType, Type[] clrTypes)
-            : this(pgName, npgsqlDbType, new[] { dbType }, clrTypes, dbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type[] clrTypes)
+            : this(pgName, EDBDbType, new[] { dbType }, clrTypes, dbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType dbType, Type clrType = null)
-            : this(pgName, npgsqlDbType, new[] { dbType }, clrType == null ? null : new[] { clrType }, dbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type clrType = null)
+            : this(pgName, EDBDbType, new[] { dbType }, clrType == null ? null : new[] { clrType }, dbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type[] clrTypes, DbType inferredDbType)
-            : this(pgName, npgsqlDbType, new DbType[0], clrTypes, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type[] clrTypes, DbType inferredDbType)
+            : this(pgName, EDBDbType, new DbType[0], clrTypes, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type[] clrTypes)
-            : this(pgName, npgsqlDbType, new DbType[0], clrTypes, null)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type[] clrTypes)
+            : this(pgName, EDBDbType, new DbType[0], clrTypes, null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type clrType, DbType inferredDbType)
-            : this(pgName, npgsqlDbType, new DbType[0], new[] { clrType }, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type clrType, DbType inferredDbType)
+            : this(pgName, EDBDbType, new DbType[0], new[] { clrType }, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type clrType)
-            : this(pgName, npgsqlDbType, new DbType[0], new[] { clrType }, null)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type clrType)
+            : this(pgName, EDBDbType, new DbType[0], new[] { clrType }, null)
         { }
 
         /// <summary>
@@ -131,14 +129,6 @@ namespace  EnterpriseDB.EDBClient
             }
             sb.AppendFormat("]");
             return sb.ToString();
-        }
-
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(!String.IsNullOrWhiteSpace(PgName));
-            Contract.Invariant(ClrTypes != null);
-            Contract.Invariant(DbTypes != null);
         }
     }
 }

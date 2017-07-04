@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,9 +23,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
@@ -45,16 +47,8 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         internal List<uint> ParameterTypeOIDs { get; private set; }
 
         readonly Encoding _encoding;
+        string name;
 
-        byte[] _statementNameBytes;
-        int _queryLen;
-        char[] _queryChars;
-        int _charPos;
-     //   int _parameterTypePos;
-		
-		string name;
-
-        State _state;
         EDBParameterCollection _parameters;
         const byte Code = (byte)'O';
 
@@ -64,137 +58,71 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             ParameterTypeOIDs = new List<uint>();
         }
 
-        internal ParseOutMessage Populate(EDBStatement statement,EDBParameterCollection _parameter, TypeHandlerRegistry typeHandlerRegistry)
+        internal ParseOutMessage Populate(string sql, string statementName, EDBParameterCollection _parameter, List<EDBParameter> inputParameters, TypeHandlerRegistry typeHandlerRegistry)
         {
-            _state = State.WroteNothing;
-      //      _parameterTypePos = 0;
-           
             ParameterTypeOIDs.Clear();
-            Query = statement.SQL;
+            Query = sql;
+            Statement = statementName;
             _parameters = _parameter;
-            Statement = statement.PreparedStatementName ?? "";
-            foreach (var inputParam in statement.InputParameters) {
+            foreach (var inputParam in inputParameters) {
                 inputParam.ResolveHandler(typeHandlerRegistry);
-                ParameterTypeOIDs.Add(inputParam.Handler.BackendType.OID);
+                ParameterTypeOIDs.Add(inputParam.Handler.PostgresType.OID);
             }
             return this;
         }
 
-        internal override bool Write(WriteBuffer buf)
+        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
         {
-            Contract.Requires(Statement != null);
-         //   _parameterTypePos = 0;
-            switch (_state)
+            Debug.Assert(Statement != null && Statement.All(c => c < 128));
+
+            var queryByteLen = _encoding.GetByteCount(Query);
+            if (buf.WriteSpaceLeft < 1 + 4 + Statement.Length + 1)
+                await buf.Flush(async, cancellationToken);
+
+            var messageLength =
+                1 +                         // Message code
+                4 +                         // Length
+                Statement.Length +
+                1 +                         // Null terminator
+                queryByteLen +
+                1 +                         // Null terminator
+                2 +                         // Number of parameters
+                _parameters.Count * 4 +
+                _parameters.Count * 2;
+
+            buf.WriteByte(Code);
+            buf.WriteInt32(messageLength - 1);
+            buf.WriteNullTerminatedString(Statement);
+
+            await buf.WriteString(Query, queryByteLen, async, cancellationToken);
+
+            if (buf.WriteSpaceLeft < 1 + 2 + _parameters.Count * 4 + _parameters.Count * 2)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteByte(0); // Null terminator for the query
+            buf.WriteInt16((short)_parameters.Count);
+
+            //TODO ZK Check why its here
+            //foreach (var t in ParameterTypeOIDs) {
+            //    buf.WriteInt32((int)t);
+            //}
+
+            /*EDB should change to goto etc*/
+            for (Int32 i = 0; i < _parameters.Count; i++)
             {
-                case State.WroteNothing:
-                    _statementNameBytes = Statement.Length == 0 ? PGUtil.EmptyBuffer : _encoding.GetBytes(Statement);
-                    _queryLen = _encoding.GetByteCount(Query);
-                    if (buf.WriteSpaceLeft < 1 + 4 + _statementNameBytes.Length + 1) {
-                        return false;
-                    }
+                // PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
 
-                    var messageLength =
-                        1 +                         // Message code
-                        4 +                         // Length
-                        _statementNameBytes.Length +
-                        1 +                         // Null terminator
-                        _queryLen +
-                        1 +                         // Null terminator
-                        2 +                         // Number of parameters
-                        _parameters.Count * 4 +
-                         _parameters.Count * 2;
+                name = _parameters[i].EDBDbType.ToString();
+                buf.WriteInt32((Int32)EDBParameter.ParamToOid((string)_parameters[i].EDBDbType.ToString()));
+            }
 
-                    buf.WriteByte(Code);
-                    buf.WriteInt32(messageLength - 1);
-                    buf.WriteBytesNullTerminated(_statementNameBytes);
-                    goto case State.WroteHeader;
-
-                case State.WroteHeader:
-                    _state = State.WroteHeader;
-
-                    if (_queryLen <= buf.WriteSpaceLeft) {
-                        buf.WriteString(Query);
-                        goto case State.WroteQuery;
-                    }
-
-                    if (_queryLen <= buf.Size) {
-                        // String can fit entirely in an empty buffer. Flush and retry rather than
-                        // going into the partial writing flow below (which requires ToCharArray())
-                        return false;
-                    }
-
-                    _queryChars = Query.ToCharArray();
-                    _charPos = 0;
-                    goto case State.WritingQuery;
-
-                case State.WritingQuery:
-                    _state = State.WritingQuery;
-                    int charsUsed;
-                    bool completed;
-                    buf.WriteStringChunked(_queryChars, _charPos, _queryChars.Length - _charPos, true,
-                                           out charsUsed, out completed);
-                    if (!completed)
-                    {
-                        _charPos += charsUsed;
-                        return false;
-                    }
-                    goto case State.WroteQuery;
-
-                case State.WroteQuery:
-                    _state = State.WroteQuery;
-                    if (buf.WriteSpaceLeft < 1 + 2 + _parameters.Count * 4 + _parameters.Count * 2)
-                    {
-                        return false;
-                    }
-                    buf.WriteByte(0); // Null terminator for the query
-                    buf.WriteInt16((short)_parameters.Count);
-
-
-                    //TODO ZK Check why its here
-                    //foreach (var t in ParameterTypeOIDs) {
-                    //    buf.WriteInt32((int)t);
-                    //}
-
-                    /*EDB should change to goto etc*/
-                    for (Int32 i = 0; i < _parameters.Count; i++)
-                    {
-                        // PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
-
-                        name = _parameters[i].EDBDbType.ToString();
-                        buf.WriteInt32((Int32)EDBParameter.ParamToOid((string)_parameters[i].EDBDbType.ToString()));
-                    }
-
-                    for (Int32 i = 0; i < _parameters.Count; i++)
-                    {
-                       // PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction)));
-                        buf.WriteInt16((Int16)EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction));
-                    }
-
-                    _state = State.WroteAll;
-                    return true;
-
-
-
-
-
-                default:
-                    throw PGUtil.ThrowIfReached();
+            for (Int32 i = 0; i < _parameters.Count; i++)
+            {
+                // PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction)));
+                buf.WriteInt16((Int16)EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction));
             }
         }
 
         public override string ToString()
-        {
-            return $"[Parse(Statement={Statement},NumParams={ParameterTypeOIDs.Count}]";
-        }
-
-        private enum State
-        {
-            WroteNothing,
-            WroteHeader,
-            WritingQuery,
-            WroteQuery,
-            WritingParameterTypes,
-            WroteAll
-        }
+            => $"[Parse(Statement={Statement},NumParams={ParameterTypeOIDs.Count}]";
     }
 }

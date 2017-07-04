@@ -1,1 +1,1 @@
-Npgsql.dll
+ EnterpriseDB.EDBClient.dll

@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,23 +25,18 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EDBTypes;
-
-#if WITHDESIGN
-using  EnterpriseDB.EDBClient.Design;
-#endif
 
 namespace  EnterpriseDB.EDBClient
 {
     ///<summary>
     /// This class represents a parameter to a command that will be sent to server
     ///</summary>
-#if WITHDESIGN
-    [TypeConverter(typeof(EDBParameterConverter))]
-#endif
 #if NETSTANDARD1_3
     public sealed class EDBParameter : DbParameter
 #else
@@ -56,18 +51,19 @@ namespace  EnterpriseDB.EDBClient
         int _size;
 
         // Fields to implement IDataParameter
-        EDBDbType? _npgsqlDbType;
+        EDBDbType? _EDBDbType;
         DbType? _dbType;
         Type _specificType;
-        string _name = String.Empty;
+        string _name = string.Empty;
         object _value;
-        object _npgsqlValue;
+        object _EDBValue;
 
         /// <summary>
         /// Can be used to communicate a value from the validation phase to the writing phase.
         /// </summary>
         internal object ConvertedValue { get; set; }
 
+        [CanBeNull]
         internal LengthCache LengthCache { get; private set; }
 
         internal TypeHandler Handler { get; private set; }
@@ -84,7 +80,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public EDBParameter()
         {
-            SourceColumn = String.Empty;
+            SourceColumn = string.Empty;
             Direction = ParameterDirection.Input;
 #if NET45 || NET451
             SourceVersion = DataRowVersion.Current;
@@ -105,7 +101,7 @@ namespace  EnterpriseDB.EDBClient
         /// This happens when calling this constructor passing an int 0 and the compiler thinks you are passing a value of DbType.
         /// Use <code> Convert.ToInt32(value) </code> for example to have compiler calling the correct constructor.</p>
         /// </remarks>
-        public EDBParameter(String parameterName, object value) : this()
+        public EDBParameter(string parameterName, object value) : this()
         {
             ParameterName = parameterName;
             Value = value;
@@ -118,7 +114,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="parameterName">The name of the parameter to map.</param>
         /// <param name="parameterType">One of the <see cref="System.Data.DbType">DbType</see> values.</param>
         public EDBParameter(string parameterName, EDBDbType parameterType)
-            : this(parameterName, parameterType, 0, String.Empty)
+            : this(parameterName, parameterType, 0, string.Empty)
         {
         }
 
@@ -128,7 +124,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="parameterName">The name of the parameter to map.</param>
         /// <param name="parameterType">One of the <see cref="System.Data.DbType">DbType</see> values.</param>
         public EDBParameter(string parameterName, DbType parameterType)
-            : this(parameterName, parameterType, 0, String.Empty)
+            : this(parameterName, parameterType, 0, string.Empty)
         {
         }
 
@@ -139,7 +135,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="parameterType">One of the <see cref="EDBTypes.EDBDbType">EDBDbType</see> values.</param>
         /// <param name="size">The length of the parameter.</param>
         public EDBParameter(string parameterName, EDBDbType parameterType, int size)
-            : this(parameterName, parameterType, size, String.Empty)
+            : this(parameterName, parameterType, size, string.Empty)
         {
         }
 
@@ -150,7 +146,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="parameterType">One of the <see cref="System.Data.DbType">DbType</see> values.</param>
         /// <param name="size">The length of the parameter.</param>
         public EDBParameter(string parameterName, DbType parameterType, int size)
-            : this(parameterName, parameterType, size, String.Empty)
+            : this(parameterName, parameterType, size, string.Empty)
         {
         }
 
@@ -278,7 +274,7 @@ namespace  EnterpriseDB.EDBClient
             {
                 ClearBind();
                 _value = value;
-                _npgsqlValue = value;
+                _EDBValue = value;
                 ConvertedValue = null;
             }
         }
@@ -292,11 +288,11 @@ namespace  EnterpriseDB.EDBClient
         [TypeConverter(typeof(StringConverter))]
         public object EDBValue
         {
-            get { return _npgsqlValue; }
+            get => _EDBValue;
             set {
                 ClearBind();
                 _value = value;
-                _npgsqlValue = value;
+                _EDBValue = value;
                 ConvertedValue = null;
             }
         }
@@ -325,7 +321,7 @@ namespace  EnterpriseDB.EDBClient
         /// <see cref="EDBParameter.Value">Value</see> property.
         /// The default value is 0, which indicates that the data provider
         /// sets the precision for <b>Value</b>.</value>
-        [DefaultValue((Byte)0)]
+        [DefaultValue((byte)0)]
         [Category("Data")]
 #if NET45
 // In mono .NET 4.5 is actually a later version, meaning that virtual Precision and Scale already exist in DbParameter
@@ -350,7 +346,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <value>The number of decimal places to which
         /// <see cref="EDBParameter.Value">Value</see> is resolved. The default is 0.</value>
-        [DefaultValue((Byte)0)]
+        [DefaultValue((byte)0)]
         [Category("Data")]
 #if NET45
 // In mono .NET 4.5 is actually a later version, meaning that virtual Precision and Scale already exist in DbParameter
@@ -378,13 +374,11 @@ namespace  EnterpriseDB.EDBClient
         [Category("Data")]
         public override int Size
         {
-            get { return _size; }
+            get => _size;
             set
             {
                 if (value < -1)
-                    throw new ArgumentException(
-                        $"Invalid parameter Size value '{value}'. The value must be greater than or equal to 0.");
-                Contract.EndContractBlock();
+                    throw new ArgumentException($"Invalid parameter Size value '{value}'. The value must be greater than or equal to 0.");
 
                 _size = value;
                 ClearBind();
@@ -417,12 +411,12 @@ namespace  EnterpriseDB.EDBClient
                 if (value == DbType.Object)
                 {
                     _dbType = null;
-                    _npgsqlDbType = null;
+                    _EDBDbType = null;
                 }
                 else
                 {
                     _dbType = value;
-                    _npgsqlDbType = TypeHandlerRegistry.ToEDBDbType(value);
+                    _EDBDbType = TypeHandlerRegistry.ToEDBDbType(value);
                 }
             }
         }
@@ -437,8 +431,8 @@ namespace  EnterpriseDB.EDBClient
         {
             get
             {
-                if (_npgsqlDbType.HasValue) {
-                    return _npgsqlDbType.Value;
+                if (_EDBDbType.HasValue) {
+                    return _EDBDbType.Value;
                 }
 
                 if (_value != null) {   // Infer from value
@@ -449,16 +443,13 @@ namespace  EnterpriseDB.EDBClient
             }
             set
             {
-                if (value == EDBDbType.Array) {
+                if (value == EDBDbType.Array)
                     throw new ArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Array, Binary-Or with the element type (e.g. Array of Box is EDBDbType.Array | EDBDbType.Box).");
-                }
-                if (value == EDBDbType.Range) {
+                if (value == EDBDbType.Range)
                     throw new ArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Range, Binary-Or with the element type (e.g. Range of integer is EDBDbType.Range | EDBDbType.Integer)");
-                }
-                Contract.EndContractBlock();
 
                 ClearBind();
-                _npgsqlDbType = value;
+                _EDBDbType = value;
                 _dbType = TypeHandlerRegistry.ToDbType(value);
             }
         }
@@ -471,13 +462,13 @@ namespace  EnterpriseDB.EDBClient
         [DefaultValue("")]
         public override string ParameterName
         {
-            get { return _name; }
+            get => _name;
             set
             {
                 _name = value;
                 if (value == null)
                 {
-                    _name = String.Empty;
+                    _name = string.Empty;
                 }
                 // no longer prefix with : so that The name returned is The name set
 
@@ -501,7 +492,7 @@ namespace  EnterpriseDB.EDBClient
         /// The default is an empty string.</value>
         [DefaultValue("")]
         [Category("Data")]
-        public override String SourceColumn { get; set; }
+        public override string SourceColumn { get; set; }
 
 #if NET45 || NET451
         /// <summary>
@@ -527,8 +518,8 @@ namespace  EnterpriseDB.EDBClient
         [PublicAPI]
         public Type EnumType
         {
-            get { return SpecificType; }
-            set { SpecificType = value; }
+            get => SpecificType;
+            set => SpecificType = value;
         }
 
         /// <summary>
@@ -543,7 +534,7 @@ namespace  EnterpriseDB.EDBClient
                     return _specificType;
 
                 // Try to infer type if EDBDbType is Enum or has not been set
-                if ((!_npgsqlDbType.HasValue || _npgsqlDbType == EDBDbType.Enum) && _value != null)
+                if ((!_EDBDbType.HasValue || _EDBDbType == EDBDbType.Enum) && _value != null)
                 {
                     var type = _value.GetType();
                     if (type.GetTypeInfo().IsEnum)
@@ -553,7 +544,7 @@ namespace  EnterpriseDB.EDBClient
                 }
                 return null;
             }
-            set { _specificType = value; }
+            set => _specificType = value;
         }
 
         /// <summary>
@@ -575,7 +566,7 @@ namespace  EnterpriseDB.EDBClient
         {
             get
             {
-                string name = ParameterName;
+                var name = ParameterName;
                 if (name.Length > 0 && (name[0] == ':' || name[0] == '@'))
                 {
                     return name.Substring(1);
@@ -589,7 +580,7 @@ namespace  EnterpriseDB.EDBClient
         /// Returns whether this parameter has had its type set explicitly via DbType or EDBDbType
         /// (and not via type inference)
         /// </summary>
-        internal bool IsTypeExplicitlySet => _npgsqlDbType.HasValue || _dbType.HasValue;
+        internal bool IsTypeExplicitlySet => _EDBDbType.HasValue || _dbType.HasValue;
 
         internal void ResolveHandler(TypeHandlerRegistry registry)
         {
@@ -597,9 +588,9 @@ namespace  EnterpriseDB.EDBClient
                 return;
             }
 
-            if (_npgsqlDbType.HasValue)
+            if (_EDBDbType.HasValue)
             {
-                Handler = registry[_npgsqlDbType.Value, SpecificType];
+                Handler = registry[_EDBDbType.Value, SpecificType];
             }
             else if (_dbType.HasValue)
             {
@@ -619,43 +610,33 @@ namespace  EnterpriseDB.EDBClient
         {
             ResolveHandler(registry);
 
-            Contract.Assert(Handler != null);
+            Debug.Assert(Handler != null);
             FormatCode = Handler.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
         }
 
         internal int ValidateAndGetLength()
         {
             if (Direction == ParameterDirection.Input)
-                if (_value == null) {
+                if (_value == null)
                 throw new InvalidCastException($"Parameter {ParameterName} must be set");
-            }
-
-            if (_value is DBNull) {
+            if (_value is DBNull)
                 return 0;
-            }
 
-            // No length caching for simple types
-            var asSimpleWriter = Handler as ISimpleTypeHandler;
-            if (asSimpleWriter != null) {
-                return asSimpleWriter.ValidateAndGetLength(Value, this);
-            }
-
-            var asChunkingWriter = Handler as IChunkingTypeHandler;
-            Contract.Assert(asChunkingWriter != null,
-                $"Handler {Handler.GetType().Name} doesn't implement either ISimpleTypeWriter or IChunkingTypeWriter");
             var lengthCache = LengthCache;
-            var len = asChunkingWriter.ValidateAndGetLength(Value, ref lengthCache, this);
+            var len = Handler.ValidateAndGetLength(Value, ref lengthCache, this);
             LengthCache = lengthCache;
             return len;
         }
+
+        internal Task WriteWithLength(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+            => Handler.WriteWithLength(Value, buf, LengthCache, this, async, cancellationToken);
 
         void ClearBind()
         {
             Handler = null;
         }
 
-            
-        /// <summary>
+        ///<summary>
         /// Get param direction
         /// </summary>
         public enum EDBParameterDirection
@@ -950,7 +931,7 @@ namespace  EnterpriseDB.EDBClient
         {
             //type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
             _dbType = null;
-            _npgsqlDbType = null;
+            _EDBDbType = null;
             Value = Value;
             ClearBind();
         }
@@ -982,7 +963,7 @@ namespace  EnterpriseDB.EDBClient
                 _scale = _scale,
                 _size = _size,
                 _dbType = _dbType,
-                _npgsqlDbType = _npgsqlDbType,
+                _EDBDbType = _EDBDbType,
                 _specificType = _specificType,
                 Direction = Direction,
                 IsNullable = IsNullable,
@@ -992,7 +973,7 @@ namespace  EnterpriseDB.EDBClient
                 SourceVersion = SourceVersion,
 #endif
                 _value = _value,
-                _npgsqlValue = _npgsqlValue,
+                _EDBValue = _EDBValue,
                 SourceColumnNullMapping = SourceColumnNullMapping,
                 AutoAssignedName = AutoAssignedName
             };

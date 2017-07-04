@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,14 +21,15 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 {
@@ -39,63 +40,37 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
         typeof(EDBTsQuery), typeof(EDBTsQueryAnd), typeof(EDBTsQueryEmpty),
         typeof(EDBTsQueryLexeme), typeof(EDBTsQueryNot), typeof(EDBTsQueryOr), typeof(EDBTsQueryBinOp) })
     ]
-    internal class TsQueryHandler : ChunkingTypeHandler<EDBTsQuery>
+    class TsQueryHandler : ChunkingTypeHandler<EDBTsQuery>
     {
         // 1 (type) + 1 (weight) + 1 (is prefix search) + 2046 (max str len) + 1 (null terminator)
         const int MaxSingleTokenBytes = 2050;
 
-        ReadBuffer  _readBuf;
-        WriteBuffer _writeBuf;
         Stack<Tuple<EDBTsQuery, int>> _nodes;
-        int _numTokens;
-        int _tokenPos;
-        int _bytesLeft;
         EDBTsQuery _value;
 
-        Stack<EDBTsQuery> _stack;
+        readonly Stack<EDBTsQuery> _stack = new Stack<EDBTsQuery>();
 
-        internal TsQueryHandler(IBackendType backendType) : base(backendType) { }
+        internal TsQueryHandler(PostgresType postgresType) : base(postgresType) { }
 
-        public override void PrepareRead(ReadBuffer buf, int len, FieldDescription fieldDescription)
+        public override async ValueTask<EDBTsQuery> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
-            _readBuf = buf;
+            await buf.Ensure(4, async);
+            var numTokens = buf.ReadInt32();
+            if (numTokens == 0)
+                return new EDBTsQueryEmpty();
+
             _nodes = new Stack<Tuple<EDBTsQuery, int>>();
-            _tokenPos = -1;
-            _bytesLeft = len;
-        }
+            len -= 4;
 
-        public override bool Read([CanBeNull] out EDBTsQuery result)
-        {
-            result = null;
-
-            if (_tokenPos == -1)
+            for (var tokenPos = 0; tokenPos < numTokens; tokenPos++)
             {
-                if (_readBuf.ReadBytesLeft < 4)
-                    return false;
-                _numTokens = _readBuf.ReadInt32();
-                _bytesLeft -= 4;
-                _tokenPos = 0;
-            }
+                await buf.Ensure(Math.Min(len, MaxSingleTokenBytes), async);
+                var readPos = buf.ReadPosition;
 
-            if (_numTokens == 0)
-            {
-                result = new EDBTsQueryEmpty();
-                _readBuf = null;
-                _nodes = null;
-                return true;
-            }
-
-            for (; _tokenPos < _numTokens; _tokenPos++)
-            {
-                if (_readBuf.ReadBytesLeft < Math.Min(_bytesLeft, MaxSingleTokenBytes))
-                    return false;
-
-                int readPos = _readBuf.ReadPosition;
-
-                bool isOper = _readBuf.ReadByte() == 2;
+                var isOper = buf.ReadByte() == 2;
                 if (isOper)
                 {
-                    EDBTsQuery.NodeKind operKind = (EDBTsQuery.NodeKind)_readBuf.ReadByte();
+                    var operKind = (EDBTsQuery.NodeKind)buf.ReadByte();
                     if (operKind == EDBTsQuery.NodeKind.Not)
                     {
                         var node = new EDBTsQueryNot(null);
@@ -106,12 +81,17 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                     {
                         EDBTsQuery node = null;
 
-                        if (operKind == EDBTsQuery.NodeKind.And)
+                        switch (operKind)
+                        {
+                        case EDBTsQuery.NodeKind.And:
                             node = new EDBTsQueryAnd(null, null);
-                        else if (operKind == EDBTsQuery.NodeKind.Or)
+                            break;
+                        case EDBTsQuery.NodeKind.Or:
                             node = new EDBTsQueryOr(null, null);
-                        else
-                            PGUtil.ThrowIfReached();
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {operKind} of enum {nameof(EDBTsQuery.NodeKind)}. Please file a bug.");
+                        }
 
                         InsertInTree(node);
 
@@ -121,31 +101,25 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                 }
                 else
                 {
-                    EDBTsQueryLexeme.Weight weight = (EDBTsQueryLexeme.Weight)_readBuf.ReadByte();
-                    bool prefix = _readBuf.ReadByte() != 0;
-                    string str = _readBuf.ReadNullTerminatedString();
+                    var weight = (EDBTsQueryLexeme.Weight)buf.ReadByte();
+                    var prefix = buf.ReadByte() != 0;
+                    var str = buf.ReadNullTerminatedString();
                     InsertInTree(new EDBTsQueryLexeme(str, weight, prefix));
                 }
 
-                _bytesLeft -= _readBuf.ReadPosition - readPos;
+                len -= buf.ReadPosition - readPos;
             }
 
             if (_nodes.Count != 0)
-                PGUtil.ThrowIfReached();
+                throw new InvalidOperationException("Internal  EnterpriseDB.EDBClient bug, please report.");
 
-            result = _value;
-            _readBuf = null;
-            _nodes = null;
-            _value = null;
-            return true;
+            return _value;
         }
 
-        void InsertInTree(EDBTsQuery node)
+        void InsertInTree([CanBeNull] EDBTsQuery node)
         {
             if (_nodes.Count == 0)
-            {
                 _value = node;
-            }
             else
             {
                 var parent = _nodes.Pop();
@@ -158,7 +132,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             }
         }
 
-        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
         {
             var vec = value as EDBTsQuery;
             if (vec == null) {
@@ -175,78 +149,51 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
         {
             switch (node.Kind)
             {
-                case EDBTsQuery.NodeKind.Lexeme:
-                    var strLen = Encoding.UTF8.GetByteCount(((EDBTsQueryLexeme)node).Text);
-                    if (strLen > 2046)
-                        throw new InvalidCastException("Lexeme text too long. Must be at most 2046 bytes in UTF8.");
-                    return 4 + strLen;
-                case EDBTsQuery.NodeKind.And:
-                case EDBTsQuery.NodeKind.Or:
-                    return 2 + GetNodeLength(((EDBTsQueryBinOp)node).Left) + GetNodeLength(((EDBTsQueryBinOp)node).Right);
-                case EDBTsQuery.NodeKind.Not:
-                    return 2 + GetNodeLength(((EDBTsQueryNot)node).Child);
-                case EDBTsQuery.NodeKind.Empty:
-                    throw new InvalidOperationException("Empty tsquery nodes must be top-level");
-                default:
-                    throw new InvalidOperationException("Illegal node kind: " + node.Kind);
+            case EDBTsQuery.NodeKind.Lexeme:
+                var strLen = Encoding.UTF8.GetByteCount(((EDBTsQueryLexeme)node).Text);
+                if (strLen > 2046)
+                    throw new InvalidCastException("Lexeme text too long. Must be at most 2046 bytes in UTF8.");
+                return 4 + strLen;
+            case EDBTsQuery.NodeKind.And:
+            case EDBTsQuery.NodeKind.Or:
+                return 2 + GetNodeLength(((EDBTsQueryBinOp)node).Left) + GetNodeLength(((EDBTsQueryBinOp)node).Right);
+            case EDBTsQuery.NodeKind.Not:
+                return 2 + GetNodeLength(((EDBTsQueryNot)node).Child);
+            case EDBTsQuery.NodeKind.Empty:
+                throw new InvalidOperationException("Empty tsquery nodes must be top-level");
+            default:
+                throw new InvalidOperationException("Illegal node kind: " + node.Kind);
             }
         }
 
-        public override void PrepareWrite(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            _writeBuf = buf;
-            _value = (EDBTsQuery)value;
-            _numTokens = GetTokenCount(_value);
-        }
+            var query = (EDBTsQuery)value;
+            var numTokens = GetTokenCount(query);
 
-        int GetTokenCount(EDBTsQuery node)
-        {
-            switch (node.Kind)
-            {
-                case EDBTsQuery.NodeKind.Lexeme:
-                    return 1;
-                case EDBTsQuery.NodeKind.And:
-                case EDBTsQuery.NodeKind.Or:
-                    return 1 + GetTokenCount(((EDBTsQueryBinOp)node).Left) + GetTokenCount(((EDBTsQueryBinOp)node).Right);
-                case EDBTsQuery.NodeKind.Not:
-                    return 1 + GetTokenCount(((EDBTsQueryNot)node).Child);
-                case EDBTsQuery.NodeKind.Empty:
-                    return 0;
-            }
-            return -1;
-        }
+            if (buf.WriteSpaceLeft < 4)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteInt32(numTokens);
 
-        public override bool Write(ref DirectBuffer directBuf)
-        {
-            if (_stack == null)
-            {
-                if (_writeBuf.WriteSpaceLeft < 4)
-                    return false;
-                _writeBuf.WriteInt32(_numTokens);
+            if (numTokens == 0)
+                return;
 
-                if (_numTokens == 0)
-                {
-                    _writeBuf = null;
-                    _value = null;
-                    return true;
-                }
-                _stack = new Stack<EDBTsQuery>();
-                _stack.Push(_value);
-            }
+            _stack.Push(query);
 
             while (_stack.Count > 0)
             {
-                if (_writeBuf.WriteSpaceLeft < 2)
-                    return false;
+                if (buf.WriteSpaceLeft < 2)
+                    await buf.Flush(async, cancellationToken);
 
-                if (_stack.Peek().Kind == EDBTsQuery.NodeKind.Lexeme && _writeBuf.WriteSpaceLeft < MaxSingleTokenBytes)
-                    return false;
+                if (_stack.Peek().Kind == EDBTsQuery.NodeKind.Lexeme && buf.WriteSpaceLeft < MaxSingleTokenBytes)
+                    await buf.Flush(async, cancellationToken);
 
                 var node = _stack.Pop();
-                _writeBuf.WriteByte(node.Kind == EDBTsQuery.NodeKind.Lexeme ? (byte)1 : (byte)2);
+                buf.WriteByte(node.Kind == EDBTsQuery.NodeKind.Lexeme ? (byte)1 : (byte)2);
                 if (node.Kind != EDBTsQuery.NodeKind.Lexeme)
                 {
-                    _writeBuf.WriteByte((byte)node.Kind);
+                    buf.WriteByte((byte)node.Kind);
                     if (node.Kind == EDBTsQuery.NodeKind.Not)
                         _stack.Push(((EDBTsQueryNot)node).Child);
                     else
@@ -258,17 +205,31 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                 else
                 {
                     var lexemeNode = (EDBTsQueryLexeme)node;
-                    _writeBuf.WriteByte((byte)lexemeNode.Weights);
-                    _writeBuf.WriteByte(lexemeNode.IsPrefixSearch ? (byte)1 : (byte)0);
-                    _writeBuf.WriteString(lexemeNode.Text);
-                    _writeBuf.WriteByte(0);
+                    buf.WriteByte((byte)lexemeNode.Weights);
+                    buf.WriteByte(lexemeNode.IsPrefixSearch ? (byte)1 : (byte)0);
+                    buf.WriteString(lexemeNode.Text);
+                    buf.WriteByte(0);
                 }
             }
 
-            _writeBuf = null;
-            _value = null;
-            _stack = null;
-            return true;
+            _stack.Clear();
+        }
+
+        int GetTokenCount(EDBTsQuery node)
+        {
+            switch (node.Kind)
+            {
+            case EDBTsQuery.NodeKind.Lexeme:
+                return 1;
+            case EDBTsQuery.NodeKind.And:
+            case EDBTsQuery.NodeKind.Or:
+                return 1 + GetTokenCount(((EDBTsQueryBinOp)node).Left) + GetTokenCount(((EDBTsQueryBinOp)node).Right);
+            case EDBTsQuery.NodeKind.Not:
+                return 1 + GetTokenCount(((EDBTsQueryNot)node).Child);
+            case EDBTsQuery.NodeKind.Empty:
+                return 0;
+            }
+            return -1;
         }
     }
 }

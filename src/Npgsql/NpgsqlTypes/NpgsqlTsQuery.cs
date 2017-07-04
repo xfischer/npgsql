@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,10 +23,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
+#pragma warning disable CA1034
+
+// ReSharper disable once CheckNamespace
 namespace EDBTypes
 {
     /// <summary>
@@ -42,7 +44,7 @@ namespace EDBTypes
         /// <summary>
         /// NodeKind
         /// </summary>
-        public enum NodeKind : byte
+        public enum NodeKind
         {
             /// <summary>
             /// Lexeme
@@ -74,7 +76,7 @@ namespace EDBTypes
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             Write(sb, true);
             return sb.ToString();
         }
@@ -88,28 +90,22 @@ namespace EDBTypes
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
-            Contract.EndContractBlock();
 
-            Stack<EDBTsQuery> valStack = new Stack<EDBTsQuery>();
-            Stack<char> opStack = new Stack<char>();
+            var valStack = new Stack<EDBTsQuery>();
+            var opStack = new Stack<char>();
 
-            StringBuilder sb = new StringBuilder();
-            int pos = 0;
-            char ch;
-            bool expectingBinOp = false;
+            var sb = new StringBuilder();
+            var pos = 0;
+            var expectingBinOp = false;
 
             NextToken:
             if (pos >= value.Length)
                 goto Finish;
-            ch = value[pos++];
+            var ch = value[pos++];
             if (ch == '\'')
-            {
                 goto WaitEndComplex;
-            }
             if ((ch == ')' || ch == '|' || ch == '&') && !expectingBinOp || (ch == '(' || ch == '!') && expectingBinOp)
-            {
                 throw new FormatException("Syntax error in tsquery. Unexpected token.");
-            }
             if (ch == '(' || ch == '!' || ch == '&')
             {
                 opStack.Push(ch);
@@ -128,9 +124,7 @@ namespace EDBTypes
                     // Implicit pop and repush |
                 }
                 else
-                {
                     opStack.Push('|');
-                }
                 expectingBinOp = false;
                 goto NextToken;
             }
@@ -150,20 +144,16 @@ namespace EDBTypes
                 goto PushedVal;
             }
             if (ch == ':')
-            {
                 throw new FormatException("Unexpected : while parsing tsquery");
-            }
-            if (Char.IsWhiteSpace(ch))
-            {
+            if (char.IsWhiteSpace(ch))
                 goto NextToken;
-            }
             pos--;
             if (expectingBinOp)
                 throw new FormatException("Unexpected lexeme while parsing tsquery");
-            goto WaitEnd;
+            // Proceed to WaitEnd
 
             WaitEnd:
-            if (pos >= value.Length || Char.IsWhiteSpace(ch = value[pos]) || ch == '!' || ch == '&' || ch == '|' || ch == '(' || ch == ')')
+            if (pos >= value.Length || char.IsWhiteSpace(ch = value[pos]) || ch == '!' || ch == '&' || ch == '|' || ch == '(' || ch == ')')
             {
                 valStack.Push(new EDBTsQueryLexeme(sb.ToString()));
                 goto PushedVal;
@@ -203,10 +193,7 @@ namespace EDBTypes
                         pos++;
                         goto InWeightInfo;
                     }
-                    else
-                    {
-                        goto PushedVal;
-                    }
+                    goto PushedVal;
                 }
             }
             if (ch == '\\')
@@ -288,15 +275,11 @@ namespace EDBTypes
         /// </summary>
         public string Text
         {
-            get
-            {
-                return _text;
-            }
+            get => _text;
             set
             {
                 if (string.IsNullOrEmpty(value))
                     throw new ArgumentException("Text is null or empty string", nameof(value));
-                Contract.EndContractBlock();
 
                 _text = value;
             }
@@ -309,15 +292,11 @@ namespace EDBTypes
         /// </summary>
         public Weight Weights
         {
-            get
-            {
-                return _weights;
-            }
+            get => _weights;
             set
             {
                 if (((byte)value >> 4) != 0)
                     throw new ArgumentOutOfRangeException(nameof(value), "Illegal weights");
-                Contract.EndContractBlock();
 
                 _weights = value;
             }
@@ -358,8 +337,10 @@ namespace EDBTypes
         /// <summary>
         /// Weight enum, can be OR'ed together.
         /// </summary>
+#pragma warning disable CA1714
         [Flags]
         public enum Weight
+#pragma warning restore CA1714
         {
             /// <summary>
             /// None
@@ -415,7 +396,7 @@ namespace EDBTypes
         /// Creates a not operator, with a given child node.
         /// </summary>
         /// <param name="child"></param>
-        public EDBTsQueryNot(EDBTsQuery child)
+        public EDBTsQueryNot([CanBeNull] EDBTsQuery child)
         {
             Kind = NodeKind.Not;
             Child = child;
@@ -465,7 +446,7 @@ namespace EDBTypes
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public EDBTsQueryAnd(EDBTsQuery left, EDBTsQuery right)
+        public EDBTsQueryAnd([CanBeNull] EDBTsQuery left, [CanBeNull] EDBTsQuery right)
         {
             Kind = NodeKind.And;
             Left = left;
@@ -490,7 +471,7 @@ namespace EDBTypes
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public EDBTsQueryOr(EDBTsQuery left, EDBTsQuery right)
+        public EDBTsQueryOr([CanBeNull] EDBTsQuery left, [CanBeNull] EDBTsQuery right)
         {
             Kind = NodeKind.Or;
             Left = left;

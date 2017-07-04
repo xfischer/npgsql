@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,7 +22,9 @@
 #endregion
 
 using System;
-using  EnterpriseDB.EDBClient;
+using EnterpriseDB.EDBClient;
+
+#pragma warning disable CA1720
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes
@@ -250,7 +252,7 @@ namespace EDBTypes
         /// Corresponds to the obsolete PostgreSQL "abstime" type.
         /// </summary>
         /// <remarks>See http://www.postgresql.org/docs/current/static/datatype-datetime.html</remarks>
-        [Obsolete]
+        [Obsolete("The PostgreSQL abstime time is obsolete.")]
         Abstime = 33,
 
         #endregion

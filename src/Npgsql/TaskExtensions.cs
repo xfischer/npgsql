@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient
 {
-    internal static class TaskExtensions
+    static class TaskExtensions
     {
         /// <summary>
         /// Utility that simplifies awaiting a task with a timeout. If the given task does not
@@ -20,14 +20,13 @@ namespace  EnterpriseDB.EDBClient
         internal static async Task<T> WithTimeout<T>(this Task<T> task, EDBTimeout timeout)
         {
             if (!timeout.IsSet)
-                return await task.ConfigureAwait(false);
+                return await task;
             var timeLeft = timeout.TimeLeft;
-            if (timeLeft < TimeSpan.Zero)
+            if (timeLeft <= TimeSpan.Zero)
                 throw new TimeoutException();
-            var timeoutTask = Task.Delay(timeLeft);
-            if (task != await Task.WhenAny(task, timeoutTask).ConfigureAwait(false))
+            if (task != await Task.WhenAny(task, Task.Delay(timeLeft)))
                 throw new TimeoutException();
-            return await task.ConfigureAwait(false);
+            return await task;
         }
 
         /// <summary>
@@ -41,16 +40,15 @@ namespace  EnterpriseDB.EDBClient
         {
             if (!timeout.IsSet)
             {
-                await task.ConfigureAwait(false);
+                await task;
                 return;
             }
             var timeLeft = timeout.TimeLeft;
-            if (timeLeft < TimeSpan.Zero)
+            if (timeLeft <= TimeSpan.Zero)
                 throw new TimeoutException();
-            var timeoutTask = Task.Delay(timeLeft);
-            if (task != await Task.WhenAny(task, timeoutTask).ConfigureAwait(false))
+            if (task != await Task.WhenAny(task, Task.Delay(timeLeft)))
                 throw new TimeoutException();
-            await task.ConfigureAwait(false);
+            await task;
         }
 
         /// <summary>
@@ -65,9 +63,9 @@ namespace  EnterpriseDB.EDBClient
             var tcs = new TaskCompletionSource<bool>();
             using (cancellationToken.Register(
                         s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
-                if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
+                if (task != await Task.WhenAny(task, tcs.Task))
                     throw new TaskCanceledException(task);
-            return await task.ConfigureAwait(false);
+            return await task;
         }
 
         /// <summary>
@@ -82,9 +80,9 @@ namespace  EnterpriseDB.EDBClient
             var tcs = new TaskCompletionSource<bool>();
             using (cancellationToken.Register(
                         s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
-                if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
+                if (task != await Task.WhenAny(task, tcs.Task))
                     throw new TaskCanceledException(task);
-            await task.ConfigureAwait(false);
+            await task;
         }
 
         internal static Task<T> WithCancellationAndTimeout<T>(this Task<T> task, EDBTimeout timeout, CancellationToken cancellationToken)

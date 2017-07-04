@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,13 +22,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
@@ -36,39 +34,32 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
     [TypeMapping("float4", EDBDbType.Real, DbType.Single, typeof(float))]
-    internal class SingleHandler : SimpleTypeHandler<float>, ISimpleTypeHandler<double>
+    class SingleHandler : SimpleTypeHandler<float>, ISimpleTypeHandler<double>
     {
-        internal SingleHandler(IBackendType backendType) : base(backendType) { }
+        internal SingleHandler(PostgresType postgresType) : base(postgresType) { }
 
-        public override float Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadSingle();
-        }
+        public override float Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => buf.ReadSingle();
 
-        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return Read(buf, len, fieldDescription);
-        }
+        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => Read(buf, len, fieldDescription);
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             if (!(value is float))
             {
                 var converted = Convert.ToSingle(value);
                 if (parameter == null)
-                {
                     throw CreateConversionButNoParamException(value.GetType());
-                }
                 parameter.ConvertedValue = converted;
             }
             return 4;
         }
 
-        public override void Write(object value, WriteBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
-            if (parameter?.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
             buf.WriteSingle((float)value);
         }
     }

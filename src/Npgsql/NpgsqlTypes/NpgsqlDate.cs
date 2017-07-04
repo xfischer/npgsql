@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,10 +24,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Text;
 using JetBrains.Annotations;
-using  EnterpriseDB.EDBClient;
 
 #pragma warning disable 1591
 
@@ -145,21 +143,21 @@ namespace EDBTypes
 
             str = str.Trim();
             try {
-                int idx = str.IndexOf('-');
+                var idx = str.IndexOf('-');
                 if (idx == -1) {
                     throw new FormatException();
                 }
-                int year = int.Parse(str.Substring(0, idx));
-                int idxLast = idx + 1;
+                var year = int.Parse(str.Substring(0, idx));
+                var idxLast = idx + 1;
                 if ((idx = str.IndexOf('-', idxLast)) == -1) {
                     throw new FormatException();
                 }
-                int month = int.Parse(str.Substring(idxLast, idx - idxLast));
+                var month = int.Parse(str.Substring(idxLast, idx - idxLast));
                 idxLast = idx + 1;
                 if ((idx = str.IndexOf(' ', idxLast)) == -1) {
                     idx = str.Length;
                 }
-                int day = int.Parse(str.Substring(idxLast, idx - idxLast));
+                var day = int.Parse(str.Substring(idxLast, idx - idxLast));
                 if (str.Contains("BC")) {
                     year = -year;
                 }
@@ -209,9 +207,9 @@ namespace EDBTypes
         {
             get
             {
-                int i = 1;
-                int target = DayOfYear;
-                int[] array = IsLeapYear ? LeapYearDays : CommonYearDays;
+                var i = 1;
+                var target = DayOfYear;
+                var array = IsLeapYear ? LeapYearDays : CommonYearDays;
                 while (target > array[i])
                 {
                     ++i;
@@ -242,7 +240,7 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return false;
                 default:
-                    throw PGUtil.ThrowIfReached();
+                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
                 }
             }
         }
@@ -254,7 +252,7 @@ namespace EDBTypes
         static int DaysForYears(int years)
         {
             //Number of years after 1CE (0 for 1CE, -1 for 1BCE, 1 for 2CE).
-            int calcYear = years < 1 ? years : years - 1;
+            var calcYear = years < 1 ? years : years - 1;
 
             return calcYear / 400 * DaysIn4Centuries //Blocks of 400 years with their leap and common years
                    + calcYear % 400 / 100 * DaysInCentury //Remaining blocks of 100 years with their leap and common years
@@ -279,7 +277,7 @@ namespace EDBTypes
 
         #region Arithmetic
 
-        [PublicAPI, Pure]
+        [PublicAPI]
         public EDBDate AddDays(int days)
         {
             switch (_type)
@@ -291,11 +289,11 @@ namespace EDBTypes
             case InternalType.Finite:
                 return new EDBDate(_daysSinceEra + days);
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
-        [PublicAPI, Pure]
+        [PublicAPI]
         public EDBDate AddYears(int years)
         {
             switch (_type) {
@@ -306,10 +304,10 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
-            int newYear = Year + years;
+            var newYear = Year + years;
             if (newYear >= 0 && _daysSinceEra < 0) //cross 1CE/1BCE divide going up
             {
                 ++newYear;
@@ -321,7 +319,7 @@ namespace EDBTypes
             return new EDBDate(newYear, Month, Day);
         }
 
-        [PublicAPI, Pure]
+        [PublicAPI]
         public EDBDate AddMonths(int months)
         {
             switch (_type) {
@@ -332,11 +330,11 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
-            int newYear = Year;
-            int newMonth = Month + months;
+            var newYear = Year;
+            var newMonth = Month + months;
 
             while (newMonth > 12)
             {
@@ -354,7 +352,6 @@ namespace EDBTypes
 
         }
 
-        [Pure]
         [PublicAPI]
         public EDBDate Add(EDBTimeSpan interval)
         {
@@ -366,13 +363,12 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             return AddMonths(interval.Months).AddDays(interval.Days);
         }
 
-        [Pure]
         [PublicAPI]
         internal EDBDate Add(EDBTimeSpan interval, int carriedOverflow)
         {
@@ -384,7 +380,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             return AddMonths(interval.Months).AddDays(interval.Days + carriedOverflow);
@@ -426,7 +422,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 return other._type == InternalType.Finite && _daysSinceEra == other._daysSinceEra;
             default:
-                throw PGUtil.ThrowIfReached();
+                return false;
             }
         }
 
@@ -454,15 +450,15 @@ namespace EDBTypes
             }
         }
 
-        public int CompareTo([CanBeNull] object obj)
+        public int CompareTo([CanBeNull] object o)
         {
-            if (obj == null)
+            if (o == null)
             {
                 return 1;
             }
-            if (obj is EDBDate)
+            if (o is EDBDate)
             {
-                return CompareTo((EDBDate) obj);
+                return CompareTo((EDBDate) o);
             }
             throw new ArgumentException();
         }
@@ -506,7 +502,7 @@ namespace EDBTypes
             return x.CompareTo(y) >= 0;
         }
 
-        public static explicit operator DateTime(EDBDate date)
+        public static DateTime ToDateTime(EDBDate date)
         {
             switch (date._type)
             {
@@ -514,32 +510,30 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 throw new InvalidCastException("Infinity values can't be cast to DateTime");
             case InternalType.Finite:
-                try { return new DateTime(date._daysSinceEra*EDBTimeSpan.TicksPerDay); }
+                try { return new DateTime(date._daysSinceEra * EDBTimeSpan.TicksPerDay); }
                 catch { throw new InvalidCastException(); }
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {date._type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
-        public static explicit operator EDBDate(DateTime date)
-        {
-            return new EDBDate((int) (date.Ticks/EDBTimeSpan.TicksPerDay));
-        }
+        public static explicit operator DateTime(EDBDate date) => ToDateTime(date);
+
+        public static EDBDate ToEDBDate(DateTime date)
+            => new EDBDate((int)(date.Ticks / EDBTimeSpan.TicksPerDay));
+
+        public static explicit operator EDBDate(DateTime date) => ToEDBDate(date);
 
         public static EDBDate operator +(EDBDate date, EDBTimeSpan interval)
-        {
-            return date.Add(interval);
-        }
+            => date.Add(interval);
 
         public static EDBDate operator +(EDBTimeSpan interval, EDBDate date)
-        {
-            return date.Add(interval);
-        }
+            => date.Add(interval);
 
         public static EDBDate operator -(EDBDate date, EDBTimeSpan interval)
-        {
-            return date.Add(-interval);
-        }
+            => date.Subtract(interval);
+
+        public EDBDate Subtract(EDBTimeSpan interval) => Add(-interval);
 
         public static EDBTimeSpan operator -(EDBDate dateX, EDBDate dateY)
         {

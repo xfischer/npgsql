@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,7 +23,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -31,7 +31,9 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
     class ExecuteOutMessage : SimpleFrontendMessage
     {
-        internal string Portal { get; private set; }
+        internal static readonly ExecuteOutMessage DefaultExecute = new ExecuteOutMessage();
+
+        internal string Portal { get; private set; } = "";
         internal int MaxRows { get; private set; }
 
         const byte Code = (byte)'v';
@@ -39,28 +41,38 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         internal ExecuteOutMessage Populate(string portal = "", int maxRows = 0)
         {
             Portal = portal;
-      //      MaxRows = maxRows;
+         //   MaxRows = maxRows;
             return this;
         }
 
         internal ExecuteOutMessage Populate(int maxRows) => Populate("", maxRows);
 
-        internal override int Length => 1 + 4 + (Portal.Length + 1) ;
+        internal override int Length => 1 + 4 + 1 + 4;
 
         internal override void WriteFully(WriteBuffer buf)
         {
-            Contract.Requires(Portal != null && Portal.All(c => c < 128));
+            Debug.Assert(Portal != null && Portal.All(c => c < 128));
 
-            var portalNameBytes = Portal == "" ? PGUtil.EmptyBuffer : Encoding.ASCII.GetBytes(Portal);
             buf.WriteByte(Code);
             buf.WriteInt32(Length - 1);
-            buf.WriteBytesNullTerminated(portalNameBytes);
-        //    buf.WriteInt32(MaxRows);
+            Debug.Assert(Portal == string.Empty);
+            buf.WriteByte(0);   // Portal is always an empty string
+          //  buf.WriteInt32(MaxRows);
         }
 
         public override string ToString()
         {
-            return $"[Execute(Portal={Portal},MaxRows={MaxRows}]";
+            var sb = new StringBuilder();
+            sb.Append("[Execute");
+            if (Portal != "" && MaxRows != 0)
+            {
+                if (Portal != "")
+                    sb.Append("Portal=").Append(Portal);
+                if (MaxRows != 0)
+                    sb.Append("MaxRows=").Append(MaxRows);
+            }
+            sb.Append(']');
+            return sb.ToString();
         }
     }
 }

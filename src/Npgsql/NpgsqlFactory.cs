@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,9 +24,7 @@
 using System;
 using System.Data.Common;
 using System.Reflection;
-
-// Keep the xml comment warning quiet for this file.
-#pragma warning disable 1591
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient
 {
@@ -38,52 +36,56 @@ namespace  EnterpriseDB.EDBClient
 #endif
     public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     {
-        public static EDBFactory Instance = new EDBFactory();
+        /// <summary>
+        /// Gets an instance of the <see cref="EDBFactory"/>.
+        /// This can be used to retrieve strongly typed data objects.
+        /// </summary>
+        public static readonly EDBFactory Instance = new EDBFactory();
 
-        private EDBFactory()
-        {
-        }
+        EDBFactory() {}
 
         /// <summary>
-        /// Creates an EDBCommand object.
+        /// Returns a strongly typed <see cref="DbCommand"/> instance.
         /// </summary>
-        public override DbCommand CreateCommand()
-        {
-            return new EDBCommand();
-        }
+        [NotNull] public override DbCommand CreateCommand() => new EDBCommand();
 
-        public override DbConnection CreateConnection()
-        {
-            return new EDBConnection();
-        }
+        /// <summary>
+        /// Returns a strongly typed <see cref="DbConnection"/> instance.
+        /// </summary>
+        [NotNull] public override DbConnection CreateConnection() => new EDBConnection();
 
+        /// <summary>
+        /// Returns a strongly typed <see cref="DbParameter"/> instance.
+        /// </summary>
+        [NotNull] public override DbParameter CreateParameter() => new EDBParameter();
 
-        public override DbParameter CreateParameter()
-        {
-            return new EDBParameter();
-        }
-
-        public override DbConnectionStringBuilder CreateConnectionStringBuilder()
-        {
-            return new EDBConnectionStringBuilder();
-        }
+        /// <summary>
+        /// Returns a strongly typed <see cref="DbConnectionStringBuilder"/> instance.
+        /// </summary>
+        [NotNull] public override DbConnectionStringBuilder CreateConnectionStringBuilder() => new EDBConnectionStringBuilder();
 
 #if NET45 || NET451
-        public override DbCommandBuilder CreateCommandBuilder()
-        {
-            return new EDBCommandBuilder();
-        }
+        /// <summary>
+        /// Returns a strongly typed <see cref="DbCommandBuilder"/> instance.
+        /// </summary>
+        [NotNull] public override DbCommandBuilder CreateCommandBuilder() => new EDBCommandBuilder();
 
-        public override DbDataAdapter CreateDataAdapter()
-        {
-            return new EDBDataAdapter();
-        }
+        /// <summary>
+        /// Returns a strongly typed <see cref="DbDataAdapter"/> instance.
+        /// </summary>
+        [NotNull] public override DbDataAdapter CreateDataAdapter() => new EDBDataAdapter();
 #endif
 
         #region IServiceProvider Members
 
-        public object GetService(Type serviceType) {
-
+        /// <summary>
+        /// Gets the service object of the specified type.
+        /// </summary>
+        /// <param name="serviceType">An object that specifies the type of service object to get.</param>
+        /// <returns>A service object of type serviceType, or null if there is no service object of type serviceType.</returns>
+        [CanBeNull]
+        public object GetService([NotNull] Type serviceType)
+        {
             if (serviceType == null)
                 throw new ArgumentNullException(nameof(serviceType));
 
@@ -91,7 +93,7 @@ namespace  EnterpriseDB.EDBClient
             // implementation of DbProviderServices. We use reflection for all types to
             // avoid any dependencies on EF stuff in this project.
 
-           if (serviceType.FullName == "System.Data.Common.DbProviderServices")
+            if (serviceType.FullName == "System.Data.Common.DbProviderServices")
             {
                 // User has requested a legacy EF DbProviderServices implementation. Check our cache first.
                 if (_legacyEntityFrameworkServices != null)
@@ -99,30 +101,29 @@ namespace  EnterpriseDB.EDBClient
 
                 // First time, attempt to find the EntityFramework5. EnterpriseDB.EDBClient assembly and load the type via reflection
                 var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-                assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
+                assemblyName.Name = "EntityFramework5. EnterpriseDB.EDBClient";
                 Assembly npgsqlEfAssembly;
                 try {
                     npgsqlEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
-                   
                 } catch (Exception e) {
-                    throw new Exception("Could not load EntityFramework5-----V6.EnterpriseDB.EDBClient assembly, is it installed?",e);
+                    throw new Exception("Could not load EntityFramework5. EnterpriseDB.EDBClient assembly, is it installed?", e);
                 }
-                
+
                 Type npgsqlServicesType;
-                if ((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null ) 
+                if((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null)
                     throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- NULL EnterprirDEB.EDBServices!");
-               if( npgsqlServicesType.GetProperty("Instance") == null)
+                if (npgsqlServicesType.GetProperty("Instance") == null)
                     throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- GetProperty(Instance) is NULL !");
+
                 return _legacyEntityFrameworkServices = npgsqlServicesType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetMethod.Invoke(null, new object[0]);
             }
 
             return null;
         }
 
-        private static object _legacyEntityFrameworkServices;
+        [CanBeNull]
+        static object _legacyEntityFrameworkServices;
 
         #endregion
     }
 }
-
-#pragma warning restore 1591
