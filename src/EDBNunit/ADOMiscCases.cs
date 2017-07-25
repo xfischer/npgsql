@@ -16,7 +16,7 @@ namespace ADO
 	public class ADOMiscCases
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
+		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=edb";
 			
 		[SetUp]
 		protected void SetUp()

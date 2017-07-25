@@ -16,7 +16,7 @@ namespace ADO
 	public class ADOConnection
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = "Provider=MSDASQL.1;Persist Security Inf o=False;Data Source=EnterpriseDB";
+		private string DBConnection = "Provider=MSDASQL.1;Persist Security Inf o=False;Data Source=edb";
 			
 		[SetUp]
 		protected void SetUp()
