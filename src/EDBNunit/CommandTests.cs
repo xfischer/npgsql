@@ -192,20 +192,15 @@ namespace DOTNET
             
             Assert.AreEqual(command.Parameters[0].EDBDbType, EDBDbType.Integer);
             Assert.AreEqual(command.Parameters[0].DbType, DbType.Int32);
-            
-            
+
             Object result = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, result);
-            
-            
+
             EDBCommand command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", _conn);
-            
 
             result = command2.ExecuteScalar();
-            
-            
-            
+
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", _conn).ExecuteNonQuery();
             
             Assert.AreEqual(5, result);
@@ -254,54 +249,56 @@ namespace DOTNET
         
         
 
-    //    [Test]
+        [Test]
         public void FunctionCallReturnSingleValue()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from funcC", _conn);
-            command.CommandType = CommandType.StoredProcedure;
+            EDBCommand command = new EDBCommand("", _conn);
+			command.CommandText = "funcC";
 
-            Object result = command.ExecuteScalar();
+			command.CommandType = CommandType.StoredProcedure;
 
-            Console.WriteLine(result.ToString());
-           // Assert.AreEqual(6, result);
-            //reader.FieldCount
+            EDBDataReader result = command.ExecuteReader();
 
+			Assert.True(result.Read());
+            Assert.AreEqual(1, result.FieldCount);
+			Assert.AreEqual(5, result.GetInt32(0));
         }
 
 
-      //  [Test]
+        [Test]
         public void FunctionCallReturnSingleValueWithPrepare()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("funcC()", _conn);
+            EDBCommand command = new EDBCommand("funcC", _conn);
             command.CommandType = CommandType.StoredProcedure;  
-          			
+
             Object result = command.ExecuteScalar();
-			
-            Assert.AreEqual(6, result);           
+
+            Assert.AreEqual(5, result);
 
         }
 
-      //  [Test]
+        //[Test]
         public void FunctionCallWithParametersReturnSingleValue()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("funcC(:a)", _conn);
+            EDBCommand command = new EDBCommand("public.funcC(:a)", _conn);
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(new EDBParameter("a", DbType.Int32));
-            command.Prepare();
-            
-            command.Parameters[0].Value = 4;
+			//command.Parameters.Add(new EDBParameter("a", DbType.Int32));
+
+			command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer, 10, "", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+			command.Prepare();
+
+			command.Parameters[0].Value = 4;
 
             Int64 result = (Int64) command.ExecuteScalar();
 			
             Assert.AreEqual(1, result);
-
 
         }
 
@@ -374,22 +371,23 @@ namespace DOTNET
 //
 //        }
 
-
-     //   [Test]
+        [Test]
         public void FunctionCallReturnResultSet()
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from funcB()", _conn);
-            command.CommandType = CommandType.StoredProcedure;
+            EDBCommand command = new EDBCommand("select * from funcB", _conn);
+            command.CommandType = CommandType.Text;
 
             EDBDataReader dr = command.ExecuteReader();
-
-
-
+			Assert.AreEqual(5, dr.FieldCount);
+			for (int i = 0; i < 5; i++)
+			{
+				Assert.True(dr.Read());
+			}
+			Assert.False(dr.Read());
 
         }
-
 
         [Test]
         public void CursorStatement()
@@ -419,8 +417,6 @@ namespace DOTNET
             dr.Close();
             t.Commit();
 
-
-
         }
 
         [Test]
@@ -432,9 +428,7 @@ namespace DOTNET
 
             command.Prepare();
 
-            
             EDBDataReader dr = command.ExecuteReader();
-
 
         }
         
@@ -455,15 +449,12 @@ namespace DOTNET
             EDBDataReader dr = command.ExecuteReader();
             dr.Close();
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea);", _conn).ExecuteNonQuery();
-            
-
 
         }
         
         [Test]
         public void PreparedStatementInsertNullValue()
         {
-
 
             _conn.Open();
 
@@ -506,9 +497,6 @@ namespace DOTNET
 
             EDBDataReader dr = command.ExecuteReader();
 
-
-
-
         }
 
         [Test]
@@ -531,9 +519,6 @@ namespace DOTNET
             command.Parameters[1].Value = 5;
 
             EDBDataReader dr = command.ExecuteReader();
-
-
-
 
         }
 
@@ -636,7 +621,6 @@ namespace DOTNET
         {
             _conn.Open();
 
-
             EDBCommand command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", _conn);
 
             DateTime d = (DateTime)command.ExecuteScalar();
@@ -715,11 +699,7 @@ namespace DOTNET
             command.Parameters.Clear();
             command.ExecuteNonQuery();
 
-
             Assert.AreEqual(7.4000000M, result);
-
-
-
 
         }
 
@@ -1258,7 +1238,7 @@ namespace DOTNET
         }
 
         [Test]
-        [ExpectedException(typeof(EDBException))]
+        [ExpectedException(typeof(System.Net.Sockets.SocketException))]
         public void ConnectionStringWithInvalidParameters()
         {
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
@@ -1273,7 +1253,7 @@ namespace DOTNET
         }
 
         [Test]
-        [ExpectedException(typeof(EDBException))]
+        [ExpectedException(typeof(System.Net.Sockets.SocketException))]
         public void InvalidConnectionString()
         {
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
