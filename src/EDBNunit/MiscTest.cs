@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Collections;
 using NUnit;
 
 //Haroon
@@ -1511,8 +1512,6 @@ namespace DOTNET
             Command.CommandText = "CREATE TABLE ArraysSmallMoney (m1 smallmoney[],m2 smallmoney[2]);";
 			Command.ExecuteNonQuery();
 
-
-
             Command.CommandText = "INSERT INTO ArraysSmallMoney VALUES ('{-474836.4128,74836.2417}','{45.1157,15.2636}');";
 			Command.ExecuteNonQuery();
 
@@ -1545,8 +1544,6 @@ namespace DOTNET
 				
 			Command.CommandText="CREATE TABLE books( books text[]);;";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO books VALUES ('{ Lord of the Rings , Suffocles}');";
 			Command.ExecuteNonQuery();
@@ -1947,6 +1944,32 @@ namespace DOTNET
 		}
 
 
+		public static String BitStreamToString(IEnumerable myList, int myWidth)
+		{
+			System.IO.StringWriter sw = new System.IO.StringWriter();
+
+			int i = myWidth;
+			foreach (Object obj in myList)
+			{
+				if (i <= 0)
+				{
+					i = myWidth;
+					sw.WriteLine();
+				}
+				i--;
+				sw.Write("{0,8}", obj);
+			}
+			sw.WriteLine();
+			return sw.ToString();
+		}
+
+		public static String MakeDebugMessage(BitArray expected, BitArray actual)
+		{
+
+			return "Expected:\n" + BitStreamToString((IEnumerable)expected, 8) + "Actual:\n" + BitStreamToString((IEnumerable)actual, 8);
+
+		}
+
 		[Test]
 		public void ArraysBoolean()
 		{
@@ -1963,16 +1986,10 @@ namespace DOTNET
 
             Command.CommandText = "SELECT * FROM ArraysBoolean;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
-			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
-			
+			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((Boolean[])Reader.GetValue(0))));
+
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArraysBoolean;";
 			Command.ExecuteNonQuery();
@@ -1980,7 +1997,7 @@ namespace DOTNET
 		}
 
 		[Test]
-		public void ArraysBool()
+		public void ArraysBoolTrueFalse()
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
@@ -1990,21 +2007,15 @@ namespace DOTNET
 
             Boolean[] a = { true, false, false, false, true, false, false, true };
 
-            Command.CommandText = "INSERT INTO ArraysBool VALUES ('{true,false,false,false,true,false,false,true }');";
+			Command.CommandText = "INSERT INTO ArraysBool VALUES ('{true,false,false,false,true,false,false,true }');";
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysBool;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
-			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
-			
+			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((Boolean[])Reader.GetValue(0))));
+
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArraysBool;";
 			Command.ExecuteNonQuery();
@@ -2013,7 +2024,7 @@ namespace DOTNET
 
 		
 		[Test]
-		public void ArraysBool2()
+		public void ArraysBoolOneZero()
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
@@ -2028,15 +2039,9 @@ namespace DOTNET
 
             Command.CommandText = "SELECT * FROM ArraysBool2;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//	while(Reader.Read())
-			//	{
-			//		Console.WriteLine(Reader.GetValue(0).ToString());
-			//		Console.WriteLine(Reader.GetValue(1).ToString());
-			//	}
+
 			Assert.IsTrue(Reader.Read());
-			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual(a,(Boolean[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((Boolean[])Reader.GetValue(0))));
 			
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArraysBool2;";
@@ -2080,38 +2085,44 @@ namespace DOTNET
 
 		}
 
-		/*[Test]
+
+		[Test]
 		public void ArraysBitString()
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (t bit(3)[]);";
+			Command.CommandText="CREATE TABLE IF NOT EXISTS arrtest (t bit(3)[]);";
 			Command.ExecuteNonQuery();
-            
-			Boolean[] a =  {101,110,011};
+
+			BitArray []a = new BitArray[3] {
+				new BitArray(new bool[] { true, false, true }),
+				new BitArray(new bool[] { true, true, false }),
+				new BitArray(new bool[] { false, true, true }) };
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{101,110,011}');";
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText="SELECT * FROM arrtest;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//	while(Reader.Read())
-			//	{
-			//		Console.WriteLine(Reader.GetValue(0).ToString());
-			//		Console.WriteLine(Reader.GetValue(1).ToString());
-			//	}
+
 			Assert.IsTrue(Reader.Read());
-            Console.WriteLine(Reader.GetValue(0));
-			//Assert.AreEqual(a,(Boolean[]) Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
-			
+			BitArray[] myBools = (BitArray[])Reader.GetValue(0);
+			Assert.AreEqual(3, myBools.Length);
+			BitArray b0 = (BitArray)myBools.GetValue(0);
+			BitArray b1 = (BitArray)myBools.GetValue(1);
+			BitArray b2 = (BitArray)myBools.GetValue(2);
+
+			BitStreamToString((IEnumerable)b1, 8);
+			Assert.AreEqual(a[0], b0, MakeDebugMessage(a[0],b0));
+			Assert.AreEqual(a[1], b1, MakeDebugMessage(a[1], b1));
+			Assert.AreEqual(a[2], b2, MakeDebugMessage(a[2], b2));
+
 			Reader.Close();
 			Command.CommandText="DROP TABLE arrtest;";
 			Command.ExecuteNonQuery();
 
-		}*/
+		}
 
 
 		[Test]
