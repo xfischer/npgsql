@@ -110,7 +110,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having max(b)=b";
+				Command.CommandText= "select a from TESTTAB group by a,b having max(b)=b order by a";
 			
 				Command.CommandType=CommandType.Text;
 				EDBDataReader Reader=Command.ExecuteReader();
@@ -194,7 +194,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having min(b)=b";
+				Command.CommandText= "select a from TESTTAB group by a,b having min(b)=b order by a";
 				EDBDataReader Reader = Command.ExecuteReader();
 				
 
@@ -285,7 +285,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having avg(b)=b";
+				Command.CommandText= "select a from TESTTAB group by a,b having avg(b)=b order by a";
 			
 				EDBDataReader Reader = Command.ExecuteReader();
 				
@@ -369,7 +369,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having BIT_AND(b)=b";
+				Command.CommandText= "select a from TESTTAB group by a,b having BIT_AND(b)=b order by a";
 			
 				EDBDataReader Reader = Command.ExecuteReader();
 				
@@ -458,7 +458,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having BIT_OR(b)=b";
+				Command.CommandText= "select a from TESTTAB group by a,b having BIT_OR(b)=b order by a";
 			
 				EDBDataReader Reader = Command.ExecuteReader();
 				
@@ -684,7 +684,7 @@ namespace DOTNET
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
-				Command.CommandText="select a from TESTTAB group by a,b having b=sum(b)";
+				Command.CommandText= "select a from TESTTAB group by a,b having b=sum(b) order by a";
 			
 				EDBDataReader Reader = Command.ExecuteReader();
 				
