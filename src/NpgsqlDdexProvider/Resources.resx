@@ -133,7 +133,7 @@
     <value>Views</value>
   </data>
   <data name="Provider_Description" xml:space="preserve">
-    <value>Npgsql Ddex Provider</value>
+    <value>EDB Ddex Provider</value>
   </data>
   <data name="Provider_Display" xml:space="preserve">
     <value>Npgsql Ddex Provider</value>
