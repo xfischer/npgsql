@@ -109,7 +109,7 @@ namespace  EnterpriseDB.EDBClient
         public uint Create(uint preferredOid = 0)
         {
 
-            return ExecuteFunction<uint>("lo_create", (int)preferredOid);
+            return ExecuteFunction<uint>("lo_create($1)", (int)preferredOid);
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace  EnterpriseDB.EDBClient
         [RewriteAsync]
         public EDBLargeObjectStream OpenRead(uint oid)
         {
-            var fd = ExecuteFunction<int>("lo_open", (int)oid, INV_READ);
+            var fd = ExecuteFunction<int>("lo_open($1, $2)", (int)oid, INV_READ);
             return new EDBLargeObjectStream(this, oid, fd, false);
         }
 
@@ -136,7 +136,7 @@ namespace  EnterpriseDB.EDBClient
         [RewriteAsync]
         public EDBLargeObjectStream OpenReadWrite(uint oid)
         {
-            var fd = ExecuteFunction<int>("lo_open", (int)oid, INV_READ | INV_WRITE);
+            var fd = ExecuteFunction<int>("lo_open($1, $2)", (int)oid, INV_READ | INV_WRITE);
             return new EDBLargeObjectStream(this, oid, fd, true);
         }
 
@@ -147,7 +147,7 @@ namespace  EnterpriseDB.EDBClient
         [RewriteAsync]
         public void Unlink(uint oid)
         {
-            ExecuteFunction<object>("lo_unlink", (int)oid);
+            ExecuteFunction<object>("lo_unlink($1)", (int)oid);
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace  EnterpriseDB.EDBClient
         [RewriteAsync]
         public void ExportRemote(uint oid, string path)
         {
-            ExecuteFunction<object>("lo_export", (int)oid, path);
+            ExecuteFunction<object>("lo_export($1, $2)", (int)oid, path);
         }
 
         /// <summary>
@@ -169,7 +169,7 @@ namespace  EnterpriseDB.EDBClient
         [RewriteAsync]
         public void ImportRemote(string path, uint oid = 0)
         {
-            ExecuteFunction<object>("lo_import", path, (int)oid);
+            ExecuteFunction<object>("lo_import($1, $2)", path, (int)oid);
         }
 
         /// <summary>

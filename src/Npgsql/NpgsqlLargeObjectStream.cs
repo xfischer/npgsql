@@ -94,7 +94,7 @@ namespace  EnterpriseDB.EDBClient
 
             while (read < count)
             {
-                var bytesRead = _manager.ExecuteFunctionGetBytes("loread", buffer, offset + read, count - read, _fd, chunkCount);
+                var bytesRead = _manager.ExecuteFunctionGetBytes("loread($1, $2)", buffer, offset + read, count - read, _fd, chunkCount);
                 _pos += bytesRead;
                 read += bytesRead;
                 if (bytesRead < chunkCount)
@@ -134,7 +134,7 @@ namespace  EnterpriseDB.EDBClient
             while (totalWritten < count)
             {
                 var chunkSize = Math.Min(count - totalWritten, _manager.MaxTransferBlockSize);
-                var bytesWritten = _manager.ExecuteFunction<int>("lowrite", _fd, new ArraySegment<byte>(buffer, offset + totalWritten, chunkSize));
+                var bytesWritten = _manager.ExecuteFunction<int>("lowrite($1, $2)", _fd, new ArraySegment<byte>(buffer, offset + totalWritten, chunkSize));
                 totalWritten += bytesWritten;
 
                 if (bytesWritten != chunkSize)
@@ -220,9 +220,9 @@ namespace  EnterpriseDB.EDBClient
             CheckDisposed();
 
             if (_manager.Has64BitSupport)
-                return _pos = _manager.ExecuteFunction<long>("lo_lseek64", _fd, offset, (int)origin);
+                return _pos = _manager.ExecuteFunction<long>("lo_lseek64($1, $2, $3)", _fd, offset, (int)origin);
             else
-                return _pos = _manager.ExecuteFunction<int>("lo_lseek", _fd, (int)offset, (int)origin);
+                return _pos = _manager.ExecuteFunction<int>("lo_lseek($1, $2, $3)", _fd, (int)offset, (int)origin);
         }
 
         /// <summary>
@@ -253,9 +253,9 @@ namespace  EnterpriseDB.EDBClient
                 throw new NotSupportedException("SetLength cannot be called on a stream opened with no write permissions");
 
             if (_manager.Has64BitSupport)
-                _manager.ExecuteFunction<int>("lo_truncate64", _fd, value);
+                _manager.ExecuteFunction<int>("lo_truncate64($1, $2)", _fd, value);
             else
-                _manager.ExecuteFunction<int>("lo_truncate", _fd, (int)value);
+                _manager.ExecuteFunction<int>("lo_truncate($1, $2)", _fd, (int)value);
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace  EnterpriseDB.EDBClient
         {
             if (!_disposed)
             {
-                _manager.ExecuteFunction<int>("lo_close", _fd);
+                _manager.ExecuteFunction<int>("lo_close($1)", _fd);
                 _disposed = true;
             }
         }
