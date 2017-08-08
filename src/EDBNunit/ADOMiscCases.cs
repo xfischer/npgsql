@@ -16,13 +16,15 @@ namespace ADO
 	public class ADOMiscCases
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=edb";
-			
+		private string DBConnection = System.Configuration.ConfigurationSettings.AppSettings["ADOConnectionString"];
+		private string UserName = System.Configuration.ConfigurationSettings.AppSettings["ADOUser"];
+		private string PassPhrase = System.Configuration.ConfigurationSettings.AppSettings["ADOPassword"];
+
 		[SetUp]
 		protected void SetUp()
 		{ 
 			Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"edb","edb",-1); 
+			Conn.Open(DBConnection,UserName,PassPhrase,-1); 
 			object RecordsAffected=null;
 			Conn.Execute("CREATE TABLE TableWithAllTypesWithSynonyms(c1 BIGINT,c2 INT8,c3 BIT,c4 BYTEA,c5 BINARY,c6 BLOB,c7 BYTE,c8 IMAGE,c9 LONG,c10 LONG RAW,c11 RAW(10),c12 VARBINARY,c13 CHAR(10),c14 CHARACTER(10),c15 DATE,c16 DOUBLE PRECISION,c17 FLOAT,c18 FLOAT(10),c19 INTEGER,c20 INT,c21 NUMERIC(10,2),c22 DEC(10,2),c23 DECIMAL(10,2),c24 MONEY,c25 NUMBER(10,2),c26 SMALLMONEY,c27 YEAR,c28 REAL,c30 SMALLFLOAT,c31 SMALLINT,c32 TINYINT,c33 TEXT,c34 CLOB,c35 LONG,c36 LONG VARCHAR,c37 LONGTEXT,c38 LVARCHAR,c39 MEDIUMTEXT,c40 TIMESTAMP,c41 TIMESTAMP(2),c42 DATETIME,c43 SMALLDATETIME,c44 VARCHAR(10),c45 CHAR VARYING(10),c46 CHARACTER VARYING(10),c47 TINYTEXT,c48 VARCHAR2(10));",out RecordsAffected,-1);
 		
