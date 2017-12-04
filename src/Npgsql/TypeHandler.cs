@@ -165,12 +165,19 @@ namespace  EnterpriseDB.EDBClient
                 buf.WriteInt32(-1);
                 return;
             }
-
-            var elementLen = ValidateAndGetLength(value, parameter);
-            if (buf.WriteSpaceLeft < 4 + elementLen)
-                await buf.Flush(async, cancellationToken);
-            buf.WriteInt32(elementLen);
-            Write(value, buf, parameter);
+            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            {
+                var elementLen = ValidateAndGetLength(value, parameter);
+                if (buf.WriteSpaceLeft < 4 + elementLen)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt32(elementLen);
+                Write(value, buf, parameter);
+            } else
+            {
+                buf.WriteInt32(-1);
+            }
+                
+            
         }
 
         public sealed override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
@@ -252,9 +259,14 @@ namespace  EnterpriseDB.EDBClient
                 buf.WriteInt32(-1);
                 return;
             }
-
-            buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
-            await Write(value, buf, lengthCache, parameter, async, cancellationToken);
+            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            {
+                buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
+                await Write(value, buf, lengthCache, parameter, async, cancellationToken);
+            }
+            else
+                buf.WriteInt32(-1);
+            
         }
 
         protected abstract Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,

@@ -178,6 +178,10 @@ namespace  EnterpriseDB.EDBClient
             Debug.Assert(_rowDescription != null);
             Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
 
+            var asDataRow = _pendingMessage as DataRowMessage;
+            if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
+            return;
+
             while (_row == null)
             {
                 var msg = _connector.ReadMessage(DataRowLoadingMode.NonSequential);

@@ -189,7 +189,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             }
 
             foreach (var element in writeValue)
-                await ElementHandler.WriteWithLength(element, buf, lengthCache, null, async, cancellationToken);
+                await ElementHandler.WriteWithLength(element, buf, lengthCache, parameter, async, cancellationToken);
         }
 
         public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)

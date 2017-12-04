@@ -575,11 +575,11 @@ namespace DOTNET
 			command.CommandType = CommandType.Text;
 
 
-			string strSql = "create or replace procedure check_proc(a inout int) as  BEGIN  IF a > 0 then check_proc1(a);  END IF;   END;";//////////////
+			string strSql = "create or replace procedure check_procA(a inout int) as  BEGIN  IF a > 0 then check_procB(a);  END IF;   END;";//////////////
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="create or replace procedure check_proc1(a inout int) as  BEGIN  a:= a-1;  check_proc(a);     END;";//////////////creating a procedure
+			strSql ="create or replace procedure check_procB(a inout int) as  BEGIN  a:= a-1;  check_procA(a);     END;";//////////////creating a procedure
 
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
@@ -588,7 +588,7 @@ namespace DOTNET
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_proc(:v_inout)",con);
+				command = new EDBCommand("check_procA(:v_inout)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -613,9 +613,9 @@ namespace DOTNET
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Procedure check_proc;";
+			command.CommandText = "DROP Procedure check_procA;";
 			command.ExecuteNonQuery();
-			command.CommandText = "DROP Procedure check_proc1;";
+			command.CommandText = "DROP Procedure check_procB;";
 			command.ExecuteNonQuery();
 		}
 		
@@ -631,7 +631,7 @@ namespace DOTNET
 			command.CommandType = CommandType.Text;
 
 
-			string strSql = "create or replace procedure check_proc(a inout int) as  BEGIN   IF a > 0 then  a:= a-1; check_proc(a);  END IF;   END;";//////////////creating a procedure
+			string strSql = "create or replace procedure check_proc1(a inout int) as  BEGIN   IF a > 0 then  a:= a-1; check_proc1(a);  END IF;   END;";//////////////creating a procedure
 
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
@@ -642,7 +642,7 @@ namespace DOTNET
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_proc(:v_inout)",con);
+				command = new EDBCommand("check_proc1(:v_inout)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -667,7 +667,7 @@ namespace DOTNET
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Procedure check_proc;";
+			command.CommandText = "DROP Procedure check_proc1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -1382,7 +1382,7 @@ namespace DOTNET
 			command.CommandType = CommandType.Text;
 
 
-			string strSql ="CREATE OR REPLACE PROCEDURE MaxProcNumeric(param1 out Numeric, param2 inout Numeric,param3 in Numeric ,param4 out Numeric, param5 inout Numeric,param6 in Numeric,param7 out Numeric, param8 inout Numeric,param9 in Numeric,param10 out Numeric, param11 inout Numeric,param12 in Numeric,param13 out Numeric, param14 inout Numeric,param15 in Numeric,param16 out Numeric, param17 inout Numeric,param18 in Numeric,param19 out Numeric, param20 inout Numeric,param21 in Numeric,param22 out Numeric, param23 inout Numeric,param24 in Numeric,param25 out Numeric, param26 inout Numeric,param27 in Numeric,param28 out Numeric, param29 inout Numeric,param30 in Numeric,param31 out Numeric, param32 inout Numeric,param33 in Numeric,param34 out Numeric, param35 inout Numeric,param36 in Numeric,param37 out Numeric, param38 inout Numeric,param39 in Numeric,param40 out Numeric, param41 inout Numeric,param42 in Numeric,param43 out Numeric, param44 inout Numeric,param45 in Numeric,param46 out Numeric, param47 inout Numeric,param48 in Numeric,param49 out Numeric, param50 inout Numeric,param51 in Numeric,param52 out Numeric, param53 inout Numeric,param54 in Numeric,param55 out Numeric, param56 inout Numeric,param57 in Numeric,param58 out Numeric, param59 inout Numeric,param60 in Numeric,param61 out Numeric, param62 inout Numeric,param63 in Numeric,param64 out Numeric, param65 inout Numeric,param66 in Numeric,param67 out Numeric, param68 inout Numeric,param69 in Numeric,param70 out Numeric, param71 inout Numeric,param72 in Numeric,param73 out Numeric, param74 inout Numeric,param75 in Numeric,param76 out Numeric, param77 inout Numeric,param78 in Numeric,param79 out Numeric, param80 inout Numeric,param81 in Numeric,param82 out Numeric, param83 inout Numeric,param84 in Numeric,param85 out Numeric, param86 inout Numeric,param87 in Numeric,param88 out Numeric, param89 inout Numeric,param90 in Numeric,param91 out Numeric, param92 inout Numeric,param93 in Numeric,param94 out Numeric, param95 inout Numeric,param96 in Numeric"
+			string strSql ="CREATE OR REPLACE PROCEDURE MaxProcNumeric1(param1 out Numeric, param2 inout Numeric,param3 in Numeric ,param4 out Numeric, param5 inout Numeric,param6 in Numeric,param7 out Numeric, param8 inout Numeric,param9 in Numeric,param10 out Numeric, param11 inout Numeric,param12 in Numeric,param13 out Numeric, param14 inout Numeric,param15 in Numeric,param16 out Numeric, param17 inout Numeric,param18 in Numeric,param19 out Numeric, param20 inout Numeric,param21 in Numeric,param22 out Numeric, param23 inout Numeric,param24 in Numeric,param25 out Numeric, param26 inout Numeric,param27 in Numeric,param28 out Numeric, param29 inout Numeric,param30 in Numeric,param31 out Numeric, param32 inout Numeric,param33 in Numeric,param34 out Numeric, param35 inout Numeric,param36 in Numeric,param37 out Numeric, param38 inout Numeric,param39 in Numeric,param40 out Numeric, param41 inout Numeric,param42 in Numeric,param43 out Numeric, param44 inout Numeric,param45 in Numeric,param46 out Numeric, param47 inout Numeric,param48 in Numeric,param49 out Numeric, param50 inout Numeric,param51 in Numeric,param52 out Numeric, param53 inout Numeric,param54 in Numeric,param55 out Numeric, param56 inout Numeric,param57 in Numeric,param58 out Numeric, param59 inout Numeric,param60 in Numeric,param61 out Numeric, param62 inout Numeric,param63 in Numeric,param64 out Numeric, param65 inout Numeric,param66 in Numeric,param67 out Numeric, param68 inout Numeric,param69 in Numeric,param70 out Numeric, param71 inout Numeric,param72 in Numeric,param73 out Numeric, param74 inout Numeric,param75 in Numeric,param76 out Numeric, param77 inout Numeric,param78 in Numeric,param79 out Numeric, param80 inout Numeric,param81 in Numeric,param82 out Numeric, param83 inout Numeric,param84 in Numeric,param85 out Numeric, param86 inout Numeric,param87 in Numeric,param88 out Numeric, param89 inout Numeric,param90 in Numeric,param91 out Numeric, param92 inout Numeric,param93 in Numeric,param94 out Numeric, param95 inout Numeric,param96 in Numeric"
 				+" ,param97 out Numeric, param98 inout Numeric,param99 in Numeric,param100 out Numeric, param101 inout Numeric,param102 in Numeric,param103 out Numeric, param104 inout Numeric,param105 in Numeric,param106 out Numeric, param107 inout Numeric,param108 in Numeric,param109 out Numeric, param110 inout Numeric,param111 in Numeric,param112 out Numeric, param113 inout Numeric,param114 in Numeric,param115 out Numeric, param116 inout Numeric,param117 in Numeric,param118 out Numeric, param119 inout Numeric,param120 in Numeric,param121 out Numeric, param122 inout Numeric,param123 in Numeric,param124 out Numeric, param125 inout Numeric,param126 in Numeric,param127 out Numeric, param128 inout Numeric)"
 				+" IS \n"
 				+" BEGIN \n"
@@ -1394,7 +1394,7 @@ namespace DOTNET
 			//////////////code
 			try
 			{
-				command = new EDBCommand("MaxProcNumeric(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)",con);
+				command = new EDBCommand("MaxProcNumeric1(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 				command.Parameters.Add(new EDBParameter("param1",	EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,128));
@@ -1697,7 +1697,7 @@ namespace DOTNET
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP PROCEDURE MaxProcNumeric;";
+			command.CommandText = "DROP PROCEDURE MaxProcNumeric1;";
 			command.ExecuteNonQuery();
 
 		}

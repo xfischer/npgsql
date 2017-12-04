@@ -58,22 +58,25 @@ namespace  EnterpriseDB.EDBClient
             MoveToNextStatement();
 
             //      bool endtok = false;
-            bool edbsupport = false;
+           // bool edbsupport = false;
             var currCharOfs = 0;
             var end = sql.Length;
             var ch = '\0';
-            var ch1 = '\0';
-            var ch2 = '\0';
+            //var ch1 = '\0';
+            //var ch2 = '\0';
+            var isProcedure = false;
+            var numActiveBlocks = 0;
+            var variableDeclare = 0;
             int dollarTagStart;
             int dollarTagEnd;
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
 
-            ch1 = sql[0];
-            ch2 = sql[1];
-            if ((ch1 == 'C' || ch1 == 'c') && (ch2 == 'R' || ch2 == 'r'))
-                edbsupport = true;
+            //ch1 = sql[0];
+            //ch2 = sql[1];
+            //if ((ch1 == 'C' || ch1 == 'c') && (ch2 == 'R' || ch2 == 'r'))
+            //    edbsupport = true;
 
             None:
             if (currCharOfs >= end) {
@@ -83,6 +86,49 @@ namespace  EnterpriseDB.EDBClient
             ch = sql[currCharOfs++];
         NoneContinue:
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
+
+                string temp = sql.Substring(currCharOfs - 1).ToUpper();
+                if (temp.StartsWith("CREATE") && (temp.Contains(" PROCEDURE ") || temp.Contains(" FUNCTION ") || temp.Contains(" TRIGGER ")))
+                    isProcedure = true;
+                if (isProcedure && temp.StartsWith("BEGIN"))
+                {
+                    numActiveBlocks++;
+                    variableDeclare = 0;
+                }
+
+
+                if (isProcedure && temp.StartsWith("END"))
+                {
+                    if (!(temp.StartsWith("END IF") || temp.StartsWith("END LOOP") || temp.StartsWith("END CASE")))
+                        numActiveBlocks--;
+                }
+
+                if (isProcedure && temp.StartsWith("IS") || temp.StartsWith("AS"))
+                {
+                    char next = ' ';
+                    if (temp.Length > 2)
+                    {
+                        next = temp[2];
+                    }
+                    if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        variableDeclare++;
+                    }
+                }
+
+                if (isProcedure && temp.StartsWith("DECLARE"))
+                {
+                    char next = ' ';
+                    if (temp.Length > 7)
+                    {
+                        next = temp[7];
+                    }
+                    if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        variableDeclare++;
+                    }
+                }
+
                 switch (ch) {
                 case '/':
                     goto BlockCommentBegin;
@@ -393,7 +439,7 @@ namespace  EnterpriseDB.EDBClient
             goto Finish;
 
         SemiColon:
-            if (edbsupport == true)
+            if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0))
             {
                 currCharOfs++;
                 //      ch = sql[currCharOfs];
@@ -426,6 +472,7 @@ namespace  EnterpriseDB.EDBClient
                 currTokenBeg = currCharOfs;
                 if (_rewrittenSql.Length > 0)
                     MoveToNextStatement();
+                isProcedure = false;
                 goto None;
             }
             if (statements.Count > _statementIndex + 1)

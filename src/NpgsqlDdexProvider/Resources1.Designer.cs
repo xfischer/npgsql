@@ -116,7 +116,7 @@ namespace Npgsql.VisualStudio.Provider {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Npgsql Ddex Provider.
+        ///   Looks up a localized string similar to EDB Ddex Provider.
         /// </summary>
         public static string Provider_Description {
             get {

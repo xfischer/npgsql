@@ -47,7 +47,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         internal ExecuteOutMessage Populate(int maxRows) => Populate("", maxRows);
 
-        internal override int Length => 1 + 4 + 1 + 4;
+        internal override int Length => 1 + 4 + (Portal.Length + 1);
 
         internal override void WriteFully(WriteBuffer buf)
         {

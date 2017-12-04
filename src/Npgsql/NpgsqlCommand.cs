@@ -681,9 +681,9 @@ namespace  EnterpriseDB.EDBClient
             for (var i = 0; i < Parameters.Count; i++)
             {
                 var p = Parameters[i];
-                if (!p.IsInputDirection)
-                    continue;
-                if (p.EDBDbType == EDBTypes.EDBDbType.Varchar && p.Direction == ParameterDirection.Output)
+                //if (!p.IsInputDirection)
+                //    continue;
+                if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
                   continue;
                 p.Bind(Connection.Connector.TypeHandlerRegistry);
                 p.LengthCache?.Clear();
@@ -874,12 +874,13 @@ namespace  EnterpriseDB.EDBClient
                 if (CommandType == CommandType.StoredProcedure)
                 {
                     await connector.DescribeMessage
-                       .Populate(StatementOrPortal.Portal)
-                       .Write(buf, async, cancellationToken);
+                        .Populate(StatementOrPortal.Portal)
+                        .Write(buf, async, cancellationToken);
 
                     await connector.DescribeOutMessage
-                    .Populate(StatementOrPortal.Portal)
-                    .Write(buf, async, cancellationToken);
+                       .Populate(StatementOrPortal.Portal)
+                       .Write(buf, async, cancellationToken);
+                    
                 }
 
                 await ExecuteMessage.DefaultExecute.Write(buf, async, cancellationToken);
