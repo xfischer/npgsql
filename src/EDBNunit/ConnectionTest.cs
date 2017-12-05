@@ -154,10 +154,9 @@ namespace DOTNET
 		[Test]
 		public void TestDoubleClose()
 		{
-			//EDBConnection Con = TestUtil.openDB();
-			//Con.Close();
-			//Con.Close();
-			
+			EDBConnection Con = TestUtil.openDB();
+			Con.Close();
+			Con.Close();
 		}
 
 	}

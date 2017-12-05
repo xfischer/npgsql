@@ -21,39 +21,21 @@ namespace DOTNET
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
 
-		
 			//	Testing procedure with one IN Param
-		
 
-		
-
-		
-
-		
-		
-
-
-		
             //string CreateTable="CREATE  table InOutTestEmp(a numeric)";
-			
-			
+
             //com.CommandText=CreateTable;
             //com.CommandType=CommandType.Text;
-			
+
             //com.ExecuteNonQuery();
             //Console.WriteLine("Table created");
-
-
-
-
 
             //string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor ) IS BEGIN open  c_1 for select * from emp order by empno; open  c_2 for select * from emp order by empno;END;";
 
             //com.CommandText = strRefTwoArg;
 
             //com.ExecuteNonQuery();
-
-
 
             //string strRefThreeArg = "CREATE OR REPLACE PROCEDURE public.refcur_callee2 (c_1  OUT numeric, c_2 IN OUT refcursor,c_3 IN OUT refcursor ) IS BEGIN c_1 :=100; open  c_2 for select * from emp; open  c_3 for select ename from emp order by ename;END;";
 
@@ -112,14 +94,10 @@ namespace DOTNET
                 com.CommandText = strSqlEmptyArg;
                 com.ExecuteNonQuery();
 
-
-
-
 				EDBCommand command = new EDBCommand("emptyArg_test",con);
 				command.CommandType = CommandType.StoredProcedure;
 				command.Prepare();
 				command.ExecuteNonQuery();
-
 
                 EDBCommand com2 = new EDBCommand("", con);
                 com2.CommandType = CommandType.Text;
@@ -215,12 +193,8 @@ namespace DOTNET
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
 
-
-
                 com.CommandText = "DROP PROCEDURE threeInArg_test";
                 com.ExecuteNonQuery();
-
-
 
 			}
 			catch(EDBException e)
@@ -247,8 +221,6 @@ namespace DOTNET
                 com1.ExecuteNonQuery();
 
                 //	Testing procedure with three OUT Param
-			
-
 
                 EDBCommand command = new EDBCommand("oneOutArg_test(:a)", con);
                 command.CommandType = CommandType.StoredProcedure;
@@ -265,11 +237,8 @@ namespace DOTNET
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
 
-
-
                 com.CommandText = "DROP PROCEDURE oneOutArg_test";
                 com.ExecuteNonQuery();
-
 
             }
             catch (EDBException e)
@@ -319,8 +288,6 @@ namespace DOTNET
 				Assert.AreEqual(15,int.Parse(command.Parameters[1].Value.ToString()));
 				Assert.AreEqual(25,int.Parse(command.Parameters[2].Value.ToString()));
 
-
-
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
                 com.CommandText = "DROP PROCEDURE threeOutArg_test";
@@ -364,14 +331,11 @@ namespace DOTNET
 
 				Assert.AreEqual(7,int.Parse(command.Parameters[1].Value.ToString()));
 
-
-
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
 
                 com.CommandText = "DROP PROCEDURE singleInOutArg_test";
                 com.ExecuteNonQuery();
-
 
 			}
 			catch(EDBException e)
@@ -398,7 +362,6 @@ namespace DOTNET
                 com1.CommandText = strSqlMixArg;
                 com1.ExecuteNonQuery();
 
-
 				EDBCommand command = new EDBCommand("mixArg_test(:a,:b,:c)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
@@ -422,7 +385,6 @@ namespace DOTNET
 
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
-
 
                 com.CommandText = "DROP PROCEDURE mixArg_test";
                 com.ExecuteNonQuery();
@@ -575,11 +537,11 @@ namespace DOTNET
 			command.CommandType = CommandType.Text;
 
 
-			string strSql = "create or replace procedure check_procA(a inout int) as  BEGIN  IF a > 0 then check_procB(a);  END IF;   END;";//////////////
+			string strSql = "create or replace procedure check_proc(a inout int) as  BEGIN  IF a > 0 then check_proc1(a);  END IF;   END;";//////////////
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="create or replace procedure check_procB(a inout int) as  BEGIN  a:= a-1;  check_procA(a);     END;";//////////////creating a procedure
+			strSql ="create or replace procedure check_proc1(a inout int) as  BEGIN  a:= a-1;  check_proc(a);     END;";//////////////creating a procedure
 
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
@@ -588,15 +550,13 @@ namespace DOTNET
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_procA(:v_inout)",con);
+				command = new EDBCommand("check_proc(:v_inout)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
 				command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Integer,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,3));
 				command.Prepare();
-	
 
-				
 				command.ExecuteNonQuery();
 
 				Assert.AreEqual(0,int.Parse(command.Parameters[0].Value.ToString()));
@@ -606,16 +566,14 @@ namespace DOTNET
 			{			
 				throw new Exception(e.ToString());
 			}
-			
-
 
 			//////////tear down
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Procedure check_procA;";
+			command.CommandText = "DROP Procedure check_proc;";
 			command.ExecuteNonQuery();
-			command.CommandText = "DROP Procedure check_procB;";
+			command.CommandText = "DROP Procedure check_proc1;";
 			command.ExecuteNonQuery();
 		}
 		
@@ -630,19 +588,15 @@ namespace DOTNET
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-
-			string strSql = "create or replace procedure check_proc1(a inout int) as  BEGIN   IF a > 0 then  a:= a-1; check_proc1(a);  END IF;   END;";//////////////creating a procedure
+			string strSql = "create or replace procedure check_proc(a inout int) as  BEGIN   IF a > 0 then  a:= a-1; check_proc(a);  END IF;   END;";//////////////creating a procedure
 
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
-				
-
-
 
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_proc1(:v_inout)",con);
+				command = new EDBCommand("check_proc(:v_inout)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -660,14 +614,12 @@ namespace DOTNET
 			{			
 				throw new Exception(e.ToString());
 			}
-			
-
 
 			//////////tear down
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP Procedure check_proc1;";
+			command.CommandText = "DROP Procedure check_proc;";
 			command.ExecuteNonQuery();
 		}
 
@@ -684,11 +636,9 @@ namespace DOTNET
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-
 			string strSql ="CREATE OR REPLACE PROCEDURE ProcedureWithINT(p_in in int,p_inout inout int,p_out out int)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
-
 
 			//////////////code
 			try
@@ -696,7 +646,6 @@ namespace DOTNET
 				command = new EDBCommand("ProcedureWithINT(:v_in,:v_inout,:v_out)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
-			
 				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Integer,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,100));
 				command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Integer,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,2000));
 				command.Parameters.Add(new EDBParameter("v_out",	EDBTypes.EDBDbType.Integer,10,"v_out",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,40));
@@ -712,8 +661,6 @@ namespace DOTNET
 			{			
 				throw new Exception(e.ToString());
 			}
-			
-
 
 			//////////tear down
 			///
@@ -1382,7 +1329,7 @@ namespace DOTNET
 			command.CommandType = CommandType.Text;
 
 
-			string strSql ="CREATE OR REPLACE PROCEDURE MaxProcNumeric1(param1 out Numeric, param2 inout Numeric,param3 in Numeric ,param4 out Numeric, param5 inout Numeric,param6 in Numeric,param7 out Numeric, param8 inout Numeric,param9 in Numeric,param10 out Numeric, param11 inout Numeric,param12 in Numeric,param13 out Numeric, param14 inout Numeric,param15 in Numeric,param16 out Numeric, param17 inout Numeric,param18 in Numeric,param19 out Numeric, param20 inout Numeric,param21 in Numeric,param22 out Numeric, param23 inout Numeric,param24 in Numeric,param25 out Numeric, param26 inout Numeric,param27 in Numeric,param28 out Numeric, param29 inout Numeric,param30 in Numeric,param31 out Numeric, param32 inout Numeric,param33 in Numeric,param34 out Numeric, param35 inout Numeric,param36 in Numeric,param37 out Numeric, param38 inout Numeric,param39 in Numeric,param40 out Numeric, param41 inout Numeric,param42 in Numeric,param43 out Numeric, param44 inout Numeric,param45 in Numeric,param46 out Numeric, param47 inout Numeric,param48 in Numeric,param49 out Numeric, param50 inout Numeric,param51 in Numeric,param52 out Numeric, param53 inout Numeric,param54 in Numeric,param55 out Numeric, param56 inout Numeric,param57 in Numeric,param58 out Numeric, param59 inout Numeric,param60 in Numeric,param61 out Numeric, param62 inout Numeric,param63 in Numeric,param64 out Numeric, param65 inout Numeric,param66 in Numeric,param67 out Numeric, param68 inout Numeric,param69 in Numeric,param70 out Numeric, param71 inout Numeric,param72 in Numeric,param73 out Numeric, param74 inout Numeric,param75 in Numeric,param76 out Numeric, param77 inout Numeric,param78 in Numeric,param79 out Numeric, param80 inout Numeric,param81 in Numeric,param82 out Numeric, param83 inout Numeric,param84 in Numeric,param85 out Numeric, param86 inout Numeric,param87 in Numeric,param88 out Numeric, param89 inout Numeric,param90 in Numeric,param91 out Numeric, param92 inout Numeric,param93 in Numeric,param94 out Numeric, param95 inout Numeric,param96 in Numeric"
+			string strSql ="CREATE OR REPLACE PROCEDURE MaxProcNumeric(param1 out Numeric, param2 inout Numeric,param3 in Numeric ,param4 out Numeric, param5 inout Numeric,param6 in Numeric,param7 out Numeric, param8 inout Numeric,param9 in Numeric,param10 out Numeric, param11 inout Numeric,param12 in Numeric,param13 out Numeric, param14 inout Numeric,param15 in Numeric,param16 out Numeric, param17 inout Numeric,param18 in Numeric,param19 out Numeric, param20 inout Numeric,param21 in Numeric,param22 out Numeric, param23 inout Numeric,param24 in Numeric,param25 out Numeric, param26 inout Numeric,param27 in Numeric,param28 out Numeric, param29 inout Numeric,param30 in Numeric,param31 out Numeric, param32 inout Numeric,param33 in Numeric,param34 out Numeric, param35 inout Numeric,param36 in Numeric,param37 out Numeric, param38 inout Numeric,param39 in Numeric,param40 out Numeric, param41 inout Numeric,param42 in Numeric,param43 out Numeric, param44 inout Numeric,param45 in Numeric,param46 out Numeric, param47 inout Numeric,param48 in Numeric,param49 out Numeric, param50 inout Numeric,param51 in Numeric,param52 out Numeric, param53 inout Numeric,param54 in Numeric,param55 out Numeric, param56 inout Numeric,param57 in Numeric,param58 out Numeric, param59 inout Numeric,param60 in Numeric,param61 out Numeric, param62 inout Numeric,param63 in Numeric,param64 out Numeric, param65 inout Numeric,param66 in Numeric,param67 out Numeric, param68 inout Numeric,param69 in Numeric,param70 out Numeric, param71 inout Numeric,param72 in Numeric,param73 out Numeric, param74 inout Numeric,param75 in Numeric,param76 out Numeric, param77 inout Numeric,param78 in Numeric,param79 out Numeric, param80 inout Numeric,param81 in Numeric,param82 out Numeric, param83 inout Numeric,param84 in Numeric,param85 out Numeric, param86 inout Numeric,param87 in Numeric,param88 out Numeric, param89 inout Numeric,param90 in Numeric,param91 out Numeric, param92 inout Numeric,param93 in Numeric,param94 out Numeric, param95 inout Numeric,param96 in Numeric"
 				+" ,param97 out Numeric, param98 inout Numeric,param99 in Numeric,param100 out Numeric, param101 inout Numeric,param102 in Numeric,param103 out Numeric, param104 inout Numeric,param105 in Numeric,param106 out Numeric, param107 inout Numeric,param108 in Numeric,param109 out Numeric, param110 inout Numeric,param111 in Numeric,param112 out Numeric, param113 inout Numeric,param114 in Numeric,param115 out Numeric, param116 inout Numeric,param117 in Numeric,param118 out Numeric, param119 inout Numeric,param120 in Numeric,param121 out Numeric, param122 inout Numeric,param123 in Numeric,param124 out Numeric, param125 inout Numeric,param126 in Numeric,param127 out Numeric, param128 inout Numeric)"
 				+" IS \n"
 				+" BEGIN \n"
@@ -1394,7 +1341,7 @@ namespace DOTNET
 			//////////////code
 			try
 			{
-				command = new EDBCommand("MaxProcNumeric1(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)",con);
+				command = new EDBCommand("MaxProcNumeric(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 				command.Parameters.Add(new EDBParameter("param1",	EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,128));
@@ -1697,7 +1644,7 @@ namespace DOTNET
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP PROCEDURE MaxProcNumeric1;";
+			command.CommandText = "DROP PROCEDURE MaxProcNumeric;";
 			command.ExecuteNonQuery();
 
 		}
@@ -2455,129 +2402,100 @@ namespace DOTNET
 		}
 
 
+		//     [Test]
+				public void TERSE_PROC_NATIVE_INPUT_TYPES()
 
-   //     [Test]
-/*
-        public void TERSE_PROC_NATIVE_INPUT_TYPES()
+				{
 
-        {
+					try
 
-            try
+					{
 
-            {
+						EDBCommand Command;
 
+						Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
+						Command.ExecuteNonQuery();
 
-                EDBCommand Command;
+						Command.Dispose();
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+						Command = new EDBCommand("BEGIN;", con);
 
-                Command.ExecuteNonQuery();
+						Command.ExecuteNonQuery();
 
-                Command.Dispose();
+						Command.Dispose();
 
+						try
 
+						{
 
-                Command = new EDBCommand("BEGIN;", con);
+							Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                Command.ExecuteNonQuery();
+							Command.ExecuteNonQuery();
 
-                Command.Dispose();
+							Command.Dispose();
 
+						}
 
+						catch (EDBException )
+						{
+						}
 
-                try
 
-                {
+						Command = new EDBCommand("create or replace procedure terse_p1( a integer, b integer ) is " +
 
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+												 "begin " +
 
-                    Command.ExecuteNonQuery();
+												 "  dbms_output.put_line('a = ' || a); " +
 
-                    Command.Dispose();
+												 "  dbms_output.put_line('b = ' || b); " +
 
-                }
+												 "end; ", con);
 
-                catch (EDBException exp)
+						Command.ExecuteNonQuery();
 
-                {
+						Command.Dispose();
 
-                }
+						Command = new EDBCommand("terse_p1(:a,:b)", con);
 
-                
-                Command = new EDBCommand("create or replace procedure terse_p1( a integer, b integer ) is " +
+						Command.CommandType = CommandType.StoredProcedure;
 
-                                         "begin " +
+						Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                                         "  dbms_output.put_line('a = ' || a); " +
+						Command.Parameters[0].Value = 50;
 
-                                         "  dbms_output.put_line('b = ' || b); " +
+						Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
 
-                                         "end; ", con);
+						Command.Parameters[1].Value = 51;
 
-                Command.ExecuteNonQuery();
+						Command.Prepare();
 
-                Command.Dispose();
+						Command.ExecuteNonQuery();
 
+						Command.Dispose();
 
+						Command = new EDBCommand("DROP PROCEDURE terse_p1", con);
+						Command.ExecuteNonQuery();
+						Command.Dispose();
 
-                Command = new EDBCommand("terse_p1(:a,:b)", con);
+						Command = new EDBCommand("END;", con);
 
-                Command.CommandType = CommandType.StoredProcedure;
+						Command.ExecuteNonQuery();
 
+						Command.Dispose();
 
+					}
+					catch (EDBException exp)
+					{
+						throw new Exception(exp.ToString());
+					}
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+				}
 
-                Command.Parameters[0].Value = 50;
+		
 
-
-
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
-
-                Command.Parameters[1].Value = 51;
-
-
-
-                Command.Prepare();
-
-                Command.ExecuteNonQuery();
-
-                Command.Dispose();
-
-
-
-                Command = new EDBCommand("DROP PROCEDURE terse_p1", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
-
-                Command = new EDBCommand("END;", con);
-
-                Command.ExecuteNonQuery();
-
-                Command.Dispose();
-
-            }
-
-
-
-            catch (EDBException exp)
-
-            {
-
-
-
-                throw new Exception(exp.ToString());
-
-            }
-
-        }
-
-*/
-
-    //    [Test]
-        /*
+		//    [Test]
+		/*
         public void TERSE_PROC_NATIVE_OUTPUT_TYPES()
 
         {
@@ -2706,16 +2624,11 @@ namespace DOTNET
         */
 
 
-    //    [Test]
-        /*
+		//[Test]
         public void TERSE_PROC_MIXED_NATIVE_TYPES()
-
         {
-
             try
-
             {
-
                 EDBCommand command;
 
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
@@ -2724,18 +2637,13 @@ namespace DOTNET
 
                 command.Dispose();
 
-
-
                 command = new EDBCommand("BEGIN;", con);
 
                 command.ExecuteNonQuery();
 
                 command.Dispose();
 
-
-
                 try
-
                 {
 
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
@@ -2745,11 +2653,8 @@ namespace DOTNET
                     command.Dispose();
 
                 }
-
-                catch (EDBException exp)
-
+                catch (EDBException )
                 {
-
                 }
 
 
@@ -2804,8 +2709,6 @@ namespace DOTNET
 
                 command.Dispose();
 
-
-
                 command = new EDBCommand("END;", con);
 
                 command.ExecuteNonQuery();
@@ -2824,10 +2727,7 @@ namespace DOTNET
 
         }
 
-
-        */
-      //  Cursor not supported yet [Test]
-
+		[Test]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
@@ -2838,19 +2738,13 @@ namespace DOTNET
 
                 EDBCommand command;
 
-
-
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
                 command.ExecuteNonQuery();
 
                 command.Dispose();
 
-
-
                 EDBTransaction tran = con.BeginTransaction();
-
-
 
                 try
 
@@ -2864,13 +2758,9 @@ namespace DOTNET
 
                 }
 
-                catch (EDBException exp)
-
+                catch (EDBException )
                 {
-
                 }
-
-
 
                 command = new EDBCommand("cursortest2(:cur1,:cur2)", con);
 
@@ -2890,17 +2780,11 @@ namespace DOTNET
 
                 int fc = result.FieldCount;
 
-
-
                 EDBDataReader rst = (EDBDataReader)command.Parameters[0].Value;
 
                 int fc1 = result.FieldCount;
 
                 rst.Read();
-
-
-
-
 
                 Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
 
@@ -2911,10 +2795,6 @@ namespace DOTNET
                 Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 
                 Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
-
-
-
-
 
                 rst = (EDBDataReader)command.Parameters[1].Value;
 
@@ -2936,40 +2816,23 @@ namespace DOTNET
 
                 Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 
-
-
-
-
                 tran.Commit();
 
                 result.Close();
 
             }
-
             catch (EDBException exp)
-
             {
-
-
-
                 Console.WriteLine("Exception: " + exp.ToString());
-
             }
 
         }
 
-
-
         [Test]
-
         public void TERSE_PROC_MIXED_NATIVE_CURSOR_TYPES()
-
         {
-
             try
-
             {
-
                 EDBCommand command;
 
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
@@ -2978,16 +2841,10 @@ namespace DOTNET
 
                 command.Dispose();
 
-
-
                 EDBTransaction tran = con.BeginTransaction();
 
-
-
                 try
-
                 {
-
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
@@ -2995,14 +2852,10 @@ namespace DOTNET
                     command.Dispose();
 
                 }
-
-                catch (EDBException exp)
-
+                catch (EDBException )
                 {
 
                 }
-
-
 
                 command = new EDBCommand("refcur_callee2(:b,:a,:c)", con);
 
@@ -3010,15 +2863,11 @@ namespace DOTNET
 
                 command.Transaction = tran;
 
-
-
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
-
 
                 command.Prepare();
 
@@ -3026,23 +2875,15 @@ namespace DOTNET
 
                 EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-
-
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
 
-
-
                 EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-
-
 
                 int fc1 = reader.FieldCount;
 
                 reader.Read();
 
                 //reader.Read();
-
-
 
                 Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
 
@@ -3054,14 +2895,7 @@ namespace DOTNET
 
                 Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 
-
-
-
-
-
                 reader = (EDBDataReader)command.Parameters[2].Value;
-
-
 
                 fc1 = reader.FieldCount;
 
@@ -3078,128 +2912,92 @@ namespace DOTNET
                 result.Close();
 
             }
-
             catch (Exception ex)
-
             {
-
                 Console.WriteLine(ex.Message.ToString());
-
             }
 
         }
 
+		/*
+				[Test]
+				public void TERSE_PROC_DEFAULT_TYPES()
+				{
 
-/*
-        [Test]
+					try
 
-        public void TERSE_PROC_DEFAULT_TYPES()
+					{
+						EDBCommand Command;
 
-        {
+						Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
-            try
+						Command.ExecuteNonQuery();
 
-            {
+						Command.Dispose();
 
+						Command = new EDBCommand("BEGIN;", con);
 
+						Command.ExecuteNonQuery();
 
-                EDBCommand Command;
+						Command.Dispose();
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+						try
+						{
+							Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                Command.ExecuteNonQuery();
+							Command.ExecuteNonQuery();
 
-                Command.Dispose();
+							Command.Dispose();
 
+						}
+						catch (EDBException exp)
+						{
+						}
 
+						Command = new EDBCommand("create or replace procedure terse_p2( a integer, b integer default 10) is " +
 
-                Command = new EDBCommand("BEGIN;", con);
+												 "begin " +
 
-                Command.ExecuteNonQuery();
+												 "  dbms_output.put_line('a = ' || a); " +
 
-                Command.Dispose();
+												 "  dbms_output.put_line('b = ' || b); " +
 
+												 "end; ", con);
 
+						Command.ExecuteNonQuery();
 
-                try
+						Command.Dispose();
 
-                {
+						Command = new EDBCommand("terse_p2(:a)", con);
 
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+						Command.CommandType = CommandType.StoredProcedure;
 
-                    Command.ExecuteNonQuery();
 
-                    Command.Dispose();
 
-                }
+						Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                catch (EDBException exp)
+						Command.Parameters[0].Value = 50;
 
-                {
+						Command.Prepare();
 
-                }
+						Command.ExecuteNonQuery();
 
+						Command.Dispose();
 
+						Command = new EDBCommand("END;", con);
 
-                Command = new EDBCommand("create or replace procedure terse_p2( a integer, b integer default 10) is " +
+						Command.ExecuteNonQuery();
 
-                                         "begin " +
+						Command.Dispose();
 
-                                         "  dbms_output.put_line('a = ' || a); " +
+					}
+					catch (EDBException exp)
+					{
+						throw new Exception(exp.ToString());
+					}
+				}
+			*/
 
-                                         "  dbms_output.put_line('b = ' || b); " +
+	}
 
-                                         "end; ", con);
-
-                Command.ExecuteNonQuery();
-
-                Command.Dispose();
-
-
-
-                Command = new EDBCommand("terse_p2(:a)", con);
-
-                Command.CommandType = CommandType.StoredProcedure;
-
-
-
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
-
-                Command.Parameters[0].Value = 50;
-
-
-
-                Command.Prepare();
-
-                Command.ExecuteNonQuery();
-
-                Command.Dispose();
-
-
-
-
-
-                Command = new EDBCommand("END;", con);
-
-                Command.ExecuteNonQuery();
-
-                Command.Dispose();
-
-            }
-
-
-
-            catch (EDBException exp)
-
-            {
-
-
-
-                throw new Exception(exp.ToString());
-
-            }
-
-        }
-    */
-    }
 }

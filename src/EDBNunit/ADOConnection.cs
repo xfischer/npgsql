@@ -16,13 +16,15 @@ namespace ADO
 	public class ADOConnection
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = "Provider=MSDASQL.1;Persist Security Inf o=False;Data Source=EnterpriseDB";
-			
+		private string DBConnection = System.Configuration.ConfigurationSettings.AppSettings["ADOConnectionString"];
+		private string UserName = System.Configuration.ConfigurationSettings.AppSettings["ADOUser"];
+		private string PassPhrase = System.Configuration.ConfigurationSettings.AppSettings["ADOPassword"];
+
 		[SetUp]
 		protected void SetUp()
 		{ 
 			Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Conn.Open(DBConnection,UserName, PassPhrase, (int)ADODB.ConnectModeEnum.adModeUnknown);
 		}	
 
 		[TearDown]
@@ -51,7 +53,7 @@ namespace ADO
 			// ADO connection's 12th property represents the DBMS Name
 			Assert.AreEqual("EnterpriseDB",Conn.Properties[11].Value.ToString());
 			// ADO connection's 41st property represents the user Name
-			Assert.AreEqual("edb",Conn.Properties[40].Value.ToString());
+			Assert.AreEqual(UserName,Conn.Properties[40].Value.ToString());
 			
 			Conn.Close();
 			Assert.AreEqual(0,Conn.State);
@@ -64,7 +66,7 @@ namespace ADO
 
 			Conn.Close();
 			Conn.ConnectionTimeout=30;
-			Conn.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Conn.Open(DBConnection, UserName, PassPhrase,(int)ADODB.ConnectModeEnum.adModeUnknown);
 			Assert.AreEqual(30,Conn.ConnectionTimeout);			
 			Conn.Close();
 			Assert.AreEqual(0,Conn.State);
@@ -220,7 +222,7 @@ namespace ADO
 		public void ADOConnectionClosedAcess ()
 		{
 			ADODB.Connection Con=new ADODB.Connection();
-			Con.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection,UserName, PassPhrase,(int)ADODB.ConnectModeEnum.adModeUnknown);
 			
 			Con.Close();
 
@@ -241,14 +243,14 @@ namespace ADO
 		public void ADOConnectionMultipleDatabase ()
 		{
 			ADODB.Connection Con=new ADODB.Connection();
-			Con.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection, UserName, PassPhrase,(int)ADODB.ConnectModeEnum.adModeUnknown);
 			object RecordsAffected=null;
 			Con.Execute("Create database regressiontest",out RecordsAffected,-1);
 			Assert.AreEqual(0,Con.Errors.Count);
 			Con.Execute("Create database regressiontest2",out RecordsAffected,-1);
 			Assert.AreEqual(0,Con.Errors.Count);
 			Con.Close();
-			Con.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+			Con.Open(DBConnection,UserName,PassPhrase,(int)ADODB.ConnectModeEnum.adModeUnknown);
 			Assert.AreEqual(1,Con.State);
 			Con.Execute("drop database regressiontest",out RecordsAffected,-1);
 			Console.WriteLine(Con.Errors.Count);
@@ -267,7 +269,7 @@ namespace ADO
 			
 			try
 			{
-				Conn.Open(DBConnection,"edb","edb",(int)ADODB.ConnectModeEnum.adModeUnknown);
+				Conn.Open(DBConnection, UserName, PassPhrase,(int)ADODB.ConnectModeEnum.adModeUnknown);
 				Assert.Fail("Operation is not allowed when the object is open");
 			}
 

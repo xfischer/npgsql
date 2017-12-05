@@ -109,7 +109,7 @@ namespace  EnterpriseDB.EDBClient
             => Create(preferredOid, true);
 
         Task<uint> Create(uint preferredOid, bool async)
-            => ExecuteFunction<uint>("lo_create", async, (int)preferredOid);
+            => ExecuteFunction<uint>("lo_create($1)", async, (int)preferredOid);
 
         /// <summary>
         /// Opens a large object on the backend, returning a stream controlling this remote object.
@@ -140,7 +140,7 @@ namespace  EnterpriseDB.EDBClient
 
         async Task<EDBLargeObjectStream> OpenRead(uint oid, bool async)
         {
-            var fd = await ExecuteFunction<int>("lo_open", async, (int)oid, INV_READ);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ);
             return new EDBLargeObjectStream(this, oid, fd, false);
         }
 
@@ -169,7 +169,7 @@ namespace  EnterpriseDB.EDBClient
 
         async Task<EDBLargeObjectStream> OpenReadWrite(uint oid, bool async)
         {
-            var fd = await ExecuteFunction<int>("lo_open", async, (int)oid, INV_READ | INV_WRITE);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ | INV_WRITE);
             return new EDBLargeObjectStream(this, oid, fd, true);
         }
 
@@ -178,7 +178,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object to delete</param>
         public void Unlink(uint oid)
-            => ExecuteFunction<object>("lo_unlink", false, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_unlink($1)", false, (int)oid).GetAwaiter().GetResult();
 
         /// <summary>
         /// Deletes a large object on the backend.
@@ -198,7 +198,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object to export</param>
         /// <param name="path">Path to write the file on the backend</param>
         public void ExportRemote(uint oid, string path)
-            => ExecuteFunction<object>("lo_export", false, (int)oid, path).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_export($1, $2)", false, (int)oid, path).GetAwaiter().GetResult();
 
         /// <summary>
         /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
@@ -210,7 +210,7 @@ namespace  EnterpriseDB.EDBClient
         {
             cancellationToken.ThrowIfCancellationRequested();
             using (NoSynchronizationContextScope.Enter())
-                await ExecuteFunction<object>("lo_export", true, (int)oid, path);
+                await ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);
         }
 
         /// <summary>
@@ -219,7 +219,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="path">Path to read the file on the backend</param>
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         public void ImportRemote(string path, uint oid = 0)
-            => ExecuteFunction<object>("lo_import", false, path, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_import($1, $2)", false, path, (int)oid).GetAwaiter().GetResult();
 
         /// <summary>
         /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
@@ -231,7 +231,7 @@ namespace  EnterpriseDB.EDBClient
         {
             cancellationToken.ThrowIfCancellationRequested();
             using (NoSynchronizationContextScope.Enter())
-                await ExecuteFunction<object>("lo_import", true, path, (int)oid);
+                await ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);
         }
 
         /// <summary>

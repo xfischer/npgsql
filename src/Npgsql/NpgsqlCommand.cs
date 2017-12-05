@@ -837,7 +837,7 @@ namespace  EnterpriseDB.EDBClient
                         .Write(buf, async, cancellationToken);
                 }
 
-                if (CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     var bind = connector.BindOutMessage;
                   //  bind.Populate(statement.InputParameters, "", statement.StatementName);
@@ -871,7 +871,7 @@ namespace  EnterpriseDB.EDBClient
                         statement.PreparedStatement.State = PreparedState.BeingPrepared;
                 }
 
-                if (CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     await connector.DescribeMessage
                         .Populate(StatementOrPortal.Portal)
@@ -884,7 +884,7 @@ namespace  EnterpriseDB.EDBClient
                 }
 
                 await ExecuteMessage.DefaultExecute.Write(buf, async, cancellationToken);
-                if (CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     await ExecuteOutMessage.DefaultExecute.Write(buf, async, cancellationToken);
                 }

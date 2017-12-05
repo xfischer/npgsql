@@ -74,11 +74,11 @@ namespace DOTNET
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
 			
-        //    com.CommandText = "DROP Function emptyfunction_test;";
-        //    com.ExecuteNonQuery();
+            com.CommandText = "DROP Function emptyfunction_test;";
+            com.ExecuteNonQuery();
 
-        //    com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
-        //    com.ExecuteNonQuery();
+            com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
+            com.ExecuteNonQuery();
 
         ////    com.CommandText = "DROP Function  varcharr( IN NUMERIC);";
         //    //com.ExecuteNonQuery();
@@ -90,7 +90,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions */       
-	//	[Test]
+		[Test]
 		public void testfunctionsanity()
 		{
 			try 
@@ -129,7 +129,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions without parameters*/       
-		//[Test]
+		[Test]
 		public void testemptyfunction()
 		{
 			try 
@@ -161,7 +161,7 @@ namespace DOTNET
 				EDBCommand command = new EDBCommand("public.FunconeInArg_test(:param1)", con); 
 				command.CommandType = CommandType.StoredProcedure; 
 
-				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
 				command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar,10,"param2",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 
 				command.Prepare(); 
@@ -175,19 +175,21 @@ namespace DOTNET
 				Assert.AreEqual(3,int.Parse(command.Parameters[0].Value.ToString()));
 				Assert.AreEqual("EnterpriseDB",command.Parameters[1].Value.ToString());
 			} 
-			catch(Exception exp) 
+			catch(EDBException exp) 
 			{ 
 				Console.WriteLine(exp.Message); 
 			} 
 		}
 
 		/* To verify the sanity of functions with three IN parameters*/
-	//	[Test]
+		[Test]
 		public void testThreeInArg()
 		{
 			try 
-			{ 
-				EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+			{
+				//EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+				EDBCommand command = new EDBCommand("public.funcThreeInArg", con);
+
 				command.CommandType = CommandType.StoredProcedure; 
 
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Input,false,4,4,System.Data.DataRowVersion.Current,1)); 

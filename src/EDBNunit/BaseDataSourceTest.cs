@@ -13,7 +13,7 @@ namespace DOTNET
 	public class BaseDataSourceTest
 	{
 		EDBConnection con = null;
-		String conString = "Server=127.0.0.1;Port=5444; UserId=edb;Password=edb;Database=edb";
+		String conString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
 		[SetUp]
 		public void Init()
 		{

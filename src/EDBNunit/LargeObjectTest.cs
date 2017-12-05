@@ -27,7 +27,24 @@ namespace DOTNET
 			int result = command.ExecuteNonQuery();
 			Console.WriteLine("create table returned " + result);
 		}
-		
+		[Test]
+		public void LOCreateTest()
+		{
+			// Retrieve a Large Object Manager for this connection
+			var manager = new EDBLargeObjectManager(con);
+
+			// Create a new empty file, returning the identifier to later access it
+			uint oid = manager.Create();
+			EDBCommand command = new EDBCommand("INSERT INTO LOTest VALUES(1, "+ oid.ToString() + "); ", con);
+
+			int rowsAdded = command.ExecuteNonQuery();
+			Assert.AreEqual(1, rowsAdded);
+
+			command = new EDBCommand("select f1 from LOTest;", con);
+			uint oid2 = (uint)command.ExecuteScalar();
+			Assert.True(0 != oid, "Invalid OID value");
+		}
+
 		[Test]
 		public void LOImportTest()
 		{

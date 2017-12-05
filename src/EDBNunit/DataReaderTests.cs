@@ -16,7 +16,7 @@ namespace DOTNET
 
 		private EDBConnection 	_conn = null;
 		string connectionString = string.Empty;
-        
+
 		[SetUp]
 		protected void SetUp()
 		{
@@ -46,7 +46,6 @@ namespace DOTNET
 
 		}
 
-
 		[Test]
 		public void GetChars()
 		{
@@ -58,14 +57,9 @@ namespace DOTNET
 			dr.Read();
 			Char[] result = new Char[6];
 
-
 			Int64 a = dr.GetChars(1, 0, result, 0, 6);
 
 			Assert.AreEqual("Random", new String(result));
-			/*ConsoleWriter cw = new ConsoleWriter(Console.Out);
-
-			cw.WriteLine(result);*/
-
 
 		}
 
@@ -79,16 +73,11 @@ namespace DOTNET
 
 			dr.Read();
 
-
 			Int32 result = dr.GetInt32(2);
 
-			//ConsoleWriter cw = new ConsoleWriter(Console.Out);
-
-			//cw.WriteLine(result.GetType().Name);
 			Assert.AreEqual(4, result);
 
 		}
-
 
 		[Test]
 		public void GetInt16()
@@ -106,7 +95,6 @@ namespace DOTNET
 
 		}
 
-
 		[Test]
 		public void GetDecimal()
 		{
@@ -119,13 +107,9 @@ namespace DOTNET
 
 			Decimal result = dr.GetDecimal(3);
 
-
 			Assert.AreEqual(4.2300000M, result);
 
 		}
-
-
-
 
 		[Test]
 		public void GetDouble()
@@ -136,14 +120,12 @@ namespace DOTNET
 			EDBDataReader dr = command.ExecuteReader();
 
 			dr.Read();
-
-			//Double result = Double.Parse(dr.GetInt32(2).ToString());
+			
 			Double result = dr.GetDouble(2);
 
 			Assert.AreEqual(.123456789012345D, result);
 
 		}
-
 
 		[Test]
 		public void GetFloat()
@@ -154,14 +136,12 @@ namespace DOTNET
 			EDBDataReader dr = command.ExecuteReader();
 
 			dr.Read();
-
-			//Single result = Single.Parse(dr.GetInt32(2).ToString());
+			
 			Single result = dr.GetFloat(1);
 
 			Assert.AreEqual(.123456F, result);
 
 		}
-
 
 		[Test]
 		public void GetString()
@@ -179,18 +159,16 @@ namespace DOTNET
 
 		}
 
-
 		[Test]
 		public void GetStringWithParameter()
 		{
-			/* _conn.Open();
+			_conn.Open();
 			 EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
 			 String test = "Random text";
 			 EDBParameter param = new EDBParameter();
 			 param.ParameterName = "value";
 			 param.DbType = DbType.String;
-			 //param.EDBDbType = EDBDbType.Text;
 			 param.Size = test.Length;
 			 param.Value = test;
 			 command.Parameters.Add(param);
@@ -201,21 +179,20 @@ namespace DOTNET
 
 			 String result = dr.GetString(1);
 
-			 Assert.AreEqual(test, result);*/
+			 Assert.AreEqual(test, result);
 
 		}
 
 		[Test]
 		public void GetStringWithQuoteWithParameter()
 		{
-			/*_conn.Open();
+			_conn.Open();
 			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
 			String test = "Text with ' single quote";
 			EDBParameter param = new EDBParameter();
 			param.ParameterName = "value";
 			param.DbType = DbType.String;
-			//param.EDBDbType = EDBDbType.Text;
 			param.Size = test.Length;
 			param.Value = test;
 			command.Parameters.Add(param);
@@ -226,7 +203,7 @@ namespace DOTNET
 
 			String result = dr.GetString(1);
 
-			Assert.AreEqual(test, result);*/
+			Assert.AreEqual(test, result);
 
 		}
 
@@ -250,14 +227,13 @@ namespace DOTNET
 		[Test]
 		public void GetValueFromEmptyResultset()
 		{
-			/*_conn.Open();
+			_conn.Open();
 			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
 			String test = "Text single quote";
 			EDBParameter param = new EDBParameter();
 			param.ParameterName = "value";
 			param.DbType = DbType.String;
-			//param.EDBDbType = EDBDbType.Text;
 			param.Size = test.Length;
 			param.Value = test;
 			command.Parameters.Add(param);
@@ -266,14 +242,18 @@ namespace DOTNET
 
 			dr.Read();
 
-
-			// This line should throw the invalid operation exception as the datareader will
-			// have an empty resultset.
-			Console.WriteLine(dr.IsDBNull(1));*/
-
+			try
+			{
+				// This line should throw the invalid operation exception as the datareader will
+				// have an empty resultset.
+				Console.WriteLine(dr.IsDBNull(1));
+				Assert.Fail("This line should throw the invalid operation exception as the datareader will have an empty resultset.");
+			}
+			catch (InvalidOperationException )
+			{
+			}
 
 		}
-
 
 		[Test]
 		public void TestOverlappedParameterNames()
@@ -294,7 +274,7 @@ namespace DOTNET
 		[Test]
 		public void TestNonExistentParameterName()
 		{
-			/*_conn.Open();
+			_conn.Open();
 
 			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
 			command.Parameters.Add(new EDBParameter(":b", DbType.Int32, 4, "b"));
@@ -302,14 +282,16 @@ namespace DOTNET
 
 			command.Parameters[0].Value = 2;
 			command.Parameters[1].Value = 3;
-
-			EDBDataReader dr = command.ExecuteReader();*/
-
+			try
+			{
+				EDBDataReader dr = command.ExecuteReader();
+				Assert.Fail("Execution should fail as we are bind a non-existing parameter");
+			}
+			catch(PostgresException)
+			{
+			}
 
 		}
-
-
-
 
 		[Test]
 		public void UseDataAdapter()
@@ -327,8 +309,8 @@ namespace DOTNET
 
 			da.Fill(ds);
 
-			//ds.WriteXml("TestUseDataAdapter.xml");
-
+			Assert.AreEqual(ds.Tables.Count,  1);
+			Assert.AreEqual(ds.Tables[0].Rows.Count, 5);
 
 		}
 
@@ -344,12 +326,12 @@ namespace DOTNET
 
 			EDBDataAdapter da = new EDBDataAdapter(command);
 
-			DataSet ds = new DataSet();
+			DataSet ds = new DataSet("testtablea");
 
 			da.Fill(ds);
 
-			//ds.WriteXml("TestUseDataAdapterEDBConnectionConstructor.xml");
-
+			Assert.AreEqual(ds.Tables.Count, 1);
+			Assert.AreEqual(ds.Tables[0].Rows.Count, 5);
 
 		}
 
@@ -359,18 +341,17 @@ namespace DOTNET
 
 			_conn.Open();
 
-
 			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
-            
+
 			DataSet ds = new DataSet();
 
 			da.Fill(ds);
 
-			ds.WriteXml("TestUseDataAdapterStringEDBConnectionConstructor.xml");
-
+			//ds.WriteXml("TestUseDataAdapterStringEDBConnectionConstructor.xml");
+			Assert.AreEqual(ds.Tables.Count, 1);
+			Assert.AreEqual(ds.Tables[0].Rows.Count, 5);
 
 		}
-
 
 		[Test]
 		public void UseDataAdapterStringStringConstructor()
@@ -378,16 +359,15 @@ namespace DOTNET
 
 			_conn.Open();
 
-            
 			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
-            
+
 			DataSet ds = new DataSet();
 
 			da.Fill(ds);
 
-			ds.WriteXml("TestUseDataAdapterStringStringConstructor.xml");
-
-
+			//ds.WriteXml("TestUseDataAdapterStringStringConstructor.xml");
+			Assert.AreEqual(ds.Tables.Count, 1);
+			Assert.AreEqual(ds.Tables[0].Rows.Count, 5);
 		}
 
 		[Test]
@@ -396,16 +376,15 @@ namespace DOTNET
 
 			_conn.Open();
 
-
 			EDBDataAdapter da = new EDBDataAdapter("select * from tableb", connectionString);
 
 			DataSet ds = new DataSet();
 
 			da.Fill(ds);
 
-			ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
-
-
+			//ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
+			Assert.AreEqual(ds.Tables.Count, 1);
+			Assert.AreEqual(ds.Tables[0].Rows.Count, 4);
 		}
 
 		[Test]
@@ -422,10 +401,7 @@ namespace DOTNET
 
 			dg.DataSource = dr;
 			dg.DataBind();
-
-
 		}
-
 
 		[Test]
 		[ExpectedException(typeof(InvalidOperationException))]
@@ -456,7 +432,6 @@ namespace DOTNET
 			dr.Read();
 			Assert.AreEqual(true, dr.IsDBNull(0));
 
-
 		}
 
 		[Test]
@@ -471,8 +446,6 @@ namespace DOTNET
 			Assert.AreEqual(false, dr.IsDBNull(0));
 
 		}
-
-
 
 		[Test]
 		public void TypesNames()
@@ -502,8 +475,6 @@ namespace DOTNET
 			Assert.AreEqual("int2", dr.GetDataTypeName(1));
 			Assert.AreEqual("timestamp", dr.GetDataTypeName(2));
 			Assert.AreEqual("numeric", dr.GetDataTypeName(3));
-
-
 
 		}
 		
@@ -586,10 +557,6 @@ namespace DOTNET
 			command=new EDBCommand("drop table DataSetTest;",_conn);
 			command.ExecuteNonQuery();
 		}
-		
-
-		
-
 
 		[Test]
 		public void DataSetTableByIndex()
@@ -597,18 +564,16 @@ namespace DOTNET
 			_conn.Open();
 			EDBCommand	command=new EDBCommand("create table DataSetTest1(field_int2 int2);",_conn);
 			command.ExecuteNonQuery();
-			
+
 			DataSet ds = new DataSet();
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest1", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest1(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -634,22 +599,20 @@ namespace DOTNET
 
 		[Test]
 		public void DataSetTableColumnByIndex()
-		{	
+		{
 			_conn.Open();
 			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
 			command.ExecuteNonQuery();
-			
+
 			DataSet ds = new DataSet();
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -673,7 +636,6 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 		}
 
-
 		[Test]
 		public void DataSetTableColumnByName()
 		{	
@@ -689,9 +651,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -717,7 +677,6 @@ namespace DOTNET
 			
 		}
 
-		
 		[Test]
 		public void DataSetCopyTest()
 		{	
@@ -754,15 +713,12 @@ namespace DOTNET
 
 			ds2=ds.Copy();
 
-			
 			Assert.AreEqual("field_int2",ds2.Tables[0].Columns[0].ToString());
 			//Console.WriteLine(ds2.Tables[0].Columns["field_int2"].ToString());
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
+
 		}
-		
 
 		[Test]
 		public void DataSetNameTest()
@@ -779,9 +735,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -794,10 +748,9 @@ namespace DOTNET
 			Assert.AreEqual("ds",ds.DataSetName);
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-				
+
 		}
-	
+
 		[Test]
 		public void DataSetClearTest()
 		{
@@ -813,9 +766,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -837,11 +788,9 @@ namespace DOTNET
 			//Console.WriteLine(ds.Tables[0].Rows.Count);
 			Assert.AreEqual("0",ds.Tables[0].Rows.Count.ToString());
 
-			
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-				
+
 		}
 
 		[Test]
@@ -852,35 +801,27 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
 			da.Fill(ds);
-		
-			
+
 			//Console.WriteLine(ds.Namespace);
 			ds.Namespace="TestNameSpace";
 			Console.WriteLine("TestNameSpace",ds.Namespace);
 			Assert.AreEqual("TestNameSpace",ds.Namespace);
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
-				
 		}
-	
 
 		[Test]
 		public void DataSetWriteXML()
@@ -888,19 +829,16 @@ namespace DOTNET
 			_conn.Open();
 			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
 			command.ExecuteNonQuery();
-			
+
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -912,17 +850,12 @@ namespace DOTNET
 			Assert.IsTrue( File.Exists("XMLTest.xml"));
 		
 			File.Delete("XMLTest.xml");
-			
-		
-			
+
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
-				
+
 		}
 
-	
 		[Test]
 		public void DataSetReadXML()
 		{
@@ -931,17 +864,14 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -951,9 +881,7 @@ namespace DOTNET
 			ds.WriteXml("XMLTest.xml");
 			
 			Assert.IsTrue( File.Exists("XMLTest.xml"));
-		
-				
-			
+
 			try
 			{
 				ds.ReadXml("XMLTest.xml");
@@ -970,9 +898,7 @@ namespace DOTNET
 				command=new EDBCommand("drop table DataSetTest3;",_conn);
 				command.ExecuteNonQuery();
 			}
-			
-	
-				
+
 		}
 
 		[Test]
@@ -993,15 +919,13 @@ namespace DOTNET
 				row["id"]= i;
 				row["Item"]= "Item" + i;
 				table.Rows.Add(row);
-    
 			}
 			// Display the DataSet contents as XML.
 				
 			//Console.WriteLine( dataSet.GetXml().Length );
 			Assert.AreEqual(651,dataSet.GetXml().Length);
-			
-
 		}
+
 		[Test]
 		public void DataSetWriteXMLSchema()
 		{
@@ -1018,9 +942,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -1032,14 +954,10 @@ namespace DOTNET
 			Assert.IsTrue( File.Exists("XMLSchemaTest.xml"));
 		
 			File.Delete("XMLSchemaTest.xml");
-			
-		
-			
+
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
-				
+
 		}
 
 		[Test]
@@ -1050,17 +968,14 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -1070,9 +985,7 @@ namespace DOTNET
 			ds.WriteXmlSchema("XMLTest.xml");
 			
 			Assert.IsTrue( File.Exists("XMLTest.xml"));
-		
-				
-			
+
 			try
 			{
 				ds.ReadXmlSchema("XMLTest.xml");
@@ -1089,9 +1002,7 @@ namespace DOTNET
 				command=new EDBCommand("drop table DataSetTest3;",_conn);
 				command.ExecuteNonQuery();
 			}
-			
-	
-				
+
 		}
 		
 			
@@ -1113,7 +1024,6 @@ namespace DOTNET
 				row["id"]= i;
 				row["Item"]= "Item" + i;
 				table.Rows.Add(row);
-    
 			}
 
 			if(Environment.Version.Major==1)
@@ -1148,17 +1058,13 @@ namespace DOTNET
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
 			da.Fill(ds);
-		
-			
 			//Console.WriteLine(ds.Namespace);
 			ds.Prefix="TestPrefix";
 			//Console.WriteLine("TestPrefix",ds.Prefix);
 			Assert.AreEqual("TestPrefix",ds.Prefix);
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
-				
+
 		}
 
 
@@ -1171,17 +1077,14 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -1193,8 +1096,7 @@ namespace DOTNET
 			Assert.AreEqual(2,ds.Tables.Count);
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
+
 		}
 
 		[Test]
@@ -1205,17 +1107,14 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
-	
+
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -1231,8 +1130,6 @@ namespace DOTNET
 
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
 		}
 
 		[Test]
@@ -1243,17 +1140,14 @@ namespace DOTNET
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
-			
-		
+
 			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
@@ -1269,8 +1163,6 @@ namespace DOTNET
 
 			command=new EDBCommand("drop table DataSetTest3;",_conn);
 			command.ExecuteNonQuery();
-			
-			
 		}
 
 
