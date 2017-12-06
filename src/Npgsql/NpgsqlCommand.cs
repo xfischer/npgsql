@@ -579,7 +579,7 @@ namespace  EnterpriseDB.EDBClient
                         parameterName = _parameters[i].ParameterName;
                         parseCommand = ReplaceParameterValue(parseCommand, parameterName, "$" + (i + 1));
                     }
-                    if (_parameters.Count > 0)
+                    if (inputList.Count > 0)
                     {
                         if (!parseCommand.Trim().EndsWith(")"))
                         {

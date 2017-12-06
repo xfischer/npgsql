@@ -131,44 +131,44 @@ namespace  EnterpriseDB.EDBClient
         /// once for populating the output parameters and once for the actual result set traversal. So in this
         /// case we can't be sequential.
         /// </summary>
-        //void PopulateOutputParameters()
-        //{
-        //    Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
-        //    Debug.Assert(_statementIndex == 0);
-        //    Debug.Assert(_pendingMessage != null);
-        //    Debug.Assert(_rowDescription != null);
+        void PopulateNotPreparedOutputParameters()
+        {
+            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
+            Debug.Assert(_statementIndex == 0);
+            Debug.Assert(_pendingMessage != null);
+            Debug.Assert(_rowDescription != null);
 
-        //    var asDataRow = _pendingMessage as DataRowMessage;
-        //    if (asDataRow == null) // The first resultset was empty
-        //        return;
-        //    Debug.Assert(asDataRow is DataRowNonSequentialMessage);
-        //    Debug.Assert(asDataRow.NumColumns == _rowDescription.NumFields);
+            var asDataRow = _pendingMessage as DataRowMessage;
+            if (asDataRow == null) // The first resultset was empty
+                return;
+            Debug.Assert(asDataRow is DataRowNonSequentialMessage);
+            Debug.Assert(asDataRow.NumColumns == _rowDescription.NumFields);
 
-        //    // Temporarily set _row to the pending data row in order to retrieve the values
-        //    _row = asDataRow;
+            // Temporarily set _row to the pending data row in order to retrieve the values
+            _row = asDataRow;
 
-        //    var pending = new Queue<EDBParameter>();
-        //    var taken = new List<int>();
-        //    foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection))
-        //    {
-        //        if (_rowDescription.TryGetFieldIndex(p.CleanName, out var idx))
-        //        {
-        //            // TODO: Provider-specific check?
-        //            p.Value = GetValue(idx);
-        //            taken.Add(idx);
-        //        }
-        //        else
-        //            pending.Enqueue(p);
-        //    }
-        //    for (var i = 0; pending.Count != 0 && i != _row.NumColumns; ++i)
-        //    {
-        //        // TODO: Need to get the provider-specific value based on the out param's type
-        //        if (!taken.Contains(i))
-        //            pending.Dequeue().Value = GetValue(i);
-        //    }
+            var pending = new Queue<EDBParameter>();
+            var taken = new List<int>();
+            foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection))
+            {
+                if (_rowDescription.TryGetFieldIndex(p.CleanName, out var idx))
+                {
+                    // TODO: Provider-specific check?
+                    p.Value = GetValue(idx);
+                    taken.Add(idx);
+                }
+                else
+                    pending.Enqueue(p);
+            }
+            for (var i = 0; pending.Count != 0 && i != _row.NumColumns; ++i)
+            {
+                // TODO: Need to get the provider-specific value based on the out param's type
+                if (!taken.Contains(i))
+                    pending.Dequeue().Value = GetValue(i);
+            }
 
-        //    _row = null;
-        //}
+            _row = null;
+        }
 
         void PopulateOutputParameters()
         {
@@ -601,7 +601,14 @@ namespace  EnterpriseDB.EDBClient
                     // we must read it in non-sequential mode because it will be traversed twice (once
                     // here for the parameters, then as a regular row).
                     _pendingMessage = await _connector.ReadMessage(async);
-                    PopulateOutputParameters();
+                    if (Command.IsPrepared)
+                    {
+                        PopulateOutputParameters();
+                    }
+                    else
+                    {
+                        PopulateNotPreparedOutputParameters();
+                    }
                 }
                 else
                 {
