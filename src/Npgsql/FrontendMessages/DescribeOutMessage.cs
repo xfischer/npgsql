@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,7 +23,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -42,28 +42,25 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         const byte Code = (byte)'u';
 
-        internal DescribeOutMessage Populate(StatementOrPortal type, string name = "")
+        internal DescribeOutMessage Populate(StatementOrPortal type, string name = null)
         {
             StatementOrPortal = type;
-            Name = name;
+            Name = name ?? "";
             return this;
         }
 
-        internal override int Length { get { return 1 + 4 + 1 + (Name.Length + 1); } }
+        internal override int Length => 1 + 4 + 1 + (Name.Length + 1);
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
-            Contract.Requires(Name != null && Name.All(c => c < 128));
+            Debug.Assert(Name != null && Name.All(c => c < 128));
 
             buf.WriteByte(Code);
             buf.WriteInt32(Length - 1);
             buf.WriteByte((byte)StatementOrPortal);
-            buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Name));
+            buf.WriteNullTerminatedString(Name);
         }
 
-        public override string ToString()
-        {
-            return String.Format("[Describe({0}={1})]", StatementOrPortal, Name);
-        }
+        public override string ToString() => $"[Describe({StatementOrPortal}={Name})]";
     }
 }

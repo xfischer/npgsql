@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,13 +23,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
-    class ParseMessage : ChunkingFrontendMessage
+    class ParseMessage : FrontendMessage
     {
         /// <summary>
         /// The query string to be parsed.
@@ -42,126 +44,68 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         string Statement { get; set; }
 
         // ReSharper disable once InconsistentNaming
-        internal List<uint> ParameterTypeOIDs { get; private set; }
+        List<uint> ParameterTypeOIDs { get; }
 
-        byte[] _statementNameBytes;
-        int _queryLen;
-        char[] _queryChars;
-        int _charPos;
-
-        State _state;
+        readonly Encoding _encoding;
 
         const byte Code = (byte)'P';
 
-        internal ParseMessage()
+        internal ParseMessage(Encoding encoding)
         {
+            _encoding = encoding;
             ParameterTypeOIDs = new List<uint>();
         }
 
-        internal ParseMessage Populate(EDBStatement statement, TypeHandlerRegistry typeHandlerRegistry)
+        internal ParseMessage Populate(string sql, string statementName, List<EDBParameter> inputParameters, TypeHandlerRegistry typeHandlerRegistry)
         {
-            _state = State.WroteNothing;
             ParameterTypeOIDs.Clear();
-            Query = statement.SQL;
-            Statement = statement.PreparedStatementName ?? "";
-            foreach (var inputParam in statement.InputParameters) {
+            Query = sql;
+            Statement = statementName;
+            foreach (var inputParam in inputParameters) {
                 inputParam.ResolveHandler(typeHandlerRegistry);
-                ParameterTypeOIDs.Add(inputParam.Handler.OID);
+                ParameterTypeOIDs.Add(inputParam.Handler.PostgresType.OID);
             }
             return this;
         }
 
-        internal override bool Write(EDBBuffer buf, ref DirectBuffer directBuf)
+        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
         {
-            Contract.Requires(Statement != null && Statement.All(c => c < 128));
+            Debug.Assert(Statement != null && Statement.All(c => c < 128));
 
-            switch (_state)
+            var queryByteLen = _encoding.GetByteCount(Query);
+            if (buf.WriteSpaceLeft < 1 + 4 + Statement.Length + 1)
+                await buf.Flush(async, cancellationToken);
+
+            var messageLength =
+                1 +                         // Message code
+                4 +                         // Length
+                Statement.Length +
+                1 +                         // Null terminator
+                queryByteLen +
+                1 +                         // Null terminator
+                2 +                         // Number of parameters
+                ParameterTypeOIDs.Count * 4;
+
+            buf.WriteByte(Code);
+            buf.WriteInt32(messageLength - 1);
+            buf.WriteNullTerminatedString(Statement);
+
+            await buf.WriteString(Query, queryByteLen, async, cancellationToken);
+
+            if (buf.WriteSpaceLeft < 1 + 2)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteByte(0); // Null terminator for the query
+            buf.WriteInt16((short)ParameterTypeOIDs.Count);
+
+            foreach (var t in ParameterTypeOIDs)
             {
-                case State.WroteNothing:
-                    _statementNameBytes = PGUtil.UTF8Encoding.GetBytes(Statement);
-                    _queryLen = PGUtil.UTF8Encoding.GetByteCount(Query);
-                    if (buf.WriteSpaceLeft < 1 + 4 + _statementNameBytes.Length + 1) {
-                        return false;
-                    }
-
-                    var messageLength =
-                        1 +                         // Message code
-                        4 +                         // Length
-                        _statementNameBytes.Length +
-                        1 +                         // Null terminator
-                        _queryLen +
-                        1 +                         // Null terminator
-                        2 +                         // Number of parameters
-                        ParameterTypeOIDs.Count * 4;
-
-                    buf.WriteByte(Code);
-                    buf.WriteInt32(messageLength - 1);
-                    buf.WriteBytesNullTerminated(_statementNameBytes);
-                    goto case State.WroteHeader;
-
-                case State.WroteHeader:
-                    _state = State.WroteHeader;
-
-                    if (_queryLen <= buf.WriteSpaceLeft) {
-                        buf.WriteString(Query);
-                        goto case State.WroteQuery;
-                    }
-
-                    if (_queryLen <= buf.Size) {
-                        // String can fit entirely in an empty buffer. Flush and retry rather than
-                        // going into the partial writing flow below (which requires ToCharArray())
-                        return false;
-                    }
-
-                    _queryChars = Query.ToCharArray();
-                    _charPos = 0;
-                    goto case State.WritingQuery;
-
-                case State.WritingQuery:
-                    _state = State.WritingQuery;
-                    int charsUsed;
-                    bool completed;
-                    buf.WriteStringChunked(_queryChars, _charPos, _queryChars.Length - _charPos, true,
-                                           out charsUsed, out completed);
-                    if (!completed)
-                    {
-                        _charPos += charsUsed;
-                        return false;
-                    }
-                    goto case State.WroteQuery;
-
-                case State.WroteQuery:
-                    _state = State.WroteQuery;
-                    if (buf.WriteSpaceLeft < 1 + 2 + ParameterTypeOIDs.Count * 4) {
-                        return false;
-                    }
-                    buf.WriteByte(0); // Null terminator for the query
-                    buf.WriteInt16((short)ParameterTypeOIDs.Count);
-
-                    foreach (var t in ParameterTypeOIDs) {
-                        buf.WriteInt32((int)t);
-                    }
-
-                    _state = State.WroteAll;
-                    return true;
-
-                default:
-                    throw PGUtil.ThrowIfReached();
+                if (buf.WriteSpaceLeft < 4)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt32((int)t);
             }
         }
 
         public override string ToString()
-        {
-            return String.Format("[Parse(Statement={0},NumParams={1}]", Statement, ParameterTypeOIDs.Count);
-        }
-
-        private enum State
-        {
-            WroteNothing,
-            WroteHeader,
-            WritingQuery,
-            WroteQuery,
-            WroteAll
-        }
+            => $"[Parse(Statement={Statement},NumParams={ParameterTypeOIDs.Count}]";
     }
 }

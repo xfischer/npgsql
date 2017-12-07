@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,31 +22,31 @@
 #endregion
 
 using System;
-using System.IO;
 
 namespace  EnterpriseDB.EDBClient
 {
     /// <summary>
     /// EventArgs class to send Notification parameters.
     /// </summary>
-    public class EDBNotificationEventArgs : EventArgs
+    public sealed class EDBNotificationEventArgs : EventArgs
     {
         /// <summary>
         /// Process ID of the PostgreSQL backend that sent this notification.
         /// </summary>
-        public readonly int PID;
+        // ReSharper disable once InconsistentNaming
+        public int PID { get; }
 
         /// <summary>
         /// Condition that triggered that notification.
         /// </summary>
-        public readonly string Condition;
+        public string Condition { get; }
 
         /// <summary>
         /// Additional information.
         /// </summary>
-        public readonly string AdditionalInformation;
+        public string AdditionalInformation { get; }
 
-        internal EDBNotificationEventArgs(EDBBuffer buf)
+        internal EDBNotificationEventArgs(ReadBuffer buf)
         {
             PID = buf.ReadInt32();
             Condition = buf.ReadNullTerminatedString();

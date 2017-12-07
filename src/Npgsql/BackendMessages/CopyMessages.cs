@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,8 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
@@ -34,14 +32,14 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         internal bool IsBinary { get; private set; }
         internal short NumColumns { get; private set; }
-        internal List<FormatCode> ColumnFormatCodes { get; private set; }
+        internal List<FormatCode> ColumnFormatCodes { get; }
 
         internal CopyResponseMessageBase()
         {
             ColumnFormatCodes = new List<FormatCode>();
         }
 
-        internal void Load(EDBBuffer buf)
+        internal void Load(ReadBuffer buf)
         {
             ColumnFormatCodes.Clear();
 
@@ -65,9 +63,9 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
     class CopyInResponseMessage : CopyResponseMessageBase
     {
-        public override BackendMessageCode Code { get { return BackendMessageCode.CopyInResponse; } }
+        public override BackendMessageCode Code => BackendMessageCode.CopyInResponse;
 
-        internal new CopyInResponseMessage Load(EDBBuffer buf)
+        internal new CopyInResponseMessage Load(ReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -76,9 +74,9 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
     class CopyOutResponseMessage : CopyResponseMessageBase
     {
-        public override BackendMessageCode Code { get { return BackendMessageCode.CopyOutResponse; } }
+        public override BackendMessageCode Code => BackendMessageCode.CopyOutResponse;
 
-        internal new CopyOutResponseMessage Load(EDBBuffer buf)
+        internal new CopyOutResponseMessage Load(ReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -87,9 +85,9 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
     class CopyBothResponseMessage : CopyResponseMessageBase
     {
-        public override BackendMessageCode Code { get { return BackendMessageCode.CopyBothResponse; } }
+        public override BackendMessageCode Code => BackendMessageCode.CopyBothResponse;
 
-        internal new CopyBothResponseMessage Load(EDBBuffer buf)
+        internal new CopyBothResponseMessage Load(ReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -102,7 +100,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     /// </summary>
     class CopyDataMessage : IBackendMessage
     {
-        public BackendMessageCode Code { get { return BackendMessageCode.CopyData; } }
+        public BackendMessageCode Code => BackendMessageCode.CopyData;
 
         public int Length { get; private set; }
 
@@ -118,13 +116,13 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     /// </remarks>
     class CopyDoneMessage : SimpleFrontendMessage, IBackendMessage
     {
-        public BackendMessageCode Code { get { return BackendMessageCode.CopyDone; } }
+        public BackendMessageCode Code => BackendMessageCode.CopyDone;
         internal static readonly CopyDoneMessage Instance = new CopyDoneMessage();
         CopyDoneMessage() { }
 
-        internal override int Length { get { return 5; } }
+        internal override int Length => 5;
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
             buf.WriteByte((byte)BackendMessageCode.CopyDone);
             buf.WriteInt32(4);

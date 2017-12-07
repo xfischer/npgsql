@@ -1,9 +1,7 @@
-﻿#if !DNXCORE50
-
-#region License
+﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,6 +20,8 @@
 // ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
+
+#if NET45 || NET451
 
 using System;
 using System.Data;
@@ -55,11 +55,10 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="adapter">The adapter.</param>
         public EDBCommandBuilder(EDBDataAdapter adapter)
-            : base()
         {
             DataAdapter = adapter;
-            this.QuotePrefix = "\"";
-            this.QuoteSuffix = "\"";
+            QuotePrefix = "\"";
+            QuoteSuffix = "\"";
         }
 
         /// <summary>
@@ -134,55 +133,36 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
+        private const string DeriveParametersQuery = @"
+SELECT
+CASE
+	WHEN pg_proc.proargnames IS NULL THEN array_cat(array_fill(''::name,ARRAY[pg_proc.pronargs]),array_agg(pg_attribute.attname ORDER BY pg_attribute.attnum))
+	ELSE pg_proc.proargnames
+END AS proargnames,
+pg_proc.proargtypes,
+CASE
+	WHEN pg_proc.proallargtypes IS NULL AND (array_agg(pg_attribute.atttypid))[1] IS NOT NULL THEN array_cat(string_to_array(pg_proc.proargtypes::text,' ')::oid[],array_agg(pg_attribute.atttypid ORDER BY pg_attribute.attnum))
+	ELSE pg_proc.proallargtypes
+END AS proallargtypes,
+CASE
+	WHEN pg_proc.proargmodes IS NULL AND (array_agg(pg_attribute.atttypid))[1] IS NOT NULL THEN array_cat(array_fill('i'::""char"",ARRAY[pg_proc.pronargs]),array_fill('o'::""char"",ARRAY[array_length(array_agg(pg_attribute.atttypid), 1)]))
+    ELSE pg_proc.proargmodes
+END AS proargmodes
+FROM pg_proc
+LEFT JOIN pg_type ON pg_proc.prorettype = pg_type.oid
+LEFT JOIN pg_attribute ON pg_type.typrelid = pg_attribute.attrelid AND pg_attribute.attnum >= 1
+WHERE pg_proc.oid = :proname::regproc
+GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_proc.proargmodes, pg_proc.pronargs;
+";
+
         private static void DoDeriveParameters(EDBCommand command)
         {
             // See http://www.postgresql.org/docs/current/static/catalog-pg-proc.html
             command.Parameters.Clear();
-            // Updated after 0.99.3 to support the optional existence of a name qualifying schema and case insensitivity when the schema ror procedure name do not contain a quote.
-            // This fixed an incompatibility with EDBCommand.CheckFunctionReturn(String ReturnType)
-            var serverVersion = command.Connection.Connector.ServerVersion;
-            string query;
-            string procedureName;
-            string schemaName = null;
-            var fullName = command.CommandText.Split('.');
-            if (fullName.Length > 1 && fullName[0].Length > 0)
-            {
-                // proargsmodes is supported for Postgresql 8.1 and above
-                query = serverVersion >= new Version(8, 1, 0)
-                    ? "select proargnames, proargtypes, proallargtypes, proargmodes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname"
-                    : "select proargnames, proargtypes from pg_proc p left join pg_namespace n on p.pronamespace = n.oid where proname=:proname and n.nspname=:nspname";
-                schemaName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
-                procedureName = (fullName[1].IndexOf("\"") != -1) ? fullName[1] : fullName[1].ToLower();
-
-                // The pg_temp pseudo-schema is special - it's an alias to a real schema name (e.g. pg_temp_2).
-                // We get the real name with pg_my_temp_schema().
-                if (schemaName == "pg_temp")
-                {
-                    using (var c = new EDBCommand("SELECT nspname FROM pg_namespace WHERE oid=pg_my_temp_schema()", command.Connection))
-                    {
-                        schemaName = (string)c.ExecuteScalar();
-                    }
-                }
-            }
-            else
-            {
-                // proargsmodes is supported for Postgresql 8.1 and above
-                query = serverVersion >= new Version(8, 1, 0)
-                    ? "select proargnames, proargtypes, proallargtypes, proargmodes from pg_proc where proname = :proname"
-                    : "select proargnames, proargtypes from pg_proc where proname = :proname";
-                procedureName = (fullName[0].IndexOf("\"") != -1) ? fullName[0] : fullName[0].ToLower();
-                procedureName = procedureName.Substring(0, procedureName.IndexOf("("));
-            }
-
-            using (var c = new EDBCommand(query, command.Connection))
+            using (var c = new EDBCommand(DeriveParametersQuery, command.Connection))
             {
                 c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
-                c.Parameters[0].Value = procedureName.Replace("\"", "").Trim();
-                if (fullName.Length > 1 && !string.IsNullOrEmpty(schemaName))
-                {
-                    var prm = c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Text));
-                    prm.Value = schemaName.Replace("\"", "").Trim();
-                }
+                c.Parameters[0].Value = command.CommandText;
 
                 string[] names = null;
                 uint[] types = null;
@@ -194,13 +174,10 @@ namespace  EnterpriseDB.EDBClient
                     {
                         if (!rdr.IsDBNull(0))
                             names = rdr.GetValue(0) as string[];
-                        if (serverVersion >= new Version("8.1.0"))
-                        {
-                            if (!rdr.IsDBNull(2))
-                                types = rdr.GetValue(2) as uint[];
-                            if (!rdr.IsDBNull(3))
-                                modes = rdr.GetValue(3) as char[];
-                        }
+                        if (!rdr.IsDBNull(2))
+                            types = rdr.GetValue(2) as uint[];
+                        if (!rdr.IsDBNull(3))
+                            modes = rdr.GetValue(3) as char[];
                         if (types == null)
                         {
                             if (rdr.IsDBNull(1) || rdr.GetFieldValue<uint[]>(1).Length == 0)
@@ -209,7 +186,7 @@ namespace  EnterpriseDB.EDBClient
                         }
                     }
                     else
-                        throw new InvalidOperationException(string.Format("{0} does not exist in pg_proc", command.CommandText));
+                        throw new InvalidOperationException($"{command.CommandText} does not exist in pg_proc");
                 }
 
                 command.Parameters.Clear();
@@ -218,13 +195,13 @@ namespace  EnterpriseDB.EDBClient
                     var param = new EDBParameter();
 
                     // TODO: Fix enums, composite types
-                    var edbDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].EDBDbType;
-                    if (edbDbType == EDBDbType.Unknown)
-                        throw new InvalidOperationException(string.Format("Invalid parameter type: {0}", types[i]));
-                    param.EDBDbType = edbDbType;
+                    var EDBDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].PostgresType.EDBDbType;
+                    if (!EDBDbType.HasValue)
+                        throw new InvalidOperationException($"Invalid parameter type: {types[i]}");
+                    param.EDBDbType = EDBDbType.Value;
 
                     if (names != null && i < names.Length)
-                        param.ParameterName = "parameter" + (i + 1);
+                        param.ParameterName = ":" + names[i];
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -238,6 +215,7 @@ namespace  EnterpriseDB.EDBClient
                                 param.Direction = ParameterDirection.Input;
                                 break;
                             case 'o':
+                            case 't':
                                 param.Direction = ParameterDirection.Output;
                                 break;
                             case 'b':
@@ -245,8 +223,6 @@ namespace  EnterpriseDB.EDBClient
                                 break;
                             case 'v':
                                 throw new NotImplementedException("Cannot derive function parameter of type VARIADIC");
-                            case 't':
-                                throw new NotImplementedException("Cannot derive function parameter of type TABLE");
                             default:
                                 throw new ArgumentOutOfRangeException("proargmode", modes[i],
                                     "Unknown code in proargmodes while deriving: " + modes[i]);
@@ -425,15 +401,15 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="adapter">The <see cref="T:System.Data.Common.DbDataAdapter" /> to be used for the update.</param>
         protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
-            var EDBAdapter = adapter as EDBDataAdapter;
-            if (EDBAdapter == null)
-                throw new ArgumentException("adapter needs to be a EDBDataAdapter", "adapter");
+            var npgsqlAdapter = adapter as EDBDataAdapter;
+            if (npgsqlAdapter == null)
+                throw new ArgumentException("adapter needs to be a EDBDataAdapter", nameof(adapter));
 
             // Being called twice for the same adapter means unregister
             if (adapter == DataAdapter)
-                EDBAdapter.RowUpdating -= RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating -= RowUpdatingHandler;
             else
-                EDBAdapter.RowUpdating += RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating += RowUpdatingHandler;
         }
 
         /// <summary>
@@ -463,10 +439,10 @@ namespace  EnterpriseDB.EDBClient
             if (unquotedIdentifier == null)
 
             {
-                throw new ArgumentNullException("unquotedIdentifier", "Unquoted identifier parameter cannot be null");
+                throw new ArgumentNullException(nameof(unquotedIdentifier), "Unquoted identifier parameter cannot be null");
             }
 
-            return String.Format("{0}{1}{2}", QuotePrefix, unquotedIdentifier.Replace(QuotePrefix, QuotePrefix + QuotePrefix), QuoteSuffix);
+            return $"{QuotePrefix}{unquotedIdentifier.Replace(QuotePrefix, QuotePrefix + QuotePrefix)}{QuoteSuffix}";
         }
 
         /// <summary>
@@ -486,18 +462,18 @@ namespace  EnterpriseDB.EDBClient
             if (quotedIdentifier == null)
 
             {
-                throw new ArgumentNullException("quotedIdentifier", "Quoted identifier parameter cannot be null");
+                throw new ArgumentNullException(nameof(quotedIdentifier), "Quoted identifier parameter cannot be null");
             }
 
             var unquotedIdentifier = quotedIdentifier.Trim().Replace(QuotePrefix + QuotePrefix, QuotePrefix);
 
-            if (unquotedIdentifier.StartsWith(this.QuotePrefix))
+            if (unquotedIdentifier.StartsWith(QuotePrefix))
 
             {
                 unquotedIdentifier = unquotedIdentifier.Remove(0, 1);
             }
 
-            if (unquotedIdentifier.EndsWith(this.QuoteSuffix))
+            if (unquotedIdentifier.EndsWith(QuoteSuffix))
 
             {
                 unquotedIdentifier = unquotedIdentifier.Remove(unquotedIdentifier.Length - 1, 1);

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,87 +22,64 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-binary.html
     /// </remarks>
-    [TypeMapping("bytea", EDBDbType.Bytea, DbType.Binary, new Type[] { typeof(byte[]), typeof(ArraySegment<byte>) })]
-    internal class ByteaHandler : TypeHandler<byte[]>,
-        IChunkingTypeReader<byte[]>, IChunkingTypeWriter
+    [TypeMapping("bytea", EDBDbType.Bytea, DbType.Binary, new[] { typeof(byte[]), typeof(ArraySegment<byte>) })]
+    class ByteaHandler : ChunkingTypeHandler<byte[]>
     {
-        bool _returnedBuffer;
-        byte[] _bytes;
-        int _pos;
-        EDBBuffer _buf;
+        internal ByteaHandler(PostgresType postgresType) : base(postgresType) {}
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override async ValueTask<byte[]> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
-            _bytes = new byte[len];
-            _pos = 0;
-            _buf = buf;
-        }
-
-        public bool Read(out byte[] result)
-        {
-            var toRead = Math.Min(_bytes.Length - _pos, _buf.ReadBytesLeft);
-            _buf.ReadBytes(_bytes, _pos, toRead);
-            _pos += toRead;
-            if (_pos == _bytes.Length)
+            var bytes = new byte[len];
+            var pos = 0;
+            while (true)
             {
-                result = _bytes;
-                _bytes = null;
-                _buf = null;
-                return true;
+                var toRead = Math.Min(len - pos, buf.ReadBytesLeft);
+                buf.ReadBytes(bytes, pos, toRead);
+                pos += toRead;
+                if (pos == len)
+                    break;
+                await buf.ReadMore(async);
             }
-            result = null;
-            return false;
+            return bytes;
         }
 
-        public long GetBytes(DataRowMessage row, int offset, byte[] output, int outputOffset, int len, FieldDescription field)
+        public long GetBytes(DataRowMessage row, int offset, [CanBeNull] byte[] output, int outputOffset, int len, FieldDescription field)
         {
-            if (output == null) {
+            if (output == null)
                 return row.ColumnLen;
-            }
 
-            row.SeekInColumn(offset);
+            row.SeekInColumn(offset, false).GetAwaiter().GetResult();
 
             // Attempt to read beyond the end of the column
-            if (offset + len > row.ColumnLen) {
+            if (offset + len > row.ColumnLen)
                 len = row.ColumnLen - offset;
-            }
 
-            row.Buffer.ReadAllBytes(output, outputOffset, len, false);
-            row.PosInColumn += len;
-            return len;
+            var read = row.Buffer.ReadAllBytes(output, outputOffset, len, false, false).Result;
+            row.PosInColumn += read;
+            return read;
         }
 
         #region Write
 
-        ArraySegment<byte> _value;
-
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             if (value is ArraySegment<byte>)
             {
                 var arraySegment = (ArraySegment<byte>)value;
-
-                if (arraySegment.Array == null)
-                    throw new InvalidCastException("Array in ArraySegment<byte> is null");
-
                 return parameter == null || parameter.Size <= 0 || parameter.Size >= arraySegment.Count
                     ? arraySegment.Count
                     : parameter.Size;
@@ -110,26 +87,23 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
             var asArray = value as byte[];
             if (asArray != null)
-            {
                 return parameter == null || parameter.Size <= 0 || parameter.Size >= asArray.Length
                     ? asArray.Length
                     : parameter.Size;
-            }
 
             throw CreateConversionException(value.GetType());
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, [CanBeNull] EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            _buf = buf;
+            ArraySegment<byte> segment;
 
             if (value is ArraySegment<byte>)
             {
-                _value = (ArraySegment<byte>)value;
-                if (!(parameter == null || parameter.Size <= 0 || parameter.Size >= _value.Count))
-                {
-                     _value = new ArraySegment<byte>(_value.Array, _value.Offset, parameter.Size);
-                }
+                segment = (ArraySegment<byte>)value;
+                if (!(parameter == null || parameter.Size <= 0 || parameter.Size >= segment.Count))
+                    segment = new ArraySegment<byte>(segment.Array, segment.Offset, parameter.Size);
             }
             else
             {
@@ -137,34 +111,26 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                 var len = parameter == null || parameter.Size <= 0 || parameter.Size >= array.Length
                     ? array.Length
                     : parameter.Size;
-                _value = new ArraySegment<byte>(array, 0, len);
+                segment = new ArraySegment<byte>(array, 0, len);
             }
+
+            // The entire segment fits in our buffer, copy it as usual.
+            if (segment.Count <= buf.WriteSpaceLeft)
+            {
+                buf.WriteBytes(segment.Array, segment.Offset, segment.Count);
+                return;
+            }
+
+            // The segment is larger than our buffer. Flush whatever is currently in the buffer and
+            // write the array directly to the socket.
+            await buf.Flush(async, cancellationToken);
+            buf.DirectWrite(segment.Array, segment.Offset, segment.Count);
         }
 
-        // ReSharper disable once RedundantAssignment
-        public bool Write(ref DirectBuffer directBuf)
-        {
-            // If we're back here after having returned a direct buffer, we're done.
-            if (_returnedBuffer)
-            {
-                _returnedBuffer = false;
-                return true;
-            }
-
-            // If the entire array fits in our buffer, copy it as usual.
-            // Otherwise, switch to direct write from the user-provided buffer
-            if (_value.Count <= _buf.WriteSpaceLeft)
-            {
-                _buf.WriteBytes(_value.Array, _value.Offset, _value.Count);
-                return true;
-            }
-
-            directBuf.Buffer = _value.Array;
-            directBuf.Offset = _value.Offset;
-            directBuf.Size = _value.Count;
-            _returnedBuffer = true;
-            return false;
-        }
+        internal Task WriteInternal(object value, WriteBuffer buf, LengthCache lengthCache,
+                [CanBeNull] EDBParameter parameter,
+                bool async, CancellationToken cancellationToken)
+            => Write(value, buf, lengthCache, parameter, async, cancellationToken);
 
         #endregion
     }
@@ -185,18 +151,21 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         {
             CheckDisposed();
             count = Math.Min(count, _row.ColumnLen - _row.PosInColumn);
-            var read = _row.Buffer.ReadAllBytes(buffer, offset, count, true);
+            var read = _row.Buffer.ReadAllBytes(buffer, offset, count, true, false).Result;
             _row.PosInColumn += read;
             return read;
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
+        public override async Task<int> ReadAsync([NotNull] byte[] buffer, int offset, int count, CancellationToken token)
         {
-            CheckDisposed();
-            count = Math.Min(count, _row.ColumnLen - _row.PosInColumn);
-            var read = await _row.Buffer.ReadAllBytesAsync(buffer, offset, count, true);
-            _row.PosInColumn += read;
-            return read;
+            using (NoSynchronizationContextScope.Enter())
+            {
+                CheckDisposed();
+                count = Math.Min(count, _row.ColumnLen - _row.PosInColumn);
+                var read = await _row.Buffer.ReadAllBytes(buffer, offset, count, true, true);
+                _row.PosInColumn += read;
+                return read;
+            }
         }
 
         public override long Length
@@ -215,7 +184,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                 CheckDisposed();
                 return _row.PosInColumn;
             }
-            set { throw new NotSupportedException(); }
+            set => throw new NotSupportedException();
         }
 
         protected override void Dispose(bool disposing)
@@ -223,15 +192,14 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             _disposed = true;
         }
 
-        public override bool CanRead { get { return true; } }
-        public override bool CanSeek { get { return false; } }
-        public override bool CanWrite { get { return false; } }
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
 
         void CheckDisposed()
         {
-            if (_disposed) {
+            if (_disposed)
                 throw new ObjectDisposedException(null);
-            }
         }
 
         #region Not Supported

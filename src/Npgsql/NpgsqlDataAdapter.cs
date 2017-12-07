@@ -1,8 +1,7 @@
-#if !DNXCORE50
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,11 +21,12 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
+#if NET45 || NET451
+
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Reflection;
-using  EnterpriseDB.EDBClient.Logging;
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient
 {
@@ -53,6 +53,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Row updated event.
         /// </summary>
+        [PublicAPI]
         public event EDBRowUpdatedEventHandler RowUpdated;
 
         /// <summary>
@@ -60,14 +61,10 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public event EDBRowUpdatingEventHandler RowUpdating;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
-
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public EDBDataAdapter()
-        {
-        }
+        public EDBDataAdapter() {}
 
         /// <summary>
         /// Constructor.
@@ -75,7 +72,6 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="selectCommand"></param>
         public EDBDataAdapter(EDBCommand selectCommand)
         {
-            Log.Trace("Create EDBDataAdapter");
             SelectCommand = selectCommand;
         }
 
@@ -84,50 +80,34 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="selectCommandText"></param>
         /// <param name="selectConnection"></param>
-        public EDBDataAdapter(String selectCommandText, EDBConnection selectConnection)
-            : this(new EDBCommand(selectCommandText, selectConnection))
-        {
-        }
+        public EDBDataAdapter(string selectCommandText, EDBConnection selectConnection)
+            : this(new EDBCommand(selectCommandText, selectConnection)) {}
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="selectCommandText"></param>
         /// <param name="selectConnectionString"></param>
-        public EDBDataAdapter(String selectCommandText, String selectConnectionString)
-            : this(selectCommandText, new EDBConnection(selectConnectionString))
-        {
-        }
+        public EDBDataAdapter(string selectCommandText, string selectConnectionString)
+            : this(selectCommandText, new EDBConnection(selectConnectionString)) {}
 
         /// <summary>
         /// Create row updated event.
         /// </summary>
-        /// <param name="dataRow"></param>
-        /// <param name="command"></param>
-        /// <param name="statementType"></param>
-        /// <param name="tableMapping"></param>
-        /// <returns></returns>
-        protected override RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command,
+        protected override RowUpdatedEventArgs CreateRowUpdatedEvent([NotNull] DataRow dataRow, [NotNull] IDbCommand command,
                                                                      System.Data.StatementType statementType,
-                                                                     DataTableMapping tableMapping)
+                                                                     [NotNull] DataTableMapping tableMapping)
         {
-            Log.Trace("CreateRowUpdatedEvent");
             return new EDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
         }
 
         /// <summary>
         /// Create row updating event.
         /// </summary>
-        /// <param name="dataRow"></param>
-        /// <param name="command"></param>
-        /// <param name="statementType"></param>
-        /// <param name="tableMapping"></param>
-        /// <returns></returns>
-        protected override RowUpdatingEventArgs CreateRowUpdatingEvent(DataRow dataRow, IDbCommand command,
+        protected override RowUpdatingEventArgs CreateRowUpdatingEvent([NotNull] DataRow dataRow, [NotNull] IDbCommand command,
                                                                        System.Data.StatementType statementType,
-                                                                       DataTableMapping tableMapping)
+                                                                       [NotNull] DataTableMapping tableMapping)
         {
-            Log.Trace("CreateRowUpdatingEvent");
             return new EDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
         }
 
@@ -135,27 +115,21 @@ namespace  EnterpriseDB.EDBClient
         /// Raise the RowUpdated event.
         /// </summary>
         /// <param name="value"></param>
-        protected override void OnRowUpdated(RowUpdatedEventArgs value)
+        protected override void OnRowUpdated([NotNull] RowUpdatedEventArgs value)
         {
-            Log.Trace("OnRowUpdated");
             //base.OnRowUpdated(value);
-            if ((RowUpdated != null) && (value is EDBRowUpdatedEventArgs))
-            {
-                RowUpdated(this, (EDBRowUpdatedEventArgs) value);
-            }
+            if (RowUpdated != null && value is EDBRowUpdatedEventArgs)
+                RowUpdated(this, (EDBRowUpdatedEventArgs)value);
         }
 
         /// <summary>
         /// Raise the RowUpdating event.
         /// </summary>
         /// <param name="value"></param>
-        protected override void OnRowUpdating(RowUpdatingEventArgs value)
+        protected override void OnRowUpdating([NotNull] RowUpdatingEventArgs value)
         {
-            Log.Trace("OnRowUpdating");
-            if ((RowUpdating != null) && (value is EDBRowUpdatingEventArgs))
-            {
+            if (RowUpdating != null && value is EDBRowUpdatingEventArgs)
                 RowUpdating(this, (EDBRowUpdatingEventArgs) value);
-            }
         }
 
         /// <summary>
@@ -163,11 +137,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand DeleteCommand
         {
-            get
-            {
-                return (EDBCommand)base.DeleteCommand;
-            }
-
+            get { return (EDBCommand)base.DeleteCommand; }
             set { base.DeleteCommand = value; }
         }
 
@@ -176,11 +146,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand SelectCommand
         {
-            get
-            {
-                return (EDBCommand)base.SelectCommand;
-            }
-
+            get { return (EDBCommand)base.SelectCommand; }
             set { base.SelectCommand = value; }
         }
 
@@ -189,11 +155,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand UpdateCommand
         {
-            get
-            {
-                return (EDBCommand)base.UpdateCommand;
-            }
-
+            get { return (EDBCommand)base.UpdateCommand; }
             set { base.UpdateCommand = value; }
         }
 
@@ -202,11 +164,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand InsertCommand
         {
-            get
-            {
-                return (EDBCommand)base.InsertCommand;
-            }
-
+            get { return (EDBCommand)base.InsertCommand; }
             set { base.InsertCommand = value; }
         }
     }
@@ -217,18 +175,14 @@ namespace  EnterpriseDB.EDBClient
     {
         public EDBRowUpdatingEventArgs(DataRow dataRow, IDbCommand command, System.Data.StatementType statementType,
                                           DataTableMapping tableMapping)
-            : base(dataRow, command, statementType, tableMapping)
-        {
-        }
+            : base(dataRow, command, statementType, tableMapping) {}
     }
 
     public class EDBRowUpdatedEventArgs : RowUpdatedEventArgs
     {
         public EDBRowUpdatedEventArgs(DataRow dataRow, IDbCommand command, System.Data.StatementType statementType,
                                          DataTableMapping tableMapping)
-            : base(dataRow, command, statementType, tableMapping)
-        {
-        }
+            : base(dataRow, command, statementType, tableMapping) {}
     }
 
 #pragma warning restore 1591

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using System.IO;
+using EDBTypes;
 
 namespace DOTNET
 {
@@ -14,6 +15,8 @@ namespace DOTNET
 	public class ByteaTest
 	{
 		EDBConnection conn = null;
+		//String testImagePath = @"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif";
+		String testImagePath = @"C:\Windows\media\Windows Background.wav";
 
 		[SetUp]
 		public void Init()
@@ -50,10 +53,9 @@ namespace DOTNET
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-				
-//			strSqlEmptyArg = "create table test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
-//			com.CommandText = strSqlEmptyArg;
-//			com.ExecuteNonQuery();
+			strSqlEmptyArg = "create table test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
+			com.CommandText = strSqlEmptyArg;
+			com.ExecuteNonQuery();
 				
 //				
 			strSqlEmptyArg = "create or replace procedure test_bytea_three_in_with_numeric(z in bytea,y in bytea,x in bytea,xx numeric) is declare begin insert into test_bytea_three_with_numeric values(x,y,z,xx);end;";
@@ -88,12 +90,17 @@ namespace DOTNET
 			strSqlEmptyArg = "create or replace procedure test_bytea_inout_two_with_numinout_varchar(x out bytea,z out bytea,y in out numeric,xx in out  varchar ,yy out bytea) is declare begin select a into z from test_bytea_three_with_numeric where d = y;select b into x from test_bytea_three_with_numeric where d = y;xx := 'EnterpriseDB';y := 106;end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
-	
+
+			strSqlEmptyArg = "create table ByteaTest(id serial, f1 bytea);";
+			com.CommandText = strSqlEmptyArg;
+			com.ExecuteNonQuery();
 		}
 			
 		[TearDown] 
 		public void Dispose()
 		{
+			if ( conn.State != ConnectionState.Open)
+				conn = TestUtil.openDB();
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
 
@@ -140,15 +147,21 @@ namespace DOTNET
 			com.CommandText = "DROP PROCEDURE test_bytea_in_in";
 			com.ExecuteNonQuery();
 
-				
+			com.CommandText = "Drop table test_bytea_three_with_numeric";
+			com.ExecuteNonQuery();
+
+
 			com.CommandText = "DROP table test_bytea_two";
 			com.ExecuteNonQuery();
 				
 			com.CommandText = "DROP table test_bytea_three";
 			com.ExecuteNonQuery();
-					
-				
-			if(conn.State != ConnectionState.Closed)
+
+			com.CommandText = "DROP table ByteaTest";
+			com.ExecuteNonQuery();
+
+
+			if (conn.State != ConnectionState.Closed)
 				conn.Close();
 		}
 
@@ -159,7 +172,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
+				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -176,8 +189,7 @@ namespace DOTNET
 				cmd.Parameters[1].Value = data;
 				cmd.Parameters[2].Value = data;
 				cmd.Parameters[3].Value = 100;
-				cmd.ExecuteScalar();
-				//conn.Close();
+				cmd.ExecuteNonQuery();
 
 				Console.WriteLine("Image Saved"); 
 			}
@@ -192,7 +204,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
+				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -208,7 +220,7 @@ namespace DOTNET
 				cmd.Parameters[0].Value = data;
 				cmd.Parameters[1].Value = data;
 				cmd.Parameters[2].Value = data;
-				cmd.ExecuteScalar();				
+				cmd.ExecuteNonQuery();
 
 				Console.WriteLine("Image Saved"); 
 			}
@@ -225,12 +237,10 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
+				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
-				EDBCommand commd = new EDBCommand("create table test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric)",conn);
-				commd.ExecuteNonQuery();
 
 				EDBCommand cmd = new EDBCommand("test_bytea_in_in(:imgin,:imgout)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
@@ -241,8 +251,7 @@ namespace DOTNET
 				cmd.Prepare();
 				cmd.Parameters[0].Value = data;
 				cmd.Parameters[1].Value = 10;
-				cmd.ExecuteScalar();
-				//conn.Close();
+				cmd.ExecuteNonQuery();
 
 				Console.WriteLine("Image Saved"); 
 			}
@@ -259,7 +268,7 @@ namespace DOTNET
 			try
 			{
 				FileStream fs = null;
-                fs = new FileStream(@"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif", FileMode.Open, FileAccess.Read);
+				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
 				Byte[] data = new Byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
@@ -273,8 +282,7 @@ namespace DOTNET
 				cmd.Prepare();
 				cmd.Parameters[0].Value = data;
 				cmd.Parameters[1].Value = data;
-				cmd.ExecuteScalar();
-				//conn.Close();
+				cmd.ExecuteNonQuery();
 
 				Console.WriteLine("Image Saved"); 
 			}
@@ -287,22 +295,24 @@ namespace DOTNET
 		[Test]
 		public void testa_bytea_out()
 		{
-			/*try
+			try
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
 				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 				cmd.Prepare();
-				//cmd.Parameters[0].Value = null;
+				Byte[] ss = { 1, 2, 3 };
+				cmd.Parameters[0].Value = ss;
 				EDBDataReader reader = cmd.ExecuteReader();
-				reader.Read(); 
+				reader.Read();
+				Assert.True(reader.HasRows);
 				if (reader.HasRows) 
 				{ 
 					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-					reader.GetBytes(0, 0, image, 0, image.Length); 
-
+					reader.GetBytes(0, 0, image, 0, image.Length);
+					Console.WriteLine("1");
 					FileStream fs = new 
-						FileStream("C:\\Temp\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
+						FileStream("C:\\edbtesting\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
@@ -310,7 +320,7 @@ namespace DOTNET
 				}
                 while(reader.Read());
 
-                reader.Close();
+                //reader.Close();
 				//conn.Close();
 
 				Console.WriteLine("Image Saved"); 
@@ -319,7 +329,7 @@ namespace DOTNET
 			{
 
 				Console.WriteLine(ex.ToString());
-			}*/
+			}
           
 		}
 
@@ -570,7 +580,47 @@ namespace DOTNET
 			}
 		
 		}
-		
+
+		[Test]
+		public void CRUDTest()
+		{
+
+			Byte[] data = { 1, 23, 3 };
+			Byte[] data2 = { 1, 3, 4 };
+			Byte[] dataOut = new Byte[3];
+
+			EDBCommand command = new EDBCommand("INSERT INTO ByteaTest Values(1, :data)", conn);
+			command.Parameters.Add(new EDBParameter("data", EDBDbType.Bytea));
+			command.Parameters[0].Value = data;
+
+			Int32 rowsAdded = command.ExecuteNonQuery();
+			Assert.AreEqual(1, rowsAdded);
+
+			// Retrieve
+			command = new EDBCommand("select f1 from ByteaTest;", conn);
+			dataOut = (Byte[])command.ExecuteScalar();
+
+			// Update
+			command = new EDBCommand("Update ByteaTest set f1 = :b where id = 1", conn);
+			command.Parameters.Add(new EDBParameter("b", EDBDbType.Bytea));
+			command.Parameters[0].Value = data2;
+
+			rowsAdded = command.ExecuteNonQuery();
+			Assert.AreEqual(1, rowsAdded);
+
+			command = new EDBCommand("select f1 from ByteaTest;", conn);
+			dataOut = (Byte[])command.ExecuteScalar();
+
+			// Delete
+			command = new EDBCommand("Delete from ByteaTest where id = 1", conn);
+
+			rowsAdded = command.ExecuteNonQuery();
+			Assert.AreEqual(1, rowsAdded);
+
+			command = new EDBCommand("select f1 from ByteaTest;", conn);
+			Assert.AreEqual(-1, command.ExecuteNonQuery());
+		}
+
 
 	}
 	

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
-using  EnterpriseDB.EDBClient.FrontendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.FrontendMessages;
+using EnterpriseDB.EDBClient.Logging;
+
 #pragma warning disable 1591
 
 namespace  EnterpriseDB.EDBClient
@@ -40,14 +42,14 @@ namespace  EnterpriseDB.EDBClient
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public class EDBRawCopyStream : Stream, ICancelable
+    public sealed class EDBRawCopyStream : Stream, ICancelable
     {
         #region Fields and Properties
 
         EDBConnector _connector;
-        EDBBuffer _buf;
+        ReadBuffer _readBuf;
+        WriteBuffer _writeBuf;
 
-        bool _writingDataMsg;
         int _leftToReadInDataMsg;
         bool _isDisposed, _isConsumed;
 
@@ -56,8 +58,8 @@ namespace  EnterpriseDB.EDBClient
 
         internal bool IsBinary { get; private set; }
 
-        public override bool CanWrite { get { return _canWrite; } }
-        public override bool CanRead { get { return _canRead; } }
+        public override bool CanWrite => _canWrite;
+        public override bool CanRead => _canRead;
 
         /// <summary>
         /// The copy binary format header signature
@@ -68,6 +70,8 @@ namespace  EnterpriseDB.EDBClient
             (byte)'\n', 255, (byte)'\r', (byte)'\n', 0
         };
 
+        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+
         #endregion
 
         #region Constructor
@@ -75,15 +79,17 @@ namespace  EnterpriseDB.EDBClient
         internal EDBRawCopyStream(EDBConnector connector, string copyCommand)
         {
             _connector = connector;
-            _buf = connector.Buffer;
-            _connector.SendSingleMessage(new QueryMessage(copyCommand));
-            var msg = _connector.ReadSingleMessage();
+            _readBuf = connector.ReadBuffer;
+            _writeBuf = connector.WriteBuffer;
+            _connector.SendQuery(copyCommand);
+            var msg = _connector.ReadMessage();
             switch (msg.Code)
             {
             case BackendMessageCode.CopyInResponse:
                 var copyInResponse = (CopyInResponseMessage) msg;
                 IsBinary = copyInResponse.IsBinary;
                 _canWrite = true;
+                _writeBuf.StartCopyMode();
                 break;
             case BackendMessageCode.CopyOutResponse:
                 var copyOutResponse = (CopyOutResponseMessage) msg;
@@ -107,24 +113,24 @@ namespace  EnterpriseDB.EDBClient
 
             if (count == 0) { return; }
 
-            EnsureDataMessage();
-
-            if (count <= _buf.WriteSpaceLeft)
+            if (count <= _writeBuf.WriteSpaceLeft)
             {
-                _buf.WriteBytes(buffer, offset, count);
+                _writeBuf.WriteBytes(buffer, offset, count);
                 return;
             }
 
             try {
-                // Value is too big. Flush whatever is in the buffer, then write a new CopyData
-                // directly with the buffer.
+                // Value is too big, flush.
                 Flush();
 
-                _buf.WriteByte((byte)BackendMessageCode.CopyData);
-                _buf.WriteInt32(count + 4);
-                _buf.Flush();
-                _buf.Underlying.Write(buffer, offset, count);
-                EnsureDataMessage();
+                if (count <= _writeBuf.WriteSpaceLeft)
+                {
+                    _writeBuf.WriteBytes(buffer, offset, count);
+                    return;
+                }
+
+                // Value is too big even after a flush - bypass the buffer and write directly.
+                _writeBuf.DirectWrite(buffer, offset, count);
             } catch {
                 _connector.Break();
                 Cleanup();
@@ -135,26 +141,7 @@ namespace  EnterpriseDB.EDBClient
         public override void Flush()
         {
             CheckDisposed();
-            if (!_writingDataMsg) { return; }
-
-            // Need to update the length for the CopyData about to be sent
-            var pos = _buf.WritePosition;
-            _buf.WritePosition = 1;
-            _buf.WriteInt32(pos - 1);
-            _buf.WritePosition = pos;
-            _buf.Flush();
-            _writingDataMsg = false;
-        }
-
-        void EnsureDataMessage()
-        {
-            if (_writingDataMsg) { return; }
-
-         //ZK   Contract.Assert(_buf.WritePosition == 0);
-            _buf.WriteByte((byte)BackendMessageCode.CopyData);
-            // Leave space for the message length
-            _buf.WriteInt32(0);
-            _writingDataMsg = true;
+            _writeBuf.Flush();
         }
 
         #endregion
@@ -175,7 +162,7 @@ namespace  EnterpriseDB.EDBClient
             {
                 // We've consumed the current DataMessage (or haven't yet received the first),
                 // read the next message
-                var msg = _connector.ReadSingleMessage();
+                var msg = _connector.ReadMessage();
                 switch (msg.Code) {
                 case BackendMessageCode.CopyData:
                     _leftToReadInDataMsg = ((CopyDataMessage)msg).Length;
@@ -190,23 +177,23 @@ namespace  EnterpriseDB.EDBClient
                 }
             }
 
-            Contract.Assume(_leftToReadInDataMsg > 0);
+            Debug.Assert(_leftToReadInDataMsg > 0);
 
             // If our buffer is empty, read in more. Otherwise return whatever is there, even if the
             // user asked for more (normal socket behavior)
-            if (_buf.ReadBytesLeft == 0) {
-                _buf.ReadMore();
+            if (_readBuf.ReadBytesLeft == 0) {
+                _readBuf.ReadMore(false).GetAwaiter().GetResult();
             }
 
-         //ZK   Contract.Assert(_buf.ReadBytesLeft > 0);
+            Debug.Assert(_readBuf.ReadBytesLeft > 0);
 
-            var maxCount = Math.Min(_buf.ReadBytesLeft, _leftToReadInDataMsg);
+            var maxCount = Math.Min(_readBuf.ReadBytesLeft, _leftToReadInDataMsg);
             if (count > maxCount) {
                 count = maxCount;
             }
 
             _leftToReadInDataMsg -= count;
-            _buf.ReadBytes(buffer, offset, count);
+            _readBuf.ReadBytes(buffer, offset, count);
             return count;
         }
 
@@ -224,18 +211,19 @@ namespace  EnterpriseDB.EDBClient
             if (CanWrite)
             {
                 _isDisposed = true;
-                _buf.Clear();
-                _connector.SendSingleMessage(new CopyFailMessage());
+                _writeBuf.EndCopyMode();
+                _writeBuf.Clear();
+                _connector.SendMessage(new CopyFailMessage());
                 try
                 {
-                    var msg = _connector.ReadSingleMessage();
+                    var msg = _connector.ReadMessage();
                     // The CopyFail should immediately trigger an exception from the read above.
                     _connector.Break();
-                    throw new Exception("Expected ErrorResponse when cancelling COPY but got: " + msg.Code);
+                    throw new EDBException("Expected ErrorResponse when cancelling COPY but got: " + msg.Code);
                 }
-                catch (EDBException e)
+                catch (PostgresException e)
                 {
-                    if (e.Code == "57014") { return; }
+                    if (e.SqlState == "57014") { return; }
                     throw;
                 }
             }
@@ -253,32 +241,43 @@ namespace  EnterpriseDB.EDBClient
         {
             if (_isDisposed || !disposing) { return; }
 
-            if (CanWrite)
+            try
             {
-                Flush();
-                _connector.SendSingleMessage(CopyDoneMessage.Instance);
-                _connector.ReadExpecting<CommandCompleteMessage>();
-                _connector.ReadExpecting<ReadyForQueryMessage>();
-            }
-            else
-            {
-                if (!_isConsumed) {
-                    if (_leftToReadInDataMsg > 0) {
-                        _buf.Skip(_leftToReadInDataMsg);
+                if (CanWrite)
+                {
+                    Flush();
+                    _writeBuf.EndCopyMode();
+                    _connector.SendMessage(CopyDoneMessage.Instance);
+                    _connector.ReadExpecting<CommandCompleteMessage>();
+                    _connector.ReadExpecting<ReadyForQueryMessage>();
+                }
+                else
+                {
+                    if (!_isConsumed)
+                    {
+                        if (_leftToReadInDataMsg > 0)
+                        {
+                            _readBuf.Skip(_leftToReadInDataMsg);
+                        }
+                        _connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                     }
-                    _connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                 }
             }
-
-            _connector.CurrentCopyOperation = null;
-            _connector.EndUserAction();
-            Cleanup();
+            finally
+            {
+                var connector = _connector;
+                Cleanup();
+                connector.EndUserAction();
+            }
         }
 
         void Cleanup()
         {
+            Log.Debug("COPY operation ended", _connector.Id);
+            _connector.CurrentCopyOperation = null;
             _connector = null;
-            _buf = null;
+            _readBuf = null;
+            _writeBuf = null;
             _isDisposed = true;
         }
 
@@ -291,21 +290,9 @@ namespace  EnterpriseDB.EDBClient
 
         #endregion
 
-        #region Invariants
-
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(_isDisposed || (_connector != null && _buf != null));
-            Contract.Invariant(CanRead || CanWrite);
-            Contract.Invariant(_buf == null || _buf == _connector.Buffer);
-        }
-
-        #endregion
-
         #region Unsupported
 
-        public override bool CanSeek { get { return false; } }
+        public override bool CanSeek => false;
 
         public override long Seek(long offset, SeekOrigin origin)
         {
@@ -317,15 +304,12 @@ namespace  EnterpriseDB.EDBClient
             throw new NotSupportedException();
         }
 
-        public override long Length
-        {
-            get { throw new NotSupportedException(); }
-        }
+        public override long Length => throw new NotSupportedException();
 
         public override long Position
         {
-            get { throw new NotSupportedException(); }
-            set { throw new NotSupportedException(); }
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         #endregion
@@ -337,13 +321,12 @@ namespace  EnterpriseDB.EDBClient
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public class EDBCopyTextWriter : StreamWriter, ICancelable
+    public sealed class EDBCopyTextWriter : StreamWriter, ICancelable
     {
         internal EDBCopyTextWriter(EDBRawCopyStream underlying) : base(underlying)
         {
             if (underlying.IsBinary)
                 throw new Exception("Can't use a binary copy stream for text writing");
-            Contract.EndContractBlock();
         }
 
         /// <summary>
@@ -361,13 +344,12 @@ namespace  EnterpriseDB.EDBClient
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public class EDBCopyTextReader : StreamReader, ICancelable
+    public sealed class EDBCopyTextReader : StreamReader, ICancelable
     {
         internal EDBCopyTextReader(EDBRawCopyStream underlying) : base(underlying)
         {
             if (underlying.IsBinary)
                 throw new Exception("Can't use a binary copy stream for text reading");
-            Contract.EndContractBlock();
         }
 
         /// <summary>

@@ -355,25 +355,18 @@ namespace DOTNET
 		[Test]
 		public void CreateSequenceStartWithMaxValNoCycle()
 		{
-			/*EDBCommand Command=new EDBCommand("",con);
+			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 MAXVALUE 5 NOCYCLE;";
 			try
 			{
 				Command.ExecuteNonQuery();
+				Assert.Fail(" NOCYCLE functionality.case should fails because EDB doesnot provide NOCYCLE functionality");
 			}
 
 			catch(EDBException exp)
 			{
-				Assert.Fail("Error creating sequence");
-				Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-
 			}
-			
-			Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-			*/
-			
+	
 		}
 
 		/// <summary>
@@ -461,25 +454,18 @@ namespace DOTNET
 		[Test]
 		public void CreateSequenceStartWithOrder()
 		{
-			/*EDBCommand Command=new EDBCommand("",con);
+			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 ORDER;";
 			try
 			{
 				Command.ExecuteNonQuery();
+				Assert.Fail("ORDER functionality.case should fails because EDB does not provide ORDER functionality");
 			}
 
 			catch(EDBException exp)
 			{
-			Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-
-			Assert.Fail("Error creating sequence");
 			}
-			
-			Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-*/
-			
+		
 		}
 
 		/// <summary>
@@ -488,23 +474,18 @@ namespace DOTNET
 		[Test]
 		public void CreateSequenceStartWithNoOrder()
 		{
-			/*EDBCommand Command=new EDBCommand("",con);
+			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="CREATE SEQUENCE TestSequence START WITH 1 NOORDER;";
 			try
 			{
 				Command.ExecuteNonQuery();
+				Assert.Fail("NOORDER functionality.case should fails because EDB does not provide ORDER functionality");
 			}
 
 			catch(EDBException exp)
 			{
-			Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-
-			Assert.Fail("Error creating sequence");
 			}
-			Command.CommandText="DROP SEQUENCE TestSequence";
-			Command.ExecuteNonQuery();
-			*/
+			
 		}
 
 

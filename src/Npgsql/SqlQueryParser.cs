@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,21 +23,20 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace  EnterpriseDB.EDBClient
 {
-    static class SqlQueryParser
+    class SqlQueryParser
     {
-        static readonly Array ParamNameCharTable;
+        readonly Dictionary<string, int> _paramIndexMap = new Dictionary<string, int>();
+        readonly StringBuilder _rewrittenSql = new StringBuilder();
 
-        static SqlQueryParser()
-        {
-            ParamNameCharTable = BuildParameterNameCharacterTable();
-        }
+        List<EDBStatement> _statements;
+        EDBStatement _statement;
+        int _statementIndex;
 
         /// <summary>
         /// Receives a raw SQL query as passed in by the user, and performs some processing necessary
@@ -48,47 +47,88 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="sql">Raw user-provided query.</param>
         /// <param name="standardConformantStrings">Whether the PostgreSQL session is configured to use standard conformant strings.</param>
         /// <param name="parameters">The parameters configured on the <see cref="EDBCommand"/> of this query.</param>
-        /// <param name="queries">An empty list to be populated with the queries parsed by this method</param>
-        static internal void ParseRawQuery(string sql, bool standardConformantStrings, EDBParameterCollection parameters, List<EDBStatement> queries)
+        /// <param name="statements">An empty list to be populated with the statements parsed by this method</param>
+        internal void ParseRawQuery(string sql, bool standardConformantStrings, EDBParameterCollection parameters, List<EDBStatement> statements)
         {
-            Contract.Requires(sql != null);
-            Contract.Requires(queries != null && !queries.Any());
+            Debug.Assert(sql != null);
+            Debug.Assert(statements != null);
 
+            _statements = statements;
+            _statementIndex = -1;
+            MoveToNextStatement();
 
-
+            //      bool endtok = false;
+           // bool edbsupport = false;
             var currCharOfs = 0;
             var end = sql.Length;
             var ch = '\0';
-            var lastChar = '\0';
-            var dollarTagStart = 0;
-            var dollarTagEnd = 0;
+            //var ch1 = '\0';
+            //var ch2 = '\0';
+            var isProcedure = false;
+            var numActiveBlocks = 0;
+            var variableDeclare = 0;
+            int dollarTagStart;
+            int dollarTagEnd;
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
+            var parenthesisLevel = 0;
 
-            queries.Clear();
-            // TODO: Recycle
-            var paramIndexMap = new Dictionary<string, int>();
-            var currentSql = new StringWriter();
-            var currentParameters = new List<EDBParameter>();
+            //ch1 = sql[0];
+            //ch2 = sql[1];
+            //if ((ch1 == 'C' || ch1 == 'c') && (ch2 == 'R' || ch2 == 'r'))
+            //    edbsupport = true;
 
-            string substr;
-            string tmp = sql;
-            substr = tmp.Substring(0, 6);
-            if (string.Compare(substr, "CREATE", true) == 0)
-            {
-                currentSql.Write(sql);
-                queries.Add(new EDBStatement(currentSql.ToString(), currentParameters));
-                return;
-            }
-
-        None:
+            None:
             if (currCharOfs >= end) {
                 goto Finish;
             }
-            lastChar = ch;
+            var lastChar = ch;
             ch = sql[currCharOfs++];
         NoneContinue:
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
+
+                string temp = sql.Substring(currCharOfs - 1).ToUpper();
+                if (temp.StartsWith("CREATE") && (temp.Contains(" PROCEDURE ") || temp.Contains(" FUNCTION ") || temp.Contains(" TRIGGER ")))
+                    isProcedure = true;
+                if (isProcedure && temp.StartsWith("BEGIN"))
+                {
+                    numActiveBlocks++;
+                    variableDeclare = 0;
+                }
+
+
+                if (isProcedure && temp.StartsWith("END"))
+                {
+                    if (!(temp.StartsWith("END IF") || temp.StartsWith("END LOOP") || temp.StartsWith("END CASE")))
+                        numActiveBlocks--;
+                }
+
+                if (isProcedure && temp.StartsWith("IS") || temp.StartsWith("AS"))
+                {
+                    char next = ' ';
+                    if (temp.Length > 2)
+                    {
+                        next = temp[2];
+                    }
+                    if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        variableDeclare++;
+                    }
+                }
+
+                if (isProcedure && temp.StartsWith("DECLARE"))
+                {
+                    char next = ' ';
+                    if (temp.Length > 7)
+                    {
+                        next = temp[7];
+                    }
+                    if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        variableDeclare++;
+                    }
+                }
+
                 switch (ch) {
                 case '/':
                     goto BlockCommentBegin;
@@ -117,10 +157,17 @@ namespace  EnterpriseDB.EDBClient
                     else
                         break;
                 case ';':
-                    goto SemiColon;
-
-                case 'e':
-                case 'E':
+                    if (parenthesisLevel == 0)
+                        goto SemiColon;
+                    break;
+                case '(':
+                    parenthesisLevel++;
+                    break;
+                case ')':
+                    parenthesisLevel--;
+                    break;
+                case 'x':
+                case 'X':
                     if (!IsLetter(lastChar))
                         goto EscapedStart;
                     else
@@ -138,7 +185,7 @@ namespace  EnterpriseDB.EDBClient
                 ch = sql[currCharOfs];
                 if (IsParamNameChar(ch)) {
                     if (currCharOfs - 1 > currTokenBeg) {
-                        currentSql.Write(sql.Substring(currTokenBeg, currCharOfs - 1 - currTokenBeg));
+                        _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - 1 - currTokenBeg));
                     }
                     currTokenBeg = currCharOfs++ - 1;
                     goto Param;
@@ -151,28 +198,32 @@ namespace  EnterpriseDB.EDBClient
 
         Param:
             // We have already at least one character of the param name
-            for (; ; ) {
+            for (;;) {
                 lastChar = ch;
                 if (currCharOfs >= end || !IsParamNameChar(ch = sql[currCharOfs])) {
                     var paramName = sql.Substring(currTokenBeg, currCharOfs - currTokenBeg);
 
-                    int index;
-                    if (!paramIndexMap.TryGetValue(paramName, out index)) {
+                    if (!_paramIndexMap.TryGetValue(paramName, out var index)) {
                         // Parameter hasn't been seen before in this query
-                        EDBParameter parameter;
-                        if (!parameters.TryGetValue(paramName, out parameter)) {
-                            throw new Exception(String.Format("Parameter '{0}' referenced in SQL but not found in parameter list", paramName));
+                        if (!parameters.TryGetValue(paramName, out var parameter))
+                        {
+                            _rewrittenSql.Append(paramName);
+                            currTokenBeg = currCharOfs;
+                            if (currCharOfs >= end)
+                                goto Finish;
+
+                            currCharOfs++;
+                            goto NoneContinue;
                         }
 
-                        if (!parameter.IsInputDirection) {
-                            throw new Exception(String.Format("Parameter '{0}' referenced in SQL but is an out-only parameter", paramName));
-                        }
+                        if (!parameter.IsInputDirection)
+                            throw new Exception($"Parameter '{paramName}' referenced in SQL but is an out-only parameter");
 
-                        currentParameters.Add(parameter);
-                        index = paramIndexMap[paramName] = currentParameters.Count;
+                        _statement.InputParameters.Add(parameter);
+                        index = _paramIndexMap[paramName] = _statement.InputParameters.Count;
                     }
-                    currentSql.Write('$');
-                    currentSql.Write(index);
+                    _rewrittenSql.Append('$');
+                    _rewrittenSql.Append(index);
                     currTokenBeg = currCharOfs;
 
                     if (currCharOfs >= end) {
@@ -388,82 +439,83 @@ namespace  EnterpriseDB.EDBClient
             goto Finish;
 
         SemiColon:
-            currentSql.Write(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
-            queries.Add(new EDBStatement(currentSql.ToString(), currentParameters));
+            if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0))
+            {
+                currCharOfs++;
+                //      ch = sql[currCharOfs];
+                //     if (ch == 'E')
+                //   {
+                //      endtok = true;
+                goto None;
+                // }
+            }
+            /*   while (char.IsWhiteSpace(ch))
+               {
+                   ch = sql[currCharOfs];
+                   if (ch == 'E')
+                   {
+                       return;
+                   }
+               }
+          */
+
+            _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
+            _statement.SQL = _rewrittenSql.ToString();
             while (currCharOfs < end) {
                 ch = sql[currCharOfs];
-                if (Char.IsWhiteSpace(ch)) {
+                if (char.IsWhiteSpace(ch)) {
                     currCharOfs++;
                     continue;
                 }
                 // TODO: Handle end of line comment? Although psql doesn't seem to handle them...
 
                 currTokenBeg = currCharOfs;
-                paramIndexMap.Clear();
-                if (queries.Count > EDBCommand.MaxQueriesInMultiquery) {
-                    throw new NotSupportedException(String.Format("A single command cannot contain more than {0} queries", EDBCommand.MaxQueriesInMultiquery));
-                }
-                currentSql = new StringWriter();
-                currentParameters = new List<EDBParameter>();
+                if (_rewrittenSql.Length > 0)
+                    MoveToNextStatement();
+                isProcedure = false;
                 goto None;
             }
+            if (statements.Count > _statementIndex + 1)
+                statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
             return;
 
         Finish:
-            currentSql.Write(sql.Substring(currTokenBeg, end - currTokenBeg));
-            queries.Add(new EDBStatement(currentSql.ToString(), currentParameters));
+            _rewrittenSql.Append(sql.Substring(currTokenBeg, end - currTokenBeg));
+            _statement.SQL = _rewrittenSql.ToString();
+            if (statements.Count > _statementIndex + 1)
+               statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
+        }
+
+        void MoveToNextStatement()
+        {
+            _statementIndex++;
+            if (_statements.Count > _statementIndex)
+            {
+                _statement = _statements[_statementIndex];
+                _statement.Reset();
+            }
+            else
+            {
+                _statement = new EDBStatement();
+                _statements.Add(_statement);
+            }
+            _paramIndexMap.Clear();
+            _rewrittenSql.Clear();
         }
 
         static bool IsLetter(char ch)
-        {
-            return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z';
-        }
+            => 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z';
 
         static bool IsIdentifierStart(char ch)
-        {
-            return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || 128 <= ch && ch <= 255;
-        }
+            => 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || 128 <= ch && ch <= 255;
 
         static bool IsDollarTagIdentifier(char ch)
-        {
-            return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || '0' <= ch && ch <= '9' || ch == '_' || 128 <= ch && ch <= 255;
-        }
+            => 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || '0' <= ch && ch <= '9' || ch == '_' || 128 <= ch && ch <= 255;
 
         static bool IsIdentifier(char ch)
-        {
-            return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || '0' <= ch && ch <= '9' || ch == '_' || ch == '$' || 128 <= ch && ch <= 255;
-        }
+            => 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || '0' <= ch && ch <= '9' || ch == '_' || ch == '$' || 128 <= ch && ch <= 255;
 
         static bool IsParamNameChar(char ch)
-        {
-            if (ch < '.' || ch > 'z') {
-                return false;
-            }
-            return ((byte)ParamNameCharTable.GetValue(ch) != 0);
-        }
-
-        static Array BuildParameterNameCharacterTable()
-        {
-            // Table has lower bound of (int)'.';
-            var paramNameCharTable = Array.CreateInstance(typeof(byte), new[] { 'z' - '.' + 1 }, new int[] { '.' });
-
-            paramNameCharTable.SetValue((byte)'.', (int)'.');
-
-            for (int i = '0'; i <= '9'; i++) {
-                paramNameCharTable.SetValue((byte)i, i);
-            }
-
-            for (int i = 'A'; i <= 'Z'; i++) {
-                paramNameCharTable.SetValue((byte)i, i);
-            }
-
-            paramNameCharTable.SetValue((byte)'_', (int)'_');
-
-            for (int i = 'a'; i <= 'z'; i++) {
-                paramNameCharTable.SetValue((byte)i, i);
-            }
-
-            return paramNameCharTable;
-        }
+            => char.IsLetterOrDigit(ch) || ch == '_' || ch == '.';  // why dot??
     }
 }

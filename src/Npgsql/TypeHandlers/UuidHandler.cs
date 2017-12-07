@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,17 +22,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -40,13 +34,12 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-uuid.html
     /// </remarks>
     [TypeMapping("uuid", EDBDbType.Uuid, DbType.Guid, typeof(Guid))]
-    internal class UuidHandler : TypeHandler<Guid>,
-        ISimpleTypeReader<Guid>, ISimpleTypeWriter,
-        ISimpleTypeReader<string>
+    class UuidHandler : SimpleTypeHandler<Guid>, ISimpleTypeHandler<string>
     {
-        public Guid Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal UuidHandler(PostgresType postgresType) : base(postgresType) { }
+
+        public override Guid Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            buf.Ensure(16);
             var a = buf.ReadInt32();
             var b = buf.ReadInt16();
             var c = buf.ReadInt16();
@@ -55,37 +48,30 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return new Guid(a, b, c, d);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return Read(buf, len, fieldDescription).ToString();
-        }
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => Read(buf, len, fieldDescription).ToString();
 
         #region Write
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             var asString = value as string;
             if (value is string)
             {
                 var converted = Guid.Parse(asString);
                 if (parameter == null)
-                {
                     throw CreateConversionButNoParamException(value.GetType());
-                }
                 parameter.ConvertedValue = converted;
             }
             else if (!(value is Guid))
-            {
                 throw CreateConversionException(value.GetType());
-            }
             return 16;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
 
             var bytes = ((Guid)value).ToByteArray();
 

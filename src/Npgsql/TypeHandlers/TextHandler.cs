@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,19 +24,21 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
     [TypeMapping("text",      EDBDbType.Text,
       new[] { DbType.String, DbType.StringFixedLength, DbType.AnsiString, DbType.AnsiStringFixedLength },
-      new[] { typeof(string), typeof(char[]), typeof(char) },
+      new[] { typeof(string), typeof(char[]), typeof(char), typeof(ArraySegment<char>) },
       DbType.String
     )]
     [TypeMapping("xml",       EDBDbType.Xml, dbType: DbType.Xml)]
@@ -46,146 +48,117 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     [TypeMapping("name",      EDBDbType.Name,               inferredDbType: DbType.String)]
     [TypeMapping("json",      EDBDbType.Json,               inferredDbType: DbType.String)]
     [TypeMapping("refcursor", EDBDbType.Refcursor,          inferredDbType: DbType.String)]
-    [TypeMapping("citext")]
+    [TypeMapping("citext",    EDBDbType.Citext,             inferredDbType: DbType.String)]
     [TypeMapping("unknown")]
-    internal class TextHandler : TypeHandler<string>,
-        IChunkingTypeWriter,
-        IChunkingTypeReader<string>, IChunkingTypeReader<char[]>
+    class TextHandler : ChunkingTypeHandler<string>, IChunkingTypeHandler<char[]>, ITextReaderHandler
     {
-        public override bool PreferTextWrite { get { return true; } }
+        // Text types are handled a bit more efficiently when sent as text than as binary
+        // see https://github.com/npgsql/npgsql/issues/1210#issuecomment-235641670
+        internal override bool PreferTextWrite => true;
+
+        readonly Encoding _encoding;
 
         #region State
 
-        string _str;
-        char[] _chars;
-        byte[] _tempBuf;
-        int _byteLen, _charLen, _bytePos, _charPos;
-        EDBBuffer _buf;
-
+        int _charPos;
         readonly char[] _singleCharArray = new char[1];
 
         #endregion
 
+        internal TextHandler(PostgresType postgresType, TypeHandlerRegistry registry) : base(postgresType)
+        {
+            _encoding = registry.Connector.TextEncoding;
+        }
+
         #region Read
 
-        internal virtual void PrepareRead(EDBBuffer buf, FieldDescription fieldDescription, int len)
+        public override ValueTask<string> Read(ReadBuffer buf, int byteLen, bool async, FieldDescription fieldDescription = null)
         {
-            _buf = buf;
-            _byteLen = len;
-            _bytePos = -1;
+            if (buf.ReadBytesLeft >= byteLen)
+                return new ValueTask<string>(buf.ReadString(byteLen));
+            return ReadLong(buf, byteLen, async);
         }
 
-        void IChunkingTypeReader<string>.PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        async ValueTask<string> ReadLong(ReadBuffer buf, int byteLen, bool async)
         {
-            PrepareRead(buf, fieldDescription, len);
-        }
-
-        void IChunkingTypeReader<char[]>.PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            PrepareRead(buf, fieldDescription, len);
-        }
-
-        public bool Read(out string result)
-        {
-            if (_bytePos == -1)
+            if (byteLen <= buf.Size)
             {
-                if (_byteLen <= _buf.ReadBytesLeft)
-                {
-                    // Already have the entire string in the buffer, decode and return
-                    result = _buf.ReadString(_byteLen);
-                    _buf = null;
-                    return true;
-                }
-
-                if (_byteLen <= _buf.Size) {
-                    // Don't have the entire string in the buffer, but it can fit. Force a read to fill.
-                    result = null;
-                    return false;
-                }
-
-                // Bad case: the string doesn't fit in our buffer.
-                // Allocate a temporary byte buffer to hold the entire string and read it in chunks.
-                // TODO: Pool/recycle the buffer?
-                _tempBuf = new byte[_byteLen];
-                _bytePos = 0;
+                // The string's byte representation can fit in our read buffer, read it.
+                while (buf.ReadBytesLeft < byteLen)
+                    await buf.ReadMore(async);
+                return buf.ReadString(byteLen);
             }
 
-            var len = Math.Min(_buf.ReadBytesLeft, _byteLen - _bytePos);
-            _buf.ReadBytes(_tempBuf, _bytePos, len);
-            _bytePos += len;
-            if (_bytePos < _byteLen)
+            // Bad case: the string's byte representation doesn't fit in our buffer.
+            // This is rare - will only happen in CommandBehavior.Sequential mode (otherwise the
+            // entire row is in memory). Tweaking the buffer length via the connection string can
+            // help avoid this.
+
+            // Allocate a temporary byte buffer to hold the entire string and read it in chunks.
+            var tempBuf = new byte[byteLen];
+            var pos = 0;
+            while (true)
             {
-                result = null;
-                return false;
+                var len = Math.Min(buf.ReadBytesLeft, byteLen - pos);
+                buf.ReadBytes(tempBuf, pos, len);
+                pos += len;
+                if (pos < byteLen)
+                {
+                    await buf.ReadMore(async);
+                    continue;
+                }
+                break;
             }
-
-            result = _buf.TextEncoding.GetString(_tempBuf);
-            _tempBuf = null;
-            _buf = null;
-            return true;
+            return buf.TextEncoding.GetString(tempBuf);
         }
 
-        public bool Read(out char[] result)
+        async ValueTask<char[]> IChunkingTypeHandler<char[]>.Read(ReadBuffer buf, int byteLen, bool async, FieldDescription fieldDescription)
         {
-            if (_bytePos == -1)
+            if (byteLen <= buf.Size)
             {
-                if (_byteLen <= _buf.ReadBytesLeft)
-                {
-                    // Already have the entire string in the buffer, decode and return
-                    result = _buf.ReadChars(_byteLen);
-                    _buf = null;
-                    return true;
-                }
-
-                if (_byteLen <= _buf.Size)
-                {
-                    // Don't have the entire string in the buffer, but it can fit. Force a read to fill.
-                    result = null;
-                    return false;
-                }
-
-                // Bad case: the string doesn't fit in our buffer.
-                // Allocate a temporary byte buffer to hold the entire string and read it in chunks.
-                // TODO: Pool/recycle the buffer?
-                _tempBuf = new byte[_byteLen];
-                _bytePos = 0;
+                // The string's byte representation can fit in our read buffer, read it.
+                while (buf.ReadBytesLeft < byteLen)
+                    await buf.ReadMore(async);
+                return buf.ReadChars(byteLen);
             }
 
-            var len = Math.Min(_buf.ReadBytesLeft, _byteLen - _bytePos);
-            _buf.ReadBytes(_tempBuf, _bytePos, len);
-            _bytePos += len;
-            if (_bytePos < _byteLen) {
-                result = null;
-                return false;
+            // TODO: The following can be optimized with Decoder - no need to allocate a byte[]
+            var tempBuf = new byte[byteLen];
+            var pos = 0;
+            while (true)
+            {
+                var len = Math.Min(buf.ReadBytesLeft, byteLen - pos);
+                buf.ReadBytes(tempBuf, pos, len);
+                pos += len;
+                if (pos < byteLen)
+                {
+                    await buf.ReadMore(async);
+                    continue;
+                }
+                break;
             }
-
-            result = _buf.TextEncoding.GetChars(_tempBuf);
-            _tempBuf = null;
-            _buf = null;
-            return true;
+            return buf.TextEncoding.GetChars(tempBuf);
         }
 
-        public long GetChars(DataRowMessage row, int charOffset, char[] output, int outputOffset, int charsCount, FieldDescription field)
+        public long GetChars(DataRowMessage row, int charOffset, [CanBeNull] char[] output, int outputOffset, int charsCount, FieldDescription field)
         {
-            if (row.PosInColumn == 0) {
+            if (row.PosInColumn == 0)
                 _charPos = 0;
-            }
 
             if (output == null)
             {
                 // Note: Getting the length of a text column means decoding the entire field,
                 // very inefficient and also consumes the column in sequential mode. But this seems to
                 // be SqlClient's behavior as well.
-                int bytesSkipped, charsSkipped;
-                row.Buffer.SkipChars(int.MaxValue, row.ColumnLen - row.PosInColumn, out bytesSkipped, out charsSkipped);
-                Contract.Assume(bytesSkipped == row.ColumnLen - row.PosInColumn);
+                row.Buffer.SkipChars(int.MaxValue, row.ColumnLen - row.PosInColumn, out var bytesSkipped, out var charsSkipped);
+                Debug.Assert(bytesSkipped == row.ColumnLen - row.PosInColumn);
                 row.PosInColumn += bytesSkipped;
                 _charPos += charsSkipped;
                 return _charPos;
             }
 
             if (charOffset < _charPos) {
-                row.SeekInColumn(0);
+                row.SeekInColumn(0, false).GetAwaiter().GetResult();
                 _charPos = 0;
             }
 
@@ -202,8 +175,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                 }
             }
 
-            int bytesRead, charsRead;
-            row.Buffer.ReadAllChars(output, outputOffset, charsCount, row.ColumnLen - row.PosInColumn, out bytesRead, out charsRead);
+            row.Buffer.ReadAllChars(output, outputOffset, charsCount, row.ColumnLen - row.PosInColumn, out var bytesRead, out var charsRead);
             row.PosInColumn += bytesRead;
             _charPos += charsRead;
             return charsRead;
@@ -213,158 +185,110 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+        public override unsafe int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
         {
-            if (lengthCache == null) {
+            if (lengthCache == null)
                 lengthCache = new LengthCache(1);
-            }
-            if (lengthCache.IsPopulated) {
+            if (lengthCache.IsPopulated)
                 return lengthCache.Get();
+
+            var asString = value as string;
+            if (asString != null)
+            {
+                if (parameter == null || parameter.Size <= 0 || parameter.Size >= asString.Length)
+                    return lengthCache.Set(_encoding.GetByteCount(asString));
+                fixed (char* p = asString)
+                    return lengthCache.Set(_encoding.GetByteCount(p, parameter.Size));
             }
 
-            //return lengthCache.Set(DoValidateAndGetLength(value, parameter));
-
-            switch (Type.GetTypeCode(value.GetType()))
+            var asCharArray = value as char[];
+            if (asCharArray != null)
             {
-            case TypeCode.String:
-                var asString = (string)value;
                 return lengthCache.Set(
-                    parameter == null || parameter.Size <= 0 || parameter.Size >= asString.Length
-                  ? PGUtil.UTF8Encoding.GetByteCount(asString)
-                  : PGUtil.UTF8Encoding.GetByteCount(asString.ToCharArray(), 0, parameter.Size)
+                    parameter == null || parameter.Size <= 0 || parameter.Size >= asCharArray.Length
+                  ? _encoding.GetByteCount(asCharArray)
+                  : _encoding.GetByteCount(asCharArray, 0, parameter.Size)
                 );
-
-            case TypeCode.Object:
-                var asCharArray = value as char[];
-                if (asCharArray != null)
-                {
-                    return lengthCache.Set(
-                        parameter == null || parameter.Size <= 0 || parameter.Size >= asCharArray.Length
-                      ? PGUtil.UTF8Encoding.GetByteCount(asCharArray)
-                      : PGUtil.UTF8Encoding.GetByteCount(asCharArray, 0, parameter.Size)
-                    );
-                }
-                var converted = Convert.ToString(value);
-                if (parameter == null)
-                {
-                    throw CreateConversionButNoParamException(value.GetType());
-                }
-                parameter.ConvertedValue = value = converted;
-                goto case TypeCode.String;
-
-            case TypeCode.Char:
-                _singleCharArray[0] = (char)value;
-                return lengthCache.Set(PGUtil.UTF8Encoding.GetByteCount(_singleCharArray));
-
-            default:
-                value = Convert.ToString(value);
-                goto case TypeCode.String;
             }
+
+            if (value is char)
+            {
+                _singleCharArray[0] = (char)value;
+                return lengthCache.Set(_encoding.GetByteCount(_singleCharArray));
+            }
+
+            if (value is ArraySegment<char>)
+            {
+                if (parameter?.Size > 0)
+                {
+                    var paramName = parameter.ParameterName;
+                    throw new ArgumentException($"Parameter {paramName} is of type ArraySegment<char> and should not have its Size set", paramName);
+                }
+
+                var segment = (ArraySegment<char>)value;
+                return lengthCache.Set(_encoding.GetByteCount(segment.Array, segment.Offset, segment.Count));
+            }
+
+            // Fallback - try to convert the value to string
+            var converted = Convert.ToString(value);
+            if (parameter == null)
+                throw CreateConversionButNoParamException(value.GetType());
+            parameter.ConvertedValue = converted;
+
+            if (parameter.Size <= 0 || parameter.Size >= converted.Length)
+                return lengthCache.Set(_encoding.GetByteCount(converted));
+            fixed (char* p = converted)
+                return lengthCache.Set(_encoding.GetByteCount(p, parameter.Size));
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        protected override Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            _buf = buf;
-            _charPos = -1;
-            _byteLen = lengthCache.GetLast();
-
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
 
-            switch (Type.GetTypeCode(value.GetType()))
+            var str = value as string;
+            if (str != null)
             {
-            case TypeCode.String:
-                _str = (string)value;
-                _charLen = parameter == null || parameter.Size <= 0 || parameter.Size >= _str.Length ? _str.Length : parameter.Size;
-                return;
-
-            case TypeCode.Object:
-                Contract.Assert(value is char[]);
-                _chars = (char[])value;
-                _charLen = parameter == null || parameter.Size <= 0 || parameter.Size >= _chars.Length ? _chars.Length : parameter.Size;
-                return;
-
-            case TypeCode.Char:
-                _singleCharArray[0] = (char)value;
-                _chars = _singleCharArray;
-                _charLen = 1;
-                return;
-
-            default:
-                value = Convert.ToString(value);
-                goto case TypeCode.String;
+                return WriteString(str, buf, lengthCache, parameter, async, cancellationToken);
             }
+
+            var chars = value as char[];
+            if (chars != null)
+            {
+                var charLen = parameter == null || parameter.Size <= 0 || parameter.Size >= chars.Length
+                    ? chars.Length
+                    : parameter.Size;
+                return buf.WriteChars(chars, 0, charLen, lengthCache.GetLast(), async, cancellationToken);
+            }
+
+            if (value is char)
+            {
+                _singleCharArray[0] = (char)value;
+                return buf.WriteChars(_singleCharArray, 0, 1, lengthCache.GetLast(), async, cancellationToken);
+            }
+
+            if (value is ArraySegment<char>)
+            {
+                var segment = (ArraySegment<char>)value;
+                return buf.WriteChars(segment.Array, segment.Offset, segment.Count, lengthCache.GetLast(), async,
+                    cancellationToken);
+            }
+
+            return WriteString(Convert.ToString(value), buf, lengthCache, parameter, async, cancellationToken);
         }
 
-        public bool Write(ref DirectBuffer directBuf)
+        Task WriteString(string str, WriteBuffer buf, LengthCache lengthCache, [CanBeNull] EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            if (_charPos == -1)
-            {
-                if (_byteLen <= _buf.WriteSpaceLeft)
-                {
-                    // Can simply write the string to the buffer
-                    if (_str != null)
-                    {
-                        _buf.WriteString(_str, _charLen);
-                        _str = null;
-                    }
-                    else
-                    {
-                        Contract.Assert(_chars != null);
-                        _buf.WriteChars(_chars, _charLen);
-                        _str = null;
-                    }
-                    _buf = null;
-                    return true;
-                }
-
-                if (_byteLen <= _buf.Size)
-                {
-                    // Buffer is currently too full, but the string can fit. Force a write to fill.
-                    return false;
-                }
-
-                // Bad case: the string doesn't fit in our buffer.
-                _charPos = 0;
-
-                // For strings, chunked/incremental conversion isn't supported
-                // (see https://visualstudio.uservoice.com/forums/121579-visual-studio/suggestions/6584398-add-system-text-encoder-convert-method-string-in)
-                // So for now allocate a temporary byte buffer to hold the entire string and write it directly.
-                if (_str != null)
-                {
-                    directBuf.Buffer = new byte[_byteLen];
-                    _buf.TextEncoding.GetBytes(_str, 0, _charLen, directBuf.Buffer, 0);
-                    return false;
-                }
-                Contract.Assert(_chars != null);
-
-                // For char arrays, fall through to chunked writing below
-            }
-
-            if (_str != null)
-            {
-                // We did a direct buffer write above, and must now clean up
-                _str = null;
-                _buf = null;
-                return true;
-            }
-
-            int charsUsed;
-            bool completed;
-            _buf.WriteStringChunked(_chars, _charPos, _chars.Length - _charPos, false, out charsUsed, out completed);
-            if (completed)
-            {
-                // Flush encoder
-                _buf.WriteStringChunked(_chars, _charPos, _chars.Length - _charPos, true, out charsUsed, out completed);
-                _chars = null;
-                _buf = null;
-                return true;
-            }
-            _charPos += charsUsed;
-            return false;
+            var charLen = parameter == null || parameter.Size <= 0 || parameter.Size >= str.Length
+                ? str.Length
+                : parameter.Size;
+            return buf.WriteString(str, charLen, lengthCache.GetLast(), async, cancellationToken);
         }
 
         #endregion
+
+        public virtual TextReader GetTextReader(Stream stream) => new StreamReader(stream);
     }
 }

@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,10 +24,12 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics.Contracts;
-using  EnterpriseDB.EDBClient.BackendMessages;
-using  EnterpriseDB.EDBClient.FrontendMessages;
-using  EnterpriseDB.EDBClient.Logging;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.FrontendMessages;
+using EnterpriseDB.EDBClient.Logging;
 
 namespace  EnterpriseDB.EDBClient
 {
@@ -42,15 +44,25 @@ namespace  EnterpriseDB.EDBClient
         /// Specifies the <see cref="EDBConnection"/> object associated with the transaction.
         /// </summary>
         /// <value>The <see cref="EDBConnection"/> object associated with the transaction.</value>
+        [CanBeNull]
         public new EDBConnection Connection { get; internal set; }
+
+        // Note that with ambient transactions, it's possible for a transaction to be pending after its connection
+        // is already closed. So we capture the connector and perform everything directly on it.
+        EDBConnector _connector;
+
+        /// <summary>
+        /// Specifies the completion state of the transaction.
+        /// </summary>
+        /// <value>The completion state of the transaction.</value>
+        public bool IsCompleted => _connector == null;
 
         /// <summary>
         /// Specifies the <see cref="EDBConnection"/> object associated with the transaction.
         /// </summary>
         /// <value>The <see cref="EDBConnection"/> object associated with the transaction.</value>
-        protected override DbConnection DbConnection { get { return Connection; } }
-
-        EDBConnector Connector { get { return Connection.Connector; } }
+        [CanBeNull]
+        protected override DbConnection DbConnection => Connection;
 
         bool _isDisposed;
 
@@ -69,50 +81,51 @@ namespace  EnterpriseDB.EDBClient
         }
         readonly IsolationLevel _isolationLevel;
 
-        const IsolationLevel DefaultIsolationLevel = IsolationLevel.ReadCommitted;
-
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+
+        const IsolationLevel DefaultIsolationLevel = IsolationLevel.ReadCommitted;
 
         #endregion
 
         #region Constructors
 
-        internal EDBTransaction(EDBConnection conn)
-            : this(conn, DefaultIsolationLevel)
+        internal EDBTransaction(EDBConnection conn, IsolationLevel isolationLevel = DefaultIsolationLevel)
         {
-            Contract.Requires(conn != null);
-        }
+            Debug.Assert(conn != null);
+            Debug.Assert(isolationLevel != IsolationLevel.Chaos);
 
-        internal EDBTransaction(EDBConnection conn, IsolationLevel isolationLevel)
-        {
-            Contract.Requires(conn != null);
-            Contract.Requires(isolationLevel != IsolationLevel.Chaos);
 
             Connection = conn;
-            Connector.Transaction = this;
-            Connector.TransactionStatus = TransactionStatus.Pending;
+            _connector = Connection.CheckReadyAndGetConnector();
+            Log.Debug($"Beginning transaction with isolation level {isolationLevel}", _connector.Id);
+            _connector.Transaction = this;
+            _connector.TransactionStatus = TransactionStatus.Pending;
 
             switch (isolationLevel) {
                 case IsolationLevel.RepeatableRead:
-                    Connector.PrependInternalMessage(PregeneratedMessage.BeginTransRepeatableRead);
+                case IsolationLevel.Snapshot:
+                    _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
+                    _connector.PrependInternalMessage(PregeneratedMessage.SetTransRepeatableRead);
                     break;
                 case IsolationLevel.Serializable:
-                case IsolationLevel.Snapshot:
-                    Connector.PrependInternalMessage(PregeneratedMessage.BeginTransSerializable);
+                    _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
+                    _connector.PrependInternalMessage(PregeneratedMessage.SetTransSerializable);
                     break;
                 case IsolationLevel.ReadUncommitted:
                     // PG doesn't really support ReadUncommitted, it's the same as ReadCommitted. But we still
                     // send as if.
-                    Connector.PrependInternalMessage(PregeneratedMessage.BeginTransReadUncommitted);
+                    _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
+                    _connector.PrependInternalMessage(PregeneratedMessage.SetTransReadUncommitted);
                     break;
                 case IsolationLevel.ReadCommitted:
-                    Connector.PrependInternalMessage(PregeneratedMessage.BeginTransReadCommitted);
+                    _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
+                    _connector.PrependInternalMessage(PregeneratedMessage.SetTransReadCommitted);
                     break;
                 case IsolationLevel.Unspecified:
                     isolationLevel = DefaultIsolationLevel;
                     goto case DefaultIsolationLevel;
                 default:
-                    throw PGUtil.ThrowIfReached("Isolation level not supported: " + isolationLevel);
+                    throw new NotSupportedException("Isolation level not supported: " + isolationLevel);
             }
 
             _isolationLevel = isolationLevel;
@@ -120,44 +133,73 @@ namespace  EnterpriseDB.EDBClient
 
         #endregion
 
-        #region Commit and Rollback
+        #region Commit
 
         /// <summary>
         /// Commits the database transaction.
         /// </summary>
-        public override void Commit()
+        public override void Commit() => Commit(false, CancellationToken.None).GetAwaiter().GetResult();
+
+        async Task Commit(bool async, CancellationToken cancellationToken)
         {
             CheckReady();
-            Log.Debug("Commit transaction", Connection.Connector.Id);
-            Connector.ExecuteInternalCommand(PregeneratedMessage.CommitTransaction);
-            Connection = null;
+            using (_connector.StartUserAction())
+            {
+                Log.Debug("Committing transaction", _connector.Id);
+                await _connector.ExecuteInternalCommand(PregeneratedMessage.CommitTransaction, async, cancellationToken);
+                Clear();
+            }
+        }
+
+        /// <summary>
+        /// Commits the database transaction.
+        /// </summary>
+        [PublicAPI]
+        public async Task CommitAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                await Commit(true, cancellationToken);
+        }
+
+        /// <summary>
+        /// Commits the database transaction.
+        /// </summary>
+        [PublicAPI]
+        public Task CommitAsync() => CommitAsync(CancellationToken.None);
+
+        #endregion
+
+        #region Rollback
+
+        /// <summary>
+        /// Rolls back a transaction from a pending state.
+        /// </summary>
+        public override void Rollback() => Rollback(false, CancellationToken.None).GetAwaiter().GetResult();
+
+        async Task Rollback(bool async, CancellationToken cancellationToken)
+        {
+            CheckReady();
+            await _connector.Rollback(async, cancellationToken);
+            Clear();
         }
 
         /// <summary>
         /// Rolls back a transaction from a pending state.
         /// </summary>
-        public override void Rollback()
+        [PublicAPI]
+        public async Task RollbackAsync(CancellationToken cancellationToken)
         {
-            CheckReady();
-
-            Log.Debug("Rollback transaction", Connection.Connector.Id);
-
-            var connector = Connector;
-
-            try
-            {
-                // If we're in a failed transaction we can't set the timeout
-                var withTimeout = connector.TransactionStatus != TransactionStatus.InFailedTransactionBlock;
-                connector.ExecuteInternalCommand(PregeneratedMessage.RollbackTransaction, withTimeout);
-            }
-            finally
-            {
-                // The rollback may change the value of statement_value, set to unknown
-                connector.SetBackendTimeoutToUnknown();
-            }
-
-            Connection = null;
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                await Rollback(true, cancellationToken);
         }
+
+        /// <summary>
+        /// Rolls back a transaction from a pending state.
+        /// </summary>
+        [PublicAPI]
+        public Task RollbackAsync() => RollbackAsync(CancellationToken.None);
 
         #endregion
 
@@ -166,66 +208,61 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Creates a transaction save point.
         /// </summary>
-        public void CreateSavepoint(string name)
+        public void Save(string name)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("name can't be empty", "name");
+                throw new ArgumentException("name can't be empty", nameof(name));
             if (name.Contains(";"))
                 throw new ArgumentException("name can't contain a semicolon");
-            Contract.EndContractBlock();
 
             CheckReady();
-            Log.Debug("Create savepoint", Connection.Connector.Id);
-            Connector.ExecuteInternalCommand(new QueryMessage(string.Format("SAVEPOINT {0}", name)));
-        }
-
-        /// <summary>
-        /// Rolls back a transaction from a pending savepoint state.
-        /// </summary>
-        public void RollbackToSavepoint(string name)
-        {
-            if (name == null)
-                throw new ArgumentNullException("name");
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("name can't be empty", "name");
-            if (name.Contains(";"))
-                throw new ArgumentException("name can't contain a semicolon");
-            Contract.EndContractBlock();
-
-            CheckReady();
-
-            Log.Debug("Rollback savepoint", Connection.Connector.Id);
-
-            try {
-                // If we're in a failed transaction we can't set the timeout
-                var withTimeout = Connector.TransactionStatus != TransactionStatus.InFailedTransactionBlock;
-                Connector.ExecuteInternalCommand(new QueryMessage(string.Format("ROLLBACK TO SAVEPOINT {0}", name)), withTimeout);
-            } finally {
-                // The rollback may change the value of statement_value, set to unknown
-                Connection.Connector.SetBackendTimeoutToUnknown();
+            using (_connector.StartUserAction())
+            {
+                Log.Debug($"Creating savepoint {name}", _connector.Id);
+                _connector.ExecuteInternalCommand($"SAVEPOINT {name}");
             }
         }
 
         /// <summary>
         /// Rolls back a transaction from a pending savepoint state.
         /// </summary>
-        public void ReleaseSavepoint(string name)
+        public void Rollback(string name)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("name can't be empty", "name");
+                throw new ArgumentException("name can't be empty", nameof(name));
             if (name.Contains(";"))
                 throw new ArgumentException("name can't contain a semicolon");
-            Contract.EndContractBlock();
 
             CheckReady();
+            using (_connector.StartUserAction())
+            {
+                Log.Debug($"Rolling back savepoint {name}", _connector.Id);
+                _connector.ExecuteInternalCommand($"ROLLBACK TO SAVEPOINT {name}");
+            }
+        }
 
-            Log.Debug("Release savepoint", Connection.Connector.Id);
+        /// <summary>
+        /// Rolls back a transaction from a pending savepoint state.
+        /// </summary>
+        public void Release(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("name can't be empty", nameof(name));
+            if (name.Contains(";"))
+                throw new ArgumentException("name can't contain a semicolon");
 
-            Connector.ExecuteInternalCommand(new QueryMessage(string.Format("RELEASE SAVEPOINT {0}", name)));
+            CheckReady();
+            using (_connector.StartUserAction())
+            {
+                Log.Debug($"Releasing savepoint {name}", _connector.Id);
+                _connector.ExecuteInternalCommand($"RELEASE SAVEPOINT {name}");
+            }
         }
 
         #endregion
@@ -236,16 +273,25 @@ namespace  EnterpriseDB.EDBClient
         /// Dispose.
         /// </summary>
         /// <param name="disposing"></param>
-        protected override void Dispose(bool disposing)
+        protected override void Dispose(bool disposing) => Dispose(disposing, true);
+
+        internal void Dispose(bool disposing, bool doRollbackIfNeeded)
         {
             if (_isDisposed) { return; }
 
-            if (disposing && Connection != null) {
+            if (disposing && doRollbackIfNeeded && !IsCompleted)
                 Rollback();
-            }
 
-            _isDisposed = true;
+            Clear();
+
             base.Dispose(disposing);
+            _isDisposed = true;
+        }
+
+        internal void Clear()
+        {
+            _connector = null;
+            Connection = null;
         }
 
         #endregion
@@ -256,28 +302,18 @@ namespace  EnterpriseDB.EDBClient
         {
             CheckDisposed();
             CheckCompleted();
-            Connection.CheckReady();
         }
 
-        [ContractArgumentValidator]
         void CheckCompleted()
         {
-            if (Connection == null)
+            if (IsCompleted)
                 throw new InvalidOperationException("This EDBTransaction has completed; it is no longer usable.");
-            Contract.EndContractBlock();
         }
 
-        [ContractArgumentValidator]
         void CheckDisposed()
         {
             if (_isDisposed)
                 throw new ObjectDisposedException(typeof(EDBTransaction).Name);
-            Contract.EndContractBlock();
-        }
-
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
         }
 
         #endregion

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,13 +22,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Net;
+using System.Diagnostics;
 using System.Net.NetworkInformation;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
@@ -37,30 +35,24 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
     [TypeMapping("macaddr", EDBDbType.MacAddr, typeof(PhysicalAddress))]
-    internal class MacaddrHandler : TypeHandler<PhysicalAddress>,
-        ISimpleTypeReader<PhysicalAddress>, ISimpleTypeWriter,
-        ISimpleTypeReader<string>
+    class MacaddrHandler : SimpleTypeHandler<PhysicalAddress>, ISimpleTypeHandler<string>
     {
-        byte[] _bytes;
+        internal MacaddrHandler(PostgresType postgresType) : base(postgresType) { }
 
-        public PhysicalAddress Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override PhysicalAddress Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            Contract.Assume(len == 6);
+            Debug.Assert(len == 6);
 
-            if (_bytes == null) {
-                _bytes = new byte[6];
-            }
+            var bytes = new byte[6];
 
-            buf.ReadBytes(_bytes, 0, 6);
-            return new PhysicalAddress(_bytes);
+            buf.ReadBytes(bytes, 0, 6);
+            return new PhysicalAddress(bytes);
         }
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return Read(buf, len, fieldDescription).ToString();
-        }
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => Read(buf, len, fieldDescription).ToString();
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             var address = value as PhysicalAddress;
             if (address == null)
@@ -70,9 +62,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             return 6;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
-        {
-            buf.WriteBytes(((PhysicalAddress)value).GetAddressBytes(), 0, 6);
-        }
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+            => buf.WriteBytes(((PhysicalAddress)value).GetAddressBytes(), 0, 6);
     }
 }

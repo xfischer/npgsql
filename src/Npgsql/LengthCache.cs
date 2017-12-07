@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,7 +25,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 
@@ -56,7 +55,7 @@ namespace  EnterpriseDB.EDBClient
 
         internal int Set(int len)
         {
-            Contract.Requires(!IsPopulated);
+            Debug.Assert(!IsPopulated);
             Lengths.Add(len);
             Position++;
             return len;
@@ -64,13 +63,13 @@ namespace  EnterpriseDB.EDBClient
 
         internal int Get()
         {
-            Contract.Requires(IsPopulated);
+            Debug.Assert(IsPopulated);
             return Lengths[Position++];
         }
 
         internal int GetLast()
         {
-            Contract.Requires(IsPopulated);
+            Debug.Assert(IsPopulated);
             return Lengths[Position-1];
         }
 

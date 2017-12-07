@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,62 +21,45 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
-    internal abstract class AuthenticationRequestMessage : IBackendMessage
+    abstract class AuthenticationRequestMessage : IBackendMessage
     {
-        public BackendMessageCode Code { get { return BackendMessageCode.AuthenticationRequest; } }
+        public BackendMessageCode Code => BackendMessageCode.AuthenticationRequest;
         internal abstract AuthenticationRequestType AuthRequestType { get; }
     }
 
-    internal class AuthenticationOkMessage : AuthenticationRequestMessage
+    class AuthenticationOkMessage : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType {
-            get { return AuthenticationRequestType.AuthenticationOk; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationOk;
 
         internal static readonly AuthenticationOkMessage Instance = new AuthenticationOkMessage();
         AuthenticationOkMessage() { }
     }
 
-    internal class AuthenticationKerberosV5Message : AuthenticationRequestMessage
+    class AuthenticationKerberosV5Message : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationKerberosV5; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationKerberosV5;
 
         internal static readonly AuthenticationKerberosV5Message Instance = new AuthenticationKerberosV5Message();
         AuthenticationKerberosV5Message() { }
     }
 
-    internal class AuthenticationCleartextPasswordMessage  : AuthenticationRequestMessage
+    class AuthenticationCleartextPasswordMessage  : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationCleartextPassword; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationCleartextPassword;
 
         internal static readonly AuthenticationCleartextPasswordMessage Instance = new AuthenticationCleartextPasswordMessage();
         AuthenticationCleartextPasswordMessage() { }
     }
 
-    internal class AuthenticationMD5PasswordMessage  : AuthenticationRequestMessage
+    class AuthenticationMD5PasswordMessage  : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationMD5Password; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationMD5Password;
 
         internal byte[] Salt { get; private set; }
 
-        internal static AuthenticationMD5PasswordMessage Load(EDBBuffer buf)
+        internal static AuthenticationMD5PasswordMessage Load(ReadBuffer buf)
         {
             var salt = new byte[4];
             buf.ReadBytes(salt, 0, 4);
@@ -89,38 +72,29 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         }
     }
 
-    internal class AuthenticationSCMCredentialMessage : AuthenticationRequestMessage
+    class AuthenticationSCMCredentialMessage : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationSCMCredential; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationSCMCredential;
 
         internal static readonly AuthenticationSCMCredentialMessage Instance = new AuthenticationSCMCredentialMessage();
         AuthenticationSCMCredentialMessage() { }
     }
 
-    internal class AuthenticationGSSMessage : AuthenticationRequestMessage
+    class AuthenticationGSSMessage : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationGSS; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationGSS;
 
         internal static readonly AuthenticationGSSMessage Instance = new AuthenticationGSSMessage();
         AuthenticationGSSMessage() { }
     }
 
-    internal class AuthenticationGSSContinueMessage : AuthenticationRequestMessage
+    class AuthenticationGSSContinueMessage : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationGSSContinue; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationGSSContinue;
 
         internal byte[] AuthenticationData { get; private set; }
 
-        internal static AuthenticationGSSContinueMessage Load(EDBBuffer buf, int len)
+        internal static AuthenticationGSSContinueMessage Load(ReadBuffer buf, int len)
         {
             len -= 4;   // The AuthRequestType code
             var authenticationData = new byte[len];
@@ -134,18 +108,15 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         }
     }
 
-    internal class AuthenticationSSPIMessage : AuthenticationRequestMessage
+    class AuthenticationSSPIMessage : AuthenticationRequestMessage
     {
-        internal override AuthenticationRequestType AuthRequestType
-        {
-            get { return AuthenticationRequestType.AuthenticationSSPI; }
-        }
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationSSPI;
 
         internal static readonly AuthenticationSSPIMessage Instance = new AuthenticationSSPIMessage();
         AuthenticationSSPIMessage() { }
     }
 
-    internal enum AuthenticationRequestType
+    enum AuthenticationRequestType
     {
         AuthenticationOk = 0,
         AuthenticationKerberosV4 = 1,

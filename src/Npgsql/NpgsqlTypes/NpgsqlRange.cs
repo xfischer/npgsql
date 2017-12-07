@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,30 +22,29 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
+
 #pragma warning disable 1591
 
+// ReSharper disable once CheckNamespace
 namespace EDBTypes
 {
-    public struct EDBRange<T>
+    public struct EDBRange<T> : IEquatable<EDBRange<T>>
     {
-        public static EDBRange<T> Empty()
-        {
-            return new EDBRange<T>(RangeFlags.Empty);
-        }
+#pragma warning disable CA1000
+        public static EDBRange<T> Empty { get; private set; } = new EDBRange<T>(default(T), default(T), RangeFlags.Empty);
+#pragma warning restore CA1000
 
-        public T LowerBound { get; set; }
-        public T UpperBound { get; set; }
+        public T LowerBound { get; }
+        public T UpperBound { get; }
 
         internal RangeFlags Flags { get; set; }
 
         public bool LowerBoundIsInclusive
         {
             get { return (Flags & RangeFlags.LowerBoundInclusive) != 0; }
-            set
+            private set
             {
                 if (value)
                     Flags |= RangeFlags.LowerBoundInclusive;
@@ -57,7 +56,7 @@ namespace EDBTypes
         public bool UpperBoundIsInclusive
         {
             get { return (Flags & RangeFlags.UpperBoundInclusive) != 0; }
-            set
+            private set
             {
                 if (value)
                     Flags |= RangeFlags.UpperBoundInclusive;
@@ -69,7 +68,7 @@ namespace EDBTypes
         public bool LowerBoundInfinite
         {
             get { return (Flags & RangeFlags.LowerBoundInfinite) != 0; }
-            set
+            private set
             {
                 if (value)
                     Flags |= RangeFlags.LowerBoundInfinite;
@@ -81,7 +80,7 @@ namespace EDBTypes
         public bool UpperBoundInfinite
         {
             get { return (Flags & RangeFlags.UpperBoundInfinite) != 0; }
-            set
+            private set
             {
                 if (value)
                     Flags |= RangeFlags.UpperBoundInfinite;
@@ -90,17 +89,7 @@ namespace EDBTypes
             }
         }
 
-        public bool IsEmpty
-        {
-            get { return (Flags & RangeFlags.Empty) != 0; }
-            set
-            {
-                if (value)
-                    Flags |= RangeFlags.Empty;
-                else
-                    Flags &= ~RangeFlags.Empty;
-            }
-        }
+        public bool IsEmpty => (Flags & RangeFlags.Empty) != 0;
 
         public EDBRange(T lowerBound, T upperBound)
             : this(lowerBound, true, false, upperBound, true, false) {}
@@ -112,10 +101,9 @@ namespace EDBTypes
                            T upperBound, bool upperBoundIsInclusive, bool upperBoundInfinite) : this()
         {
             if (lowerBoundInfinite && lowerBoundIsInclusive)
-                throw new ArgumentException("Infinite bound can't be inclusive", "lowerBoundIsInclusive");
+                throw new ArgumentException("Infinite bound can't be inclusive", nameof(lowerBoundIsInclusive));
             if (upperBoundInfinite && upperBoundIsInclusive)
-                throw new ArgumentException("Infinite bound can't be inclusive", "upperBoundIsInclusive");
-            Contract.EndContractBlock();
+                throw new ArgumentException("Infinite bound can't be inclusive", nameof(upperBoundIsInclusive));
 
             LowerBound = lowerBound;
             UpperBound = upperBound;
@@ -127,39 +115,32 @@ namespace EDBTypes
             UpperBoundInfinite = upperBoundInfinite;
         }
 
-        internal EDBRange(RangeFlags flags) : this()
+        internal EDBRange([CanBeNull] T lowerBound, [CanBeNull] T upperBound, RangeFlags flags) : this()
         {
+            LowerBound = lowerBound;
+            UpperBound = upperBound;
             Flags = flags;
         }
 
         public static bool operator ==(EDBRange<T> x, EDBRange<T> y)
-        {
-            return
-                x.IsEmpty == y.IsEmpty &&
-                x.LowerBound.Equals(y.LowerBound) &&
-                x.UpperBound.Equals(y.UpperBound) &&
-                x.LowerBoundIsInclusive == y.LowerBoundIsInclusive &&
-                x.UpperBoundIsInclusive == y.UpperBoundIsInclusive &&
-                x.LowerBoundInfinite == y.LowerBoundInfinite &&
-                x.UpperBoundInfinite == y.UpperBoundInfinite;
-        }
+            => x.IsEmpty == y.IsEmpty &&
+               (x.LowerBoundInfinite || y.LowerBoundInfinite || x.LowerBound.Equals(y.LowerBound)) &&
+               (x.UpperBoundInfinite || y.UpperBoundInfinite || x.UpperBound.Equals(y.UpperBound)) &&
+               x.LowerBoundIsInclusive == y.LowerBoundIsInclusive &&
+               x.UpperBoundIsInclusive == y.UpperBoundIsInclusive &&
+               x.LowerBoundInfinite == y.LowerBoundInfinite &&
+               x.UpperBoundInfinite == y.UpperBoundInfinite;
 
-        public static bool operator !=(EDBRange<T> x, EDBRange<T> y)
-        {
-            return !(x == y);
-        }
+        public static bool operator !=(EDBRange<T> x, EDBRange<T> y) => !(x == y);
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBRange<T> && this == (EDBRange<T>)obj;
-        }
+        public override bool Equals([CanBeNull] object o) => o is EDBRange<T> && this == (EDBRange<T>)o;
+
+        public bool Equals(EDBRange<T> other) => this == other;
 
         public override int GetHashCode()
-        {
-            return IsEmpty ? 0 :
+            => IsEmpty ? 0 :
                 (LowerBoundInfinite ? 0 : LowerBound.GetHashCode()) +
-                (UpperBoundInfinite      ? 0 : UpperBound.GetHashCode());
-        }
+                (UpperBoundInfinite ? 0 : UpperBound.GetHashCode());
 
         public override string ToString()
         {
@@ -187,7 +168,7 @@ namespace EDBTypes
     }
 
     [Flags]
-    internal enum RangeFlags : byte
+    enum RangeFlags : byte
     {
         Empty = 1,
         LowerBoundInclusive = 2,

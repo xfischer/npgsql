@@ -7,9 +7,9 @@ using System.Resources;
 // Additional assembly attributes are defined in GlobalAssemblyInfo.cs
 
 #if ENTITIES6
-[assembly: AssemblyTitleAttribute("EntityFramework6.Npgsql")]
-[assembly: AssemblyDescriptionAttribute("PostgreSQL provider for Entity Framework 6")]
+[assembly: AssemblyTitleAttribute("EntityFramework6.EnterpriseDB.EDBClient")]
+[assembly: AssemblyDescriptionAttribute("Entity Framework 6 for EnterpriseDB Advance Server")]
 #else
-[assembly: AssemblyTitleAttribute("EntityFramework5.Npgsql")]
-[assembly: AssemblyDescriptionAttribute("PostgreSQL provider for Entity Framework 5")]
+[assembly: AssemblyTitleAttribute("EntityFramework5.EnterpriseDB.EDBClient")]
+[assembly: AssemblyDescriptionAttribute("Entity Framework 5 for EnterpriseDB Advance Server")]
 #endif

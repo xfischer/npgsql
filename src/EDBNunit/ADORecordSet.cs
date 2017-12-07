@@ -17,13 +17,15 @@ namespace ADO
 	public class ADORecordSet
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = "Provider=MSDASQL.1;Persist Security Info=False;Data Source=EnterpriseDB";
-			
+		private string DBConnection = System.Configuration.ConfigurationSettings.AppSettings["ADOConnectionString"];
+		private string UserName = System.Configuration.ConfigurationSettings.AppSettings["ADOUser"];
+		private string PassPhrase = System.Configuration.ConfigurationSettings.AppSettings["ADOPassword"];
+
 		[SetUp]
 		protected void SetUp()
 		{ 
 			Conn=new ADODB.Connection();
-			Conn.Open(DBConnection,"edb","edb",-1); 
+			Conn.Open(DBConnection,UserName,PassPhrase,-1); 
 		}	
 
 		[TearDown]

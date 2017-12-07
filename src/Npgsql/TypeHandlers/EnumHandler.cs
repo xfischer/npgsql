@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,99 +21,131 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
-    internal interface IEnumHandler { }
-    internal class EnumHandler<TEnum> : TypeHandler<TEnum>, IEnumHandler,
-        ISimpleTypeReader<TEnum>, ISimpleTypeWriter
-        where TEnum : struct
+    /// <summary>
+    /// Interface implemented by all concrete handlers which handle enums
+    /// </summary>
+    interface IEnumHandler
+    {
+        /// <summary>
+        /// The CLR enum type mapped to the PostgreSQL enum
+        /// </summary>
+        Type EnumType { get; }
+    }
+
+    interface IEnumHandlerFactory
+    {
+        IEnumHandler Create(PostgresType backendType);
+    }
+
+    class EnumHandler<TEnum> : SimpleTypeHandler<TEnum>, IEnumHandler where TEnum : struct
     {
         readonly Dictionary<TEnum, string> _enumToLabel;
         readonly Dictionary<string, TEnum> _labelToEnum;
 
-        public EnumHandler()
+        public Type EnumType => typeof(TEnum);
+
+        #region Construction
+
+        internal EnumHandler(PostgresType postgresType, IEDBNameTranslator nameTranslator)
+            : base(postgresType)
         {
-            Contract.Requires(typeof(TEnum).GetTypeInfo().IsEnum, "EnumHandler instantiated for non-enum type");
-
-            // Reflect on our enum type to find any explicit mappings
-            if (!typeof(TEnum).GetFields(BindingFlags.Static | BindingFlags.Public).Any(t => t.GetCustomAttributes(typeof(EnumLabelAttribute), false).Any())) {
-                return;
-            }
-
+            Debug.Assert(typeof(TEnum).GetTypeInfo().IsEnum, "EnumHandler instantiated for non-enum type");
             _enumToLabel = new Dictionary<TEnum, string>();
             _labelToEnum = new Dictionary<string, TEnum>();
+            GenerateMappings(nameTranslator, _enumToLabel, _labelToEnum);
+        }
+
+        internal EnumHandler(PostgresType postgresType, Dictionary<TEnum, string> enumToLabel, Dictionary<string, TEnum> labelToEnum)
+            : base(postgresType)
+        {
+            Debug.Assert(typeof(TEnum).GetTypeInfo().IsEnum, "EnumHandler instantiated for non-enum type");
+            _enumToLabel = enumToLabel;
+            _labelToEnum = labelToEnum;
+        }
+
+        static void GenerateMappings(IEDBNameTranslator nameTranslator, Dictionary<TEnum, string> enumToLabel, Dictionary<string, TEnum> labelToEnum)
+        {
             foreach (var field in typeof(TEnum).GetFields(BindingFlags.Static | BindingFlags.Public))
             {
-                var attribute = (EnumLabelAttribute)field.GetCustomAttributes(typeof(EnumLabelAttribute), false).FirstOrDefault();
-                var enumName = attribute == null ? field.Name : attribute.Label;
+                var attribute = (PgNameAttribute)field.GetCustomAttributes(typeof(PgNameAttribute), false).FirstOrDefault();
+                var enumName = attribute == null
+                    ? nameTranslator.TranslateMemberName(field.Name)
+                    : attribute.PgName;
                 var enumValue = (Enum)field.GetValue(null);
-                _enumToLabel[(TEnum)(object)enumValue] = enumName;
-                _labelToEnum[enumName] = (TEnum)(object)enumValue;
+                enumToLabel[(TEnum)(object)enumValue] = enumName;
+                labelToEnum[enumName] = (TEnum)(object)enumValue;
             }
         }
 
-        public TEnum Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        #endregion
+
+        #region Read
+
+        public override TEnum Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             var str = buf.ReadString(len);
-            TEnum value;
-            var success = _labelToEnum == null
-                ? Enum.TryParse(str, out value)
-                : _labelToEnum.TryGetValue(str, out value);
+            var success = _labelToEnum.TryGetValue(str, out var value);
 
             if (!success)
-                throw new SafeReadException(new InvalidCastException(String.Format("Received enum value '{0}' from database which wasn't found on enum {1}", str, typeof(TEnum))));
+                throw new SafeReadException(new InvalidCastException($"Received enum value '{str}' from database which wasn't found on enum {typeof(TEnum)}"));
 
             return value;
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        #endregion
+
+        #region Write
+
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             if (!(value is TEnum))
                 throw CreateConversionException(value.GetType());
 
-            string str;
-            if (_enumToLabel == null)
-            {
-                str = value.ToString();
-            }
-            else
-            {
-                var asEnum = (TEnum)value;
-                if (!_enumToLabel.TryGetValue(asEnum, out str)) {
-                    throw new InvalidCastException(String.Format("Can't write value {0} as enum {1}", asEnum, typeof(TEnum)));
-                }
-            }
+            var asEnum = (TEnum)value;
+            if (!_enumToLabel.TryGetValue(asEnum, out var str))
+                throw new InvalidCastException($"Can't write value {asEnum} as enum {typeof(TEnum)}");
 
             return Encoding.UTF8.GetByteCount(str);
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
             string str;
-            if (_enumToLabel == null) {
-                str = value.ToString();
-            } else {
-                var asEnum = (TEnum)value;
-                if (!_enumToLabel.TryGetValue(asEnum, out str)) {
-                    throw new InvalidCastException(String.Format("Can't write value {0} as enum {1}", asEnum, typeof(TEnum)));
-                }
-            }
+            var asEnum = (TEnum)value;
+            if (!_enumToLabel.TryGetValue(asEnum, out str))
+                throw new InvalidCastException($"Can't write value {asEnum} as enum {typeof(TEnum)}");
 
             buf.WriteString(str);
         }
 
-        internal EnumHandler<TEnum> Clone()
+        #endregion
+
+        internal class Factory : IEnumHandlerFactory
         {
-            return new EnumHandler<TEnum>();
+            readonly Dictionary<TEnum, string> _enumToLabel;
+            readonly Dictionary<string, TEnum> _labelToEnum;
+
+            internal Factory(IEDBNameTranslator nameTranslator)
+            {
+                _enumToLabel = new Dictionary<TEnum, string>();
+                _labelToEnum = new Dictionary<string, TEnum>();
+                GenerateMappings(nameTranslator, _enumToLabel, _labelToEnum);
+            }
+
+            public IEnumHandler Create(PostgresType backendType)
+                => new EnumHandler<TEnum>(backendType, _enumToLabel, _labelToEnum);
         }
     }
 }

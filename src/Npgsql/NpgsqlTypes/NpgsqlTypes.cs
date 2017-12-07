@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,14 +24,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using  EnterpriseDB.EDBClient;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient;
 
 #pragma warning disable 1591
 
@@ -57,30 +57,19 @@ namespace EDBTypes
             Y = y;
         }
 
-        public bool Equals(EDBPoint other)
-        {
-            return X == other.X && Y == other.Y;
-        }
+        // ReSharper disable CompareOfFloatsByEqualityOperator
+        public bool Equals(EDBPoint other) => X == other.X && Y == other.Y;
+        // ReSharper restore CompareOfFloatsByEqualityOperator
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBPoint && Equals((EDBPoint) obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBPoint && Equals((EDBPoint) obj);
 
-        public static bool operator ==(EDBPoint x, EDBPoint y)
-        {
-            return x.Equals(y);
-        }
+        public static bool operator ==(EDBPoint x, EDBPoint y) => x.Equals(y);
 
-        public static bool operator !=(EDBPoint x, EDBPoint y)
-        {
-            return !(x == y);
-        }
+        public static bool operator !=(EDBPoint x, EDBPoint y) => !(x == y);
 
         public override int GetHashCode()
-        {
-            return X.GetHashCode() ^ PGUtil.RotateShift(Y.GetHashCode(), sizeof (int)/2);
-        }
+            => X.GetHashCode() ^ PGUtil.RotateShift(Y.GetHashCode(), sizeof (int)/2);
 
         public static EDBPoint Parse(string s)
         {
@@ -88,14 +77,12 @@ namespace EDBTypes
             if (!m.Success) {
                 throw new FormatException("Not a valid point: " + s);
             }
-            return new EDBPoint(Double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                                   Double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat));
+            return new EDBPoint(double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                                   double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat));
         }
 
         public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture, "({0},{1})", X, Y);
-        }
+            => string.Format(CultureInfo.InvariantCulture, "({0},{1})", X, Y);
     }
 
     /// <summary>
@@ -123,45 +110,26 @@ namespace EDBTypes
         public static EDBLine Parse(string s)
         {
             var m = Regex.Match(s);
-            if (!m.Success) {
+            if (!m.Success)
                 throw new FormatException("Not a valid line: " + s);
-            }
             return new EDBLine(
-                Double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
+                double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
             );
         }
 
-        public override String ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture, "{{{0},{1},{2}}}", A, B, C);
-        }
+        public override string ToString()
+            => string.Format(CultureInfo.InvariantCulture, "{{{0},{1},{2}}}", A, B, C);
 
-        public override int GetHashCode()
-        {
-            return A.GetHashCode() * B.GetHashCode() * C.GetHashCode();
-        }
+        public override int GetHashCode() => A.GetHashCode() * B.GetHashCode() * C.GetHashCode();
 
-        public bool Equals(EDBLine other)
-        {
-            return A == other.A && B == other.B && C == other.C;
-        }
+        public bool Equals(EDBLine other) => A == other.A && B == other.B && C == other.C;
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBLine && Equals((EDBLine)obj);
-        }
+        public override bool Equals([CanBeNull] object obj) => obj is EDBLine && Equals((EDBLine)obj);
 
-        public static bool operator ==(EDBLine x, EDBLine y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBLine x, EDBLine y)
-        {
-            return !(x == y);
-        }
+        public static bool operator ==(EDBLine x, EDBLine y) => x.Equals(y);
+        public static bool operator !=(EDBLine x, EDBLine y) => !(x == y);
     }
 
     /// <summary>
@@ -194,45 +162,28 @@ namespace EDBTypes
                 throw new FormatException("Not a valid line: " + s);
             }
             return new EDBLSeg(
-                Double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[4].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
+                double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[4].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
             );
 
         }
 
-        public override String ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture, "[{0},{1}]", Start, End);
-        }
+        public override string ToString()
+            => string.Format(CultureInfo.InvariantCulture, "[{0},{1}]", Start, End);
 
         public override int GetHashCode()
-        {
-            return
-                Start.X.GetHashCode() ^ PGUtil.RotateShift(Start.Y.GetHashCode(), sizeof(int) / 4) ^
-                PGUtil.RotateShift(End.X.GetHashCode(), sizeof(int) / 2) ^ PGUtil.RotateShift(End.Y.GetHashCode(), sizeof(int) * 3 / 4);
-        }
+            => Start.X.GetHashCode() ^ PGUtil.RotateShift(Start.Y.GetHashCode(), sizeof(int) / 4) ^
+               PGUtil.RotateShift(End.X.GetHashCode(), sizeof(int) / 2) ^ PGUtil.RotateShift(End.Y.GetHashCode(), sizeof(int) * 3 / 4);
 
-        public bool Equals(EDBLSeg other)
-        {
-            return Start == other.Start && End == other.End;
-        }
+        public bool Equals(EDBLSeg other) => Start == other.Start && End == other.End;
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBLSeg && Equals((EDBLSeg)obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBLSeg && Equals((EDBLSeg)obj);
 
-        public static bool operator ==(EDBLSeg x, EDBLSeg y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBLSeg x, EDBLSeg y)
-        {
-            return !(x == y);
-        }
+        public static bool operator ==(EDBLSeg x, EDBLSeg y) => x.Equals(y);
+        public static bool operator !=(EDBLSeg x, EDBLSeg y) => !(x == y);
     }
 
     /// <summary>
@@ -257,61 +208,40 @@ namespace EDBTypes
         public EDBBox(double top, double right, double bottom, double left)
             : this(new EDBPoint(right, top), new EDBPoint(left, bottom)) { }
 
-        public double Left   { get { return LowerLeft.X;  } }
-        public double Right  { get { return UpperRight.X; } }
-        public double Bottom { get { return LowerLeft.Y;  } }
-        public double Top    { get { return UpperRight.Y; } }
-        public double Width  { get { return Right - Left; } }
-        public double Height { get { return Top - Bottom; } }
+        public double Left => LowerLeft.X;
+        public double Right => UpperRight.X;
+        public double Bottom => LowerLeft.Y;
+        public double Top => UpperRight.Y;
+        public double Width => Right - Left;
+        public double Height => Top - Bottom;
 
-        public bool IsEmpty
-        {
-            get { return Width == 0 || Height == 0; }
-        }
+        public bool IsEmpty => Width == 0 || Height == 0;
 
-        public bool Equals(EDBBox other)
-        {
-            return UpperRight == other.UpperRight && LowerLeft == other.LowerLeft;
-        }
+        public bool Equals(EDBBox other) => UpperRight == other.UpperRight && LowerLeft == other.LowerLeft;
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBBox && Equals((EDBBox) obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBBox && Equals((EDBBox) obj);
 
-        public static bool operator ==(EDBBox x, EDBBox y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBBox x, EDBBox y)
-        {
-            return !(x == y);
-        }
-
+        public static bool operator ==(EDBBox x, EDBBox y) => x.Equals(y);
+        public static bool operator !=(EDBBox x, EDBBox y) => !(x == y);
         public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture, "{0},{1}", UpperRight, LowerLeft);
-        }
+            => string.Format(CultureInfo.InvariantCulture, "{0},{1}", UpperRight, LowerLeft);
 
         public static EDBBox Parse(string s)
         {
             var m = Regex.Match(s);
             return new EDBBox(
-                new EDBPoint(Double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                                Double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)),
-                new EDBPoint(Double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                                Double.Parse(m.Groups[4].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat))
+                new EDBPoint(double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                                double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)),
+                new EDBPoint(double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                                double.Parse(m.Groups[4].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat))
             );
         }
 
         public override int GetHashCode()
-        {
-            return
-                Top.GetHashCode() ^ PGUtil.RotateShift(Right.GetHashCode(), sizeof (int)/4) ^
-                PGUtil.RotateShift(Bottom.GetHashCode(), sizeof (int)/2) ^
-                PGUtil.RotateShift(LowerLeft.GetHashCode(), sizeof (int)*3/4);
-        }
+            => Top.GetHashCode() ^ PGUtil.RotateShift(Right.GetHashCode(), sizeof (int)/4) ^
+               PGUtil.RotateShift(Bottom.GetHashCode(), sizeof (int)/2) ^
+               PGUtil.RotateShift(LowerLeft.GetHashCode(), sizeof (int)*3/4);
     }
 
     /// <summary>
@@ -347,99 +277,47 @@ namespace EDBTypes
 
         public EDBPoint this[int index]
         {
-            get { return _points[index]; }
-            set { _points[index] = value; }
+            get => _points[index];
+            set => _points[index] = value;
         }
 
-        public int Capacity { get { return _points.Capacity; } }
-        public int Count { get { return _points.Count; } }
-        public bool IsReadOnly { get { return false; } }
+        public int Capacity => _points.Capacity;
+        public int Count => _points.Count;
+        public bool IsReadOnly => false;
 
-        public int IndexOf(EDBPoint item)
-        {
-            return _points.IndexOf(item);
-        }
-
-        public void Insert(int index, EDBPoint item)
-        {
-            _points.Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            _points.RemoveAt(index);
-        }
-
-        public void Add(EDBPoint item)
-        {
-            _points.Add(item);
-        }
-
-        public void Clear()
-        {
-            _points.Clear();
-        }
-
-        public bool Contains(EDBPoint item)
-        {
-            return _points.Contains(item);
-        }
-
-        public void CopyTo(EDBPoint[] array, int arrayIndex)
-        {
-            _points.CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(EDBPoint item)
-        {
-            return _points.Remove(item);
-        }
-
-        public IEnumerator<EDBPoint> GetEnumerator()
-        {
-            return _points.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public int IndexOf(EDBPoint item) => _points.IndexOf(item);
+        public void Insert(int index, EDBPoint item) => _points.Insert(index, item);
+        public void RemoveAt(int index) => _points.RemoveAt(index);
+        public void Add(EDBPoint item) => _points.Add(item);
+        public void Clear() =>  _points.Clear();
+        public bool Contains(EDBPoint item) => _points.Contains(item);
+        public void CopyTo(EDBPoint[] array, int arrayIndex) =>  _points.CopyTo(array, arrayIndex);
+        public bool Remove(EDBPoint item) =>  _points.Remove(item);
+        public IEnumerator<EDBPoint> GetEnumerator() =>  _points.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public bool Equals(EDBPath other)
         {
             if (Open != other.Open || Count != other.Count)
                 return false;
-            else if(ReferenceEquals(_points, other._points))//Short cut for shallow copies.
+            if (ReferenceEquals(_points, other._points))//Short cut for shallow copies.
                 return true;
-            for (int i = 0; i != Count; ++i)
-            {
+            for (var i = 0; i != Count; ++i)
                 if (this[i] != other[i])
-                {
                     return false;
-                }
-            }
             return true;
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj != null && obj is EDBPath && Equals((EDBPath) obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBPath && Equals((EDBPath) obj);
 
-        public static bool operator ==(EDBPath x, EDBPath y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBPath x, EDBPath y)
-        {
-            return !(x == y);
-        }
+        public static bool operator ==(EDBPath x, EDBPath y) => x.Equals(y);
+        public static bool operator !=(EDBPath x, EDBPath y) => !(x == y);
 
         public override int GetHashCode()
         {
-            int ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
-            foreach (EDBPoint point in this)
+            var ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
+            foreach (var point in this)
             {
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
@@ -458,9 +336,8 @@ namespace EDBTypes
             {
                 var p = _points[i];
                 sb.AppendFormat(CultureInfo.InvariantCulture, "({0},{1})", p.X, p.Y);
-                if (i < _points.Count - 1) {
+                if (i < _points.Count - 1)
                     sb.Append(",");
-                }
             }
             sb.Append(Open ? ']' : ')');
             return sb.ToString();
@@ -471,16 +348,16 @@ namespace EDBTypes
             bool open;
             switch (s[0])
             {
-                case '[':
-                    open = true;
-                    break;
-                case '(':
-                    open = false;
-                    break;
-                default:
-                    throw new Exception("Invalid path string: " + s);
+            case '[':
+                open = true;
+                break;
+            case '(':
+                open = false;
+                break;
+            default:
+                throw new Exception("Invalid path string: " + s);
             }
-            Contract.Assume(s[s.Length - 1] == (open ? ']' : ')'));
+            Debug.Assert(s[s.Length - 1] == (open ? ']' : ')'));
             var result = new EDBPath(open);
             var i = 1;
             while (true)
@@ -500,7 +377,7 @@ namespace EDBTypes
     /// </summary>
     public struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
     {
-        private readonly List<EDBPoint> _points;
+        readonly List<EDBPoint> _points;
 
         public EDBPolygon(IEnumerable<EDBPoint> points)
         {
@@ -516,62 +393,24 @@ namespace EDBTypes
 
         public EDBPoint this[int index]
         {
-            get { return _points[index]; }
-            set { _points[index] = value; }
+            get => _points[index];
+            set => _points[index] = value;
         }
 
-        public int Capacity { get { return _points.Capacity; } }
-        public int Count { get { return _points.Count; } }
-        public bool IsReadOnly { get { return false; } }
-        public int IndexOf(EDBPoint item)
-        {
-            return _points.IndexOf(item);
-        }
+        public int Capacity => _points.Capacity;
+        public int Count => _points.Count;
+        public bool IsReadOnly => false;
 
-        public void Insert(int index, EDBPoint item)
-        {
-            _points.Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            _points.RemoveAt(index);
-        }
-
-        public void Add(EDBPoint item)
-        {
-            _points.Add(item);
-        }
-
-        public void Clear()
-        {
-            _points.Clear();
-        }
-
-        public bool Contains(EDBPoint item)
-        {
-            return _points.Contains(item);
-        }
-
-        public void CopyTo(EDBPoint[] array, int arrayIndex)
-        {
-            _points.CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(EDBPoint item)
-        {
-            return _points.Remove(item);
-        }
-
-        public IEnumerator<EDBPoint> GetEnumerator()
-        {
-            return _points.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public int IndexOf(EDBPoint item) => _points.IndexOf(item);
+        public void Insert(int index, EDBPoint item) => _points.Insert(index, item);
+        public void RemoveAt(int index) =>  _points.RemoveAt(index);
+        public void Add(EDBPoint item) =>  _points.Add(item);
+        public void Clear() =>  _points.Clear();
+        public bool Contains(EDBPoint item) => _points.Contains(item);
+        public void CopyTo(EDBPoint[] array, int arrayIndex) => _points.CopyTo(array, arrayIndex);
+        public bool Remove(EDBPoint item) => _points.Remove(item);
+        public IEnumerator<EDBPoint> GetEnumerator() => _points.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public bool Equals(EDBPolygon other)
         {
@@ -579,35 +418,22 @@ namespace EDBTypes
                 return false;
             if (ReferenceEquals(_points, other._points))
                 return true;
-            for (int i = 0; i != Count; ++i)
-            {
+            for (var i = 0; i != Count; ++i)
                 if (this[i] != other[i])
-                {
                     return false;
-                }
-            }
             return true;
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBPolygon && Equals((EDBPolygon) obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBPolygon && Equals((EDBPolygon) obj);
 
-        public static bool operator ==(EDBPolygon x, EDBPolygon y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBPolygon x, EDBPolygon y)
-        {
-            return !(x == y);
-        }
+        public static bool operator ==(EDBPolygon x, EDBPolygon y) => x.Equals(y);
+        public static bool operator !=(EDBPolygon x, EDBPolygon y) => !(x == y);
 
         public override int GetHashCode()
         {
-            int ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
-            foreach (EDBPoint point in this)
+            var ret = 266370105;//seed with something other than zero to make paths of all zeros hash differently.
+            foreach (var point in this)
             {
                 //The ideal amount to shift each value is one that would evenly spread it throughout
                 //the resultant bytes. Using the current result % 32 is essentially using a random value
@@ -678,7 +504,7 @@ namespace EDBTypes
 
         public EDBPoint Center
         {
-            get { return new EDBPoint(X, Y); }
+            get => new EDBPoint(X, Y);
             set
             {
                 X = value.X;
@@ -686,49 +512,35 @@ namespace EDBTypes
             }
         }
 
+        // ReSharper disable CompareOfFloatsByEqualityOperator
         public bool Equals(EDBCircle other)
-        {
-            return X == other.X && Y == other.Y && Radius == other.Radius;
-        }
+            => X == other.X && Y == other.Y && Radius == other.Radius;
+        // ReSharper restore CompareOfFloatsByEqualityOperator
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBCircle && Equals((EDBCircle) obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBCircle && Equals((EDBCircle) obj);
 
         public static EDBCircle Parse(string s)
         {
             var m = Regex.Match(s);
-            if (!m.Success) {
+            if (!m.Success)
                 throw new FormatException("Not a valid circle: " + s);
-            }
 
             return new EDBCircle(
-                Double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
-                Double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
+                double.Parse(m.Groups[1].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[2].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat),
+                double.Parse(m.Groups[3].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture.NumberFormat)
             );
         }
 
-        public override String ToString()
-        {
-            return string.Format(CultureInfo.InvariantCulture, "<({0},{1}),{2}>", X, Y, Radius);
-        }
+        public override string ToString()
+            => string.Format(CultureInfo.InvariantCulture, "<({0},{1}),{2}>", X, Y, Radius);
 
-        public static bool operator ==(EDBCircle x, EDBCircle y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBCircle x, EDBCircle y)
-        {
-            return !(x == y);
-        }
+        public static bool operator ==(EDBCircle x, EDBCircle y) => x.Equals(y);
+        public static bool operator !=(EDBCircle x, EDBCircle y) => !(x == y);
 
         public override int GetHashCode()
-        {
-            return X.GetHashCode() * Y.GetHashCode() * Radius.GetHashCode();
-        }
+            => X.GetHashCode() * Y.GetHashCode() * Radius.GetHashCode();
     }
 
     /// <summary>
@@ -740,14 +552,13 @@ namespace EDBTypes
     /// </remarks>
     public struct EDBInet : IEquatable<EDBInet>
     {
-        public IPAddress Address;
-        public int Netmask;
+        public IPAddress Address { get; set; }
+        public int Netmask { get; set; }
 
         public EDBInet(IPAddress address, int netmask)
         {
             if (address.AddressFamily != AddressFamily.InterNetwork && address.AddressFamily != AddressFamily.InterNetworkV6)
-                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", "address");
-            Contract.EndContractBlock();
+                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", nameof(address));
 
             Address = address;
             Netmask = netmask;
@@ -756,8 +567,7 @@ namespace EDBTypes
         public EDBInet(IPAddress address)
         {
             if (address.AddressFamily != AddressFamily.InterNetwork && address.AddressFamily != AddressFamily.InterNetworkV6)
-                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", "address");
-            Contract.EndContractBlock();
+                throw new ArgumentException("Only IPAddress of InterNetwork or InterNetworkV6 address families are accepted", nameof(address));
 
             Address = address;
             Netmask = address.AddressFamily == AddressFamily.InterNetwork ? 32 : 128;
@@ -781,51 +591,76 @@ namespace EDBTypes
             }
         }
 
-        public override String ToString()
+        public override string ToString()
         {
-            if (Netmask != 32) {
-                return string.Format("{0}/{1}", Address, Netmask);
+            if ((Address.AddressFamily == AddressFamily.InterNetwork   && Netmask == 32) ||
+                (Address.AddressFamily == AddressFamily.InterNetworkV6 && Netmask == 128))
+            {
+                return Address.ToString();
             }
-            return Address.ToString();
+            return $"{Address}/{Netmask}";
         }
 
-        public static explicit operator IPAddress(EDBInet x)
+        // ReSharper disable once InconsistentNaming
+        public static IPAddress ToIPAddress(EDBInet inet)
         {
-            if (x.Netmask != 32) {
+            if (inet.Netmask != 32)
                 throw new InvalidCastException("Cannot cast CIDR network to address");
-            }
-            return x.Address;
+            return inet.Address;
         }
 
-        public static implicit operator EDBInet(IPAddress ipaddress)
-        {
-            return new EDBInet(ipaddress);
-        }
+        public static explicit operator IPAddress(EDBInet inet) => ToIPAddress(inet);
 
-        public bool Equals(EDBInet other)
-        {
-            return Address.Equals(other.Address) && Netmask == other.Netmask;
-        }
+        public static EDBInet ToEDBInet([CanBeNull] IPAddress ip)
+            => ReferenceEquals(ip, null) ? default(EDBInet) : new EDBInet(ip);
 
-        public override bool Equals(object obj)
-        {
-            return obj != null && obj is EDBInet && Equals((EDBInet) obj);
-        }
+        public static implicit operator EDBInet([CanBeNull] IPAddress ip) => ToEDBInet(ip);
+
+        public bool Equals(EDBInet other) => Address.Equals(other.Address) && Netmask == other.Netmask;
+
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBInet && Equals((EDBInet) obj);
 
         public override int GetHashCode()
+            => PGUtil.RotateShift(Address.GetHashCode(), Netmask%32);
+
+        public static bool operator ==(EDBInet x, EDBInet y) => x.Equals(y);
+        public static bool operator !=(EDBInet x, EDBInet y) => !(x == y);
+    }
+
+    /// <summary>
+    /// Represents a PostgreSQL tid value
+    /// </summary>
+    /// <remarks>
+    /// http://www.postgresql.org/docs/current/static/datatype-oid.html
+    /// </remarks>
+    public struct EDBTid : IEquatable<EDBTid>
+    {
+        /// <summary>
+        /// Block number
+        /// </summary>
+        public uint BlockNumber { get; }
+
+        /// <summary>
+        /// Tuple index within block
+        /// </summary>
+        public ushort OffsetNumber { get; }
+
+        public EDBTid(uint blockNumber, ushort offsetNumber)
         {
-            return PGUtil.RotateShift(Address.GetHashCode(), Netmask%32);
+            BlockNumber = blockNumber;
+            OffsetNumber = offsetNumber;
         }
 
-        public static bool operator ==(EDBInet x, EDBInet y)
-        {
-            return x.Equals(y);
-        }
+        public bool Equals(EDBTid other)
+            => BlockNumber == other.BlockNumber && OffsetNumber == other.OffsetNumber;
 
-        public static bool operator !=(EDBInet x, EDBInet y)
-        {
-            return !(x == y);
-        }
+        public override bool Equals([CanBeNull] object o) => o is EDBTid && Equals((EDBTid)o);
+
+        public override int GetHashCode() => (int)BlockNumber ^ OffsetNumber;
+        public static bool operator ==(EDBTid left, EDBTid right) => left.Equals(right);
+        public static bool operator !=(EDBTid left, EDBTid right) => !(left == right);
+        public override string ToString() => $"({BlockNumber},{OffsetNumber})";
     }
 }
 

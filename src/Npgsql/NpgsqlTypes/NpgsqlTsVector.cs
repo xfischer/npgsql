@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,16 +24,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
+
+#pragma warning disable CA1040, CA1034
 
 namespace EDBTypes
 {
     /// <summary>
     /// Represents a PostgreSQL tsvector.
     /// </summary>
-    public class EDBTsVector : IEnumerable<EDBTsVector.Lexeme>
+    public sealed class EDBTsVector : IEnumerable<EDBTsVector.Lexeme>
     {
         List<Lexeme> _lexemes;
 
@@ -65,8 +66,8 @@ namespace EDBTypes
             // Only when a .NET user wants to print the sort order.
             _lexemes.Sort((a, b) => a.Text.CompareTo(b.Text));
 
-            int res = 0;
-            int pos = 1;
+            var res = 0;
+            var pos = 1;
             while (pos < _lexemes.Count)
             {
                 if (_lexemes[pos].Text != _lexemes[res].Text)
@@ -109,19 +110,18 @@ namespace EDBTypes
         public static EDBTsVector Parse(string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(value));
 
-            List<Lexeme> lexemes = new List<Lexeme>();
-            int pos = 0;
-            int wordPos = 0;
-            StringBuilder sb = new StringBuilder();
+            var lexemes = new List<Lexeme>();
+            var pos = 0;
+            var wordPos = 0;
+            var sb = new StringBuilder();
             List<Lexeme.WordEntryPos> wordEntryPositions;
 
             WaitWord:
             if (pos >= value.Length)
                 goto Finish;
-            if (Char.IsWhiteSpace(value[pos]))
+            if (char.IsWhiteSpace(value[pos]))
             {
                 pos++;
                 goto WaitWord;
@@ -147,7 +147,7 @@ namespace EDBTypes
             goto WaitEndWord;
 
             WaitEndWord:
-            if (pos >= value.Length || Char.IsWhiteSpace(value[pos]))
+            if (pos >= value.Length || char.IsWhiteSpace(value[pos]))
             {
                 lexemes.Add(new Lexeme(sb.ToString()));
                 if (pos >= value.Length)
@@ -205,7 +205,7 @@ namespace EDBTypes
             goto InPosInfo;
 
             InPosInfo:
-            int digitPos = pos;
+            var digitPos = pos;
             while (pos < value.Length && value[pos] >= '0' && value[pos] <= '9')
                 pos++;
             if (digitPos == pos)
@@ -225,7 +225,7 @@ namespace EDBTypes
                 }
                 if (value[pos] >= 'B' && value[pos] <= 'D' || value[pos] >= 'b' && value[pos] <= 'd')
                 {
-                    char weight = value[pos];
+                    var weight = value[pos];
                     if (weight >= 'b' && weight <= 'd')
                         weight = (char)(weight - ('b' - 'B'));
                     wordEntryPositions.Add(new Lexeme.WordEntryPos(wordPos, Lexeme.Weight.D + ('D' - weight)));
@@ -237,7 +237,7 @@ namespace EDBTypes
             goto WaitPosDelim;
 
             WaitPosDelim:
-            if (pos >= value.Length || Char.IsWhiteSpace(value[pos]))
+            if (pos >= value.Length || char.IsWhiteSpace(value[pos]))
             {
                 if (pos < value.Length)
                     pos++;
@@ -265,7 +265,7 @@ namespace EDBTypes
             get
             {
                 if (index < 0 || index >= _lexemes.Count)
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentException(nameof(index));
 
                 return _lexemes[index];
             }
@@ -274,41 +274,37 @@ namespace EDBTypes
         /// <summary>
         /// Gets the number of lexemes.
         /// </summary>
-        public int Count { get { return _lexemes.Count; } }
+        public int Count => _lexemes.Count;
 
         /// <summary>
         /// Returns an enumerator.
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<Lexeme> GetEnumerator()
-        {
-            return _lexemes.GetEnumerator();
-        }
+        public IEnumerator<Lexeme> GetEnumerator() => _lexemes.GetEnumerator();
 
         /// <summary>
         /// Returns an enumerator.
         /// </summary>
         /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _lexemes.GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => _lexemes.GetEnumerator();
 
         /// <summary>
         /// Gets a string representation in PostgreSQL's format.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return string.Join(" ", _lexemes);
-        }
+        public override string ToString() => string.Join(" ", _lexemes);
 
         /// <summary>
         /// Represents a lexeme. A lexeme consists of a text string and optional word entry positions.
         /// </summary>
-        public struct Lexeme
+        public struct Lexeme : IEquatable<Lexeme>
         {
-            string _text;
+            /// <summary>
+            /// Gets or sets the text.
+            /// </summary>
+            public string Text { get; set; }
+
+            [CanBeNull]
             internal List<WordEntryPos> _wordEntryPositions;
 
             /// <summary>
@@ -317,7 +313,7 @@ namespace EDBTypes
             /// <param name="text"></param>
             public Lexeme(string text)
             {
-                _text = text;
+                Text = text;
                 _wordEntryPositions = null;
             }
 
@@ -326,29 +322,24 @@ namespace EDBTypes
             /// </summary>
             /// <param name="text"></param>
             /// <param name="wordEntryPositions"></param>
-            public Lexeme(string text, List<WordEntryPos> wordEntryPositions)
-            {
-                _text = text;
-                if (wordEntryPositions != null)
-                    _wordEntryPositions = new List<WordEntryPos>(wordEntryPositions);
-                else
-                    _wordEntryPositions = null;
-            }
+            public Lexeme(string text, [CanBeNull]List<WordEntryPos> wordEntryPositions)
+                : this(text, wordEntryPositions, false) {}
 
-            internal Lexeme(string text, List<WordEntryPos> wordEntryPositions, bool noCopy)
+            internal Lexeme(string text, [CanBeNull] List<WordEntryPos> wordEntryPositions, bool noCopy)
             {
-                _text = text;
+                Text = text;
                 if (wordEntryPositions != null)
                     _wordEntryPositions = noCopy ? wordEntryPositions : new List<WordEntryPos>(wordEntryPositions);
                 else
                     _wordEntryPositions = null;
             }
 
-            internal static List<WordEntryPos> UniquePos(List<WordEntryPos> list)
+            [CanBeNull]
+            internal static List<WordEntryPos> UniquePos([CanBeNull] List<WordEntryPos> list)
             {
                 if (list == null)
                     return null;
-                bool needsProcessing = false;
+                var needsProcessing = false;
                 for (var i = 1; i < list.Count; i++)
                 {
                     if (list[i - 1].Pos >= list[i].Pos)
@@ -365,8 +356,8 @@ namespace EDBTypes
 
                 list.Sort((x, y) => x.Pos.CompareTo(y.Pos));
 
-                int a = 0;
-                for (int b = 1; b < list.Count; b++)
+                var a = 0;
+                for (var b = 1; b < list.Count; b++)
                 {
                     if (list[a].Pos != list[b].Pos)
                     {
@@ -385,11 +376,6 @@ namespace EDBTypes
             }
 
             /// <summary>
-            /// Gets or sets the text.
-            /// </summary>
-            public string Text { get { return _text ?? ""; } set { _text = value; } }
-
-            /// <summary>
             /// Gets a word entry position.
             /// </summary>
             /// <param name="index"></param>
@@ -399,14 +385,14 @@ namespace EDBTypes
                 get
                 {
                     if (index < 0 || _wordEntryPositions == null || index >= _wordEntryPositions.Count)
-                        throw new ArgumentOutOfRangeException("index");
+                        throw new ArgumentException(nameof(index));
 
                     return _wordEntryPositions[index];
                 }
                 internal set
                 {
                     if (index < 0 || _wordEntryPositions == null || index >= _wordEntryPositions.Count)
-                        throw new ArgumentOutOfRangeException("index");
+                        throw new ArgumentOutOfRangeException(nameof(index));
 
                     _wordEntryPositions[index] = value;
                 }
@@ -415,7 +401,7 @@ namespace EDBTypes
             /// <summary>
             /// Gets the number of word entry positions.
             /// </summary>
-            public int Count { get { return _wordEntryPositions == null ? 0 : _wordEntryPositions.Count; } }
+            public int Count => _wordEntryPositions?.Count ?? 0;
 
             /// <summary>
             /// Creates a string representation in PostgreSQL's format.
@@ -423,7 +409,7 @@ namespace EDBTypes
             /// <returns></returns>
             public override string ToString()
             {
-                var str = '\'' + (_text ?? "").Replace(@"\", @"\\").Replace("'", "''") + '\'';
+                var str = '\'' + (Text ?? "").Replace(@"\", @"\\").Replace("'", "''") + '\'';
                 if (Count > 0)
                     str += ":" + string.Join(",", _wordEntryPositions);
                 return str;
@@ -432,13 +418,13 @@ namespace EDBTypes
             /// <summary>
             /// Represents a word entry position and an optional weight.
             /// </summary>
-            public struct WordEntryPos
+            public struct WordEntryPos : IEquatable<WordEntryPos>
             {
-                internal short _val;
+                internal short Value { get; }
 
                 internal WordEntryPos(short value)
                 {
-                    _val = value;
+                    Value = value;
                 }
 
                 /// <summary>
@@ -449,39 +435,26 @@ namespace EDBTypes
                 public WordEntryPos(int pos, Weight weight = Weight.D)
                 {
                     if (pos == 0)
-                        throw new ArgumentOutOfRangeException("pos", "Lexeme position is out of range. Min value is 1, max value is 2^14-1. Value was: " + pos);
+                        throw new ArgumentOutOfRangeException(nameof(pos), "Lexeme position is out of range. Min value is 1, max value is 2^14-1. Value was: " + pos);
                     if (weight < Weight.D || weight > Weight.A)
-                        throw new ArgumentOutOfRangeException("weight");
-                    Contract.EndContractBlock();
+                        throw new ArgumentOutOfRangeException(nameof(weight));
 
                     // Per documentation: "Position values can range from 1 to 16383; larger numbers are silently set to 16383."
-                    if ((pos >> 14) != 0)
+                    if (pos >> 14 != 0)
                         pos = (1 << 14) - 1;
 
-                    _val = (short)(((int)weight << 14) | pos);
+                    Value = (short)(((int)weight << 14) | pos);
                 }
 
                 /// <summary>
                 /// The weight is labeled from A to D. D is the default, and not printed.
                 /// </summary>
-                public Weight Weight
-                {
-                    get
-                    {
-                        return (Weight)((_val >> 14) & 3);
-                    }
-                }
+                public Weight Weight => (Weight)((Value >> 14) & 3);
 
                 /// <summary>
                 /// The position is a 14-bit unsigned integer indicating the position in the text this lexeme occurs. Cannot be 0.
                 /// </summary>
-                public int Pos
-                {
-                    get
-                    {
-                        return _val & ((1 << 14) - 1);
-                    }
-                }
+                public int Pos => Value & ((1 << 14) - 1);
 
                 /// <summary>
                 /// Prints this lexeme in PostgreSQL's format, i.e. position is followed by weight (weight is only printed if A, B or C).
@@ -493,6 +466,32 @@ namespace EDBTypes
                         return Pos + Weight.ToString();
                     return Pos.ToString();
                 }
+
+                /// <summary>
+                /// Determines whether the specified object is equal to the current object.
+                /// </summary>
+                public bool Equals(WordEntryPos o) => Value == o.Value;
+
+                /// <summary>
+                /// Determines whether the specified object is equal to the current object.
+                /// </summary>
+                public override bool Equals([CanBeNull] object o)
+                    => o is WordEntryPos && Equals((WordEntryPos)o);
+
+                /// <summary>
+                /// Gets a hash code for the current object.
+                /// </summary>
+                public override int GetHashCode() => Value.GetHashCode();
+
+                /// <summary>
+                /// Determines whether the specified object is equal to the current object.
+                /// </summary>
+                public static bool operator ==(WordEntryPos left, WordEntryPos right) => left.Equals(right);
+
+                /// <summary>
+                /// Determines whether the specified object is unequal to the current object.
+                /// </summary>
+                public static bool operator !=(WordEntryPos left, WordEntryPos right) => !left.Equals(right);
             }
 
             /// <summary>
@@ -520,6 +519,35 @@ namespace EDBTypes
                 /// </summary>
                 A = 3
             }
+
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            public bool Equals(Lexeme o)
+                => Text == o.Text &&
+                    ((_wordEntryPositions == null && o._wordEntryPositions == null) ||
+                    (_wordEntryPositions != null && _wordEntryPositions.Equals(o._wordEntryPositions)));
+
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            public override bool Equals([CanBeNull] object o)
+                => o is Lexeme && Equals((Lexeme)o);
+
+            /// <summary>
+            /// Gets a hash code for the current object.
+            /// </summary>
+            public override int GetHashCode() => Text.GetHashCode();
+
+            /// <summary>
+            /// Determines whether the specified object is equal to the current object.
+            /// </summary>
+            public static bool operator ==(Lexeme left, Lexeme right) => left.Equals(right);
+
+            /// <summary>
+            /// Determines whether the specified object is unequal to the current object.
+            /// </summary>
+            public static bool operator !=(Lexeme left, Lexeme right) => !left.Equals(right);
         }
     }
 }

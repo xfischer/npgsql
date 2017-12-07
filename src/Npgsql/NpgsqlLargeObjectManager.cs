@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,20 +21,17 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using  EnterpriseDB.EDBClient.FrontendMessages;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using AsyncRewriter;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Large object manager. This class can be used to store very large files in a PostgreSQL database.
     /// </summary>
-    public partial class EDBLargeObjectManager
+    public class EDBLargeObjectManager
     {
         const int INV_WRITE = 0x00020000;
         const int INV_READ = 0x00040000;
@@ -59,21 +56,15 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Execute a function
         /// </summary>
-        /// <param name="function"></param>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
-        [RewriteAsync]
-        internal T ExecuteFunction<T>(string function, params object[] arguments)
+        internal async Task<T> ExecuteFunction<T>(string function, bool async, params object[] arguments)
         {
             using (var command = new EDBCommand(function, _connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandText = function;
                 foreach (var argument in arguments)
-                {
-                    command.Parameters.Add(new EDBParameter() { Value = argument });
-                }
-                return (T)command.ExecuteScalar();
+                    command.Parameters.Add(new EDBParameter { Value = argument });
+                return (T)(async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
             }
         }
 
@@ -81,37 +72,44 @@ namespace  EnterpriseDB.EDBClient
         /// Execute a function that returns a byte array
         /// </summary>
         /// <returns></returns>
-        [RewriteAsync]
-        internal int ExecuteFunctionGetBytes(string function, byte[] buffer, int offset, int len, params object[] arguments)
+        internal async Task<int> ExecuteFunctionGetBytes(string function, byte[] buffer, int offset, int len, bool async, params object[] arguments)
         {
             using (var command = new EDBCommand(function, _connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
                 foreach (var argument in arguments)
+                    command.Parameters.Add(new EDBParameter { Value = argument });
+                using (var reader = async ? await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess) : command.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
-                    command.Parameters.Add(new EDBParameter() { Value = argument });
-                }
-                using (var reader = command.ExecuteReader(System.Data.CommandBehavior.SequentialAccess))
-                {
-                    reader.Read();
+                    if (async)
+                        await reader.ReadAsync();
+                    else
+                        reader.Read();
                     return (int)reader.GetBytes(0, 0, buffer, offset, len);
                 }
             }
         }
 
         /// <summary>
-        /// Create an empty large object in the database. If an oid is specified but is already in use, an EDBException will be thrown.
+        /// Create an empty large object in the database. If an oid is specified but is already in use, an PostgresException will be thrown.
         /// </summary>
         /// <param name="preferredOid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         /// <returns>The oid for the large object created</returns>
-        /// <exception cref="EDBException">If an oid is already in use</exception>
-        [RewriteAsync]
-        [CLSCompliant(false)]
-        public uint Create(uint preferredOid = 0)
-        {
+        /// <exception cref="PostgresException">If an oid is already in use</exception>
+        public uint Create(uint preferredOid = 0) => Create(preferredOid, false).GetAwaiter().GetResult();
 
-            return ExecuteFunction<uint>("lo_create", (int)preferredOid);
-        }
+        /// <summary>
+        /// Create an empty large object in the database. If an oid is specified but is already in use, an PostgresException will be thrown.
+        /// </summary>
+        /// <param name="preferredOid">A preferred oid, or specify 0 if one should be automatically assigned</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The oid for the large object created</returns>
+        /// <exception cref="PostgresException">If an oid is already in use</exception>
+        public Task<uint> CreateAsync(uint preferredOid, CancellationToken cancellationToken)
+            => Create(preferredOid, true);
+
+        Task<uint> Create(uint preferredOid, bool async)
+            => ExecuteFunction<uint>("lo_create($1)", async, (int)preferredOid);
 
         /// <summary>
         /// Opens a large object on the backend, returning a stream controlling this remote object.
@@ -121,10 +119,28 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object</param>
         /// <returns>An EDBLargeObjectStream</returns>
-        [RewriteAsync]
         public EDBLargeObjectStream OpenRead(uint oid)
+            => OpenRead(oid, false).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Opens a large object on the backend, returning a stream controlling this remote object.
+        /// A transaction snapshot is taken by the backend when the object is opened with only read permissions.
+        /// When reading from this object, the contents reflects the time when the snapshot was taken.
+        /// Note that this method, as well as operations on the stream must be wrapped inside a transaction.
+        /// </summary>
+        /// <param name="oid">Oid of the object</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An EDBLargeObjectStream</returns>
+        public async Task<EDBLargeObjectStream> OpenReadAsync(uint oid, CancellationToken cancellationToken)
         {
-            var fd = ExecuteFunction<int>("lo_open", (int)oid, INV_READ);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return await OpenRead(oid, true);
+        }
+
+        async Task<EDBLargeObjectStream> OpenRead(uint oid, bool async)
+        {
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ);
             return new EDBLargeObjectStream(this, oid, fd, false);
         }
 
@@ -134,10 +150,26 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object</param>
         /// <returns>An EDBLargeObjectStream</returns>
-        [RewriteAsync]
         public EDBLargeObjectStream OpenReadWrite(uint oid)
+            => OpenReadWrite(oid, false).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Opens a large object on the backend, returning a stream controlling this remote object.
+        /// Note that this method, as well as operations on the stream must be wrapped inside a transaction.
+        /// </summary>
+        /// <param name="oid">Oid of the object</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An EDBLargeObjectStream</returns>
+        public async Task<EDBLargeObjectStream> OpenReadWriteAsync(uint oid, CancellationToken cancellationToken)
         {
-            var fd = ExecuteFunction<int>("lo_open", (int)oid, INV_READ | INV_WRITE);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return await OpenReadWrite(oid, true);
+        }
+
+        async Task<EDBLargeObjectStream> OpenReadWrite(uint oid, bool async)
+        {
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ | INV_WRITE);
             return new EDBLargeObjectStream(this, oid, fd, true);
         }
 
@@ -145,10 +177,19 @@ namespace  EnterpriseDB.EDBClient
         /// Deletes a large object on the backend.
         /// </summary>
         /// <param name="oid">Oid of the object to delete</param>
-        [RewriteAsync]
         public void Unlink(uint oid)
+            => ExecuteFunction<object>("lo_unlink($1)", false, (int)oid).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Deletes a large object on the backend.
+        /// </summary>
+        /// <param name="oid">Oid of the object to delete</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task UnlinkAsync(uint oid, CancellationToken cancellationToken)
         {
-            ExecuteFunction<object>("lo_unlink", (int)oid);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                await ExecuteFunction<object>("lo_unlink", true, (int)oid);
         }
 
         /// <summary>
@@ -156,10 +197,20 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object to export</param>
         /// <param name="path">Path to write the file on the backend</param>
-        [RewriteAsync]
         public void ExportRemote(uint oid, string path)
+            => ExecuteFunction<object>("lo_export($1, $2)", false, (int)oid, path).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
+        /// </summary>
+        /// <param name="oid">Oid of the object to export</param>
+        /// <param name="path">Path to write the file on the backend</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task ExportRemoteAsync(uint oid, string path, CancellationToken cancellationToken)
         {
-            ExecuteFunction<object>("lo_export", (int)oid, path);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                await ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);
         }
 
         /// <summary>
@@ -167,17 +218,27 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="path">Path to read the file on the backend</param>
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
-        [RewriteAsync]
         public void ImportRemote(string path, uint oid = 0)
+            => ExecuteFunction<object>("lo_import($1, $2)", false, path, (int)oid).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
+        /// </summary>
+        /// <param name="path">Path to read the file on the backend</param>
+        /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task ImportRemoteAsync(string path, uint oid, CancellationToken cancellationToken)
         {
-            ExecuteFunction<object>("lo_import", path, (int)oid);
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                await ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);
         }
 
         /// <summary>
         /// Since PostgreSQL 9.3, large objects larger than 2GB can be handled, up to 4TB.
         /// This property returns true whether the PostgreSQL version is >= 9.3.
         /// </summary>
-        public bool Has64BitSupport { get { return _connection.PostgreSqlVersion >= new Version(9, 3); } }
+        public bool Has64BitSupport => _connection.PostgreSqlVersion >= new Version(9, 3);
 
         /*
         internal enum Function : uint

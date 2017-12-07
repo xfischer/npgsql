@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,150 +22,55 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
-using EDBTypes;
-using System.Data;
+using System.Diagnostics;
 using System.IO;
-using System.Diagnostics.CodeAnalysis;
-using AsyncRewriter;
+using EnterpriseDB.EDBClient.BackendMessages;
+using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandlers;
 
 namespace  EnterpriseDB.EDBClient
 {
-    interface ITypeReader<T> {}
+    // ReSharper disable once UnusedTypeParameter
+#pragma warning disable CA1040
+    interface ITypeHandler<T> { }
+#pragma warning restore CA1040
 
-    #region Simple type handler
-
-    interface ISimpleTypeWriter
+    abstract class TypeHandler
     {
-        int ValidateAndGetLength(object value, EDBParameter parameter);
-        void Write(object value, EDBBuffer buf, EDBParameter parameter);
-    }
+        internal PostgresType PostgresType { get; }
 
-    /// <summary>
-    /// A handler which can read small, usually fixed-length values.
-    /// </summary>
-    /// <typeparam name="T">the type of the value returned by this type handler</typeparam>
-    //[ContractClass(typeof(ITypeHandlerContract<>))]
-    // ReSharper disable once TypeParameterCanBeVariant
-    interface ISimpleTypeReader<T> : ITypeReader<T>
-    {
-        /// <summary>
-        /// The entire data required to read the value is expected to be in the buffer.
-        /// </summary>
-        /// <param name="buf"></param>
-        /// <param name="len"></param>
-        /// <param name="fieldDescription"></param>
-        /// <returns></returns>
-        T Read(EDBBuffer buf, int len, FieldDescription fieldDescription=null);
-    }
-
-    #endregion
-
-    [ContractClass(typeof(IChunkingTypeWriterContracts))]
-    interface IChunkingTypeWriter
-    {
-        /// <param name="value">the value to be examined</param>
-        /// <param name="lengthCache">a cache in which to store length(s) of values to be written</param>
-        /// <param name="parameter">
-        /// the <see cref="EDBParameter"/> containing <paramref name="value"/>. Consulted for settings
-        /// which impact how to send the parameter, e.g. <see cref="EDBParameter.Size"/>. Can be null.
-        /// </param>
-        int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter);
-
-        /// <param name="value">the value to be written</param>
-        /// <param name="buf"></param>
-        /// <param name="lengthCache">a cache in which to store length(s) of values to be written</param>
-        /// <param name="parameter">
-        /// the <see cref="EDBParameter"/> containing <paramref name="value"/>. Consulted for settings
-        /// which impact how to send the parameter, e.g. <see cref="EDBParameter.Size"/>. Can be null.
-        /// <see cref="EDBParameter.Size"/>.
-        /// </param>
-        void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter);
-        bool Write(ref DirectBuffer directBuf);
-    }
-
-    [ContractClassFor(typeof(IChunkingTypeWriter))]
-    // ReSharper disable once InconsistentNaming
-    class IChunkingTypeWriterContracts : IChunkingTypeWriter
-    {
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        internal TypeHandler(PostgresType postgresType)
         {
-            Contract.Requires(value != null);
-            return default(int);
+            PostgresType = postgresType;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
-        {
-            Contract.Requires(buf != null);
-            Contract.Requires(value != null);
-        }
+        internal abstract Type GetFieldType(FieldDescription fieldDescription = null);
+        internal abstract Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null);
 
-        public bool Write(ref DirectBuffer directBuf)
-        {
-            Contract.Ensures(Contract.Result<bool>() == false || directBuf.Buffer == null);
-            return default(bool);
-        }
-    }
-
-    /// <summary>
-    /// A type handler which handles values of totally arbitrary length, and therefore supports chunking them.
-    /// </summary>
-    [ContractClass(typeof(IChunkingTypeReaderContracts<>))]
-    // ReSharper disable once TypeParameterCanBeVariant
-    interface IChunkingTypeReader<T> : ITypeReader<T>
-    {
-        void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription=null);
-        bool Read(out T result);
-    }
-
-    [ContractClassFor(typeof(IChunkingTypeReader<>))]
-    // ReSharper disable once InconsistentNaming
-    class IChunkingTypeReaderContracts<T> : IChunkingTypeReader<T>
-    {
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            Contract.Requires(buf != null);
-        }
-
-        public bool Read(out T result)
-        {
-            //Contract.Ensures(!completed || Contract.ValueAtReturn(out result) == default(T));
-            result = default(T);
-            return default(bool);
-        }
-    }
-
-    internal abstract partial class TypeHandler
-    {
-        internal string PgName { get; set; }
-        internal uint OID { get; set; }
-        internal EDBDbType EDBDbType { get; set; }
-        internal abstract Type GetFieldType(FieldDescription fieldDescription=null);
-        internal abstract Type GetProviderSpecificFieldType(FieldDescription fieldDescription=null);
-
-        internal abstract object ReadValueAsObject(DataRowMessage row, FieldDescription fieldDescription);
+        internal abstract object ReadAsObject(DataRowMessage row, FieldDescription fieldDescription = null);
 
         internal virtual object ReadPsvAsObject(DataRowMessage row, FieldDescription fieldDescription)
-        {
-            return ReadValueAsObject(row, fieldDescription);
-        }
+            => ReadAsObject(row, fieldDescription);
 
-        public virtual bool PreferTextWrite { get { return false; } }
+        public abstract int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null);
 
-        [RewriteAsync]
-        internal T Read<T>(DataRowMessage row, int len, FieldDescription fieldDescription = null)
+        internal abstract Task WriteWithLength([CanBeNull] object value, WriteBuffer buf, LengthCache lengthCache,
+            EDBParameter parameter,
+            bool async, CancellationToken cancellationToken);
+
+        internal virtual bool PreferTextWrite => false;
+
+        internal async ValueTask<T> Read<T>(DataRowMessage row, int len, bool async, FieldDescription fieldDescription = null)
         {
-            Contract.Requires(row.PosInColumn == 0);
-            Contract.Ensures(row.PosInColumn == row.ColumnLen);
+            Debug.Assert(row.PosInColumn == 0);
 
             T result;
             try
             {
-                result = Read<T>(row.Buffer, len, fieldDescription);
+                result = await Read<T>(row.Buffer, len, async, fieldDescription);
             }
             finally
             {
@@ -175,86 +80,139 @@ namespace  EnterpriseDB.EDBClient
             return result;
         }
 
-        [RewriteAsync]
-        internal T Read<T>(EDBBuffer buf, int len, FieldDescription fieldDescription=null)
+        /// <summary>
+        /// Reads a value from the buffer, assuming our read position is at the value's preceding length.
+        /// If the length is -1 (null), this method will return the default value.
+        /// </summary>
+        [ItemCanBeNull]
+        internal async ValueTask<T> ReadWithLength<T>(ReadBuffer buf, bool async, FieldDescription fieldDescription = null)
         {
-            T result;
-
-            var asSimpleReader = this as ISimpleTypeReader<T>;
-            if (asSimpleReader != null)
-            {
-                buf.Ensure(len);
-                result = asSimpleReader.Read(buf, len, fieldDescription);
-            }
-            else
-            {
-                var asChunkingReader = this as IChunkingTypeReader<T>;
-                if (asChunkingReader == null) {
-                    if (fieldDescription == null)
-                        throw new InvalidCastException("Can't cast database type to " + typeof(T).Name);
-                    throw new InvalidCastException(String.Format("Can't cast database type {0} to {1}", fieldDescription.Handler.PgName, typeof(T).Name));
-                }
-
-                asChunkingReader.PrepareRead(buf, len, fieldDescription);
-                while (!asChunkingReader.Read(out result)) {
-                    buf.ReadMore();
-                }
-            }
-
-            return result;
+            await buf.Ensure(4, async);
+            var len = buf.ReadInt32();
+            if (len == -1)
+                return default(T);
+            return await Read<T>(buf, len, async, fieldDescription);
         }
 
+        internal abstract ValueTask<T> Read<T>(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
+
+        internal abstract ValueTask<object> ReadAsObject(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
+
+        internal virtual ValueTask<object> ReadPsvAsObject(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+            => ReadAsObject(buf, len, async, fieldDescription);
+
+        /// <summary>
+        /// Creates a type handler for arrays of this handler's type.
+        /// </summary>
+        internal abstract ArrayHandler CreateArrayHandler(PostgresType arrayBackendType);
+
+        /// <summary>
+        /// Creates a type handler for ranges of this handler's type.
+        /// </summary>
+        internal abstract TypeHandler CreateRangeHandler(PostgresType rangeBackendType);
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="clrType"></param>
+        /// <returns></returns>
         protected Exception CreateConversionException(Type clrType)
-        {
-            return new InvalidCastException(string.Format("Can't convert .NET type {0} to PostgreSQL {1}", clrType, PgName));
-        }
+            => new InvalidCastException($"Can't convert .NET type {clrType} to PostgreSQL {PgDisplayName}");
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="clrType"></param>
+        /// <returns></returns>
         protected Exception CreateConversionButNoParamException(Type clrType)
-        {
-            return new InvalidCastException(string.Format("Can't convert .NET type {0} to PostgreSQL {1} within an array", clrType, PgName));
-        }
+            => new InvalidCastException($"Can't convert .NET type '{clrType}' to PostgreSQL '{PgDisplayName}' within an array");
 
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(!(this is IChunkingTypeWriter && this is ISimpleTypeWriter));
-        }
+        internal string PgDisplayName => PostgresType.DisplayName;
     }
 
-    internal abstract class TypeHandler<T> : TypeHandler
+    abstract class TypeHandler<T> : TypeHandler
     {
-        internal override Type GetFieldType(FieldDescription fieldDescription)
+        internal TypeHandler(PostgresType postgresType) : base(postgresType) {}
+
+        internal override Type GetFieldType(FieldDescription fieldDescription = null) => typeof(T);
+        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null) => typeof(T);
+
+        internal override object ReadAsObject(DataRowMessage row, FieldDescription fieldDescription = null)
+            => Read<T>(row, row.ColumnLen, false, fieldDescription).Result;
+
+        internal override async ValueTask<object> ReadAsObject(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+            => await Read<T>(buf, len, async, fieldDescription);
+
+        internal override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
+            => new ArrayHandler<T>(arrayBackendType, this);
+
+        internal override TypeHandler CreateRangeHandler(PostgresType rangeBackendType)
+            => new RangeHandler<T>(rangeBackendType, this);
+    }
+
+    abstract class SimpleTypeHandler<T> : TypeHandler<T>, ISimpleTypeHandler<T>
+    {
+        internal SimpleTypeHandler(PostgresType postgresType) : base(postgresType) { }
+        public abstract T Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null);
+
+        internal sealed override async Task WriteWithLength(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            return typeof(T);
+            if (value == null || value is DBNull)
+            {
+                if (buf.WriteSpaceLeft < 4)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt32(-1);
+                return;
+            }
+            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            {
+                var elementLen = ValidateAndGetLength(value, parameter);
+                if (buf.WriteSpaceLeft < 4 + elementLen)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteInt32(elementLen);
+                Write(value, buf, parameter);
+            } else
+            {
+                buf.WriteInt32(-1);
+            }
+                
+            
         }
 
-        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription)
-        {
-            return typeof(T);
-        }
+        public sealed override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+            => ValidateAndGetLength(value, parameter);
 
-        internal override object ReadValueAsObject(DataRowMessage row, FieldDescription fieldDescription)
-        {
-            return Read<T>(row, row.ColumnLen, fieldDescription);
-        }
+        public abstract int ValidateAndGetLength(object value, EDBParameter parameter = null);
+        protected abstract void Write(object value, WriteBuffer buf, EDBParameter parameter = null);
 
-        internal override object ReadPsvAsObject(DataRowMessage row, FieldDescription fieldDescription)
+        /// <remarks>
+        /// A type handler may implement ISimpleTypeHandler for types other than its primary one.
+        /// This is why this method has type parameter T2 and not T.
+        /// </remarks>
+        internal override async ValueTask<T2> Read<T2>(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
-            return Read<T>(row, row.ColumnLen, fieldDescription);
-        }
+            await buf.Ensure(len, async);
 
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(this is ISimpleTypeReader<T> || this is IChunkingTypeReader<T>);
+            var asTypedHandler = this as ISimpleTypeHandler<T2>;
+            if (asTypedHandler == null)
+                throw new InvalidCastException(fieldDescription == null
+                    ? "Can't cast database type to " + typeof(T2).Name
+                    : $"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(T2).Name}"
+                );
+
+            return asTypedHandler.Read(buf, len, fieldDescription);
         }
     }
 
     /// <summary>
-    /// A marking interface to allow us to know whether a given type handler has a provider-specific type
-    /// distinct from its regular type
+    /// Type handlers that wish to support reading other types in additional to the main one can
+    /// implement this interface for all those types.
     /// </summary>
-    internal interface ITypeHandlerWithPsv {}
+    interface ISimpleTypeHandler<T> : ITypeHandler<T>
+    {
+        T Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null);
+    }
 
     /// <summary>
     /// A type handler that supports a provider-specific value which is different from the regular value (e.g.
@@ -262,17 +220,82 @@ namespace  EnterpriseDB.EDBClient
     /// </summary>
     /// <typeparam name="T">the regular value type returned by this type handler</typeparam>
     /// <typeparam name="TPsv">the type of the provider-specific value returned by this type handler</typeparam>
-    internal abstract class TypeHandlerWithPsv<T, TPsv> : TypeHandler<T>, ITypeHandlerWithPsv
+    abstract class SimpleTypeHandlerWithPsv<T, TPsv> : SimpleTypeHandler<T>, ISimpleTypeHandler<TPsv>
     {
-        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription)
-        {
-            return typeof (TPsv);
-        }
+        internal SimpleTypeHandlerWithPsv(PostgresType postgresType) : base(postgresType) { }
+
+        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null)
+            => typeof(TPsv);
 
         internal override object ReadPsvAsObject(DataRowMessage row, FieldDescription fieldDescription)
+            => Read<TPsv>(row, row.ColumnLen, false, fieldDescription).Result;
+
+        internal override async ValueTask<object> ReadPsvAsObject(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+            => await Read<TPsv>(buf, len, async, fieldDescription);
+
+        internal abstract TPsv ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null);
+
+        TPsv ISimpleTypeHandler<TPsv>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => ReadPsv(buf, len, fieldDescription);
+
+        internal override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
+            => new ArrayHandlerWithPsv<T, TPsv>(arrayBackendType, this);
+    }
+
+    abstract class ChunkingTypeHandler<T> : TypeHandler<T>, IChunkingTypeHandler<T>
+    {
+        internal ChunkingTypeHandler(PostgresType postgresType) : base(postgresType) { }
+
+        public abstract ValueTask<T> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
+
+        internal sealed override async Task WriteWithLength(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            return Read<TPsv>(row, row.ColumnLen, fieldDescription);
+            if (buf.WriteSpaceLeft < 4)
+                await buf.Flush(async, cancellationToken);
+
+            if (value == null || value is DBNull)
+            {
+                buf.WriteInt32(-1);
+                return;
+            }
+            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            {
+                buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
+                await Write(value, buf, lengthCache, parameter, async, cancellationToken);
+            }
+            else
+                buf.WriteInt32(-1);
+            
         }
+
+        protected abstract Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken);
+
+        /// <remarks>
+        /// A type handler may implement IChunkingTypeHandler for types other than its primary one.
+        /// This is why this method has type parameter T2 and not T.
+        /// </remarks>
+        internal override ValueTask<T2> Read<T2>(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        {
+            var asTypedHandler = this as IChunkingTypeHandler<T2>;
+            if (asTypedHandler == null)
+                throw new InvalidCastException(fieldDescription == null
+                    ? "Can't cast database type to " + typeof(T2).Name
+                    : $"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(T2).Name}"
+                );
+
+            return asTypedHandler.Read(buf, len, async, fieldDescription);
+        }
+    }
+
+    /// <summary>
+    /// Type handlers that wish to support reading other types in additional to the main one can
+    /// implement this interface for all those types.
+    /// </summary>
+    interface IChunkingTypeHandler<T> : ITypeHandler<T>
+    {
+        ValueTask<T> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
     }
 
     /// <summary>
@@ -283,12 +306,8 @@ namespace  EnterpriseDB.EDBClient
     {
         TextReader GetTextReader(Stream stream);
     }
-    struct DirectBuffer
-    {
-        public byte[] Buffer;
-        public int Offset;
-        public int Size;
-    }
+
+#pragma warning disable CA1032
 
     /// <summary>
     /// Can be thrown by readers to indicate that interpreting the value failed, but the value was read wholly
@@ -296,121 +315,13 @@ namespace  EnterpriseDB.EDBClient
     /// and the connector is therefore set to Broken.
     /// Note that an inner exception is mandatory, and will get thrown to the user instead of the SafeReadException.
     /// </summary>
-    internal class SafeReadException : Exception
+    class SafeReadException : Exception
     {
         public SafeReadException(Exception innerException) : base("", innerException)
         {
-            Contract.Requires(innerException != null);
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    class TypeMappingAttribute : Attribute
-    {
-        /// <summary>
-        /// Maps an  EnterpriseDB.EDBClient type handler to a PostgreSQL type.
-        /// </summary>
-        /// <param name="pgName">A PostgreSQL type name as it appears in the pg_type table.</param>
-        /// <param name="edbDbType">
-        /// A member of <see cref="EDBDbType"/> which represents this PostgreSQL type.
-        /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.EDBDbType"/> set to
-        /// this value will be sent with the type handler mapped by this attribute.
-        /// </param>
-        /// <param name="dbTypes">
-        /// All members of <see cref="DbType"/> which represent this PostgreSQL type.
-        /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.DbType"/> set to
-        /// one of these values will be sent with the type handler mapped by this attribute.
-        /// </param>
-        /// <param name="types">
-        /// Any .NET type which corresponds to this PostgreSQL type.
-        /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.Value"/> set to
-        /// one of these values will be sent with the type handler mapped by this attribute.
-        /// </param>
-        /// <param name="inferredDbType">
-        /// The "primary" <see cref="DbType"/> which best corresponds to this PostgreSQL type.
-        /// When <see cref="EDBParameter.EDBDbType"/> or <see cref="EDBParameter.Value"/>
-        /// set, <see cref="EDBParameter.DbType"/> will be set to this value.
-        /// </param>
-        internal TypeMappingAttribute(string pgName, EDBDbType? edbDbType, DbType[] dbTypes, Type[] types, DbType? inferredDbType)
-        {
-            if (String.IsNullOrWhiteSpace(pgName))
-                throw new ArgumentException("pgName can't be empty", "pgName");
-            Contract.EndContractBlock();
-
-            PgName = pgName;
-            EDBDbType = edbDbType;
-            DbTypes = dbTypes ?? new DbType[0];
-            Types = types ?? new Type[0];
-            InferredDbType = inferredDbType;
+            Debug.Assert(innerException != null);
         }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, DbType[] dbTypes, Type[] types, DbType inferredDbType)
-            : this(pgName, (EDBDbType?)edbDbType, dbTypes, types, inferredDbType) {}
-
-        //internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes=null, Type type=null)
-        //    : this(pgName, EDBDbType, dbTypes, type == null ? null : new[] { type }) {}
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType)
-            : this(pgName, edbDbType, new DbType[0], new Type[0], null) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, DbType inferredDbType)
-            : this(pgName, edbDbType, new DbType[0], new Type[0], inferredDbType) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, DbType[] dbTypes, Type type, DbType inferredDbType)
-            : this(pgName, edbDbType, dbTypes, new[] { type }, inferredDbType) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, DbType dbType, Type[] types)
-            : this(pgName, edbDbType, new[] { dbType }, types, dbType) {}
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, DbType dbType, Type type=null)
-            : this(pgName, edbDbType, new[] { dbType }, type == null ? null : new[] { type }, dbType) {}
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, Type[] types, DbType inferredDbType)
-            : this(pgName, edbDbType, new DbType[0], types, inferredDbType) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, Type[] types)
-            : this(pgName, edbDbType, new DbType[0], types, null) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, Type type, DbType inferredDbType)
-            : this(pgName, edbDbType, new DbType[0], new[] { type }, inferredDbType) { }
-
-        internal TypeMappingAttribute(string pgName, EDBDbType edbDbType, Type type)
-            : this(pgName, edbDbType, new DbType[0], new[] { type }, null) {}
-
-        /// <summary>
-        /// Read-only parameter
-        /// </summary>
-        internal TypeMappingAttribute(string pgName)
-            : this(pgName, null, null, null, null) {}
-
-        internal string PgName { get; private set; }
-        internal EDBDbType? EDBDbType { get; private set; }
-        internal DbType[] DbTypes { get; private set; }
-        internal Type[] Types { get; private set; }
-        internal DbType? InferredDbType { get; private set; }
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            sb.AppendFormat("[{0} EDBDbType={1}", PgName, EDBDbType);
-            if (DbTypes.Length > 0) {
-                sb.Append(" DbTypes=");
-                sb.Append(String.Join(",", DbTypes.Select(t => t.ToString())));
-            }
-            if (Types.Length > 0) {
-                sb.Append(" Types=");
-                sb.Append(String.Join(",", Types.Select(t => t.Name)));
-            }
-            sb.AppendFormat("]");
-            return sb.ToString();
-        }
-
-        [ContractInvariantMethod]
-        void ObjectInvariants()
-        {
-            Contract.Invariant(!String.IsNullOrWhiteSpace(PgName));
-            Contract.Invariant(Types != null);
-            Contract.Invariant(DbTypes != null);
-        }
+        public SafeReadException(string message) : this(new EDBException(message)) {}
     }
 }

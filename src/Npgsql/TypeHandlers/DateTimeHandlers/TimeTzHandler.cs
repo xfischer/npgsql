@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,7 +22,9 @@
 #endregion
 
 using System;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
@@ -31,13 +33,13 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
     [TypeMapping("timetz", EDBDbType.TimeTZ)]
-    internal class TimeTzHandler : TypeHandler<DateTimeOffset>,
-        ISimpleTypeReader<DateTimeOffset>, ISimpleTypeReader<DateTime>, ISimpleTypeReader<TimeSpan>,
-        ISimpleTypeWriter
+    class TimeTzHandler : SimpleTypeHandler<DateTimeOffset>, ISimpleTypeHandler<DateTime>, ISimpleTypeHandler<TimeSpan>
     {
         // Binary Format: int64 expressing microseconds, int32 expressing timezone in seconds, negative
 
-        DateTimeOffset ISimpleTypeReader<DateTimeOffset>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal TimeTzHandler(PostgresType postgresType) : base(postgresType) { }
+
+        public override DateTimeOffset Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             // Adjust from 1 microsecond to 100ns. Time zone (in seconds) is inverted.
             var ticks = buf.ReadInt64() * 10;
@@ -45,26 +47,20 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             return new DateTimeOffset(ticks, offset);
         }
 
-        DateTime ISimpleTypeReader<DateTime>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return Read<DateTimeOffset>(buf, len, fieldDescription).LocalDateTime;
-        }
+        DateTime ISimpleTypeHandler<DateTime>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => Read(buf, len, fieldDescription).LocalDateTime;
 
-        TimeSpan ISimpleTypeReader<TimeSpan>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return Read<DateTimeOffset>(buf, len, fieldDescription).LocalDateTime.TimeOfDay;
-        }
+        TimeSpan ISimpleTypeHandler<TimeSpan>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => Read(buf, len, fieldDescription).LocalDateTime.TimeOfDay;
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             if (!(value is DateTimeOffset) && !(value is DateTime) && !(value is TimeSpan))
-            {
                 throw CreateConversionException(value.GetType());
-            }
             return 12;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
             if (value is DateTimeOffset)
             {
@@ -91,7 +87,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                     buf.WriteInt32(-(int)(TimeZoneInfo.Local.BaseUtcOffset.Ticks / TimeSpan.TicksPerSecond));
                     break;
                 default:
-                    throw PGUtil.ThrowIfReached();
+                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {dt.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
                 }
 
                 return;
@@ -105,7 +101,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                 return;
             }
 
-            throw PGUtil.ThrowIfReached();
+            throw new InvalidOperationException("Internal  EnterpriseDB.EDBClient bug, please report.");
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,10 +24,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient;
 #pragma warning disable 1591
 
 // ReSharper disable once CheckNamespace
@@ -38,7 +36,7 @@ namespace EDBTypes
     /// DateTime is capable of storing values from year 1 to 9999 at 100-nanosecond precision,
     /// while PostgreSQL's timestamps store values from 4713BC to 5874897AD with 1-microsecond precision.
     /// </summary>
-#if !DNXCORE50
+#if NET45 || NET451
     [Serializable]
 #endif
     public struct EDBDateTime : IEquatable<EDBDateTime>, IComparable<EDBDateTime>, IComparable,
@@ -73,8 +71,7 @@ namespace EDBTypes
         EDBDateTime(InternalType type, EDBDate date, TimeSpan time)
         {
             if (!date.IsFinite && type != InternalType.Infinity && type != InternalType.NegativeInfinity)
-                throw new ArgumentException("Can't construct an EDBDateTime with a non-finite date, use Infinity and NegativeInfinity instead", "date");
-            Contract.EndContractBlock();
+                throw new ArgumentException("Can't construct an EDBDateTime with a non-finite date, use Infinity and NegativeInfinity instead", nameof(date));
 
             _type = type;
             _date = date;
@@ -106,22 +103,22 @@ namespace EDBTypes
 
         #region Public Properties
 
-        public EDBDate Date { get { return _date; } }
-        public TimeSpan Time { get { return _time; } }
-        public int DayOfYear { get { return _date.DayOfYear; } }
-        public int Year { get { return _date.Year; } }
-        public int Month { get { return _date.Month; } }
-        public int Day { get { return _date.Day; } }
-        public DayOfWeek DayOfWeek { get { return _date.DayOfWeek; } }
-        public bool IsLeapYear { get { return _date.IsLeapYear; } }
+        public EDBDate Date => _date;
+        public TimeSpan Time => _time;
+        public int DayOfYear => _date.DayOfYear;
+        public int Year => _date.Year;
+        public int Month => _date.Month;
+        public int Day => _date.Day;
+        public DayOfWeek DayOfWeek => _date.DayOfWeek;
+        public bool IsLeapYear => _date.IsLeapYear;
 
-        public long Ticks { get { return _date.DaysSinceEra * EDBTimeSpan.TicksPerDay + _time.Ticks; } }
-        public int Millisecond { get { return _time.Milliseconds; } }
-        public int Second { get { return _time.Seconds; } }
-        public int Minute { get { return _time.Minutes; } }
-        public int Hour { get { return _time.Hours; } }
-        public bool IsInfinity { get { return _type == InternalType.Infinity; } }
-        public bool IsNegativeInfinity { get { return _type == InternalType.NegativeInfinity; } }
+        public long Ticks => _date.DaysSinceEra * EDBTimeSpan.TicksPerDay + _time.Ticks;
+        public int Millisecond => _time.Milliseconds;
+        public int Second => _time.Seconds;
+        public int Minute => _time.Minutes;
+        public int Hour => _time.Hours;
+        public bool IsInfinity => _type == InternalType.Infinity;
+        public bool IsNegativeInfinity => _type == InternalType.NegativeInfinity;
 
         public bool IsFinite
         {
@@ -136,7 +133,7 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return false;
                 default:
-                    throw PGUtil.ThrowIfReached();
+                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
                 }
             }
         }
@@ -156,7 +153,7 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return DateTimeKind.Unspecified;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(DateTimeKind)}. Please file a bug.");
                 }
             }
         }
@@ -165,19 +162,15 @@ namespace EDBTypes
         /// Cast of an <see cref="EDBDateTime"/> to a <see cref="DateTime"/>.
         /// </summary>
         /// <returns>An equivalent <see cref="DateTime"/>.</returns>
-        public DateTime DateTime
+        public DateTime ToDateTime()
         {
-            get
-            {
-                if (!IsFinite)
-                    throw new InvalidCastException("Can't convert infinite timestamp values to DateTime");
-                Contract.EndContractBlock();
+            if (!IsFinite)
+                throw new InvalidCastException("Can't convert infinite timestamp values to DateTime");
 
-                if (_date.DaysSinceEra < 0 || _date.DaysSinceEra > MaxDateTimeDay)
-                    throw new InvalidCastException("Out of the range of DateTime (year must be between 1 and 9999)");
+            if (_date.DaysSinceEra < 0 || _date.DaysSinceEra > MaxDateTimeDay)
+                throw new InvalidCastException("Out of the range of DateTime (year must be between 1 and 9999)");
 
-                return new DateTime(Ticks, Kind);
-            }
+            return new DateTime(Ticks, Kind);
         }
 
         /// <summary>
@@ -186,7 +179,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToUniversalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToUniversalTime()
@@ -199,7 +192,7 @@ namespace EDBTypes
                 if (_date.DaysSinceEra >= 1 && _date.DaysSinceEra <= MaxDateTimeDay - 1)
                 {
                     // Day between 0001-01-02 and 9999-12-30, so we can use DateTime and it will always succeed
-                    return new EDBDateTime(Subtract(TimeZoneInfo.Local.GetUtcOffset(new DateTime(this.DateTime.Ticks, DateTimeKind.Local))).Ticks, DateTimeKind.Utc);
+                    return new EDBDateTime(Subtract(TimeZoneInfo.Local.GetUtcOffset(new DateTime(ToDateTime().Ticks, DateTimeKind.Local))).Ticks, DateTimeKind.Utc);
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
                 return new EDBDateTime(Subtract(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Utc);
@@ -208,7 +201,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
@@ -218,7 +211,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToLocalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/ EnterpriseDB.EDBClient/ EnterpriseDB.EDBClient/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToLocalTime()
@@ -230,7 +223,7 @@ namespace EDBTypes
                 if (_date.DaysSinceEra >= 1 && _date.DaysSinceEra <= MaxDateTimeDay - 1)
                 {
                     // Day between 0001-01-02 and 9999-12-30, so we can use DateTime and it will always succeed
-                    return new EDBDateTime(TimeZoneInfo.ConvertTimeFromUtc(new DateTime(this.DateTime.Ticks, DateTimeKind.Utc), TimeZoneInfo.Local));
+                    return new EDBDateTime(TimeZoneInfo.ConvertTime(new DateTime(ToDateTime().Ticks, DateTimeKind.Utc), TimeZoneInfo.Local));
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
                 return new EDBDateTime(Add(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Local);
@@ -239,11 +232,11 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
-        public static EDBDateTime Now { get { return new EDBDateTime(DateTime.Now); } }
+        public static EDBDateTime Now => new EDBDateTime(DateTime.Now);
 
         #endregion
 
@@ -257,7 +250,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return "-infinity";
             default:
-                return string.Format("{0} {1}", _date, _time);
+                return $"{_date} {_time}";
             }
         }
 
@@ -273,16 +266,16 @@ namespace EDBTypes
                 return NegativeInfinity;
             default:
                 try {
-                    int idxSpace = str.IndexOf(' ');
-                    string datePart = str.Substring(0, idxSpace);
+                    var idxSpace = str.IndexOf(' ');
+                    var datePart = str.Substring(0, idxSpace);
                     if (str.Contains("bc")) {
                         datePart += " BC";
                     }
-                    int idxSecond = str.IndexOf(' ', idxSpace + 1);
+                    var idxSecond = str.IndexOf(' ', idxSpace + 1);
                     if (idxSecond == -1) {
                         idxSecond = str.Length;
                     }
-                    string timePart = str.Substring(idxSpace + 1, idxSecond - idxSpace - 1);
+                    var timePart = str.Substring(idxSpace + 1, idxSecond - idxSpace - 1);
                     return new EDBDateTime(EDBDate.Parse(datePart), TimeSpan.Parse(timePart));
                 } catch (OverflowException) {
                     throw;
@@ -308,10 +301,8 @@ namespace EDBTypes
             }
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj is EDBDateTime && Equals((EDBDateTime)obj);
-        }
+        public override bool Equals([CanBeNull] object obj)
+            => obj is EDBDateTime && Equals((EDBDateTime)obj);
 
         public override int GetHashCode()
         {
@@ -339,39 +330,31 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return 1;
                 default:
-                    int cmp = _date.CompareTo(other._date);
+                    var cmp = _date.CompareTo(other._date);
                     return cmp == 0 ? _time.CompareTo(_time) : cmp;
                 }
             }
         }
 
-        public int CompareTo(object obj)
+        public int CompareTo([CanBeNull] object o)
         {
-            if (obj == null) {
+            if (o == null)
                 return 1;
-            }
-            if (obj is EDBDateTime) {
-                return CompareTo((EDBDateTime)obj);
-            }
+            if (o is EDBDateTime)
+                return CompareTo((EDBDateTime)o);
             throw new ArgumentException();
         }
 
-        public int Compare(EDBDateTime x, EDBDateTime y)
-        {
-            return x.CompareTo(y);
-        }
+        public int Compare(EDBDateTime x, EDBDateTime y) => x.CompareTo(y);
 
-        public int Compare(object x, object y)
+        public int Compare([CanBeNull] object x, [CanBeNull] object y)
         {
-            if (x == null) {
+            if (x == null)
                 return y == null ? 0 : -1;
-            }
-            if (y == null) {
+            if (y == null)
                 return 1;
-            }
-            if (!(x is IComparable) || !(y is IComparable)) {
+            if (!(x is IComparable) || !(y is IComparable))
                 throw new ArgumentException();
-            }
             return ((IComparable)x).CompareTo(y);
         }
 
@@ -384,7 +367,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A positive or negative time interval.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the time interval represented by value.</returns>
-        [Pure]
         public EDBDateTime Add(EDBTimeSpan value) { return AddTicks(value.Ticks); }
 
         /// <summary>
@@ -392,7 +374,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A positive or negative time interval.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the time interval represented by value.</returns>
-        [Pure]
         public EDBDateTime Add(TimeSpan value) { return AddTicks(value.Ticks); }
 
         /// <summary>
@@ -400,7 +381,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of years. The value parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of years represented by value.</returns>
-        [Pure]
         public EDBDateTime AddYears(int value)
         {
             switch (_type) {
@@ -417,7 +397,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of months. The months parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and months.</returns>
-        [Pure]
         public EDBDateTime AddMonths(int value)
         {
             switch (_type) {
@@ -434,7 +413,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of whole and fractional days. The value parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of days represented by value.</returns>
-        [Pure]
         public EDBDateTime AddDays(double value) { return Add(TimeSpan.FromDays(value)); }
 
         /// <summary>
@@ -442,7 +420,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of whole and fractional hours. The value parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of hours represented by value.</returns>
-        [Pure]
         public EDBDateTime AddHours(double value) { return Add(TimeSpan.FromHours(value)); }
 
         /// <summary>
@@ -450,7 +427,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of whole and fractional minutes. The value parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of minutes represented by value.</returns>
-        [Pure]
         public EDBDateTime AddMinutes(double value) { return Add(TimeSpan.FromMinutes(value)); }
 
         /// <summary>
@@ -458,7 +434,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of whole and fractional minutes. The value parameter can be negative or positive.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of minutes represented by value.</returns>
-        [Pure]
         public EDBDateTime AddSeconds(double value) { return Add(TimeSpan.FromSeconds(value)); }
 
         /// <summary>
@@ -466,7 +441,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of whole and fractional milliseconds. The value parameter can be negative or positive. Note that this value is rounded to the nearest integer.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the number of milliseconds represented by value.</returns>
-        [Pure]
         public EDBDateTime AddMilliseconds(double value) { return Add(TimeSpan.FromMilliseconds(value)); }
 
         /// <summary>
@@ -474,7 +448,6 @@ namespace EDBTypes
         /// </summary>
         /// <param name="value">A number of 100-nanosecond ticks. The value parameter can be positive or negative.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the time represented by value.</returns>
-        [Pure]
         public EDBDateTime AddTicks(long value)
         {
             switch (_type) {
@@ -486,24 +459,22 @@ namespace EDBTypes
             }
         }
 
-        [Pure]
         public EDBDateTime Subtract(EDBTimeSpan interval)
         {
             return Add(-interval);
         }
 
-        [Pure]
         public EDBTimeSpan Subtract(EDBDateTime timestamp)
         {
             switch (_type) {
             case InternalType.Infinity:
             case InternalType.NegativeInfinity:
-                throw new ArgumentOutOfRangeException("this", "You cannot subtract infinity timestamps");
+                throw new InvalidOperationException("You cannot subtract infinity timestamps");
             }
             switch (timestamp._type) {
             case InternalType.Infinity:
             case InternalType.NegativeInfinity:
-                throw new ArgumentOutOfRangeException("timestamp", "You cannot subtract infinity timestamps");
+                throw new InvalidOperationException("You cannot subtract infinity timestamps");
             }
             return new EDBTimeSpan(0, _date.DaysSinceEra - timestamp._date.DaysSinceEra, _time.Ticks - timestamp._time.Ticks);
         }
@@ -513,54 +484,21 @@ namespace EDBTypes
         #region Operators
 
         public static EDBDateTime operator +(EDBDateTime timestamp, EDBTimeSpan interval)
-        {
-            return timestamp.Add(interval);
-        }
+            => timestamp.Add(interval);
 
         public static EDBDateTime operator +(EDBTimeSpan interval, EDBDateTime timestamp)
-        {
-            return timestamp.Add(interval);
-        }
+            => timestamp.Add(interval);
 
         public static EDBDateTime operator -(EDBDateTime timestamp, EDBTimeSpan interval)
-        {
-            return timestamp.Subtract(interval);
-        }
+            => timestamp.Subtract(interval);
 
-        public static EDBTimeSpan operator -(EDBDateTime x, EDBDateTime y)
-        {
-            return x.Subtract(y);
-        }
-
-        public static bool operator ==(EDBDateTime x, EDBDateTime y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(EDBDateTime x, EDBDateTime y)
-        {
-            return !(x == y);
-        }
-
-        public static bool operator <(EDBDateTime x, EDBDateTime y)
-        {
-            return x.CompareTo(y) < 0;
-        }
-
-        public static bool operator >(EDBDateTime x, EDBDateTime y)
-        {
-            return x.CompareTo(y) > 0;
-        }
-
-        public static bool operator <=(EDBDateTime x, EDBDateTime y)
-        {
-            return x.CompareTo(y) <= 0;
-        }
-
-        public static bool operator >=(EDBDateTime x, EDBDateTime y)
-        {
-            return x.CompareTo(y) >= 0;
-        }
+        public static EDBTimeSpan operator -(EDBDateTime x, EDBDateTime y) => x.Subtract(y);
+        public static bool operator ==(EDBDateTime x, EDBDateTime y) => x.Equals(y);
+        public static bool operator !=(EDBDateTime x, EDBDateTime y) => !(x == y);
+        public static bool operator <(EDBDateTime x, EDBDateTime y) => x.CompareTo(y) < 0;
+        public static bool operator >(EDBDateTime x, EDBDateTime y) => x.CompareTo(y) > 0;
+        public static bool operator <=(EDBDateTime x, EDBDateTime y) => x.CompareTo(y) <= 0;
+        public static bool operator >=(EDBDateTime x, EDBDateTime y) => x.CompareTo(y) >= 0;
 
         #endregion
 
@@ -571,10 +509,8 @@ namespace EDBTypes
         /// </summary>
         /// <param name="dateTime">A <see cref="DateTime"/></param>
         /// <returns>An equivalent <see cref="EDBDateTime"/>.</returns>
-        public static implicit operator EDBDateTime(DateTime dateTime)
-        {
-            return new EDBDateTime(dateTime);
-        }
+        public static implicit operator EDBDateTime(DateTime dateTime) => ToEDBDateTime(dateTime);
+        public static EDBDateTime ToEDBDateTime(DateTime dateTime) => new EDBDateTime(dateTime);
 
         /// <summary>
         /// Explicit cast of an <see cref="EDBDateTime"/> to a <see cref="DateTime"/>.
@@ -582,17 +518,11 @@ namespace EDBTypes
         /// <param name="EDBDateTime">An <see cref="EDBDateTime"/>.</param>
         /// <returns>An equivalent <see cref="DateTime"/>.</returns>
         public static explicit operator DateTime(EDBDateTime EDBDateTime)
-        {
-            return EDBDateTime.DateTime;
-        }
+            => EDBDateTime.ToDateTime();
 
         #endregion
 
-        [Pure]
-        public EDBDateTime Normalize()
-        {
-            return Add(EDBTimeSpan.Zero);
-        }
+        public EDBDateTime Normalize() => Add(EDBTimeSpan.Zero);
 
         static InternalType KindToInternalType(DateTimeKind kind)
         {
@@ -604,7 +534,7 @@ namespace EDBTypes
             case DateTimeKind.Local:
                 return InternalType.FiniteLocal;
             default:
-                throw PGUtil.ThrowIfReached();
+                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {kind} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 

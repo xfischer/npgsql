@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,13 +22,12 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
@@ -37,24 +36,24 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
     [TypeMapping("inet", EDBDbType.Inet, new[] { typeof(EDBInet), typeof(IPAddress) })]
-    internal class InetHandler : TypeHandlerWithPsv<IPAddress, EDBInet>,
-        ISimpleTypeReader<IPAddress>, ISimpleTypeReader<EDBInet>, ISimpleTypeWriter,
-        ISimpleTypeReader<string>
+    class InetHandler : SimpleTypeHandlerWithPsv<IPAddress, EDBInet>, ISimpleTypeHandler<string>
     {
+        // ReSharper disable InconsistentNaming
         const byte IPv4 = 2;
         const byte IPv6 = 3;
+        // ReSharper restore InconsistentNaming
 
-        public IPAddress Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return ((ISimpleTypeReader<EDBInet>)this).Read(buf, len, fieldDescription).Address;
-        }
+        internal InetHandler(PostgresType postgresType) : base(postgresType) { }
 
-        static internal EDBInet DoRead(EDBBuffer buf, FieldDescription fieldDescription, int len, bool isCidrHandler)
+        public override IPAddress Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => ((ISimpleTypeHandler<EDBInet>)this).Read(buf, len, fieldDescription).Address;
+
+        internal static EDBInet DoRead(ReadBuffer buf, [CanBeNull] FieldDescription fieldDescription, int len, bool isCidrHandler)
         {
             buf.ReadByte();  // addressFamily
             var mask = buf.ReadByte();
             var isCidr = buf.ReadByte() == 1;
-            Contract.Assume(isCidrHandler == isCidr);
+            Debug.Assert(isCidrHandler == isCidr);
             var numBytes = buf.ReadByte();
             var bytes = new byte[numBytes];
             for (var i = 0; i < numBytes; i++) {
@@ -63,26 +62,21 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             return new EDBInet(new IPAddress(bytes), mask);
         }
 
-        EDBInet ISimpleTypeReader<EDBInet>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return DoRead(buf, fieldDescription, len, false);
-        }
+        internal override EDBInet ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => DoRead(buf, fieldDescription, len, false);
 
-        string ISimpleTypeReader<string>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return ((ISimpleTypeReader<EDBInet>)this).Read(buf, len, fieldDescription).ToString();
-        }
+        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => ((ISimpleTypeHandler<EDBInet>)this).Read(buf, len, fieldDescription).ToString();
 
-        static internal int DoValidateAndGetLength(object value)
+        internal static int DoValidateAndGetLength(object value)
         {
             IPAddress ip;
-            if (value is EDBInet) {
+            if (value is EDBInet)
                 ip = ((EDBInet)value).Address;
-            } else {
+            else {
                 ip = value as IPAddress;
-                if (ip == null) {
-                    throw new InvalidCastException(String.Format("Can't send type {0} as inet", value.GetType()));
-                }
+                if (ip == null)
+                    throw new InvalidCastException($"Can't send type {value.GetType()} as inet");
             }
 
             switch (ip.AddressFamily) {
@@ -91,16 +85,14 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             case AddressFamily.InterNetworkV6:
                 return 20;
             default:
-                throw new InvalidCastException(String.Format("Can't handle IPAddress with AddressFamily {0}, only InterNetwork or InterNetworkV6!", ip.AddressFamily));
+                throw new InvalidCastException($"Can't handle IPAddress with AddressFamily {ip.AddressFamily}, only InterNetwork or InterNetworkV6!");
             }
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
-        {
-            return DoValidateAndGetLength(value);
-        }
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+            => DoValidateAndGetLength(value);
 
-        internal static void DoWrite(object value, EDBBuffer buf, bool isCidrHandler)
+        internal static void DoWrite(object value, WriteBuffer buf, bool isCidrHandler)
         {
             IPAddress ip;
             int mask;
@@ -111,7 +103,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             } else {
                 ip = value as IPAddress;
                 if (ip == null) {
-                    throw new InvalidCastException(String.Format("Can't send type {0} as inet", value.GetType()));
+                    throw new InvalidCastException($"Can't send type {value.GetType()} as inet");
                 }
                 mask = -1;
             }
@@ -130,7 +122,8 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
                 }
                 break;
             default:
-                throw new InvalidCastException(String.Format("Can't handle IPAddress with AddressFamily {0}, only InterNetwork or InterNetworkV6!", ip.AddressFamily));
+                throw new InvalidCastException(
+                    $"Can't handle IPAddress with AddressFamily {ip.AddressFamily}, only InterNetwork or InterNetworkV6!");
             }
 
             buf.WriteByte((byte)mask);
@@ -140,9 +133,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             buf.WriteBytes(bytes, 0, bytes.Length);
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
-        {
-            DoWrite(value, buf, false);
-        }
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+            => DoWrite(value, buf, false);
     }
 }

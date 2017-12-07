@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,13 +22,10 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
@@ -36,33 +33,29 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
     [TypeMapping("float8", EDBDbType.Double, DbType.Double, typeof(double))]
-    internal class DoubleHandler : TypeHandler<double>,
-        ISimpleTypeReader<double>, ISimpleTypeWriter
+    class DoubleHandler : SimpleTypeHandler<double>
     {
-        public double Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadDouble();
-        }
+        internal DoubleHandler(PostgresType postgresType) : base(postgresType) { }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override double Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => buf.ReadDouble();
+
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             if (!(value is double))
             {
                 var converted = Convert.ToDouble(value);
                 if (parameter == null)
-                {
                     throw CreateConversionButNoParamException(value.GetType());
-                }
                 parameter.ConvertedValue = converted;
             }
             return 8;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
             buf.WriteDouble((double)value);
         }
     }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,50 +23,54 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
     /// <summary>
     /// A simple query message.
-    ///
-    /// Note that since this is only used to send some specific control messages (e.g. start transaction)
-    /// and never arbitrary-length user-provided queries, this message is treated as simple and not chunking,
-    /// and only ASCII is supported.
     /// </summary>
-    class QueryMessage : SimpleFrontendMessage
+    class QueryMessage : FrontendMessage
     {
-        string Query { get; set; }
+        readonly Encoding _encoding;
+        string _query;
 
-        internal const byte Code = (byte)'Q';
+        const byte Code = (byte)'Q';
 
-        internal QueryMessage(string query)
+        internal QueryMessage(Encoding encoding)
         {
-            Contract.Requires(query != null && query.All(c => c < 128), "Not ASCII");
-            Contract.Requires(PGUtil.UTF8Encoding.GetByteCount(query) + 5 < EDBBuffer.MinimumBufferSize, "Too long");
-
-            Query = query;
+            _encoding = encoding;
         }
 
-        internal override int Length
+        internal QueryMessage Populate(string query)
         {
-            get { return 1 + 4 + (Query.Length + 1); }
+            Debug.Assert(query != null);
+
+            _query = query;
+            return this;
         }
 
-        internal override void Write(EDBBuffer buf)
+        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
         {
-            Contract.Requires(Query != null && Query.All(c => c < 128));
+            if (buf.WriteSpaceLeft < 1 + 4)
+                await buf.Flush(async, cancellationToken);
+            var queryByteLen = _encoding.GetByteCount(_query);
 
             buf.WriteByte(Code);
-            buf.WriteInt32(Length - 1);
-            buf.WriteBytesNullTerminated(Encoding.ASCII.GetBytes(Query));
+            buf.WriteInt32(4 +            // Message length (including self excluding code)
+                           queryByteLen + // Query byte length
+                           1);            // Null terminator
+
+            await buf.WriteString(_query, queryByteLen, async, cancellationToken);
+            if (buf.WriteSpaceLeft < 1)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteByte(0);
         }
 
-        public override string ToString()
-        {
-            return String.Format("[Query={0}]", Query);
-        }
+        public override string ToString() => $"[Query={_query}]";
     }
 }

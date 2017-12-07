@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,149 +23,76 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
+using System.Diagnostics;
 using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using System.Threading;
+using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
-    [TypeMapping("hstore", EDBDbType.Hstore)]
-    class HstoreHandler : TypeHandler<IDictionary<string, string>>,
-        IChunkingTypeWriter, IChunkingTypeReader<IDictionary<string, string>>, IChunkingTypeReader<string>
+    [TypeMapping("hstore", EDBDbType.Hstore, new[] { typeof(Dictionary<string, string>), typeof(IDictionary<string, string>) })]
+    class HstoreHandler : ChunkingTypeHandler<Dictionary<string, string>>,
+        IChunkingTypeHandler<IDictionary<string, string>>, IChunkingTypeHandler<string>
     {
-        EDBBuffer _buf;
-        EDBParameter _parameter;
-        LengthCache _lengthCache;
-        FieldDescription _fieldDescription;
-        IDictionary<string, string> _value;
-        IEnumerator<KeyValuePair<string, string>> _enumerator;
-        string _key;
-        int _numElements;
-        State _state;
-
         /// <summary>
         /// The text handler to which we delegate encoding/decoding of the actual strings
         /// </summary>
         readonly TextHandler _textHandler;
 
-        public HstoreHandler()
+        internal HstoreHandler(PostgresType postgresType, TypeHandlerRegistry registry) : base(postgresType)
         {
-            _textHandler = new TextHandler();
+            _textHandler = new TextHandler(postgresType, registry);
         }
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
         {
-            if (lengthCache == null) {
+            var asDict = value as IDictionary<string, string>;
+            if (asDict == null)
+                throw CreateConversionException(value.GetType());
+
+            if (lengthCache == null)
                 lengthCache = new LengthCache(1);
-            }
-            if (lengthCache.IsPopulated) {
+            if (lengthCache.IsPopulated)
                 return lengthCache.Get();
-            }
 
-            var asDict = value as IDictionary<string, string>;
-            if (asDict != null)
+            // Leave empty slot for the entire hstore length, and go ahead an populate the individual string slots
+            var pos = lengthCache.Position;
+            lengthCache.Set(0);
+
+            var totalLen = 4;  // Number of key-value pairs
+            foreach (var kv in asDict)
             {
-                // Leave empty slot for the entire hstore length, and go ahead an populate the individual string slots
-                var pos = lengthCache.Position;
-                lengthCache.Set(0);
-
-                var totalLen = 4;  // Number of key-value pairs
-                foreach (var kv in asDict)
-                {
-                    totalLen += 8;   // Key length + value length
-                    if (kv.Key == null) {
-                        throw new FormatException("HSTORE doesn't support null keys");
-                    }
-                    totalLen += lengthCache.Set(Encoding.UTF8.GetByteCount(kv.Key));
-                    if (kv.Value != null) {
-                        totalLen += lengthCache.Set(Encoding.UTF8.GetByteCount(kv.Value));
-                    }
-                }
-
-                return lengthCache.Lengths[pos] = totalLen;
+                totalLen += 8;   // Key length + value length
+                if (kv.Key == null)
+                    throw new FormatException("HSTORE doesn't support null keys");
+                totalLen += _textHandler.ValidateAndGetLength(kv.Key, ref lengthCache);
+                if (kv.Value != null)
+                    totalLen += _textHandler.ValidateAndGetLength(kv.Value, ref lengthCache);
             }
 
-            throw CreateConversionException(value.GetType());
+            return lengthCache.Lengths[pos] = totalLen;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter)
+        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            _buf = buf;
-            _lengthCache = lengthCache;
-            _parameter = parameter;
-            _state = State.Count;
+            var asDict = (IDictionary<string, string>)value;
 
-            var asDict = value as IDictionary<string, string>;
-            if (asDict != null) {
-                _value = asDict;
+            if (buf.WriteSpaceLeft < 4)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteInt32(asDict.Count);
+            if (asDict.Count == 0)
                 return;
-            }
 
-            throw PGUtil.ThrowIfReached();
-        }
-
-        public bool Write(ref DirectBuffer directBuf)
-        {
-            switch (_state)
+            foreach (var kv in asDict)
             {
-                case State.Count:
-                    if (_buf.WriteSpaceLeft < 4) { return false; }
-                    _buf.WriteInt32(_value.Count);
-                    if (_value.Count == 0)
-                    {
-                        CleanupState();
-                        return true;
-                    }
-                    _enumerator = _value.GetEnumerator();
-                    _enumerator.MoveNext();
-                    goto case State.KeyLen;
-
-                case State.KeyLen:
-                    _state = State.KeyLen;
-                    if (_buf.WriteSpaceLeft < 4) { return false; }
-                    var keyLen = _lengthCache.Get();
-                    _buf.WriteInt32(keyLen);
-                    _textHandler.PrepareWrite(_enumerator.Current.Key, _buf, _lengthCache, _parameter);
-                    goto case State.KeyData;
-
-                case State.KeyData:
-                    _state = State.KeyData;
-                    if (!_textHandler.Write(ref directBuf)) { return false; }
-                    goto case State.ValueLen;
-
-                case State.ValueLen:
-                    _state = State.ValueLen;
-                    if (_buf.WriteSpaceLeft < 4) { return false; }
-                    if (_enumerator.Current.Value == null)
-                    {
-                        _buf.WriteInt32(-1);
-                        if (!_enumerator.MoveNext()) {
-                            CleanupState();
-                            return true;
-                        }
-                        goto case State.KeyLen;
-                    }
-                    var valueLen = _lengthCache.Get();
-                    _buf.WriteInt32(valueLen);
-                    _textHandler.PrepareWrite(_enumerator.Current.Value, _buf, _lengthCache, _parameter);
-                    goto case State.ValueData;
-
-                case State.ValueData:
-                    _state = State.ValueData;
-                    if (!_textHandler.Write(ref directBuf)) { return false; }
-                    if (!_enumerator.MoveNext())
-                    {
-                        CleanupState();
-                        return true;
-                    }
-                    goto case State.KeyLen;
-
-                default:
-                    throw PGUtil.ThrowIfReached();
+                await _textHandler.WriteWithLength(kv.Key, buf, lengthCache, parameter, async, cancellationToken);
+                await _textHandler.WriteWithLength(kv.Value, buf, lengthCache, parameter, async, cancellationToken);
             }
         }
 
@@ -173,92 +100,35 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         #region Read
 
-        void IChunkingTypeReader<IDictionary<string, string>>.PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override async ValueTask<Dictionary<string, string>> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
         {
-            _buf = buf;
-            _fieldDescription = fieldDescription;
-            _state = State.Count;
-        }
+            await buf.Ensure(4, async);
+            var numElements = buf.ReadInt32();
+            var hstore = new Dictionary<string, string>(numElements);
 
-        void IChunkingTypeReader<string>.PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            ((IChunkingTypeReader<IDictionary<string, string>>)this).PrepareRead(buf, len, fieldDescription);
-        }
-
-        public bool Read(out IDictionary<string, string> result)
-        {
-            result = null;
-            switch (_state)
+            for (var i = 0; i < numElements; i++)
             {
-                case State.Count:
-                    if (_buf.ReadBytesLeft < 4) { return false; }
-                    _numElements = _buf.ReadInt32();
-                    _value = new Dictionary<string, string>(_numElements);
-                    if (_numElements == 0)
-                    {
-                        CleanupState();
-                        return true;
-                    }
-                    goto case State.KeyLen;
+                await buf.Ensure(4, async);
+                var keyLen = buf.ReadInt32();
+                Debug.Assert(keyLen != -1);
+                var key = await _textHandler.Read(buf, keyLen, async);
 
-                case State.KeyLen:
-                    _state = State.KeyLen;
-                    if (_buf.ReadBytesLeft < 4) { return false; }
-                    var keyLen = _buf.ReadInt32();
-                    Contract.Assume(keyLen != -1);
-                    _textHandler.PrepareRead(_buf, _fieldDescription, keyLen);
-                    goto case State.KeyData;
+                await buf.Ensure(4, async);
+                var valueLen = buf.ReadInt32();
 
-                case State.KeyData:
-                    _state = State.KeyData;
-                    if (!_textHandler.Read(out _key)) { return false; }
-                    goto case State.ValueLen;
-
-                case State.ValueLen:
-                    _state = State.ValueLen;
-                    if (_buf.ReadBytesLeft < 4) { return false; }
-                    var valueLen = _buf.ReadInt32();
-                    if (valueLen == -1)
-                    {
-                        _value[_key] = null;
-                        if (--_numElements == 0)
-                        {
-                            result = _value;
-                            CleanupState();
-                            return true;
-                        }
-                        goto case State.KeyLen;
-                    }
-                    _textHandler.PrepareRead(_buf, _fieldDescription, valueLen);
-                    goto case State.ValueData;
-
-                case State.ValueData:
-                    _state = State.ValueData;
-                    string value;
-                    if (!_textHandler.Read(out value)) { return false; }
-                    _value[_key] = value;
-                    if (--_numElements == 0)
-                    {
-                        result = _value;
-                        CleanupState();
-                        return true;
-                    }
-                    goto case State.KeyLen;
-
-                default:
-                    throw PGUtil.ThrowIfReached();
+                hstore[key] = valueLen == -1
+                    ? null
+                    : await _textHandler.Read(buf, valueLen, async);
             }
+            return hstore;
         }
 
-        public bool Read(out string result)
-        {
-            IDictionary<string, string> dict;
-            if (!((IChunkingTypeReader<IDictionary<string, string>>) this).Read(out dict))
-            {
-                result = null;
-                return false;
-            }
+        ValueTask<IDictionary<string, string>> IChunkingTypeHandler<IDictionary<string, string>>.Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+            => new ValueTask<IDictionary<string, string>>(Read(buf, len, async, fieldDescription).Result);
 
+        async ValueTask<string> IChunkingTypeHandler<string>.Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        {
+            var dict = await Read(buf, len, async, fieldDescription);
             var sb = new StringBuilder();
             var i = dict.Count;
             foreach (var kv in dict)
@@ -267,35 +137,19 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                 sb.Append(kv.Key);
                 sb.Append(@"""=>");
                 if (kv.Value == null)
-                {
                     sb.Append("NULL");
-                }
                 else
                 {
                     sb.Append('"');
                     sb.Append(kv.Value);
                     sb.Append('"');
                 }
-                if (--i > 0) {
+                if (--i > 0)
                     sb.Append(',');
-                }
             }
-            result = sb.ToString();
-            return true;
+            return sb.ToString();
         }
 
         #endregion
-
-        void CleanupState()
-        {
-            _buf = null;
-            _value = null;
-            _parameter = null;
-            _fieldDescription = null;
-            _enumerator = null;
-            _key = null;
-        }
-
-        enum State { Count, KeyLen, KeyData, ValueLen, ValueData }
     }
 }

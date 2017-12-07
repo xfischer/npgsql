@@ -5,7 +5,7 @@ using System.Text;
 
 namespace  EnterpriseDB.EDBClient
 {
-    internal interface ICancelable : IDisposable
+    interface ICancelable : IDisposable
     {
         void Cancel();
     }

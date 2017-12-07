@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,14 +36,14 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         TerminateMessage() { }
 
-        internal override int Length { get { return 1 + 4; } }
+        internal override int Length => 1 + 4;
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
             buf.WriteByte(Code);
             buf.WriteInt32(4);
         }
 
-        public override string ToString() { return "[Terminate]"; }
+        public override string ToString() => "[Terminate]";
     }
 }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,9 +23,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
@@ -33,6 +34,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
     {
         const byte Code = (byte)'f';
 
+        [CanBeNull]
         readonly string _errorMessage;
         readonly int _errorMessageLen;
 
@@ -40,29 +42,23 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         internal CopyFailMessage(string errorMessage="")
         {
-            if (errorMessage.Length > 1024) {
+            if (errorMessage.Length > 1024)
                 throw new ArgumentException("CopyFail message must be 1024 characters or less");
-            }
             _errorMessage = errorMessage;
             _errorMessageLen = PGUtil.UTF8Encoding.GetByteCount(_errorMessage);
         }
 
-        internal override int Length { get { return 1 + 4 + (_errorMessageLen + 1); } }
+        internal override int Length => 1 + 4 + (_errorMessageLen + 1);
 
-        internal override void Write(EDBBuffer buf)
+        internal override void WriteFully(WriteBuffer buf)
         {
             buf.WriteByte(Code);
             buf.WriteInt32(Length - 1);
-            if (_errorMessageLen == 0)
-            {
-                buf.WriteByte(0);
-            }
-            else
-            {
-                buf.WriteBytesNullTerminated(PGUtil.UTF8Encoding.GetBytes(_errorMessage));
-            }
+            // Error message not supported for now
+            Debug.Assert(_errorMessage == null);
+            buf.WriteByte(0);
         }
 
-        public override string ToString() { return "[CopyFail]"; }
+        public override string ToString() => "[CopyFail]";
     }
 }

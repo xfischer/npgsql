@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using  EnterpriseDB.EDBClient.TypeHandlers;
-using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
@@ -38,13 +36,11 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/protocol-message-formats.html
     /// </remarks>
-    internal sealed class RowDescriptionMessage : IBackendMessage
+    sealed class RowDescriptionMessage : IBackendMessage
     {
-        public List<FieldDescription> Fields { get; private set; }
+        public List<FieldDescription> Fields { get; }
         readonly Dictionary<string, int> _nameIndex;
         readonly Dictionary<string, int> _caseInsensitiveNameIndex;
-        public bool out_param;
-        public FieldDescription field;  
 
         internal RowDescriptionMessage()
         {
@@ -53,71 +49,65 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             _caseInsensitiveNameIndex = new Dictionary<string, int>(KanaWidthCaseInsensitiveComparer.Instance);
         }
 
-        internal RowDescriptionMessage Load(EDBBuffer buf, TypeHandlerRegistry typeHandlerRegistry, bool iSCalllabe)
+        internal RowDescriptionMessage Load(ReadBuffer buf, TypeHandlerRegistry typeHandlerRegistry, bool isCallableStmt)
         {
             Fields.Clear();
             _nameIndex.Clear();
             _caseInsensitiveNameIndex.Clear();
 
             var numFields = buf.ReadInt16();
-            if (iSCalllabe != true)
+            if (isCallableStmt != true)
             {
                 for (var i = 0; i != numFields; ++i)
+            {
+                // TODO: Recycle
+                var field = new FieldDescription();
+                field.Populate(
+                    typeHandlerRegistry,
+                    buf.ReadNullTerminatedString(),  // Name
+                    buf.ReadUInt32(),                // TableOID
+                    buf.ReadInt16(),                 // ColumnAttributeNumber
+                    buf.ReadUInt32(),                // TypeOID
+                    buf.ReadInt16(),                 // TypeSize
+                    buf.ReadInt32(),                 // TypeModifier
+                    (FormatCode)buf.ReadInt16()      // FormatCode
+                );
+
+                Fields.Add(field);
+                if (!_nameIndex.ContainsKey(field.Name))
                 {
-                    // TODO: Recycle
-                     field = new FieldDescription
-                    {
-                        Name = buf.ReadNullTerminatedString(),
-                        TableOID = buf.ReadUInt32(),
-                        ColumnAttributeNumber = buf.ReadInt16(),
-                        OID = buf.ReadUInt32(),
-                        TypeSize = buf.ReadInt16(),
-                        TypeModifier = buf.ReadInt32(),
-                        FormatCode = (FormatCode)buf.ReadInt16()
-                    };
-
-                    // If we get the exact unknown type in return, it was a literal string written in the query string
-                    field.Handler = typeHandlerRegistry[field.OID];
-
-                    Fields.Add(field);
-                    if (!_nameIndex.ContainsKey(field.Name))
-                    {
-                        _nameIndex.Add(field.Name, i);
-                        if (!_caseInsensitiveNameIndex.ContainsKey(field.Name))
-                        {
-                            _caseInsensitiveNameIndex.Add(field.Name, i);
-                        }
-                    }
+                    _nameIndex.Add(field.Name, i);
+                    if (!_caseInsensitiveNameIndex.ContainsKey(field.Name))
+                        _caseInsensitiveNameIndex.Add(field.Name, i);
                 }
+            }
             }
             else
             {
-                /*Name = PGUtil.ReadString(stream);
-                ReturningIndex = PGUtil.ReadInt16(stream);
-                TypeOID = PGUtil.ReadInt32(stream);
-                TypeSize = PGUtil.ReadInt16(stream);
-                TypeModifier = PGUtil.ReadInt32(stream);
-                FormatCode = (FormatCode)PGUtil.ReadInt16(stream);
-                TypeInfo = typeMapping[TypeOID];
-
-                */
-
                 for (var i = 0; i != numFields; ++i)
                 {
                     // TODO: Recycle
-                    field = new FieldDescription
-                    {
-                        Name = buf.ReadNullTerminatedString(),
-                        ReturningIndex = buf.ReadInt16(),
-                        OID = buf.ReadUInt32(),
-                        TypeSize = buf.ReadInt16(),
-                        TypeModifier = buf.ReadInt32(),
-                        FormatCode = (FormatCode)buf.ReadInt16()
-                    };
+                    var field = new FieldDescription();
+                    field.PopulateCallableStmt(
+                     typeHandlerRegistry,
+                     buf.ReadNullTerminatedString(),  // Name
+                     buf.ReadInt16(),                // Returing index
+                     buf.ReadUInt32(),                 // TypeOID
+                     buf.ReadInt16(),                // TypeSize
+                     buf.ReadInt32(),                 // TypeModifier
+                     (FormatCode)buf.ReadInt16()      // FormatCode
+                     );
+
+                    //Name = buf.ReadNullTerminatedString(),
+                    //ReturningIndex = buf.ReadInt16(),
+                    //OID = buf.ReadUInt32(),
+                    //TypeSize = buf.ReadInt16(),
+                    //TypeModifier = buf.ReadInt32(),
+                    //FormatCode = (FormatCode)buf.ReadInt16()
 
                     // If we get the exact unknown type in return, it was a literal string written in the query string
-                    field.Handler = typeHandlerRegistry[field.OID];
-                  //  Fields.Add()
+                    field.Handler = typeHandlerRegistry[field.TypeOID];
+                    //  Fields.Add()
                     Fields.Add(field);
                     if (!_nameIndex.ContainsKey(field.Name))
                     {
@@ -129,12 +119,13 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                     }
                 }
 
+
+
             }
-        return this;
+            return this;
         }
 
-
-        public void AddReturnData( FieldDescription fd)
+        public void AddReturnData(FieldDescription fd)
         {
 
             FieldDescription[] fdData = new FieldDescription[Fields.Count + 1];
@@ -143,38 +134,26 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             _nameIndex.Add(fd.Name, Fields.Count);
             for (int i = 0; i < Fields.Count; i++)
             {
-                    fdData[i] = Fields[i];
+                fdData[i] = Fields[i];
                 if (!_nameIndex.ContainsKey(Fields[i].Name))
                     _nameIndex.Add(Fields[i].Name, i);
             }
             Fields.Clear();
             for (int i = 0; i < fdData.Length; i++)
                 Fields.Add(fdData[i]);
-          //  Fields =(FieldDescription) fdData;
+            //  Fields =(FieldDescription) fdData;
         }
 
+        internal FieldDescription this[int index] => Fields[index];
 
-
-
-
-
-        internal FieldDescription this[int index]
-        {
-            get { return Fields[index]; }
-        }
-
-        internal int NumFields
-        {
-            get { return Fields.Count; }
-        }
+        internal int NumFields => Fields.Count;
 
         /// <summary>
         /// Given a string name, returns the field's ordinal index in the row.
         /// </summary>
         internal int GetFieldIndex(string name)
         {
-            int ret;
-            if (_nameIndex.TryGetValue(name, out ret) || _caseInsensitiveNameIndex.TryGetValue(name, out ret))
+            if (_nameIndex.TryGetValue(name, out var ret) || _caseInsensitiveNameIndex.TryGetValue(name, out ret))
                 return ret;
             throw new IndexOutOfRangeException("Field not found in row: " + name);
         }
@@ -183,42 +162,44 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// Given a string name, returns the field's ordinal index in the row.
         /// </summary>
         internal bool TryGetFieldIndex(string name, out int fieldIndex)
-        {
-            return _nameIndex.TryGetValue(name, out fieldIndex) ||
-                   _caseInsensitiveNameIndex.TryGetValue(name, out fieldIndex);
-        }
+            => _nameIndex.TryGetValue(name, out fieldIndex) ||
+               _caseInsensitiveNameIndex.TryGetValue(name, out fieldIndex);
 
-        public BackendMessageCode Code { get { return BackendMessageCode.RowDescription; } }
+        public BackendMessageCode Code => BackendMessageCode.RowDescription;
 
         #region Kana comparers
 
         static readonly CompareInfo CompareInfo = CultureInfo.InvariantCulture.CompareInfo;
 
-        private sealed class KanaWidthInsensitiveComparer : IEqualityComparer<string>
+        sealed class KanaWidthInsensitiveComparer : IEqualityComparer<string>
         {
             public static readonly KanaWidthInsensitiveComparer Instance = new KanaWidthInsensitiveComparer();
-            private KanaWidthInsensitiveComparer() { }
-            public bool Equals(string x, string y)
+            KanaWidthInsensitiveComparer() { }
+            public bool Equals([NotNull] string x, [NotNull] string y)
+                => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth) == 0;
+            public int GetHashCode([NotNull] string o)
             {
-                return CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth) == 0;
-            }
-            public int GetHashCode(string obj)
-            {
-                return CompareInfo.GetSortKey(obj, CompareOptions.IgnoreWidth).GetHashCode();
+#if NET45 || NET451
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth).GetHashCode();
+#else
+                return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth);
+#endif
             }
         }
 
-        private sealed class KanaWidthCaseInsensitiveComparer : IEqualityComparer<string>
+        sealed class KanaWidthCaseInsensitiveComparer : IEqualityComparer<string>
         {
             public static readonly KanaWidthCaseInsensitiveComparer Instance = new KanaWidthCaseInsensitiveComparer();
-            private KanaWidthCaseInsensitiveComparer() { }
-            public bool Equals(string x, string y)
+            KanaWidthCaseInsensitiveComparer() { }
+            public bool Equals([NotNull] string x, [NotNull] string y)
+                => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
+            public int GetHashCode([NotNull] string o)
             {
-                return CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
-            }
-            public int GetHashCode(string obj)
-            {
-                return CompareInfo.GetSortKey(obj, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
+#if NET45 || NET451
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
+#else
+                return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
+#endif
             }
         }
 
@@ -226,11 +207,47 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
     }
 
     /// <summary>
-    /// A descriptive record on a single field received from Postgresql.
+    /// A descriptive record on a single field received from PostgreSQL.
     /// See RowDescription in http://www.postgresql.org/docs/current/static/protocol-message-formats.html
     /// </summary>
-    internal sealed class FieldDescription
+    sealed class FieldDescription
     {
+        internal void Populate(
+            TypeHandlerRegistry typeHandlerRegistry, string name, uint tableOID, short columnAttributeNumber,
+            uint oid, short typeSize, int typeModifier, FormatCode formatCode
+        )
+        {
+            _typeHandlerRegistry = typeHandlerRegistry;
+            Name = name;
+            TableOID = tableOID;
+            ColumnAttributeNumber = columnAttributeNumber;
+            TypeOID = oid;
+            TypeSize = typeSize;
+            TypeModifier = typeModifier;
+            FormatCode = formatCode;
+
+            RealHandler = typeHandlerRegistry[TypeOID];
+            ResolveHandler();
+        }
+
+        internal void PopulateCallableStmt(
+            TypeHandlerRegistry typeHandlerRegistry, string name, short retIndex, uint typoid,
+             short typeSize, int typeModifier, FormatCode formatCode
+        )
+        {
+
+            _typeHandlerRegistry = typeHandlerRegistry;
+            Name = name;
+            ReturningIndex = retIndex;
+            TypeOID = typoid;
+            TypeSize = typeSize;
+            TypeModifier = typeModifier;
+            FormatCode = formatCode;
+
+            RealHandler = typeHandlerRegistry[TypeOID];
+            ResolveHandler();
+        }
+
         /// <summary>
         /// The field name.
         /// </summary>
@@ -239,7 +256,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// <summary>
         /// The object ID of the field's data type.
         /// </summary>
-        internal uint OID { get; set; }
+        internal uint TypeOID { get; private set; }
 
         /// <summary>
         /// The data type size (see pg_type.typlen). Note that negative values denote variable-width types.
@@ -256,9 +273,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal uint TableOID { get; set; }
 
-
         /// <summary>
-        /// Incase of callable statements we should store the returning index on returned parameters.
+        /// /// Incase of callable statements we should store the returning index on returned parameters.
         /// </summary>
         internal short ReturningIndex { get; set; }
 
@@ -272,14 +288,44 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// Currently will be zero (text) or one (binary).
         /// In a RowDescription returned from the statement variant of Describe, the format code is not yet known and will always be zero.
         /// </summary>
-        internal FormatCode FormatCode { get; set; }
+        internal FormatCode FormatCode
+        {
+            get { return _formatCode; }
+            set
+            {
+                _formatCode = value;
+                ResolveHandler();
+            }
+        }
+
+        FormatCode _formatCode;
 
         /// <summary>
         /// The  EnterpriseDB.EDBClient type handler assigned to handle this field.
+        /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
-        internal TypeHandler Handler { get; set; }
+        public TypeHandler Handler { get; set; }
 
-        public bool IsBinaryFormat { get { return FormatCode == FormatCode.Binary; } }
-        public bool IsTextFormat   { get { return FormatCode == FormatCode.Text;   } }
+        /// <summary>
+        /// The type handler resolved for this field, regardless of whether it's binary or text.
+        /// </summary>
+        internal TypeHandler RealHandler { get; private set; }
+
+        internal PostgresType PostgresType => RealHandler.PostgresType;
+        public Type FieldType => Handler.GetFieldType(this);
+
+        void ResolveHandler()
+        {
+            Handler = IsBinaryFormat
+                ? _typeHandlerRegistry[TypeOID]
+                : _typeHandlerRegistry.UnrecognizedTypeHandler;
+        }
+
+        TypeHandlerRegistry _typeHandlerRegistry;
+
+        public bool IsBinaryFormat => FormatCode == FormatCode.Binary;
+        public bool IsTextFormat => FormatCode == FormatCode.Text;
+
+        public override string ToString() => Name + (Handler == null ? "" : $"({Handler.PgDisplayName})");
     }
 }

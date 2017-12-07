@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,8 +22,9 @@
 #endregion
 
 using System;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace  EnterpriseDB.EDBClient
@@ -31,22 +32,39 @@ namespace  EnterpriseDB.EDBClient
     /// <summary>
     /// Base class for all classes which represent a message sent by the PostgreSQL backend.
     /// </summary>
-    internal interface IBackendMessage
+    interface IBackendMessage
     {
         BackendMessageCode Code { get; }
     }
 
     /// <summary>
     /// Base class for all classes which represent a message sent to the PostgreSQL backend.
+    /// Concrete classes which directly inherit this represent arbitrary-length messages which can chunked.
     /// </summary>
-    internal abstract class FrontendMessage {}
+    abstract class FrontendMessage
+    {
+        /// <param name="buf">the buffer into which to write the message.</param>
+        /// <param name="async"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        /// Whether there was enough space in the buffer to contain the entire message.
+        /// If false, the buffer should be flushed and write should be called again.
+        /// </returns>
+        internal abstract Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Returns how many messages PostgreSQL is expected to send in response to this message.
+        /// Used for message prepending.
+        /// </summary>
+        internal virtual int ResponseMessageCount => 1;
+    }
 
     /// <summary>
     /// Represents a simple frontend message which is typically small and fits well within
     /// the write buffer. The message is first queries for the number of bytes it requires,
     /// and then writes itself out.
     /// </summary>
-    internal abstract class SimpleFrontendMessage : FrontendMessage
+    abstract class SimpleFrontendMessage : FrontendMessage
     {
         /// <summary>
         /// Returns the number of bytes needed to write this message.
@@ -56,28 +74,26 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Writes the message contents into the buffer.
         /// </summary>
-        internal abstract void Write(EDBBuffer buf);
+        internal abstract void WriteFully(WriteBuffer buf);
+
+        internal sealed override Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+        {
+            if (buf.WriteSpaceLeft < Length)
+                return FlushAndWrite(buf, async, cancellationToken);
+            Debug.Assert(Length <= buf.WriteSpaceLeft, $"Message of type {GetType().Name} has length {Length} which is bigger than the buffer ({buf.WriteSpaceLeft})");
+            WriteFully(buf);
+            return PGUtil.CompletedTask;
+        }
+
+        async Task FlushAndWrite(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+        {
+            await buf.Flush(async, cancellationToken);
+            Debug.Assert(Length <= buf.WriteSpaceLeft, $"Message of type {GetType().Name} has length {Length} which is bigger than the buffer ({buf.WriteSpaceLeft})");
+            WriteFully(buf);
+        }
     }
 
-    /// <summary>
-    /// Represents an arbitrary-length message capable of flushing the buffer internally as it's
-    /// writing itself out.
-    /// </summary>
-    internal abstract class ChunkingFrontendMessage : FrontendMessage
-    {
-        /// <param name="buf">the buffer into which to write the message.</param>
-        /// <param name="directBuf">
-        /// an option buffer that, if returned, will be written to the server directly, bypassing our
-        /// EDBBuffer. This is an optimization hack for bytea.
-        /// </param>
-        /// <returns>
-        /// Whether there was enough space in the buffer to contain the entire message.
-        /// If false, the buffer should be flushed and write should be called again.
-        /// </returns>
-        internal abstract bool Write(EDBBuffer buf, ref DirectBuffer directBuf);
-    }
-
-    internal enum BackendMessageCode : byte
+    enum BackendMessageCode : byte
     {
         AuthenticationRequest = (byte)'R',
         BackendKeyData        = (byte)'K',
@@ -104,10 +120,8 @@ namespace  EnterpriseDB.EDBClient
         PortalSuspended       = (byte)'s',
         ReadyForQuery         = (byte)'Z',
         RowDescription        = (byte)'T',
-        OutDescription        = (byte) 'u', //Describe Out from server
-        ParamData             = (byte)'v'		//Parameter Out data
-
-
+        OutDescription = (byte)'u', //Describe Out from server
+        ParamData = (byte)'v'		//Parameter Out data
     }
 
     enum StatementOrPortal : byte
@@ -133,4 +147,68 @@ namespace  EnterpriseDB.EDBClient
         Other
 #pragma warning restore 1591
     }
+
+    /// <summary>
+    /// The way how to order bytes.
+    /// </summary>
+    enum ByteOrder
+    {
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// Most significant byte first (XDR)
+        /// </summary>
+        MSB = 0,
+        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// Less significant byte first (NDR)
+        /// </summary>
+        LSB = 1
+    }
+
+    #region Component model attributes missing from CoreCLR
+
+#if NETSTANDARD1_3
+    [AttributeUsage(AttributeTargets.Property)]
+    class DisplayNameAttribute : Attribute
+    {
+        internal string DisplayName { get; private set; }
+
+        internal DisplayNameAttribute(string displayName)
+        {
+            DisplayName = displayName;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    class CategoryAttribute : Attribute
+    {
+        internal CategoryAttribute(string category) {}
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    sealed class BrowsableAttribute : Attribute
+    {
+        public BrowsableAttribute(bool browsable) {}
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    sealed class PasswordPropertyTextAttribute : Attribute
+    {
+        public PasswordPropertyTextAttribute(bool password) {}
+    }
+
+#pragma warning disable CA1717
+    enum RefreshProperties {
+        All
+    }
+#pragma warning restore CA1717
+
+    [AttributeUsage(AttributeTargets.Property)]
+    sealed class RefreshPropertiesAttribute : Attribute
+    {
+        public RefreshPropertiesAttribute(RefreshProperties refreshProperties) {}
+    }
+#endif
+
+    #endregion
 }

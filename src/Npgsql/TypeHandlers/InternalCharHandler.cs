@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,12 +22,10 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
-using System.Data;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -38,42 +36,33 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-character.html
     /// </remarks>
     [TypeMapping("char", EDBDbType.InternalChar)]
-    internal class InternalCharHandler : TypeHandler<char>,
-        ISimpleTypeReader<char>, ISimpleTypeWriter,
-        ISimpleTypeReader<byte>, ISimpleTypeReader<short>, ISimpleTypeReader<int>, ISimpleTypeReader<long>
+    class InternalCharHandler : SimpleTypeHandler<char>,
+        ISimpleTypeHandler<byte>, ISimpleTypeHandler<short>, ISimpleTypeHandler<int>, ISimpleTypeHandler<long>
     {
+        internal InternalCharHandler(PostgresType postgresType) : base(postgresType) { }
+
         #region Read
 
-        public char Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return (char)buf.ReadByte();
-        }
+        public override char Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => (char)buf.ReadByte();
 
-        byte ISimpleTypeReader<byte>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadByte();
-        }
+        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => buf.ReadByte();
 
-        short ISimpleTypeReader<short>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadByte();
-        }
+        short ISimpleTypeHandler<short>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => buf.ReadByte();
 
-        int ISimpleTypeReader<int>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadByte();
-        }
+        int ISimpleTypeHandler<int>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => buf.ReadByte();
 
-        long ISimpleTypeReader<long>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
-        {
-            return buf.ReadByte();
-        }
+        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => buf.ReadByte();
 
         #endregion
 
         #region Write
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             if (!(value is byte))
             {
@@ -83,7 +72,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             return 1;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
             buf.WriteByte(value as byte? ?? Convert.ToByte(value));
         }

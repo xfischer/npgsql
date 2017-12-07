@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,9 +23,9 @@
 
 namespace  EnterpriseDB.EDBClient.BackendMessages
 {
-    internal class CloseCompletedMessage : IBackendMessage
+    class CloseCompletedMessage : IBackendMessage
     {
-        public BackendMessageCode Code { get { return BackendMessageCode.CloseComplete; } }
+        public BackendMessageCode Code => BackendMessageCode.CloseComplete;
         internal static readonly CloseCompletedMessage Instance = new CloseCompletedMessage();
         CloseCompletedMessage() { }
     }

@@ -74,11 +74,11 @@ namespace DOTNET
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
 			
-        //    com.CommandText = "DROP Function emptyfunction_test;";
-        //    com.ExecuteNonQuery();
+            com.CommandText = "DROP Function emptyfunction_test;";
+            com.ExecuteNonQuery();
 
-        //    com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
-        //    com.ExecuteNonQuery();
+            com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
+            com.ExecuteNonQuery();
 
         ////    com.CommandText = "DROP Function  varcharr( IN NUMERIC);";
         //    //com.ExecuteNonQuery();
@@ -90,7 +90,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions */       
-	//	[Test]
+		[Test]
 		public void testfunctionsanity()
 		{
 			try 
@@ -129,7 +129,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions without parameters*/       
-		//[Test]
+		[Test]
 		public void testemptyfunction()
 		{
 			try 
@@ -182,12 +182,14 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions with three IN parameters*/
-	//	[Test]
+		[Test]
 		public void testThreeInArg()
 		{
 			try 
-			{ 
-				EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+			{
+				//EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+				EDBCommand command = new EDBCommand("public.funcThreeInArg", con);
+
 				command.CommandType = CommandType.StoredProcedure; 
 
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Input,false,4,4,System.Data.DataRowVersion.Current,1)); 
@@ -1327,7 +1329,7 @@ namespace DOTNET
 				
 				Assert.AreEqual("10000",command.Parameters[1].Value.ToString());	
 				Console.WriteLine(command.Parameters[1].Value.ToString());
-				Assert.AreEqual("-1.99",command.Parameters[2].Value.ToString());	//ZK: TODO checkme 
+				Assert.AreEqual("-2",command.Parameters[2].Value.ToString());
 				Console.WriteLine(command.Parameters[2].Value.ToString());
 				Assert.AreEqual("1234",command.Parameters[3].Value.ToString());	
 				Console.WriteLine(command.Parameters[3].Value.ToString());
@@ -3658,9 +3660,9 @@ namespace DOTNET
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.RefCursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.RefCursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
 

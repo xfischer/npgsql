@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,18 +22,18 @@
 #endregion
 
 using System;
-using System.CodeDom;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("time", EDBDbType.Time, DbType.Time, typeof(TimeSpan))]
-    internal class TimeHandler : TypeHandler<TimeSpan>, ISimpleTypeReader<TimeSpan>, ISimpleTypeWriter
+    [TypeMapping("time", EDBDbType.Time, new[] { DbType.Time })]
+    class TimeHandler : SimpleTypeHandler<TimeSpan>
     {
         /// <summary>
         /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
@@ -41,45 +41,41 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         readonly bool _integerFormat;
 
-        public TimeHandler(TypeHandlerRegistry registry)
+        public TimeHandler(PostgresType postgresType, TypeHandlerRegistry registry)
+            : base(postgresType)
         {
-            _integerFormat = registry.Connector.BackendParams["integer_datetimes"] == "on";
+            // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
+            _integerFormat = !registry.Connector.BackendParams.TryGetValue("integer_datetimes", out var s) || s == "on";
         }
 
-        TimeSpan ISimpleTypeReader<TimeSpan>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override TimeSpan Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            if (!_integerFormat) {
+            if (!_integerFormat)
                 throw new NotSupportedException("Old floating point representation for timestamps not supported");
-            }
 
             // PostgreSQL time resolution == 1 microsecond == 10 ticks
             return new TimeSpan(buf.ReadInt64() * 10);
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
         {
             var asString = value as string;
             if (asString != null)
             {
                 var converted = TimeSpan.Parse(asString);
                 if (parameter == null)
-                {
                     throw CreateConversionButNoParamException(value.GetType());
-                }
                 parameter.ConvertedValue = converted;
             }
             else if (!(value is TimeSpan))
-            {
                 throw CreateConversionException(value.GetType());
-            }
             return 8;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
 
             buf.WriteInt64(((TimeSpan)value).Ticks / 10);
         }

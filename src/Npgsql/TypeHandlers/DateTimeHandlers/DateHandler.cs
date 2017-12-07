@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,9 +22,11 @@
 #endregion
 
 using System;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
@@ -32,8 +34,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
     [TypeMapping("date", EDBDbType.Date, DbType.Date, typeof(EDBDate))]
-    internal class DateHandler : TypeHandlerWithPsv<DateTime, EDBDate>,
-        ISimpleTypeReader<DateTime>, ISimpleTypeReader<EDBDate>, ISimpleTypeWriter
+    class DateHandler : SimpleTypeHandlerWithPsv<DateTime, EDBDate>
     {
         internal const int PostgresEpochJdate = 2451545; // == date2j(2000, 1, 1)
         internal const int MonthsPerYear = 12;
@@ -44,15 +45,16 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         readonly bool _convertInfinityDateTime;
 
-        public DateHandler(TypeHandlerRegistry registry)
+        public DateHandler(PostgresType postgresType, TypeHandlerRegistry registry)
+            : base(postgresType)
         {
             _convertInfinityDateTime = registry.Connector.ConvertInfinityDateTime;
         }
 
-        public DateTime Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             // TODO: Convert directly to DateTime without passing through EDBDate?
-            var EDBDate = ((ISimpleTypeReader<EDBDate>) this).Read(buf, len, fieldDescription);
+            var EDBDate = ((ISimpleTypeHandler<EDBDate>) this).Read(buf, len, fieldDescription);
             try {
                 if (EDBDate.IsFinite)
                     return (DateTime)EDBDate;
@@ -69,7 +71,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// <remarks>
         /// Copied wholesale from Postgresql backend/utils/adt/datetime.c:j2date
         /// </remarks>
-        EDBDate ISimpleTypeReader<EDBDate>.Read(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        internal override EDBDate ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             var binDate = buf.ReadInt32();
 
@@ -84,58 +86,43 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public int ValidateAndGetLength(object value, EDBParameter parameter)
+        public override int ValidateAndGetLength(object value, [CanBeNull] EDBParameter parameter)
         {
             if (!(value is DateTime) && !(value is EDBDate))
             {
                 var converted = Convert.ToDateTime(value);
                 if (parameter == null)
-                {
                     throw CreateConversionButNoParamException(value.GetType());
-                }
                 parameter.ConvertedValue = converted;
             }
             return 4;
         }
 
-        public void Write(object value, EDBBuffer buf, EDBParameter parameter)
+        protected override void Write(object value, WriteBuffer buf, [CanBeNull] EDBParameter parameter)
         {
-            if (parameter != null && parameter.ConvertedValue != null) {
+            if (parameter?.ConvertedValue != null)
                 value = parameter.ConvertedValue;
-            }
 
             EDBDate date;
             if (value is EDBDate)
-            {
                 date = (EDBDate)value;
-            }
             else if (value is DateTime)
             {
                 var dt = (DateTime)value;
                 if (_convertInfinityDateTime)
                 {
                     if (dt == DateTime.MaxValue)
-                    {
                         date = EDBDate.Infinity;
-                    }
                     else if (dt == DateTime.MinValue)
-                    {
                         date = EDBDate.NegativeInfinity;
-                    }
                     else
-                    {
                         date = new EDBDate(dt);
-                    }
                 }
                 else
-                {
                     date = new EDBDate(dt);
-                }
             }
             else
-            {
-                throw PGUtil.ThrowIfReached();
-            }
+                throw new InvalidOperationException("Internal  EnterpriseDB.EDBClient bug, please report.");
 
             if (date == EDBDate.NegativeInfinity)
                 buf.WriteInt32(int.MinValue);

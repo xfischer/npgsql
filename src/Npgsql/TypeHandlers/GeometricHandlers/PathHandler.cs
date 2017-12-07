@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2015 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,13 +22,10 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using  EnterpriseDB.EDBClient.BackendMessages;
+using System.Threading;
+using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -40,99 +37,67 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("path", EDBDbType.Path, typeof(EDBPath))]
-    internal class PathHandler : TypeHandler<EDBPath>,
-        IChunkingTypeReader<EDBPath>, IChunkingTypeWriter
+    class PathHandler : ChunkingTypeHandler<EDBPath>
     {
-        #region State
-
-        EDBPath _value;
-        EDBBuffer _buf;
-        int _index;
-
-        #endregion
+        internal PathHandler(PostgresType postgresType) : base(postgresType) { }
 
         #region Read
 
-        public void PrepareRead(EDBBuffer buf, int len, FieldDescription fieldDescription)
+        public override async ValueTask<EDBPath> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
-            _buf = buf;
-            _index = -1;
-        }
-
-        public bool Read(out EDBPath result)
-        {
-            result = default(EDBPath);
-
-            if (_index == -1)
+            await buf.Ensure(5, async);
+            bool open;
+            var openByte = buf.ReadByte();
+            switch (openByte)
             {
-                if (_buf.ReadBytesLeft < 5) { return false; }
-
-                bool open;
-                var openByte = _buf.ReadByte();
-                switch (openByte) {
-                    case 1:
-                        open = false;
-                        break;
-                    case 0:
-                        open = true;
-                        break;
-                    default:
-                        throw new Exception("Error decoding binary geometric path: bad open byte");
-                }
-                var numPoints = _buf.ReadInt32();
-                _value = new EDBPath(numPoints, open);
-                _index = 0;
+            case 1:
+                open = false;
+                break;
+            case 0:
+                open = true;
+                break;
+            default:
+                throw new Exception("Error decoding binary geometric path: bad open byte");
             }
 
-            for (; _index < _value.Capacity; _index++)
+            var numPoints = buf.ReadInt32();
+            var result = new EDBPath(numPoints, open);
+            for (var i = 0; i < numPoints; i++)
             {
-                if (_buf.ReadBytesLeft < 16) { return false; }
-                _value.Add(new EDBPoint(_buf.ReadDouble(), _buf.ReadDouble()));
+                await buf.Ensure(16, async);
+                result.Add(new EDBPoint(buf.ReadDouble(), buf.ReadDouble()));
             }
-            result = _value;
-            _value = default(EDBPath);
-            _buf = null;
-            return true;
+            return result;
         }
 
         #endregion
 
         #region Write
 
-        public int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
         {
             if (!(value is EDBPath))
                     throw CreateConversionException(value.GetType());
             return 5 + ((EDBPath)value).Count * 16;
         }
 
-        public void PrepareWrite(object value, EDBBuffer buf, LengthCache lengthCache, EDBParameter parameter=null)
+        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
+            bool async, CancellationToken cancellationToken)
         {
-            _buf = buf;
-            _value = (EDBPath)value;
-            _index = -1;
-        }
+            var path = (EDBPath)value;
 
-        public bool Write(ref DirectBuffer directBuf)
-        {
-            if (_index == -1)
-            {
-                if (_buf.WriteSpaceLeft < 5) { return false; }
-                _buf.WriteByte((byte)(_value.Open ? 0 : 1));
-                _buf.WriteInt32(_value.Count);
-                _index = 0;
-            }
+            if (buf.WriteSpaceLeft < 5)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteByte((byte)(path.Open ? 0 : 1));
+            buf.WriteInt32(path.Count);
 
-            for (; _index < _value.Count; _index++)
+            foreach (var p in path)
             {
-                if (_buf.WriteSpaceLeft < 16) { return false; }
-                var p = _value[_index];
-                _buf.WriteDouble(p.X);
-                _buf.WriteDouble(p.Y);
+                if (buf.WriteSpaceLeft < 16)
+                    await buf.Flush(async, cancellationToken);
+                buf.WriteDouble(p.X);
+                buf.WriteDouble(p.Y);
             }
-            _buf = null;
-            _value = default(EDBPath);
-            return true;
         }
 
         #endregion
