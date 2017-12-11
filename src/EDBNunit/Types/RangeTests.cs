@@ -13,6 +13,7 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/rangetypes.html
     /// </remarks>
+    [Ignore("RM#43104")]
     class RangeTests
     {
         [Test, Description("Resolves a range type handler via the different pathways")]

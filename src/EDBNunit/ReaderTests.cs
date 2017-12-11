@@ -652,13 +652,13 @@ namespace DOTNET
             using (var cmd1 = new EDBCommand("SELECT 1", conn))
             using (var reader1 = cmd1.ExecuteReader())
             {
-                Assert.That(() => conn.ExecuteNonQuery("SELECT 1"), Throws.Exception.TypeOf<InvalidOperationException>());
-                Assert.That(() => conn.ExecuteScalar("SELECT 1"), Throws.Exception.TypeOf<InvalidOperationException>());
+                Assert.That(() => conn.ExecuteNonQuery("SELECT 1"), Throws.Exception.TypeOf<EDBOperationInProgressException>());
+                Assert.That(() => conn.ExecuteScalar("SELECT 1"), Throws.Exception.TypeOf<EDBOperationInProgressException>());
 
                 using (var cmd2 = new EDBCommand("SELECT 2", conn))
                 {
-                    Assert.That(() => cmd2.ExecuteReader(), Throws.Exception.TypeOf<InvalidOperationException>());
-                    Assert.That(() => cmd2.Prepare(), Throws.Exception.TypeOf<InvalidOperationException>());
+                    Assert.That(() => cmd2.ExecuteReader(), Throws.Exception.TypeOf<EDBOperationInProgressException>());
+                    Assert.That(() => cmd2.Prepare(), Throws.Exception.TypeOf<EDBOperationInProgressException>());
                 }
             }
         }

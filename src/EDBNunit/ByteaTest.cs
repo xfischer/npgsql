@@ -292,7 +292,7 @@ namespace DOTNET
 			}
 		}
 		
-		[Test, Ignore("RM#43100")]
+		[Test]
 		public void testa_bytea_out()
 		{
 			EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);

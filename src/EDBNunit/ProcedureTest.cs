@@ -31,25 +31,30 @@ namespace DOTNET
             //com.ExecuteNonQuery();
             //Console.WriteLine("Table created");
 
-            //string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor ) IS BEGIN open  c_1 for select * from emp order by empno; open  c_2 for select * from emp order by empno;END;";
+            string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT refcursor,c_2 OUT refcursor ) \n"
+                + "IS \n"
+                + "BEGIN \n"
+                + "open  c_1 for select * from emp order by empno; \n"
+                + "open  c_2 for select * from emp order by empno; \n"
+                + "END;";
 
-            //com.CommandText = strRefTwoArg;
+            com.CommandText = strRefTwoArg;
 
-            //com.ExecuteNonQuery();
+            com.ExecuteNonQuery();
 
-            //string strRefThreeArg = "CREATE OR REPLACE PROCEDURE public.refcur_callee2 (c_1  OUT numeric, c_2 IN OUT refcursor,c_3 IN OUT refcursor ) IS BEGIN c_1 :=100; open  c_2 for select * from emp; open  c_3 for select ename from emp order by ename;END;";
+            string strRefThreeArg = "CREATE OR REPLACE PROCEDURE public.refcur_callee2 (c_1  OUT numeric, c_2 IN OUT refcursor,c_3 IN OUT refcursor ) IS BEGIN c_1 :=100; open  c_2 for select * from emp; open  c_3 for select ename from emp order by ename;END;";
 
-            //com.CommandText = strRefThreeArg;
+            com.CommandText = strRefThreeArg;
 
-            //com.ExecuteNonQuery();
+            com.ExecuteNonQuery();
 
 		}
 
 		[TearDown] 
 		public void Dispose()
 		{
-            //EDBCommand com = new EDBCommand("",con);
-            //com.CommandType = CommandType.Text;
+            EDBCommand com = new EDBCommand("",con);
+            com.CommandType = CommandType.Text;
           
 
             //com.CommandText="Drop table InOutTestEmp";
@@ -202,7 +207,7 @@ namespace DOTNET
 				throw new Exception(e.ToString());
 			}
 		}
-        [Test, Ignore("RM#43100")]
+        [Test]
         public void testOneOutArg()
         {
             try
@@ -246,7 +251,7 @@ namespace DOTNET
                 throw new Exception(e.ToString());
             }
         }
-        [Test, Ignore("RM#43100")]
+        [Test]
 		public void testThreeOutArg()
 		{
 			try 
@@ -988,7 +993,7 @@ namespace DOTNET
 /*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test, Ignore("RM#43100")]
+		[Test]
 		public void testMaxParametersSupportInProcedureWithNumericAsOut()
 		{
 			//////prereq
@@ -1321,7 +1326,7 @@ namespace DOTNET
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("RM#43100")]
+		[Test]
 		public void testMaxParametersSupportInProcedureWithNumericAsInAndOut()
 		{
 			//////prereq
@@ -2727,11 +2732,12 @@ namespace DOTNET
 
         }
 
-		[Test, Ignore("RM#43100")]
+		[Test]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
-
+            try
+            {
                 EDBCommand command;
 
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
@@ -2750,7 +2756,7 @@ namespace DOTNET
                     command.Dispose();
                 }
 
-                catch (EDBException )
+                catch (EDBException)
                 {
                 }
 
@@ -2811,7 +2817,11 @@ namespace DOTNET
                 tran.Commit();
 
                 result.Close();
-
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());
+            }
         }
 
         [Test]

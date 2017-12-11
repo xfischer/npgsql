@@ -1647,7 +1647,7 @@ namespace DOTNET
 		/*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test, Ignore("RM#43100")]
+		[Test]
 		public void testMaxParametersSupportInFunctionWithNumericAsOut()
 		{
 			//////prereq
@@ -3050,35 +3050,19 @@ namespace DOTNET
         [Test]
 
         public void TERSE_FUNC_NATIVE_INPUT_TYPES()
-
         {
-
             try
-
             {
-
                 EDBCommand command;
-
-
-
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-
                 command.ExecuteNonQuery();
-
                 command.Dispose();
-
-
 
                 command = new EDBCommand("BEGIN;", con);
 
                 command.ExecuteNonQuery();
-
                 command.Dispose();
-
-
-
                 try
-
                 {
 
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
@@ -3088,47 +3072,31 @@ namespace DOTNET
                     command.Dispose();
 
                 }
-
                 catch (EDBException exp)
-
                 {
-
                 }
-
-
 
                 command = new EDBCommand("public.FunconeInArg_test(:param1)", con);
 
                 command.CommandType = CommandType.StoredProcedure;
 
-
-
                 command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
                 command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
-
-
+                
                 command.Prepare();
-
-
-
+                
                 command.Parameters[0].Value = 3;
-
-
-
+                
                 EDBDataReader result = command.ExecuteReader();
-
-
+                
                 while (result.Read())
                 { }
 
                 Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
 
                 Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
-
-
-
+                
                 command = new EDBCommand("END;", con);
 
                 command.ExecuteNonQuery();
@@ -3136,13 +3104,9 @@ namespace DOTNET
                 command.Dispose();
 
             }
-
             catch (EDBException exp)
-
             {
-
                 Console.WriteLine(exp.Message);
-
             }
 
         }
@@ -3658,9 +3622,7 @@ namespace DOTNET
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
-
-
+                
                 command.Prepare();
 
                 command.Parameters[0].Value = 7369;
@@ -3668,27 +3630,20 @@ namespace DOTNET
                 EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
                 while (result.Read())
                 { }
-
-
-
+                
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
 
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
-
-
-
+                
                 EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-
-
+                
 
                 int fc1 = reader.FieldCount;
 
                 reader.Read();
 
                 reader.Read();
-
-
-
+                
                 Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
 
                 Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
@@ -3698,15 +3653,9 @@ namespace DOTNET
                 Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
 
                 Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
-
-
-
-
-
+                
                 reader = (EDBDataReader)command.Parameters[2].Value;
-
-
-
+                
                 fc1 = reader.FieldCount;
 
                 reader.Read();
