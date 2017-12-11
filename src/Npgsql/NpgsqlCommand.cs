@@ -587,7 +587,11 @@ namespace  EnterpriseDB.EDBClient
                         }
                     }
                     else
-                        parseCommand += "( )";
+                    {
+                        if (!parseCommand.Trim().EndsWith(")"))
+                            parseCommand += "( )";
+                    }
+                        
                     parseCommand = "CALL " + parseCommand; // This syntax i s only available in 7.3+ as well SupportsPrepare.
                     sb.Append(parseCommand);
 
