@@ -292,36 +292,44 @@ namespace DOTNET
 			}
 		}
 		
-		[Test, Ignore("RM#43100")]
+		[Test]
 		public void testa_bytea_out()
 		{
-			EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
-			cmd.CommandType= CommandType.StoredProcedure;
-			cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-			cmd.Prepare();
-			Byte[] ss = { 1, 2, 3 };
-			cmd.Parameters[0].Value = ss;
-			EDBDataReader reader = cmd.ExecuteReader();
-			reader.Read();
-			Assert.True(reader.HasRows);
-			if (reader.HasRows) 
-			{ 
-				Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-				reader.GetBytes(0, 0, image, 0, image.Length);
-				Console.WriteLine("1");
-				FileStream fs = new 
-					FileStream("C:\\edbtesting\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
+			try
+			{
+				EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
+				cmd.CommandType= CommandType.StoredProcedure;
+				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+				cmd.Prepare();
+				Byte[] ss = { 1, 2, 3 };
+				cmd.Parameters[0].Value = ss;
+				EDBDataReader reader = cmd.ExecuteReader();
+				reader.Read();
+				Assert.True(reader.HasRows);
+				if (reader.HasRows) 
+				{ 
+					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
+					reader.GetBytes(0, 0, image, 0, image.Length);
+					Console.WriteLine("1");
+					FileStream fs = new 
+						FileStream("C:\\edbtesting\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
-				for(int i=0;i<image.Length;i++) 
-					fs.WriteByte(image[i]); 
-				fs.Close(); 
+					for(int i=0;i<image.Length;i++) 
+						fs.WriteByte(image[i]); 
+					fs.Close(); 
+				}
+                while(reader.Read());
+
+                //reader.Close();
+				//conn.Close();
+
+				Console.WriteLine("Image Saved"); 
 			}
-            while(reader.Read());
+			catch(Exception ex)
+			{
 
-            //reader.Close();
-			//conn.Close();
-
-			Console.WriteLine("Image Saved"); 
+				Console.WriteLine(ex.ToString());
+			}
           
 		}
 

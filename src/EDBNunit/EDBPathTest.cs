@@ -61,10 +61,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBPath path = EDBPath.Parse("(5)");
+			Assert.Throws<FormatException>(() => EDBPath.Parse("(5)"));
 		}
 
 		[Test]

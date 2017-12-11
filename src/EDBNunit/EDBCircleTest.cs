@@ -49,10 +49,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBCircle circle = EDBCircle.Parse("(-4,3),5");
+			Assert.Throws<FormatException>(() => EDBCircle.Parse("(-4,3),5"));
 		}
 
 		[Test]

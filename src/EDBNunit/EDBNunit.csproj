@@ -12,8 +12,7 @@
     <AssemblyKeyContainerName>
     </AssemblyKeyContainerName>
     <AssemblyName>EDBNunit</AssemblyName>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\Npgsql.snk</AssemblyOriginatorKeyFile>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
     <DefaultTargetSchema>IE50</DefaultTargetSchema>
@@ -79,19 +78,25 @@
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\Npgsql\bin\Release\EnterpriseDB.EDBClient.dll</HintPath>
+      <HintPath>..\Npgsql\bin\Debug\net451\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
-    <Reference Include="nunit.framework, Version=3.2.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+    <Reference Include="nunit.framework, Version=2.6.1.12208, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>nunit\lib\common\2.0\nunit.framework.dll</HintPath>
+      <HintPath>nunit\lib\common\3.8\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
     <Reference Include="System.Data">
       <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\Npgsql\bin\Debug\net451\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Web">
       <Name>System.Web</Name>
@@ -107,18 +112,22 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="AsyncTests.cs" />
     <Compile Include="BaseDataSourceTest.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ByteaTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CommandBuilderTests.cs" />
     <Compile Include="CommandTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ConnectionStringBuilderTests.cs" />
     <Compile Include="ConnectionTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CopyTests.cs" />
     <Compile Include="CursorTest.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -141,6 +150,7 @@
     <Compile Include="EDBCircleTest.cs" />
     <Compile Include="EDBPathTest.cs" />
     <Compile Include="EDBPolygonTest.cs" />
+    <Compile Include="ExceptionTests.cs" />
     <Compile Include="FBs.cs" />
     <Compile Include="FunctionTest.cs">
       <SubType>Code</SubType>
@@ -156,24 +166,50 @@
     <Compile Include="NumericDataTypeTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ParameterTests.cs" />
+    <Compile Include="PoolTests.cs" />
     <Compile Include="PreparedStatements.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ProcedureTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ReadBufferTests.cs" />
+    <Compile Include="ReaderNewSchemaTests.cs" />
+    <Compile Include="ReaderOldSchemaTests.cs" />
+    <Compile Include="ReaderTests.cs" />
+    <Compile Include="SchemaTests.cs" />
+    <Compile Include="SecurityTests.cs" />
     <Compile Include="Sequences.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SimpleSelectsTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="SpeedTests.cs" />
+    <Compile Include="SqlQueryParserTests.cs" />
+    <Compile Include="SystemTransactionTests.cs" />
+    <Compile Include="TestMetrics.cs" />
     <Compile Include="TestUtil.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TransactionTests.cs" />
     <Compile Include="Triggers.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TypesTests.cs" />
+    <Compile Include="Types\ArrayTests.cs" />
+    <Compile Include="Types\BitStringTests.cs" />
+    <Compile Include="Types\CompositeTests.cs" />
+    <Compile Include="Types\DateTimeTests.cs" />
+    <Compile Include="Types\GeometricTypeTests.cs" />
+    <Compile Include="Types\MiscTypeTests.cs" />
+    <Compile Include="Types\NetworkTypeTests.cs" />
+    <Compile Include="Types\NumericTypeTests.cs" />
+    <Compile Include="Types\PostgisTests.cs" />
+    <Compile Include="Types\RangeTests.cs" />
+    <Compile Include="Types\TextTests.cs" />
+    <Compile Include="WriteBufferTests.cs" />
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
@@ -191,9 +227,6 @@
       <WrapperTool>primary</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1,3 +1,26 @@
+#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2016 The Npgsql Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
 using System;
 using NUnit.Framework;
 using System.Data;
@@ -5,6 +28,7 @@ using System.Globalization;
 using EDBTypes;
 using EnterpriseDB.EDBClient;
 using System.Net;
+using System.Text;
 
 namespace DOTNET
 {
@@ -15,10 +39,10 @@ namespace DOTNET
         Value2 = 1
     };
 
-    [TestFixture]
+    [TestFixture, Ignore("Hangs on someon these tests")]
     public class CommandTests
     {
-        private EDBConnection 	_conn = null;        
+        private EDBConnection	_conn = null;
 
         [SetUp]
         protected void SetUp()
@@ -43,6 +67,13 @@ namespace DOTNET
                 _conn.Close();
         }
 
+        private EDBConnection OpenConnection()
+        {
+            string connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+            var conn = new EDBConnection(connectionString);
+            conn.Open();
+            return conn;
+        }
 
         [Test]
         public void ParametersGetName()
@@ -53,21 +84,34 @@ namespace DOTNET
             command.Parameters.Add(new EDBParameter(":Parameter1", DbType.Boolean));
             command.Parameters.Add(new EDBParameter(":Parameter2", DbType.Int32));
             command.Parameters.Add(new EDBParameter(":Parameter3", DbType.DateTime));
+            command.Parameters.Add(new EDBParameter("Parameter4", DbType.DateTime));
 
+            var idbPrmtr = command.Parameters["Parameter1"];
+            Assert.IsNotNull(idbPrmtr);
+            command.Parameters[0].Value = 1;
 
             // Get by indexers.
 
             Assert.AreEqual(":Parameter1", command.Parameters[":Parameter1"].ParameterName);
             Assert.AreEqual(":Parameter2", command.Parameters[":Parameter2"].ParameterName);
             Assert.AreEqual(":Parameter3", command.Parameters[":Parameter3"].ParameterName);
-
+            //Assert.AreEqual(":Parameter4", command.Parameters["Parameter4"].ParameterName); //Should this work?
 
             Assert.AreEqual(":Parameter1", command.Parameters[0].ParameterName);
             Assert.AreEqual(":Parameter2", command.Parameters[1].ParameterName);
             Assert.AreEqual(":Parameter3", command.Parameters[2].ParameterName);
+            Assert.AreEqual("Parameter4", command.Parameters[3].ParameterName);
+        }
 
+        [Test]
+        public void ParameterNameWithSpace()
+        {
+            var command = new EDBCommand();
 
+            // Add parameters.
+            command.Parameters.Add(new EDBParameter(":Parameter1 ", DbType.Boolean));
 
+            Assert.AreEqual(":Parameter1", command.Parameters[0].ParameterName);
         }
 
         [Test]
@@ -89,7 +133,7 @@ namespace DOTNET
 //            command.Parameters.Add(new EDBParameter());
 //        }       
 
-    //    [Test]
+        [Test]
         public void FunctionCallFromSelect()
         {
             _conn.Open();
@@ -376,7 +420,7 @@ namespace DOTNET
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("select * from funcB", _conn);
+            EDBCommand command = new EDBCommand("select * from funcb()", _conn);
             command.CommandType = CommandType.Text;
 
             EDBDataReader dr = command.ExecuteReader();
@@ -473,8 +517,6 @@ namespace DOTNET
 
 
         }
-        
-        
 
         [Test]
         public void PreparedStatementWithParameters()
@@ -520,6 +562,491 @@ namespace DOTNET
 
             EDBDataReader dr = command.ExecuteReader();
 
+        }
+
+        [Test, Description("Makes sure that calling Prepare() twice on a command deallocates the first prepared statement")]
+        public void DoublePrepare()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT, int INTEGER)");
+                using (var cmd = new EDBCommand("INSERT INTO data (name) VALUES (:p0)", conn))
+                {
+                    cmd.Parameters.Add(new EDBParameter("p0", EDBDbType.Text));
+                    cmd.Parameters["p0"].Value = "test";
+                    cmd.Prepare();
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "INSERT INTO data (int) VALUES (:p0)";
+                    cmd.Parameters.Clear();
+                    cmd.Parameters.Add(new EDBParameter("p0", EDBDbType.Integer));
+                    cmd.Parameters["p0"].Value = 8;
+                    cmd.Prepare();
+                    cmd.ExecuteNonQuery();
+                }
+                Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM pg_prepared_statements"), Is.EqualTo(0), "Prepared statements are being leaked");
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1207")]
+        public void DoublePrepare2()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn))
+            {
+                cmd.Prepare();
+                cmd.Prepare();
+            }
+        }
+
+        [Test]
+        public void StringEscapeSyntax()
+        {
+            using (var conn = OpenConnection())
+            {
+
+                //the next command will fail on earlier postgres versions, but that is not a bug in itself.
+                try
+                {
+                    conn.ExecuteNonQuery("set standard_conforming_strings=off;set escape_string_warning=off");
+                }
+                catch
+                {
+                }
+                string cmdTxt = "select :par";
+                var command = new EDBCommand(cmdTxt, conn);
+                var arrCommand = new EDBCommand(cmdTxt, conn);
+                string testStrPar = "This string has a single quote: ', a double quote: \", and a backslash: \\";
+                string[,] testArrPar = new string[,] {{testStrPar, ""}, {testStrPar, testStrPar}};
+                command.Parameters.AddWithValue(":par", testStrPar);
+                using (var rdr = command.ExecuteReader())
+                {
+                    rdr.Read();
+                    Assert.AreEqual(rdr.GetString(0), testStrPar);
+                }
+                arrCommand.Parameters.AddWithValue(":par", testArrPar);
+                using (var rdr = arrCommand.ExecuteReader())
+                {
+                    rdr.Read();
+                    Assert.AreEqual(((string[,]) rdr.GetValue(0))[0, 0], testStrPar);
+                }
+
+                try //the next command will fail on earlier postgres versions, but that is not a bug in itself.
+                {
+                    conn.ExecuteNonQuery("set standard_conforming_strings=on;set escape_string_warning=on");
+                }
+                catch
+                {
+                }
+                using (var rdr = command.ExecuteReader())
+                {
+                    rdr.Read();
+                    Assert.AreEqual(rdr.GetString(0), testStrPar);
+                }
+                using (var rdr = arrCommand.ExecuteReader())
+                {
+                    rdr.Read();
+                    Assert.AreEqual(((string[,]) rdr.GetValue(0))[0, 0], testStrPar);
+                }
+            }
+        }
+
+        [Test]
+        public void ParameterAndOperatorUnclear()
+        {
+            using (var conn = OpenConnection())
+            {
+                //Without parenthesis the meaning of [, . and potentially other characters is
+                //a syntax error. See comment in EDBCommand.GetClearCommandText() on "usually-redundant parenthesis".
+                using (var command = new EDBCommand("select :arr[2]", conn))
+                {
+                    command.Parameters.AddWithValue(":arr", new int[] {5, 4, 3, 2, 1});
+                    using (var rdr = command.ExecuteReader())
+                    {
+                        rdr.Read();
+                        Assert.AreEqual(rdr.GetInt32(0), 4);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void StatementMappedOutputParameters()
+        {
+            using (var conn = OpenConnection())
+            {
+                var command = new EDBCommand("select 3, 4 as param1, 5 as param2, 6;", conn);
+
+                var p = new EDBParameter("param2", EDBDbType.Integer);
+                p.Direction = ParameterDirection.Output;
+                p.Value = -1;
+                command.Parameters.Add(p);
+
+                p = new EDBParameter("param1", EDBDbType.Integer);
+                p.Direction = ParameterDirection.Output;
+                p.Value = -1;
+                command.Parameters.Add(p);
+
+                p = new EDBParameter("p", EDBDbType.Integer);
+                p.Direction = ParameterDirection.Output;
+                p.Value = -1;
+                command.Parameters.Add(p);
+
+                command.ExecuteNonQuery();
+
+                Assert.AreEqual(4, command.Parameters["param1"].Value);
+                Assert.AreEqual(5, command.Parameters["param2"].Value);
+                //Assert.AreEqual(-1, command.Parameters["p"].Value); //Which is better, not filling this or filling this with an unmapped value?
+            }
+        }
+
+        [Test]
+        public void CaseSensitiveParameterNames()
+        {
+            using (var conn = OpenConnection())
+            {
+                using (var command = new EDBCommand("select :p1", conn))
+                {
+                    command.Parameters.Add(new EDBParameter("P1", EDBDbType.Integer)).Value = 5;
+                    var result = command.ExecuteScalar();
+                    Assert.AreEqual(5, result);
+                }
+            }
+        }
+
+        [Test]
+        public void TestBug1006158OutputParameters()
+        {
+            using (var conn = OpenConnection())
+            {
+                const string createFunction =
+                    @"CREATE OR REPLACE FUNCTION pg_temp.more_params(OUT a integer, OUT b boolean) AS
+            $BODY$DECLARE
+                BEGIN
+                    a := 3;
+                    b := true;
+                END;$BODY$
+              LANGUAGE 'plpgsql' VOLATILE;";
+
+                var command = new EDBCommand(createFunction, conn);
+                command.ExecuteNonQuery();
+
+                command = new EDBCommand("pg_temp.more_params", conn);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("a", DbType.Int32));
+                command.Parameters[0].Direction = ParameterDirection.Output;
+                command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
+                command.Parameters[1].Direction = ParameterDirection.Output;
+
+                var result = command.ExecuteScalar();
+
+                Assert.AreEqual(3, command.Parameters[0].Value);
+                Assert.AreEqual(true, command.Parameters[1].Value);
+            }
+        }
+
+        [Test]
+        public void TestErrorInPreparedStatementCausesReleaseConnectionToThrowException()
+        {
+            using (var conn = OpenConnection())
+            {
+                // This is caused by having an error with the prepared statement and later, Npgsql is trying to release the plan as it was successful created.
+                var cmd = new EDBCommand("sele", conn);
+                Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<PostgresException>());
+            }
+        }
+
+#if NET451
+        [Test]
+        public void Bug1010788UpdateRowSource()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (id SERIAL PRIMARY KEY, name TEXT)");
+                var command = new EDBCommand("SELECT * FROM data", conn);
+                Assert.AreEqual(UpdateRowSource.Both, command.UpdatedRowSource);
+
+                var cmdBuilder = new EDBCommandBuilder();
+                var da = new EDBDataAdapter(command);
+                cmdBuilder.DataAdapter = da;
+                Assert.IsNotNull(da.SelectCommand);
+                Assert.IsNotNull(cmdBuilder.DataAdapter);
+
+                EDBCommand updateCommand = cmdBuilder.GetUpdateCommand();
+                Assert.AreEqual(UpdateRowSource.None, updateCommand.UpdatedRowSource);
+            }
+        }
+#endif
+
+        [Test]
+        public void TableDirect()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
+                conn.ExecuteNonQuery(@"INSERT INTO data (name) VALUES ('foo')");
+                using (var cmd = new EDBCommand("data", conn) { CommandType = CommandType.TableDirect })
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    Assert.That(rdr.Read(), Is.True);
+                    Assert.That(rdr["name"], Is.EqualTo("foo"));
+                }
+            }
+        }
+
+        [Test]
+        public void InputAndOutputParameters()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand())
+            {
+                cmd.Connection = conn;
+                cmd.CommandText = "Select :a + 2 as b, :c - 1 as c";
+                var b = new EDBParameter { ParameterName = "b", Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(b);
+                cmd.Parameters.Add(new EDBParameter("a", 3));
+                var c = new EDBParameter { ParameterName = "c", Direction = ParameterDirection.InputOutput, Value = 4 };
+                cmd.Parameters.Add(c);
+                using (cmd.ExecuteReader())
+                {
+                    Assert.AreEqual(5, b.Value);
+                    Assert.AreEqual(3, c.Value);
+                }
+            }
+        }
+
+        [Test]
+        public void SendUnknown([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::TIMESTAMP", conn))
+            {
+                cmd.CommandText = "SELECT @p::TIMESTAMP";
+                cmd.Parameters.Add(new EDBParameter("p", EDBDbType.Unknown) { Value = "2008-1-1" });
+                if (prepare == PrepareOrNot.Prepared)
+                    cmd.Prepare();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetValue(0), Is.EqualTo(new DateTime(2008, 1, 1)));
+                }
+            }
+        }
+
+        [Test, Description("Checks that prepares requires all params to have explicitly set types (EDBDbType or DbType)")]
+        public void PrepareRequiresParamTypesSet()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                var p = new EDBParameter("p", 8);
+                cmd.Parameters.Add(p);
+                Assert.That(() => cmd.Prepare(), Throws.InvalidOperationException);
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/503")]
+        public void InvalidUTF8()
+        {
+            const string badString = "SELECT 'abc\uD801\uD802d'";
+            using (var conn = OpenConnection())
+            {
+                Assert.That(() => conn.ExecuteScalar(badString), Throws.Exception.TypeOf<EncoderFallbackException>());
+            }
+        }
+
+        [Test]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/393")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/299")]
+        public void DisposePreparedAfterCommandClose()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "select 1";
+                cmd.Prepare();
+                conn.Close();
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
+        public void PreparedAcrossCloseOpen()
+        {
+            using (var conn1 = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn1))
+            {
+                cmd.Prepare();
+                Assert.That(cmd.IsPrepared, Is.True);
+                conn1.Close();
+                conn1.Open();
+                Assert.That(cmd.IsPrepared, Is.False);
+                Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1)); // Execute unprepared
+                cmd.Prepare();
+                Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
+        public void UseAcrossConnectionChange([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
+        {
+            using (var conn1 = OpenConnection())
+            using (var conn2 = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn1))
+            {
+                if (prepare == PrepareOrNot.Prepared)
+                    cmd.Prepare();
+                cmd.Connection = conn2;
+                Assert.That(cmd.IsPrepared, Is.False);
+                if (prepare == PrepareOrNot.Prepared)
+                    cmd.Prepare();
+                Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+            }
+        }
+
+        [Test, Description("CreateCommand before connection open")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/565")]
+        public void CreateCommandBeforeConnectionOpen()
+        {
+            using (var conn = new EDBConnection(TestUtil.defaultConnectionString)) {
+                var cmd = new EDBCommand("SELECT 1", conn);
+                conn.Open();
+                Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+            }
+        }
+
+        [Test]
+        public void BadConnection()
+        {
+            var cmd = new EDBCommand("SELECT 1");
+            Assert.That(() => cmd.ExecuteScalar(), Throws.Exception.TypeOf<InvalidOperationException>());
+
+            using (var conn = new EDBConnection(TestUtil.defaultConnectionString))
+            {
+                cmd = new EDBCommand("SELECT 1", conn);
+                Assert.That(() => cmd.ExecuteScalar(), Throws.Exception.TypeOf<InvalidOperationException>());
+            }
+        }
+
+        [Test, Description("This scenario used to be supported in 3.0, but isn't supported starting 3.1")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/416")]
+        public void PreparedDisposeWithOpenReader()
+        {
+            using (var conn = OpenConnection())
+            {
+                var cmd1 = new EDBCommand("SELECT 1", conn);
+                var cmd2 = new EDBCommand("SELECT 1", conn);
+                cmd1.Prepare();
+                cmd2.Prepare();
+                var reader = cmd2.ExecuteReader();
+                reader.Read();
+                Assert.That(() => cmd1.Dispose(), Throws.Exception.TypeOf<InvalidOperationException>());
+                reader.Close();
+                cmd1.Dispose();
+                cmd2.Dispose();
+                Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM pg_prepared_statements"), Is.EqualTo(0));
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/831")]
+        [Timeout(10000)]
+        public void ManyParameters()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn))
+            {
+                for (var i = 0; i < conn.Settings.WriteBufferSize; i++)
+                    cmd.Parameters.Add(new EDBParameter("p" + i, 8));
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        [Test, Description("Bypasses PostgreSQL's int16 limitation on the number of parameters")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/831")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/858")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/1199")]
+        public void TooManyParameters()
+        {
+            using (var conn = OpenConnection())
+            {
+                using (var cmd = new EDBCommand { Connection = conn })
+                {
+                    var sb = new StringBuilder("SELECT ");
+                    for (var i = 0; i < 65536; i++)
+                    {
+                        var paramName = "p" + i;
+                        cmd.Parameters.Add(new EDBParameter(paramName, 8));
+                        if (i > 0)
+                            sb.Append(", ");
+                        sb.Append('@');
+                        sb.Append(paramName);
+                    }
+                    cmd.CommandText = sb.ToString();
+                    Assert.That(() => cmd.ExecuteNonQuery(), Throws.Exception
+                        .InstanceOf<Exception>()
+                        .With.Message.EqualTo("A statement cannot have more than 65535 parameters")
+                        );
+                }
+
+                // An individual statement cannot have more than 65535 parameters, but a command can
+                // (across multiple statements).
+                // Create a command with 1000 statements which have 70 params each
+                using (var cmd = new EDBCommand { Connection = conn })
+                {
+                    var paramIndex = 0;
+                    var sb = new StringBuilder();
+                    for (var statementIndex = 0; statementIndex < 1000; statementIndex++)
+                    {
+                        if (statementIndex > 0)
+                            sb.Append("; ");
+                        sb.Append("SELECT ");
+                        var startIndex = paramIndex;
+                        var endIndex = paramIndex + 70;
+                        for (; paramIndex < endIndex; paramIndex++)
+                        {
+                            var paramName = "p" + paramIndex;
+                            cmd.Parameters.Add(new EDBParameter(paramName, 8));
+                            if (paramIndex > startIndex)
+                                sb.Append(", ");
+                            sb.Append('@');
+                            sb.Append(paramName);
+                        }
+                    }
+
+                    cmd.CommandText = sb.ToString();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1037")]
+        public void Statements()
+        {
+            // See also ReaderTests.Statements()
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
+                using (var cmd = new EDBCommand(
+                    "INSERT INTO data (name) VALUES ('a');" +
+                    "UPDATE data SET name='b' WHERE name='doesnt_exist'",
+                    conn)
+                )
+                {
+                    cmd.ExecuteNonQuery();
+
+                    Assert.That(cmd.Statements, Has.Count.EqualTo(2));
+                    Assert.That(cmd.Statements, Has.Count.EqualTo(2));
+                    Assert.That(cmd.Statements[0].SQL, Is.EqualTo("INSERT INTO data (name) VALUES ('a')"));
+                    Assert.That(cmd.Statements[0].StatementType, Is.EqualTo(EnterpriseDB.EDBClient.StatementType.Insert));
+                    Assert.That(cmd.Statements[0].Rows, Is.EqualTo(1));
+                    Assert.That(cmd.Statements[0].OID, Is.Not.EqualTo(0));
+                    Assert.That(cmd.Statements[1].SQL,
+                        Is.EqualTo("UPDATE data SET name='b' WHERE name='doesnt_exist'"));
+                    Assert.That(cmd.Statements[1].StatementType, Is.EqualTo(EnterpriseDB.EDBClient.StatementType.Update));
+                    Assert.That(cmd.Statements[1].Rows, Is.EqualTo(0));
+                    Assert.That(cmd.Statements[1].OID, Is.EqualTo(0));
+                }
+            }
         }
 
 
@@ -1238,31 +1765,24 @@ namespace DOTNET
         }
 
         [Test]
-        [ExpectedException(typeof(System.Net.Sockets.SocketException))]
         public void ConnectionStringWithInvalidParameters()
         {
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
 
-            command.Connection.Open();
-            command.ExecuteReader();
-            command.Connection.Close();
-
+            Assert.Throws<System.Net.Sockets.SocketException>(() => command.Connection.Open());
 
         }
 
         [Test]
-        [ExpectedException(typeof(System.Net.Sockets.SocketException))]
         public void InvalidConnectionString()
         {
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
-               command.Connection.Open();
-                command.ExecuteReader();
-                command.Connection.Close();
-       
+            Assert.Throws<System.Net.Sockets.SocketException>(() => command.Connection.Open());
+
        //     Assert("Either password must be specified or IntegratedSecurity must be on",);
 
         }

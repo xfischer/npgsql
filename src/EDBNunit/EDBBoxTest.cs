@@ -57,10 +57,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBBox box = EDBBox.Parse("(-4,3,2,5");
+			Assert.Throws<FormatException>(() => EDBBox.Parse("(-4,3,2,5"));
 		}
 
 		[Test]

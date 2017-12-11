@@ -52,10 +52,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBPolygon polygon = EDBPolygon.Parse("(5)");
+			Assert.Throws<FormatException>(() => EDBPolygon.Parse("(5)"));
 		}
 
 		[Test]

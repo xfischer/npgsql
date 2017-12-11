@@ -49,10 +49,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBLine line = EDBLine.Parse("(5");
+			Assert.Throws<FormatException>(() => EDBLine.Parse("(5"));
 		}
 
 		[Test]

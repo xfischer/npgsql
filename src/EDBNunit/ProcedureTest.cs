@@ -202,7 +202,7 @@ namespace DOTNET
 				throw new Exception(e.ToString());
 			}
 		}
-        [Test]
+        [Test, Ignore("RM#43100")]
         public void testOneOutArg()
         {
             try
@@ -246,7 +246,7 @@ namespace DOTNET
                 throw new Exception(e.ToString());
             }
         }
-        [Test]
+        [Test, Ignore("RM#43100")]
 		public void testThreeOutArg()
 		{
 			try 
@@ -988,7 +988,7 @@ namespace DOTNET
 /*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test]
+		[Test, Ignore("RM#43100")]
 		public void testMaxParametersSupportInProcedureWithNumericAsOut()
 		{
 			//////prereq
@@ -1321,7 +1321,7 @@ namespace DOTNET
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("RM#43100")]
 		public void testMaxParametersSupportInProcedureWithNumericAsInAndOut()
 		{
 			//////prereq
@@ -2727,14 +2727,10 @@ namespace DOTNET
 
         }
 
-		[Test]
+		[Test, Ignore("RM#43100")]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
-
-            try
-
-            {
 
                 EDBCommand command;
 
@@ -2749,13 +2745,9 @@ namespace DOTNET
                 try
 
                 {
-
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
                     command.ExecuteNonQuery();
-
                     command.Dispose();
-
                 }
 
                 catch (EDBException )
@@ -2819,12 +2811,6 @@ namespace DOTNET
                 tran.Commit();
 
                 result.Close();
-
-            }
-            catch (EDBException exp)
-            {
-                Console.WriteLine("Exception: " + exp.ToString());
-            }
 
         }
 

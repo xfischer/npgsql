@@ -404,7 +404,7 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(InvalidOperationException))]
+		//[ExpectedException(typeof(InvalidOperationException))]
 		public void ReadPastDataReaderEnd()
 		{
 			_conn.Open();
@@ -414,8 +414,8 @@ namespace DOTNET
 
 			while (dr.Read())
 				;
-
-			Object o = dr[0];
+			Object o;
+			Assert.Throws<InvalidOperationException>(() => o = dr[0]);
 
 		}
 
