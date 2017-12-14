@@ -10,7 +10,7 @@ namespace DOTNET
 	/// Summary description for FBs.
 	/// </summary>
     [TestFixture]
-    public class FBs
+    public class FBs : TestBase
     {
         EDBConnection con = null;
 
@@ -18,7 +18,7 @@ namespace DOTNET
         public void Init()
         {
             //write setup for following test cases
-            con = TestUtil.openDB();
+            con = OpenConnection();
             EDBCommand Command = new EDBCommand("", con);
 
             Command.CommandText = "CREATE OR REPLACE FUNCTION surname1(a IN INTEGER, b IN VARCHAR2) RETURN VARCHAR2 \n" +

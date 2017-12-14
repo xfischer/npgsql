@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -31,7 +31,7 @@ using NUnit.Framework;
 
 namespace DOTNET
 {
-    class PostgisTests
+    class PostgisTests : TestBase
     {
         public class TestAtt
         {
@@ -115,7 +115,7 @@ namespace DOTNET
         [Test,TestCaseSource(nameof(Tests))]
         public void PostgisTestRead(TestAtt att)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 var a = att;
@@ -128,27 +128,28 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(Tests))]
         public void PostgisTestWrite(TestAtt a)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Parameters.AddWithValue("p1", EDBDbType.Geometry,a.Geom);
                 a.Geom.SRID = 0;
                 cmd.CommandText = "Select st_asewkb(:p1) = st_asewkb(" + a.SQL + ")";
-                try
-                {
-                    Assert.IsTrue((bool)cmd.ExecuteScalar(),"Error on comparison of " + a.Geom);
+                bool areEqual;
+                try {
+                    areEqual = (bool)cmd.ExecuteScalar();
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    Assert.Fail("Exception caught on " + a.Geom);
+                    throw new Exception("Exception caught on " + a.Geom, e);
                 }
+                Assert.IsTrue(areEqual, "Error on comparison of " + a.Geom);
             }
         }
 
         [Test, TestCaseSource(nameof(Tests))]
         public void PostgisTestWriteSrid(TestAtt a)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Parameters.AddWithValue("p1", EDBDbType.Geometry, a.Geom);
@@ -162,7 +163,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(Tests))]
         public void PostgisTestReadSrid(TestAtt a)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "Select st_setsrid(" + a.SQL + ",3942)";
@@ -175,7 +176,7 @@ namespace DOTNET
         [Test]
         public void PostgisTestArrayRead()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "Select ARRAY(select st_makepoint(1,1))";
@@ -188,7 +189,7 @@ namespace DOTNET
         [Test]
         public void PostgisTestArrayWrite()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 var p = new PostgisPoint[1] { new PostgisPoint(1d, 1d) };
@@ -224,7 +225,7 @@ namespace DOTNET
                     }
                 })
             }) { SRID = 4326 };
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.Parameters.AddWithValue("p1", geom2);
@@ -236,7 +237,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1121")]
         public void AsBinaryWkb()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo GEOMETRY)");
                 var point = new PostgisPoint(8, 8);
@@ -271,7 +272,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/npgsql/npgsql/issues/1260")]
         public void CopyBinary(TestAtt a)
         {
-            using (var c = TestUtil.openDB())
+            using (var c = OpenConnection())
             {
                 using (var cmd = new EDBCommand("CREATE TEMPORARY TABLE testcopybin (g geometry)", c))
                     cmd.ExecuteNonQuery();
@@ -308,7 +309,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/npgsql/npgsql/issues/1260")]
         public void CopyBinaryArray(TestAtt a)
         {
-            using (var c = TestUtil.openDB())
+            using (var c = OpenConnection())
             {
                 using (var cmd = new EDBCommand("CREATE TEMPORARY TABLE testcopybinarray (g geometry[3])", c))
                     cmd.ExecuteNonQuery();
@@ -356,7 +357,7 @@ namespace DOTNET
         [Test]
         public void ReadAsConcreteType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT st_makepoint(1, 1)", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -366,10 +367,37 @@ namespace DOTNET
             }
         }
 
+        [Test]
+        public void Bug1381()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.Add("p", EDBDbType.Geometry).Value = new PostgisMultiPolygon(new[]
+                {
+                    new PostgisPolygon(new[]
+                        {
+                            new[]
+                            {
+                                new Coordinate2D(-0.555701, 46.42473701),
+                                new Coordinate2D(-0.549486, 46.42707801),
+                                new Coordinate2D(-0.549843, 46.42749901),
+                                new Coordinate2D(-0.555524, 46.42533901),
+                                new Coordinate2D(-0.555701, 46.42473701)
+                            }
+                        })
+                        // This is the problem:
+                        { SRID = 4326 }
+                }) { SRID = 4326 };
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         [OneTimeSetUp]
         public void SetUp()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT postgis_version()", conn))
             {
                 try
@@ -381,7 +409,6 @@ namespace DOTNET
                     cmd.CommandText = "SELECT version()";
                     var versionString = (string)cmd.ExecuteScalar();
                     Debug.Assert(versionString != null);
-                    Console.WriteLine(versionString);
                     var m = Regex.Match(versionString, @"^EnterpriseDB ([0-9.]+(\w*)?)");
                     if (!m.Success)
                         throw new Exception("Couldn't parse EnterpriseDB PostgreSQL version string: " + versionString);

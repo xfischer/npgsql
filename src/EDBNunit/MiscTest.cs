@@ -13,15 +13,15 @@ namespace DOTNET
 	/// </summary>
 	
 	[TestFixture]
-	public class MiscTest
-	{
+	public class MiscTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 			TestUtil.createTempTable(con,"TESTTAB","a VARCHAR, b INT4");
 			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V1',1)";
@@ -53,7 +53,7 @@ namespace DOTNET
 		{
 			try
 			{
-				EDBConnection Con=TestUtil.openDB();
+				EDBConnection Con=OpenConnection();
 			
 				EDBCommand Command=new EDBCommand("",Con);
 				Command.CommandType=CommandType.Text;

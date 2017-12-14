@@ -481,7 +481,7 @@ namespace DOTNET
 		[Test]
 		public void testgetByte() 
 		{
-			/*_conn=TestUtil.openDB();
+			/*_conn=OpenConnection();
 			TestUtil.createTempTable(_conn,"TESTTAB","a VARCHAR, b INT4");
 			EDBCommand Command=new EDBCommand("",_conn);
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V1',1)";

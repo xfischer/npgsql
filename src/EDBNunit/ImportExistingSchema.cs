@@ -11,15 +11,15 @@ namespace DOTNET
 	/// it creates a new table importing the schema of an existing table
 	/// </summary>
 	[TestFixture]
-	public class ImportExistingSchema
-	{
+	public class ImportExistingSchema : TestBase
+    {
 		
 		EDBConnection con=null;
 
 		[SetUp]
 		public void Init()
 		{
-			con = TestUtil.openDB();
+			con = OpenConnection();
 			
 		}
 		

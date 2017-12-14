@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -27,8 +27,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using EnterpriseDB.EDBClient.NameTranslation;
 using EnterpriseDB.EDBClient;
+using EnterpriseDB.EDBClient.NameTranslation;
 using EDBTypes;
 using NUnit.Framework.Internal;
 
@@ -36,20 +36,20 @@ using NUnit.Framework.Internal;
 namespace DOTNET
 {
     [Parallelizable(ParallelScope.None)]
-    class EnumTests
+    class EnumTests : TestBase
     {
         enum Mood { Sad, Ok, Happy };
 
         [Test, Description("Resolves an enum type handler via the different pathways, with global mapping")]
         public void EnumTypeResolutionWithGlobalMapping()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(EnumTypeResolutionWithGlobalMapping),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood1 AS ENUM ('sad', 'ok', 'happy')");
                 EDBConnection.MapEnumGlobally<Mood>("mood1");
@@ -100,13 +100,13 @@ namespace DOTNET
         [Test, Description("Resolves an enum type handler via the different pathways, with late mapping")]
         public void EnumTypeResolutionWithLateMapping()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(EnumTypeResolutionWithLateMapping),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood2 AS ENUM ('sad', 'ok', 'happy')");
 
@@ -152,7 +152,7 @@ namespace DOTNET
         [Test]
         public void LateMapping()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood3 AS ENUM ('sad', 'ok', 'happy')");
                 conn.ReloadTypes();
@@ -178,7 +178,7 @@ namespace DOTNET
         [Test]
         public void DualEnums()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood4 AS ENUM ('sad', 'ok', 'happy')");
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.test_enum AS ENUM ('label1', 'label2', 'label3')");
@@ -200,7 +200,7 @@ namespace DOTNET
         [Test]
         public void GlobalMapping()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood5 AS ENUM ('sad', 'ok', 'happy')");
                 EDBConnection.MapEnumGlobally<Mood>("mood5");
@@ -232,7 +232,7 @@ namespace DOTNET
         [Test]
         public void Array()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood6 AS ENUM ('sad', 'ok', 'happy')");
                 conn.ReloadTypes();
@@ -265,7 +265,7 @@ namespace DOTNET
         [Test]
         public void ReadUnmappedEnumsAsString()
         {
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString))
+            using (var conn = new EDBConnection(ConnectionString))
             {
                 conn.Open();
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood7 AS ENUM ('Sad', 'Ok', 'Happy')");
@@ -284,7 +284,7 @@ namespace DOTNET
         [Test, Description("Test that a c# string can be written to a backend enum when DbType is unknown")]
         public void WriteStringToBackendEnum()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.fruit AS ENUM ('Banana', 'Apple', 'Orange')");
                 conn.ExecuteNonQuery("create table pg_temp.test_fruit ( id serial, value1 pg_temp.fruit, value2 pg_temp.fruit );");
@@ -303,7 +303,7 @@ namespace DOTNET
         [Test, Description("Tests that a a C# enum an be written to an enum backend when passed as dbUnknown")]
         public void WriteEnumAsDbUnknwown()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood8 AS ENUM ('Sad', 'Ok', 'Happy')");
                 conn.ExecuteNonQuery("CREATE TABLE pg_temp.test_mood_writes (value1 pg_temp.mood8)");
@@ -321,7 +321,7 @@ namespace DOTNET
         public void NameTranslationDefaultSnakeCase()
         {
             // Per-connection mapping
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.name_translation_enum AS ENUM ('simple', 'two_words', 'some_database_name')");
                 conn.ReloadTypes();
@@ -344,7 +344,7 @@ namespace DOTNET
             EDBConnection.MapEnumGlobally<NameTranslationEnum>();
             try
             {
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                 {
                     conn.ExecuteNonQuery("CREATE TYPE pg_temp.name_translation_enum AS ENUM ('simple', 'two_words', 'some_database_name')");
                     conn.ReloadTypes();
@@ -373,7 +373,7 @@ namespace DOTNET
         public void NameTranslationNull()
         {
             // Per-connection mapping
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"CREATE TYPE pg_temp.""NameTranslationEnum"" AS ENUM ('Simple', 'TwoWords', 'some_database_name')");
                 conn.ReloadTypes();
@@ -409,7 +409,7 @@ namespace DOTNET
         {
             try
             {
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                 {
                     conn.ExecuteNonQuery("DROP SCHEMA IF EXISTS a CASCADE; DROP SCHEMA IF EXISTS b CASCADE");
                     conn.ExecuteNonQuery("CREATE SCHEMA a; CREATE SCHEMA b");
@@ -437,7 +437,7 @@ namespace DOTNET
                 // Global mapping
                 EDBConnection.MapEnumGlobally<Enum1>("a.my_enum");
                 EDBConnection.MapEnumGlobally<Enum2>("b.my_enum");
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                 {
                     using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
                     {
@@ -458,7 +458,7 @@ namespace DOTNET
             {
                 EDBConnection.UnmapEnumGlobally<Enum1>("a.my_enum");
                 EDBConnection.UnmapEnumGlobally<Enum2>("b.my_enum");
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                     conn.ExecuteNonQuery("DROP SCHEMA IF EXISTS a CASCADE; DROP SCHEMA IF EXISTS b CASCADE");
             }
         }
@@ -469,12 +469,12 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1017")]
         public void GlobalMappingsAndPooling()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var csb = new EDBConnectionStringBuilder(ConnectionString) {
                 ApplicationName = nameof(GlobalMappingsAndPooling)
             };
 
             int serverId;
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 serverId = conn.ProcessID;
                 conn.ExecuteNonQuery("DROP TYPE IF EXISTS mood9");
@@ -487,7 +487,7 @@ namespace DOTNET
             EDBConnection.MapEnumGlobally<Mood>("mood9");
             try
             {
-                using (var conn = TestUtil.openDB(csb))
+                using (var conn = OpenConnection(csb))
                 {
                     Assert.That(conn.ProcessID, Is.EqualTo(serverId));
                     Assert.That(conn.ExecuteScalar("SELECT 'sad'::mood9"), Is.EqualTo(Mood.Sad));
@@ -495,7 +495,7 @@ namespace DOTNET
             }
             finally
             {
-                using (var conn = TestUtil.openDB(csb))
+                using (var conn = OpenConnection(csb))
                     conn.ExecuteNonQuery("DROP TYPE IF EXISTS mood9");
                 EDBConnection.UnmapEnumGlobally<Mood>("mood9");
             }
@@ -504,7 +504,7 @@ namespace DOTNET
         [Test]
         public void TestEnumType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.test_enum2 AS ENUM ('label1', 'label2', 'label3')");
                 conn.ReloadTypes();

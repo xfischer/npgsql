@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,6 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -39,10 +40,10 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-bit.html
     /// </remarks>
-    public class BitStringTests
+    public class BitStringTests : TestBase
     {
         [Test]
-        public void Roundtrip(
+        public void RoundtripBitArray(
             [Values(
                 "1011011000101111010110101101011011",  // 34 bits
                 "10110110",
@@ -55,7 +56,7 @@ namespace DOTNET
             for (var i = 0; i < bits.Length; i++)
                 expected[i] = bits[i] == '1';
 
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Varbit);
@@ -84,20 +85,52 @@ namespace DOTNET
         [Test]
         public void Long()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
-                var bitLen = (conn.Settings.WriteBufferSize + 10)*8;
+                var bitLen = (conn.Settings.WriteBufferSize + 10) * 8;
                 var chars = new char[bitLen];
                 for (var i = 0; i < bitLen; i++)
-                    chars[i] = i%2 == 0 ? '0' : '1';
-                Roundtrip(new string(chars));
+                    chars[i] = i % 2 == 0 ? '0' : '1';
+                RoundtripBitArray(new string(chars));
+            }
+        }
+
+        [Test]
+        public void RoundtripBitVector32([Values(15, 0)] int bits)
+        {
+            var expected = new BitVector32(bits);
+
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.AddWithValue("p", expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetFieldValue<BitVector32>(0), Is.EqualTo(expected));
+                }
+            }
+        }
+
+        [Test]
+        public void BitVector32TooLong()
+        {
+            using (var conn = OpenConnection())
+            {
+                using (var cmd = new EDBCommand($"SELECT B'{new string('0', 34)}'", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(() => reader.GetFieldValue<BitVector32>(0), Throws.Exception.TypeOf<EDBException>());
+                }
+                Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
             }
         }
 
         [Test, Description("Roundtrips a single bit")]
         public void SingleBit()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::BIT(1), B'01'::BIT(2)", conn))
             {
                 const bool expected = true;
@@ -120,7 +153,7 @@ namespace DOTNET
         [Test, Description("BIT(N) shouldn't be accessible as bool")]
         public void BitstringAsSingleBit()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT B'01'::BIT(2)", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
@@ -137,7 +170,7 @@ namespace DOTNET
         [Test]
         public void Array()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 var expected = new[] { new BitArray(new[] { true, false, true }), new BitArray(new[] { false }) };
@@ -150,7 +183,7 @@ namespace DOTNET
 
                     Assert.That(reader.GetValue(0), Is.EqualTo(expected));
                     Assert.That(reader.GetFieldValue<BitArray[]>(0), Is.EqualTo(expected));
-                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof (Array)));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
                 }
             }
         }
@@ -158,7 +191,7 @@ namespace DOTNET
         [Test]
         public void SingleBitArray()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::BIT(1)[]", conn))
             {
                 var expected = new[] { true, false };
@@ -171,7 +204,7 @@ namespace DOTNET
 
                     Assert.That(reader.GetValue(0), Is.EqualTo(expected));
                     Assert.That(reader.GetFieldValue<bool[]>(0), Is.EqualTo(expected));
-                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof (Array)));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
                 }
             }
         }
@@ -179,7 +212,7 @@ namespace DOTNET
         [Test]
         public void Validation()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1::BIT VARYING", conn))
             {
                 var p = new EDBParameter("p1", EDBDbType.Bit);

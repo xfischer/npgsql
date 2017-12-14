@@ -14,18 +14,18 @@ namespace DOTNET
     /// http://www.postgresql.org/docs/current/static/rangetypes.html
     /// </remarks>
     [Ignore("RM#43104")]
-    class RangeTests
+    class RangeTests : TestBase
     {
         [Test, Description("Resolves a range type handler via the different pathways")]
         public void RangeTypeResolution()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(RangeTypeResolution),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 // Resolve type by EDBDbType
                 using (var cmd = new EDBCommand("SELECT @p", conn))
@@ -64,7 +64,7 @@ namespace DOTNET
         [Test]
         public void Range()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Range | EDBDbType.Integer) { Value = EDBRange<int>.Empty };
@@ -91,7 +91,7 @@ namespace DOTNET
         [Test]
         public void RangeWithLongSubtype()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.textrange AS RANGE(subtype=text)");
                 conn.ReloadTypes();
@@ -118,7 +118,7 @@ namespace DOTNET
         [Test]
         public void TestRange()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 object obj;
@@ -135,10 +135,59 @@ namespace DOTNET
             }
         }
 
+        [Test]
+        public void RangeEquality_FiniteRange()
+        {
+           var r1 = new EDBRange<int>(0, true, false, 1, false, false);
+
+           //different bounds
+           var r2 = new EDBRange<int>(1, true, false, 2, false, false);
+           Assert.IsFalse(r1 == r2);
+
+           //lower bound is not inclusive
+           var r3 = new EDBRange<int>(0, false, false, 1, false, false);
+           Assert.IsFalse(r1 == r3);
+           
+           //upper bound is inclusive
+           var r4 = new EDBRange<int>(0, true, false, 1, true, false);
+           Assert.IsFalse(r1 == r4);
+
+           var r5 = new EDBRange<int>(0, true, false, 1, false, false);
+           Assert.IsTrue(r1 == r5);
+
+            //check some other combinations while we are here
+           Assert.IsFalse(r2 == r3);
+           Assert.IsFalse(r2 == r4);
+           Assert.IsFalse(r3 == r4);
+        }
+
+        [Test]
+        public void RangeEquality_InfiniteRange()
+        {
+           var r1 = new EDBRange<int>(0, false, true, 1, false, false);
+
+           //different upper bound (lower bound shoulnd't matter since it is infinite)
+           var r2 = new EDBRange<int>(1, false, true, 2, false, false);
+           Assert.IsFalse(r1 == r2);
+
+           //upper bound is inclusive
+           var r3 = new EDBRange<int>(0, false, true, 1, true, false);
+           Assert.IsFalse(r1 == r3);
+           
+           //value of lower bound shoulnd't matter since it is infinite
+           var r4 = new EDBRange<int>(10, false, true, 1, false, false);
+           Assert.IsTrue(r1 == r4);
+
+            //check some other combinations while we are here
+           Assert.IsFalse(r2 == r3);
+           Assert.IsFalse(r2 == r4);
+           Assert.IsFalse(r3 == r4);
+        }
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
                 TestUtil.MinimumPgVersion(conn, "9.2.0");
         }
     }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,10 +32,10 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 
 namespace DOTNET
-{
-	//[Parallelizable(ParallelScope.None)]
-    [Ignore("Hangs tests, Need to investigate")]
-	class CompositeTests
+{ 
+    [Parallelizable(ParallelScope.None)]
+    [Ignore("RM#43106")]
+    class CompositeTests : TestBase
     {
         #region Test Types
 
@@ -65,13 +65,13 @@ namespace DOTNET
         [Test, Description("Resolves an enum type handler via the different pathways, with global mapping")]
         public void CompositeTypeResolutionWithGlobalMapping()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(CompositeTypeResolutionWithGlobalMapping),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite1 AS (x int, some_text text)");
                 EDBConnection.MapCompositeGlobally<SomeComposite>("composite1");
@@ -86,8 +86,7 @@ namespace DOTNET
                         using (var reader = cmd.ExecuteReader())
                         {
                             reader.Read();
-                            Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                            Assert.True(reader.GetDataTypeName(0).EndsWith(".composite1"));
+                            Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite1"));
                             Assert.That(reader.IsDBNull(0), Is.True);
                         }
                     }
@@ -100,8 +99,7 @@ namespace DOTNET
                         using (var reader = cmd.ExecuteReader())
                         {
                             reader.Read();
-                            Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                            Assert.True(reader.GetDataTypeName(0).EndsWith(".composite1"));
+                            Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite1"));
                         }
                     }
 
@@ -111,8 +109,7 @@ namespace DOTNET
                     using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
-                        Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                        Assert.True(reader.GetDataTypeName(0).EndsWith(".composite1"));
+                        Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite1"));
                     }
                 }
                 finally
@@ -125,13 +122,13 @@ namespace DOTNET
         [Test, Description("Resolves a composite type handler via the different pathways, with late mapping")]
         public void CompositeTypeResolutionWithLateMapping()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(CompositeTypeResolutionWithLateMapping),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite2 AS (x int, some_text text)");
                 // Resolve type by EDBDbType
@@ -143,8 +140,7 @@ namespace DOTNET
                     using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
-                        Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                        Assert.True(reader.GetDataTypeName(0).EndsWith(".composite2"));
+                        Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite2"));
                         Assert.That(reader.IsDBNull(0), Is.True);
                     }
                 }
@@ -158,8 +154,7 @@ namespace DOTNET
                     using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
-                        Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                        Assert.True(reader.GetDataTypeName(0).EndsWith(".composite2"));
+                        Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite2"));
                     }
                 }
 
@@ -170,16 +165,15 @@ namespace DOTNET
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
-                    Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-                    Assert.True(reader.GetDataTypeName(0).EndsWith(".composite2"));
+                    Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".composite2"));
                 }
             }
         }
 
-        //[Test, Parallelizable(ParallelScope.None)]
+        [Test, Parallelizable(ParallelScope.None)]
         public void LateMapping()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite3 AS (x int, some_text text)");
                 conn.ReloadTypes();
@@ -190,7 +184,7 @@ namespace DOTNET
                 {
                     cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Composite) {
                         Value = expected,
-                        SpecificType = typeof (SomeComposite)
+                        SpecificType = typeof(SomeComposite)
                     });
                     cmd.Parameters.AddWithValue("p2", expected);
                     using (var reader = cmd.ExecuteReader())
@@ -212,14 +206,14 @@ namespace DOTNET
         {
             try
             {
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                 {
                     conn.ExecuteNonQuery("DROP TYPE IF EXISTS composite4");
                     conn.ExecuteNonQuery("CREATE TYPE composite4 AS (x int, some_text text)");
                     conn.ReloadTypes();
                 }
                 EDBConnection.MapCompositeGlobally<SomeComposite>("composite4");
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                 {
                     var expected = new SomeComposite { x = 8, SomeText = "foo" };
                     using (var cmd = new EDBCommand($"SELECT @p::composite4", conn))
@@ -238,7 +232,7 @@ namespace DOTNET
             finally
             {
                 EDBConnection.UnmapCompositeGlobally<SomeComposite>("composite4");
-                using (var conn = TestUtil.openDB())
+                using (var conn = OpenConnection())
                     conn.ExecuteNonQuery("DROP TYPE IF EXISTS composite4");
             }
         }
@@ -246,7 +240,7 @@ namespace DOTNET
         [Test, Description("Tests a composite within another composite")]
         public void Recursive()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite_contained AS (x int, some_text text)");
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite_container AS (a int, contained composite_contained)");
@@ -278,7 +272,7 @@ namespace DOTNET
         [Test]
         public void Struct()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite_struct AS (x int, some_text text)");
                 conn.ReloadTypes();
@@ -302,7 +296,7 @@ namespace DOTNET
         [Test]
         public void Array()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.composite5 AS (x int, some_text text)");
                 conn.ReloadTypes();
@@ -317,7 +311,7 @@ namespace DOTNET
                 {
                     cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Array | EDBDbType.Composite) {
                         Value = expected,
-                        SpecificType = typeof (SomeComposite)
+                        SpecificType = typeof(SomeComposite)
                     });
                     cmd.Parameters.AddWithValue("p2", expected); // Infer
                     using (var reader = cmd.ExecuteReader())
@@ -340,7 +334,7 @@ namespace DOTNET
         public void NameTranslation()
         {
             var expected = new NameTranslationComposite { Simple = 2, TwoWords = 3, SomeClrName = 4 };
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.name_translation_composite AS (simple int, two_words int, some_database_name int)");
                 conn.ReloadTypes();
@@ -382,7 +376,7 @@ CREATE TYPE address AS
     street TEXT,
     postal_code us_postal_code
 )";
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(setupSql);
                 conn.ReloadTypes();
@@ -417,7 +411,7 @@ CREATE TYPE address AS
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/990")]
         public void TableAsComposite()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE table_as_composite (foo int); INSERT INTO table_as_composite (foo) VALUES (8)");
                 conn.ReloadTypes();
@@ -430,7 +424,7 @@ CREATE TYPE address AS
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1267")]
         public void TableAsCompositeWithDeleteColumns()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"
                     CREATE TEMP TABLE table_as_composite (foo int, bar int);
@@ -446,7 +440,7 @@ CREATE TYPE address AS
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1125")]
         public void NullableProperty()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.nullable_property_type AS (foo INT)");
                 conn.ReloadTypes();
@@ -477,13 +471,13 @@ CREATE TYPE address AS
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1168")]
         public void WithSchema()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(WithSchema),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("DROP SCHEMA IF EXISTS composite_schema CASCADE; CREATE SCHEMA composite_schema");
                 try
@@ -513,13 +507,13 @@ CREATE TYPE address AS
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1168")]
         public void InDifferentSchemas()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(WithSchema),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("DROP SCHEMA IF EXISTS composite_schema1 CASCADE; CREATE SCHEMA composite_schema1");
                 conn.ExecuteNonQuery("DROP SCHEMA IF EXISTS composite_schema2 CASCADE; CREATE SCHEMA composite_schema2");

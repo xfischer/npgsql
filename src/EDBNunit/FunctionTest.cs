@@ -9,14 +9,15 @@ namespace DOTNET
 	/// Testing Functions with Different combination of parameters
 	/// </summary>
 	[TestFixture]
-	public class FunctionTest
-	{
+	public class FunctionTest : TestBase
+    {
 		EDBConnection con = null;
 
-		[SetUp]
+        #region Setup / Tear Down
+        [SetUp]
 		public void Init()
 		{
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
@@ -78,7 +79,7 @@ namespace DOTNET
             com.ExecuteNonQuery();
 
             com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
-            com.ExecuteNonQuery();
+            //com.ExecuteNonQuery();
 
         ////    com.CommandText = "DROP Function  varcharr( IN NUMERIC);";
         //    //com.ExecuteNonQuery();
@@ -89,8 +90,10 @@ namespace DOTNET
 			TestUtil.closeDB(con);
 		}
 
-		/* To verify the sanity of functions */       
-		[Test]
+        #endregion
+
+        /* To verify the sanity of functions */
+        [Test]
 		public void testfunctionsanity()
 		{
 			try 
@@ -3454,7 +3457,7 @@ namespace DOTNET
                 EDBCommand command = new EDBCommand("RefCursorsOUT(:v_id)",con);
 				command.CommandType = CommandType.StoredProcedure;
 				command.Transaction = tran;
-				command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+				command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 				command.Prepare();
 				command.ExecuteNonQuery();
@@ -3540,91 +3543,48 @@ namespace DOTNET
 
 
         [Test]
-
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
-
         {
-
+            EDBCommand command = null;
             try
-
             {
-
-                EDBCommand command;
-
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
                 command.ExecuteNonQuery();
-
                 command.Dispose();
-
-
-
                 EDBTransaction tran = con.BeginTransaction();
-
-
-
+                
                 command = new EDBCommand("CREATE OR REPLACE function refcur_callee2_func( c_1 OUT numeric, " +
-
                                         "                                           c_2 IN OUT refcursor, " +
-
                                         "                                           c_3 IN OUT refcursor ) return numeric IS " +
-
                                         "BEGIN " +
-
                                         "   c_1 := 100; " +
-
                                         "   open c_2 for select * from emp; " +
-
                                         "   open c_3 for select ename from emp; " +
-
                                         "   return c_1; " +
-
                                         "END;", con);
 
                 command.ExecuteNonQuery();
-
                 command.Dispose();
-
-
-
+                
                 try
-
                 {
-
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
                     command.ExecuteNonQuery();
-
                     command.Dispose();
-
                 }
-
                 catch (EDBException exp)
-
                 {
-
                 }
-
-
-
                 command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);
-
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Transaction = tran;
-
-
-
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                
                 command.Prepare();
-
                 command.Parameters[0].Value = 7369;
 
                 EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -3632,52 +3592,35 @@ namespace DOTNET
                 { }
                 
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
-
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
-                
                 EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-                
 
                 int fc1 = reader.FieldCount;
-
+                reader.Read();
                 reader.Read();
 
-                reader.Read();
-                
                 Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
-
                 Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
-
                 Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
-
                 Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
-
                 Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
                 
                 reader = (EDBDataReader)command.Parameters[2].Value;
-                
                 fc1 = reader.FieldCount;
 
                 reader.Read();
-
-
-
                 Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
-
                 tran.Commit();
-
                 reader.Close();
-
                 result.Close();
 
             }
 
             catch (Exception ex)
-
             {
-
                 Console.WriteLine(ex.Message.ToString());
-
+                if (command != null)
+                command.Dispose();
             }
 
         }

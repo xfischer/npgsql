@@ -38,14 +38,14 @@ using EDBTypes;
 namespace DOTNET
 {
     [Explicit]
-    public class SpeedTests
+    public class SpeedTests : TestBase
     {
         static readonly TimeSpan TestRunTime = new TimeSpan(0, 0, 10); // 10 seconds
 
         [Test, Description("A minimal, simple, non-query scenario")]
         public void ExecuteUpdateNonQuery()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var metrics = TestMetrics.Start(TestRunTime, true))
             {
                 while (!metrics.TimesUp)
@@ -59,7 +59,7 @@ namespace DOTNET
         [Test, Description("A minimal, simple, non-query scenario in async")]
         public async void ExecuteUpdateNonQueryAsync()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var metrics = TestMetrics.Start(TestRunTime, true))
             {
                 while (!metrics.TimesUp)
@@ -70,24 +70,10 @@ namespace DOTNET
             }
         }
 
-        [Test, Description("A minimal, simple, scalar scenario")]
-        public void ExecuteScalar()
-        {
-            using (var conn = TestUtil.openDB())
-            using (var metrics = TestMetrics.Start(TestRunTime, true))
-            {
-                while (!metrics.TimesUp)
-                {
-                    conn.ExecuteScalar("SELECT 1 + 1");
-                    metrics.IncrementIterations();
-                }
-            }
-        }
-
         [Test, Description("A minimal, simple, scalar scenario in async")]
         public async void ExecuteScalarAsync()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var metrics = TestMetrics.Start(TestRunTime, true))
             {
                 while (!metrics.TimesUp)
@@ -102,7 +88,7 @@ namespace DOTNET
         [TestCase(100)]
         public void ExecuteReader(int rows)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 for (var i = 0; i < rows; i++)
                     conn.ExecuteNonQuery("INSERT INTO DATA (field_int4) VALUES (10)");
@@ -123,7 +109,7 @@ namespace DOTNET
         [TestCase(100)]
         public async void ExecuteReaderAsync(int rows)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 for (var i = 0; i < rows; i++)
                     conn.ExecuteNonQuery("INSERT INTO DATA (field_int4) VALUES (10)");
@@ -143,7 +129,7 @@ namespace DOTNET
         [Test, Description("A normal insert command with one parameter")]
         public void ParameterizedInsert()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -174,7 +160,7 @@ namespace DOTNET
         [Test, Description("A single decimal roundtrip test")]
         public void ParameterizedSelectDecimalRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -203,7 +189,7 @@ namespace DOTNET
         [Test, Description("A large bytea roundtrip test")]
         public void ParameterizedSelectByteaRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -237,7 +223,7 @@ namespace DOTNET
         [Test, Description("A bigint roundtrip test")]
         public void ParameterizedSelectBigIntRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -273,7 +259,7 @@ namespace DOTNET
         [Test, Description("A bigint array roundtrip test")]
         public void ParameterizedSelectBigIntArrayRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -309,7 +295,7 @@ namespace DOTNET
         [Test, Description("A text array roundtrip test")]
         public void ParameterizedSelectArrayRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -360,7 +346,7 @@ namespace DOTNET
         [Test, Description("A bytea array roundtrip test")]
         public void ParameterizedSelectByteaArrayRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -411,7 +397,7 @@ namespace DOTNET
         [Test, Description("A decimal array roundtrip test")]
         public void ParameterizedSelectDecimalArrayRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -447,7 +433,7 @@ namespace DOTNET
         [Test, Description("A money array roundtrip test")]
         public void ParameterizedSelectMoneyArrayRoundTrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 command.CommandType = CommandType.Text;
@@ -486,7 +472,7 @@ namespace DOTNET
         [TestCase(true), TestCase(false)]
         public void ConnectWithPool(bool withPool)
         {
-            EDBConnectionStringBuilder csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString);
+            EDBConnectionStringBuilder csb = new EDBConnectionStringBuilder(ConnectionString);
             csb.Pooling = withPool;
             String conStr = csb.ConnectionString;
             using (var metrics = TestMetrics.Start(TestRunTime, true))
@@ -504,7 +490,7 @@ namespace DOTNET
         [Test, Description("Many parameter substitution test")]
         public void ParameterizedPrepareManyFields()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = conn.CreateCommand())
             {
                 StringWriter sql = new StringWriter();
@@ -584,7 +570,7 @@ namespace DOTNET
 
         TimeSpan PoolTestCase(int numThreads, int numIterations, int maxPoolSize)
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString) {
                  MaxPoolSize = maxPoolSize,
                  Host = "mammoth",
                  Port=5432

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,21 +24,22 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using EnterpriseDB.EDBClient;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EDBTypes;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EDBTypes;
 
 namespace DOTNET
 {
-    public class ReaderTests
+    public class ReaderTests : TestBase
     {
         [Test]
         public void EmptyResultSet()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 1 WHERE FALSE", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -51,7 +52,7 @@ namespace DOTNET
         [Test]
         public void FieldCount()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (int INTEGER)");
                 using (var cmd = new EDBCommand("SELECT 1; SELECT 2,3", conn))
@@ -84,28 +85,37 @@ namespace DOTNET
         [Test]
         public void RecordsAffected()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (int INTEGER)");
-                var cmd = new EDBCommand("INSERT INTO data (int) VALUES (7); INSERT INTO data (int) VALUES (8)", conn);
+
+                var sb = new StringBuilder();
+                for (var i = 0; i < 15; i++)
+                    sb.Append($"INSERT INTO data (int) VALUES ({i});");
+                var cmd = new EDBCommand(sb.ToString(), conn);
                 var reader = cmd.ExecuteReader();
                 reader.Close();
-                Assert.That(reader.RecordsAffected, Is.EqualTo(2));
+                Assert.That(reader.RecordsAffected, Is.EqualTo(15));
 
                 cmd = new EDBCommand("SELECT * FROM data", conn);
                 reader = cmd.ExecuteReader();
                 reader.Close();
                 Assert.That(reader.RecordsAffected, Is.EqualTo(-1));
 
-                cmd = new EDBCommand("UPDATE data SET int=8", conn);
+                cmd = new EDBCommand("UPDATE data SET int=int+1 WHERE int > 10", conn);
                 reader = cmd.ExecuteReader();
                 reader.Close();
-                Assert.That(reader.RecordsAffected, Is.EqualTo(2));
+                Assert.That(reader.RecordsAffected, Is.EqualTo(4));
 
                 cmd = new EDBCommand("UPDATE data SET int=8 WHERE int=666", conn);
                 reader = cmd.ExecuteReader();
                 reader.Close();
                 Assert.That(reader.RecordsAffected, Is.EqualTo(0));
+
+                cmd = new EDBCommand("DELETE FROM data WHERE int > 10", conn);
+                reader = cmd.ExecuteReader();
+                reader.Close();
+                Assert.That(reader.RecordsAffected, Is.EqualTo(4));
             }
         }
 
@@ -113,7 +123,7 @@ namespace DOTNET
         public void Statements()
         {
             // See also CommandTests.Statements()
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
@@ -155,7 +165,7 @@ namespace DOTNET
         [Test]
         public void GetStringWithParameter()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 const string text = "Random text";
@@ -182,7 +192,7 @@ namespace DOTNET
         [Test]
         public void GetStringWithQuoteWithParameter()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 conn.ExecuteNonQuery(@"INSERT INTO data (name) VALUES ('Text with '' single quote')");
@@ -210,7 +220,7 @@ namespace DOTNET
         [Test]
         public void GetValueByName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var command = new EDBCommand(@"SELECT 'Random text' AS real_column", conn))
                 using (var dr = command.ExecuteReader())
@@ -226,7 +236,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public void GetFieldType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn))
                 using (var reader = cmd.ExecuteReader())
@@ -249,7 +259,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1096")]
         public void GetFieldTypeSchemaOnly()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
@@ -261,11 +271,42 @@ namespace DOTNET
         }
 
         [Test]
+        public void GetPostgresType()
+        {
+            using (var conn = OpenConnection())
+            {
+                PostgresType intType;
+                using (var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    intType = (PostgresBaseType)reader.GetPostgresType(0);
+                    Assert.That(intType.Namespace, Is.EqualTo("pg_catalog"));
+                    Assert.That(intType.Name, Is.EqualTo("int4"));
+                    Assert.That(intType.FullName, Is.EqualTo("pg_catalog.int4"));
+                    Assert.That(intType.DisplayName, Is.EqualTo("int4"));
+                    Assert.That(intType.EDBDbType, Is.EqualTo(EDBDbType.Integer));
+                }
+
+                using (var cmd = new EDBCommand(@"SELECT '{1}'::INT4[] AS some_column", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    var intArrayType = (PostgresArrayType)reader.GetPostgresType(0);
+                    Assert.That(intArrayType.Name, Is.EqualTo("_int4"));
+                    Assert.That(intArrayType.Element, Is.SameAs(intType));
+                    Assert.That(intType.Array, Is.SameAs(intArrayType));
+                    Assert.That(intArrayType.EDBDbType, Is.EqualTo(EDBDbType.Integer | EDBDbType.Array));
+                }
+            }
+        }
+
+        [Test]
         [IssueLink("https://github.com/npgsql/npgsql/issues/787")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public void GetDataTypeName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn))
                 using (var reader = cmd.ExecuteReader())
@@ -294,9 +335,8 @@ namespace DOTNET
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
-                    Assert.True(reader.GetDataTypeName(0).StartsWith("pg_temp"));
-	                 Assert.True(reader.GetDataTypeName(0).EndsWith(".my_enum"));
-	            }
+                    Assert.That(reader.GetDataTypeName(0), Does.StartWith("pg_temp").And.EndWith(".my_enum"));
+                }
             }
         }
 
@@ -305,7 +345,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public void GetDataTypeOID()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var int4OID = conn.ExecuteScalar("SELECT oid FROM pg_type WHERE typname = 'int4'");
                 using (var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn))
@@ -329,7 +369,7 @@ namespace DOTNET
         [Test]
         public void GetName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand(@"SELECT 1 AS some_column", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -342,7 +382,7 @@ namespace DOTNET
         [Test]
         public void GetOrdinal()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand(@"SELECT 0, 1 AS some_column WHERE 1=0", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -354,7 +394,7 @@ namespace DOTNET
         [Test]
         public void GetFieldValueAsObject()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 'foo'::TEXT", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -366,7 +406,7 @@ namespace DOTNET
         [Test]
         public void GetValues()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01'::DATE", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -383,7 +423,7 @@ namespace DOTNET
         [Test]
         public void GetProviderSpecificValues()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01'::DATE", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -400,7 +440,7 @@ namespace DOTNET
         [Test]
         public void ExecuteReaderGettingEmptyResultSetWithOutputParameter()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var command = new EDBCommand("SELECT * FROM data WHERE name = NULL;", conn);
@@ -415,7 +455,7 @@ namespace DOTNET
         [Test]
         public void GetValueFromEmptyResultset()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 using (var command = new EDBCommand("SELECT * FROM data WHERE name = :value;", conn))
@@ -444,7 +484,7 @@ namespace DOTNET
         [Test]
         public void ReadPastDataReaderEnd()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var command = new EDBCommand("SELECT 1", conn);
                 using (var dr = command.ExecuteReader())
@@ -458,7 +498,7 @@ namespace DOTNET
         [Test]
         public void SingleResult()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var cmd = new EDBCommand(@"SELECT 1; SELECT 2", conn);
                 var rdr = cmd.ExecuteReader(CommandBehavior.SingleResult);
@@ -471,7 +511,7 @@ namespace DOTNET
         [Test, Description("In sequential access, performing a null check on a non-first field would check the first field")]
         public void SequentialNullCheckOnNonFirstField()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 'X', NULL", conn))
             using (var dr = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
@@ -483,7 +523,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1034")]
         public void SequentialSkipOverFirstRow()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 1; SELECT 2", conn))
             using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
@@ -496,7 +536,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/400")]
         public void ExceptionThrownFromExecuteQuery([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"
                      CREATE OR REPLACE FUNCTION pg_temp.emit_exception() RETURNS VOID AS
@@ -516,7 +556,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1032")]
         public void ExceptionThrownFromNextResult([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"
                      CREATE OR REPLACE FUNCTION pg_temp.emit_exception() RETURNS VOID AS
@@ -537,7 +577,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/967")]
         public void EDBExceptionReferencesStatement()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"
                      CREATE OR REPLACE FUNCTION pg_temp.emit_exception() RETURNS VOID AS
@@ -579,21 +619,16 @@ namespace DOTNET
         [Test]
         public void SchemaOnlyCommandBehaviorSupport()
         {
-            using (var conn = TestUtil.openDB())
-            using (var command = new EDBCommand("SELECT 1", conn))
-            using (var dr = command.ExecuteReader(CommandBehavior.SchemaOnly))
-            {
-                var i = 0;
-                while (dr.Read())
-                    i++;
-                Assert.AreEqual(0, i);
-            }
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn))
+            using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                Assert.That(reader.Read(), Is.False);
         }
 
         [Test]
         public void SchemaOnlyCommandBehaviorSupportFunctioncall()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(@"CREATE OR REPLACE FUNCTION pg_temp.funcB() RETURNS SETOF integer as 'SELECT 1;' LANGUAGE 'sql';");
                 var command = new EDBCommand("pg_temp.funcb", conn) { CommandType = CommandType.StoredProcedure };
@@ -610,7 +645,7 @@ namespace DOTNET
         [Test]
         public void FieldNameKanaWidthWideRequestForNarrowFieldName()
         {//Should ignore Kana width and hence find the first of these two fields
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select 123 as ｦｧｨｩｪｫｬ, 124 as ヲァィゥェォャ", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -623,7 +658,7 @@ namespace DOTNET
         [Test]
         public void FieldNameKanaWidthNarrowRequestForWideFieldName()
         {//Should ignore Kana width and hence find the first of these two fields
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select 123 as ヲァィゥェォャ, 124 as ｦｧｨｩｪｫｬ", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -636,7 +671,7 @@ namespace DOTNET
         [Test]
         public void FieldIndexDoesntExist()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("SELECT 1", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -648,7 +683,7 @@ namespace DOTNET
         [Test, Description("Performs some operations while a reader is still open and checks for exceptions")]
         public void ReaderIsStillOpen()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd1 = new EDBCommand("SELECT 1", conn))
             using (var reader1 = cmd1.ExecuteReader())
             {
@@ -666,7 +701,7 @@ namespace DOTNET
         [Test]
         public void CleansupOkWithDisposeCalls()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("SELECT 1", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -684,7 +719,7 @@ namespace DOTNET
         [Test]
         public void Null()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::TEXT", conn))
             {
                 cmd.Parameters.Add(new EDBParameter("p", DbType.String) { Value = DBNull.Value });
@@ -708,7 +743,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/1234")]
         public void HasRows([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var command = new EDBCommand("SELECT 1; SELECT * FROM data WHERE name='does_not_exist'", conn);
@@ -741,7 +776,7 @@ namespace DOTNET
         [Test]
         public void HasRowsWithoutResultset()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 using (var command = new EDBCommand("DELETE FROM data WHERE name = 'unknown'", conn))
@@ -753,7 +788,7 @@ namespace DOTNET
         [Test]
         public void IntervalAsTimeSpan()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("SELECT CAST('1 hour' AS interval) AS dauer", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -767,7 +802,7 @@ namespace DOTNET
         [Test]
         public void SequentialConsumeWithNull()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("SELECT 1, NULL", conn))
             using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
                 reader.Read();
@@ -776,7 +811,7 @@ namespace DOTNET
         [Test]
         public void CloseConnectionInMiddleOfRow()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT 1, 2", conn))
                 using (var reader = cmd.ExecuteReader())
@@ -802,7 +837,7 @@ END;
 $BODY$
 LANGUAGE plpgsql VOLATILE";
 
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery(initializeTablesSql);
                 using (var cmd = new EDBCommand("SELECT pg_temp.C(1)", conn))
@@ -819,7 +854,7 @@ LANGUAGE plpgsql VOLATILE";
         [Timeout(5000)]
         public void SafeReadException()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 // Temporarily reroute integer to go to a type handler which generates SafeReadExceptions
                 var registry = conn.Connector.TypeHandlerRegistry;
@@ -847,11 +882,11 @@ LANGUAGE plpgsql VOLATILE";
         [Timeout(5000)]
         public void NonSafeReadException()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 // Temporarily reroute integer to go to a type handler which generates some exception
                 var registry = conn.Connector.TypeHandlerRegistry;
-                var intHandler = registry[typeof (int)];
+                var intHandler = registry[typeof(int)];
                 registry.ByOID[intHandler.PostgresType.OID] = new NonSafeExceptionGeneratingHandler(intHandler.PostgresType);
                 try
                 {
@@ -878,8 +913,8 @@ LANGUAGE plpgsql VOLATILE";
 #if DEBUG
     class SafeExceptionGeneratingHandler : SimpleTypeHandler<int>
     {
-        internal SafeExceptionGeneratingHandler(PostgresType backendType)
-            : base (backendType) {}
+        internal SafeExceptionGeneratingHandler(PostgresType postgresType)
+            : base (postgresType) {}
 
         public override int Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {
@@ -893,8 +928,8 @@ LANGUAGE plpgsql VOLATILE";
 
     class NonSafeExceptionGeneratingHandler : SimpleTypeHandler<int>
     {
-        internal NonSafeExceptionGeneratingHandler(PostgresType backendType)
-            : base (backendType) { }
+        internal NonSafeExceptionGeneratingHandler(PostgresType postgresType)
+            : base (postgresType) { }
 
         public override int Read(ReadBuffer buf, int len, FieldDescription fieldDescription)
         {

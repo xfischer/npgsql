@@ -9,14 +9,14 @@ namespace DOTNET
 	/// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
 	/// </summary>
 	[TestFixture] 
-	public class ConnectionTest
-	{
+	public class ConnectionTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{			
-			con = TestUtil.openDB();
+			con = OpenConnection();
 			Console.WriteLine(con.ConnectionString.ToString());
 		}
 
@@ -25,7 +25,7 @@ namespace DOTNET
 		{
 			try 
 			{
-				con = TestUtil.openDB();
+				con = OpenConnection();
 			}
 			catch(EDBException e)
 			{
@@ -38,7 +38,7 @@ namespace DOTNET
 		{
 			try 
 			{
-			//	con = TestUtil.openDBwithoutPooling();
+			//	con = OpenConnectionwithoutPooling();
 			}
 			catch(EDBException e)
 			{
@@ -137,7 +137,7 @@ namespace DOTNET
 		[Test]
 		public void TestIsClosed()
 		{
-		 EDBConnection Con = TestUtil.openDB();
+		 EDBConnection Con = OpenConnection();
 
 		// Should not say closed
 			Console.WriteLine(Con.State.ToString());
@@ -154,7 +154,7 @@ namespace DOTNET
 		[Test]
 		public void TestDoubleClose()
 		{
-			EDBConnection Con = TestUtil.openDB();
+			EDBConnection Con = OpenConnection();
 			Con.Close();
 			Con.Close();
 		}

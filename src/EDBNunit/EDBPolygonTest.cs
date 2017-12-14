@@ -12,8 +12,8 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class EDBPolygonTest
-	{
+	public class EDBPolygonTest : TestBase
+    {
 		EDBConnection con = null;
 		EDBPoint[] testPoints = { new EDBPoint(1, 2), new EDBPoint(3, 4), new EDBPoint(5, 6) };
 		EDBPoint[] testPoints2 = { new EDBPoint(7, 0.1), new EDBPoint(3, 4.4), new EDBPoint(8, -6) };
@@ -22,7 +22,7 @@ namespace DOTNET
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand command = new EDBCommand("create table EDBPolygonTest(id serial, f1 polygon);", con);
 			int result = command.ExecuteNonQuery();

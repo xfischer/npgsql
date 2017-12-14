@@ -8,15 +8,16 @@ namespace DOTNET
 	/// <summary>
 	/// Testing Procedures with Different combination of parameters
 	/// </summary>
-	[TestFixture]
-	public class PackageTest
+	[TestFixture, Ignore("RM#43113")]
+    public class PackageTest : TestBase
 	{
 		EDBConnection con = null;
 
-		[SetUp]
+        #region Setup / Tear Down
+        [SetUp]
 		public void Init()
 		{
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
@@ -77,12 +78,14 @@ namespace DOTNET
 	
 			TestUtil.closeDB(con);
 		}
-		/// <summary>
-		////////////////////////////Scenerio//////////////
-		//////////////////////////Create package spec without body
-		//////////////////////////After Execution No error should occur
-		/// </summary>
-		[Test]
+
+        #endregion
+        /// <summary>
+        ////////////////////////////Scenerio//////////////
+        //////////////////////////Create package spec without body
+        //////////////////////////After Execution No error should occur
+        /// </summary>
+        [Test]
 		public void testPackageWithoutBody()
 		{
 			//////prereq
@@ -1819,9 +1822,9 @@ namespace DOTNET
 
                 //REFCUSOR CommandBehavior.SequentialAccess
 
-                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.RefCursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.RefCursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
 
@@ -1987,9 +1990,9 @@ namespace DOTNET
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.RefCursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.RefCursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
 
 
@@ -2770,7 +2773,7 @@ namespace DOTNET
 
                 command.Transaction = tran;
 
-                command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
 
@@ -3036,9 +3039,9 @@ namespace DOTNET
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.RefCursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.RefCursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
 

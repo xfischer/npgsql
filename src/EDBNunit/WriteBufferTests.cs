@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -38,12 +38,17 @@ namespace DOTNET
         {
             // Fill up the buffer entirely
             WriteBuffer.WriteBytes(new byte[WriteBuffer.Size], 0, WriteBuffer.Size);
-            Assert.AreEqual(WriteBuffer.WriteSpaceLeft, 0);
+            Assert.That(WriteBuffer.WriteSpaceLeft, Is.Zero);
 
             int charsUsed;
             bool completed;
+#if !NETCOREAPP1_1
+            WriteBuffer.WriteStringChunked("hello", 0, 5, true, out charsUsed, out completed);
+            Assert.That(charsUsed, Is.Zero);
+            Assert.That(completed, Is.False);
+#endif
             WriteBuffer.WriteStringChunked("hello".ToCharArray(), 0, 5, true, out charsUsed, out completed);
-            Assert.AreEqual(charsUsed, 0);
+            Assert.That(charsUsed, Is.Zero);
             Assert.That(completed, Is.False);
         }
 

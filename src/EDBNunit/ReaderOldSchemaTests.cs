@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -30,6 +30,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using EnterpriseDB.EDBClient;
 
 namespace DOTNET
 {
@@ -37,12 +38,12 @@ namespace DOTNET
     /// This tests the .NET Framework DbDataReader schema/metadata API, which returns DataTable.
     /// For the new CoreCLR API, see <see cref="ReaderNewSchemaTests"/>.
     /// </summary>
-    public class ReaderOldSchemaTests
+    public class ReaderOldSchemaTests : TestBase
     {
         [Test]
         public void PrimaryKeyFieldsMetadataSupport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("DROP TABLE IF EXISTS DATA2 CASCADE");
                 conn.ExecuteNonQuery(@"CREATE TEMP TABLE DATA2 (
@@ -68,7 +69,7 @@ namespace DOTNET
         [Test]
         public void PrimaryKeyFieldMetadataSupport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id SERIAL PRIMARY KEY, serial SERIAL)");
                 using (var command = new EDBCommand("SELECT * FROM data", conn))
@@ -87,7 +88,7 @@ namespace DOTNET
         [Test]
         public void IsAutoIncrementMetadataSupport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id SERIAL PRIMARY KEY)");
                 var command = new EDBCommand("SELECT * FROM data", conn);
@@ -105,7 +106,7 @@ namespace DOTNET
         [Test]
         public void IsReadOnlyMetadataSupport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id SERIAL PRIMARY KEY, int2 SMALLINT)");
                 conn.ExecuteNonQuery("CREATE OR REPLACE TEMPORARY VIEW DataView (id, int2) AS SELECT id, int2 + int2 AS int2 FROM data");
@@ -144,10 +145,10 @@ namespace DOTNET
         }
 
         // ReSharper disable once InconsistentNaming
-        [Test, Ignore("https://github.com/npgsql/npgsql/issues/1092")]
+        [Test]
         public void AllowDBNull()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (nullable INTEGER, non_nullable INTEGER NOT NULL)");
 
@@ -175,7 +176,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1027")]
         public void GetSchemaTableWithoutResult()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 1", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -188,13 +189,62 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1093")]
         public void WithoutPersistSecurityInfo()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) { Pooling = false };
-            using (var conn = TestUtil.openDB(csb))
+            var csb = new EDBConnectionStringBuilder(ConnectionString) { Pooling = false };
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id INT)");
                 using (var cmd = new EDBCommand("SELECT id FROM data", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo))
                     reader.GetSchemaTable();
+            }
+        }
+
+        [Test]
+        public void PrecisionAndScale()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1::NUMERIC AS result", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                var schemaTable = reader.GetSchemaTable();
+                foreach (DataRow myField in schemaTable.Rows)
+                {
+                    Assert.That(myField["NumericScale"], Is.EqualTo(0));
+                    Assert.That(myField["NumericPrecision"], Is.EqualTo(0));
+                }
+            }
+        }
+
+        [Test]
+        public void SchemaOnly([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
+                using (var cmd = new EDBCommand(
+                    "SELECT 1 AS some_column;" +
+                    "UPDATE data SET name='yo' WHERE 1=0;" +
+                    "SELECT 1 AS some_other_column",
+                    conn))
+                {
+                    if (prepare == PrepareOrNot.Prepared)
+                        cmd.Prepare();
+                    using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                    {
+                        Assert.That(reader.Read(), Is.False);
+                        var t = reader.GetSchemaTable();
+                        Assert.That(t.Rows[0]["ColumnName"], Is.EqualTo("some_column"));
+                        Assert.That(reader.NextResult(), Is.True);
+                        Assert.That(reader.Read(), Is.False);
+                        t = reader.GetSchemaTable();
+                        Assert.That(t.Rows[0]["ColumnName"], Is.EqualTo("some_other_column"));
+                        Assert.That(reader.NextResult(), Is.False);
+                    }
+
+                    // Close reader in the middle
+                    using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                        reader.Read();
+                }
             }
         }
     }

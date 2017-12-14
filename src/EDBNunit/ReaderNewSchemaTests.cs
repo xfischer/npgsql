@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,13 +36,13 @@ namespace DOTNET
     /// Note that this API is also available on .NET Framework.
     /// For the old DataTable-based API, see <see cref="ReaderOldSchemaTests"/>.
     /// </summary>
-    public class ReaderNewSchemaTests
+    public class ReaderNewSchemaTests : TestBase
     {
         // ReSharper disable once InconsistentNaming
         [Test]
         public void AllowDBNull()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (nullable INTEGER, non_nullable INTEGER NOT NULL)");
 
@@ -60,8 +60,8 @@ namespace DOTNET
         [Test]
         public void BaseCatalogName()
         {
-            var dbName = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString).Database;
-            using (var conn = TestUtil.openDB())
+            var dbName = new EDBConnectionStringBuilder(ConnectionString).Database;
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -78,7 +78,7 @@ namespace DOTNET
         [Test]
         public void BaseColumnName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -97,7 +97,7 @@ namespace DOTNET
         [Test]
         public void BaseSchemaName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -105,7 +105,7 @@ namespace DOTNET
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo))
                 {
                     var columns = reader.GetColumnSchema();
-                    Assert.True(columns[0].BaseSchemaName.StartsWith("pg_temp"));
+                    Assert.That(columns[0].BaseSchemaName, Does.StartWith("pg_temp"));
                     Assert.That(columns[1].BaseSchemaName, Is.Null);
                 }
             }
@@ -114,8 +114,8 @@ namespace DOTNET
         [Test]
         public void BaseServerName()
         {
-            var host = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString).Host;
-            using (var conn = TestUtil.openDB())
+            var host = new EDBConnectionStringBuilder(ConnectionString).Host;
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -132,7 +132,7 @@ namespace DOTNET
         [Test]
         public void BaseTableName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -149,7 +149,7 @@ namespace DOTNET
         [Test]
         public void ColumnName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -168,7 +168,7 @@ namespace DOTNET
         [Test]
         public void ColumnOrdinal()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (first INTEGER, second INTEGER)");
 
@@ -187,7 +187,7 @@ namespace DOTNET
         [Test]
         public void ColumnAttributeNumber()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (first INTEGER, second INTEGER)");
 
@@ -206,7 +206,7 @@ namespace DOTNET
         [Test]
         public void ColumnSize()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (bounded VARCHAR(30), unbounded VARCHAR)");
 
@@ -225,7 +225,7 @@ namespace DOTNET
         [Test]
         public void IsAutoIncrement()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (inc SERIAL, non_inc INT)");
 
@@ -243,7 +243,7 @@ namespace DOTNET
         [Test]
         public void IsKey()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id INT PRIMARY KEY, non_id INT, uniq INT UNIQUE)");
 
@@ -267,7 +267,7 @@ namespace DOTNET
         [Test]
         public void IsKeyComposite()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id1 INT, id2 INT, PRIMARY KEY (id1, id2))");
 
@@ -284,7 +284,7 @@ namespace DOTNET
         [Test]
         public void IsLong()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (long BYTEA, non_long INT)");
 
@@ -302,7 +302,7 @@ namespace DOTNET
         [Test]
         public void IsReadOnlyOnView()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 // We can't use temporary tables because GetColumnSchema opens another connection
                 // internally, which doesn't have our temporary schema
@@ -329,7 +329,7 @@ namespace DOTNET
         [Test]
         public void IsReadOnlyOnNonColumn()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT 8", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
@@ -340,7 +340,7 @@ namespace DOTNET
         [Test]
         public void IsUnique()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (id INT PRIMARY KEY, non_id INT, uniq INT UNIQUE)");
 
@@ -359,7 +359,7 @@ namespace DOTNET
         [Test]
         public void NumericPrecision()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (a NUMERIC(8), b NUMERIC, c INTEGER)");
 
@@ -378,7 +378,7 @@ namespace DOTNET
         [Test]
         public void NumericScale()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (a NUMERIC(8,5), b NUMERIC, c INTEGER)");
 
@@ -397,7 +397,7 @@ namespace DOTNET
         [Test]
         public void DataType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -414,7 +414,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1305")]
         public void DataTypeUnknownType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -433,13 +433,13 @@ namespace DOTNET
         [Test]
         public void DataTypeWithComposite()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(DataTypeWithComposite),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 conn.ExecuteNonQuery("CREATE TYPE pg_temp.some_composite AS (foo int)");
                 conn.ReloadTypes();
@@ -462,7 +462,7 @@ namespace DOTNET
         public void UdtAssemblyQualifiedName()
         {
             // Also see DataTypeWithComposite
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -477,9 +477,27 @@ namespace DOTNET
         }
 
         [Test]
+        public void PostgresType()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
+
+                using (var cmd = new EDBCommand("SELECT foo,8 FROM data", conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))
+                {
+                    var columns = reader.GetColumnSchema();
+                    var intType = columns[0].PostgresType;
+                    Assert.That(columns[1].PostgresType, Is.SameAs(intType));
+                    Assert.That(intType.Name, Is.EqualTo("int4"));
+                }
+            }
+        }
+
+        [Test]
         public void DataTypeName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -496,7 +514,7 @@ namespace DOTNET
         [Test]
         public void DefaultValue()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (with_default INTEGER DEFAULT(8), without_default INTEGER)");
 
@@ -514,7 +532,7 @@ namespace DOTNET
         [Test]
         public void SameColumnName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data1 (foo INTEGER); CREATE TEMP TABLE data2 (foo INTEGER)");
 
@@ -535,7 +553,7 @@ namespace DOTNET
         [Test]
         public void IsAliased()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -548,7 +566,7 @@ namespace DOTNET
         [Test]
         public void IsExpression()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -561,7 +579,7 @@ namespace DOTNET
         [Test]
         public void IsHidden()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 
@@ -574,7 +592,7 @@ namespace DOTNET
         [Test]
         public void IsIdentity()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INTEGER)");
 

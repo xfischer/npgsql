@@ -12,7 +12,7 @@ namespace DOTNET
 	/// </summary>
 	
 	[TestFixture]
-	public class ByteaTest
+	public class EDBByteaTest : TestBase
 	{
 		EDBConnection conn = null;
 		//String testImagePath = @"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif";
@@ -21,7 +21,7 @@ namespace DOTNET
 		[SetUp]
 		public void Init()
 		{
-			conn = TestUtil.openDB();
+			conn = OpenConnection();
 				
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
@@ -100,7 +100,7 @@ namespace DOTNET
 		public void Dispose()
 		{
 			if ( conn.State != ConnectionState.Open)
-				conn = TestUtil.openDB();
+				conn = OpenConnection();
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
 

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -34,12 +34,12 @@ using NUnit.Framework;
 namespace DOTNET
 {
 
-    public class AsyncTests
+    public class AsyncTests : TestBase
     {
         [Test]
         public async Task NonQuery()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (int INTEGER)");
                 using (var cmd = new EDBCommand("INSERT INTO data (int) VALUES (4)", conn))
@@ -51,17 +51,16 @@ namespace DOTNET
         [Test]
         public async Task Scalar()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 1", conn)) {
-                object x = await cmd.ExecuteScalarAsync();
-                Assert.AreEqual( x, 1);
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(1));
             }
         }
 
         [Test]
         public async Task Reader()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 1", conn))
             using (var reader = await cmd.ExecuteReaderAsync())
             {
@@ -73,33 +72,13 @@ namespace DOTNET
         [Test]
         public async Task Columnar()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT NULL, 2, 'Some Text'", conn))
             using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess))
             {
                 await reader.ReadAsync();
                 Assert.That(await reader.IsDBNullAsync(0), Is.True);
                 Assert.That(await reader.GetFieldValueAsync<string>(2), Is.EqualTo("Some Text"));
-            }
-        }
-
-        [Test, Description("Cancels an async query with the cancellation token")]
-        [Timeout(5000)]
-        [Ignore("Not reliable...")]
-        public void Cancel()
-        {
-            var cancellationSource = new CancellationTokenSource();
-            using (var conn = TestUtil.openDB())
-            using (var cmd = TestUtil.CreateSleepCommand(conn, 5))
-            {
-                Task.Factory.StartNew(() =>
-                                        {
-                                            Thread.Sleep(300);
-                                            cancellationSource.Cancel();
-                                        });
-                var t = cmd.ExecuteNonQueryAsync(cancellationSource.Token);
-                Task.WaitAny(t);
-                Assert.That(t.IsCanceled);
             }
         }
     }

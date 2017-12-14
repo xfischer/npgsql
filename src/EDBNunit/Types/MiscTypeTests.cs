@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -38,18 +37,18 @@ namespace DOTNET
     /// <summary>
     /// Tests on PostgreSQL types which don't fit elsewhere
     /// </summary>
-    class MiscTypeTests
+    class MiscTypeTests : TestBase
     {
         [Test, Description("Resolves a base type handler via the different pathways")]
         public void BaseTypeResolution()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(BaseTypeResolution),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 // Resolve type by EDBDbType
                 using (var cmd = new EDBCommand("SELECT @p", conn))
@@ -104,7 +103,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a bool")]
         public void Bool()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Boolean);
@@ -143,7 +142,7 @@ namespace DOTNET
         [Test]
         public void Money()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected1 = 12345.12m;
@@ -169,7 +168,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a UUID")]
         public void Uuid()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
                 var expected = new Guid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
@@ -199,7 +198,7 @@ namespace DOTNET
         [Test]
         public void ReadInternalChar()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT typdelim FROM pg_type WHERE typname='int4'", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -215,7 +214,7 @@ namespace DOTNET
         public void ReadUnknown()
         {
             const string expected = "some_text";
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand($"SELECT '{expected}'", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -230,7 +229,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a null value")]
         public void Null()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::INT4", conn))
             {
                 cmd.Parameters.AddWithValue("p", DBNull.Value);
@@ -246,7 +245,7 @@ namespace DOTNET
         [Test]
         public void Json()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 TestUtil.MinimumPgVersion(conn, "9.2.0", "JSON data type not yet introduced");
@@ -267,7 +266,7 @@ namespace DOTNET
         [Test]
         public void Jsonb()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 TestUtil.MinimumPgVersion(conn, "9.4.0", "JSONB data type not yet introduced");
@@ -292,7 +291,7 @@ namespace DOTNET
         [Test]
         public void Hstore()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 TestUtil.MinimumPgVersion(conn, "9.1.0", "HSTORE data type not yet introduced");
                 conn.ExecuteNonQuery(@"CREATE EXTENSION IF NOT EXISTS hstore");
@@ -338,7 +337,7 @@ namespace DOTNET
         public void RegType()
         {
             const uint expected = 8u;
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 cmd.Parameters.AddWithValue("p", EDBDbType.Regtype, expected);
@@ -355,7 +354,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/724")]
         public void Record()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE FUNCTION pg_temp.foo () RETURNS RECORD AS $$ SELECT 1,2 $$ LANGUAGE SQL");
                 using (var cmd = new EDBCommand("SELECT pg_temp.foo()", conn))
@@ -373,7 +372,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/694")]
         public void DbTypeCausesInference()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 cmd.Parameters.Add(new EDBParameter { ParameterName="p", DbType = DbType.Object, Value = 3 });
@@ -392,7 +391,7 @@ namespace DOTNET
         public void UnrecognizedBinary()
         {
             CheckUnrecognizedType();
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT typinput FROM pg_type WHERE typname='bool'", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
@@ -408,7 +407,7 @@ namespace DOTNET
         public void AllResultTypesAreUnknown()
         {
             CheckUnrecognizedType();
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 // Fetch as text to have something the value to assert against
                 var expected = (string)conn.ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
@@ -430,7 +429,7 @@ namespace DOTNET
         public void UnknownResultTypeList()
         {
             CheckUnrecognizedType();
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 // Fetch as text to have something the value to assert against
                 var expected = (string) conn.ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
@@ -452,7 +451,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/711")]
         public void KnownTypeAsUnknown()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT 8", conn))
             {
                 cmd.AllResultTypesAreUnknown = true;
@@ -463,7 +462,7 @@ namespace DOTNET
         [Test, Description("Sends a null value parameter with no EDBDbType or DbType, but with context for the backend to handle it")]
         public void UnrecognizedNull()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::TEXT", conn))
             {
                 var p = new EDBParameter("p", DBNull.Value);
@@ -480,7 +479,7 @@ namespace DOTNET
         [Test, Description("Sends a value parameter with an explicit EDBDbType.Unknown, but with context for the backend to handle it")]
         public void SendUnknown()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p::INT4", conn))
             {
                 var p = new EDBParameter("p", "8");
@@ -500,7 +499,7 @@ namespace DOTNET
         public void Int2Vector()
         {
             var expected = new short[] { 4, 5, 6 };
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 TestUtil.MinimumPgVersion(conn, "9.1.0");
@@ -518,7 +517,7 @@ namespace DOTNET
         public void Tid()
         {
             var expected = new EDBTid(3, 5);
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "SELECT '(1234,40000)'::tid, @p::tid";
@@ -537,14 +536,14 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1138")]
         public void Void()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
                 Assert.That(conn.ExecuteScalar("SELECT pg_sleep(0)"), Is.SameAs(DBNull.Value));
         }
 
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1364")]
         public void UnsupportedDbType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 Assert.That(() => cmd.Parameters.Add(new EDBParameter("p", DbType.UInt32) { Value = 8u }),
@@ -558,7 +557,7 @@ namespace DOTNET
         public void Bug1011085()
         {
             // Money format is not set in accordance with the system locale format
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select :moneyvalue", conn))
             {
                 var expectedValue = 8.99m;
@@ -592,7 +591,7 @@ namespace DOTNET
 
         private void TestXmlParameter_Internal(bool prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select @PrecisionXML", conn))
             {
                 var sXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <strings type=\"array\"> <string> this is a test with ' single quote </string></strings>";
@@ -613,7 +612,7 @@ namespace DOTNET
         public void TestBoolParameter1()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", conn))
             {
                 var p0 = new EDBParameter(":a", true);
@@ -628,7 +627,7 @@ namespace DOTNET
         public void TestBoolParameter2()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", conn))
             {
                 var p0 = new EDBParameter(":a", true);
@@ -640,7 +639,7 @@ namespace DOTNET
 
         private void TestBoolParameter_Internal(bool prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select :boolValue", conn))
             {
                 // Add test for prepared queries with bool parameter.
@@ -681,7 +680,7 @@ namespace DOTNET
         public void TestBoolParameterPrepared2()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select :boolValue", conn))
             {
                 var p0 = new EDBParameter(":boolValue", false);
@@ -696,7 +695,7 @@ namespace DOTNET
         [Test]
         public void TestUUIDDataType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 const string createTable =
                     @"CREATE TEMP TABLE person (
@@ -722,7 +721,7 @@ namespace DOTNET
         [Test]
         public void OidVector()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "Select '1 2 3'::oidvector, :p1";
@@ -741,7 +740,7 @@ namespace DOTNET
         [Test]
         public void TsVector()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 var inputVec = EDBTsVector.Parse(" a:12345C  a:24D a:25B b c d 1 2 a:25A,26B,27,28");
@@ -756,7 +755,7 @@ namespace DOTNET
         [Test]
         public void TsQuery()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 var query = EDBTsQuery.Parse("(a & !(c | d)) & (!!a&b) | ä | d | e");

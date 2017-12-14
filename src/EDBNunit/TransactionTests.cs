@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -33,12 +33,12 @@ using NUnit.Framework;
 
 namespace DOTNET
 {
-    public class TransactionTests
+    public class TransactionTests : TestBase
     {
         [Test, Description("Basic insert within a committed transaction")]
         public void Commit()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -51,7 +51,7 @@ namespace DOTNET
         [Test]
         public async Task CommitAsync()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -64,7 +64,7 @@ namespace DOTNET
         [Test, Description("Basic insert within a rolled back transaction")]
         public void Rollback([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -74,7 +74,7 @@ namespace DOTNET
                 cmd.ExecuteNonQuery();
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(1));
                 tx.Rollback();
-                Assert.That(tx.Connection, Is.Null);
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
             }
         }
@@ -82,7 +82,7 @@ namespace DOTNET
         [Test, Description("Basic insert within a rolled back transaction")]
         public async Task RollbackAsync([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -92,7 +92,7 @@ namespace DOTNET
                 cmd.ExecuteNonQuery();
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(1));
                 await tx.RollbackAsync();
-                Assert.That(tx.Connection, Is.Null);
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
             }
         }
@@ -100,7 +100,7 @@ namespace DOTNET
         [Test, Description("Dispose a transaction in progress, should roll back")]
         public void RollbackOnDispose()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -115,33 +115,34 @@ namespace DOTNET
         public void RollbackOnClose()
         {
             var tableName = TestUtil.GetUniqueIdentifier(nameof(RollbackOnClose));
-            using (var conn1 = TestUtil.openDB())
+            using (var conn1 = OpenConnection())
             {
                 conn1.ExecuteNonQuery($"DROP TABLE IF EXISTS {tableName}");
                 conn1.ExecuteNonQuery($"CREATE TABLE {tableName} (name TEXT)");
 
                 EDBTransaction tx;
-                using (var conn2 = TestUtil.openDB())
+                using (var conn2 = OpenConnection())
                 {
                     tx = conn2.BeginTransaction();
                     conn2.ExecuteNonQuery($"INSERT INTO {tableName} (name) VALUES ('X')", tx);
                 }
-                Assert.That(tx.Connection, Is.Null);
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn1.ExecuteScalar($"SELECT COUNT(*) FROM {tableName}"), Is.EqualTo(0));
+                conn1.ExecuteNonQuery($"DROP TABLE {tableName}");
             }
         }
 
         [Test, Description("Intentionally generates an error, putting us in a failed transaction block. Rolls back.")]
         public void RollbackFailed()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
                 conn.ExecuteNonQuery("INSERT INTO data (name) VALUES ('X')", tx: tx);
                 Assert.That(() => conn.ExecuteNonQuery("BAD QUERY"), Throws.Exception.TypeOf<PostgresException>());
                 tx.Rollback();
-                Assert.That(tx.Connection, Is.Null);
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
             }
         }
@@ -149,21 +150,21 @@ namespace DOTNET
         [Test, Description("Commits an empty transaction")]
         public void EmptyCommit()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
                 conn.BeginTransaction().Commit();
         }
 
         [Test, Description("Rolls back an empty transaction")]
         public void EmptyRollback()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
                 conn.BeginTransaction().Rollback();
         }
 
         [Test, Description("Tests that the isolation levels are properly supported")]
         public void IsolationLevels()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 foreach (var level in new[]
                 {
@@ -193,7 +194,7 @@ namespace DOTNET
         [Test, Description("Rollback of an already rolled back transaction")]
         public void RollbackTwice()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var transaction = conn.BeginTransaction();
                 transaction.Rollback();
@@ -205,7 +206,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/559")]
         public void DbConnectionDefaultIsolation()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var dbConn = (DbConnection)conn;
                 var tx = dbConn.BeginTransaction();
@@ -221,7 +222,7 @@ namespace DOTNET
         [Test, Description("Makes sure that transactions started in SQL work")]
         public void ViaSql()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 conn.ExecuteNonQuery("BEGIN");
@@ -232,9 +233,26 @@ namespace DOTNET
         }
 
         [Test]
+        public void Nested()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.BeginTransaction();
+                Assert.That(() => conn.BeginTransaction(), Throws.TypeOf<NotSupportedException>());
+            }
+        }
+
+        [Test]
+        public void BeginTransactionBeforeOpen()
+        {
+            using (var conn = new EDBConnection())
+                Assert.That(() => conn.BeginTransaction(), Throws.Exception.TypeOf<InvalidOperationException>());
+        }
+
+        [Test]
         public void RollbackFailedTransactionWithTimeout()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var tx = conn.BeginTransaction();
                 using (var cmd = new EDBCommand("BAD QUERY", conn, tx))
@@ -261,7 +279,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/184")]
         public void FailedTransactionCantRollbackToSavepointWithCustomTimeout()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var transaction = conn.BeginTransaction();
                 transaction.Save("TestSavePoint");
@@ -286,8 +304,11 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/719")]
         public void FailedTransactionOnCloseWithCustom()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) { Pooling = true }.ToString();
-            using (var conn = new EDBConnection(csb))
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                Pooling = true
+            }.ToString();
+            using (var conn = new EDBConnection(connString))
             {
                 conn.Open();
                 var backendProcessId = conn.ProcessID;
@@ -309,7 +330,7 @@ namespace DOTNET
         public void TransactionOnRecycledConnection()
         {
             // Use application name to make sure we have our very own private connection pool
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString + $";Application Name={TestUtil.GetUniqueIdentifier(nameof(TransactionOnRecycledConnection))}"))
+            using (var conn = new EDBConnection(ConnectionString + $";Application Name={TestUtil.GetUniqueIdentifier(nameof(TransactionOnRecycledConnection))}"))
             {
                 conn.Open();
                 var prevConnectorId = conn.Connector.Id;
@@ -326,7 +347,7 @@ namespace DOTNET
         [Test]
         public void Savepoint()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 const string name = "theSavePoint";
@@ -352,45 +373,16 @@ namespace DOTNET
         [Test]
         public void SavepointWithSemicolon()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var tx = conn.BeginTransaction())
                 Assert.That(() => tx.Save("a;b"), Throws.Exception.TypeOf<ArgumentException>());
-        }
-
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/765")]
-        public void PrependedRollbackWhileStartingNewTransaction()
-        {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
-                CommandTimeout = 600,
-                InternalCommandTimeout = 30
-            }.ToString();
-
-            int backendId;
-            using (var conn = new EDBConnection(connString))
-            {
-                conn.Open();
-                backendId = conn.Connector.BackendProcessId;
-                conn.BeginTransaction();
-                conn.ExecuteNonQuery("SELECT 1");
-            }
-            // Connector is back in the pool with a queued ROLLBACK
-            using (var conn = new EDBConnection(connString))
-            {
-                conn.Open();
-                Assert.That(conn.Connector.BackendProcessId, Is.EqualTo(backendId));
-                var tx = conn.BeginTransaction();
-                // We've captured the transaction instance, a new begin transaction is now enqueued after the rollback
-                conn.ExecuteNonQuery("SELECT 1");
-                Assert.That(tx.Connection, Is.SameAs(conn));
-                Assert.That(conn.Connector.Transaction, Is.SameAs(tx));
-            }
         }
 
         [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public void IsCompletedCommit()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -406,7 +398,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public void IsCompletedRollback()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -423,7 +415,7 @@ namespace DOTNET
         [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public void IsCompletedRollbackFailed()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT)");
                 var tx = conn.BeginTransaction();
@@ -443,7 +435,7 @@ namespace DOTNET
         [Test]
         public void Bug184RollbackFailsOnAbortedTransaction()
         {
-            EDBConnectionStringBuilder csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString);
+            EDBConnectionStringBuilder csb = new EDBConnectionStringBuilder(ConnectionString);
             csb.CommandTimeout = 100000;
 
             using (EDBConnection connTimeoutChanged = new EDBConnection(csb.ToString())) {

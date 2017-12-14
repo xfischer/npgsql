@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -37,14 +37,14 @@ using NUnit.Framework.Constraints;
 
 namespace DOTNET
 {
-    public class CopyTests
+    public class CopyTests : TestBase
     {
         #region Raw
 
         [Test, Description("Exports data in binary format (raw mode) and then loads it back in")]
         public void RawBinaryRoundtrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
 
@@ -78,16 +78,16 @@ namespace DOTNET
                         len += read;
                     }
 
-                    Assert.That(len, Is.GreaterThan(conn.Settings.WriteBufferSize) & Is.LessThan(data.Length));
+                    Assert.That(len, Is.GreaterThan(conn.Settings.ReadBufferSize) & Is.LessThan(data.Length));
                 }
 
                 conn.ExecuteNonQuery("TRUNCATE data");
 
-                using (var outStream = conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY"))
+                using (var inStream = conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY"))
                 {
                     StateAssertions(conn);
 
-                    outStream.Write(data, 0, len);
+                    inStream.Write(data, 0, len);
                 }
 
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM DATA"), Is.EqualTo(iterations));
@@ -97,7 +97,7 @@ namespace DOTNET
         [Test, Description("Disposes a raw binary stream in the middle of an export")]
         public void DisposeInMiddleOfRawBinaryExport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.ExecuteNonQuery("INSERT INTO data (field_text, field_int4) VALUES ('HELLO', 8)");
@@ -116,7 +116,7 @@ namespace DOTNET
         [Test, Description("Disposes a raw binary stream in the middle of an import")]
         public void DisposeInMiddleOfRawBinaryImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 var inStream = conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY");
@@ -132,7 +132,7 @@ namespace DOTNET
         [Test, Description("Cancels a binary write")]
         public void CancelRawBinaryImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 var garbage = new byte[] {1, 2, 3, 4};
@@ -149,7 +149,7 @@ namespace DOTNET
         [Test]
         public void ImportLargeValueRaw()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (blob BYTEA)");
 
@@ -194,7 +194,7 @@ namespace DOTNET
         [Test, Description("Roundtrips some data")]
         public void BinaryRoundtrip()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 var longString = new StringBuilder(conn.Settings.WriteBufferSize + 50).Append('a').ToString();
@@ -244,7 +244,7 @@ namespace DOTNET
         [Test]
         public void CancelBinaryImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 using (var writer = conn.BeginBinaryImport("COPY data (field_text, field_int4) FROM STDIN BINARY"))
@@ -262,7 +262,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/657")]
         public void ImportBytea()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field BYTEA)");
 
@@ -281,7 +281,7 @@ namespace DOTNET
         [Test]
         public void ImportStringArray()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field TEXT[])");
 
@@ -299,7 +299,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/816")]
         public void ImportStringWithBufferLength()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field TEXT)");
 
@@ -316,7 +316,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/662")]
         public void ImportDirectBuffer()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (blob BYTEA)");
 
@@ -337,7 +337,7 @@ namespace DOTNET
         [Ignore("Unreliable")]
         public void UnexpectedExceptionBinaryImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (blob BYTEA)");
 
@@ -345,7 +345,7 @@ namespace DOTNET
 
                 var writer = conn.BeginBinaryImport("COPY data (blob) FROM STDIN BINARY");
 
-                using (var conn2 = TestUtil.openDB())
+                using (var conn2 = OpenConnection())
                     conn2.ExecuteNonQuery($"SELECT pg_terminate_backend({conn.ProcessID})");
 
                 Thread.Sleep(50);
@@ -363,7 +363,7 @@ namespace DOTNET
         [Explicit]
         public void ImportByteaMassive()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field BYTEA)");
 
@@ -388,7 +388,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1134")]
         public void ReadBitString()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (bits BIT(3), bitarray BIT(3)[])");
                 conn.ExecuteNonQuery("INSERT INTO data (bits, bitarray) VALUES (B'101', ARRAY[B'101', B'111'])");
@@ -411,7 +411,7 @@ namespace DOTNET
         {
             var expected = new[] { 8 };
 
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (arr INTEGER[])");
 
@@ -429,6 +429,24 @@ namespace DOTNET
             }
         }
 
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1440")]
+        public void ErrorDuringImport()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INT, CONSTRAINT uq UNIQUE(foo))");
+                var writer = conn.BeginBinaryImport("COPY DATA (foo) FROM STDIN BINARY");
+                writer.StartRow();
+                writer.Write(8);
+                writer.StartRow();
+                writer.Write(8);
+                Assert.That(() => writer.Dispose(), Throws.Exception
+                    .TypeOf<PostgresException>()
+                    .With.Property(nameof(PostgresException.SqlState)).EqualTo("23505"));
+                Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
+            }
+        }
+
         #endregion
 
         #region Text
@@ -436,7 +454,7 @@ namespace DOTNET
         [Test]
         public void TextImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 const string line = "HELLO\t1\n";
@@ -463,7 +481,7 @@ namespace DOTNET
         [Test]
         public void CancelTextImport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
 
@@ -477,7 +495,7 @@ namespace DOTNET
         [Test]
         public void TextImportEmpty()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 using (conn.BeginTextImport("COPY data (field_text, field_int4) FROM STDIN"))
@@ -490,7 +508,7 @@ namespace DOTNET
         [Test]
         public void TextExport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 var chars = new char[30];
@@ -512,7 +530,7 @@ namespace DOTNET
         [Test]
         public void DisposeInMiddleOfTextExport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.ExecuteNonQuery("INSERT INTO data (field_text, field_int4) VALUES ('HELLO', 1)");
@@ -530,7 +548,7 @@ namespace DOTNET
         [Test, Description("Starts a transaction before a COPY, testing that prepended messages are handled well")]
         public void PrependedMessages()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.BeginTransaction();
                 TextImport();
@@ -540,7 +558,7 @@ namespace DOTNET
         [Test]
         public void UndefinedTable()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
                 Assert.That(() => conn.BeginBinaryImport("COPY undefined_table (field_text, field_int2) FROM STDIN BINARY"),
                     Throws.Exception.TypeOf<PostgresException>()
                     .With.Property(nameof(PostgresException.SqlState)).EqualTo("42P01")
@@ -551,32 +569,32 @@ namespace DOTNET
         public void CloseDuringCopy()
         {
             // TODO: Check no broken connections were returned to the pool
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginBinaryImport("COPY data (field_text, field_int4) FROM STDIN BINARY");
             }
 
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginBinaryExport("COPY data (field_text, field_int2) TO STDIN BINARY");
             }
 
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY");
             }
 
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) TO STDIN BINARY");
             }
 
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginTextImport("COPY data (field_text, field_int4) FROM STDIN");
             }
 
-            using (var conn = TestUtil.openDB()) {
+            using (var conn = OpenConnection()) {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginTextExport("COPY data (field_text, field_int4) TO STDIN");
             }
@@ -585,7 +603,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/994")]
         public void NonAsciiColumnName()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (non_ascii_éè TEXT)");
                 using (conn.BeginBinaryImport("COPY data (non_ascii_éè) FROM STDIN BINARY")) { }
@@ -593,38 +611,26 @@ namespace DOTNET
         }
 
         [Test, IssueLink("http://stackoverflow.com/questions/37431054/08p01-insufficient-data-left-in-message-for-nullable-datetime/37431464")]
-        public void WriteDbNullWithoutEDBDbType()
+        public void WriteNullValues()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
-                conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INT)");
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo1 INT, foo2 UUID, foo3 INT, foo4 UUID)");
 
-                using (var writer = conn.BeginBinaryImport("COPY data (foo) FROM STDIN BINARY"))
-                {
-                    writer.StartRow();
-                    Assert.That(() => writer.Write(DBNull.Value), Throws.ArgumentException);
-                    writer.Cancel();
-                }
-            }
-        }
-
-        [Test, IssueLink("http://stackoverflow.com/questions/37431054/08p01-insufficient-data-left-in-message-for-nullable-datetime/37431464")]
-        public void WriteDbNullWithEDBDbType()
-        {
-            using (var conn = TestUtil.openDB())
-            {
-                conn.ExecuteNonQuery("CREATE TEMP TABLE data (foo INT)");
-
-                using (var writer = conn.BeginBinaryImport("COPY data (foo) FROM STDIN BINARY"))
+                using (var writer = conn.BeginBinaryImport("COPY data (foo1, foo2, foo3, foo4) FROM STDIN BINARY"))
                 {
                     writer.StartRow();
                     writer.Write(DBNull.Value, EDBDbType.Integer);
+                    writer.Write((string)null, EDBDbType.Uuid);
+                    writer.Write(DBNull.Value);
+                    writer.Write((string)null);
                 }
-                using (var cmd = new EDBCommand("SELECT foo FROM data", conn))
+                using (var cmd = new EDBCommand("SELECT foo1,foo2,foo3,foo4 FROM data", conn))
                 using (var reader = cmd.ExecuteReader())
                 {
                     Assert.That(reader.Read(), Is.True);
-                    Assert.That(reader.IsDBNull(0), Is.True);
+                    for (var i = 0; i < reader.FieldCount; i++)
+                        Assert.That(reader.IsDBNull(i), Is.True);
                 }
             }
         }

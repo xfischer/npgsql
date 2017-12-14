@@ -11,15 +11,15 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class SimpleSelectsTest
-	{
+	public class SimpleSelectsTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 		}
 
 		[Test]

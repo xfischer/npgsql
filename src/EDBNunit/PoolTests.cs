@@ -35,18 +35,12 @@ using EnterpriseDB.EDBClient;
 namespace DOTNET
 {
     [Explicit]
-    class PoolTests
+    class PoolTests : TestBase
     {
-		[SetUp]
-		public void setup()
-		{
-			PoolManager.ClearAll();
-		}
-
         [Test]
         public void MinPoolSizeEqualsMaxPoolSize()
         {
-            using (var conn = new EDBConnection(new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            using (var conn = new EDBConnection(new EDBConnectionStringBuilder(ConnectionString) {
                 MinPoolSize = 30,
                 MaxPoolSize = 30
             }.ToString()))
@@ -56,29 +50,28 @@ namespace DOTNET
         }
 
         [Test]
-        public void MinPoolSizeLargeThanMaxPoolSize()
+        public void MinPoolSizeLargerThanMaxPoolSize()
         {
-            using (var conn = new EDBConnection(new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 MinPoolSize = 2,
                 MaxPoolSize = 1
-            }.ToString()))
-            {
-                Assert.That(() => conn.Open(), Throws.Exception.TypeOf<ArgumentException>());
-            }
+            }.ToString();
+
+            Assert.That(() => new EDBConnection(connString), Throws.Exception.TypeOf<ArgumentException>());
         }
 
         [Test]
-        public void MinPoolSizeLargeThanPoolSizeLimit()
+        public void MinPoolSizeLargerThanPoolSizeLimit()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString);
+            var csb = new EDBConnectionStringBuilder(ConnectionString);
             Assert.That(() => csb.MinPoolSize = PoolManager.PoolSizeLimit + 1, Throws.Exception.TypeOf<ArgumentOutOfRangeException>());
         }
 
         [Test]
         public void MinPoolSize()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 MinPoolSize = 2
             }.ToString();
@@ -92,10 +85,10 @@ namespace DOTNET
             Assert.That(pool.Idle, Has.Count.EqualTo(2));
 
             // Now open 2 connections and make sure they're good
-            using (var conn1 = TestUtil.openDB(connString))
-            using (var conn2 = TestUtil.openDB(connString))
+            using (var conn1 = OpenConnection(connString))
+            using (var conn2 = OpenConnection(connString))
             {
-                Assert.AreEqual(pool.Idle.Count, 0);
+                Assert.That(pool.Idle, Has.Count.Zero);
                 Assert.That(conn1.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
                 Assert.That(conn2.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
             }
@@ -104,7 +97,7 @@ namespace DOTNET
         [Test]
         public void ReuseConnectorBeforeCreatingNew()
         {
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString))
+            using (var conn = new EDBConnection(ConnectionString))
             {
                 conn.Open();
                 var backendId = conn.Connector.BackendProcessId;
@@ -117,7 +110,7 @@ namespace DOTNET
         [Test, Timeout(10000)]
         public void GetConnectorFromExhaustedPool()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString) {
                 MaxPoolSize = 1,
                 Timeout = 0
             }.ToString();
@@ -138,7 +131,7 @@ namespace DOTNET
         [Test, Timeout(10000)]
         public async Task GetConnectorFromExhaustedPoolAsync()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 MaxPoolSize = 1,
                 Timeout = 0
@@ -160,7 +153,7 @@ namespace DOTNET
         [Test]
         public void TimeoutGettingConnectorFromExhaustedPool()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString) {
                 MaxPoolSize = 1,
                 Timeout = 1
             }.ToString();
@@ -180,7 +173,7 @@ namespace DOTNET
         [Test]
         public async Task TimeoutGettingConnectorFromExhaustedPoolAsync()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 MaxPoolSize = 1,
                 Timeout = 1
@@ -203,7 +196,7 @@ namespace DOTNET
         [Explicit("Flaky")]
         public async Task CancelOpenAsync()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString) {
                 ApplicationName = nameof(CancelOpenAsync),
                 MaxPoolSize = 1,
             }.ToString();
@@ -232,7 +225,11 @@ namespace DOTNET
         [Test, Description("Makes sure that when a pooled connection is closed it's properly reset, and that parameter settings aren't leaked")]
         public void ResetOnClose()
         {
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString + ";SearchPath=public"))
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                SearchPath = "public"
+            }.ToString();
+            using (var conn = new EDBConnection(connString))
             {
                 conn.Open();
                 Assert.That(conn.ExecuteScalar("SHOW search_path"), Is.Not.Contains("pg_temp"));
@@ -250,16 +247,16 @@ namespace DOTNET
         [Ignore("Flaky")]
         public void PruneIdleConnectors()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(PruneIdleConnectors),
                 MinPoolSize = 2,
                 ConnectionIdleLifetime = 2,
                 ConnectionPruningInterval = 1
             }.ToString();
-            using (var conn1 = TestUtil.openDB(connString))
-            using (var conn2 = TestUtil.openDB(connString))
-            using (var conn3 = TestUtil.openDB(connString))
+            using (var conn1 = OpenConnection(connString))
+            using (var conn2 = OpenConnection(connString))
+            using (var conn3 = OpenConnection(connString))
             {
                 conn1.Close();
                 conn2.Close();
@@ -281,7 +278,7 @@ namespace DOTNET
         [Test, Description("Makes sure that when a waiting async open is is given a connection, the continuation is executed in the TP rather than on the closing thread")]
         public void CloseReleasesWaiterOnAnotherThread()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(CloseReleasesWaiterOnAnotherThread),
                 MaxPoolSize = 1
@@ -317,71 +314,69 @@ namespace DOTNET
         [Test]
         public void ClearAll()
         {
-            EDBConnectionStringBuilder connString;
-            using (var conn = TestUtil.openDB())
-                connString = conn.Settings; // Shouldn't be necessary
+            using (OpenConnection()) {}
             // Now have one connection in the pool
+            var pool = PoolManager.Pools[ConnectionString];
+            Assert.That(pool.Idle, Has.Count.EqualTo(1));
+
             EDBConnection.ClearAllPools();
-            var pool = PoolManager.Pools[TestUtil.defaultConnectionString];
-            Assert.AreEqual(0, pool.Idle.Count);
-            Assert.AreEqual(0, pool.Busy);
+            Assert.That(pool.Idle, Has.Count.Zero);
+            Assert.That(pool.Busy, Is.Zero);
         }
 
         [Test]
         public void ClearAllWithBusy()
         {
             ConnectorPool pool;
-            using (var conn1 = TestUtil.openDB())
+            using (var conn1 = OpenConnection())
             {
-                var connString = conn1.Settings;
-                using (TestUtil.openDB()) { }
+                using (OpenConnection()) { }
                 // We have one idle, one busy
 
                 EDBConnection.ClearAllPools();
-                pool = PoolManager.Pools[TestUtil.defaultConnectionString];
-                Assert.AreEqual(0, pool.Idle.Count);
+                pool = PoolManager.Pools[ConnectionString];
+                Assert.That(pool.Idle, Has.Count.Zero);
                 Assert.That(pool.Busy, Is.EqualTo(1));
             }
-            Assert.AreEqual(0, pool.Idle.Count);
-            Assert.AreEqual(0, pool.Busy);
+            Assert.That(pool.Idle, Has.Count.Zero);
+            Assert.That(pool.Busy, Is.Zero);
         }
 
         [Test]
         public void ClearPool()
         {
-            EDBConnectionStringBuilder connString;
             EDBConnection conn;
-            using (conn = TestUtil.openDB())
-                connString = conn.Settings; // Shouldn't be necessary
+            using (conn = OpenConnection()) {}
             // Now have one connection in the pool
+            var pool = PoolManager.Pools[ConnectionString];
+            Assert.That(pool.Idle, Has.Count.EqualTo(1));
+
             EDBConnection.ClearPool(conn);
-            var pool = PoolManager.Pools[TestUtil.defaultConnectionString];
-            Assert.AreEqual(0, pool.Idle.Count);
-            Assert.AreEqual(0, pool.Busy);
+            Assert.That(pool.Idle, Has.Count.Zero);
+            Assert.That(pool.Busy, Is.Zero);
         }
 
         [Test]
         public void ClearWithBusy()
         {
             ConnectorPool pool;
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
-                var connString = conn.Settings;
                 EDBConnection.ClearPool(conn);
                 // conn is still busy but should get closed when returned to the pool
 
-                pool = PoolManager.Pools[TestUtil.defaultConnectionString];
-                Assert.AreEqual(0, pool.Idle.Count);
+                pool = PoolManager.Pools[ConnectionString];
+                Assert.That(pool.Idle, Has.Count.Zero);
                 Assert.That(pool.Busy, Is.EqualTo(1));
             }
-            Assert.AreEqual(0, pool.Idle.Count);
-            Assert.AreEqual(0, pool.Busy);
+            Assert.That(pool.Idle, Has.Count.Zero);
+            Assert.That(pool.Busy, Is.Zero);
         }
 
         [Test]
         public void ClearWithNoPool()
         {
-            var connString = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString) {
                 ApplicationName = nameof(ClearWithNoPool)
             }.ToString();
             using (var conn = new EDBConnection(connString))

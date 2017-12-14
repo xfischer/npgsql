@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -41,13 +41,6 @@ namespace DOTNET
             _params.AddWithValue(":p2", "bar");
             _parser.ParseRawQuery("SELECT :p1, :p2", true, _params, _queries);
             Assert.That(_queries.Single().InputParameters, Is.EqualTo(_params));
-        }
-
-        [Test]
-        public void ConsecutiveSemicolons()
-        {
-            _parser.ParseRawQuery(";;SELECT 1", true, _params, _queries);
-            Assert.That(_queries, Has.Count.EqualTo(3));
         }
 
         [Test]
@@ -98,7 +91,7 @@ namespace DOTNET
         }
 
         [Test]
-        [TestCase(@"SELECT e'ab\'c:param'", TestName = "Estring")]
+        [TestCase(@"SELECT e'ab\'c:param'", TestName = "Estring", Ignore = "RM#43111")]
         [TestCase(@"SELECT/*/* -- nested comment :int /*/* *//*/ **/*/*/*/1")]
         [TestCase(@"SELECT 1,
 -- Comment, @param and also :param
@@ -156,6 +149,27 @@ namespace DOTNET
         }
 
         [Test]
+        public void ConsecutiveSemicolons()
+        {
+            _parser.ParseRawQuery(";;SELECT 1", true, _params, _queries);
+            Assert.That(_queries, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void TrailingSemicolon()
+        {
+            _parser.ParseRawQuery("SELECT 1;", true, _params, _queries);
+            Assert.That(_queries, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void Empty()
+        {
+            _parser.ParseRawQuery("", true, _params, _queries);
+            Assert.That(_queries, Has.Count.EqualTo(1));
+        }
+
+        [Test]
         public void SemicolonInParentheses()
         {
             _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1; SELECT 1)", true, _params, _queries);
@@ -167,6 +181,15 @@ namespace DOTNET
         {
             _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1); SELECT 1", true, _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(2));
+        }
+
+        [Test]
+        public void ReduceNumberOfStatements()
+        {
+            _parser.ParseRawQuery("SELECT 1; SELECT 2", true, _params, _queries);
+            Assert.That(_queries, Has.Count.EqualTo(2));
+            _parser.ParseRawQuery("SELECT 1", true, _params, _queries);
+            Assert.That(_queries, Has.Count.EqualTo(1));
         }
 
 #if TODO

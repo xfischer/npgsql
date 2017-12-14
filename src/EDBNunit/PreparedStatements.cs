@@ -10,14 +10,14 @@ namespace DOTNET
 	/// Summary description for PreparedStatements.
 	/// </summary>
 	[TestFixture] 
-	public class PreparedStatements
-	{	
+	public class PreparedStatements : TestBase
+    {	
 		EDBConnection conn = null;
 
 		[SetUp]
 		public void Init()
 		{	
-			conn = TestUtil.openDB();
+			conn = OpenConnection();
 			
 		}
 		protected void TearDown()

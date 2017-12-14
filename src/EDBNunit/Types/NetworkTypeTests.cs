@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -39,12 +39,12 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
-    class NetworkTypeTests
+    class NetworkTypeTests : TestBase
     {
         [Test]
         public void InetV4()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 var expectedIp = IPAddress.Parse("192.168.1.1");
@@ -64,11 +64,11 @@ namespace DOTNET
                     for (var i = 0; i < 2; i++)
                     {
                         // Regular type (IPAddress)
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
                         Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(expectedIp));
                         Assert.That(reader[i], Is.EqualTo(expectedIp));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
                         Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof (EDBInet)));
@@ -81,11 +81,11 @@ namespace DOTNET
                     for (var i = 2; i < 4; i++)
                     {
                         // Regular type (IPAddress)
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
                         Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(expectedIp));
                         Assert.That(reader[i], Is.EqualTo(expectedIp));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
                         Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof (EDBInet)));
@@ -101,7 +101,7 @@ namespace DOTNET
         [Test]
         public void InetV6()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 const string addr = "2001:1db8:85a3:1142:1000:8a2e:1370:7334";
@@ -122,12 +122,12 @@ namespace DOTNET
                     for (var i = 0; i < 2; i++)
                     {
                         // Regular type (IPAddress)
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
                         Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(expectedIp));
                         Assert.That(reader[i], Is.EqualTo(expectedIp));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
                         Assert.That(reader.GetString(i), Is.EqualTo(addr + "/24"));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
                         Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof (EDBInet)));
@@ -140,11 +140,11 @@ namespace DOTNET
                     for (var i = 2; i < 4; i++)
                     {
                         // Regular type (IPAddress)
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
                         Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(expectedIp));
                         Assert.That(reader[i], Is.EqualTo(expectedIp));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (IPAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
                         Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof (EDBInet)));
@@ -161,7 +161,7 @@ namespace DOTNET
         public void Cidr()
         {
             var expectedInet = new EDBInet("192.168.1.0/24");
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT '192.168.1.0/24'::CIDR", conn))
             using (var reader = cmd.ExecuteReader())
             {
@@ -183,7 +183,7 @@ namespace DOTNET
 #endif
         public void Macaddr()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected = PhysicalAddress.Parse("08-00-2B-01-02-03");
@@ -200,7 +200,7 @@ namespace DOTNET
                         Assert.That(reader.GetFieldValue<PhysicalAddress>(i), Is.EqualTo(expected));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expected));
                         Assert.That(reader.GetString(i), Is.EqualTo(expected.ToString()));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (PhysicalAddress)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(PhysicalAddress)));
                     }
                 }
             }
@@ -212,7 +212,7 @@ namespace DOTNET
 #endif
         public void MacaddrMultiple()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT unnest(ARRAY['08-00-2B-01-02-03'::MACADDR, '08-00-2B-01-02-04'::MACADDR])", conn))
             using (var r = cmd.ExecuteReader())
             {
@@ -234,7 +234,7 @@ namespace DOTNET
             // This test tries to check if the type returned is an IPAddress when using
             // the GetValue() of EDBDataReader and EDBInet when using GetProviderValue();
 
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select '192.168.10.10'::inet;", conn))
             using (var dr = command.ExecuteReader())
             {

@@ -12,15 +12,15 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class EDBLineTest
-	{
+	public class EDBLineTest : TestBase
+    {
 		EDBConnection con = null;
 		
 		[SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand command = new EDBCommand("create table EDBLineTest(id serial, f1 line);", con);
 			int result = command.ExecuteNonQuery();

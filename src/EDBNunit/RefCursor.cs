@@ -11,15 +11,16 @@ namespace DOTNET
 	/// Summary description for RefCursor.
 	/// </summary>
 	
-		[TestFixture]
-		public class RefCursor
+		[TestFixture, Ignore("RM#43113")]
+		public class RefCursor : TestBase
 		{
 			EDBConnection con = null;
-
+            
+            #region Setup / Tear Down
 			[SetUp]
 			public void Init()
 			{
-				con = TestUtil.openDB();
+				con = OpenConnection();
 				
 				EDBCommand com = new EDBCommand("",con);
 				com.CommandType = CommandType.Text;
@@ -201,7 +202,9 @@ namespace DOTNET
 					con.Close();
 			}
 
-			[Test]
+            #endregion
+
+            [Test]
 			public void testonecursor()
 			{			
 				try
@@ -218,7 +221,7 @@ namespace DOTNET
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					//REFCUSOR
-					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.RefCursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.Refcursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
 					int fc=result.FieldCount;
@@ -255,8 +258,8 @@ namespace DOTNET
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					//REFCUSOR CommandBehavior.SequentialAccess
-					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.RefCursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("cur2",EDBTypes.EDBDbType.RefCursor,10,"cur2",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.Refcursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("cur2",EDBTypes.EDBDbType.Refcursor,10,"cur2",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
 					int fc=result.FieldCount;
@@ -308,8 +311,8 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,10));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
@@ -358,9 +361,9 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,10));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.RefCursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
@@ -423,9 +426,9 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,10));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.RefCursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
@@ -492,11 +495,11 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,10));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.RefCursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.RefCursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
 					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -573,11 +576,11 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.RefCursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.RefCursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Numeric,10,"g",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
@@ -659,11 +662,11 @@ namespace DOTNET
 					command.Transaction = tran;
 					
 					command.Parameters.Add(new EDBParameter("b",EDBTypes.EDBDbType.Numeric,10,"b",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.RefCursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.RefCursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.RefCursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Refcursor,10,"a",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.RefCursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("g",EDBTypes.EDBDbType.Numeric,10,"g",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("h",EDBTypes.EDBDbType.Money,10,"h",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
@@ -766,7 +769,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProc(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.ExecuteNonQuery();
 
@@ -880,7 +883,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("refcurpackproc.RefCursorsOUT(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.ExecuteNonQuery();
 
@@ -975,7 +978,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutBool(:v_id,:v_bool)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_bool",	EDBTypes.EDBDbType.Boolean,10,"v_bool",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,true));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1028,7 +1031,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutBigInt(:v_id,:v_bigint)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_bigint",	EDBTypes.EDBDbType.Bigint,10,"v_bigint",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,400));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1081,7 +1084,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutChar(:v_id,:v_char)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_char",	EDBTypes.EDBDbType.Char,10,"v_char",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,"Hashim"));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1133,7 +1136,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutDoublePrecision(:v_id,:v_doublePrecision)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 				//	command.Parameters.Add(new EDBParameter("v_doublePrecision",	EDBTypes.EDBDbType.Float,10,"v_doublePrecision",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,4.4009));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1185,7 +1188,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutInteger(:v_id,:v_integer)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_integer", EDBTypes.EDBDbType.Integer,10,"v_integer",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1237,7 +1240,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutNumeric(:v_id,:v_numeric)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1289,7 +1292,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutNumeric2(:v_id,:v_numeric)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1341,7 +1344,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutReal(:v_id,:v_real)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Float,10,"v_real",ParameterDirection.Output,false, 15, 15,DataRowVersion.Current,4.4));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1395,7 +1398,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutSmallInt(:v_id,:v_smallint)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_smallint",	EDBTypes.EDBDbType.Smallint,10,"v_smallint",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,400));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1447,7 +1450,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutText(:v_id,:v_text)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_text",	EDBTypes.EDBDbType.Text,10,"v_text",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,"4"));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1518,7 +1521,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProc(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.ExecuteNonQuery();
 
@@ -1557,7 +1560,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCurProcOutVarchar(:v_id,:v_varchar)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_varchar",	EDBTypes.EDBDbType.Varchar,10,"v_varchar",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,"4"));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1609,7 +1612,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutBool(:v_id,:v_bool)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_bool",	EDBTypes.EDBDbType.Boolean,10,"v_bool",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,true));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1662,7 +1665,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutBigInt(:v_id,:v_bigint)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_bigint",	EDBTypes.EDBDbType.Bigint,10,"v_bigint",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,400));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1715,7 +1718,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutChar(:v_id,:v_char)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_char",	EDBTypes.EDBDbType.Char,10,"v_char",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,"Hashim"));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1767,7 +1770,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutDoublePrecision(:v_id,:v_doublePrecision)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
                     command.Parameters.Add(new EDBParameter("v_doublePrecision", EDBTypes.EDBDbType.Double, 10, "v_doublePrecision", ParameterDirection.Output, false, 8, 8, DataRowVersion.Current, 4.4009));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1819,7 +1822,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutInteger(:v_id,:v_integer)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_integer", EDBTypes.EDBDbType.Integer,10,"v_integer",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1871,7 +1874,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutNumeric(:v_id,:v_numeric)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1923,7 +1926,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutNumeric2(:v_id,:v_numeric)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -1975,7 +1978,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutReal(:v_id,:v_real)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Float,10,"v_real",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,4.4));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -2027,7 +2030,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutSmallInt(:v_id,:v_smallint)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_smallint",	EDBTypes.EDBDbType.Smallint,10,"v_smallint",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,400));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -2079,7 +2082,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorPackage.RefCurProcOutText(:v_id,:v_text)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_text",	EDBTypes.EDBDbType.Text,10,"v_text",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,"4"));
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -2150,7 +2153,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("RefCursorsOUT(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
@@ -2286,7 +2289,7 @@ namespace DOTNET
 					EDBCommand command = new EDBCommand("refcurpackfunc.RefCursorsOUT(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.RefCursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 					command.Prepare();
 					command.ExecuteNonQuery();

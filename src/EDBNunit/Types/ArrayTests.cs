@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,18 +40,18 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/arrays.html
     /// </remarks>
-    class ArrayTests
+    class ArrayTests : TestBase
     {
         [Test, Description("Resolves an array type handler via the different pathways")]
         public void ArrayTypeResolution()
         {
-            var csb = new EDBConnectionStringBuilder(TestUtil.defaultConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(ArrayTypeResolution),  // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
-            using (var conn = TestUtil.openDB(csb))
+            using (var conn = OpenConnection(csb))
             {
                 // Resolve type by EDBDbType
                 using (var cmd = new EDBCommand("SELECT @p", conn))
@@ -90,7 +90,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a simple, one-dimensional array of ints")]
         public void Ints()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected = new[] { 1, 5, 9 };
@@ -116,11 +116,10 @@ namespace DOTNET
         [Test, Description("Roundtrips a large, one-dimensional array of ints that will be chunked")]
         public void LongOneDimensional()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
-				const int BufferSize = 512;
-				var expected = new int[BufferSize/4 + 100]; //conn.Settings.WriteBufferSize
-				for (var i = 0; i < expected.Length; i++)
+                var expected = new int[conn.Settings.WriteBufferSize/4 + 100];
+                for (var i = 0; i < expected.Length; i++)
                     expected[i] = i;
                 using (var cmd = new EDBCommand("SELECT @p", conn))
                 {
@@ -138,7 +137,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a large, two-dimensional array of ints that will be chunked")]
         public void LongTwoDimensional()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var len = conn.Settings.WriteBufferSize/2 + 100;
                 var expected = new int[2, len];
@@ -162,7 +161,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a long, one-dimensional array of strings, including a null")]
         public void StringsWithNull()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var largeString = new StringBuilder();
                 largeString.Append('a', conn.Settings.WriteBufferSize);
@@ -183,7 +182,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a zero-dimensional array of ints, should return empty one-dimensional")]
         public void ZeroDimensional()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 var expected = new int[0];
@@ -201,7 +200,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a two-dimensional array of ints")]
         public void TwoDimensionalInts()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected = new[,] { { 1, 2, 3 }, { 7, 8, 9 } };
@@ -221,7 +220,7 @@ namespace DOTNET
         [Test, Description("Reads a one-dimensional array dates, both as DateTime and as the provider-specific EDBDate")]
         public void ReadProviderSpecificType()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand(@"SELECT '{ ""2014-01-04"", ""2014-01-08"" }'::DATE[]", conn))
             {
                 var expectedRegular = new[] { new DateTime(2014, 1, 4), new DateTime(2014, 1, 8) };
@@ -240,7 +239,7 @@ namespace DOTNET
         [Test, Description("Reads an one-dimensional array with lower bound != 0")]
         public void ReadNonZeroLowerBounded()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT '[2:3]={ 8, 9 }'::INT[]", conn))
                 using (var reader = cmd.ExecuteReader())
@@ -261,7 +260,7 @@ namespace DOTNET
         [Test, Description("Roundtrips a one-dimensional array of bytea values")]
         public void Byteas()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected = new[] { new byte[] { 1, 2 }, new byte[] { 3, 4, } };
@@ -286,7 +285,7 @@ namespace DOTNET
         // ReSharper disable once InconsistentNaming
         public void IListNonGeneric()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 var expected = new ArrayList(new[] { 1, 2, 3 });
@@ -301,7 +300,7 @@ namespace DOTNET
         // ReSharper disable once InconsistentNaming
         public void IListGeneric()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
             {
                 var expected = new[] {1, 2, 3};
@@ -321,7 +320,7 @@ namespace DOTNET
         [Test, IssueLink("https://github.com/npgsql/npgsql/issues/844")]
         public void IEnumerableThrowsFriendlyException()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1", conn))
             {
                 cmd.Parameters.AddWithValue("p1", Enumerable.Range(1, 3));
@@ -334,7 +333,7 @@ namespace DOTNET
         public void MixedElementTypes()
         {
             var mixedList = new ArrayList { 1, "yo" };
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1", conn))
             {
                 cmd.Parameters.AddWithValue("p1", EDBDbType.Array | EDBDbType.Integer, mixedList);
@@ -351,7 +350,7 @@ namespace DOTNET
             var jagged = new int[2][];
             jagged[0] = new[] { 8 };
             jagged[1] = new[] { 8, 10 };
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1", conn))
             {
                 cmd.Parameters.AddWithValue("p1", EDBDbType.Array | EDBDbType.Integer, jagged);
@@ -360,5 +359,34 @@ namespace DOTNET
                     .With.Message.Contains("jagged"));
             }
         }
+
+        [Test, Description("Checks that IList<T>s are properly serialized as arrays of their underlying types")]
+        public void ListTypeResolution()
+        {
+            using (var conn = OpenConnection(ConnectionString))
+            {
+                AssertIListRoundtrips(conn, new[] { 1, 2, 3 });
+                AssertIListRoundtrips(conn, new IntList() { 1, 2, 3 });
+                AssertIListRoundtrips(conn, new MisleadingIntList<string>() { 1, 2, 3 });
+            }
+        }
+
+        void AssertIListRoundtrips<TElement>(EDBConnection conn, IEnumerable<TElement> value)
+        {
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p", Value = value });
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetDataTypeName(0), Is.EqualTo("_int4"));
+                    Assert.That(reader[0], Is.EqualTo(value.ToArray()));
+                }
+            }
+        }
+
+        class IntList : List<int> { }
+        class MisleadingIntList<T> : List<int> { }
     }
 }

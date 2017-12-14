@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -40,14 +40,14 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    class DateTimeTests
+    class DateTimeTests : TestBase
     {
         #region Date
 
         [Test]
         public void Date()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var dateTime = new DateTime(2002, 3, 4, 0, 0, 0, 0, DateTimeKind.Unspecified);
                 var npgsqlDate = new EDBDate(dateTime);
@@ -95,7 +95,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(DateSpecialCases))]
         public void DateSpecial(EDBDate value)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn)) {
                 cmd.Parameters.Add(new EDBParameter { ParameterName = "p", Value = value });
                 using (var reader = cmd.ExecuteReader()) {
@@ -110,7 +110,7 @@ namespace DOTNET
         [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted")]
         public void DateConvertInfinity()
         {
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString + ";ConvertInfinityDateTime=true"))
+            using (var conn = new EDBConnection(ConnectionString + ";ConvertInfinityDateTime=true"))
             {
                 conn.Open();
 
@@ -135,7 +135,7 @@ namespace DOTNET
         [Test]
         public void Time()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new TimeSpan(0, 10, 45, 34, 500);
 
@@ -165,10 +165,10 @@ namespace DOTNET
         #region Time with timezone
 
         [Test]
-       // [MonoIgnore]
+        [MonoIgnore]
         public void TimeTz()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var tzOffset = TimeZoneInfo.Local.BaseUtcOffset;
                 if (tzOffset == TimeSpan.Zero)
@@ -222,7 +222,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(TimeStampCases))]
         public void Timestamp(DateTime dateTime)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var npgsqlTimeStamp = new EDBDateTime(dateTime.Ticks);
                 var offset = TimeSpan.FromHours(2);
@@ -285,7 +285,7 @@ namespace DOTNET
         [Test, TestCaseSource(nameof(TimeStampSpecialCases))]
         public void TimeStampSpecial(EDBDateTime value)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn)) {
                 cmd.Parameters.Add(new EDBParameter { ParameterName = "p", Value = value });
                 using (var reader = cmd.ExecuteReader()) {
@@ -300,7 +300,7 @@ namespace DOTNET
         [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted")]
         public void TimeStampConvertInfinity()
         {
-            using (var conn = new EDBConnection(TestUtil.defaultConnectionString + ";ConvertInfinityDateTime=true"))
+            using (var conn = new EDBConnection(ConnectionString + ";ConvertInfinityDateTime=true"))
             {
                 conn.Open();
 
@@ -327,7 +327,7 @@ namespace DOTNET
         [Test]
         public void TimestampTz()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var tzOffset = TimeZoneInfo.Local.BaseUtcOffset;
                 if (tzOffset == TimeSpan.Zero)
@@ -396,7 +396,7 @@ namespace DOTNET
         [Test]
         public void Interval()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expectedEDBInterval = new EDBTimeSpan(1, 2, 3, 4, 5);
                 var expectedTimeSpan = new TimeSpan(1, 2, 3, 4, 5);

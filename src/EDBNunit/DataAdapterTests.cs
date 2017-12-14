@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -35,7 +35,7 @@ namespace DOTNET
 {
 
     [TestFixture]
-    public class DataAdapterTests
+    public class DataAdapterTests : TestBase
     {
 
         private EDBConnection 	_conn = null;
@@ -214,7 +214,7 @@ namespace DOTNET
         [Test]
         public void UseDataAdapterStringStringConstructor()
         {
-            var da = new EDBDataAdapter("SELECT 1", TestUtil.defaultConnectionString);
+            var da = new EDBDataAdapter("SELECT 1", ConnectionString);
             var ds = new DataSet();
             da.Fill(ds);
             //ds.WriteXml("TestUseDataAdapterStringStringConstructor.xml");
@@ -223,7 +223,7 @@ namespace DOTNET
         [Test]
         public void UseDataAdapterStringStringConstructor2()
         {
-            var da = new EDBDataAdapter("SELECT 1", TestUtil.defaultConnectionString);
+            var da = new EDBDataAdapter("SELECT 1", ConnectionString);
             var ds = new DataSet();
             da.Fill(ds);
             //ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
@@ -319,11 +319,11 @@ namespace DOTNET
         public void FillWithEmptyResultset()
         {
 
-            _conn.Open();
+                _conn.Open();
 
-            DataSet ds = new DataSet();
+                var ds = new DataSet();
 
-            EDBDataAdapter da = new EDBDataAdapter("select * from tableb where field_serial = -1", _conn);
+                var da = new EDBDataAdapter("select * from tableb where field_serial = -1", _conn);
 
 
                 da.Fill(ds);
@@ -357,28 +357,28 @@ namespace DOTNET
                 Assert.IsFalse(field_serial.AllowDBNull);
                 Assert.IsTrue(field_serial.AutoIncrement);
                 Assert.AreEqual("field_serial", field_serial.ColumnName);
-                Assert.AreEqual(typeof (int), field_serial.DataType);
+                Assert.AreEqual(typeof(int), field_serial.DataType);
                 Assert.AreEqual(0, field_serial.Ordinal);
                 Assert.IsTrue(field_serial.Unique);
 
                 Assert.IsTrue(field_int2.AllowDBNull);
                 Assert.IsFalse(field_int2.AutoIncrement);
                 Assert.AreEqual("field_int2", field_int2.ColumnName);
-                Assert.AreEqual(typeof (short), field_int2.DataType);
+                Assert.AreEqual(typeof(short), field_int2.DataType);
                 Assert.AreEqual(1, field_int2.Ordinal);
                 Assert.IsFalse(field_int2.Unique);
 
                 Assert.IsTrue(field_timestamp.AllowDBNull);
                 Assert.IsFalse(field_timestamp.AutoIncrement);
                 Assert.AreEqual("field_timestamp", field_timestamp.ColumnName);
-                Assert.AreEqual(typeof (DateTime), field_timestamp.DataType);
+                Assert.AreEqual(typeof(DateTime), field_timestamp.DataType);
                 Assert.AreEqual(2, field_timestamp.Ordinal);
                 Assert.IsFalse(field_timestamp.Unique);
 
                 Assert.IsTrue(field_numeric.AllowDBNull);
                 Assert.IsFalse(field_numeric.AutoIncrement);
                 Assert.AreEqual("field_numeric", field_numeric.ColumnName);
-                Assert.AreEqual(typeof (decimal), field_numeric.DataType);
+                Assert.AreEqual(typeof(decimal), field_numeric.DataType);
                 Assert.AreEqual(3, field_numeric.Ordinal);
                 Assert.IsFalse(field_numeric.Unique);
             }
@@ -401,19 +401,19 @@ namespace DOTNET
                 var field_numeric = ds.Tables[0].Columns[3];
 
                 Assert.AreEqual("field_serial", field_serial.ColumnName);
-                Assert.AreEqual(typeof (int), field_serial.DataType);
+                Assert.AreEqual(typeof(int), field_serial.DataType);
                 Assert.AreEqual(0, field_serial.Ordinal);
 
                 Assert.AreEqual("field_int2", field_int2.ColumnName);
-                Assert.AreEqual(typeof (short), field_int2.DataType);
+                Assert.AreEqual(typeof(short), field_int2.DataType);
                 Assert.AreEqual(1, field_int2.Ordinal);
 
                 Assert.AreEqual("field_timestamp", field_timestamp.ColumnName);
-                Assert.AreEqual(typeof (DateTime), field_timestamp.DataType);
+                Assert.AreEqual(typeof(DateTime), field_timestamp.DataType);
                 Assert.AreEqual(2, field_timestamp.Ordinal);
 
                 Assert.AreEqual("field_numeric", field_numeric.ColumnName);
-                Assert.AreEqual(typeof (decimal), field_numeric.DataType);
+                Assert.AreEqual(typeof(decimal), field_numeric.DataType);
                 Assert.AreEqual(3, field_numeric.Ordinal);
             }
         }
@@ -1042,7 +1042,37 @@ namespace DOTNET
             }
         }
 
+        [Test]
+        public void LoadDataTable()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (char5 CHAR(5), varchar5 VARCHAR(5))");
+                using (var command = new EDBCommand("SELECT char5, varchar5 FROM data", conn))
+                using (var dr = command.ExecuteReader())
+                {
+                    var dt = new DataTable();
+                    dt.Load(dr);
+                    dr.Close();
 
-		
+                    Assert.AreEqual(5, dt.Columns[0].MaxLength);
+                    Assert.AreEqual(5, dt.Columns[1].MaxLength);
+                }
+            }
+        }
+
+        public void Setup(EDBConnection conn)
+        {
+            conn.ExecuteNonQuery("CREATE TEMP TABLE data (" +
+                                 "field_pk SERIAL PRIMARY KEY," +
+                                 "field_serial SERIAL," +
+                                 "field_int2 SMALLINT," +
+                                 "field_int4 INTEGER," +
+                                 "field_numeric NUMERIC," +
+                                 "field_timestamp TIMESTAMP" +
+                                 ")");
+        }
     }
 }
+
+//#endif

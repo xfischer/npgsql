@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -43,12 +43,12 @@ namespace DOTNET
     /// <summary>
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </summary>
-    public class NumericTypeTests
+    public class NumericTypeTests : TestBase
     {
         [Test]
         public void Int16()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Smallint);
@@ -89,7 +89,7 @@ namespace DOTNET
         [Test]
         public void Int32()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Integer);
@@ -130,7 +130,7 @@ namespace DOTNET
         public void UInt32(EDBDbType npgsqlDbType)
         {
             var expected = 8u;
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
                 cmd.Parameters.Add(new EDBParameter("p", npgsqlDbType) { Value = expected });
@@ -147,7 +147,7 @@ namespace DOTNET
         [Test]
         public void Int64()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Bigint);
@@ -182,7 +182,7 @@ namespace DOTNET
         [Test]
         public void Double()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
                 const double expected = 4.123456789012345;
@@ -200,9 +200,24 @@ namespace DOTNET
                     for (var i = 0; i < cmd.Parameters.Count; i++)
                     {
                         Assert.That(reader.GetDouble(i), Is.EqualTo(expected).Within(10E-07));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (double)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(double)));
                     }
                 }
+            }
+        }
+
+        [Test]
+        [TestCase(double.NaN)]
+        [TestCase(double.PositiveInfinity)]
+        [TestCase(double.NegativeInfinity)]
+        public void DoubleSpecial(double value)
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.AddWithValue("p", EDBDbType.Double, value);
+                var actual = cmd.ExecuteScalar();
+                Assert.That(actual, Is.EqualTo(value));
             }
         }
 
@@ -210,7 +225,7 @@ namespace DOTNET
         public void Float()
         {
             const float expected = .123456F;
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
                 var p1 = new EDBParameter("p1", EDBDbType.Real);
@@ -227,16 +242,31 @@ namespace DOTNET
                     for (var i = 0; i < cmd.Parameters.Count; i++)
                     {
                         Assert.That(reader.GetFloat(i), Is.EqualTo(expected).Within(10E-07));
-                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof (float)));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(float)));
                     }
                 }
             }
         }
 
         [Test]
+        [TestCase(double.NaN)]
+        [TestCase(double.PositiveInfinity)]
+        [TestCase(double.NegativeInfinity)]
+        public void DoubleFloat(double value)
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.AddWithValue("p", EDBDbType.Real, value);
+                var actual = cmd.ExecuteScalar();
+                Assert.That(actual, Is.EqualTo(value));
+            }
+        }
+
+        [Test]
         public void Numeric()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 using (var cmd = new EDBCommand("SELECT '-1234567.890123'::numeric", conn))
                 {
@@ -299,12 +329,38 @@ namespace DOTNET
             }
         }
 
+        /// <summary>
+        /// http://www.postgresql.org/docs/current/static/datatype-money.html
+        /// </summary>
+        [Test]
+        public void Money()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
+            {
+                var expected1 = 12345.12m;
+                var expected2 = -10.5m;
+                cmd.Parameters.AddWithValue("p1", EDBDbType.Money, expected1);
+                cmd.Parameters.Add(new EDBParameter("p2", DbType.Currency) { Value = expected2 });
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetDecimal(0), Is.EqualTo(12345.12m));
+                    Assert.That(reader.GetValue(0), Is.EqualTo(12345.12m));
+                    Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(12345.12m));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(decimal)));
+
+                    Assert.That(reader.GetDecimal(1), Is.EqualTo(-10.5m));
+                }
+            }
+        }
+
         // Older tests
 
         [Test]
         public void DoubleWithoutPrepared()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("select :field_float8", conn))
             {
                 command.Parameters.Add(new EDBParameter(":field_float8", EDBDbType.Double));
@@ -318,7 +374,7 @@ namespace DOTNET
         [Test]
         public void PrecisionScaleNumericSupport()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var command = new EDBCommand("SELECT -4.3::NUMERIC", conn))
             using (var dr = command.ExecuteReader())
             {
@@ -333,21 +389,21 @@ namespace DOTNET
         [Test]
         public void NumberConversionWithCulture()
         {
-            //using (var conn = TestUtil.openDB())
-            //using (var cmd = new EDBCommand("select :p1", conn))
-            //using (new CultureSetter(new CultureInfo("es-ES")))
-            //{
-            //    var parameter = new EDBParameter("p1", EDBDbType.Double) { Value = 5.5 };
-            //    cmd.Parameters.Add(parameter);
-            //    var result = cmd.ExecuteScalar();
-            //    Assert.AreEqual(5.5, result);
-            //}
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("select :p1", conn))
+            using (new CultureSetter(new CultureInfo("es-ES")))
+            {
+                var parameter = new EDBParameter("p1", EDBDbType.Double) { Value = 5.5 };
+                cmd.Parameters.Add(parameter);
+                var result = cmd.ExecuteScalar();
+                Assert.AreEqual(5.5, result);
+            }
         }
 
         [Test]
         public void TestMoney([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "select '1'::MONEY, '12345'::MONEY / 100, '123456789012345'::MONEY / 100";

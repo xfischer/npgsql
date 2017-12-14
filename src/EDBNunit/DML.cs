@@ -9,14 +9,14 @@ namespace DOTNET
 	/// This Class contains functions for unit testing of .Net Driver.
 	/// </summary>
 	[TestFixture] 
-	public class DMLTest
-	{
+	public class DMLTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{
-			con = TestUtil.openDB();
+			con = OpenConnection();
 			TestUtil.createTempTable(con, "dml_TestTable1",
 										"RecNo int, Name varchar(20)");
 			TestUtil.createTempTable(con, "dml_TestTable2",

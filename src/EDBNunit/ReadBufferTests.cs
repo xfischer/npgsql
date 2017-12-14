@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -90,8 +90,7 @@ namespace DOTNET
             Underlying.Seek(0, SeekOrigin.Begin);
 
             var chars = new char[expected.Length + 5];
-            int bytesRead, charsRead;
-            ReadBuffer.ReadAllChars(chars, 5, expected.Length, bytes.Length, out bytesRead, out charsRead);
+            ReadBuffer.ReadAllChars(chars, 5, expected.Length, bytes.Length, out var bytesRead, out var charsRead);
             Assert.That(charsRead, Is.EqualTo(expected.Length));
             Assert.That(bytesRead, Is.EqualTo(bytes.Length));
             var actual = new string(chars, 5, expected.Length);

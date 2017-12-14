@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -58,10 +58,9 @@ namespace DOTNET
         [Test]
         public void TryGetValue()
         {
-            object value;
             Builder.ConnectionString = "Host=myhost";
 
-            Assert.That(Builder.TryGetValue("Host", out value), Is.True);
+            Assert.That(Builder.TryGetValue("Host", out var value), Is.True);
             Assert.That(value, Is.EqualTo("myhost"));
 
             Assert.That(Builder.TryGetValue("SomethingUnknown", out value), Is.False);

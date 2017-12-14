@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2016 The Npgsql Development Team
+// Copyright (C) 2017 The Npgsql Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -39,12 +39,12 @@ namespace DOTNET
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
-    class GeometricTypeTests
+    class GeometricTypeTests : TestBase
     {
         [Test]
         public void Point()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new EDBPoint(1.2, 3.4);
                 var cmd = new EDBCommand("SELECT @p1, @p2", conn);
@@ -69,7 +69,7 @@ namespace DOTNET
         [Test]
         public void LineSegment()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new EDBLSeg(1, 2, 3, 4);
                 var cmd = new EDBCommand("SELECT @p1, @p2", conn);
@@ -96,7 +96,7 @@ namespace DOTNET
         [Test]
         public void Box()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new EDBBox(2, 4, 1, 3);
                 var cmd = new EDBCommand("SELECT @p1, @p2", conn);
@@ -122,7 +122,7 @@ namespace DOTNET
         [Test]
         public void Path()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expectedOpen = new EDBPath(new[] {new EDBPoint(1, 2), new EDBPoint(3, 4)}, true);
                 var expectedClosed = new EDBPath(new[] {new EDBPoint(1, 2), new EDBPoint(3, 4)}, false);
@@ -155,7 +155,7 @@ namespace DOTNET
         [Test]
         public void Polygon()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new EDBPolygon(new EDBPoint(1, 2), new EDBPoint(3, 4));
                 var cmd = new EDBCommand("SELECT @p1, @p2", conn);
@@ -183,7 +183,7 @@ namespace DOTNET
         [Test]
         public void Circle()
         {
-            using (var conn = TestUtil.openDB())
+            using (var conn = OpenConnection())
             {
                 var expected = new EDBCircle(1, 2, 0.5);
                 var cmd = new EDBCommand("SELECT @p1, @p2", conn);
