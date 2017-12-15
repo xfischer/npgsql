@@ -88,12 +88,12 @@ namespace  EnterpriseDB.EDBClient
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
 
                 string temp = sql.Substring(currCharOfs - 1).ToUpper();
-                if (temp.StartsWith("CREATE") && (temp.Contains(" PROCEDURE ") || temp.Contains(" FUNCTION ") || temp.Contains(" TRIGGER ")))
+                if (temp.StartsWith("CREATE") && (temp.Contains(" PROCEDURE ") || temp.Contains(" FUNCTION ") || temp.Contains(" TRIGGER ") || temp.Contains(" PACKAGE ")))
                     isProcedure = true;
                 if (isProcedure && temp.StartsWith("BEGIN"))
                 {
                     numActiveBlocks++;
-                    variableDeclare = 0;
+                    variableDeclare--;
                 }
 
 

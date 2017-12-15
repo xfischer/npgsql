@@ -114,9 +114,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             if (range.IsEmpty)
                 return;
             if (!range.LowerBoundInfinite)
-                await ElementHandler.WriteWithLength(range.LowerBound, buf, lengthCache, null, async, cancellationToken);
+                await ElementHandler.WriteWithLength(range.LowerBound, buf, lengthCache, parameter, async, cancellationToken);
             if (!range.UpperBoundInfinite)
-                await ElementHandler.WriteWithLength(range.UpperBound, buf, lengthCache, null, async, cancellationToken);
+                await ElementHandler.WriteWithLength(range.UpperBound, buf, lengthCache, parameter, async, cancellationToken);
         }
 
         #endregion

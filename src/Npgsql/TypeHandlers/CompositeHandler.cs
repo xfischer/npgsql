@@ -169,7 +169,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
                     await buf.Flush(async, cancellationToken);
 
                 buf.WriteUInt32(fieldDescriptor.OID);
-                await fieldHandler.WriteWithLength(fieldValue, buf, lengthCache, null, async, cancellationToken);
+                await fieldHandler.WriteWithLength(fieldValue, buf, lengthCache, parameter, async, cancellationToken);
             }
         }
 

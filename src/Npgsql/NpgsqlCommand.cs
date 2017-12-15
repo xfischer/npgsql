@@ -685,10 +685,12 @@ namespace  EnterpriseDB.EDBClient
             for (var i = 0; i < Parameters.Count; i++)
             {
                 var p = Parameters[i];
-                //if (!p.IsInputDirection)
-                //    continue;
-                if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
-                  continue;
+                if (CommandType == CommandType.StoredProcedure) {
+                    if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
+                        continue;
+                } else if (!p.IsInputDirection)
+                        continue;
+                
                 p.Bind(Connection.Connector.TypeHandlerRegistry);
                 p.LengthCache?.Clear();
                 p.ValidateAndGetLength();

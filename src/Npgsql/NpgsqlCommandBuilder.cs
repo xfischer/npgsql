@@ -167,6 +167,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 string[] names = null;
                 uint[] types = null;
                 char[] modes = null;
+                Boolean hasInputParams = false;
+                string paramNames = null;
 
                 using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
                 {
@@ -201,7 +203,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     param.EDBDbType = EDBDbType.Value;
 
                     if (names != null && i < names.Length)
-                        param.ParameterName = ":" + names[i];
+                        if (command.CommandType == CommandType.StoredProcedure)
+                        {
+                            param.ParameterName = names[i];
+                        } else
+                        {
+                            param.ParameterName = ":" + names[i];
+                        }
+                          
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -213,6 +222,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         {
                             case 'i':
                                 param.Direction = ParameterDirection.Input;
+                                hasInputParams = true;
+                                paramNames += paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'o':
                             case 't':
@@ -230,6 +241,15 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     }
 
                     command.Parameters.Add(param);
+                    
+                }
+                if (hasInputParams && command.CommandType == CommandType.StoredProcedure)
+                {
+                    if (paramNames.Trim().EndsWith(","))
+                    {
+                        paramNames = paramNames.Substring(0, paramNames.LastIndexOf(","));
+                    }
+                    command.CommandText = command.CommandText + "(" + paramNames + ")";
                 }
             }
         }
