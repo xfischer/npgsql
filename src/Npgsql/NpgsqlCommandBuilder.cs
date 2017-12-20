@@ -167,7 +167,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 string[] names = null;
                 uint[] types = null;
                 char[] modes = null;
-                Boolean hasInputParams = false;
+                Boolean hasParams = false;
                 string paramNames = null;
 
                 using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
@@ -222,15 +222,19 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         {
                             case 'i':
                                 param.Direction = ParameterDirection.Input;
-                                hasInputParams = true;
-                                paramNames += paramNames + ":" + param.ParameterName + ", ";
+                                hasParams = true;
+                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'o':
                             case 't':
                                 param.Direction = ParameterDirection.Output;
+                                hasParams = true;
+                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'b':
                                 param.Direction = ParameterDirection.InputOutput;
+                                hasParams = true;
+                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'v':
                                 throw new NotImplementedException("Cannot derive function parameter of type VARIADIC");
@@ -243,7 +247,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     command.Parameters.Add(param);
                     
                 }
-                if (hasInputParams && command.CommandType == CommandType.StoredProcedure)
+                if (hasParams && command.CommandType == CommandType.StoredProcedure)
                 {
                     if (paramNames.Trim().EndsWith(","))
                     {
