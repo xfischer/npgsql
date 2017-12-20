@@ -34,7 +34,6 @@ using EDBTypes;
 namespace DOTNET
 { 
     [Parallelizable(ParallelScope.None)]
-    [Ignore("RM#43106")]
     class CompositeTests : TestBase
     {
         #region Test Types

@@ -786,7 +786,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("RM#43115")]
+        [Test]
         public void InputAndOutputParameters()
         {
             using (var conn = OpenConnection())

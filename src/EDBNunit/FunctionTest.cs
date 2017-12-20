@@ -132,12 +132,12 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions without parameters*/       
-		[Test]
+		[Test, Ignore("RM#43146")]
 		public void testemptyfunction()
 		{
 			try 
 			{ 
-				EDBCommand command = new EDBCommand("public.emptyfunction_test()", con); 
+				EDBCommand command = new EDBCommand("public.emptyfunction_test", con); 
 				command.CommandType = CommandType.StoredProcedure; 
 
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
@@ -156,13 +156,13 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions with one IN parameters*/ 
-		[Test]
+		[Test, Ignore("RM#43146")]
 		public void testOneInArg()
 		{
-			EDBCommand command = new EDBCommand("public.FunconeInArg_test(:param1)", con); 
+			EDBCommand command = new EDBCommand("public.FunconeInArg_test", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Numeric,10,"a",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar,10,"param2",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 
 			command.Prepare(); 
@@ -178,7 +178,7 @@ namespace DOTNET
 		}
 
 		/* To verify the sanity of functions with three IN parameters*/
-		[Test]
+		[Test, Ignore("RM#43146")]
 		public void testThreeInArg()
 		{
 			try 
@@ -3050,7 +3050,7 @@ namespace DOTNET
 
 
 
-        [Test]
+        [Test, Ignore("RM#43146")]
 
         public void TERSE_FUNC_NATIVE_INPUT_TYPES()
         {
@@ -3542,7 +3542,7 @@ namespace DOTNET
         */
 
 
-        [Test]
+        [Test, Ignore("RM#43146")]
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
         {
             EDBCommand command = null;

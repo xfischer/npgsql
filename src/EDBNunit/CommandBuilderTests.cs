@@ -33,7 +33,7 @@ namespace DOTNET
 {
     class CommandBuilderTests : TestBase
     {
-        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters"), Ignore("RM#43109")]
+        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters")]
         public void DeriveParametersVarious()
         {
             using (var conn = OpenConnection())
@@ -64,7 +64,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Description("Tests function parameter derivation with IN-only parameters"), Ignore("RM#43109")]
+        [Test, Description("Tests function parameter derivation with IN-only parameters")]
         public void DeriveParametersInOnly()
         {
             using (var conn = OpenConnection())
@@ -139,8 +139,8 @@ namespace DOTNET
                 conn.ExecuteNonQuery(@"CREATE OR REPLACE FUNCTION pg_temp.testoutparameter2(x int, y int, out sum int, out product int) as 'select $1 + $2, $1 * $2' language 'sql';");
                 var command = new EDBCommand("pg_temp.testoutparameter2", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(command);
-                Assert.AreEqual(":x", command.Parameters[0].ParameterName);
-                Assert.AreEqual(":y", command.Parameters[1].ParameterName);
+                Assert.AreEqual("x", command.Parameters[0].ParameterName);
+                Assert.AreEqual("y", command.Parameters[1].ParameterName);
             }
         }
 
@@ -151,8 +151,7 @@ namespace DOTNET
             {
                 var invalidCommandName = new EDBCommand("invalidfunctionname", conn);
                 Assert.That(() => EDBCommandBuilder.DeriveParameters(invalidCommandName),
-                    Throws.Exception.TypeOf<InvalidOperationException>()
-                        .With.Property(nameof(PostgresException.SqlState)).EqualTo("42883"));
+                    Throws.Exception.TypeOf<PostgresException>());
             }
         }
 
@@ -222,7 +221,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Description("Tests if the right function according to search_path is used in function parameter derivation"), Ignore("RM#43109")]
+        [Test, Description("Tests if the right function according to search_path is used in function parameter derivation")]
         public void DeriveParametersWithCorrectSchemaResolution()
         {
             using (var conn = OpenConnection())
@@ -299,7 +298,7 @@ RESET search_path;
             }
         }
 
-        [Test, Description("Tests if an exception is thrown if multiple functions with the specified name are in the search_path"), Ignore("RM#43109")]
+        [Test, Description("Tests if an exception is thrown if multiple functions with the specified name are in the search_path")]
         public void DeriveThrowsForMultipleFunctionNameHitsInSearchPath()
         {
             using (var conn = OpenConnection())
@@ -342,7 +341,7 @@ SET search_path TO schema1, schema2;
 
         #region Set returning functions
 
-        [Test, Description("Tests parameter derivation for a function that returns SETOF sometype"), Ignore("RM#43109")]
+        [Test, Description("Tests parameter derivation for a function that returns SETOF sometype")]
         public void DeriveParametersFunctionReturningSetofType()
         {
             using (var conn = OpenConnection())
@@ -410,7 +409,7 @@ $$ LANGUAGE SQL;
             }
         }
 
-        [Test, Description("Tests parameter derivation for a function that returns SETOF record"), Ignore("RM#43109")]
+        [Test, Description("Tests parameter derivation for a function that returns SETOF record")]
         public void DeriveParametersFunctionReturningSetofRecord()
         {
             using (var conn = OpenConnection())
