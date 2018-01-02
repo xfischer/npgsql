@@ -11,7 +11,8 @@ namespace DOTNET
 	/// Summary description for RefCursor.
 	/// </summary>
 	
-		[TestFixture, Ignore("RM#43113")]
+		[TestFixture, Ignore("RM#43158")]
+        // TODO: After RM#43158 fix, all the test need to be refactored like 'testonecursor' test ( which is new way to use cursors )
 		public class RefCursor : TestBase
 		{
 			EDBConnection con = null;
@@ -217,32 +218,33 @@ namespace DOTNET
 					com.ExecuteNonQuery();
 
 					EDBTransaction tran = con.BeginTransaction();
-					EDBCommand command = new EDBCommand("cursortest1(:cur1)", con);
+					EDBCommand command = new EDBCommand("cursortest1", con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					//REFCUSOR
-					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.Refcursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("c_1", EDBTypes.EDBDbType.Refcursor,10, "c_1", ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
-					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					int fc=result.FieldCount;
-					EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-					rst.Read();
+                    command.ExecuteNonQuery();
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
+                    rst.Read();
 					Assert.AreEqual("7369",Convert.ToString(rst[0].ToString()));
 					Assert.AreEqual("SMITH", Convert.ToString(rst[1].ToString()));
 					Assert.AreEqual("CLERK", Convert.ToString(rst[2].ToString()));
                     Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 					Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
-				
-					
+
+                    rst.Close();
 					tran.Commit();
-					result.Close();
 
 					com.CommandText = "DROP TABLE TestCursorTable;";
 					com.ExecuteNonQuery();
 				}
 				catch(EDBException exp)
 				{
-
 					Console.WriteLine("Exception: " + exp.Message.ToString()); 
 				}
 				
@@ -261,14 +263,13 @@ namespace DOTNET
 					command.Parameters.Add(new EDBParameter("cur1",EDBTypes.EDBDbType.Refcursor,10,"cur1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("cur2",EDBTypes.EDBDbType.Refcursor,10,"cur2",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
-					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					int fc=result.FieldCount;
-
-					EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-					int fc1=result.FieldCount;
+                    command.ExecuteNonQuery();
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+					EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 					rst.Read();
-
-
+                
                     Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
 					Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
 					Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
@@ -276,8 +277,10 @@ namespace DOTNET
 					Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 				
 				
-					rst = (EDBDataReader) command.Parameters[1].Value;
-					fc1=result.FieldCount;
+                    cursorName = command.Parameters[1].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+					rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 					rst.Read();
 					rst.Read();
 					rst.Read();
@@ -289,7 +292,7 @@ namespace DOTNET
 				
 				
 					tran.Commit();
-					result.Close();
+					rst.Close();
 				}
 				catch(EDBException exp	)
 				{

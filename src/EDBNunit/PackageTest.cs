@@ -1432,7 +1432,7 @@ namespace DOTNET
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test, Ignore("RM#43158")]
         public void TERSE_PKG_PROC_CURSOR_TYPES()
         {
             try
@@ -1545,7 +1545,7 @@ namespace DOTNET
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test, Ignore("RM#43158")]
         public void TERSE_PKG_PROC_MIXED_NATIVE_CURSOR_TYPES()
 
         {
@@ -2020,7 +2020,7 @@ namespace DOTNET
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test, Ignore("RM#43158")]
         public void TERSE_PKG_FUNC_CURSOR_TYPES()
         {
             try
@@ -2224,7 +2224,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test, Ignore("RM#43158")]
         public void TERSE_PKG_FUNC_MIXED_NATIVE_CURSOR_TYPES()
 
         {

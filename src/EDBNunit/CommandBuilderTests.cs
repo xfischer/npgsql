@@ -33,7 +33,7 @@ namespace DOTNET
 {
     class CommandBuilderTests : TestBase
     {
-        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters")]
+        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters"), Ignore("RM#43151")]
         public void DeriveParametersVarious()
         {
             using (var conn = OpenConnection())

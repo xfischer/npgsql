@@ -2728,7 +2728,7 @@ namespace DOTNET
 
         }
 
-		[Test, Ignore("Umar: Investigation needed, throws exception")]
+		[Test, Ignore("RM#43158")]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
@@ -2820,7 +2820,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("Umar: Investigation needed, throws exception")]
+        [Test, Ignore("RM#43158")]
         public void TERSE_PROC_MIXED_NATIVE_CURSOR_TYPES()
         {
             try

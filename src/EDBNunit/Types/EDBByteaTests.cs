@@ -7,11 +7,11 @@ using EDBTypes;
 
 namespace DOTNET
 {
-	/// <summary>
-	/// Summary description for RefCursor.
-	/// </summary>
-	
-	[TestFixture]
+    /// <summary>
+    /// Summary description for EDBByteaTest.
+    /// </summary>
+
+    [TestFixture]
 	public class EDBByteaTest : TestBase
 	{
 		EDBConnection conn = null;
@@ -25,9 +25,8 @@ namespace DOTNET
 				
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
-				
-			//	Testing procedure with one cursor
-			string strSqlEmptyArg = "create or replace procedure test_bytea_in_in(z in bytea,y in numeric) is declare begin null ;end;";
+
+            string strSqlEmptyArg = "create or replace procedure test_bytea_in_in(z in bytea,y in numeric) is declare begin null ;end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 //			
@@ -35,7 +34,7 @@ namespace DOTNET
 //			com.CommandText = strSqlEmptyArg;
 //			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table test_bytea_two( a bytea ,b bytea)";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_two( a bytea ,b bytea)";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
@@ -44,7 +43,7 @@ namespace DOTNET
 			com.ExecuteNonQuery();
 
 				
-			strSqlEmptyArg = "create table test_bytea_three( a bytea ,b bytea,c bytea);";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three( a bytea ,b bytea,c bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
@@ -53,7 +52,7 @@ namespace DOTNET
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
@@ -91,7 +90,7 @@ namespace DOTNET
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table ByteaTest(id serial, f1 bytea);";
+			strSqlEmptyArg = "create table IF NOT EXISTS ByteaTest(id serial, f1 bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 		}
@@ -131,14 +130,8 @@ namespace DOTNET
 			com.CommandText = "DROP PROCEDURE test_bytea_three_in_with_numeric";
 			com.ExecuteNonQuery();
 				
-				
-				
-				
-				
 			com.CommandText = "DROP PROCEDURE test_bytea_three_in";
 			com.ExecuteNonQuery();
-				
-				
 				
 			com.CommandText = "DROP PROCEDURE test_bytea_two_in";
 			com.ExecuteNonQuery();

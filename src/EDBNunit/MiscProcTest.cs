@@ -10,7 +10,7 @@ namespace DOTNET
 	/// <summary>
 	/// Summary description for MiscProcTest.
 	/// </summary>
-	[TestFixture, Ignore("RM#43113")]
+	[TestFixture, Ignore("RM#43113,RM#43158")]
 	public class MiscProcTest : TestBase
 	{
 		EDBConnection con = null;
@@ -28,7 +28,6 @@ namespace DOTNET
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V2',2)";
 			Command.ExecuteNonQuery();
 			
-
 			Command.CommandText="CREATE OR REPLACE	FUNCTION GETREFCURSOR RETURN REFCURSOR AS\n"+
 				"	TEST_REF REFCURSOR;\n"+
 				"		BEGIN\n"+
@@ -56,7 +55,6 @@ namespace DOTNET
 				"		END;";
 			Command.ExecuteNonQuery();
 
-
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETREFCURSORSVVPROC(A OUT REFCURSOR,B OUT REFCURSOR) AS\n"+
 				"	TEST_REF REFCURSOR;\n"+
 				"	TEST_REF2 REFCURSOR;\n"+
@@ -67,11 +65,6 @@ namespace DOTNET
 				"			B:=TEST_REF2;\n"+
 				"		END;";
 			Command.ExecuteNonQuery();
-
-		
-
-			
-
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETREFCURSORSVPROC(A OUT REFCURSOR,B OUT REFCURSOR) AS\n"+
 				"	TEST_REF REFCURSOR;\n"+
 				"		BEGIN\n"+
@@ -101,7 +94,6 @@ namespace DOTNET
 				"		END;";
 			Command.ExecuteNonQuery();
 
-
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETSYSREFCURSORSIVPROC(A OUT SYS_REFCURSOR,B OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"		BEGIN\n"+
@@ -109,7 +101,6 @@ namespace DOTNET
 				"			A:=TEST_REF;\n"+
 				"		END;";
 			Command.ExecuteNonQuery();
-
 
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETREFCURSORSIIPROC(A OUT REFCURSOR,B OUT REFCURSOR) AS\n"+
 			"		BEGIN\n"+
@@ -133,7 +124,6 @@ namespace DOTNET
 				"		END;";
 			Command.ExecuteNonQuery();
 	
-
 			///////////
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETSYSREFCURSORPROC(A OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
@@ -154,7 +144,6 @@ namespace DOTNET
 				"		END;";
 			Command.ExecuteNonQuery();
 
-
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETSYSREFCURSORSVVPROC(A OUT SYS_REFCURSOR,B OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"	TEST_REF2 SYS_REFCURSOR;\n"+
@@ -165,10 +154,7 @@ namespace DOTNET
 				"			B:=TEST_REF2;\n"+
 				"		END;";
 			Command.ExecuteNonQuery();
-
-
 			
-
 			Command.CommandText="CREATE OR REPLACE	PROCEDURE GETSYSREFCURSORSVPROC(A OUT SYS_REFCURSOR,B OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"		BEGIN\n"+
@@ -177,7 +163,6 @@ namespace DOTNET
 				"			B:=A;\n"+
 				"		END;";
 			Command.ExecuteNonQuery();
-
 
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayVarchar(Name IN VARCHAR, Age IN INT, "+
 				"     		Sal IN  INT, WhoAmI IN OUT VARCHAR,CheckOut OUT INT) return VARCHAR[]  "+ 
@@ -200,7 +185,6 @@ namespace DOTNET
 				"		return Ret;  "+
 				"	      END;", con);
 			Command.ExecuteNonQuery();
-
 
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayNumeric(a numeric, b IN numeric, "+
 			 "     		c IN numeric, d IN OUT numeric,e OUT numeric) return NUMERIC[]  " +
@@ -245,7 +229,6 @@ namespace DOTNET
 			 "	      END;", con);
 			Command.ExecuteNonQuery();
 
-
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayFloat(a float, b IN OUT float)  "+  
 			 "  return FLOAT[] "+
 			 "   IS "+
@@ -287,7 +270,6 @@ namespace DOTNET
 			 "		return Ret;  "+
 			 "	      END;", con);
 			Command.ExecuteNonQuery();
-
 
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayBigInt(a bigint, b IN OUT bigint)  " + 
 			 "  return bigint[] "+
@@ -331,7 +313,6 @@ namespace DOTNET
 			"END REFCURSOR_PKG;";
 			
 			Command.ExecuteNonQuery();
-
 
 			Command.CommandText="CREATE OR REPLACE PACKAGE BODY REFCURSOR_PKG IS\n"
 				+ "FUNCTION GETREFCURSOR RETURN REFCURSOR AS\n"+
@@ -385,9 +366,8 @@ namespace DOTNET
 				"			OPEN TEST_REF FOR SELECT * FROM TESTTAB;\n"+
 				"			RETURN TEST_REF;\n"+
 				"		END;"+
-								
-	
 
+	
 				"PROCEDURE GETSYSREFCURSORPROC(A OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"		BEGIN\n"+
@@ -395,7 +375,6 @@ namespace DOTNET
 				"			A:=TEST_REF;\n"+
 				"		END;"+
 			
-
 				"FUNCTION GETSYSREFCURSOR_OUT(R OUT SYS_REFCURSOR) RETURN SYS_REFCURSOR AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"	TEST_REF2 SYS_REFCURSOR;\n"+
@@ -405,7 +384,6 @@ namespace DOTNET
 				"			R:=TEST_REF2;\n"+
 				"			RETURN TEST_REF;\n"+
 				"		END;"+
-
 				"PROCEDURE GETSYSREFCURSORSVVPROC(A OUT SYS_REFCURSOR,B OUT SYS_REFCURSOR) AS\n"+
 				"	TEST_REF SYS_REFCURSOR;\n"+
 				"	TEST_REF2 SYS_REFCURSOR;\n"+
@@ -445,11 +423,8 @@ namespace DOTNET
 				"			A:=TEST_REF;\n"+
 				"		END;"+
 				"END REFCURSOR_PKG;\n";
-
 			Command.ExecuteNonQuery();
-
 		
-
 		}
 
 		[TearDown] 
@@ -470,15 +445,11 @@ namespace DOTNET
 			Command.CommandText="DROP PROCEDURE GETREFCURSORPROC";
 			Command.ExecuteNonQuery();
 
-
 			Command.CommandText="DROP PROCEDURE GETREFCURSORSVVPROC";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="DROP PROCEDURE GETREFCURSORSVPROC";
 			Command.ExecuteNonQuery();
-
 
             Command.CommandText = "DROP FUNCTION DEFAULTINRETURNFUNC(IN INT4 )";
 			Command.ExecuteNonQuery();
@@ -489,18 +460,14 @@ namespace DOTNET
 			Command.CommandText="DROP FUNCTION GETSYSREFCURSOR";
 			Command.ExecuteNonQuery();
 
-
             Command.CommandText = "DROP FUNCTION  GETSYSREFCURSOR_OUT(OUT SYS_REFCURSOR)";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORPROC";
 			Command.ExecuteNonQuery();
 
-
 			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVVPROC";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVPROC";
 			Command.ExecuteNonQuery();
@@ -667,9 +634,6 @@ namespace DOTNET
 			if(!ex) 
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
-		
-
-
 		[Test]
 		public void RefCursorProc()
 		{
@@ -700,7 +664,6 @@ namespace DOTNET
 			tran.Commit();
 			
 		}
-
 
 		[Test]
 		public void RefCursorInvalidProc()
@@ -742,8 +705,6 @@ namespace DOTNET
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
 
-
-
 		[Test]
 		public void RefcursorsVV()
 		{
@@ -778,14 +739,11 @@ namespace DOTNET
 			else
 				Assert.IsFalse(false);
 
-		
-			
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
 			
 		}	
-
 
 		[Test]
 		public void RefcursorsV()
@@ -809,8 +767,7 @@ namespace DOTNET
 			Assert.IsFalse(rst.Read());
 			Assert.IsFalse(rst1.Read());
 
-			
-			
+
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -832,8 +789,6 @@ namespace DOTNET
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-		
-			
 		}	
 
 	//	[Test]
@@ -855,10 +810,7 @@ namespace DOTNET
 				Assert.IsTrue(false);
 
             Reader.Close();
-		
-			
 		}	
-
 
 		[Test]
 		public void SYSRefCursorFunc()
@@ -914,7 +866,6 @@ namespace DOTNET
 			
 		}
 
-
 		[Test]
 		public void SYSRefcursorsV()
 		{
@@ -937,8 +888,7 @@ namespace DOTNET
 			Assert.IsFalse(rst.Read());
 			Assert.IsFalse(rst1.Read());
 
-			
-			
+
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -979,14 +929,11 @@ namespace DOTNET
 			else
 				Assert.IsFalse(false);
 
-		
-			
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
 			
 		}	
-
 
 		[Test]
 		public void SYSRefCursorFuncOut()
@@ -1066,8 +1013,6 @@ namespace DOTNET
 			
 		}
 
-	
-
 		[Test]
 		public void PACKGAERefCursorFuncOut()
 		{
@@ -1091,7 +1036,6 @@ namespace DOTNET
 			tran.Commit();
 			
 		}
-
 
 		[Test]
 		public void PACKAGERefcursorsVV()
@@ -1127,8 +1071,6 @@ namespace DOTNET
 			else
 				Assert.IsFalse(false);
 
-		
-			
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -1158,8 +1100,7 @@ namespace DOTNET
 			Assert.IsFalse(rst.Read());
 			Assert.IsFalse(rst1.Read());
 
-			
-			
+
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -1183,8 +1124,6 @@ namespace DOTNET
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-		
-			
 		}	
 
 		[Test]
@@ -1262,7 +1201,6 @@ namespace DOTNET
 			
 		}
 
-
 		[Test]
 		public void PACKSYSRefcursorsV()
 		{
@@ -1285,8 +1223,7 @@ namespace DOTNET
 			Assert.IsFalse(rst.Read());
 			Assert.IsFalse(rst1.Read());
 
-			
-			
+
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -1327,8 +1264,6 @@ namespace DOTNET
 			else
 				Assert.IsFalse(false);
 
-		
-			
 			rst.Close();
 			rst1.Close();
 			tran.Commit();
@@ -1397,10 +1332,8 @@ namespace DOTNET
 			}
 			if(!ex) 
 				Assert.Fail("Expected an exception. Cursor should be invalid");
-			
-			
-		}
 
+		}
 
 		[Test]
 		public void PACKRefCursorInvalidFuncOut()
@@ -1444,12 +1377,9 @@ namespace DOTNET
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
 
-
 		[Test]
 		public void DefaultInBindAsReturn()
 		{
-		
-			
 			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC(:param0)", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 			
@@ -1468,10 +1398,7 @@ namespace DOTNET
 				Assert.IsTrue(false);
 
             reader.Close();
-			
-			
-		
-			
+
 		}
 
 		[Test]
@@ -1494,17 +1421,10 @@ namespace DOTNET
 				Assert.IsTrue(false);
 
             reader.Close();
-		
-			
 		}	
-	
-
-		
 		[Test]
 		public void PACKDefaultInBindAsReturn()
 		{
-		
-			
 			EDBCommand command = new EDBCommand("REFCURSOR_PKG.DEFAULTINRETURNFUNC(:param0)", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 			
@@ -1521,12 +1441,8 @@ namespace DOTNET
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-			
-              
-			
-			
-		
-			
+	
+
 		}
 
 		[Test]
@@ -1548,13 +1464,7 @@ namespace DOTNET
 			else
 				Assert.IsTrue(false);
             reader.Close();
-
-			
-		
-			
-		}	
-	
-
+		}
 		[Test]
 		public void RefcursorsIV()
 		{
@@ -1591,7 +1501,6 @@ namespace DOTNET
 			
 		}	
 
-
 		[Test]
 		public void RefcursorsII()
 		{
@@ -1610,12 +1519,9 @@ namespace DOTNET
 
 			Assert.AreEqual("",rst);
 			Assert.AreEqual("",rst1);
-			
-		
 			tran.Commit();
 			
 		}	
-
 
 		[Test]
 		public void PACKRefcursorsIV()
@@ -1671,14 +1577,10 @@ namespace DOTNET
 
 			Assert.AreEqual("",rst);
 			Assert.AreEqual("",rst1);
-			
-		
 			tran.Commit();
 			
-		}	
+		}
 
-
-		
 		[Test]
 		public void SYSRefcursorsIV()
 		{
@@ -1715,7 +1617,6 @@ namespace DOTNET
 			
 		}	
 
-
 		[Test]
 		public void SYSRefcursorsII()
 		{
@@ -1734,12 +1635,9 @@ namespace DOTNET
 
 			Assert.AreEqual("",rst);
 			Assert.AreEqual("",rst1);
-			
-		
 			tran.Commit();
 			
 		}	
-
 
 		[Test]
 		public void PACKSYSRefcursorsIV()
@@ -1795,8 +1693,6 @@ namespace DOTNET
 
 			Assert.AreEqual("",rst);
 			Assert.AreEqual("",rst1);
-			
-		
 			tran.Commit();
 			
 		}	
@@ -1804,8 +1700,6 @@ namespace DOTNET
 		[Test]
 		public void FuncReturningArrayVarchar()
 		{
-
-
 
             String[] a = { "100", "200", "300", "400" };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest (c1 VARCHAR, c2 INT); ", con);
@@ -1830,28 +1724,20 @@ namespace DOTNET
 			EDBDataReader Reader=command.ExecuteReader();
 
             Object rst = command.Parameters[0].Value;
-			
-			
+
 			Reader.Close();
 			
 			Assert.AreEqual(a,(String[])rst);	
 			command=new EDBCommand("drop table tblTest;",con);
-			
-			
+
 			command.ExecuteNonQuery();
 
 			
-		
-			
 		}
-
-
 
 		[Test]
 		public void FuncReturningArrayNumeric()
 		{
-
-
 
             Decimal[] a = { 132.654M, 897.2563M };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest (f1 Numeric[10],f2 numeric[]);  ", con);
@@ -1879,21 +1765,16 @@ namespace DOTNET
 			
 			Assert.AreEqual(a,(Decimal[])rst);	
 			command=new EDBCommand("drop table tblTest;",con);
-			
-			
+
 			command.ExecuteNonQuery();
 
 			
-		
-			
 		}
-
 
 		[Test]
 		public void FuncReturningArrayInteger()
 		{
-			
-			
+
 			
             Int32[] a = {132,897};
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest2 (f1 integer[10],f2 integer[]);  ", con);
@@ -1919,20 +1800,15 @@ namespace DOTNET
 			
 			Assert.AreEqual(a , (Int32[])rst);	
 			command=new EDBCommand("drop table tblTest2;",con);
-			
-			
+
 			command.ExecuteNonQuery();
 
 			
-		
-			
 		}
-
 
 		[Test]
 		public void FuncReturningArrayFloat()
 		{
-
 
             Double[] a = { 132.654, 897.2563 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest3 (d1 float[10],f2 float[]);  ", con);
@@ -1957,21 +1833,15 @@ namespace DOTNET
 			
 			Assert.AreEqual(a,(Double[])rst);	
 			command=new EDBCommand("drop table tblTest3;",con);
-			
-			
+
 			command.ExecuteNonQuery();
 
 			
-		
-			
 		}
-
 
 		[Test]
 		public void FuncReturningArrayDoublePrecision()
 		{
-
-
 
             Double[] a = { 555.43534543233, 344654.345344398 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest4 (d1 double precision[],f2 double precision[]);", con);
@@ -1997,20 +1867,12 @@ namespace DOTNET
 			Assert.AreEqual(a,(Double[])rst);	
 			command=new EDBCommand("drop table tblTest4;",con);
 			
-			
 			command.ExecuteNonQuery();
-
-			
-		
-			
 		}
-
 
 		[Test]
 		public void FuncReturningArrayBigInt()
 		{
-
-
 
             Int64[] a = { 55543534543233, 34465434534439785 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest5 (d1 bigint[],f2 bigint[]);", con);
@@ -2035,18 +1897,10 @@ namespace DOTNET
 			
 			Assert.AreEqual(a,(Int64)rst);	
 			command=new EDBCommand("drop table tblTest5;",con);
-			
-			
+
 			command.ExecuteNonQuery();
 
 			
-		
-			
 		}
-
-
-
-
-
 	}
 }

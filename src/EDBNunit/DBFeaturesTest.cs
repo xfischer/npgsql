@@ -22,7 +22,7 @@ namespace DOTNET
 			string connectionString = ConfigurationManager.AppSettings["connectionString"];
 			con = new EDBConnection(connectionString);			
 		}
-        [Test]
+        [Test, Ignore("RM#43158")]
         public void TestExecImmediate()
         {
 //            EDBTransaction tran = con.BeginTransaction();
