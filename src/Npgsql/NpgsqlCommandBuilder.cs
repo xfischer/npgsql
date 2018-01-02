@@ -195,7 +195,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 for (var i = 0; i < types.Length; i++)
                 {
                     var param = new EDBParameter();
-
+                    hasParams = true;
                     // TODO: Fix enums, composite types
                     var EDBDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].PostgresType.EDBDbType;
                     if (!EDBDbType.HasValue)
@@ -205,7 +205,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     if (names != null && i < names.Length)
                         if (command.CommandType == CommandType.StoredProcedure)
                         {
-                            param.ParameterName = names[i];
+                            if (names[i].Equals("")) {
+                                param.ParameterName = "parameter" + (i + 1);
+                            } else
+                            {
+                                param.ParameterName = names[i];
+                            }
+                            
                         } else
                         {
                             param.ParameterName = ":" + names[i];
@@ -222,19 +228,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         {
                             case 'i':
                                 param.Direction = ParameterDirection.Input;
-                                hasParams = true;
-                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'o':
                             case 't':
                                 param.Direction = ParameterDirection.Output;
-                                hasParams = true;
-                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'b':
                                 param.Direction = ParameterDirection.InputOutput;
-                                hasParams = true;
-                                paramNames = paramNames + ":" + param.ParameterName + ", ";
                                 break;
                             case 'v':
                                 throw new NotImplementedException("Cannot derive function parameter of type VARIADIC");
@@ -243,7 +243,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                     "Unknown code in proargmodes while deriving: " + modes[i]);
                         }
                     }
-
+                    paramNames = paramNames + ":" + param.ParameterName + ", ";
                     command.Parameters.Add(param);
                     
                 }

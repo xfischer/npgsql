@@ -91,7 +91,7 @@ namespace DOTNET
         }
 
         [Test]
-        [TestCase(@"SELECT e'ab\'c:param'", TestName = "Estring", Ignore = "RM#43111")]
+        [TestCase(@"SELECT e'ab\'c:param'", TestName = "Estring")]
         [TestCase(@"SELECT/*/* -- nested comment :int /*/* *//*/ **/*/*/*/1")]
         [TestCase(@"SELECT 1,
 -- Comment, @param and also :param

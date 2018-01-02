@@ -82,9 +82,6 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\Npgsql\bin\Release\net451\EnterpriseDB.EDBClient.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework, Version=2.6.1.12208, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>nunit\lib\common\3.8\nunit.framework.dll</HintPath>
@@ -96,7 +93,7 @@
       <Name>System.Data</Name>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
-      <HintPath>..\Npgsql\bin\Release\net451\System.Threading.Tasks.Extensions.dll</HintPath>
+      <HintPath>..\Npgsql\bin\$(Configuration)\net451\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web">
@@ -244,6 +241,12 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Npgsql\Npgsql.csproj">
+      <Project>{9d13b739-62b1-4190-b386-7a9547304eb3}</Project>
+      <Name>Npgsql</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
