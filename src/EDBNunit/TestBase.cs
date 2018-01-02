@@ -28,6 +28,8 @@ using System.Linq;
 using EnterpriseDB.EDBClient.Logging;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
+using System.Configuration;
+
 
 namespace DOTNET
 {
@@ -44,7 +46,7 @@ namespace DOTNET
         /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        public static string DefaultConnectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+        public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"];
 
         #region Utilities for use by tests
 

@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Configuration;
 
 
 namespace DOTNET
@@ -13,7 +14,7 @@ namespace DOTNET
 	public class BaseDataSourceTest : TestBase
     {
 		EDBConnection con = null;
-		String conString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+		String conString = ConfigurationManager.AppSettings["connectionString"];
 		[SetUp]
 		public void Init()
 		{

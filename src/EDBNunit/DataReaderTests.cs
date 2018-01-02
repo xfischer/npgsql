@@ -5,6 +5,7 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
 using System.IO;
+using System.Configuration;
 
 
 namespace DOTNET
@@ -20,7 +21,7 @@ namespace DOTNET
 		[SetUp]
 		protected void SetUp()
 		{
-			connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+			connectionString = ConfigurationManager.AppSettings["connectionString"];
 			_conn = new EDBConnection(connectionString);
 		}
 
@@ -692,9 +693,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";

@@ -89,6 +89,7 @@
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data">
       <Name>System.Data</Name>
     </Reference>
@@ -228,6 +229,8 @@
     <None Include="Scripts\add_functions.sql" />
     <None Include="Scripts\add_tables.sql" />
     <None Include="Scripts\add_views.sql" />
+    <None Include="Scripts\cleanDB.bat" />
+    <None Include="Scripts\makeDB.bat" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ADODB">

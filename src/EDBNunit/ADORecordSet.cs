@@ -6,6 +6,7 @@ using EDBTypes;
 using EnterpriseDB.EDBClient;
 using System.Net;
 using System.IO;
+using System.Configuration;
 
 namespace ADO
 {
@@ -17,9 +18,9 @@ namespace ADO
 	public class ADORecordSet
 	{
 		private ADODB.Connection Conn=null;
-		private string DBConnection = System.Configuration.ConfigurationSettings.AppSettings["ADOConnectionString"];
-		private string UserName = System.Configuration.ConfigurationSettings.AppSettings["ADOUser"];
-		private string PassPhrase = System.Configuration.ConfigurationSettings.AppSettings["ADOPassword"];
+		private string DBConnection = ConfigurationManager.AppSettings["ADOConnectionString"];
+		private string UserName = ConfigurationManager.AppSettings["ADOUser"];
+		private string PassPhrase = ConfigurationManager.AppSettings["ADOPassword"];
 
 		[SetUp]
 		protected void SetUp()

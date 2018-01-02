@@ -3,6 +3,7 @@ using System.Configuration;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Configuration;
 
 namespace DOTNET
 {
@@ -18,7 +19,7 @@ namespace DOTNET
 		public void Init()
 		{
 
-			string connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+			string connectionString = ConfigurationManager.AppSettings["connectionString"];
 			con = new EDBConnection(connectionString);			
 		}
         [Test]

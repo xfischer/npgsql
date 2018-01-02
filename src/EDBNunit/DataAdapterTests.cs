@@ -43,8 +43,7 @@ namespace DOTNET
         [SetUp]
         protected void SetUp()
         {
-			string connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
-			_conn = new EDBConnection(connectionString);
+			_conn = new EDBConnection(ConnectionString);
         }
 
         [TearDown]
@@ -56,8 +55,7 @@ namespace DOTNET
 
         private EDBConnection OpenConnection()
         {
-            string connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
-            var conn = new EDBConnection(connectionString);
+            var conn = new EDBConnection(ConnectionString);
             conn.Open();
             conn.ExecuteNonQuery("CREATE TEMP TABLE data (" +
                                  "field_pk SERIAL PRIMARY KEY," +
