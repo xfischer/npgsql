@@ -36,7 +36,7 @@ namespace  EnterpriseDB.EDBClient
     /// </summary>
     internal static class EDBSchema
     {
-        const string MetaDataResourceName = " EnterpriseDB.EDBClient.NpgsqlMetaData.xml";
+        const string MetaDataResourceName = "EnterpriseDB.EDBClient.NpgsqlMetaData.xml";
 
         /// <summary>
         /// Returns the MetaDataCollections that lists all possible collections.
