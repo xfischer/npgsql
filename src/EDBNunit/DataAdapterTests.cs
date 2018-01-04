@@ -1045,8 +1045,8 @@ namespace DOTNET
         {
             using (var conn = OpenConnection())
             {
-                conn.ExecuteNonQuery("CREATE TEMP TABLE data (char5 CHAR(5), varchar5 VARCHAR(5))");
-                using (var command = new EDBCommand("SELECT char5, varchar5 FROM data", conn))
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data2 (char5 CHAR(5), varchar5 VARCHAR(5))");
+                using (var command = new EDBCommand("SELECT char5, varchar5 FROM data2", conn))
                 using (var dr = command.ExecuteReader())
                 {
                     var dt = new DataTable();

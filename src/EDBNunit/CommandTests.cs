@@ -660,7 +660,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("Umar: Investigate, this throws exception")]
+        [Test]
         public void StatementMappedOutputParameters()
         {
             using (var conn = OpenConnection())
@@ -704,7 +704,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("Umar: need to investigate ")]
+        [Test]
         public void TestBug1006158OutputParameters()
         {
             using (var conn = OpenConnection())
@@ -723,11 +723,13 @@ namespace DOTNET
 
                 command = new EDBCommand("pg_temp.more_params", conn);
                 command.CommandType = CommandType.StoredProcedure;
+                
 
                 command.Parameters.Add(new EDBParameter("a", DbType.Int32));
                 command.Parameters[0].Direction = ParameterDirection.Output;
                 command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
                 command.Parameters[1].Direction = ParameterDirection.Output;
+                command.Prepare();
 
                 var result = command.ExecuteScalar();
 
@@ -889,7 +891,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Description("Bypasses PostgreSQL's int16 limitation on the number of parameters"), Ignore("RM#43125")]
+        [Test, Description("Bypasses PostgreSQL's int16 limitation on the number of parameters")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/831")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/858")]
         public void TooManyParameters()
@@ -915,7 +917,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Description("An individual statement cannot have more than 65535 parameters, but a command can (across multiple statements)."), Ignore("RM#43125")]
+        [Test, Description("An individual statement cannot have more than 65535 parameters, but a command can (across multiple statements).")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/1199")]
         public void ManyParametersAcrossStatements()
         {

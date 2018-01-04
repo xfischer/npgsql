@@ -35,6 +35,7 @@ using EnterpriseDB.EDBClient;
 
 namespace DOTNET
 {
+    [Ignore("43205")]
     public class SchemaTests : TestBase
     {
         [Test]

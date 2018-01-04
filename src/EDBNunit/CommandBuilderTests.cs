@@ -33,7 +33,7 @@ namespace DOTNET
 {
     class CommandBuilderTests : TestBase
     {
-        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters"), Ignore("RM#43151")]
+        [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters")]
         public void DeriveParametersVarious()
         {
             using (var conn = OpenConnection())
@@ -156,7 +156,7 @@ namespace DOTNET
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1212"), Ignore("Need re-verfication as function has only one param and test case expects three")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1212"), Ignore("RM#43108")]
         public void TableParameters()
         {
             using (var conn = OpenConnection())
@@ -171,6 +171,7 @@ namespace DOTNET
 
                 var cmd = new EDBCommand("pg_temp.func", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
+                cmd.Prepare();
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(3));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
                 Assert.That(cmd.Parameters[1].Direction, Is.EqualTo(ParameterDirection.Output));
@@ -342,7 +343,7 @@ SET search_path TO schema1, schema2;
 
         #region Set returning functions
 
-        [Test, Description("Tests parameter derivation for a function that returns SETOF sometype"), Ignore("Need re-verfication as function has only one param and test case expects three")]
+        [Test, Description("Tests parameter derivation for a function that returns SETOF sometype"), Ignore("RM#43108")]
         public void DeriveParametersFunctionReturningSetofType()
         {
             using (var conn = OpenConnection())
@@ -365,6 +366,7 @@ $$ LANGUAGE SQL;
 
                 var cmd = new EDBCommand("pg_temp.getfoo", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
+                cmd.Prepare();
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(4));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
                 Assert.That(cmd.Parameters[1].Direction, Is.EqualTo(ParameterDirection.Output));
@@ -376,7 +378,7 @@ $$ LANGUAGE SQL;
             }
         }
 
-        [Test, Description("Tests parameter derivation for a function that returns TABLE"), Ignore("Need re-verfication as function has only one param and test case expects three")]
+        [Test, Description("Tests parameter derivation for a function that returns TABLE"), Ignore("RM#43108")]
         public void DeriveParametersFunctionReturningTable()
         {
             using (var conn = OpenConnection())

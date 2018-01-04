@@ -40,7 +40,6 @@ namespace DOTNET
     /// <summary>
     /// http://www.postgresql.org/docs/current/static/datatype-binary.html
     /// </summary>
-    [Ignore("Check")]
     class ByteaTests : TestBase
     {
         [Test, Description("Roundtrips a bytea")]

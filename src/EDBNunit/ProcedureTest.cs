@@ -53,11 +53,16 @@ namespace DOTNET
 		[TearDown] 
 		public void Dispose()
 		{
+            // Following extra Close() open sequence will make sure pending transactions are rolled back.
+            if (con.State != ConnectionState.Closed)
+                con.Close();
+            con.Open();
+
             EDBCommand com = new EDBCommand("",con);
             com.CommandType = CommandType.Text;
 
 
-            //com.CommandText="Drop table InOutTestEmp";
+            //com.CommandText="DROP TABLE IF EXIST InOutTestEmp";
             //com.ExecuteNonQuery();
 
 
@@ -75,10 +80,8 @@ namespace DOTNET
 
             //com.CommandText = "DROP PROCEDURE oneOutArg_test";
             //com.ExecuteNonQuery();
-
-            Console.WriteLine("xx\n");
+            
 			TestUtil.closeDB(con);
-            Console.WriteLine("yy\n");
         }
 
 
@@ -2728,7 +2731,7 @@ namespace DOTNET
 
         }
 
-		[Test, Ignore("RM#43158")]
+		[Test, Ignore("Needs Refcursor refactor")]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
@@ -2820,7 +2823,7 @@ namespace DOTNET
             }
         }
 
-        [Test, Ignore("RM#43158")]
+        [Test, Ignore("Needs Refcursor refactor")]
         public void TERSE_PROC_MIXED_NATIVE_CURSOR_TYPES()
         {
             try

@@ -2,8 +2,10 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Text;
 using System.IO;
 using EDBTypes;
+using System.Collections.Generic;
 
 namespace DOTNET
 {
@@ -284,11 +286,31 @@ namespace DOTNET
 				Console.WriteLine(ex.ToString());
 			}
 		}
-		
-		[Test]
+
+        static string EncodeHex(ICollection<byte> buf)
+        {
+            var hex = new StringBuilder(@"E'\\x", buf.Count * 2 + 3);
+            foreach (byte b in buf)
+            {
+                hex.Append(String.Format("{0:x2}", b));
+            }
+            hex.Append("'");
+            return hex.ToString();
+        }
+
+        [Test, Ignore("Needs refactor")]
 		public void testa_bytea_out()
 		{
-			EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
+            // Insert Data first
+
+            FileStream fs_in = null;
+            fs_in = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+            byte[] data = new byte[fs_in.Length];
+            fs_in.Read(data, 0, data.Length);
+            fs_in.Close();
+            conn.ExecuteNonQuery($"INSERT INTO test_bytea_three_with_numeric (a) VALUES ({EncodeHex(data)})");
+
+            EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
 			cmd.CommandType= CommandType.StoredProcedure;
 			cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 			cmd.Prepare();

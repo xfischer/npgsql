@@ -22,7 +22,7 @@ namespace DOTNET
 			string connectionString = ConfigurationManager.AppSettings["connectionString"];
 			con = new EDBConnection(connectionString);			
 		}
-        [Test, Ignore("RM#43158")]
+        [Test, Ignore("Needs Refcursor refactor")]
         public void TestExecImmediate()
         {
 //            EDBTransaction tran = con.BeginTransaction();

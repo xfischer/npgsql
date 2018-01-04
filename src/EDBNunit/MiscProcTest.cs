@@ -10,7 +10,7 @@ namespace DOTNET
 	/// <summary>
 	/// Summary description for MiscProcTest.
 	/// </summary>
-	[TestFixture, Ignore("RM#43113,RM#43158")]
+	[TestFixture, Ignore("Needs Refcursor refactor")]
 	public class MiscProcTest : TestBase
 	{
 		EDBConnection con = null;
@@ -513,17 +513,19 @@ namespace DOTNET
 		{
 			EDBTransaction tran=con.BeginTransaction();
 			
-			EDBCommand command=new EDBCommand("public.getrefcursor()",con);
+			EDBCommand command=new EDBCommand("public.GETREFCURSOR", con);
 			command.CommandType=CommandType.StoredProcedure;
 			command.Transaction=tran;
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader();
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 			rst.Close();
@@ -537,17 +539,19 @@ namespace DOTNET
 			bool ex=false;
 			try
 			{
-				EDBCommand command=new EDBCommand("public.getrefcursor()",con);
+				EDBCommand command=new EDBCommand("public.getrefcursor",con);
 				command.CommandType=CommandType.StoredProcedure;
 				
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 				command.Prepare();
+                command.ExecuteNonQuery();
+                String cursorName = command.Parameters[0].Value.ToString();
+                command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-				command.ExecuteReader();
-				EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-				Assert.IsNotNull(rst);
+                Assert.IsNotNull(rst);
 				Assert.IsTrue(rst.Read());
 				Assert.AreEqual("V1",rst.GetValue(0).ToString());
 				Assert.IsTrue(rst.Read());
@@ -580,15 +584,26 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+
+            //EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+			//EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
-			Assert.IsNotNull(rst1);
+            rst.Close();
+
+            cursorName = command.Parameters[1].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            Assert.IsNotNull(rst1);
 			
-			rst.Close();
+			rst1.Close();
 			tran.Commit();
 			
 		}
@@ -646,10 +661,13 @@ namespace DOTNET
 			
 			command.Prepare();
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -679,11 +697,13 @@ namespace DOTNET
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 				command.Prepare();
+                command.ExecuteNonQuery();
+                String cursorName = command.Parameters[0].Value.ToString();
+                command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-				command.ExecuteReader();
-				EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-				Assert.IsNotNull(rst);
+                Assert.IsNotNull(rst);
 				Assert.IsTrue(rst.Read());
 				Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -716,10 +736,11 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -730,7 +751,11 @@ namespace DOTNET
 			else
 				Assert.IsFalse(false);
 
-			Assert.IsNotNull(rst1);
+            cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            Assert.IsNotNull(rst1);
 			Assert.IsTrue(rst1.Read());
 			Assert.AreEqual("V1",rst1.GetValue(0).ToString());
 			Assert.IsTrue(rst1.Read());
@@ -756,19 +781,24 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            Assert.IsNotNull(rst);
+            Assert.IsTrue(rst.Read());
+            Assert.IsTrue(rst.Read());
+            rst.Close();
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			Assert.IsNotNull(rst);
-			Assert.IsTrue(rst.Read());
-			Assert.IsTrue(rst.Read());
 			Assert.IsFalse(rst.Read());
 			Assert.IsFalse(rst1.Read());
 
-
-			rst.Close();
 			rst1.Close();
 			tran.Commit();
 			
@@ -823,11 +853,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 			rst.Close();
@@ -846,11 +878,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -877,10 +911,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -906,10 +942,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -946,10 +984,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsNotNull(rst1);
@@ -970,11 +1010,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 			rst.Close();
@@ -993,11 +1035,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -1024,10 +1068,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsNotNull(rst1);
@@ -1048,10 +1094,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1089,10 +1137,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1181,11 +1231,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-			Assert.IsNotNull(rst);
+            Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -1212,16 +1264,22 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			EDBDataReader rst1 = (EDBDataReader) command.Parameters[1].Value;
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
 			Assert.IsTrue(rst.Read());
 			Assert.IsFalse(rst.Read());
-			Assert.IsFalse(rst1.Read());
+            
+            cursorName = command.Parameters[1].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            Assert.IsFalse(rst1.Read());
 
 
 			rst.Close();
@@ -1308,11 +1366,13 @@ namespace DOTNET
 				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			
 				command.Prepare();
+                command.ExecuteNonQuery();
+                String cursorName = command.Parameters[0].Value.ToString();
+                command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-				command.ExecuteReader();
-				EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-
-				Assert.IsNotNull(rst);
+                Assert.IsNotNull(rst);
 				Assert.IsTrue(rst.Read());
 				Assert.AreEqual("V1",rst.GetValue(0).ToString());
 
@@ -1476,10 +1536,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			string rst1 = command.Parameters[1].Value.ToString();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            string rst1 = command.Parameters[1].Value.ToString();
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1534,10 +1596,12 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
 			
 			command.Prepare();
-
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			string rst1 = command.Parameters[1].Value.ToString();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            string rst1 = command.Parameters[1].Value.ToString();
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1650,10 +1714,13 @@ namespace DOTNET
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
+            String cursorName = command.Parameters[0].Value.ToString();
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-			command.ExecuteReader();
-			EDBDataReader rst = (EDBDataReader) command.Parameters[0].Value;
-			string rst1 = command.Parameters[1].Value.ToString();
+            string rst1 = command.Parameters[1].Value.ToString();
 
 			Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1888,11 +1955,11 @@ namespace DOTNET
             command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Bigint, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            EDBDataReader Reader = command.ExecuteReader();
 
             Object rst = command.Parameters[2].Value;
-			
-			Console.WriteLine(rst);
+
+            Console.WriteLine(rst);
 			Reader.Close();
 			
 			Assert.AreEqual(a,(Int64)rst);	
