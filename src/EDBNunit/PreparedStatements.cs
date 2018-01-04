@@ -10,14 +10,14 @@ namespace DOTNET
 	/// Summary description for PreparedStatements.
 	/// </summary>
 	[TestFixture] 
-	public class PreparedStatements
-	{	
+	public class PreparedStatements : TestBase
+    {	
 		EDBConnection conn = null;
 
 		[SetUp]
 		public void Init()
 		{	
-			conn = TestUtil.openDB();
+			conn = OpenConnection();
 			
 		}
 		protected void TearDown()
@@ -255,22 +255,12 @@ namespace DOTNET
 		[Test]
 		public void testmultiple_statemant1()
 		{
-			try
-			{
-				string CreateTableQuery  = "create table test1 (a varchar);create table test2(a varchar);create table test3(a varchar)";
-				EDBCommand createcommand = new EDBCommand();
-				createcommand.CommandType = CommandType.Text;
-				createcommand.CommandText = CreateTableQuery;
-				createcommand.Connection = conn;
-				createcommand.ExecuteNonQuery();
-
-				Console.WriteLine("Success..");			
-			}						
-			catch(EDBException exp)
-			{							
-				Console.WriteLine(exp.ToString()); 				
-			}
-
+			string CreateTableQuery  = "create table test1 (a varchar);create table test2(a varchar);create table test3(a varchar)";
+			EDBCommand createcommand = new EDBCommand();
+			createcommand.CommandType = CommandType.Text;
+			createcommand.CommandText = CreateTableQuery;
+			createcommand.Connection = conn;
+			createcommand.ExecuteNonQuery();
 		}
 		[Test]
 		public void testmultiple_statemant2()

@@ -3,6 +3,7 @@ using System.Configuration;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Configuration;
 
 namespace DOTNET
 {
@@ -18,10 +19,10 @@ namespace DOTNET
 		public void Init()
 		{
 
-			string connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+			string connectionString = ConfigurationManager.AppSettings["connectionString"];
 			con = new EDBConnection(connectionString);			
 		}
-        [Test]
+        [Test, Ignore("Needs Refcursor refactor")]
         public void TestExecImmediate()
         {
 //            EDBTransaction tran = con.BeginTransaction();
@@ -30,7 +31,7 @@ namespace DOTNET
 //            command.CommandType = CommandType.Text;
 //            command.Transaction = tran;
 //
-//            //command.Parameters.Add(new EDBParameter("refCursor", EDBTypes.EDBDbType.RefCursor, 10, "refCursor", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+//            //command.Parameters.Add(new EDBParameter("refCursor", EDBTypes.EDBDbType.Refcursor, 10, "refCursor", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 //            //command.Prepare();
 //            //command.Parameters[0].Value = null;
 //

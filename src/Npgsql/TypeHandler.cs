@@ -259,7 +259,7 @@ namespace  EnterpriseDB.EDBClient
                 buf.WriteInt32(-1);
                 return;
             }
-            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            if (parameter != null && parameter.Direction != System.Data.ParameterDirection.Output)
             {
                 buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
                 await Write(value, buf, lengthCache, parameter, async, cancellationToken);

@@ -12,15 +12,15 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class EDBBoxTest
-	{
+	public class EDBBoxTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand command = new EDBCommand("create table EDBBoxTest(id serial, f1 box);", con);
 			int result = command.ExecuteNonQuery();
@@ -57,10 +57,10 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(FormatException))]
+		//[ExpectedException(typeof(FormatException))]
 		public void CreateFromStringInvalid()
 		{
-			EDBBox box = EDBBox.Parse("(-4,3,2,5");
+			Assert.Throws<FormatException>(() => EDBBox.Parse("(-4,3,2,5"));
 		}
 
 		[Test]

@@ -2,17 +2,19 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Text;
 using System.IO;
 using EDBTypes;
+using System.Collections.Generic;
 
 namespace DOTNET
 {
-	/// <summary>
-	/// Summary description for RefCursor.
-	/// </summary>
-	
-	[TestFixture]
-	public class ByteaTest
+    /// <summary>
+    /// Summary description for EDBByteaTest.
+    /// </summary>
+
+    [TestFixture]
+	public class EDBByteaTest : TestBase
 	{
 		EDBConnection conn = null;
 		//String testImagePath = @"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif";
@@ -21,13 +23,12 @@ namespace DOTNET
 		[SetUp]
 		public void Init()
 		{
-			conn = TestUtil.openDB();
+			conn = OpenConnection();
 				
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
-				
-			//	Testing procedure with one cursor
-			string strSqlEmptyArg = "create or replace procedure test_bytea_in_in(z in bytea,y in numeric) is declare begin null ;end;";
+
+            string strSqlEmptyArg = "create or replace procedure test_bytea_in_in(z in bytea,y in numeric) is declare begin null ;end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 //			
@@ -35,7 +36,7 @@ namespace DOTNET
 //			com.CommandText = strSqlEmptyArg;
 //			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table test_bytea_two( a bytea ,b bytea)";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_two( a bytea ,b bytea)";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
@@ -44,7 +45,7 @@ namespace DOTNET
 			com.ExecuteNonQuery();
 
 				
-			strSqlEmptyArg = "create table test_bytea_three( a bytea ,b bytea,c bytea);";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three( a bytea ,b bytea,c bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
@@ -53,7 +54,7 @@ namespace DOTNET
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
+			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
@@ -91,7 +92,7 @@ namespace DOTNET
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table ByteaTest(id serial, f1 bytea);";
+			strSqlEmptyArg = "create table IF NOT EXISTS ByteaTest(id serial, f1 bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 		}
@@ -100,7 +101,7 @@ namespace DOTNET
 		public void Dispose()
 		{
 			if ( conn.State != ConnectionState.Open)
-				conn = TestUtil.openDB();
+				conn = OpenConnection();
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
 
@@ -131,14 +132,8 @@ namespace DOTNET
 			com.CommandText = "DROP PROCEDURE test_bytea_three_in_with_numeric";
 			com.ExecuteNonQuery();
 				
-				
-				
-				
-				
 			com.CommandText = "DROP PROCEDURE test_bytea_three_in";
 			com.ExecuteNonQuery();
-				
-				
 				
 			com.CommandText = "DROP PROCEDURE test_bytea_two_in";
 			com.ExecuteNonQuery();
@@ -291,45 +286,57 @@ namespace DOTNET
 				Console.WriteLine(ex.ToString());
 			}
 		}
-		
-		[Test]
+
+        static string EncodeHex(ICollection<byte> buf)
+        {
+            var hex = new StringBuilder(@"E'\\x", buf.Count * 2 + 3);
+            foreach (byte b in buf)
+            {
+                hex.Append(String.Format("{0:x2}", b));
+            }
+            hex.Append("'");
+            return hex.ToString();
+        }
+
+        [Test, Ignore("Needs refactor")]
 		public void testa_bytea_out()
 		{
-			try
-			{
-				EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
-				cmd.CommandType= CommandType.StoredProcedure;
-				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-				cmd.Prepare();
-				Byte[] ss = { 1, 2, 3 };
-				cmd.Parameters[0].Value = ss;
-				EDBDataReader reader = cmd.ExecuteReader();
-				reader.Read();
-				Assert.True(reader.HasRows);
-				if (reader.HasRows) 
-				{ 
-					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-					reader.GetBytes(0, 0, image, 0, image.Length);
-					Console.WriteLine("1");
-					FileStream fs = new 
-						FileStream("C:\\edbtesting\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
+            // Insert Data first
+
+            FileStream fs_in = null;
+            fs_in = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+            byte[] data = new byte[fs_in.Length];
+            fs_in.Read(data, 0, data.Length);
+            fs_in.Close();
+            conn.ExecuteNonQuery($"INSERT INTO test_bytea_three_with_numeric (a) VALUES ({EncodeHex(data)})");
+
+            EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
+			cmd.CommandType= CommandType.StoredProcedure;
+			cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+			cmd.Prepare();
+			Byte[] ss = { 1, 2, 3 };
+			cmd.Parameters[0].Value = ss;
+			EDBDataReader reader = cmd.ExecuteReader();
+			reader.Read();
+			Assert.True(reader.HasRows);
+			if (reader.HasRows) 
+			{ 
+				Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
+				reader.GetBytes(0, 0, image, 0, image.Length);
+				Console.WriteLine("1");
+				FileStream fs = new 
+					FileStream("C:\\edbtesting\\procout.gif", FileMode.Create, FileAccess.ReadWrite); 
 				
-					for(int i=0;i<image.Length;i++) 
-						fs.WriteByte(image[i]); 
-					fs.Close(); 
-				}
-                while(reader.Read());
-
-                //reader.Close();
-				//conn.Close();
-
-				Console.WriteLine("Image Saved"); 
+				for(int i=0;i<image.Length;i++) 
+					fs.WriteByte(image[i]); 
+				fs.Close(); 
 			}
-			catch(Exception ex)
-			{
+            while(reader.Read());
 
-				Console.WriteLine(ex.ToString());
-			}
+            //reader.Close();
+			//conn.Close();
+
+			Console.WriteLine("Image Saved"); 
           
 		}
 

@@ -574,6 +574,16 @@ namespace  EnterpriseDB.EDBClient
                     var sb = new StringBuilder();
                     string parameterName;
                     string parseCommand = CommandText;
+                    if (_parameters.Count > 0 && !parseCommand.Trim().Contains("(") && !parseCommand.Trim().EndsWith(")"))
+                    {
+                        parseCommand += "(";
+                        for (var i = 0; i < _parameters.Count; i++)
+                        {
+                            parseCommand += ":" + _parameters[i].ParameterName + ", ";
+                        }
+                        parseCommand = parseCommand.Substring(0, parseCommand.LastIndexOf(","));
+                        parseCommand += ")";
+                    }
                     for (var i = 0; i < _parameters.Count; i++)
                     {
                         parameterName = _parameters[i].ParameterName;
@@ -587,7 +597,11 @@ namespace  EnterpriseDB.EDBClient
                         }
                     }
                     else
-                        parseCommand += "( )";
+                    {
+                        if (!parseCommand.Trim().EndsWith(")"))
+                            parseCommand += "( )";
+                    }
+                        
                     parseCommand = "CALL " + parseCommand; // This syntax i s only available in 7.3+ as well SupportsPrepare.
                     sb.Append(parseCommand);
 
@@ -681,10 +695,12 @@ namespace  EnterpriseDB.EDBClient
             for (var i = 0; i < Parameters.Count; i++)
             {
                 var p = Parameters[i];
-                //if (!p.IsInputDirection)
-                //    continue;
-                if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
-                  continue;
+                if (CommandType == CommandType.StoredProcedure) {
+                    if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
+                        continue;
+                } else if (!p.IsInputDirection)
+                        continue;
+                
                 p.Bind(Connection.Connector.TypeHandlerRegistry);
                 p.LengthCache?.Clear();
                 p.ValidateAndGetLength();

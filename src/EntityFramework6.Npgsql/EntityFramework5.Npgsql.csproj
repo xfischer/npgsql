@@ -89,13 +89,17 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\Npgsql\bin\Release\EnterpriseDB.EDBClient.dll</HintPath>
+    <Reference Include="EnterpriseDB.EDBClient, Version=3.1.9.3, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Npgsql\bin\$(Configuration)\net45\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Entity" />
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\Npgsql\bin\$(Configuration)\net45\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Transactions" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Xml" />

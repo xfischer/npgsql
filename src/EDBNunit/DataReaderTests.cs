@@ -5,6 +5,7 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
 using System.IO;
+using System.Configuration;
 
 
 namespace DOTNET
@@ -20,7 +21,7 @@ namespace DOTNET
 		[SetUp]
 		protected void SetUp()
 		{
-			connectionString = System.Configuration.ConfigurationSettings.AppSettings["connectionString"];
+			connectionString = ConfigurationManager.AppSettings["connectionString"];
 			_conn = new EDBConnection(connectionString);
 		}
 
@@ -404,7 +405,7 @@ namespace DOTNET
 		}
 
 		[Test]
-		[ExpectedException(typeof(InvalidOperationException))]
+		//[ExpectedException(typeof(InvalidOperationException))]
 		public void ReadPastDataReaderEnd()
 		{
 			_conn.Open();
@@ -414,8 +415,8 @@ namespace DOTNET
 
 			while (dr.Read())
 				;
-
-			Object o = dr[0];
+			Object o;
+			Assert.Throws<InvalidOperationException>(() => o = dr[0]);
 
 		}
 
@@ -481,7 +482,7 @@ namespace DOTNET
 		[Test]
 		public void testgetByte() 
 		{
-			/*_conn=TestUtil.openDB();
+			/*_conn=OpenConnection();
 			TestUtil.createTempTable(_conn,"TESTTAB","a VARCHAR, b INT4");
 			EDBCommand Command=new EDBCommand("",_conn);
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V1',1)";
@@ -692,9 +693,7 @@ namespace DOTNET
 				" values (:a)", _conn);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
-	
-			
-			
+
 			da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
 	
 			da.InsertCommand.Parameters[0].SourceColumn = "field_int2";

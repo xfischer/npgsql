@@ -12,15 +12,15 @@ namespace DOTNET
 	/// </summary>
 	 
 	[TestFixture]
-	public class DateTest
-	{
+	public class DateTest : TestBase
+    {
 		EDBConnection con;
 		bool testingSetDate = false;
 		
 		[SetUp]
 		public void Init()
 		{			
-			con = TestUtil.openDB();
+			con = OpenConnection();
 			TestUtil.createTempTable(con, "testdate", "dt date");
 		}
 

@@ -9,14 +9,14 @@ namespace DOTNET
 	/// Testing Procedures with Different combination of parameters
 	/// </summary>
 	[TestFixture]
-	public class CursorTest
-	{
+	public class CursorTest : TestBase
+    {
 		EDBConnection con = null;
 
 		[SetUp]
 		public void Init()
 		{
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;

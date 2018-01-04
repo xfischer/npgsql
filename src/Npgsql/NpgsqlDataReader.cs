@@ -176,7 +176,7 @@ namespace  EnterpriseDB.EDBClient
             bool retDataFetched = false;
             // TODO: Should we really use Contract here, instead of throwing an Exception?
             Debug.Assert(_rowDescription != null);
-            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
+            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
 
             var asDataRow = _pendingMessage as DataRowMessage;
             if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
@@ -225,7 +225,13 @@ namespace  EnterpriseDB.EDBClient
                             return;
                         case BackendMessageCode.OutDescription:
                         case BackendMessageCode.RowDescription:
-                            _callable_descrition = (RowDescriptionMessage)msg;
+                            if (Command.Parameters.Any(p => p.IsOutputDirection))
+                            {
+                                _callable_descrition = (RowDescriptionMessage)msg;
+                            } else
+                            {
+                                _callable_descrition = _rowDescription;
+                            }
                             continue;
 
 
@@ -240,6 +246,9 @@ namespace  EnterpriseDB.EDBClient
                         case BackendMessageCode.BindComplete:
                         case BackendMessageCode.ParameterDescription:
                         case BackendMessageCode.NoData:
+                            if (!Command.Parameters.Any(p => p.IsOutputDirection)) {
+                                _callable_descrition = _rowDescription;
+                            }
                             continue;
 
                         default:
@@ -259,8 +268,11 @@ namespace  EnterpriseDB.EDBClient
                 }
             }
 
-
-            Debug.Assert(_rowDescription.NumFields == _row.NumColumns);
+            if (Command.Parameters.Any(p => p.IsOutputDirection))
+            {
+                Debug.Assert(_rowDescription.NumFields == _row.NumColumns);
+            }
+                
       //      if (IsCaching) { _rowCache.Clear(); }
 
             var pending = new Queue<EDBParameter>();
@@ -595,7 +607,7 @@ namespace  EnterpriseDB.EDBClient
                 // Read the next message and store it in _pendingRow, this is to make sure that if the
                 // statement generated an error, it gets thrown here and not on the first call to Read().
 
-                if (_statementIndex == 0 && Command.Parameters.HasOutputParameters)
+                if (_statementIndex == 0 && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))
                 {
                     // If output parameters are present and this is the first row of the first resultset,
                     // we must read it in non-sequential mode because it will be traversed twice (once
@@ -614,6 +626,10 @@ namespace  EnterpriseDB.EDBClient
                 {
                     _pendingMessage = await _connector.ReadMessage(async, IsSequential ? DataRowLoadingMode.Sequential : DataRowLoadingMode.NonSequential);
 
+                    _state = ReaderState.InResult;
+                }
+                if (Command.CommandType != CommandType.StoredProcedure)
+                {
                     _state = ReaderState.InResult;
                 }
                 return true;

@@ -167,6 +167,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 string[] names = null;
                 uint[] types = null;
                 char[] modes = null;
+                Boolean hasParams = false;
+                string paramNames = null;
 
                 using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
                 {
@@ -193,7 +195,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 for (var i = 0; i < types.Length; i++)
                 {
                     var param = new EDBParameter();
-
+                    hasParams = true;
                     // TODO: Fix enums, composite types
                     var EDBDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].PostgresType.EDBDbType;
                     if (!EDBDbType.HasValue)
@@ -201,7 +203,20 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     param.EDBDbType = EDBDbType.Value;
 
                     if (names != null && i < names.Length)
-                        param.ParameterName = ":" + names[i];
+                        if (command.CommandType == CommandType.StoredProcedure)
+                        {
+                            if (names[i].Equals("")) {
+                                param.ParameterName = "parameter" + (i + 1);
+                            } else
+                            {
+                                param.ParameterName = names[i];
+                            }
+                            
+                        } else
+                        {
+                            param.ParameterName = ":" + names[i];
+                        }
+                          
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -228,8 +243,17 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                     "Unknown code in proargmodes while deriving: " + modes[i]);
                         }
                     }
-
+                    paramNames = paramNames + ":" + param.ParameterName + ", ";
                     command.Parameters.Add(param);
+                    
+                }
+                if (hasParams && command.CommandType == CommandType.StoredProcedure)
+                {
+                    if (paramNames.Trim().EndsWith(","))
+                    {
+                        paramNames = paramNames.Substring(0, paramNames.LastIndexOf(","));
+                    }
+                    command.CommandText = command.CommandText + "(" + paramNames + ")";
                 }
             }
         }

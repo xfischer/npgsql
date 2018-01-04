@@ -72,6 +72,9 @@ namespace  EnterpriseDB.EDBClient
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
+            string temp = sql.ToUpper();
+            if (temp.StartsWith("CREATE") && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("PACKAGE ")))
+                isProcedure = true;
 
             //ch1 = sql[0];
             //ch2 = sql[1];
@@ -87,13 +90,15 @@ namespace  EnterpriseDB.EDBClient
         NoneContinue:
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
 
-                string temp = sql.Substring(currCharOfs - 1).ToUpper();
-                if (temp.StartsWith("CREATE") && (temp.Contains(" PROCEDURE ") || temp.Contains(" FUNCTION ") || temp.Contains(" TRIGGER ")))
-                    isProcedure = true;
+                if (isProcedure)
+                {
+                    temp = sql.Substring(currCharOfs - 1).ToUpper();
+                }
+                
                 if (isProcedure && temp.StartsWith("BEGIN"))
                 {
                     numActiveBlocks++;
-                    variableDeclare = 0;
+                    variableDeclare--;
                 }
 
 
@@ -166,6 +171,18 @@ namespace  EnterpriseDB.EDBClient
                 case ')':
                     parenthesisLevel--;
                     break;
+                case 'e':
+                case 'E':
+                        if (!isProcedure)
+                        {
+                            if (!IsLetter(lastChar))
+                                goto EscapedStart;
+                            else
+                                break;
+                        } else
+                        {
+                            break;
+                        }
                 case 'x':
                 case 'X':
                     if (!IsLetter(lastChar))

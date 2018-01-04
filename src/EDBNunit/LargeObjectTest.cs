@@ -12,8 +12,8 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class LargeObjectTest
-	{
+	public class LargeObjectTest : TestBase
+    {
 		EDBConnection con = null;
 		String testPath = @"C:\Windows\media\Windows Background.wav";
 
@@ -21,7 +21,7 @@ namespace DOTNET
 		public void Init()
 		{
 			//write setup for following test cases
-			con = TestUtil.openDB();
+			con = OpenConnection();
 
 			EDBCommand command = new EDBCommand("create table LOTest(id serial, f1 oid);", con);
 			int result = command.ExecuteNonQuery();
