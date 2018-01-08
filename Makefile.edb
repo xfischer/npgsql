@@ -1,0 +1,22 @@
+
+include Makefile.installer
+
+SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
+export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
+
+
+SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
+export GIT_REPO_PATH ?="buildfarm@172.16.253.90:/home/buildfarm/git"
+
+SHELL := env REDUX_TAG_NAME=$(REDUX_TAG_NAME) $(SHELL)
+export REDUX_TAG_NAME ?="master"
+
+# Generate installer
+skip-build: 
+
+	./pkg/installer/generate-installer.sh $(DOTNET_STAGING_PATH) $(EDB_INSTALLBUILDER_BIN) $(GIT_REPO_PATH) $(REDUX_TAG_NAME)
+
+installer: staging-dir skip-build
+
+# Clean distro
+instclean: edbclean
