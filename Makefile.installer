@@ -23,7 +23,7 @@ get-version:
 
 # Build .NET
 build-dotnet45:
-	
+
 	cmd /c "pkg\\installer\\build-dotnet.bat $(DOTNET_SOURCE_PATH) 4.5 Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
 # Install .NET
