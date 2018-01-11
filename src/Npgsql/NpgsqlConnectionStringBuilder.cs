@@ -284,10 +284,10 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Connection
 
         /// <summary>
-        /// The hostname or IP address of the PostgreSQL server to connect to.
+        /// The hostname or IP address of the EnterpriseDB Postgres server to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The hostname or IP address of the PostgreSQL server to connect to.")]
+        [Description("The hostname or IP address of the EnterpriseDB Postgres server to connect to.")]
         [DisplayName("Host")]
         [EDBConnectionStringProperty("Server")]
         [CanBeNull]
@@ -303,10 +303,10 @@ namespace  EnterpriseDB.EDBClient
         string _host;
 
         /// <summary>
-        /// The TCP/IP port of the PostgreSQL server.
+        /// The TCP/IP port of the EnterpriseDB Postgres server.
         /// </summary>
         [Category("Connection")]
-        [Description("The TCP port of the PostgreSQL server.")]
+        [Description("The TCP port of the EnterpriseDB Postgres server.")]
         [DisplayName("Port")]
         [EDBConnectionStringProperty]
         [DefaultValue(EDBConnection.DefaultPort)]
@@ -325,10 +325,10 @@ namespace  EnterpriseDB.EDBClient
         int _port;
 
         ///<summary>
-        /// The PostgreSQL database to connect to.
+        /// The EnterpriseDB Postgres server database to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The PostgreSQL database to connect to.")]
+        [Description("The EnterpriseDB Postgres server database to connect to.")]
         [DisplayName("Database")]
         [EDBConnectionStringProperty("DB")]
         [CanBeNull]
@@ -456,10 +456,10 @@ namespace  EnterpriseDB.EDBClient
         string _clientEncoding;
 
         /// <summary>
-        /// Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.
+        /// Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres server string data.
         /// </summary>
         [Category("Connection")]
-        [Description("Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.")]
+        [Description("Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres server string data.")]
         [DisplayName("Encoding")]
         [DefaultValue("UTF8")]
         [EDBConnectionStringProperty]
@@ -580,7 +580,7 @@ namespace  EnterpriseDB.EDBClient
         [Description("The Kerberos service name to be used for authentication.")]
         [DisplayName("Kerberos Service Name")]
         [EDBConnectionStringProperty("Krbsrvname")]
-        [DefaultValue("postgres")]
+        [DefaultValue("enterprisedb")]
         public string KerberosServiceName
         {
             get => _kerberosServiceName;
@@ -816,13 +816,13 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// The database template to specify when creating a database in Entity Framework. If not specified,
-        /// PostgreSQL defaults to "template1".
+        /// EnterpriseDB Postgres server defaults to "template1".
         /// </summary>
         /// <remarks>
         /// http://www.postgresql.org/docs/current/static/manage-ag-templatedbs.html
         /// </remarks>
         [Category("Entity Framework")]
-        [Description("The database template to specify when creating a database in Entity Framework. If not specified, PostgreSQL defaults to \"template1\".")]
+        [Description("The database template to specify when creating a database in Entity Framework. If not specified, EnterpriseDB Postgres server defaults to \"template1\".")]
         [DisplayName("EF Template Database")]
         [EDBConnectionStringProperty]
         public string EntityTemplateDatabase
@@ -1045,7 +1045,7 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Compatibility
 
         /// <summary>
-        /// A compatibility mode for special PostgreSQL server types.
+        /// A compatibility mode for special EnterpriseDB Postgres server types.
         /// </summary>
         [Category("Compatibility")]
         [Description("A compatibility mode for special PostgreSQL server types.")]
