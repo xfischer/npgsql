@@ -1,0 +1,19 @@
+﻿
+dotnet.installdir.empty=インストールディレクトリを空にすることはできません
+dotnet.installdir.error=インストールディレクトリは、文字、数字、および記号「-」、「/」、「.」、「_」のみを使用した絶対パスであり、書き込み可能でなければなりません。
+dotnet.installdir.invalid.solaris11=パスは「/home」で開始できません。別のパスを指定してください。
+Installer.Installation.Finished.Text=EnterpriseDBは、Postgresコミュニティ向けの付加価値製品や付加価値サービスの大手プロバイダです。\n\n詳細については、弊社のWeb サイトwww.enterprisedb.comをご覧ください
+Installer.Installing.Title=${edb_postgres_branding} Dotnetをインストールしています
+Installer.Welcome.Text=${edb_postgres_branding} %1$sセットアップへようこそ。
+Installer.Welcome.Title=%1$sのセットアップ
+install.summary=${advanced_server_branding}対応の.NETドライバ(EnterpriseDB製)。
+platform.not.match=64ビットマシンで32ビットインストーラを実行しようとしています。インストーラはすぐに終了します
+upgrade.existing.installation.description=Dotnetが既に${installdir}にインストールされています。このインストール済みのファイルはアップグレードされます。
+upgrade.existing.installation.title=既存のインストール
+error.32bit.installation.exists=${product_fullname}の32ビット版が既にインストールされています。\n64ビット版をインストールする前に\n32ビット版を削除してください。
+error.64bit.installation.exists=${product_fullname}の64ビット版が既にインストールされています。\n32ビット版をインストールする前に\n64ビット版を削除してください。
+error.platform.not.match.win=32ビットマシンで64ビットインストーラを実行しようとしています。インストーラはすぐに終了します。
+
+install.runtimes.description=Microsoft Visual C++ランタイムをインストールするかどうかを指定してから、インストールを続行してください。
+error.installing.runtimes=Microsoft VC++ランタイムインストーラの実行中にエラーが発生しました。
+warning.reboot.machine=Please reboot the machine in order to complete the installation.

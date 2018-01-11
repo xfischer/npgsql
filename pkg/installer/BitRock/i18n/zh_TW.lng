@@ -1,0 +1,19 @@
+﻿
+dotnet.installdir.empty=安裝目錄不可是空的
+dotnet.installdir.error=安裝目錄必須是絕對路徑，只包含字母、數字和字元 '-'、'/'、'.' 和 '_'，而且為可寫入。
+dotnet.installdir.invalid.solaris11=路徑的開頭不可以是 '/home'。請選擇其他路徑
+Installer.Installation.Finished.Text=EnterpriseDB 是 Postgres 社群中加值產品和服務的主要提供者。\n\n請造訪我們的網站: www.enterprisedb.com
+Installer.Installing.Title=正在安裝 ${edb_postgres_branding} Dotnet
+Installer.Welcome.Text=歡迎使用 ${edb_postgres_branding} %1$s 安裝程式。
+Installer.Welcome.Title=安裝 %1$s
+install.summary=${advanced_server_branding} 的 .NET 驅動程式，由 EnterpriseDB 提供。
+platform.not.match=您正嘗試在 64 位元電腦中執行 32 位元安裝程式。安裝程式即將結束
+upgrade.existing.installation.description=已在 ${installdir} 找到現有連接器安裝。將升級此安裝。
+upgrade.existing.installation.title=現有安裝
+error.32bit.installation.exists=32 位元的 ${product_fullname} 安裝已經存在。\n請先移除 32 位元安裝再 \n繼續 64 位元安裝作業。
+error.64bit.installation.exists=64 位元的 ${product_fullname} 安裝已經存在。\n請先移除 64 位元安裝再 \n繼續 32 位元安裝作業。
+error.platform.not.match.win=您正嘗試在 32 位元電腦中執行 64 位元安裝程式。安裝程式即將結束。
+
+install.runtimes.description=指定在安裝程序繼續之前，是否安裝 Microsoft Visual C++ Runtime。
+error.installing.runtimes=執行 Microsoft VC++ Runtime 安裝程式時發生錯誤。
+warning.reboot.machine=Please reboot the machine in order to complete the installation.

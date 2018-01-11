@@ -1,0 +1,19 @@
+﻿
+dotnet.installdir.empty=安装目录不能为空
+dotnet.installdir.error=安装目录必须是绝对路径，只能包含字母，数字以及字符'-', '/', '.'和'_'，并且这个目录必须可写.
+dotnet.installdir.invalid.solaris11=路径不能以“/home”开始。请选择另一路径。
+Installer.Installation.Finished.Text=EnterpriseDB是针对Postgres社区的增值产品和服务的领先提供商.\n\n请访问我们的网站www.enterprisedb.com
+Installer.Installing.Title=正在安装${edb_postgres_branding} Dotnet
+Installer.Welcome.Text=欢迎来到${edb_postgres_branding} %1$s安装向导
+Installer.Welcome.Title=安装 %1$s
+install.summary=.NET驱动 for ${advanced_server_branding}的，由EnterpriseDB公司开发
+platform.not.match=您正在尝试64位主机中运行32位安装程序.安装程序现在将退出.
+upgrade.existing.installation.description=在目录${installdir}找到已安装的连接器驱动.已安装的文件将会升级.
+upgrade.existing.installation.title=退出安装
+error.32bit.installation.exists=${product_fullname} 的 32 位安装已经存在。\n请先删除 32 位安装，\n再进行 64 位安装。
+error.64bit.installation.exists=${product_fullname} 的 64 位安装已经存在。\n请先删除 64 位安装，\n再进行 32 位安装。
+error.platform.not.match.win=您正尝试在 32 位的机器上运行 64 位的安装程序。即将退出安装程序。
+
+install.runtimes.description=在安装程序继续进行前请确定是否安装 Microsoft Visual C++ 运行环境.
+error.installing.runtimes=在执行Microsoft VC++运行环境安装程序时产生错误.
+warning.reboot.machine=Please reboot the machine in order to complete the installation.
