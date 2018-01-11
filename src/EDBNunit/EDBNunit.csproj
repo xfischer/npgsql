@@ -1,261 +1,39 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
-    <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{C5BEF4C1-1DA5-47F3-A08F-8C97BFB3E1B3}</ProjectGuid>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>
-    </ApplicationIcon>
-    <AssemblyKeyContainerName>
-    </AssemblyKeyContainerName>
+    <TargetFrameworks>net451</TargetFrameworks>
+    <DebugType>portable</DebugType>
     <AssemblyName>EDBNunit</AssemblyName>
-    <AssemblyOriginatorKeyFile>..\..\Npgsql.snk</AssemblyOriginatorKeyFile>
-    <DefaultClientScript>JScript</DefaultClientScript>
-    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
-    <DefaultTargetSchema>IE50</DefaultTargetSchema>
-    <DelaySign>false</DelaySign>
-    <OutputType>Library</OutputType>
-    <RootNamespace>EDBNunit</RootNamespace>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <StartupObject>
-    </StartupObject>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
-    <OldToolsVersion>2.0</OldToolsVersion>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>TRACE;DEBUG;NET451</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>false</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>full</DebugType>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>true</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>none</DebugType>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
+     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
+    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="nunit.framework, Version=2.6.1.12208, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>nunit\lib\common\3.8\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <Name>System</Name>
-    </Reference>
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Data">
-      <Name>System.Data</Name>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net451|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+ <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+    <Reference Include="System.configuration" />  
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
+
+    <Reference Include="EnterpriseDB.EDBClient">
+      <HintPath>..\Npgsql\bin\$(Configuration)\net451\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
       <HintPath>..\Npgsql\bin\$(Configuration)\net451\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Web">
-      <Name>System.Web</Name>
-    </Reference>
-    <Reference Include="System.Xml">
-      <Name>System.XML</Name>
+    <Reference Include="nunit">
+      <HintPath>nunit\lib\common\3.8\nunit.framework.dll</HintPath>
     </Reference>
   </ItemGroup>
+ <ItemGroup>
+   <Compile Remove="ADOConnection.cs" />
+   <Compile Remove="ADOMiscCases.cs" />
+   <Compile Remove="ADORecordSet.cs" />
+ </ItemGroup>
   <ItemGroup>
-    <Compile Include="ADOConnection.cs" />
-    <Compile Include="ADOMiscCases.cs" />
-    <Compile Include="ADORecordSet.cs" />
-    <Compile Include="AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="AsyncTests.cs" />
-    <Compile Include="AutoPrepareTests.cs" />
-    <Compile Include="BaseDataSourceTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="BugTests.cs" />
-    <Compile Include="CommandBuilderTests.cs" />
-    <Compile Include="CommandTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ConnectionStringBuilderTests.cs" />
-    <Compile Include="ConnectionTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="CopyTests.cs" />
-    <Compile Include="CursorTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="DataAdapterTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="DataReaderTests.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="DateTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="DBFeaturesTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="DML.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="EDBBoxTest.cs" />
-    <Compile Include="EDBCircleTest.cs" />
-    <Compile Include="EDBPathTest.cs" />
-    <Compile Include="EDBPolygonTest.cs" />
-    <Compile Include="ExceptionTests.cs" />
-    <Compile Include="FBs.cs" />
-    <Compile Include="FunctionTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GlobalSetup.cs" />
-    <Compile Include="ImportExistingSchema.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="EDBLineTest.cs" />
-    <Compile Include="LargeObjectTest.cs" />
-    <Compile Include="LoginTimeOutTest.cs" />
-    <Compile Include="MiscProcTest.cs" />
-    <Compile Include="MiscTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="NotificationTests.cs" />
-    <Compile Include="NumericDataTypeTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="PackageTest.cs" />
-    <Compile Include="ParameterTests.cs" />
-    <Compile Include="PerformanceCounterTests.cs" />
-    <Compile Include="PgPassEntryTests.cs" />
-    <Compile Include="PgPassFileTests.cs" />
-    <Compile Include="PoolTests.cs" />
-    <Compile Include="PreparedStatements.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="PrepareTests.cs" />
-    <Compile Include="ProcedureTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ReadBufferTests.cs" />
-    <Compile Include="ReaderNewSchemaTests.cs" />
-    <Compile Include="ReaderOldSchemaTests.cs" />
-    <Compile Include="ReaderTests.cs" />
-    <Compile Include="RefCursor.cs" />
-    <Compile Include="SchemaTests.cs" />
-    <Compile Include="SecurityTests.cs" />
-    <Compile Include="Sequences.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="SimpleSelectsTest.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="SpeedTests.cs" />
-    <Compile Include="SqlQueryParserTests.cs" />
-    <Compile Include="SystemTransactionTests.cs" />
-    <Compile Include="TestBase.cs" />
-    <Compile Include="TestMetrics.cs" />
-    <Compile Include="TestUtil.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="TransactionTests.cs" />
-    <Compile Include="Triggers.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="TypesTests.cs" />
-    <Compile Include="Types\ArrayTests.cs" />
-    <Compile Include="Types\BitStringTests.cs" />
-    <Compile Include="Types\ByteaTests.cs" />
-    <Compile Include="Types\CompositeTests.cs" />
-    <Compile Include="Types\DateTimeTests.cs" />
-    <Compile Include="Types\EDBByteaTests.cs" />
-    <Compile Include="Types\EnumTests.cs" />
-    <Compile Include="Types\GeometricTypeTests.cs" />
-    <Compile Include="Types\MiscTypeTests.cs" />
-    <Compile Include="Types\NetworkTypeTests.cs" />
-    <Compile Include="Types\NumericTypeTests.cs" />
-    <Compile Include="Types\PostgisTests.cs" />
-    <Compile Include="Types\RangeTests.cs" />
-    <Compile Include="Types\TextTests.cs" />
-    <Compile Include="WriteBufferTests.cs" />
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Scripts\add_data.sql" />
-    <None Include="Scripts\add_functions.sql" />
-    <None Include="Scripts\add_tables.sql" />
-    <None Include="Scripts\add_views.sql" />
-    <None Include="Scripts\cleanDB.bat" />
-    <None Include="Scripts\makeDB.bat" />
+    <None Include="ADOConnection.cs" />
+    <None Include="ADOMiscCases.cs" />
+    <None Include="ADORecordSet.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="ADODB">
-      <Guid>{EF53050B-882E-4776-B643-EDA472E8E3F2}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>7</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Npgsql\Npgsql.csproj">
-      <Project>{9d13b739-62b1-4190-b386-7a9547304eb3}</Project>
-      <Name>Npgsql</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
 </Project>
