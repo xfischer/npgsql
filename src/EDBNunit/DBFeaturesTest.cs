@@ -3,7 +3,6 @@ using System.Configuration;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
-using System.Configuration;
 
 namespace DOTNET
 {
