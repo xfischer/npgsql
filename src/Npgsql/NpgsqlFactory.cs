@@ -101,12 +101,12 @@ namespace  EnterpriseDB.EDBClient
 
                 // First time, attempt to find the EntityFramework5. EnterpriseDB.EDBClient assembly and load the type via reflection
                 var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-                assemblyName.Name = "EntityFramework5. EnterpriseDB.EDBClient";
+                assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
                 Assembly npgsqlEfAssembly;
                 try {
                     npgsqlEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
                 } catch (Exception e) {
-                    throw new Exception("Could not load EntityFramework5. EnterpriseDB.EDBClient assembly, is it installed?", e);
+                    throw new Exception("Could not load EntityFramework5.EnterpriseDB.EDBClient assembly, is it installed?", e);
                 }
 
                 Type npgsqlServicesType;
