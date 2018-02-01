@@ -12,8 +12,8 @@ namespace DOTNET
 {
 
 	[TestFixture]
-	public class DataReaderTests
-	{
+	public class EDBDataReaderTests
+    {
 
 		private EDBConnection 	_conn = null;
 		string connectionString = string.Empty;

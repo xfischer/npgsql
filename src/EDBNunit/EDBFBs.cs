@@ -10,7 +10,7 @@ namespace DOTNET
 	/// Summary description for FBs.
 	/// </summary>
     [TestFixture]
-    public class FBs : TestBase
+    public class EDBFBs : TestBase
     {
         EDBConnection con = null;
 

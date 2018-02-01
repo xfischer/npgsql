@@ -11,7 +11,7 @@ namespace DOTNET
 	/// </summary>
 	
 	[TestFixture]
-	public class Triggers : TestBase
+	public class EDBTriggers : TestBase
     {
 		EDBConnection con = null;
 

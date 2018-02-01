@@ -12,7 +12,7 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class NumericDataTypeTest : TestBase
+	public class EDBNumericDataTypeTest : TestBase
     {
 		EDBConnection con = null;
 

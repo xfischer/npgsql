@@ -10,7 +10,7 @@ namespace DOTNET
 	/// Summary description for PreparedStatements.
 	/// </summary>
 	[TestFixture] 
-	public class PreparedStatements : TestBase
+	public class EDBPreparedStatements : TestBase
     {	
 		EDBConnection conn = null;
 
@@ -24,10 +24,6 @@ namespace DOTNET
 		{
 			if (conn.State != ConnectionState.Closed)
 				conn.Close();
-		}
-
-		public PreparedStatements()
-		{
 		}
 
 		[Test]

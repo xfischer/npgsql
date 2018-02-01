@@ -9,7 +9,7 @@ namespace DOTNET
 	/// Testing Procedures with Different combination of parameters
 	/// </summary>
 	[TestFixture, Ignore("Flanky test cuase failure in othere tests, needs to update")]
-    public class PackageTest : TestBase
+    public class EDBPackageTest : TestBase
 	{
 		EDBConnection con = null;
 

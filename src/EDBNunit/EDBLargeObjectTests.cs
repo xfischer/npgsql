@@ -12,7 +12,7 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class LargeObjectTest : TestBase
+	public class EDBLargeObjectTests : TestBase
     {
 		EDBConnection con = null;
 		String testPath = @"C:\Windows\media\Windows Background.wav";

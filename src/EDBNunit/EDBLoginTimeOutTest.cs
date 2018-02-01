@@ -11,8 +11,8 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class LoginTimeOutTest
-	{
+	public class EDBLoginTimeOutTest
+    {
 		EDBConnection con = null;
 
 		[SetUp]

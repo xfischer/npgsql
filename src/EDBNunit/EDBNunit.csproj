@@ -27,13 +27,13 @@
     </Reference>
   </ItemGroup>
  <ItemGroup>
-   <Compile Remove="ADOConnection.cs" />
-   <Compile Remove="ADOMiscCases.cs" />
-   <Compile Remove="ADORecordSet.cs" />
+   <Compile Remove="EDBADOConnection.cs" />
+   <Compile Remove="EDBADOMiscCases.cs" />
+   <Compile Remove="EDBADORecordSet.cs" />
  </ItemGroup>
   <ItemGroup>
-    <None Include="ADOConnection.cs" />
-    <None Include="ADOMiscCases.cs" />
-    <None Include="ADORecordSet.cs" />
+    <None Include="EDBADOConnection.cs" />
+    <None Include="EDBADOMiscCases.cs" />
+    <None Include="EDBADORecordSet.cs" />
   </ItemGroup>
 </Project>

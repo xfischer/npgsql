@@ -11,7 +11,7 @@ namespace DOTNET
 	/// it creates a new table importing the schema of an existing table
 	/// </summary>
 	[TestFixture]
-	public class ImportExistingSchema : TestBase
+	public class EDBImportExistingSchema : TestBase
     {
 		
 		EDBConnection con=null;

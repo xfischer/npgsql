@@ -10,8 +10,8 @@ namespace DOTNET
 	/// This Class contains functions for unit testing of .Net Driver.
 	/// </summary>
 	[TestFixture] 
-	public class DBFeaturesTest
-	{
+	public class EDBDBFeaturesTest
+    {
 		EDBConnection con = null;       
  
 		[SetUp]

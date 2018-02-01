@@ -15,8 +15,8 @@ namespace ADO
 	/// </summary>
 	
 	[TestFixture]
-	public class ADORecordSet
-	{
+	public class EDBADORecordSet
+    {
 		private ADODB.Connection Conn=null;
 		private string DBConnection = ConfigurationManager.AppSettings["ADOConnectionString"];
 		private string UserName = ConfigurationManager.AppSettings["ADOUser"];

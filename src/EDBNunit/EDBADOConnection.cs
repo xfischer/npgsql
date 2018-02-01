@@ -14,7 +14,7 @@ namespace ADO
 	/// </summary>
 	
 	[TestFixture]
-	public class ADOConnection
+	public class EDBADOConnection
 	{
 		private ADODB.Connection Conn=null;
 		private string DBConnection = ConfigurationManager.AppSettings["ADOConnectionString"];

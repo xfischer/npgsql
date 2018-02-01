@@ -11,7 +11,7 @@ namespace DOTNET
 	/// Summary description for MiscProcTest.
 	/// </summary>
 	[TestFixture, Ignore("Needs Refcursor refactor")]
-	public class MiscProcTest : TestBase
+	public class EDBMiscProcTest : TestBase
 	{
 		EDBConnection con = null;
 

@@ -9,7 +9,7 @@ namespace DOTNET
 	/// Testing Procedures with Different combination of parameters
 	/// </summary>
 	[TestFixture]
-	public class CursorTest : TestBase
+	public class EDBCursorTest : TestBase
     {
 		EDBConnection con = null;
 

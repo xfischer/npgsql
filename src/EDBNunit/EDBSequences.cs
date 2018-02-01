@@ -11,7 +11,7 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class Sequences : TestBase
+	public class EDBSequences : TestBase
     {
 			EDBConnection con = null;
 

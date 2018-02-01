@@ -13,7 +13,7 @@ namespace DOTNET
 	/// </summary>
 	
 	[TestFixture]
-	public class MiscTest : TestBase
+	public class EDBMiscTest : TestBase
     {
 		EDBConnection con = null;
 

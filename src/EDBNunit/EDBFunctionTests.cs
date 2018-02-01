@@ -9,7 +9,7 @@ namespace DOTNET
 	/// Testing Functions with Different combination of parameters
 	/// </summary>
 	[TestFixture, Ignore("After some test cause test hang, need to investigate")]
-	public class FunctionTest : TestBase
+	public class EDBFunctionTests : TestBase
     {
 		EDBConnection con = null;
 

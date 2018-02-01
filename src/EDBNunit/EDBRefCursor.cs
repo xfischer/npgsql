@@ -12,7 +12,7 @@ namespace DOTNET
 	/// </summary>
 	
 		[TestFixture]
-        public class RefCursor : TestBase
+        public class EDBRefCursor : TestBase
 		{
 			EDBConnection con = null;
             

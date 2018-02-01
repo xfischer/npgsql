@@ -14,8 +14,8 @@ namespace ADO
 	/// </summary>
 	
 	[TestFixture]
-	public class ADOMiscCases
-	{
+	public class EDBADOMiscCases
+    {
 		private ADODB.Connection Conn=null;
 		private string DBConnection = ConfigurationManager.AppSettings["ADOConnectionString"];
 		private string UserName = ConfigurationManager.AppSettings["ADOUser"];

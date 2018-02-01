@@ -11,7 +11,7 @@ namespace DOTNET
 	/// Summary description for BaseDataSourceTest.
 	/// </summary>
 	[TestFixture, Ignore("Fix open without pooling ")]
-	public class BaseDataSourceTest : TestBase
+	public class EDBBaseDataSourceTest : TestBase
     {
 		EDBConnection con = null;
 		String conString = ConfigurationManager.AppSettings["connectionString"];

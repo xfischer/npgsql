@@ -9,7 +9,7 @@ namespace DOTNET
 	/// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
 	/// </summary>
 	[TestFixture] 
-	public class ConnectionTest : TestBase
+	public class EDBConnectionTests : TestBase
     {
 		EDBConnection con = null;
 

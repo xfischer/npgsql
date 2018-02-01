@@ -11,7 +11,7 @@ namespace DOTNET
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class SimpleSelectsTest : TestBase
+	public class EDBSimpleSelectsTest : TestBase
     {
 		EDBConnection con = null;
 
