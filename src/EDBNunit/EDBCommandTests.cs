@@ -1193,7 +1193,7 @@ namespace DOTNET
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
 
-            Assert.Throws<System.Net.Sockets.SocketException>(() => command.Connection.Open());
+            Assert.Throws<PostgresException>(() => command.Connection.Open());
 
         }
 
@@ -1203,7 +1203,7 @@ namespace DOTNET
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
-            Assert.Throws<System.Net.Sockets.SocketException>(() => command.Connection.Open());
+            Assert.Throws<PostgresException>(() => command.Connection.Open());
 
        //     Assert("Either password must be specified or IntegratedSecurity must be on",);
 
