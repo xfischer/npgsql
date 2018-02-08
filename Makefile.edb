@@ -1,5 +1,14 @@
 
-include Makefile.installer
+#######################
+# Environment variables
+#######################
+
+# Determine operating system
+OS := $(shell uname -a)
+
+PKG_NAME:=dotnet
+COMMIT_DOT_GIT_PATH:=.
+COMMIT_LOG_FILE:=$(PKG_NAME).log
 
 SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
 export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
@@ -11,12 +20,41 @@ export GIT_REPO_PATH ?="buildfarm@172.16.253.90:/home/buildfarm/git"
 SHELL := env REDUX_TAG_NAME=$(REDUX_TAG_NAME) $(SHELL)
 export REDUX_TAG_NAME ?="master"
 
+# Clone redux repository
+contents:=$(shell rm -rf redux; git clone $(GIT_REPO_PATH)/REDUX redux; cd redux; git checkout "$(REDUX_TAG_NAME)"; cd -)
+
+COMMON_MAKEFILE_INCLUDES:=$(wildcard Makefile.installer)
+ifneq ($(strip $(COMMON_MAKEFILE_INCLUDES)),)
+  include $(COMMON_MAKEFILE_INCLUDES)
+endif
+
+EDB_VERSION_DOTNET=$(shell cat src/CommonAssemblyInfo.cs | grep AssemblyVersion | cut -f2 -d"\"")
+
+SHELL := env EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET) $(SHELL)
+export EDB_BUILDNUM_DOTNET ?=1
+
+get-version:
+
+		echo "EDB_VERSION_DOTNET=$(EDB_VERSION_DOTNET)"> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+		echo "EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+		chmod 755 $(DOTNET_STAGING_PATH)/dotnet-version.sh
+
 # Generate installer
 skip-build: 
 
-	./pkg/installer/generate-installer.sh $(DOTNET_STAGING_PATH) $(EDB_INSTALLBUILDER_BIN) $(GIT_REPO_PATH) $(REDUX_TAG_NAME)
+	./pkg/installer/generate-installer.sh $(DOTNET_STAGING_PATH) $(EDB_INSTALLBUILDER_BIN)
 
 installer: staging-dir skip-build
 
-# Clean distro
-instclean: edbclean
+# Clean source directory
+edbclean:
+	rm -rf $(DOTNET_STAGING_PATH)
+	rm -rf src/Npgsql/bin/Release
+	rm -rf src/NpgsqlDdexProvider/bin/Release
+	rm -rf src/EDBNunit/bin/Release
+	rm -rf src/EntityFramework6.Npgsql/bin/Release
+
+# Build Installer staging
+staging-dir: install get-version
+
+	mv $(COMMIT_LOG_FILE) $(DOTNET_STAGING_PATH)/$(COMMIT_LOG_FILE)

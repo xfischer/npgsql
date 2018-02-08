@@ -1,9 +1,4 @@
-include Makefile.commit
-
-# Determine operating system
-OS := $(shell uname -a)
-
-COMMIT_LOG_FILE := dotnet.log
+include redux/common/Makefile.common
 
 # Environment variables
 SHELL := env DOTNET_SOURCE_PATH=$(DOTNET_SOURCE_PATH) $(SHELL)
@@ -12,14 +7,11 @@ export DOTNET_SOURCE_PATH ?= C:\\\\CON-DNET
 SHELL := env DOTNET_STAGING_PATH=$(DOTNET_STAGING_PATH) $(SHELL)
 export DOTNET_STAGING_PATH ?= "$(DOTNET_SOURCE_PATH)\\\\inst"
 
-SHELL := env EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET) $(SHELL)
-export EDB_BUILDNUM_DOTNET ?=1
+# Remote host and location to get packages
+REMOTE_HOST:="centos@172.16.253.7"
+REMOTE_PATH:="/opt/local/Windows64"
 
-get-version:
-
-	echo "EDB_VERSION_DOTNET=$(shell cat src/CommonAssemblyInfo.cs | grep AssemblyVersion | cut -f2 -d"\"")"> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-        echo "EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-        chmod 755 $(DOTNET_STAGING_PATH)/dotnet-version.sh
+PACKAGE_LIST := pgBuild64 BitRock 
 
 # Build .NET
 build-dotnet45:
@@ -27,21 +19,9 @@ build-dotnet45:
 	cmd /c "pkg\\installer\\build-dotnet.bat $(DOTNET_SOURCE_PATH) 4.5 Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
 # Install .NET
-install: edbclean get-commit build-dotnet45
+install: edbclean get-commit install-builddeps build-dotnet45
 
 	#mkdir -p $(DOTNET_STAGING_PATH)/samples
 	#cp -rp $(PWD)/edb-samples/driver_samples/dotnet/SAMPLE_TEST.cs $(DOTNET_STAGING_PATH)/samples
 
-# Clean source directory
-edbclean:
-	rm -rf $(DOTNET_STAGING_PATH)
-	rm -rf src/Npgsql/bin/Release
-	rm -rf src/NpgsqlDdexProvider/bin/Release
-	rm -rf src/EDBNunit/bin/Release
-	rm -rf src/EntityFramework6.Npgsql/bin/Release
-	rm -rf redux
 
-# Build Installer staging
-staging-dir: install get-version
-
-	mv $(COMMIT_LOG_FILE) $(DOTNET_STAGING_PATH)/dotnet.log

@@ -2,20 +2,6 @@
 
 DOTNET_STAGING_PATH=$1
 EDB_INSTALLBUILDER_BIN=$2
-GIT_REPO_PATH=$3
-REDUX_TAG_NAME=$4
-
-###################### 
-# Get REDUX repository
-######################
-
-rm -rf $PWD/redux
-
-git clone $GIT_REPO_PATH/REDUX redux
-
-pushd redux
-git checkout "$REDUX_TAG_NAME"
-popd
 
 # Source redux files
 source $PWD/redux/common/branding.sh
@@ -55,3 +41,5 @@ ExecuteCommand "cp $PWD/pkg/installer/BitRock/installer.xml.in $PWD/pkg/installe
 ReplacePlaceHolders $PWD/pkg/installer/BitRock/installer.xml
 
 PackageInstaller "dotnet" "$DOTNET_STAGING_PATH" "DOTNET_INSTALLER_NAME_PREFIX" "$PWD/redux"
+
+ExecuteCommand "rm -f $PWD/pkg/installer/BitRock/installer.xml"
