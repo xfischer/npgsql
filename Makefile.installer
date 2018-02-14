@@ -16,7 +16,7 @@ PACKAGE_LIST := pgBuild64 BitRock
 # Build .NET
 build-dotnet45:
 
-	cmd /c "pkg\\installer\\build-dotnet.bat $(DOTNET_SOURCE_PATH) 4.5 Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
+	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) 4.5 Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
 # Install .NET
 install: edbclean get-commit install-builddeps build-dotnet45
