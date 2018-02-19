@@ -817,7 +817,7 @@ namespace DOTNET
                 conn.UserCertificateValidationCallback = callback2;
 
                 conn.Open();
-#if NET451
+#if NET45 || NET451
                 using (var conn2 = (EDBConnection)((ICloneable)conn).Clone())
 #else
                 using (var conn2 = conn.Clone())
