@@ -8,7 +8,7 @@ OS := $(shell uname -a)
 
 PKG_NAME:=dotnet
 COMMIT_DOT_GIT_PATH:=.
-COMMIT_LOG_FILE:=$(PKG_NAME).log
+COMMIT_LOG_FILE:=$(PKG_NAME)-commit.log
 
 SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
 export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
