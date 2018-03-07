@@ -39,6 +39,8 @@ copy bin\%RELEASE_CONFIGURATION%\netstandard1.3\EnterpriseDB.EDBClient.dll %STAG
 
 cd %SOURCE_PATH%
 cd src\NpgsqlDdexProvider
+nuget restore NpgsqlDdexProvider.sln
+
 msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
 
 copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%
