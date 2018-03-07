@@ -13,10 +13,12 @@ REMOTE_PATH:="/opt/local/Windows64"
 
 PACKAGE_LIST := pgBuild64 BitRock 
 
+export NET45_FRAMEWORK :=4.5
+
 # Build .NET
 build-dotnet45:
 
-	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) 4.5 Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
+	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
 # Install .NET
 install: edbclean get-commit install-builddeps build-dotnet45

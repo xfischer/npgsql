@@ -29,6 +29,7 @@ ReplacePlaceHolders(){
 	Replace DOTNET_INSTALLER_NAME_PREFIX $DOTNET_INSTALLER_NAME_PREFIX $filepath
 	Replace DOTNET_INSTALL_DIR $DOTNET_INSTALL_DIR $filepath
 	Replace DOTNET_STAGING_PATH $DOTNET_STAGING_PATH $filepath
+	Replace NET45_FRAMEWORK $NET45_FRAMEWORK $filepath
 }
 
 if [[ $OS == *"Msys"* ]]; then
