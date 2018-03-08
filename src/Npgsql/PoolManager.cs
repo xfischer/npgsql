@@ -7,11 +7,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Logging;
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 using System.Transactions;
 #endif
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     static class PoolManager
     {
@@ -28,7 +28,7 @@ namespace  EnterpriseDB.EDBClient
 
         static PoolManager()
         {
-#if NET45 || NET451
+#if !NETSTANDARD1_3
             // When the appdomain gets unloaded (e.g. web app redeployment) attempt to nicely
             // close idle connectors to prevent errors in PostgreSQL logs (#491).
             AppDomain.CurrentDomain.DomainUnload += (sender, args) => ClearAll();
@@ -290,7 +290,7 @@ namespace  EnterpriseDB.EDBClient
                         var tcs2 = tcs;
                         var connector2 = connector;
 
-                        Task.Run(() => tcs2.SetResult(connector2));
+                        Task.Run(() => tcs2.TrySetResult(connector2));
                     }
                     else
                         tcs.SetResult(connector);
@@ -324,10 +324,10 @@ namespace  EnterpriseDB.EDBClient
 
                 try
                 {
-#if NET45 || NET451
-                    var connector = new EDBConnector((EDBConnection) ((ICloneable) conn).Clone())
-#else
+#if NETSTANDARD1_3
                     var connector = new EDBConnector(conn.Clone())
+#else
+                    var connector = new EDBConnector((EDBConnection) ((ICloneable) conn).Clone())
 #endif
                     {
                         ClearCounter = _clearCounter
@@ -443,7 +443,7 @@ namespace  EnterpriseDB.EDBClient
 
         #region Pending Enlisted Connections
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         internal void AddPendingEnlistedConnector(EDBConnector connector, Transaction transaction)
         {
             lock (_pendingEnlistedConnectors)
@@ -454,10 +454,12 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
-        internal void RemovePendingEnlistedConnector(EDBConnector connector, Transaction transaction)
+        internal void TryRemovePendingEnlistedConnector(EDBConnector connector, Transaction transaction)
         {
-            lock (_pendingEnlistedConnectors) {
-                var list = _pendingEnlistedConnectors[transaction];
+            lock (_pendingEnlistedConnectors)
+            {
+                if (!_pendingEnlistedConnectors.TryGetValue(transaction, out var list))
+                    return;
                 list.Remove(connector);
                 if (list.Count == 0)
                     _pendingEnlistedConnectors.Remove(transaction);

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     static class TaskExtensions
     {

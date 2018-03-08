@@ -3,14 +3,14 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
-    /// Represents a single SQL statement within  EnterpriseDB.EDBClient.
+    /// Represents a single SQL statement within EnterpriseDB.EDBClient.
     ///
     /// Instances aren't constructed directly; users should construct an <see cref="EDBCommand"/>
     /// object and populate its <see cref="EDBCommand.CommandText"/> property as in standard ADO.NET.
-    ///  EnterpriseDB.EDBClient will analyze that property and constructed instances of <see cref="EDBStatement"/>
+    /// EnterpriseDB.EDBClient will analyze that property and constructed instances of <see cref="EDBStatement"/>
     /// internally.
     ///
     /// Users can retrieve instances from <see cref="EDBDataReader.Statements"/>

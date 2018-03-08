@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -26,11 +26,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 
-namespace  EnterpriseDB.EDBClient.FrontendMessages
+namespace EnterpriseDB.EDBClient.FrontendMessages
 {
-    class PasswordMessage : SimpleFrontendMessage
+    class PasswordMessage : FrontendMessage
     {
         internal byte[] Payload { get; private set; }
         internal int PayloadOffset { get; private set; }
@@ -107,13 +109,22 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             return this;
         }
 
-        internal override int Length => 1 + 4 + PayloadLength;
-
-        internal override void WriteFully(WriteBuffer buf)
+        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
         {
+            if (buf.WriteSpaceLeft < 1 + 5)
+                await buf.Flush(async);
             buf.WriteByte(Code);
-            buf.WriteInt32(Length - 1);
-            buf.WriteBytes(Payload, PayloadOffset, Payload.Length);
+            buf.WriteInt32(4 + PayloadLength);
+
+            if (PayloadLength <= buf.WriteSpaceLeft)
+            {
+                // The entire array fits in our buffer, copy it into the buffer as usual.
+                buf.WriteBytes(Payload, PayloadOffset, Payload.Length);
+                return;
+            }
+
+            await buf.Flush(async);
+            buf.DirectWrite(Payload, PayloadOffset, PayloadLength);
         }
 
         public override string ToString() =>  "[Password]";

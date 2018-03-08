@@ -1,27 +1,27 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 
 using System;
 using System.Data;
@@ -31,7 +31,7 @@ using System.Linq;
 using System.Reflection;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     ///<summary>
     /// This class is responsible to create database commands for automatic insert, update and delete operations.
@@ -116,7 +116,7 @@ namespace  EnterpriseDB.EDBClient
         ///<summary>
         ///
         /// This method is reponsible to derive the command parameter list with values obtained from function definition.
-        /// It clears the Parameters collection of command. Also, if there is any parameter type which is not supported by  EnterpriseDB.EDBClient, an InvalidOperationException will be thrown.
+        /// It clears the Parameters collection of command. Also, if there is any parameter type which is not supported by EnterpriseDB.EDBClient, an InvalidOperationException will be thrown.
         /// Parameters name will be parameter1, parameter2, ...
         ///</summary>
         /// <param name="command">EDBCommand whose function parameters will be obtained.</param>
@@ -167,8 +167,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 string[] names = null;
                 uint[] types = null;
                 char[] modes = null;
-                Boolean hasParams = false;
-                string paramNames = null;
+                Boolean hasParams = false;//EnterpriseDB Team
+                string paramNames = null;//EnterpriseDB Team
 
                 using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
                 {
@@ -195,7 +195,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 for (var i = 0; i < types.Length; i++)
                 {
                     var param = new EDBParameter();
-                    hasParams = true;
+                    hasParams = true;//EnterpriseDB Team
                     // TODO: Fix enums, composite types
                     var EDBDbType = c.Connection.Connector.TypeHandlerRegistry[types[i]].PostgresType.EDBDbType;
                     if (!EDBDbType.HasValue)
@@ -203,20 +203,22 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     param.EDBDbType = EDBDbType.Value;
 
                     if (names != null && i < names.Length)
-                        if (command.CommandType == CommandType.StoredProcedure)
+                        if (command.CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                         {
-                            if (names[i].Equals("")) {
+                            if (names[i].Equals(""))
+                            {
                                 param.ParameterName = "parameter" + (i + 1);
-                            } else
+                            }
+                            else
                             {
                                 param.ParameterName = names[i];
                             }
-                            
-                        } else
+
+                        }
+                        else
                         {
                             param.ParameterName = ":" + names[i];
                         }
-                          
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -243,11 +245,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                     "Unknown code in proargmodes while deriving: " + modes[i]);
                         }
                     }
-                    paramNames = paramNames + ":" + param.ParameterName + ", ";
+                    paramNames = paramNames + ":" + param.ParameterName + ", ";//EnterpriseDB Team
                     command.Parameters.Add(param);
-                    
                 }
-                if (hasParams && command.CommandType == CommandType.StoredProcedure)
+                if (hasParams && command.CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     if (paramNames.Trim().EndsWith(","))
                     {
@@ -425,15 +426,15 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// <param name="adapter">The <see cref="T:System.Data.Common.DbDataAdapter" /> to be used for the update.</param>
         protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
-            var npgsqlAdapter = adapter as EDBDataAdapter;
-            if (npgsqlAdapter == null)
+            var EDBAdapter = adapter as EDBDataAdapter;
+            if (EDBAdapter == null)
                 throw new ArgumentException("adapter needs to be a EDBDataAdapter", nameof(adapter));
 
             // Being called twice for the same adapter means unregister
             if (adapter == DataAdapter)
-                npgsqlAdapter.RowUpdating -= RowUpdatingHandler;
+                EDBAdapter.RowUpdating -= RowUpdatingHandler;
             else
-                npgsqlAdapter.RowUpdating += RowUpdatingHandler;
+                EDBAdapter.RowUpdating += RowUpdatingHandler;
         }
 
         /// <summary>

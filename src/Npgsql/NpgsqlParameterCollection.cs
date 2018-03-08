@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -29,7 +29,7 @@ using System.Diagnostics;
 using JetBrains.Annotations;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a collection of parameters relevant to a <see cref="EDBCommand">EDBCommand</see>
@@ -44,11 +44,11 @@ namespace  EnterpriseDB.EDBClient
         // Dictionary lookups for GetValue to improve performance
         Dictionary<string, int> _lookup;
         Dictionary<string, int> _lookupIgnoreCase;
+
         // EnterpriseDB Team
         private EDBParameter return_param = null;
         private int return_index = -1;
         internal bool _hasReturnParam = false;
-
         /// <summary>
         /// Initializes a new instance of the EDBParameterCollection class.
         /// </summary>
@@ -81,8 +81,6 @@ namespace  EnterpriseDB.EDBClient
         {
             get { return return_param; }
         }
-
-
 
         /// <summary>
         /// Invalidate the hash lookup tables.  This should be done any time a change
@@ -180,9 +178,8 @@ namespace  EnterpriseDB.EDBClient
             {
                 throw new InvalidOperationException("The parameter already belongs to a collection");
             }
-            if (value.Direction != System.Data.ParameterDirection.ReturnValue)
+            if (value.Direction != System.Data.ParameterDirection.ReturnValue)//EnterpriseDB Team
             {
-
                 _internalList.Add(value);
             value.Collection = this;
             InvalidateHashLookups();
@@ -194,7 +191,7 @@ namespace  EnterpriseDB.EDBClient
                 value.AutoAssignedName = true;
             }
             }
-            else
+            else//EnterpriseDB Team
             {
 
                 return_param = value;
@@ -202,7 +199,6 @@ namespace  EnterpriseDB.EDBClient
                 _hasReturnParam = true;
 
             }
-
             return value;
         }
 
@@ -468,7 +464,7 @@ namespace  EnterpriseDB.EDBClient
 
         #region IList Member
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Report whether the collection is read only.  Always false.
         /// </summary>
@@ -622,7 +618,7 @@ namespace  EnterpriseDB.EDBClient
             return Count - 1;
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Report whether the collection is fixed size.  Always false.
         /// </summary>
@@ -633,7 +629,7 @@ namespace  EnterpriseDB.EDBClient
 
         #region ICollection Member
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Report whether the collection is synchronized.
         /// </summary>

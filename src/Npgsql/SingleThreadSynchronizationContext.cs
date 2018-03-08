@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using JetBrains.Annotations;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     sealed class SingleThreadSynchronizationContext : SynchronizationContext, IDisposable
     {

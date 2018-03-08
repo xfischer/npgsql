@@ -7,9 +7,13 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
+#if !NETSTANDARD1_3
+using System.Transactions;
+#endif
 
-namespace  EnterpriseDB.EDBClient.Schema
+namespace EnterpriseDB.EDBClient.Schema
 {
     class DbColumnSchemaGenerator
     {
@@ -24,22 +28,25 @@ namespace  EnterpriseDB.EDBClient.Schema
             _fetchAdditionalInfo = fetchAdditionalInfo;
         }
 
-        const string GetColumnsQuery = @"
-SELECT
-     typ.oid AS typoid, nspname, relname, attname, typname, attrelid, attnum, atttypmod, attnotnull,
+        #region Columns queries
+
+        static string GenerateColumnsQuery(string columnFieldFilter) =>
+$@"SELECT
+     typ.oid AS typoid, nspname, relname, attname, typ.typname, attrelid, attnum, attnotnull,
+     CASE WHEN typ.typtype = 'd' THEN typ.typtypmod ELSE atttypmod END AS typmod,
      CASE WHEN atthasdef THEN (SELECT pg_get_expr(adbin, cls.oid) FROM pg_attrdef WHERE adrelid = cls.oid AND adnum = attr.attnum) ELSE NULL END AS default,
      CASE WHEN col.is_updatable = 'YES' THEN true ELSE false END AS is_updatable,
      EXISTS (
        SELECT * FROM pg_index
        WHERE pg_index.indrelid = cls.oid AND
              pg_index.indisprimary AND
-             attnum = ANY (pg_index.indkey)
+             attnum = ANY (indkey)
      ) AS isprimarykey,
      EXISTS (
        SELECT * FROM pg_index
        WHERE pg_index.indrelid = cls.oid AND
              pg_index.indisunique AND
-             attnum = ANY (pg_index.indkey)
+             attnum = ANY (indkey)
      ) AS isunique
 FROM pg_attribute AS attr
 JOIN pg_type AS typ ON attr.atttypid = typ.oid
@@ -54,8 +61,37 @@ WHERE
      NOT attisdropped AND
      nspname NOT IN ('pg_catalog', 'information_schema') AND
      attnum > 0 AND
-     ({0})
+     ({columnFieldFilter})
 ORDER BY attnum";
+
+        /// <summary>
+        /// Stripped-down version of <see cref="GenerateColumnsQuery"/>, mainly to support Amazon Redshift.
+        /// </summary>
+        static string GenerateOldColumnsQuery(string columnFieldFilter) =>
+            $@"SELECT
+     typ.oid AS typoid, nspname, relname, attname, typ.typname, attrelid, attnum, attnotnull,
+     CASE WHEN typ.typtype = 'd' THEN typ.typtypmod ELSE atttypmod END AS typmod,
+     CASE WHEN atthasdef THEN (SELECT pg_get_expr(adbin, cls.oid) FROM pg_attrdef WHERE adrelid = cls.oid AND adnum = attr.attnum) ELSE NULL END AS default,
+     TRUE AS is_updatable,  /* Supported only since PG 8.2 */
+     FALSE AS isprimarykey, /* Can't do ANY() on pg_index.indkey which is int2vector */
+     FALSE AS isunique      /* Can't do ANY() on pg_index.indkey which is int2vector */
+FROM pg_attribute AS attr
+JOIN pg_type AS typ ON attr.atttypid = typ.oid
+JOIN pg_class AS cls ON cls.oid = attr.attrelid
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+LEFT OUTER JOIN information_schema.columns AS col ON col.table_schema = nspname AND
+     col.table_name = relname AND
+     col.column_name = attname
+WHERE
+     atttypid <> 0 AND
+     relkind IN ('r', 'v', 'm') AND
+     NOT attisdropped AND
+     nspname NOT IN ('pg_catalog', 'information_schema') AND
+     attnum > 0 AND
+     ({columnFieldFilter})
+ORDER BY attnum";
+
+        #endregion Column queries
 
         internal ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
         {
@@ -79,12 +115,15 @@ ORDER BY attnum";
 
             if (_fetchAdditionalInfo && columnFieldFilter != "")
             {
-                var query = string.Format(GetColumnsQuery, columnFieldFilter);
+                var query = _connection.PostgreSqlVersion >= new Version(8, 2)
+                    ? GenerateColumnsQuery(columnFieldFilter)
+                    : GenerateOldColumnsQuery(columnFieldFilter);
 
-#if NET45 || NET451
-                using (var connection = (EDBConnection)((ICloneable)_connection).Clone())
-#else
+#if NETSTANDARD1_3
                 using (var connection = _connection.Clone())
+#else
+                using (new TransactionScope(TransactionScopeOption.Suppress))
+                using (var connection = (EDBConnection)((ICloneable)_connection).Clone())
 #endif
                 {
                     connection.Open();
@@ -94,26 +133,16 @@ ORDER BY attnum";
                     {
                         for (; reader.Read(); populatedColumns++)
                         {
-                            var column = LoadColumnDefinition(reader);
+                            var column = LoadColumnDefinition(reader, _connection.Connector.TypeHandlerRegistry);
 
                             var ordinal = fields.FindIndex(f => f.TableOID == column.TableOID && f.ColumnAttributeNumber - 1 == column.ColumnAttributeNumber);
                             Debug.Assert(ordinal >= 0);
-                            var field = fields[ordinal];
-
-                            column.PostgresType = field.PostgresType;
 
                             // The column's ordinal is with respect to the resultset, not its table
                             column.ColumnOrdinal = ordinal;
 
                             result[ordinal] = column;
                         }
-                    }
-
-                    if (populatedColumns == fields.Count)
-                    {
-                        // All columns were regular table columns that got loaded, we're done
-                        Debug.Assert(result.All(c => c != null));
-                        return result.AsReadOnly();
                     }
                 }
             }
@@ -122,12 +151,15 @@ ORDER BY attnum";
             // Fill in whatever info we have from the RowDescription itself
             for (var i = 0; i < fields.Count; i++)
             {
-                if (result[i] != null)
-                    continue;
-                var column = SetUpNonColumnField(fields[i]);
-                column.ColumnOrdinal = i;
-                result[i] = column;
-                populatedColumns++;
+                var field = fields[i];
+                if (result[i] == null)
+                {
+                    var column = SetUpNonColumnField(field);
+                    column.ColumnOrdinal = i;
+                    result[i] = column;
+                    populatedColumns++;
+                }
+                result[i].ColumnName = result[i].BaseColumnName = field.Name.StartsWith("?column?") ? null : field.Name;
             }
 
             if (populatedColumns != fields.Count)
@@ -136,18 +168,18 @@ ORDER BY attnum";
             return result.AsReadOnly();
         }
 
-        EDBDbColumn LoadColumnDefinition(EDBDataReader reader)
+        EDBDbColumn LoadColumnDefinition(EDBDataReader reader, TypeHandlerRegistry registry)
         {
-            var columnName = reader.GetString(reader.GetOrdinal("attname"));
+            // Note: we don't set ColumnName and BaseColumnName. These should always contain the
+            // column alias rather than the table column name (i.e. in case of "SELECT foo AS foo_alias").
+            // It will be set later.
             var column = new EDBDbColumn
             {
                 AllowDBNull = !reader.GetBoolean(reader.GetOrdinal("attnotnull")),
                 BaseCatalogName = _connection.Database,
-                BaseColumnName = columnName,
                 BaseSchemaName = reader.GetString(reader.GetOrdinal("nspname")),
                 BaseServerName = _connection.Host,
                 BaseTableName = reader.GetString(reader.GetOrdinal("relname")),
-                ColumnName = columnName,
                 ColumnOrdinal = reader.GetInt32(reader.GetOrdinal("attnum")) - 1,
                 ColumnAttributeNumber = (short)(reader.GetInt16(reader.GetOrdinal("attnum")) - 1),
                 IsKey = reader.GetBoolean(reader.GetOrdinal("isprimarykey")),
@@ -159,24 +191,24 @@ ORDER BY attnum";
                 TypeOID = reader.GetFieldValue<uint>(reader.GetOrdinal("typoid"))
             };
 
+            column.PostgresType = registry.PostgresTypes.ByOID[column.TypeOID];
+
             var defaultValueOrdinal = reader.GetOrdinal("default");
             column.DefaultValue = reader.IsDBNull(defaultValueOrdinal) ? null : reader.GetString(defaultValueOrdinal);
 
             column.IsAutoIncrement = column.DefaultValue != null && column.DefaultValue.StartsWith("nextval(");
 
-            ColumnPostConfig(column, reader.GetInt32(reader.GetOrdinal("atttypmod")));
+            ColumnPostConfig(column, reader.GetInt32(reader.GetOrdinal("typmod")));
 
             return column;
         }
 
         EDBDbColumn SetUpNonColumnField(FieldDescription field)
         {
-            var columnName = field.Name.StartsWith("?column?") ? null : field.Name;
+            // ColumnName and BaseColumnName will be set later
             var column = new EDBDbColumn
             {
-                ColumnName = columnName,
                 BaseCatalogName = _connection.Database,
-                BaseColumnName = columnName,
                 BaseServerName = _connection.Host,
                 IsReadOnly = true,
                 DataTypeName = field.PostgresType.DisplayName,
@@ -211,7 +243,11 @@ ORDER BY attnum";
             if (typeModifier == -1)
                 return;
 
-            switch (column.DataTypeName)
+            // If the column's type is a domain, use its base data type to interpret the typmod
+            var dataTypeName = column.PostgresType is PostgresDomainType
+                ? ((PostgresDomainType)column.PostgresType).BaseType.Name
+                : column.DataTypeName;
+            switch (dataTypeName)
             {
             case "bpchar":
             case "char":

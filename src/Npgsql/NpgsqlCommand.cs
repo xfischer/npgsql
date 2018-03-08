@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -38,10 +38,10 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
-using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;//EnterpriseDB Team
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a SQL statement or function (stored procedure) to execute
@@ -273,7 +273,7 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// Marks all of the query's result columns as either known or unknown.
-        /// Unknown results column are requested them from PostgreSQL in text format, and  EnterpriseDB.EDBClient makes no
+        /// Unknown results column are requested them from PostgreSQL in text format, and EnterpriseDB.EDBClient makes no
         /// attempt to parse them. They will be accessible as strings only.
         /// </summary>
         public bool AllResultTypesAreUnknown
@@ -291,7 +291,7 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// Marks the query's result columns as known or unknown, on a column-by-column basis.
-        /// Unknown results column are requested them from PostgreSQL in text format, and  EnterpriseDB.EDBClient makes no
+        /// Unknown results column are requested them from PostgreSQL in text format, and EnterpriseDB.EDBClient makes no
         /// attempt to parse them. They will be accessible as strings only.
         /// </summary>
         /// <remarks>
@@ -324,7 +324,7 @@ namespace  EnterpriseDB.EDBClient
         /// Only primitive numerical types and DateTimeOffset are supported.
         /// Set the whole array or just a value to null to use default type.
         /// </summary>
-        public Type[] ObjectResultTypes { get; set; }
+        public Type[] ObjectResultTypes { get; set; }//EnterpriseDB Team
 
         #endregion
 
@@ -407,8 +407,11 @@ namespace  EnterpriseDB.EDBClient
                     if (statement.IsPrepared)
                         continue;
                     statement.PreparedStatement = connector.PreparedStatementManager.GetOrAddExplicit(statement);
-                    if (statement.PreparedStatement?.State == PreparedState.NotYetPrepared)
+                    if (statement.PreparedStatement?.State == PreparedState.NotPrepared)
+                    {
+                        statement.PreparedStatement.State = PreparedState.ToBePrepared;
                         needToPrepare = true;
+                    }
                 }
 
                 // It's possible the command was already prepared, or that presistent prepared statements were found for
@@ -569,8 +572,8 @@ namespace  EnterpriseDB.EDBClient
                 break;
 
             case CommandType.StoredProcedure:
-                    var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
-                    var numInput = _parameters.Count(p => p.IsInputDirection);
+                var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
+                    var numInput = _parameters.Count(p => p.IsInputDirection);//EnterpriseDB Team
                     var sb = new StringBuilder();
                     string parameterName;
                     string parseCommand = CommandText;
@@ -601,7 +604,7 @@ namespace  EnterpriseDB.EDBClient
                         if (!parseCommand.Trim().EndsWith(")"))
                             parseCommand += "( )";
                     }
-                        
+
                     parseCommand = "CALL " + parseCommand; // This syntax i s only available in 7.3+ as well SupportsPrepare.
                     sb.Append(parseCommand);
 
@@ -677,7 +680,7 @@ namespace  EnterpriseDB.EDBClient
                     ////   _statements.Add(new EDBStatement(sb.ToString(), inputList));
                     break;
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
             }
 
             foreach (var s in _statements)
@@ -687,7 +690,6 @@ namespace  EnterpriseDB.EDBClient
 
         #endregion
 
-
         #region Execute
 
         void ValidateParameters()
@@ -695,12 +697,13 @@ namespace  EnterpriseDB.EDBClient
             for (var i = 0; i < Parameters.Count; i++)
             {
                 var p = Parameters[i];
-                if (CommandType == CommandType.StoredProcedure) {
+                if (CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+                {
                     if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
                         continue;
-                } else if (!p.IsInputDirection)
-                        continue;
-                
+                }
+                else if (!p.IsInputDirection)
+                    continue;
                 p.Bind(Connection.Connector.TypeHandlerRegistry);
                 p.LengthCache?.Clear();
                 p.ValidateAndGetLength();
@@ -838,7 +841,7 @@ namespace  EnterpriseDB.EDBClient
                 var statement = _statements[i];
                 var pStatement = statement.PreparedStatement;
 
-                if (pStatement == null || pStatement.State == PreparedState.NotYetPrepared)
+                if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
                     if (pStatement?.StatementBeingReplaced != null)
                     {
@@ -853,10 +856,10 @@ namespace  EnterpriseDB.EDBClient
                         .Write(buf, async, cancellationToken);
                 }
 
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     var bind = connector.BindOutMessage;
-                  //  bind.Populate(statement.InputParameters, "", statement.StatementName);
+                    //  bind.Populate(statement.InputParameters, "", statement.StatementName);
                     bind.Populate(statement.InputParameters, _parameters, "", statement.StatementName);
 
                     if (AllResultTypesAreUnknown)
@@ -864,8 +867,10 @@ namespace  EnterpriseDB.EDBClient
                     else if (i == 0 && UnknownResultTypeList != null)
                         bind.UnknownResultTypeList = UnknownResultTypeList;
                     await connector.BindOutMessage.Write(buf, async, cancellationToken);
-                } else
+                }
+                else
                 {
+
                     var bind = connector.BindMessage;
                     bind.Populate(statement.InputParameters, "", statement.StatementName);
                     if (AllResultTypesAreUnknown)
@@ -873,21 +878,18 @@ namespace  EnterpriseDB.EDBClient
                     else if (i == 0 && UnknownResultTypeList != null)
                         bind.UnknownResultTypeList = UnknownResultTypeList;
                     await connector.BindMessage.Write(buf, async, cancellationToken);
-                }
+                }//EnterpriseDB Team
 
-                    
-
-                if (pStatement == null || pStatement.State == PreparedState.NotYetPrepared)
+                if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
                     await connector.DescribeMessage
                         .Populate(StatementOrPortal.Portal)
                         .Write(buf, async, cancellationToken);
-
                     if (statement.PreparedStatement != null)
                         statement.PreparedStatement.State = PreparedState.BeingPrepared;
                 }
 
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     await connector.DescribeMessage
                         .Populate(StatementOrPortal.Portal)
@@ -896,11 +898,11 @@ namespace  EnterpriseDB.EDBClient
                     await connector.DescribeOutMessage
                        .Populate(StatementOrPortal.Portal)
                        .Write(buf, async, cancellationToken);
-                    
+
                 }
 
                 await ExecuteMessage.DefaultExecute.Write(buf, async, cancellationToken);
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     await ExecuteOutMessage.DefaultExecute.Write(buf, async, cancellationToken);
                 }
@@ -975,7 +977,7 @@ namespace  EnterpriseDB.EDBClient
 
                 // A statement may be already prepared, already in preparation (i.e. same statement twice
                 // in the same command), or we can't prepare (overloaded SQL)
-                if (pStatement?.State != PreparedState.NotYetPrepared)
+                if (pStatement?.State != PreparedState.ToBePrepared)
                     continue;
 
                 var statementToClose = pStatement.StatementBeingReplaced;
@@ -986,21 +988,21 @@ namespace  EnterpriseDB.EDBClient
                         .Populate(StatementOrPortal.Statement, statementToClose.Name)
                         .Write(buf, async, cancellationToken);
                 }
-                if (CommandType == CommandType.StoredProcedure) //TODO ZK here
+
+                if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                 {
                     connector._isCallableStmt = true;
                     await connector.ParseOutMessage
                   .Populate(statement.SQL, pStatement.Name, _parameters, statement.InputParameters, connector.TypeHandlerRegistry)
                   .Write(buf, async, cancellationToken);
-                    
+
                 }
                 else
                 {
                     await connector.ParseMessage
                     .Populate(statement.SQL, pStatement.Name, statement.InputParameters, connector.TypeHandlerRegistry)
                     .Write(buf, async, cancellationToken);
-                }
-                    
+                }//EnterpriseDB Team
 
                 await connector.DescribeMessage
                     .Populate(StatementOrPortal.Statement, pStatement.Name)
@@ -1055,13 +1057,13 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, with the number of rows affected if known; -1 otherwise.</returns>
-        public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-            using (cancellationToken.Register(Cancel))
-                return await ExecuteNonQuery(true, cancellationToken);
-        }
+        public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                using (cancellationToken.Register(Cancel))
+                    return await ExecuteNonQuery(true, cancellationToken);
+            });
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
@@ -1070,7 +1072,7 @@ namespace  EnterpriseDB.EDBClient
             using (connector.StartUserAction(this))
             using (var reader = await Execute(CommandBehavior.Default, async, cancellationToken))
             {
-                if (CommandType != CommandType.StoredProcedure)
+                if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
                     while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) {}
                 reader.Close();
                 return reader.RecordsAffected;
@@ -1097,13 +1099,13 @@ namespace  EnterpriseDB.EDBClient
         /// <returns>A task representing the asynchronous operation, with the first column of the
         /// first row in the result set, or a null reference if the result set is empty.</returns>
         [ItemCanBeNull]
-        public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-            using (cancellationToken.Register(Cancel))
-                return await ExecuteScalar(true, cancellationToken);
-        }
+        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested()            ;
+                using (cancellationToken.Register(Cancel))
+                    return await ExecuteScalar(true, cancellationToken);
+            });
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ItemCanBeNull]
@@ -1123,7 +1125,7 @@ namespace  EnterpriseDB.EDBClient
         /// Executes the CommandText against the Connection, and returns an DbDataReader.
         /// </summary>
         /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a  EnterpriseDB.EDBClient-specific
+        /// Unlike the ADO.NET method which it replaces, this method returns a EnterpriseDB.EDBClient-specific
         /// DataReader.
         /// </remarks>
         /// <returns>A DbDataReader object.</returns>
@@ -1134,7 +1136,7 @@ namespace  EnterpriseDB.EDBClient
         /// of the CommandBehavior values.
         /// </summary>
         /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a  EnterpriseDB.EDBClient-specific
+        /// Unlike the ADO.NET method which it replaces, this method returns a EnterpriseDB.EDBClient-specific
         /// DataReader.
         /// </remarks>
         /// <returns>A DbDataReader object.</returns>
@@ -1146,13 +1148,13 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="behavior">An instance of <see cref="CommandBehavior"/>.</param>
         /// <param name="cancellationToken">A task representing the operation.</param>
         /// <returns></returns>
-        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-            using (cancellationToken.Register(Cancel))
-                return await ExecuteDbDataReader(behavior, true, cancellationToken);
-        }
+        protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                using (cancellationToken.Register(Cancel))
+                    return await ExecuteDbDataReader(behavior, true, cancellationToken);
+            });
 
         /// <summary>
         /// Executes the command text against the connection.
@@ -1161,7 +1163,7 @@ namespace  EnterpriseDB.EDBClient
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteDbDataReader(behavior, false, CancellationToken.None).GetAwaiter().GetResult();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        async ValueTask<EDBDataReader> ExecuteDbDataReader(CommandBehavior behavior, bool async, CancellationToken cancellationToken)
+        async ValueTask<DbDataReader> ExecuteDbDataReader(CommandBehavior behavior, bool async, CancellationToken cancellationToken)
         {
             var connector = CheckReadyAndGetConnector();
             connector.StartUserAction(this);
@@ -1285,7 +1287,7 @@ namespace  EnterpriseDB.EDBClient
             Log.Debug(sb.ToString(), Connection.Connector.Id);
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Create a new command based on this one.
         /// </summary>

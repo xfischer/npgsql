@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -30,6 +30,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -40,11 +41,11 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a connection to a PostgreSQL backend. Unlike EDBConnection objects, which are
-    /// exposed to users, connectors are internal to  EnterpriseDB.EDBClient and are recycled by the connection pool.
+    /// exposed to users, connectors are internal to EnterpriseDB.EDBClient and are recycled by the connection pool.
     /// </summary>
     sealed partial class EDBConnector : IDisposable
     {
@@ -68,6 +69,9 @@ namespace  EnterpriseDB.EDBClient
         internal EDBConnectionStringBuilder Settings { get; }
         internal string ConnectionString { get; }
 
+        [CanBeNull] ProvideClientCertificatesCallback ProvideClientCertificatesCallback { get; }
+        [CanBeNull] RemoteCertificateValidationCallback UserCertificateValidationCallback { get; }
+
         internal Encoding TextEncoding { get; private set; }
 
         /// <summary>
@@ -77,7 +81,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Buffer used for reading data.
         /// </summary>
-        internal ReadBuffer tmpReadBuffer { get; private set; }
+        internal ReadBuffer tmpReadBuffer { get; private set; }//EnterpriseDB Team
 
         /// <summary>
         /// If we read a data row that's bigger than <see cref="ReadBuffer"/>, we allocate an oversize buffer.
@@ -93,8 +97,7 @@ namespace  EnterpriseDB.EDBClient
         ///<summary>
         /// Buffer used for writing data.
         /// </summary>
-        internal WriteBuffer tmpWriteBuffer { get; private set; }
-        
+        internal WriteBuffer tmpWriteBuffer { get; private set; }//EnterpriseDB Team
 
         /// <summary>
         /// Version of backend server this connector is connected to.
@@ -240,16 +243,15 @@ namespace  EnterpriseDB.EDBClient
 
         // Frontend
         internal readonly BindMessage     BindMessage     = new BindMessage();
-        internal readonly BindOutMessage BindOutMessage = new BindOutMessage();
+        internal readonly BindOutMessage BindOutMessage = new BindOutMessage();//EnterpriseDB Team
         internal readonly DescribeMessage DescribeMessage = new DescribeMessage();
-        internal readonly DescribeOutMessage DescribeOutMessage = new DescribeOutMessage();
+        internal readonly DescribeOutMessage DescribeOutMessage = new DescribeOutMessage();//EnterpriseDB Team
         internal readonly CloseMessage    CloseMessage    = new CloseMessage();
         // ParseMessage and QueryMessage depend on the encoding, which isn't known until open-time
         internal ParseMessage ParseMessage;
-        internal ParseOutMessage ParseOutMessage;
+        internal ParseOutMessage ParseOutMessage;//EnterpriseDB Team
         internal QueryMessage QueryMessage;
-
-        public bool _isCallableStmt = false;
+        public bool _isCallableStmt = false;//EnterpriseDB Team
         // The reset message depends on the server version, which isn't known until open-time
         [CanBeNull]
         PregeneratedMessage _resetWithoutDeallocateMessage;
@@ -260,8 +262,8 @@ namespace  EnterpriseDB.EDBClient
         readonly ParameterDescriptionMessage _parameterDescriptionMessage = new ParameterDescriptionMessage();
         readonly DataRowSequentialMessage    _dataRowSequentialMessage    = new DataRowSequentialMessage();
         readonly DataRowNonSequentialMessage _dataRowNonSequentialMessage = new DataRowNonSequentialMessage();
-        readonly DataRowSequentialMessage _outParamRowSequentialMessage = new DataRowSequentialMessage(); //EDB out param row
-        readonly DataRowNonSequentialMessage _outParamRowNonSequentialMessage = new DataRowNonSequentialMessage(); //EDB Out param row
+        readonly DataRowSequentialMessage _outParamRowSequentialMessage = new DataRowSequentialMessage(); //EnterpriseDB Team out param row
+        readonly DataRowNonSequentialMessage _outParamRowNonSequentialMessage = new DataRowNonSequentialMessage();//EnterpriseDB Team Out param row
 
 
 
@@ -279,6 +281,15 @@ namespace  EnterpriseDB.EDBClient
         {
             Connection = connection;
             Connection.Connector = this;
+            ProvideClientCertificatesCallback = Connection.ProvideClientCertificatesCallback;
+            UserCertificateValidationCallback = Connection.UserCertificateValidationCallback;
+        }
+
+        EDBConnector(EDBConnector connector)
+            : this(connector.Settings, connector.ConnectionString)
+        {
+            ProvideClientCertificatesCallback = connector.ProvideClientCertificatesCallback;
+            UserCertificateValidationCallback = connector.UserCertificateValidationCallback;
         }
 
         /// <summary>
@@ -457,6 +468,12 @@ namespace  EnterpriseDB.EDBClient
                 startupMessage["application_name"] = Settings.ApplicationName;
             if (!string.IsNullOrEmpty(Settings.SearchPath))
                 startupMessage["search_path"] = Settings.SearchPath;
+
+            // SSL renegotiation support has been dropped in recent versions of PostgreSQL
+            // (OpenSSL implementations were buggy etc.), but disable them for older unpatched
+            // versions which turns it on by default.
+            // Amazon Redshift doesn't recognize the ssl_renegotiation_limit parameter and bombs
+            // (https://forums.aws.amazon.com/thread.jspa?messageID=721898&#721898)
             if (IsSecure && !IsRedshift)
                 startupMessage["ssl_renegotiation_limit"] = "0";
 
@@ -489,7 +506,7 @@ namespace  EnterpriseDB.EDBClient
                     return username;
             }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
             username = Environment.UserName;
             if (!string.IsNullOrEmpty(username))
                 return username;
@@ -524,7 +541,7 @@ namespace  EnterpriseDB.EDBClient
                 ReadBuffer = new ReadBuffer(this, _stream, Settings.ReadBufferSize, TextEncoding);
                 WriteBuffer = new WriteBuffer(this, _stream, Settings.WriteBufferSize, TextEncoding);
                 ParseMessage = new ParseMessage(TextEncoding);
-                ParseOutMessage = new ParseOutMessage(TextEncoding); //EnterpriseDB Team 
+                ParseOutMessage = new ParseOutMessage(TextEncoding); //EnterpriseDB Team
                 QueryMessage = new QueryMessage(TextEncoding);
 
                 if (SslMode == SslMode.Require || SslMode == SslMode.Prefer)
@@ -548,13 +565,13 @@ namespace  EnterpriseDB.EDBClient
                         break;
                     case 'S':
                         var clientCertificates = new X509CertificateCollection();
-                        Connection.ProvideClientCertificatesCallback?.Invoke(clientCertificates);
+                        ProvideClientCertificatesCallback?.Invoke(clientCertificates);
 
                         RemoteCertificateValidationCallback certificateValidationCallback;
                         if (Settings.TrustServerCertificate)
                             certificateValidationCallback = (sender, certificate, chain, errors) => true;
-                        else if (Connection.UserCertificateValidationCallback != null)
-                            certificateValidationCallback = Connection.UserCertificateValidationCallback;
+                        else if (UserCertificateValidationCallback != null)
+                            certificateValidationCallback = UserCertificateValidationCallback;
                         else
                             certificateValidationCallback = DefaultUserCertificateValidationCallback;
 
@@ -580,6 +597,7 @@ namespace  EnterpriseDB.EDBClient
                             _stream = sslStream;
                         }
                         timeout.Check();
+                        ReadBuffer.Clear();  // Reset to empty after reading single SSL char
                         ReadBuffer.Underlying = _stream;
                         WriteBuffer.Underlying = _stream;
                         IsSecure = true;
@@ -621,19 +639,26 @@ namespace  EnterpriseDB.EDBClient
             }
             else
             {
-#if NET45 || NET451
+#if NETSTANDARD1_3
+                // .NET Standard 1.3 didn't have sync DNS methods
+                endpoints = Dns.GetHostAddressesAsync(Host).Result.Select(a => new IPEndPoint(a, Port)).ToArray();
+#else
                 // Note that there aren't any timeoutable DNS methods, and we want to use sync-only
                 // methods (not to rely on any TP threads etc.)
                 endpoints = Dns.GetHostAddresses(Host).Select(a => new IPEndPoint(a, Port)).ToArray();
-#else
-                // .NET Core doesn't appear to have sync DNS methods (yet?)
-                endpoints = Dns.GetHostAddressesAsync(Host).Result.Select(a => new IPEndPoint(a, Port)).ToArray();
 #endif
                 timeout.Check();
             }
 
             // Give each endpoint an equal share of the remaining time
-            var perEndpointTimeout = timeout.IsSet ? (int)((timeout.TimeLeft.Ticks / endpoints.Length) / 10) : -1;
+            var perEndpointTimeout = -1;  // Default to infinity
+            if (timeout.IsSet)
+            {
+                var timeoutTicks = timeout.TimeLeft.Ticks;
+                if (timeoutTicks <= 0)
+                    throw new TimeoutException();
+                perEndpointTimeout = (int)(timeoutTicks / endpoints.Length / 10);
+            }
 
             for (var i = 0; i < endpoints.Length; i++)
             {
@@ -675,12 +700,7 @@ namespace  EnterpriseDB.EDBClient
                         continue;
                     }
                     socket.Blocking = true;
-                    if (socket.AddressFamily == AddressFamily.InterNetwork)
-                        socket.NoDelay = true;
-                    if (Settings.SocketReceiveBufferSize > 0)
-                        socket.ReceiveBufferSize = Settings.SocketReceiveBufferSize;
-                    if (Settings.SocketSendBufferSize > 0)
-                        socket.SendBufferSize = Settings.SocketSendBufferSize;
+                    SetSocketOptions(socket);
                     _socket = socket;
                     return;
                 }
@@ -716,8 +736,16 @@ namespace  EnterpriseDB.EDBClient
             }
 
             // Give each IP an equal share of the remaining time
-            var perIpTimespan = timeout.IsSet ? new TimeSpan(timeout.TimeLeft.Ticks / endpoints.Length) : TimeSpan.Zero;
-            var perIpTimeout = timeout.IsSet ? new EDBTimeout(perIpTimespan) : timeout;
+            var perIpTimespan = default(TimeSpan);
+            var perIpTimeout = timeout;
+            if (timeout.IsSet)
+            {
+                var timeoutTicks = timeout.TimeLeft.Ticks;
+                if (timeoutTicks <= 0)
+                    throw new TimeoutException();
+                perIpTimespan = new TimeSpan(timeoutTicks / endpoints.Length);
+                perIpTimeout = new EDBTimeout(perIpTimespan);
+            }
 
             for (var i = 0; i < endpoints.Length; i++)
             {
@@ -758,12 +786,7 @@ namespace  EnterpriseDB.EDBClient
                         throw;
                     }
 
-                    if (socket.AddressFamily == AddressFamily.InterNetwork)
-                        socket.NoDelay = true;
-                    if (Settings.SocketReceiveBufferSize > 0)
-                        socket.ReceiveBufferSize = Settings.SocketReceiveBufferSize;
-                    if (Settings.SocketSendBufferSize > 0)
-                        socket.SendBufferSize = Settings.SocketSendBufferSize;
+                    SetSocketOptions(socket);
                     _socket = socket;
                     return;
                 }
@@ -784,6 +807,41 @@ namespace  EnterpriseDB.EDBClient
                         throw;
                     }
                 }
+            }
+        }
+
+        void SetSocketOptions(Socket socket)
+        {
+            if (socket.AddressFamily == AddressFamily.InterNetwork)
+                socket.NoDelay = true;
+            if (Settings.SocketReceiveBufferSize > 0)
+                socket.ReceiveBufferSize = Settings.SocketReceiveBufferSize;
+            if (Settings.SocketSendBufferSize > 0)
+                socket.SendBufferSize = Settings.SocketSendBufferSize;
+
+            if (Settings.TcpKeepAliveInterval > 0 && Settings.TcpKeepAliveTime == 0)
+                throw new ArgumentException("If TcpKeepAliveInterval is defined, TcpKeepAliveTime must be defined as well");
+            if (Settings.TcpKeepAliveTime > 0)
+            {
+                if (!PGUtil.IsWindows)
+                    throw new PlatformNotSupportedException(
+                        "EnterpriseDB.EDBClient management of TCP keepalive is supported only on Windows. " +
+                        "TCP keepalives can still be used on other systems but are configured globally for the machine, see the relevant docs.");
+
+                var time = Settings.TcpKeepAliveTime;
+                var interval = Settings.TcpKeepAliveInterval > 0
+                    ? Settings.TcpKeepAliveInterval
+                    : Settings.TcpKeepAliveTime;
+
+                // For the following see https://msdn.microsoft.com/en-us/library/dd877220.aspx
+                var dummy = 0u;
+                var inOptionValues = new byte[Marshal.SizeOf(dummy) * 3];
+                BitConverter.GetBytes((uint)1).CopyTo(inOptionValues, 0);
+                BitConverter.GetBytes((uint)time).CopyTo(inOptionValues, Marshal.SizeOf(dummy));
+                BitConverter.GetBytes((uint)interval).CopyTo(inOptionValues, Marshal.SizeOf(dummy) * 2);
+                var result = socket.IOControl(IOControlCode.KeepAliveValues, inOptionValues, null);
+                if (result != 0)
+                    throw new EDBException($"Got non-zero value when trying to set TCP keepalive: {result}");
             }
         }
 
@@ -839,17 +897,12 @@ namespace  EnterpriseDB.EDBClient
                 if (CurrentReader != null)
                 {
                     // The reader cleanup will call EndUserAction
-                    CurrentReader.Cleanup();
+                    await CurrentReader.Cleanup(async);
                 }
                 else
                 {
                     EndUserAction();
                 }
-                throw;
-            }
-            catch(Exception e)
-            {
-                e.ToString();
                 throw;
             }
         }
@@ -918,8 +971,8 @@ namespace  EnterpriseDB.EDBClient
                 case BackendMessageCode.NoticeResponse:
                 case BackendMessageCode.NotificationResponse:
                 case BackendMessageCode.ParameterStatus:
-                 //   Debug.Assert(msg == null);
-                    if (!readingNotifications)
+                        //Debug.Assert(msg == null);//EnterpriseDB Team
+                        if (!readingNotifications)
                         continue;
                     return null;
                 }
@@ -939,6 +992,7 @@ namespace  EnterpriseDB.EDBClient
                     var rowDescriptionMessage = new RowDescriptionMessage();
                     return rowDescriptionMessage.Load(buf, TypeHandlerRegistry, false);
 
+                /* EnterpriseDB Team */
                 case BackendMessageCode.OutDescription:
 
                     var rowOutDescriptionMessage = new RowDescriptionMessage();
@@ -1046,7 +1100,7 @@ namespace  EnterpriseDB.EDBClient
                     // We don't use the obsolete function call protocol
                     throw new EDBException("Unexpected backend message: " + code);
                 default:
-                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
             }
         }
 
@@ -1078,7 +1132,7 @@ namespace  EnterpriseDB.EDBClient
             while (true)
             {
                 var msg = await ReadMessage(async, DataRowLoadingMode.Skip);
-                Debug.Assert(!(msg is DataRowMessage));
+                Debug.Assert(!(msg is DataRowMessage));//EnterpriseDB Team
                 if (msg.Code == stopAt) {
                     return msg;
                 }
@@ -1098,7 +1152,7 @@ namespace  EnterpriseDB.EDBClient
 
             while (true) {
                 var msg = await ReadMessage(async, DataRowLoadingMode.Skip);
-              //  Debug.Assert(!(msg is DataRowMessage));
+                //Debug.Assert(!(msg is DataRowMessage));//EnterpriseDB Team
                 if (msg.Code == stopAt1 || msg.Code == stopAt2) {
                     return msg;
                 }
@@ -1150,7 +1204,7 @@ namespace  EnterpriseDB.EDBClient
                 case TransactionStatus.InFailedTransactionBlock:
                     return true;
                 default:
-                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
                 }
             }
         }
@@ -1171,7 +1225,7 @@ namespace  EnterpriseDB.EDBClient
             case TransactionStatus.Pending:
                 throw new Exception("Invalid TransactionStatus (should be frontend-only)");
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
             }
             TransactionStatus = newStatus;
         }
@@ -1216,8 +1270,8 @@ namespace  EnterpriseDB.EDBClient
             {
                 try
                 {
-                    var cancelConnector = new EDBConnector(Settings, ConnectionString);
-                    cancelConnector.DoCancelRequest(BackendProcessId, _backendSecretKey, cancelConnector.ConnectionTimeout);
+                    var cancelConnector = new EDBConnector(this);
+                    cancelConnector.DoCancelRequest(BackendProcessId, _backendSecretKey);
                 }
                 catch (Exception e)
                 {
@@ -1228,13 +1282,13 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
-        void DoCancelRequest(int backendProcessId, int backendSecretKey, int connectionTimeout)
+        void DoCancelRequest(int backendProcessId, int backendSecretKey)
         {
             Debug.Assert(State == ConnectorState.Closed);
 
             try
             {
-                RawOpen(new EDBTimeout(TimeSpan.FromSeconds(connectionTimeout)), false, CancellationToken.None)
+                RawOpen(new EDBTimeout(TimeSpan.FromSeconds(ConnectionTimeout)), false, CancellationToken.None)
                     .GetAwaiter().GetResult();
                 SendMessage(new CancelRequestMessage(backendProcessId, backendSecretKey));
 
@@ -1449,7 +1503,7 @@ namespace  EnterpriseDB.EDBClient
             case ConnectorState.Waiting:
                 throw new InvalidOperationException("Reset() called on connector with state " + State);
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
             }
 
             if (IsInUserAction)
@@ -1481,7 +1535,7 @@ namespace  EnterpriseDB.EDBClient
                 Rollback(false, CancellationToken.None);
                 break;
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
             }
 
             if (!Settings.NoResetOnClose && SupportsDiscard)
@@ -1546,7 +1600,7 @@ namespace  EnterpriseDB.EDBClient
                     case ConnectorState.Waiting:
                     case ConnectorState.Connecting:
                     case ConnectorState.Copy:
-                        throw new InvalidOperationException("Internal  EnterpriseDB.EDBClient error, please report: acquired both locks and connector is in state " + State);
+                        throw new InvalidOperationException("Internal EnterpriseDB.EDBClient error, please report: acquired both locks and connector is in state " + State);
                     default:
                         throw new ArgumentOutOfRangeException(nameof(State), State, "Invalid connector state: " + State);
                     }
@@ -1726,7 +1780,7 @@ namespace  EnterpriseDB.EDBClient
             }
         }
 
-        public async Task WaitAsync(CancellationToken cancellationToken)
+        public Task WaitAsync(CancellationToken cancellationToken)
         {
             var keepaliveSent = false;
             var keepaliveLock = new SemaphoreSlim(1, 1);
@@ -1748,97 +1802,99 @@ namespace  EnterpriseDB.EDBClient
                 }
             };
 
-            using (NoSynchronizationContextScope.Enter())
-            using (StartUserAction(ConnectorState.Waiting))
-            using (cancellationToken.Register(() => performKeepaliveMethod(null)))
+            return SynchronizationContextSwitcher.NoContext(async () =>
             {
-                // We may have prepended messages in the connection's write buffer - these need to be flushed now.
-                WriteBuffer.Flush();
-
-                Timer keepaliveTimer = null;
-                if (IsKeepAliveEnabled)
-                    keepaliveTimer = new Timer(performKeepaliveMethod, null, Settings.KeepAlive*1000, Timeout.Infinite);
-                try
+                using (StartUserAction(ConnectorState.Waiting))
+                using (cancellationToken.Register(() => performKeepaliveMethod(null)))
                 {
-                    while (true)
+                    // We may have prepended messages in the connection's write buffer - these need to be flushed now.
+                    WriteBuffer.Flush();
+
+                    Timer keepaliveTimer = null;
+                    if (IsKeepAliveEnabled)
+                        keepaliveTimer = new Timer(performKeepaliveMethod, null, Settings.KeepAlive*1000, Timeout.Infinite);
+                    try
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        var msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
-                        if (!keepaliveSent)
+                        while (true)
                         {
-                            if (msg != null)
+                            cancellationToken.ThrowIfCancellationRequested();
+                            var msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
+                            if (!keepaliveSent)
                             {
-                                Break();
-                                throw new EDBException($"Received unexpected message of type {msg.Code} while waiting");
+                                if (msg != null)
+                                {
+                                    Break();
+                                    throw new EDBException($"Received unexpected message of type {msg.Code} while waiting");
+                                }
+                                return;
                             }
-                            return;
-                        }
 
-                        // A keepalive was sent. Consume the response (RowDescription, CommandComplete,
-                        // ReadyForQuery) while also keeping track if an async message was received in between.
-                        keepaliveLock.Wait();
-                        try
-                        {
-                            var receivedNotification = false;
-                            var expectedMessageCode = BackendMessageCode.RowDescription;
-
-                            while (true)
+                            // A keepalive was sent. Consume the response (RowDescription, CommandComplete,
+                            // ReadyForQuery) while also keeping track if an async message was received in between.
+                            keepaliveLock.Wait();
+                            try
                             {
-                                while (msg == null)
+                                var receivedNotification = false;
+                                var expectedMessageCode = BackendMessageCode.RowDescription;
+
+                                while (true)
                                 {
-                                    receivedNotification = true;
-                                    msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
+                                    while (msg == null)
+                                    {
+                                        receivedNotification = true;
+                                        msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
+                                    }
+
+                                    if (msg.Code != expectedMessageCode)
+                                        throw new EDBException($"Received unexpected message of type {msg.Code} while expecting {expectedMessageCode} as part of keepalive");
+
+                                    var finishedKeepalive = false;
+                                    switch (msg.Code)
+                                    {
+                                    case BackendMessageCode.RowDescription:
+                                        expectedMessageCode = BackendMessageCode.DataRow;
+                                        break;
+                                    case BackendMessageCode.DataRow:
+                                        expectedMessageCode = BackendMessageCode.CompletedResponse;
+                                        break;
+                                    case BackendMessageCode.CompletedResponse:
+                                        expectedMessageCode = BackendMessageCode.ReadyForQuery;
+                                        break;
+                                    case BackendMessageCode.ReadyForQuery:
+                                        finishedKeepalive = true;
+                                        break;
+                                    }
+
+                                    if (!finishedKeepalive)
+                                    {
+                                        msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
+                                        continue;
+                                    }
+
+                                    Log.Trace("Performed keepalive", Id);
+
+                                    if (receivedNotification)
+                                        return; // Notification was received during the keepalive
+
+                                    cancellationToken.ThrowIfCancellationRequested();
+                                    // Keepalive completed without notification, set up the next one and continue waiting
+                                    keepaliveTimer.Change(Settings.KeepAlive*1000, Timeout.Infinite);
+                                    keepaliveSent = false;
+                                    break;
                                 }
-
-                                if (msg.Code != expectedMessageCode)
-                                    throw new EDBException($"Received unexpected message of type {msg.Code} while expecting {expectedMessageCode} as part of keepalive");
-
-                                var finishedKeepalive = false;
-                                switch (msg.Code)
-                                {
-                                case BackendMessageCode.RowDescription:
-                                    expectedMessageCode = BackendMessageCode.DataRow;
-                                    break;
-                                case BackendMessageCode.DataRow:
-                                    expectedMessageCode = BackendMessageCode.CompletedResponse;
-                                    break;
-                                case BackendMessageCode.CompletedResponse:
-                                    expectedMessageCode = BackendMessageCode.ReadyForQuery;
-                                    break;
-                                case BackendMessageCode.ReadyForQuery:
-                                    finishedKeepalive = true;
-                                    break;
-                                }
-
-                                if (!finishedKeepalive)
-                                {
-                                    msg = await ReadMessage(true, DataRowLoadingMode.NonSequential, true);
-                                    continue;
-                                }
-
-                                Log.Trace("Performed keepalive", Id);
-
-                                if (receivedNotification)
-                                    return; // Notification was received during the keepalive
-
-                                cancellationToken.ThrowIfCancellationRequested();
-                                // Keepalive completed without notification, set up the next one and continue waiting
-                                keepaliveTimer.Change(Settings.KeepAlive*1000, Timeout.Infinite);
-                                keepaliveSent = false;
-                                break;
                             }
-                        }
-                        finally
-                        {
-                            keepaliveLock.Release();
+                            finally
+                            {
+                                keepaliveLock.Release();
+                            }
                         }
                     }
+                    finally
+                    {
+                        keepaliveTimer?.Dispose();
+                    }
                 }
-                finally
-                {
-                    keepaliveTimer?.Dispose();
-                }
-            }
+            });
         }
 
         #endregion

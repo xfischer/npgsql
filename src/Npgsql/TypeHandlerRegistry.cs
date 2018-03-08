@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -37,7 +37,7 @@ using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     class TypeHandlerRegistry
     {
@@ -61,7 +61,7 @@ namespace  EnterpriseDB.EDBClient
         [CanBeNull]
         internal Dictionary<Type, TypeHandler> ArrayHandlerByType { get; set; }
 
-        AvailablePostgresTypes _postgresTypes;
+        internal AvailablePostgresTypes PostgresTypes { get; private set; }
 
         /// <summary>
         /// A counter that is updated when this registry activates its global mappings.
@@ -117,14 +117,14 @@ namespace  EnterpriseDB.EDBClient
             if (!BackendTypeCache.TryGetValue(connector.ConnectionString, out var types))
                 types = BackendTypeCache[connector.ConnectionString] = await LoadBackendTypes(connector, timeout, async);
 
-            connector.TypeHandlerRegistry._postgresTypes = types;
+            connector.TypeHandlerRegistry.PostgresTypes = types;
             connector.TypeHandlerRegistry.ActivateGlobalMappings();
         }
 
         TypeHandlerRegistry(EDBConnector connector)
         {
             Connector = connector;
-            _postgresTypes = EmptyPostgresTypes;
+            PostgresTypes = EmptyPostgresTypes;
             UnrecognizedTypeHandler = new UnknownTypeHandler(this);
             ByOID = new Dictionary<uint, TypeHandler>();
             ByDbType = new Dictionary<DbType, TypeHandler>();
@@ -205,10 +205,18 @@ ORDER BY ord";
 
         static async Task<AvailablePostgresTypes> LoadBackendTypes(EDBConnector connector, EDBTimeout timeout, bool async)
         {
+            var commandTimeout = 0;  // Default to infinity
+            if (timeout.IsSet)
+            {
+                commandTimeout = (int)timeout.TimeLeft.TotalSeconds;
+                if (commandTimeout <= 0)
+                    throw new TimeoutException();
+            }
+
             var types = new AvailablePostgresTypes();
             using (var command = new EDBCommand(connector.SupportsRangeTypes ? TypesQueryWithRange : TypesQueryWithoutRange, connector.Connection))
             {
-                command.CommandTimeout = timeout.IsSet ? (int)timeout.TimeLeft.TotalSeconds : 0;
+                command.CommandTimeout = commandTimeout;
                 command.AllResultTypesAreUnknown = true;
                 using (var reader = async ? await command.ExecuteReaderAsync() : command.ExecuteReader())
                 {
@@ -239,7 +247,7 @@ ORDER BY ord";
                 (
                     HandlerTypes.TryGetValue(name, out var typeAndMapping)
                         ? new PostgresBaseType(ns, name, oid, typeAndMapping.HandlerType, typeAndMapping.Mapping)
-                        : new PostgresBaseType(ns, name, oid)  // Unsupported by  EnterpriseDB.EDBClient
+                        : new PostgresBaseType(ns, name, oid)  // Unsupported by EnterpriseDB.EDBClient
                 ).AddTo(types);
                 return;
             case 'a':   // Array
@@ -393,8 +401,8 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
         {
             // First check if the composite type definition has already been loaded from the database
             if (pgName.IndexOf('.') == -1
-                ? _postgresTypes.ByName.TryGetValue(pgName, out var postgresType)
-                : _postgresTypes.ByFullName.TryGetValue(pgName, out postgresType))
+                ? PostgresTypes.ByName.TryGetValue(pgName, out var postgresType)
+                : PostgresTypes.ByFullName.TryGetValue(pgName, out postgresType))
             {
                 var asComposite = postgresType as PostgresCompositeType;
                 if (asComposite == null)
@@ -449,7 +457,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                         fields.Add(new RawCompositeField { PgName = reader.GetString(0), TypeOID = reader.GetFieldValue<uint>(1) });
 
                     var compositeType = new PostgresCompositeType(ns, name, oid, fields);
-                    compositeType.AddTo(_postgresTypes);
+                    compositeType.AddTo(PostgresTypes);
 
                     reader.NextResult();  // Load the array type
 
@@ -459,7 +467,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                         var arrayName = reader.GetString(1);
                         var arrayOID = reader.GetFieldValue<uint>(2);
 
-                        new PostgresArrayType(arrayNs, arrayName, arrayOID, compositeType).AddTo(_postgresTypes);
+                        new PostgresArrayType(arrayNs, arrayName, arrayOID, compositeType).AddTo(PostgresTypes);
                     } else
                         Log.Warn($"Could not find array type corresponding to composite {pgName}");
 
@@ -487,7 +495,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
         {
             if (ByOID.TryGetValue(oid, out handler))
                 return true;
-            if (!_postgresTypes.ByOID.TryGetValue(oid, out var postgresType))
+            if (!PostgresTypes.ByOID.TryGetValue(oid, out var postgresType))
                 return false;
 
             handler = postgresType.Activate(this);
@@ -525,13 +533,13 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                     throw new InvalidCastException($"When specifying EDBDbType.{nameof(EDBDbType.Enum)}, {nameof(EDBParameter.SpecificType)} must be specified as well");
 
                 // Base, range or array of base/range
-                if (_postgresTypes.ByEDBDbType.TryGetValue(EDBDbType, out var postgresType))
+                if (PostgresTypes.ByEDBDbType.TryGetValue(EDBDbType, out var postgresType))
                     return postgresType.Activate(this);
 
                 // We don't have a backend type for this EDBDbType. This could be because it's not yet supported by
-                //  EnterpriseDB.EDBClient, or that the type is missing in the database (old PG, missing extension...)
+                // EnterpriseDB.EDBClient, or that the type is missing in the database (old PG, missing extension...)
                 if (!HandlerTypesByNpsgqlDbType.TryGetValue(EDBDbType, out var typeAndMapping))
-                    throw new NotSupportedException("This EDBDbType isn't supported in  EnterpriseDB.EDBClient yet: " + EDBDbType);
+                    throw new NotSupportedException("This EDBDbType isn't supported in EnterpriseDB.EDBClient yet: " + EDBDbType);
                 throw new EDBException($"The PostgreSQL type '{typeAndMapping.Mapping.PgName}', mapped to EDBDbType '{EDBDbType}' isn't present in your database. " +
                                            "You may need to install an extension or upgrade to a newer version.");
             }
@@ -543,9 +551,9 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
             {
                 if (ByDbType.TryGetValue(dbType, out var handler))
                     return handler;
-                if (_postgresTypes.ByDbType.TryGetValue(dbType, out var postgresType))
+                if (PostgresTypes.ByDbType.TryGetValue(dbType, out var postgresType))
                     return postgresType.Activate(this);
-                throw new NotSupportedException("This DbType is not supported in  EnterpriseDB.EDBClient: " + dbType);
+                throw new NotSupportedException("This DbType is not supported in EnterpriseDB.EDBClient: " + dbType);
             }
         }
 
@@ -582,7 +590,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                     return handler;
 
                 // Try to find the backend type by a simple lookup on the given CLR type, this will handle base types.
-                if (_postgresTypes.ByClrType.TryGetValue(type, out var postgresType))
+                if (PostgresTypes.ByClrType.TryGetValue(type, out var postgresType))
                     return postgresType.Activate(this);
 
                 // Try to see if it is an array type
@@ -605,17 +613,17 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                     // Special check for byte[] - bytea not array of int2
                     if (type == typeof(byte[]))
                     {
-                        if (!_postgresTypes.ByClrType.TryGetValue(typeof(byte[]), out var byteaPostgresType))
+                        if (!PostgresTypes.ByClrType.TryGetValue(typeof(byte[]), out var byteaPostgresType))
                             throw new EDBException("The PostgreSQL 'bytea' type is missing");
                         return byteaPostgresType.Activate(this);
                     }
 
                     // Get the elements backend type and activate its array backend type
-                    if (!_postgresTypes.ByClrType.TryGetValue(arrayElementType, out var elementPostgresType))
+                    if (!PostgresTypes.ByClrType.TryGetValue(arrayElementType, out var elementPostgresType))
                     {
                         if (arrayElementType.GetTypeInfo().IsEnum)
-                            throw new NotSupportedException($"The CLR enum type {arrayElementType.Name} must be mapped with  EnterpriseDB.EDBClient before usage, please refer to the documentation.");
-                        throw new NotSupportedException($"The CLR type {arrayElementType} isn't supported by  EnterpriseDB.EDBClient or your PostgreSQL. " +
+                            throw new NotSupportedException($"The CLR enum type {arrayElementType.Name} must be mapped with EnterpriseDB.EDBClient before usage, please refer to the documentation.");
+                        throw new NotSupportedException($"The CLR type {arrayElementType} isn't supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
                                                          "If you wish to map it to a PostgreSQL composite type you need to register it before usage, please refer to the documentation.");
                     }
 
@@ -628,7 +636,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
                 // Range type which hasn't yet been set up
                 if (type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(EDBRange<>))
                 {
-                    if (!_postgresTypes.ByClrType.TryGetValue(type.GetGenericArguments()[0], out var subtypePostgresType) ||
+                    if (!PostgresTypes.ByClrType.TryGetValue(type.GetGenericArguments()[0], out var subtypePostgresType) ||
                         subtypePostgresType.Range == null)
                     {
                         throw new EDBException($"The .NET range type {type.Name} isn't supported in your PostgreSQL, use CREATE TYPE AS RANGE");
@@ -639,12 +647,12 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
 
                 // Nothing worked
                 if (type.GetTypeInfo().IsEnum)
-                    throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with  EnterpriseDB.EDBClient before usage, please refer to the documentation.");
+                    throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with EnterpriseDB.EDBClient before usage, please refer to the documentation.");
 
                 if (typeof(IEnumerable).IsAssignableFrom(type))
-                    throw new NotSupportedException(" EnterpriseDB.EDBClient 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
+                    throw new NotSupportedException("EnterpriseDB.EDBClient 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
 
-                throw new NotSupportedException($"The CLR type {type} isn't supported by  EnterpriseDB.EDBClient or your PostgreSQL. " +
+                throw new NotSupportedException($"The CLR type {type} isn't supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
                                                  "If you wish to map it to a PostgreSQL composite type you need to register it before usage, please refer to the documentation.");
             }
         }
@@ -669,7 +677,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
         internal static EDBDbType ToEDBDbType(DbType dbType)
         {
             if (!DbTypeToEDBDbType.TryGetValue(dbType, out var EDBDbType))
-                throw new NotSupportedException($"The parameter type DbType.{dbType} isn't supported by PostgreSQL or  EnterpriseDB.EDBClient");
+                throw new NotSupportedException($"The parameter type DbType.{dbType} isn't supported by PostgreSQL or EnterpriseDB.EDBClient");
             return EDBDbType;
         }
 
@@ -705,6 +713,10 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
             }
 
             var typeInfo = type.GetTypeInfo();
+
+            var ilist = typeInfo.ImplementedInterfaces.FirstOrDefault(x => x.GetTypeInfo().IsGenericType && x.GetGenericTypeDefinition() == typeof(IList<>));
+            if (ilist != null)
+                return EDBDbType.Array | ToEDBDbType(ilist.GetGenericArguments()[0]);
 
             if (typeInfo.IsEnum)
                 return EDBDbType.Enum;
@@ -850,7 +862,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
             if (i == -1)
             {
                 // No dot, this is a partial type name
-                if (!_postgresTypes.ByName.TryGetValue(pgName, out postgresType))
+                if (!PostgresTypes.ByName.TryGetValue(pgName, out postgresType))
                     throw new EDBException($"A PostgreSQL type with the name {pgName} was not found in the database");
                 if (postgresType == null)
                     throw new EDBException($"More than one PostgreSQL type was found with the name {pgName}, please specify a full name including schema");
@@ -858,7 +870,7 @@ WHERE a.typtype = 'b' AND b.typname = @name{(withSchema ? " AND ns.nspname = @sc
             }
 
             // Full type name with namespace
-            if (!_postgresTypes.ByFullName.TryGetValue(pgName, out postgresType))
+            if (!PostgresTypes.ByFullName.TryGetValue(pgName, out postgresType))
                 throw new Exception($"A PostgreSQL type with the name {pgName} was not found in the database");
             return postgresType;
         }

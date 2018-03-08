@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -29,13 +29,13 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 using System.Runtime.Serialization;
 #endif
 
 #pragma warning disable CA1032
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// The exception that is thrown when the PostgreSQL backend reports errors (e.g. query
@@ -44,13 +44,13 @@ namespace  EnterpriseDB.EDBClient
     /// <remarks>
     /// This exception only corresponds to a PostgreSQL-delivered error.
     /// Other errors (e.g. network issues) will be raised via <see cref="EDBException"/>,
-    /// and purely  EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
+    /// and purely EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
     /// via the standard CLR exceptions (e.g. ArgumentException).
     /// 
     /// See http://www.postgresql.org/docs/current/static/errcodes-appendix.html,
     /// http://www.postgresql.org/docs/current/static/protocol-error-fields.html
     /// </remarks>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
     [Serializable]
 #endif
     public sealed class PostgresException : EDBException
@@ -236,6 +236,41 @@ namespace  EnterpriseDB.EDBClient
         public override string Message => SqlState + ": " + MessageText;
 
         /// <summary>
+        /// Specifies whether the exception is considered transient, that is, whether retrying to operation could
+        /// succeed (e.g. a network error). Check <see cref="SqlState"/>.
+        /// </summary>
+        public override bool IsTransient
+        {
+            get
+            {
+                switch (SqlState)
+                {
+                case "53000":   //insufficient_resources
+                case "53100":   //disk_full
+                case "53200":   //out_of_memory
+                case "53300":   //too_many_connections
+                case "53400":   //configuration_limit_exceeded
+                case "57P03":   //cannot_connect_now
+                case "58000":   //system_error
+                case "58030":   //io_error
+                case "40001":   //serialization_error
+                case "55P03":   //lock_not_available
+                case "55006":   //object_in_use
+                case "55000":   //object_not_in_prerequisite_state
+                case "08000":   //connection_exception
+                case "08003":   //connection_does_not_exist
+                case "08006":   //connection_failure
+                case "08001":   //sqlclient_unable_to_establish_sqlconnection
+                case "08004":   //sqlserver_rejected_establishment_of_sqlconnection
+                case "08007":   //transaction_resolution_unknown
+                    return true;
+                default:
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Returns the statement which triggered this exception.
         /// </summary>
         public EDBStatement Statement { get; internal set; }
@@ -262,7 +297,7 @@ namespace  EnterpriseDB.EDBClient
         }
 
         #region Serialization
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         PostgresException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             Severity         = (string)info.GetValue("Severity",         typeof(string));

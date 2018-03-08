@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -26,9 +26,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
-using  EnterpriseDB.EDBClient.TypeHandlers;
+using EnterpriseDB.EDBClient.TypeHandlers;
 
-namespace  EnterpriseDB.EDBClient.BackendMessages
+namespace EnterpriseDB.EDBClient.BackendMessages
 {
     /// <summary>
     /// A RowDescription message sent from the backend.
@@ -49,14 +49,14 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             _caseInsensitiveNameIndex = new Dictionary<string, int>(KanaWidthCaseInsensitiveComparer.Instance);
         }
 
-        internal RowDescriptionMessage Load(ReadBuffer buf, TypeHandlerRegistry typeHandlerRegistry, bool isCallableStmt)
+        internal RowDescriptionMessage Load(ReadBuffer buf, TypeHandlerRegistry typeHandlerRegistry, bool isCallableStmt)//EnterpriseDB Team
         {
             Fields.Clear();
             _nameIndex.Clear();
             _caseInsensitiveNameIndex.Clear();
 
             var numFields = buf.ReadInt16();
-            if (isCallableStmt != true)
+            if (isCallableStmt != true)//EnterpriseDB Team
             {
                 for (var i = 0; i != numFields; ++i)
             {
@@ -82,7 +82,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                 }
             }
             }
-            else
+            else//EnterpriseDB Team
             {
                 for (var i = 0; i != numFields; ++i)
                 {
@@ -125,7 +125,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             return this;
         }
 
-        public void AddReturnData(FieldDescription fd)
+        public void AddReturnData(FieldDescription fd)//EnterpriseDB Team
         {
 
             FieldDescription[] fdData = new FieldDescription[Fields.Count + 1];
@@ -143,6 +143,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                 Fields.Add(fdData[i]);
             //  Fields =(FieldDescription) fdData;
         }
+
 
         internal FieldDescription this[int index] => Fields[index];
 
@@ -179,10 +180,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                 => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth) == 0;
             public int GetHashCode([NotNull] string o)
             {
-#if NET45 || NET451
-                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth).GetHashCode();
-#else
+#if NETSTANDARD1_3
                 return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth);
+#else
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth).GetHashCode();
 #endif
             }
         }
@@ -195,10 +196,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
                 => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase) == 0;
             public int GetHashCode([NotNull] string o)
             {
-#if NET45 || NET451
-                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
-#else
+#if NETSTANDARD1_3
                 return CompareInfo.GetHashCode(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase);
+#else
+                return CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase).GetHashCode();
 #endif
             }
         }
@@ -230,7 +231,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
             ResolveHandler();
         }
 
-        internal void PopulateCallableStmt(
+        internal void PopulateCallableStmt(//EnterpriseDB Team
             TypeHandlerRegistry typeHandlerRegistry, string name, short retIndex, uint typoid,
              short typeSize, int typeModifier, FormatCode formatCode
         )
@@ -273,10 +274,8 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal uint TableOID { get; set; }
 
-        /// <summary>
         /// /// Incase of callable statements we should store the returning index on returned parameters.
-        /// </summary>
-        internal short ReturningIndex { get; set; }
+        internal short ReturningIndex { get; set; }//EnterpriseDB Team
 
         /// <summary>
         /// If the field can be identified as a column of a specific table, the attribute number of the column; otherwise zero.
@@ -290,7 +289,7 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal FormatCode FormatCode
         {
-            get { return _formatCode; }
+            get => _formatCode;
             set
             {
                 _formatCode = value;
@@ -301,10 +300,10 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         FormatCode _formatCode;
 
         /// <summary>
-        /// The  EnterpriseDB.EDBClient type handler assigned to handle this field.
+        /// The EnterpriseDB.EDBClient type handler assigned to handle this field.
         /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
-        public TypeHandler Handler { get; set; }
+        public TypeHandler Handler { get; set; }//EnterpriseDB Team
 
         /// <summary>
         /// The type handler resolved for this field, regardless of whether it's binary or text.

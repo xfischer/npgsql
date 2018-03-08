@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient.NameTranslation
+namespace EnterpriseDB.EDBClient.NameTranslation
 {
     /// <summary>
     /// A name translator which preserves CLR names (e.g. SomeClass) when mapping names to the database.

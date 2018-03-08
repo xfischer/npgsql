@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     ///<summary>
     /// This class represents a parameter to a command that will be sent to server
@@ -82,7 +82,7 @@ namespace  EnterpriseDB.EDBClient
         {
             SourceColumn = string.Empty;
             Direction = ParameterDirection.Input;
-#if NET45 || NET451
+#if !NETSTANDARD1_3
             SourceVersion = DataRowVersion.Current;
 #endif
         }
@@ -182,7 +182,7 @@ namespace  EnterpriseDB.EDBClient
             SourceColumn = sourceColumn;
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Initializes a new instance of the <see cref="EDBParameter">EDBParameter</see>.
         /// </summary>
@@ -261,7 +261,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <value>An <see cref="System.Object">Object</see> that is the value of the parameter.
         /// The default value is null.</value>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         [TypeConverter(typeof(StringConverter)), Category("Data")]
 #endif
         public override object Value
@@ -494,7 +494,7 @@ namespace  EnterpriseDB.EDBClient
         [Category("Data")]
         public override string SourceColumn { get; set; }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Gets or sets the <see cref="System.Data.DataRowVersion">DataRowVersion</see>
         /// to use when loading <see cref="EDBParameter.Value">Value</see>.
@@ -616,7 +616,7 @@ namespace  EnterpriseDB.EDBClient
 
         internal int ValidateAndGetLength()
         {
-            if (Direction == ParameterDirection.Input)
+            if (Direction == ParameterDirection.Input)//EnterpriseDB Team
                 if (_value == null)
                 throw new InvalidCastException($"Parameter {ParameterName} must be set");
             if (_value is DBNull)
@@ -635,11 +635,10 @@ namespace  EnterpriseDB.EDBClient
         {
             Handler = null;
         }
-
         ///<summary>
         /// Get param direction
         /// </summary>
-        public enum EDBParameterDirection
+        public enum EDBParameterDirection //EnterpriseDB Team
         {
             /// <summary>
             /// unknown, Input 
@@ -662,7 +661,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Get param OID
         /// </summary>
-        public enum EDBParameterOID
+        public enum EDBParameterOID //EnterpriseDB Team
         {
             /// <summary>
             /// 
@@ -804,7 +803,7 @@ namespace  EnterpriseDB.EDBClient
         /// Get EDB param direction
         /// </summary>
 
-        public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)
+        public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)//EnterpriseDB Team
         {
             switch (direction)
             {
@@ -822,7 +821,7 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Get param to OID
         /// </summary>
-        public static EDBParameterOID ParamToOid(String param_name)
+        public static EDBParameterOID ParamToOid(String param_name)//EnterpriseDB Team
         {
             /* EDB Team
              * Function Returns OID of datatype
@@ -918,12 +917,7 @@ namespace  EnterpriseDB.EDBClient
                     return EDBParameterOID.Unknown;
             }
         }
-
-
-
-
-
-
+        
         /// <summary>
         /// Reset DBType.
         /// </summary>
@@ -969,7 +963,7 @@ namespace  EnterpriseDB.EDBClient
                 IsNullable = IsNullable,
                 _name = _name,
                 SourceColumn = SourceColumn,
-#if NET45 || NET451
+#if !NETSTANDARD1_3
                 SourceVersion = SourceVersion,
 #endif
                 _value = _value,
@@ -980,7 +974,7 @@ namespace  EnterpriseDB.EDBClient
             return clone;
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         object ICloneable.Clone()
         {
             return Clone();

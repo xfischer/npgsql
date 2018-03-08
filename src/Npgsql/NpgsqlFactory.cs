@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -26,12 +26,12 @@ using System.Data.Common;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
-    /// A factory to create instances of various  EnterpriseDB.EDBClient objects.
+    /// A factory to create instances of various EnterpriseDB.EDBClient objects.
     /// </summary>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
     [Serializable]
 #endif
     public sealed class EDBFactory : DbProviderFactory, IServiceProvider
@@ -64,7 +64,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         [NotNull] public override DbConnectionStringBuilder CreateConnectionStringBuilder() => new EDBConnectionStringBuilder();
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Returns a strongly typed <see cref="DbCommandBuilder"/> instance.
         /// </summary>
@@ -89,7 +89,7 @@ namespace  EnterpriseDB.EDBClient
             if (serviceType == null)
                 throw new ArgumentNullException(nameof(serviceType));
 
-            // In legacy Entity Framework, this is the entry point for obtaining  EnterpriseDB.EDBClient's
+            // In legacy Entity Framework, this is the entry point for obtaining EnterpriseDB.EDBClient's
             // implementation of DbProviderServices. We use reflection for all types to
             // avoid any dependencies on EF stuff in this project.
 
@@ -99,7 +99,7 @@ namespace  EnterpriseDB.EDBClient
                 if (_legacyEntityFrameworkServices != null)
                     return _legacyEntityFrameworkServices;
 
-                // First time, attempt to find the EntityFramework5. EnterpriseDB.EDBClient assembly and load the type via reflection
+                // First time, attempt to find the EntityFramework5.EnterpriseDB.EDBClient assembly and load the type via reflection
                 var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
                 assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
                 Assembly npgsqlEfAssembly;
@@ -110,7 +110,8 @@ namespace  EnterpriseDB.EDBClient
                 }
 
                 Type npgsqlServicesType;
-                if((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null)
+                //EnterpriseDB Team
+                if ((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null)
                     throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- NULL EnterprirDEB.EDBServices!");
                 if (npgsqlServicesType.GetProperty("Instance") == null)
                     throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type-- GetProperty(Instance) is NULL !");

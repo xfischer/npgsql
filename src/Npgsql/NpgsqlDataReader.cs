@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -41,7 +41,7 @@ using EnterpriseDB.EDBClient.Schema;
 using EnterpriseDB.EDBClient.TypeHandlers;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Reads a forward-only stream of rows from a data source.
@@ -77,9 +77,9 @@ namespace  EnterpriseDB.EDBClient
         RowDescriptionMessage _rowDescription;
 
         [CanBeNull]
-        DataRowMessage _row;
-        DataRowMessage _outRow;
-        DataRowMessage _tempDataRow;
+        DataRowMessage _row;//EnterpriseDB Team
+        DataRowMessage _outRow;//EnterpriseDB Team
+        DataRowMessage _tempDataRow;//EnterpriseDB Team
 
         //  RowDescriptionMessage _return_descrition;
         RowDescriptionMessage _callable_descrition; //EDB
@@ -131,7 +131,7 @@ namespace  EnterpriseDB.EDBClient
         /// once for populating the output parameters and once for the actual result set traversal. So in this
         /// case we can't be sequential.
         /// </summary>
-        void PopulateNotPreparedOutputParameters()
+        void PopulateNotPreparedOutputParameters()//EnterpriseDB Team
         {
             Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
             Debug.Assert(_statementIndex == 0);
@@ -170,7 +170,7 @@ namespace  EnterpriseDB.EDBClient
             _row = null;
         }
 
-        void PopulateOutputParameters()
+        void PopulateOutputParameters()//EnterpriseDB Team
         {
             bool paramdata = false;
             bool retDataFetched = false;
@@ -180,7 +180,7 @@ namespace  EnterpriseDB.EDBClient
 
             var asDataRow = _pendingMessage as DataRowMessage;
             if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
-            return;
+                return;
 
             while (_row == null)
             {
@@ -228,7 +228,8 @@ namespace  EnterpriseDB.EDBClient
                             if (Command.Parameters.Any(p => p.IsOutputDirection))
                             {
                                 _callable_descrition = (RowDescriptionMessage)msg;
-                            } else
+                            }
+                            else
                             {
                                 _callable_descrition = _rowDescription;
                             }
@@ -246,7 +247,8 @@ namespace  EnterpriseDB.EDBClient
                         case BackendMessageCode.BindComplete:
                         case BackendMessageCode.ParameterDescription:
                         case BackendMessageCode.NoData:
-                            if (!Command.Parameters.Any(p => p.IsOutputDirection)) {
+                            if (!Command.Parameters.Any(p => p.IsOutputDirection))
+                            {
                                 _callable_descrition = _rowDescription;
                             }
                             continue;
@@ -272,8 +274,8 @@ namespace  EnterpriseDB.EDBClient
             {
                 Debug.Assert(_rowDescription.NumFields == _row.NumColumns);
             }
-                
-      //      if (IsCaching) { _rowCache.Clear(); }
+
+            //      if (IsCaching) { _rowCache.Clear(); }
 
             var pending = new Queue<EDBParameter>();
             var taken = new List<int>();
@@ -334,11 +336,8 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="cancellationToken">Ignored for now.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
-        {
-            using (NoSynchronizationContextScope.Enter())
-                return await Read(true);
-        }
+        public override Task<bool> ReadAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () => await Read(true));
 
         async Task<bool> Read(bool async)
         {
@@ -427,6 +426,8 @@ namespace  EnterpriseDB.EDBClient
                 goto case BackendMessageCode.EmptyQueryResponse;
 
             case BackendMessageCode.EmptyQueryResponse:
+                if (!_hasRows.HasValue)
+                    _hasRows = false;
                 _state = ReaderState.BetweenResults;
                 return ReadResult.RowNotRead;
 
@@ -455,22 +456,13 @@ namespace  EnterpriseDB.EDBClient
         {
             try
             {
-              //  try
-              //  {
-                    return (IsSchemaOnly ? NextResultSchemaOnly(false) : NextResult(false))
-                   .GetAwaiter().GetResult();
-             //   }
-                //catch (Exception ex)
-                //{
-                //    ex.ToString();
-                //    return (IsSchemaOnly ? NextResultSchemaOnly(false) : NextResult(false))
-                //   .GetAwaiter().GetResult();
-                //}
+                return (IsSchemaOnly ? NextResultSchemaOnly(false) : NextResult(false))
+                    .GetAwaiter().GetResult();
             }
             catch (PostgresException e)
             {
                 _state = ReaderState.Consumed;
-                if ((_statementIndex >= 0) && (_statementIndex < _statements.Count))
+                if (_statementIndex >= 0 && _statementIndex < _statements.Count)
                     e.Statement = _statements[_statementIndex];
                 throw;
             }
@@ -482,26 +474,26 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="cancellationToken">Currently ignored.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
-        {
-            try
+        public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
             {
-                using (NoSynchronizationContextScope.Enter())
+                try
+                {
                     return IsSchemaOnly ? await NextResultSchemaOnly(true) : await NextResult(true);
-            }
-            catch (PostgresException e)
-            {
-                _state = ReaderState.Consumed;
-                if ((_statementIndex >= 0) && (_statementIndex < _statements.Count))
-                    e.Statement = _statements[_statementIndex];
-                throw;
-            }
-        }
+                }
+                catch (PostgresException e)
+                {
+                    _state = ReaderState.Consumed;
+                    if (_statementIndex >= 0 && _statementIndex < _statements.Count)
+                        e.Statement = _statements[_statementIndex];
+                    throw;
+                }
+            });
 
-        async Task<bool> NextResult(bool async)
+        async Task<bool> NextResult(bool async, bool isConsuming = false)
         {
-            var completedMsg = (IBackendMessage)null;
             Debug.Assert(!IsSchemaOnly);
+            var completedMsg = (IBackendMessage)null;//EnterpriseDB Team
 
             // If we're in the middle of a resultset, consume it
             switch (_state)
@@ -512,17 +504,14 @@ namespace  EnterpriseDB.EDBClient
                     _row = null;
                 }
 
-                    // TODO: Duplication with SingleResult handling above
-                    if (Command.CommandType == CommandType.StoredProcedure)
-                        completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
-
-                    else
-                        completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.EmptyQueryResponse, async);
-
+                if (Command.CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+                    completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
+                else
+                    completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.EmptyQueryResponse, async);
                 ProcessMessage(completedMsg);
                 break;
 
-            case ReaderState.BetweenResults:
+                case ReaderState.BetweenResults:
                 break;
 
             case ReaderState.Consumed:
@@ -535,10 +524,9 @@ namespace  EnterpriseDB.EDBClient
             Debug.Assert(_state == ReaderState.BetweenResults);
             _hasRows = null;
 
-            if ((_behavior & CommandBehavior.SingleResult) != 0 && _statementIndex == 0)
+            if ((_behavior & CommandBehavior.SingleResult) != 0 && _statementIndex == 0 && !isConsuming)
             {
-                if (_state == ReaderState.BetweenResults)
-                    await Consume(async);
+                await Consume(async);
                 return false;
             }
 
@@ -607,7 +595,7 @@ namespace  EnterpriseDB.EDBClient
                 // Read the next message and store it in _pendingRow, this is to make sure that if the
                 // statement generated an error, it gets thrown here and not on the first call to Read().
 
-                if (_statementIndex == 0 && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))
+                if (_statementIndex == 0 && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//EnterpriseDB Team
                 {
                     // If output parameters are present and this is the first row of the first resultset,
                     // we must read it in non-sequential mode because it will be traversed twice (once
@@ -825,6 +813,13 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         async Task Consume(bool async)
         {
+            //// Skip over the other result sets. Note that this does tally records affected
+            //// from CommandComplete messages, and properly sets state for auto-prepared statements
+            //if (IsSchemaOnly)
+            //    while (await NextResultSchemaOnly(async)) {}
+            //else
+            //    while (await NextResult(async, true)) {}
+            //EnterpriseDB Team
             if (IsSchemaOnly && _statements.All(s => s.IsPrepared))
             {
                 _state = ReaderState.Consumed;
@@ -843,14 +838,14 @@ namespace  EnterpriseDB.EDBClient
                 var msg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
                 switch (msg.Code)
                 {
-                case BackendMessageCode.CompletedResponse:
-                    ProcessMessage(msg);
-                    continue;
-                case BackendMessageCode.ReadyForQuery:
-                    ProcessMessage(msg);
-                    return;
-                default:
-                    throw new EDBException("Unexpected message of type " + msg.Code);
+                    case BackendMessageCode.CompletedResponse:
+                        ProcessMessage(msg);
+                        continue;
+                    case BackendMessageCode.ReadyForQuery:
+                        ProcessMessage(msg);
+                        return;
+                    default:
+                        throw new EDBException("Unexpected message of type " + msg.Code);
                 }
             }
         }
@@ -861,16 +856,21 @@ namespace  EnterpriseDB.EDBClient
         protected override void Dispose(bool disposing) => Close();
 
         /// <summary>
-        /// Closes the <see cref="EDBDataReader"/> object.
+        /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
         /// </summary>
-#if NET45 || NET451
-        public override void Close()
-#else
+#if NETSTANDARD1_3
         public void Close()
+#else
+        public override void Close()
 #endif
-            => Close(false);
+            => Close(false, false).GetAwaiter().GetResult();
 
-        internal void Close(bool connectionClosing)
+        /// <summary>
+        /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
+        /// </summary>
+        public Task CloseAsync() => Close(false, true);
+
+        internal async Task Close(bool connectionClosing, bool async)
         {
             if (_state == ReaderState.Closed)
                 return;
@@ -889,18 +889,21 @@ namespace  EnterpriseDB.EDBClient
             }
 
             if (_state != ReaderState.Consumed)
-                Consume(false).GetAwaiter().GetResult();
+                await Consume(async);
 
-            Cleanup(connectionClosing);
+            await Cleanup(async, connectionClosing);
         }
 
-        internal void Cleanup(bool connectionClosing=false)
+        internal async Task Cleanup(bool async, bool connectionClosing=false)
         {
             Log.Trace("Cleaning up reader", _connector.Id);
 
             // Make sure the send task for this command, which may have executed asynchronously and in
             // parallel with the reading, has completed, throwing any exceptions it generated.
-            _sendTask.GetAwaiter().GetResult();
+            if (async)
+                await _sendTask;
+            else
+                _sendTask.GetAwaiter().GetResult();
 
             _state = ReaderState.Closed;
             Command.State = CommandState.Idle;
@@ -1051,7 +1054,7 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDate"/>,
-        ///  EnterpriseDB.EDBClient's provider-specific type for dates.
+        /// EnterpriseDB.EDBClient's provider-specific type for dates.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's date type represents dates from 4713 BC to 5874897 AD, while .NET's DateTime
@@ -1079,7 +1082,7 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBTimeSpan"/>,
-        ///  EnterpriseDB.EDBClient's provider-specific type for time spans.
+        /// EnterpriseDB.EDBClient's provider-specific type for time spans.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's interval type has has a resolution of 1 microsecond and ranges from
@@ -1096,7 +1099,7 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDateTime"/>,
-        ///  EnterpriseDB.EDBClient's provider-specific type for date/time timestamps. Note that this type covers
+        /// EnterpriseDB.EDBClient's provider-specific type for date/time timestamps. Note that this type covers
         /// both PostgreSQL's "timestamp with time zone" and "timestamp without time zone" types,
         /// which differ only in how they are converted upon input/output.
         /// </summary>
@@ -1135,7 +1138,8 @@ namespace  EnterpriseDB.EDBClient
                 throw new IndexOutOfRangeException($"length must be between {0} and {buffer.Length - bufferOffset}");
 
             var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ByteaHandler;
+            var handler = fieldDescription.Handler as ByteaHandler ??
+                (fieldDescription.Handler as PostgisGeometryHandler)?.ByteaHandler;
             if (handler == null)
                 throw new InvalidCastException("GetBytes() not supported for type " + fieldDescription.Name);
 
@@ -1163,6 +1167,29 @@ namespace  EnterpriseDB.EDBClient
             row.SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
             row.CheckNotNull();
             return row.GetStream();
+        }
+
+        /// <summary>
+        /// Retrieves data as a <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The returned object.</returns>
+        public Task<Stream> GetStreamAsync(int ordinal)
+        {
+            CheckRowAndOrdinal(ordinal);
+
+            var fieldDescription = _rowDescription[ordinal];
+            var handler = fieldDescription.Handler as ByteaHandler;
+            if (handler == null)
+                throw new InvalidCastException("GetStream() not supported for type " + fieldDescription.Handler.PgDisplayName);
+
+            return SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                var row = Row;
+                await row.SeekToColumnStart(ordinal, false);
+                row.CheckNotNull();
+                return row.GetStream();
+            });
         }
 
         #endregion
@@ -1220,6 +1247,29 @@ namespace  EnterpriseDB.EDBClient
             return handler.GetTextReader(row.GetStream());
         }
 
+        /// <summary>
+        /// Retrieves data as a <see cref="TextReader"/>.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The returned object.</returns>
+        public Task<TextReader> GetTextReaderAsync(int ordinal)
+        {
+            CheckRowAndOrdinal(ordinal);
+
+            var fieldDescription = _rowDescription[ordinal];
+            var handler = fieldDescription.Handler as ITextReaderHandler;
+            if (handler == null)
+                throw new InvalidCastException("GetTextReader() not supported for type " + fieldDescription.Handler.PgDisplayName);
+
+            return SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                var row = Row;
+                await row.SeekToColumnStart(ordinal, false);
+                row.CheckNotNull();
+                return handler.GetTextReader(row.GetStream());
+            });
+        }
+
         #endregion
 
         #region IsDBNull
@@ -1238,11 +1288,8 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="ordinal">The zero-based column to be retrieved.</param>
         /// <param name="cancellationToken">Currently ignored.</param>
         /// <returns><b>true</b> if the specified column value is equivalent to <see cref="DBNull"/> otherwise <b>false</b>.</returns>
-        public override async Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
-        {
-            using (NoSynchronizationContextScope.Enter())
-                return await IsDBNull(ordinal, true);
-        }
+        public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () => await IsDBNull(ordinal, true));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // ReSharper disable once InconsistentNaming
@@ -1399,11 +1446,8 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="ordinal">The column to be retrieved.</param>
         /// <param name="cancellationToken">Currently ignored.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public override async Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
-        {
-            using (NoSynchronizationContextScope.Enter())
-                return await GetFieldValue<T>(ordinal, true);
-        }
+        public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () => await GetFieldValue<T>(ordinal, true));
 
         async ValueTask<T> GetFieldValue<T>(int ordinal, bool async)
         {
@@ -1493,10 +1537,10 @@ namespace  EnterpriseDB.EDBClient
         /// <returns>An <see cref="IEnumerator"/> that can be used to iterate through the rows in the data reader.</returns>
         public override IEnumerator GetEnumerator()
         {
-#if NET45 || NET451
-            return new DbEnumerator(this);
-#else
+#if NETSTANDARD1_3
             throw new NotSupportedException("GetEnumerator not yet supported in .NET Core");
+#else
+            return new DbEnumerator(this);
 #endif
         }
 
@@ -1544,7 +1588,7 @@ namespace  EnterpriseDB.EDBClient
         #endregion
 
         #region Schema metadata table
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 
         /// <summary>
         /// Returns a System.Data.DataTable that describes the column metadata of the DataReader.
@@ -1557,17 +1601,23 @@ namespace  EnterpriseDB.EDBClient
 
             var table = new DataTable("SchemaTable");
 
-            table.Columns.Add("AllowDBNull", typeof(bool));
+            // Note: column order is important to match SqlClient's, some ADO.NET users appear
+            // to assume ordering (see #1671)
+            table.Columns.Add("ColumnName", typeof(string));
+            table.Columns.Add("ColumnOrdinal", typeof(int));
+            table.Columns.Add("ColumnSize", typeof(int));
+            table.Columns.Add("NumericPrecision", typeof(int));
+            table.Columns.Add("NumericScale", typeof(int));
+            table.Columns.Add("IsUnique", typeof(bool));
+            table.Columns.Add("IsKey", typeof(bool));
+            table.Columns.Add("BaseServerName", typeof(string));
             table.Columns.Add("BaseCatalogName", typeof(string));
             table.Columns.Add("BaseColumnName", typeof(string));
             table.Columns.Add("BaseSchemaName", typeof(string));
             table.Columns.Add("BaseTableName", typeof(string));
-            table.Columns.Add("ColumnName", typeof(string));
-            table.Columns.Add("ColumnOrdinal", typeof(int));
-            table.Columns.Add("ColumnSize", typeof(int));
             table.Columns.Add("DataType", typeof(Type));
-            table.Columns.Add("IsUnique", typeof(bool));
-            table.Columns.Add("IsKey", typeof(bool));
+            table.Columns.Add("AllowDBNull", typeof(bool));
+            table.Columns.Add("ProviderType", typeof(Type));
             table.Columns.Add("IsAliased", typeof(bool));
             table.Columns.Add("IsExpression", typeof(bool));
             table.Columns.Add("IsIdentity", typeof(bool));
@@ -1576,35 +1626,35 @@ namespace  EnterpriseDB.EDBClient
             table.Columns.Add("IsHidden", typeof(bool));
             table.Columns.Add("IsLong", typeof(bool));
             table.Columns.Add("IsReadOnly", typeof(bool));
-            table.Columns.Add("NumericPrecision", typeof(int));
-            table.Columns.Add("NumericScale", typeof(int));
             table.Columns.Add("ProviderSpecificDataType", typeof(Type));
-            table.Columns.Add("ProviderType", typeof(Type));
+            table.Columns.Add("DataTypeName", typeof(string));
 
             foreach (var column in GetColumnSchema())
             {
                 var row = table.NewRow();
 
-                row["AllowDBNull"] = (object)column.AllowDBNull ?? DBNull.Value;
-                row["BaseColumnName"] = column.BaseColumnName;
-                row["BaseCatalogName"] = column.BaseCatalogName;
-                row["BaseSchemaName"] = column.BaseSchemaName;
-                row["BaseTableName"] = column.BaseTableName;
                 row["ColumnName"] = column.ColumnName;
                 row["ColumnOrdinal"] = column.ColumnOrdinal ?? -1;
                 row["ColumnSize"] = column.ColumnSize ?? -1;
-                row["DataType"] = row["ProviderType"] = column.DataType; // Non-standard
+                row["NumericPrecision"] = column.NumericPrecision ?? 0;
+                row["NumericScale"] = column.NumericScale ?? 0;
                 row["IsUnique"] = column.IsUnique == true;
                 row["IsKey"] = column.IsKey == true;
+                row["BaseServerName"] = "";
+                row["BaseCatalogName"] = column.BaseCatalogName;
+                row["BaseColumnName"] = column.BaseColumnName;
+                row["BaseSchemaName"] = column.BaseSchemaName;
+                row["BaseTableName"] = column.BaseTableName;
+                row["DataType"] = row["ProviderType"] = column.DataType; // Non-standard
+                row["AllowDBNull"] = (object)column.AllowDBNull ?? DBNull.Value;
                 row["IsAliased"] = column.IsAliased == true;
                 row["IsExpression"] = column.IsExpression == true;
-                row["IsAutoIncrement"] = column.IsAutoIncrement == true;
                 row["IsIdentity"] = column.IsIdentity == true;
+                row["IsAutoIncrement"] = column.IsAutoIncrement == true;
                 row["IsRowVersion"] = false;
                 row["IsHidden"] = column.IsHidden == true;
                 row["IsLong"] = column.IsLong == true;
-                row["NumericPrecision"] = column.NumericPrecision ?? 0;
-                row["NumericScale"] = column.NumericScale ?? 0;
+                row["DataTypeName"] = column.DataTypeName;
 
                 table.Rows.Add(row);
             }

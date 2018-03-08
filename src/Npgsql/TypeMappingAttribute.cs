@@ -7,17 +7,17 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     [MeansImplicitUse]
     class TypeMappingAttribute : Attribute
     {
         /// <summary>
-        /// Maps an  EnterpriseDB.EDBClient type handler to a PostgreSQL type.
+        /// Maps an EnterpriseDB.EDBClient type handler to a PostgreSQL type.
         /// </summary>
         /// <param name="pgName">A PostgreSQL type name as it appears in the pg_type table.</param>
-        /// <param name="npgsqlDbType">
+        /// <param name="eDBDbType">
         /// A member of <see cref="EDBDbType"/> which represents this PostgreSQL type.
         /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.EDBDbType"/> set to
         /// this value will be sent with the type handler mapped by this attribute.
@@ -37,13 +37,13 @@ namespace  EnterpriseDB.EDBClient
         /// When <see cref="EDBParameter.EDBDbType"/> or <see cref="EDBParameter.Value"/>
         /// set, <see cref="EDBParameter.DbType"/> will be set to this value.
         /// </param>
-        internal TypeMappingAttribute(string pgName, EDBDbType? npgsqlDbType, [CanBeNull] DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType? inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType? eDBDbType, [CanBeNull] DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType? inferredDbType)
         {
             if (String.IsNullOrWhiteSpace(pgName))
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
             PgName = pgName;
-            EDBDbType = npgsqlDbType;
+            EDBDbType = eDBDbType;
             DbTypes = dbTypes ?? new DbType[0];
             ClrTypes = clrTypes ?? new Type[0];
             InferredDbType = inferredDbType;

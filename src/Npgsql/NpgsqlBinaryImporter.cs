@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -35,7 +35,7 @@ using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Provides an API for a binary COPY FROM operation, a high-performance data import mechanism to
@@ -89,10 +89,24 @@ namespace  EnterpriseDB.EDBClient
             {
                 _connector.SendQuery(copyFromCommand);
 
-                // TODO: Failure will break the connection (e.g. if we get CopyOutResponse), handle more gracefully
-                var copyInResponse = _connector.ReadExpecting<CopyInResponseMessage>();
-                if (!copyInResponse.IsBinary)
-                    throw new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed", nameof(copyFromCommand));
+                CopyInResponseMessage copyInResponse;
+                var msg = _connector.ReadMessage();
+                switch (msg.Code)
+                {
+                case BackendMessageCode.CopyInResponse:
+                    copyInResponse = (CopyInResponseMessage)msg;
+                    if (!copyInResponse.IsBinary)
+                        throw new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed", nameof(copyFromCommand));
+                    break;
+                case BackendMessageCode.CompletedResponse:
+                    throw new InvalidOperationException(
+                        "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
+                        "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
+                        "Note that your data has been successfully imported/exported.");
+                default:
+                    throw _connector.UnexpectedMessageReceived(msg.Code);
+                }
+
                 NumColumns = copyInResponse.NumColumns;
                 _buf.StartCopyMode();
                 WriteHeader();
@@ -276,7 +290,13 @@ namespace  EnterpriseDB.EDBClient
                 return;
 
             if (_column != -1 && _column != NumColumns)
-                throw new InvalidOperationException("Can't close writer, a row is still in progress, end it first");
+            {
+                Log.Error("Binary importer closed in the middle of a row, cancelling import.");
+                _buf.Clear();
+                Cancel();
+                return;
+            }
+
             WriteTrailer();
             _buf.Flush();
             _buf.EndCopyMode();

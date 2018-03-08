@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -31,7 +31,7 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     // ReSharper disable once UnusedTypeParameter
 #pragma warning disable CA1040
@@ -165,19 +165,18 @@ namespace  EnterpriseDB.EDBClient
                 buf.WriteInt32(-1);
                 return;
             }
-            if (parameter.Direction != System.Data.ParameterDirection.Output)
+            if (parameter.Direction != System.Data.ParameterDirection.Output)//EnterpriseDB Team
             {
                 var elementLen = ValidateAndGetLength(value, parameter);
-                if (buf.WriteSpaceLeft < 4 + elementLen)
-                    await buf.Flush(async, cancellationToken);
-                buf.WriteInt32(elementLen);
-                Write(value, buf, parameter);
-            } else
-            {
-                buf.WriteInt32(-1);
+            if (buf.WriteSpaceLeft < 4 + elementLen)
+                await buf.Flush(async, cancellationToken);
+            buf.WriteInt32(elementLen);
+            Write(value, buf, parameter);
             }
-                
-            
+            else
+            {
+                buf.WriteInt32(-1);//EnterpriseDB Team
+            }
         }
 
         public sealed override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
@@ -196,10 +195,13 @@ namespace  EnterpriseDB.EDBClient
 
             var asTypedHandler = this as ISimpleTypeHandler<T2>;
             if (asTypedHandler == null)
-                throw new InvalidCastException(fieldDescription == null
+            {
+                buf.Skip(len);  // Perform this in sync for performance
+                throw new SafeReadException(new InvalidCastException(fieldDescription == null
                     ? "Can't cast database type to " + typeof(T2).Name
                     : $"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(T2).Name}"
-                );
+                ));
+            }
 
             return asTypedHandler.Read(buf, len, fieldDescription);
         }
@@ -259,14 +261,14 @@ namespace  EnterpriseDB.EDBClient
                 buf.WriteInt32(-1);
                 return;
             }
-            if (parameter != null && parameter.Direction != System.Data.ParameterDirection.Output)
+            if (parameter != null && parameter.Direction != System.Data.ParameterDirection.Output)//EnterpriseDB Team
             {
                 buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
-                await Write(value, buf, lengthCache, parameter, async, cancellationToken);
+            await Write(value, buf, lengthCache, parameter, async, cancellationToken);
             }
             else
-                buf.WriteInt32(-1);
-            
+                buf.WriteInt32(-1);//EnterpriseDB Team
+
         }
 
         protected abstract Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
@@ -280,10 +282,13 @@ namespace  EnterpriseDB.EDBClient
         {
             var asTypedHandler = this as IChunkingTypeHandler<T2>;
             if (asTypedHandler == null)
-                throw new InvalidCastException(fieldDescription == null
+            {
+                buf.Skip(len);  // Perform this in sync for performance
+                throw new SafeReadException(new InvalidCastException(fieldDescription == null
                     ? "Can't cast database type to " + typeof(T2).Name
                     : $"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(T2).Name}"
-                );
+                ));
+            }
 
             return asTypedHandler.Read(buf, len, async, fieldDescription);
         }

@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -26,12 +26,13 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient.BackendMessages
+namespace EnterpriseDB.EDBClient.BackendMessages
 {
     abstract class DataRowMessage : IBackendMessage
     {
         public BackendMessageCode Code => BackendMessageCode.DataRow;
-        internal abstract DataRowMessage Add(DataRowMessage buf);//ZK
+
+        internal abstract DataRowMessage Add(DataRowMessage buf); //EnterpriseDB Team
 
         protected internal ReadBuffer Buffer { get; protected set; }
 
@@ -40,15 +41,13 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
         /// </summary>
         internal int NumColumns;
 
+        internal bool _isReturnRow = true; //EnterpriseDB Team
         /// <summary>
         /// 
         /// </summary>
-        internal bool _isReturnRow = true;
-        /// <summary>
-        /// 
-        /// </summary>
-        internal int _InternalreadPosition;
-        internal int _InternalActaullReadPosition;
+        internal int _InternalreadPosition;//EnterpriseDB Team
+        internal int _InternalActaullReadPosition;//EnterpriseDB Team
+        
         /// <summary>
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1
@@ -69,11 +68,11 @@ namespace  EnterpriseDB.EDBClient.BackendMessages
 
         internal bool IsColumnNull => ColumnLen == -1;
 
-      //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
+        //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
 
         internal abstract DataRowMessage Load(ReadBuffer buf);
-      //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
 
+        //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
 
         /// <summary>
         /// Places our position at the beginning of the given column, after the 4-byte length.

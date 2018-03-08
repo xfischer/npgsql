@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a .pgpass file, which contains passwords for noninteractive connections

@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -31,7 +31,7 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Provides a simple way to create and manage the contents of connection strings used by
@@ -66,7 +66,7 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         public EDBConnectionStringBuilder() { Init(); }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Initializes a new instance of the EDBConnectionStringBuilder class, optionally using ODBC rules for quoting values.
         /// </summary>
@@ -284,10 +284,10 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Connection
 
         /// <summary>
-        /// The hostname or IP address of the EnterpriseDB Postgres server to connect to.
+        /// The hostname or IP address of the PostgreSQL server to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The hostname or IP address of the EnterpriseDB Postgres server to connect to.")]
+        [Description("The hostname or IP address of the PostgreSQL server to connect to.")]
         [DisplayName("Host")]
         [EDBConnectionStringProperty("Server")]
         [CanBeNull]
@@ -303,10 +303,10 @@ namespace  EnterpriseDB.EDBClient
         string _host;
 
         /// <summary>
-        /// The TCP/IP port of the EnterpriseDB Postgres server.
+        /// The TCP/IP port of the PostgreSQL server.
         /// </summary>
         [Category("Connection")]
-        [Description("The TCP port of the EnterpriseDB Postgres server.")]
+        [Description("The TCP port of the PostgreSQL server.")]
         [DisplayName("Port")]
         [EDBConnectionStringProperty]
         [DefaultValue(EDBConnection.DefaultPort)]
@@ -325,10 +325,10 @@ namespace  EnterpriseDB.EDBClient
         int _port;
 
         ///<summary>
-        /// The EnterpriseDB Postgres server database to connect to.
+        /// The PostgreSQL database to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The EnterpriseDB Postgres server database to connect to.")]
+        [Description("The PostgreSQL database to connect to.")]
         [DisplayName("Database")]
         [EDBConnectionStringProperty("DB")]
         [CanBeNull]
@@ -456,10 +456,10 @@ namespace  EnterpriseDB.EDBClient
         string _clientEncoding;
 
         /// <summary>
-        /// Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres server string data.
+        /// Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.
         /// </summary>
         [Category("Connection")]
-        [Description("Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres server string data.")]
+        [Description("Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.")]
         [DisplayName("Encoding")]
         [DefaultValue("UTF8")]
         [EDBConnectionStringProperty]
@@ -534,10 +534,10 @@ namespace  EnterpriseDB.EDBClient
         bool _checkCertificateRevocation;
 
         /// <summary>
-        ///  EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.
+        /// EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.
         /// </summary>
         [Category("Security")]
-        [Description(" EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.")]
+        [Description("EnterpriseDB.EDBClient uses its own internal implementation of TLS/SSL. Turn this on to use .NET SslStream instead.")]
         [DisplayName("Use SSL Stream")]
         [EDBConnectionStringProperty]
         public bool UseSslStream
@@ -564,9 +564,9 @@ namespace  EnterpriseDB.EDBClient
             set
             {
                 // No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
-                // see https://github.com/npgsql/ EnterpriseDB.EDBClient/issues/133
+                // see https://github.com/npgsql/npgsql/issues/133
                 if (value && Type.GetType("Mono.Runtime") != null)
-                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/npgsql/ EnterpriseDB.EDBClient/issues/133)");
+                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/npgsql/npgsql/issues/133)");
                 _integratedSecurity = value;
                 SetValue(nameof(IntegratedSecurity), value);
             }
@@ -580,7 +580,7 @@ namespace  EnterpriseDB.EDBClient
         [Description("The Kerberos service name to be used for authentication.")]
         [DisplayName("Kerberos Service Name")]
         [EDBConnectionStringProperty("Krbsrvname")]
-        [DefaultValue("enterprisedb")]
+        [DefaultValue("postgres")]
         public string KerberosServiceName
         {
             get => _kerberosServiceName;
@@ -816,13 +816,13 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// The database template to specify when creating a database in Entity Framework. If not specified,
-        /// EnterpriseDB Postgres server defaults to "template1".
+        /// PostgreSQL defaults to "template1".
         /// </summary>
         /// <remarks>
         /// http://www.postgresql.org/docs/current/static/manage-ag-templatedbs.html
         /// </remarks>
         [Category("Entity Framework")]
-        [Description("The database template to specify when creating a database in Entity Framework. If not specified, EnterpriseDB Postgres server defaults to \"template1\".")]
+        [Description("The database template to specify when creating a database in Entity Framework. If not specified, PostgreSQL defaults to \"template1\".")]
         [DisplayName("EF Template Database")]
         [EDBConnectionStringProperty]
         public string EntityTemplateDatabase
@@ -838,8 +838,8 @@ namespace  EnterpriseDB.EDBClient
 
         /// <summary>
         /// The database admin to specify when creating and dropping a database in Entity Framework. This is needed because
-        ///  EnterpriseDB.EDBClient needs to connect to a database in order to send the create/drop database command.
-        /// If not specified, defaults to "template1". Check NpgsqlServices.UsingPostgresDBConnection for more information.
+        /// EnterpriseDB.EDBClient needs to connect to a database in order to send the create/drop database command.
+        /// If not specified, defaults to "template1". Check EDBServices.UsingPostgresDBConnection for more information.
         /// </summary>
         [Category("Entity Framework")]
         [Description("The database admin to specify when creating and dropping a database in Entity Framework. If not specified, defaults to \"template1\".")]
@@ -861,11 +861,11 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Advanced
 
         /// <summary>
-        /// The number of seconds of connection inactivity before  EnterpriseDB.EDBClient sends a keepalive query.
+        /// The number of seconds of connection inactivity before EnterpriseDB.EDBClient sends a keepalive query.
         /// Set to 0 (the default) to disable.
         /// </summary>
         [Category("Advanced")]
-        [Description("The number of seconds of connection inactivity before  EnterpriseDB.EDBClient sends a keepalive query.")]
+        [Description("The number of seconds of connection inactivity before EnterpriseDB.EDBClient sends a keepalive query.")]
         [DisplayName("Keepalive")]
         [EDBConnectionStringProperty]
         public int KeepAlive
@@ -883,10 +883,56 @@ namespace  EnterpriseDB.EDBClient
         int _keepAlive;
 
         /// <summary>
-        /// Determines the size of the internal buffer  EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.
+        /// The number of seconds of connection inactivity before a TCP keepalive query is sent.
+        /// Use of this option is discouraged, use <see cref="KeepAlive"/> instead if possible.
+        /// Set to 0 (the default) to disable. Supported only on Windows.
         /// </summary>
         [Category("Advanced")]
-        [Description("Determines the size of the internal buffer  EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.")]
+        [Description("The number of milliseconds of connection inactivity before a TCP keepalive query is sent.")]
+        [DisplayName("TCP Keepalive Time")]
+        [EDBConnectionStringProperty]
+        public int TcpKeepAliveTime
+        {
+            get => _tcpKeepAliveTime;
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "TcpKeepAliveTime can't be negative");
+
+                _tcpKeepAliveTime = value;
+                SetValue(nameof(TcpKeepAliveTime), value);
+            }
+        }
+        int _tcpKeepAliveTime;
+
+        /// <summary>
+        /// The interval, in milliseconds, between when successive keep-alive packets are sent if no acknowledgement is received.
+        /// Defaults to the value of <see cref="TcpKeepAliveTime"/>. <see cref="TcpKeepAliveTime"/> must be non-zero as well.
+        /// Supported only on Windows.
+        /// </summary>
+        [Category("Advanced")]
+        [Description("The interval, in milliseconds, between when successive keep-alive packets are sent if no acknowledgement is received.")]
+        [DisplayName("TCP Keepalive Interval")]
+        [EDBConnectionStringProperty]
+        public int TcpKeepAliveInterval
+        {
+            get => _tcpKeepAliveInterval;
+            set
+            {
+                if (value < 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "TcpKeepAliveInterval can't be negative");
+
+                _tcpKeepAliveInterval = value;
+                SetValue(nameof(TcpKeepAliveInterval), value);
+            }
+        }
+        int _tcpKeepAliveInterval;
+
+        /// <summary>
+        /// Determines the size of the internal buffer EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.
+        /// </summary>
+        [Category("Advanced")]
+        [Description("Determines the size of the internal buffer EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.")]
         [DisplayName("Read Buffer Size")]
         [EDBConnectionStringProperty]
         [DefaultValue(ReadBuffer.DefaultSize)]
@@ -902,10 +948,10 @@ namespace  EnterpriseDB.EDBClient
         int _readBufferSize;
 
         /// <summary>
-        /// Determines the size of the internal buffer  EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.
+        /// Determines the size of the internal buffer EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.
         /// </summary>
         [Category("Advanced")]
-        [Description("Determines the size of the internal buffer  EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.")]
+        [Description("Determines the size of the internal buffer EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.")]
         [DisplayName("Write Buffer Size")]
         [EDBConnectionStringProperty]
         [DefaultValue(WriteBuffer.DefaultSize)]
@@ -1045,7 +1091,7 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Compatibility
 
         /// <summary>
-        /// A compatibility mode for special EnterpriseDB Postgres server types.
+        /// A compatibility mode for special PostgreSQL server types.
         /// </summary>
         [Category("Compatibility")]
         [Description("A compatibility mode for special PostgreSQL server types.")]
@@ -1085,73 +1131,73 @@ namespace  EnterpriseDB.EDBClient
         #region Properties - Obsolete
 
         /// <summary>
-        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
         [DisplayName("Connection Lifetime")]
         [EDBConnectionStringProperty]
         [Obsolete("The ConnectionLifeTime parameter is no longer supported")]
         public int ConnectionLifeTime
         {
             get => 0;
-            set => throw new NotSupportedException("The ConnectionLifeTime parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The ConnectionLifeTime parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
         [DisplayName("Continuous Processing")]
         [EDBConnectionStringProperty]
         [Obsolete("The ContinuousProcessing parameter is no longer supported.")]
         public bool ContinuousProcessing
         {
             get => false;
-            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
         [DisplayName("Backend Timeouts")]
         [EDBConnectionStringProperty]
         [Obsolete("The BackendTimeouts parameter is no longer supported")]
         public bool BackendTimeouts
         {
             get => false;
-            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.npgsql.org/doc/migration/3.0.html
+        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.0.html")]
+        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html")]
         [DisplayName("Preload Reader")]
         [EDBConnectionStringProperty]
         [Obsolete("The PreloadReader parameter is no longer supported")]
         public bool PreloadReader
         {
             get => false;
-            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.0.html");
+            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.npgsql.org/doc/migration/3.0.html
+        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.0.html")]
+        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html")]
         [DisplayName("Use Extended Types")]
         [EDBConnectionStringProperty]
         [Obsolete("The UseExtendedTypes parameter is no longer supported")]
         public bool UseExtendedTypes
         {
             get => false;
-            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.0.html");
+            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html");
         }
 
         #endregion
@@ -1222,7 +1268,7 @@ namespace  EnterpriseDB.EDBClient
                 yield return new KeyValuePair<string, object>(k, this[k]);
         }
 
-#if !(NET45 || NET451)
+#if NETSTANDARD1_3
         /// <summary>
         /// Gets a value indicating whether the ICollection{T} is read-only.
         /// </summary>
@@ -1232,7 +1278,7 @@ namespace  EnterpriseDB.EDBClient
 
         #region ICustomTypeDescriptor
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         protected override void GetProperties(Hashtable propertyDescriptors)
         {

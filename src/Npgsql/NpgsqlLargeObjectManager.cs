@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -26,7 +26,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Large object manager. This class can be used to store very large files in a PostgreSQL database.
@@ -109,7 +109,7 @@ namespace  EnterpriseDB.EDBClient
             => Create(preferredOid, true);
 
         Task<uint> Create(uint preferredOid, bool async)
-            => ExecuteFunction<uint>("lo_create($1)", async, (int)preferredOid);
+            => ExecuteFunction<uint>("lo_create($1)", async, (int)preferredOid);//EnterpriseDB Team
 
         /// <summary>
         /// Opens a large object on the backend, returning a stream controlling this remote object.
@@ -131,16 +131,16 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An EDBLargeObjectStream</returns>
-        public async Task<EDBLargeObjectStream> OpenReadAsync(uint oid, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task<EDBLargeObjectStream> OpenReadAsync(uint oid, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 return await OpenRead(oid, true);
-        }
+            });
 
         async Task<EDBLargeObjectStream> OpenRead(uint oid, bool async)
         {
-            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ);//EnterpriseDB Team
             return new EDBLargeObjectStream(this, oid, fd, false);
         }
 
@@ -160,16 +160,16 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An EDBLargeObjectStream</returns>
-        public async Task<EDBLargeObjectStream> OpenReadWriteAsync(uint oid, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task<EDBLargeObjectStream> OpenReadWriteAsync(uint oid, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 return await OpenReadWrite(oid, true);
-        }
+            });
 
         async Task<EDBLargeObjectStream> OpenReadWrite(uint oid, bool async)
         {
-            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ | INV_WRITE);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ | INV_WRITE);//EnterpriseDB Team
             return new EDBLargeObjectStream(this, oid, fd, true);
         }
 
@@ -178,19 +178,19 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object to delete</param>
         public void Unlink(uint oid)
-            => ExecuteFunction<object>("lo_unlink($1)", false, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_unlink($1)", false, (int)oid).GetAwaiter().GetResult();//EnterpriseDB Team
 
         /// <summary>
         /// Deletes a large object on the backend.
         /// </summary>
         /// <param name="oid">Oid of the object to delete</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task UnlinkAsync(uint oid, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-                await ExecuteFunction<object>("lo_unlink", true, (int)oid);
-        }
+        public Task UnlinkAsync(uint oid, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await ExecuteFunction<object>("lo_unlink($1)", true, (int)oid);//EnterpriseDB Team
+            });
 
         /// <summary>
         /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
@@ -198,7 +198,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object to export</param>
         /// <param name="path">Path to write the file on the backend</param>
         public void ExportRemote(uint oid, string path)
-            => ExecuteFunction<object>("lo_export($1, $2)", false, (int)oid, path).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_export($1, $2)", false, (int)oid, path).GetAwaiter().GetResult();//EnterpriseDB Team
 
         /// <summary>
         /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
@@ -206,12 +206,12 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object to export</param>
         /// <param name="path">Path to write the file on the backend</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task ExportRemoteAsync(uint oid, string path, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-                await ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);
-        }
+        public Task ExportRemoteAsync(uint oid, string path, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);//EnterpriseDB Team
+            });
 
         /// <summary>
         /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
@@ -219,7 +219,7 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="path">Path to read the file on the backend</param>
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         public void ImportRemote(string path, uint oid = 0)
-            => ExecuteFunction<object>("lo_import($1, $2)", false, path, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_import($1, $2)", false, path, (int)oid).GetAwaiter().GetResult();//EnterpriseDB Team
 
         /// <summary>
         /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
@@ -227,12 +227,12 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="path">Path to read the file on the backend</param>
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task ImportRemoteAsync(string path, uint oid, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-                await ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);
-        }
+        public Task ImportRemoteAsync(string path, uint oid, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);//EnterpriseDB Team
+            });
 
         /// <summary>
         /// Since PostgreSQL 9.3, large objects larger than 2GB can be handled, up to 4TB.

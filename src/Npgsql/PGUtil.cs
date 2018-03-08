@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -33,7 +33,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     // ReSharper disable once InconsistentNaming
     static class PGUtil
@@ -72,8 +72,8 @@ namespace  EnterpriseDB.EDBClient
             case BackendMessageCode.PortalSuspended:
             case BackendMessageCode.ReadyForQuery:
             case BackendMessageCode.RowDescription:
-            case BackendMessageCode.OutDescription:
-            case BackendMessageCode.ParamData:
+            case BackendMessageCode.OutDescription://EnterpriseDB Team
+            case BackendMessageCode.ParamData://EnterpriseDB Team
                     return;
             default:
                 throw new EDBException("Unknown message code: " + code);
@@ -87,7 +87,7 @@ namespace  EnterpriseDB.EDBClient
 
         internal static readonly Task CompletedTask = Task.FromResult(0);
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         internal static StringComparer InvariantCaseIgnoringStringComparer => StringComparer.InvariantCultureIgnoreCase;
 #else
         internal static StringComparer InvariantCaseIgnoringStringComparer => CultureInfo.InvariantCulture.CompareInfo.GetStringComparer(CompareOptions.IgnoreCase);
@@ -166,37 +166,6 @@ namespace  EnterpriseDB.EDBClient
 #else
             CultureInfo.CurrentCulture = _oldCulture;
 #endif
-        }
-    }
-
-    /// <summary>
-    /// This mechanism is used to temporarily set the current synchronization context to null while
-    /// executing  EnterpriseDB.EDBClient code, making all await continuations execute on the thread pool. This replaces
-    /// the need to place ConfigureAwait(false) everywhere, and should be used in all surface async methods,
-    /// without exception.
-    /// </summary>
-    /// <remarks>
-    /// http://stackoverflow.com/a/28307965/640325
-    /// </remarks>
-    static class NoSynchronizationContextScope
-    {
-        internal static Disposable Enter()
-        {
-            var sc = SynchronizationContext.Current;
-            SynchronizationContext.SetSynchronizationContext(null);
-            return new Disposable(sc);
-        }
-
-        internal struct Disposable : IDisposable
-        {
-            readonly SynchronizationContext _synchronizationContext;
-
-            internal Disposable(SynchronizationContext synchronizationContext)
-            {
-                _synchronizationContext = synchronizationContext;
-            }
-
-            public void Dispose() => SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
         }
     }
 }

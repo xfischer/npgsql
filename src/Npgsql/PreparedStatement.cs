@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Internally represents a statement has been prepared, is in the process of being prepared, or is a
@@ -77,7 +77,7 @@ namespace  EnterpriseDB.EDBClient
             _manager = manager;
             Sql = sql;
             IsExplicit = isExplicit;
-            State = PreparedState.NotYetPrepared;
+            State = PreparedState.NotPrepared;
         }
 
         internal void SetParamTypes(List<EDBParameter> parameters)
@@ -129,7 +129,15 @@ namespace  EnterpriseDB.EDBClient
         /// This is the value for autoprepare candidates which haven't been prepared yet, and is also
         /// a temporary state during preparation.
         /// </summary>
-        NotYetPrepared,
+        NotPrepared,
+
+        /// <summary>
+        /// The statement has been selected for preparation, but the preparation hasn't started yet.
+        /// This is a temporary state that only occurs during preparation.
+        /// Specifically, no protocol message (Parse) has been sent yet. Specifically, it means that
+        /// a Parse message for the statement has already been written to the write buffer.
+        /// </summary>
+        ToBePrepared,
 
         /// <summary>
         /// The statement is in the process of being prepared. This is a temporary state that only occurs during

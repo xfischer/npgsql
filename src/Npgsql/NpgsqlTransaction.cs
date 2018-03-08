@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -31,7 +31,7 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a transaction to be made in a PostgreSQL database. This class cannot be inherited.
@@ -103,11 +103,11 @@ namespace  EnterpriseDB.EDBClient
 
             switch (isolationLevel) {
                 case IsolationLevel.RepeatableRead:
-                case IsolationLevel.Snapshot:
                     _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
                     _connector.PrependInternalMessage(PregeneratedMessage.SetTransRepeatableRead);
                     break;
                 case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
                     _connector.PrependInternalMessage(PregeneratedMessage.BeginTrans);
                     _connector.PrependInternalMessage(PregeneratedMessage.SetTransSerializable);
                     break;
@@ -155,12 +155,12 @@ namespace  EnterpriseDB.EDBClient
         /// Commits the database transaction.
         /// </summary>
         [PublicAPI]
-        public async Task CommitAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task CommitAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 await Commit(true, cancellationToken);
-        }
+            });
 
         /// <summary>
         /// Commits the database transaction.
@@ -188,12 +188,12 @@ namespace  EnterpriseDB.EDBClient
         /// Rolls back a transaction from a pending state.
         /// </summary>
         [PublicAPI]
-        public async Task RollbackAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task RollbackAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 await Rollback(true, cancellationToken);
-        }
+            });
 
         /// <summary>
         /// Rolls back a transaction from a pending state.

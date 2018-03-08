@@ -53,7 +53,7 @@
   </xs:schema>
   <DataSourceInformation>
     <CompositeIdentifierSeparatorPattern>\.</CompositeIdentifierSeparatorPattern>
-    <DataSourceProductName> EnterpriseDB.EDBClient</DataSourceProductName>
+    <DataSourceProductName>EnterpriseDB.EDBClient</DataSourceProductName>
     <GroupByBehavior>2</GroupByBehavior>
     <IdentifierPattern>(^\[\p{Lo}\p{Lu}\p{Ll}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Nd}@$#_]*$)|(^\[[^\]\0]|\]\]+\]$)|(^\"[^\"\0]|\"\"+\"$)</IdentifierPattern>
     <IdentifierCase>1</IdentifierCase>

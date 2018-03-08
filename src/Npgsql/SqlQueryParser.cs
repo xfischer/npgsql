@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -27,7 +27,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     class SqlQueryParser
     {
@@ -57,29 +57,20 @@ namespace  EnterpriseDB.EDBClient
             _statementIndex = -1;
             MoveToNextStatement();
 
-            //      bool endtok = false;
-           // bool edbsupport = false;
             var currCharOfs = 0;
             var end = sql.Length;
             var ch = '\0';
-            //var ch1 = '\0';
-            //var ch2 = '\0';
-            var isProcedure = false;
-            var numActiveBlocks = 0;
-            var variableDeclare = 0;
+            var isProcedure = false;//EnterpriseDB Team
+            var numActiveBlocks = 0;//EnterpriseDB Team
+            var variableDeclare = 0;//EnterpriseDB Team
             int dollarTagStart;
             int dollarTagEnd;
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
-            string temp = sql.ToUpper();
+            string temp = sql.ToUpper();//EnterpriseDB Team
             if (temp.StartsWith("CREATE") && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("PACKAGE ")))
                 isProcedure = true;
-
-            //ch1 = sql[0];
-            //ch2 = sql[1];
-            //if ((ch1 == 'C' || ch1 == 'c') && (ch2 == 'R' || ch2 == 'r'))
-            //    edbsupport = true;
 
             None:
             if (currCharOfs >= end) {
@@ -89,12 +80,12 @@ namespace  EnterpriseDB.EDBClient
             ch = sql[currCharOfs++];
         NoneContinue:
             for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
-
+                //EnterpriseDB Team
                 if (isProcedure)
                 {
                     temp = sql.Substring(currCharOfs - 1).ToUpper();
                 }
-                
+
                 if (isProcedure && temp.StartsWith("BEGIN"))
                 {
                     numActiveBlocks++;
@@ -133,7 +124,6 @@ namespace  EnterpriseDB.EDBClient
                         variableDeclare++;
                     }
                 }
-
                 switch (ch) {
                 case '/':
                     goto BlockCommentBegin;
@@ -172,23 +162,24 @@ namespace  EnterpriseDB.EDBClient
                     parenthesisLevel--;
                     break;
                 case 'e':
-                case 'E':
+                case 'E'://EnterpriseDB Team
                         if (!isProcedure)
                         {
                             if (!IsLetter(lastChar))
                                 goto EscapedStart;
                             else
                                 break;
-                        } else
+                        }
+                        else
                         {
                             break;
                         }
-                case 'x':
-                case 'X':
-                    if (!IsLetter(lastChar))
-                        goto EscapedStart;
-                    else
-                        break;
+                    case 'x':
+                    case 'X':
+                        if (!IsLetter(lastChar))
+                            goto EscapedStart;
+                        else
+                            break;
                 }
 
                 if (currCharOfs >= end) {
@@ -456,7 +447,7 @@ namespace  EnterpriseDB.EDBClient
             goto Finish;
 
         SemiColon:
-            if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0))
+            if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0))//EnterpriseDB Team
             {
                 currCharOfs++;
                 //      ch = sql[currCharOfs];
@@ -475,7 +466,6 @@ namespace  EnterpriseDB.EDBClient
                    }
                }
           */
-
             _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
             _statement.SQL = _rewrittenSql.ToString();
             while (currCharOfs < end) {
@@ -489,7 +479,7 @@ namespace  EnterpriseDB.EDBClient
                 currTokenBeg = currCharOfs;
                 if (_rewrittenSql.Length > 0)
                     MoveToNextStatement();
-                isProcedure = false;
+                isProcedure = false;//EnterpriseDB Team
                 goto None;
             }
             if (statements.Count > _statementIndex + 1)

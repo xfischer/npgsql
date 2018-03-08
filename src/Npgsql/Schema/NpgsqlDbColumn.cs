@@ -2,13 +2,13 @@
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
 
-#if NETSTANDARD1_3
+#if NETSTANDARD1_3 || NETSTANDARD2_0
 using System.Data.Common;
 #endif
 
 #pragma warning disable 1591
 
-namespace  EnterpriseDB.EDBClient.Schema
+namespace EnterpriseDB.EDBClient.Schema
 {
     /// <summary>
     /// Provides schema information about a column.
@@ -149,7 +149,7 @@ namespace  EnterpriseDB.EDBClient.Schema
 
         #endregion Standard fields
 
-        #region  EnterpriseDB.EDBClient-specific fields
+        #region EnterpriseDB.EDBClient-specific fields
 
         [PublicAPI]
         public PostgresType PostgresType { get; internal set; }
@@ -185,6 +185,6 @@ namespace  EnterpriseDB.EDBClient.Schema
             }
         }
 
-        #endregion  EnterpriseDB.EDBClient-specific fields
+        #endregion EnterpriseDB.EDBClient-specific fields
     }
 }

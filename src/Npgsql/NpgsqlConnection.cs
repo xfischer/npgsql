@@ -1,29 +1,27 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -32,19 +30,19 @@ using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Resources;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Logging;
-#if NET45 || NET451
-using System.Transactions;
-#endif
 using EDBTypes;
 using IsolationLevel = System.Data.IsolationLevel;
 using ThreadState = System.Threading.ThreadState;
+
+#if !NETSTANDARD1_3
+using System.Transactions;
+#endif
 
 namespace EnterpriseDB.EDBClient
 {
@@ -92,7 +90,7 @@ namespace EnterpriseDB.EDBClient
 
         bool _wasBroken;
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         [CanBeNull]
         internal Transaction EnlistedTransaction { get; set; }
 #endif
@@ -100,7 +98,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The default TCP/IP port for PostgreSQL.
         /// </summary>
-        public const int DefaultPort = 5444;
+        public const int DefaultPort = 5432;
 
         /// <summary>
         /// Maximum value for connection timeout.
@@ -130,7 +128,7 @@ namespace EnterpriseDB.EDBClient
             GC.SuppressFinalize(this);
             ConnectionString = connectionString;
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
             // Fix authentication problems. See https://bugzilla.novell.com/show_bug.cgi?id=MONO77559 and
             // http://pgfoundry.org/forum/message.php?msg_id=1002377 for more info.
             RSACryptoServiceProvider.UseMachineKeyStore = true;
@@ -151,11 +149,8 @@ namespace EnterpriseDB.EDBClient
         /// </remarks>
         /// <param name="cancellationToken">The cancellation instruction.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public override async Task OpenAsync(CancellationToken cancellationToken)
-        {
-            using (NoSynchronizationContextScope.Enter())
-                await Open(true, cancellationToken);
-        }
+        public override Task OpenAsync(CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () => await Open(true, cancellationToken));
 
         void GetPoolAndSettings()
         {
@@ -223,7 +218,7 @@ namespace EnterpriseDB.EDBClient
                 {
                     _userFacingConnectionString = _pool.UserFacingConnectionString;
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
                     if (Settings.Enlist)
                     {
                         if (Transaction.Current != null)
@@ -240,7 +235,7 @@ namespace EnterpriseDB.EDBClient
                     }
                     else  // No enlist
 #endif
-                        Connector = await _pool.Allocate(this, timeout, async, cancellationToken);
+                    Connector = await _pool.Allocate(this, timeout, async, cancellationToken);
 
                     Counters.SoftConnectsPerSecond.Increment();
 
@@ -249,7 +244,7 @@ namespace EnterpriseDB.EDBClient
                     Connector.TypeHandlerRegistry.ActivateGlobalMappings();
                 }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
                 // We may have gotten an already enlisted pending connector above, no need to enlist in that case
                 if (Settings.Enlist && Transaction.Current != null && EnlistedTransaction == null)
                     EnlistTransaction(Transaction.Current);
@@ -278,7 +273,7 @@ namespace EnterpriseDB.EDBClient
         [CanBeNull]
         public override string ConnectionString
         {
-            get { return _userFacingConnectionString; }
+            get => _userFacingConnectionString;
             set
             {
                 CheckConnectionClosed();
@@ -333,7 +328,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <value>The name of the current database or the name of the database to be
         /// used after a connection is opened. The default value is the empty string.</value>
-        public override string Database => Settings.Database;
+        [CanBeNull]
+        public override string Database => Settings.Database ?? Settings.Username;
 
         /// <summary>
         /// Gets the string identifying the database server (host and port)
@@ -360,11 +356,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// EntityTemplateDatabase
         /// </summary>
-        public string EntityTemplateDatabase => Settings.EntityTemplateDatabase;
+        public string EntityTemplateDatabase => Settings.EntityTemplateDatabase;//EnterpriseDB Team
         /// <summary>
         /// EntityAdminDatabase
         /// </summary>
-        public string EntityAdminDatabase => Settings.EntityAdminDatabase;
+        public string EntityAdminDatabase => Settings.EntityAdminDatabase;//EnterpriseDB Team
 
         #endregion Configuration settings
 
@@ -401,7 +397,7 @@ namespace EnterpriseDB.EDBClient
                 case ConnectorState.Broken:
                     return ConnectionState.Broken;
                 default:
-                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.");
                 }
             }
         }
@@ -507,24 +503,34 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Enlist transation.
         /// </summary>
         public override void EnlistTransaction(Transaction transaction)
         {
-            if (transaction == null)
-                throw new ArgumentNullException(nameof(transaction));
-
-            if (EnlistedTransaction == transaction)
-                return;
-
             if (EnlistedTransaction != null)
-                throw new InvalidOperationException($"Already enlisted to transaction (localid={EnlistedTransaction.TransactionInformation.LocalIdentifier})");
+            {
+                if (EnlistedTransaction.Equals(transaction))
+                    return;
+                try
+                {
+                    if (EnlistedTransaction.TransactionInformation.Status == System.Transactions.TransactionStatus.Active)
+                        throw new InvalidOperationException($"Already enlisted to transaction (localid={EnlistedTransaction.TransactionInformation.LocalIdentifier})");
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The MSDTC 2nd phase is asynchronous, so we may end up checking the TransactionInformation on
+                    // a disposed transaction. To be extra safe we catch that, and understand that the transaction
+                    // has ended - no problem for reenlisting.
+                }
+            }
 
             var connector = CheckReadyAndGetConnector();
 
             EnlistedTransaction = transaction;
+            if (transaction == null)
+                return;
 
             // Until #1378 is implemented, we have no recovery, and so no need to enlist as a durable resource manager
             // (or as promotable single phase).
@@ -557,26 +563,26 @@ namespace EnterpriseDB.EDBClient
 
             CloseOngoingOperations();
 
-#if NET45 || NET451
-            if (EnlistedTransaction == null)
-            {
-#endif
-                if (Settings.Pooling)
-                    _pool.Release(Connector);
-                else
-                    Connector.Close();
-#if NET45 || NET451
-            }
+            if (!Settings.Pooling)
+                Connector.Close();
             else
             {
-                // A System.Transactions transaction is still in progress, we need to wait for it to complete.
-                // Close the connection and disconnect it from the resource manager but leave the connector
-                // in a enlisted pending list in the pool.
-                _pool.AddPendingEnlistedConnector(Connector, EnlistedTransaction);
-                Connector.Connection = null;
-                EnlistedTransaction = null;
-            }
+#if NETSTANDARD1_3
+                _pool.Release(Connector);
+#else
+                if (EnlistedTransaction == null)
+                    _pool.Release(Connector);
+                else
+                {
+                    // A System.Transactions transaction is still in progress, we need to wait for it to complete.
+                    // Close the connection and disconnect it from the resource manager but leave the connector
+                    // in a enlisted pending list in the pool.
+                    _pool.AddPendingEnlistedConnector(Connector, EnlistedTransaction);
+                    Connector.Connection = null;
+                    EnlistedTransaction = null;
+                }
 #endif
+            }
 
             Log.Debug("Connection closed", connectorId);
 
@@ -596,7 +602,7 @@ namespace EnterpriseDB.EDBClient
                 return;
 
             Debug.Assert(Connector != null);
-            Connector.CurrentReader?.Close(true);
+            Connector.CurrentReader?.Close(true, false);
             var currentCopyOperation = Connector.CurrentCopyOperation;
             if (currentCopyOperation != null)
             {
@@ -1261,7 +1267,7 @@ namespace EnterpriseDB.EDBClient
         #endregion State checks
 
         #region Schema operations
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Returns the supported collections
         /// </summary>
@@ -1291,41 +1297,44 @@ namespace EnterpriseDB.EDBClient
         /// <returns>The collection specified.</returns>
         public override DataTable GetSchema([CanBeNull] string collectionName, [CanBeNull] string[] restrictions)
         {
-            switch (collectionName)
+            if (string.IsNullOrEmpty(collectionName))
+                throw new ArgumentException("Collection name cannot be null or empty", nameof(collectionName));
+
+            switch (collectionName.ToUpperInvariant())
             {
-                case "MetaDataCollections":
+                case "METADATACOLLECTIONS":
                     return EDBSchema.GetMetaDataCollections();
-                case "Restrictions":
+                case "RESTRICTIONS":
                     return EDBSchema.GetRestrictions();
-                case "DataSourceInformation":
+                case "DATASOURCEINFORMATION":
                     return EDBSchema.GetDataSourceInformation();
-                case "DataTypes":
+                case "DATATYPES":
                     throw new NotSupportedException();
-                case "ReservedWords":
+                case "RESERVEDWORDS":
                     return EDBSchema.GetReservedWords();
-                    // custom collections for EDB
-                case "Databases":
+                // custom collections for EnterpriseDB.EDBClient
+                case "DATABASES":
                     return EDBSchema.GetDatabases(this, restrictions);
-                case "Schemata":
+                case "SCHEMATA":
                     return EDBSchema.GetSchemata(this, restrictions);
-                case "Tables":
+                case "TABLES":
                     return EDBSchema.GetTables(this, restrictions);
-                case "Columns":
+                case "COLUMNS":
                     return EDBSchema.GetColumns(this, restrictions);
-                case "Views":
+                case "VIEWS":
                     return EDBSchema.GetViews(this, restrictions);
-                case "Users":
+                case "USERS":
                     return EDBSchema.GetUsers(this, restrictions);
-                case "Indexes":
+                case "INDEXES":
                     return EDBSchema.GetIndexes(this, restrictions);
-                case "IndexColumns":
+                case "INDEXCOLUMNS":
                     return EDBSchema.GetIndexColumns(this, restrictions);
-                case "Constraints":
-                case "PrimaryKey":
-                case "UniqueKeys":
-                case "ForeignKeys":
+                case "CONSTRAINTS":
+                case "PRIMARYKEY":
+                case "UNIQUEKEYS":
+                case "FOREIGNKEYS":
                     return EDBSchema.GetConstraints(this, restrictions, collectionName);
-                case "ConstraintColumns":
+                case "CONSTRAINTCOLUMNS":
                     return EDBSchema.GetConstraintColumns(this, restrictions);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(collectionName), collectionName, "Invalid collection name");
@@ -1340,7 +1349,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Creates a closed connection with the connection string and authentication details of this message.
         /// </summary>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         object ICloneable.Clone()
 #else
         public EDBConnection Clone()
@@ -1398,7 +1407,7 @@ namespace EnterpriseDB.EDBClient
             Open();
         }
 
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// DB provider factory.
         /// </summary>
@@ -1448,14 +1457,14 @@ namespace EnterpriseDB.EDBClient
     /// </summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A <see cref="EDBNoticeEventArgs">EDBNoticeEventArgs</see> that contains the event data.</param>
-    public delegate void NoticeEventHandler(Object sender, EDBNoticeEventArgs e);
+    public delegate void NoticeEventHandler(object sender, EDBNoticeEventArgs e);
 
     /// <summary>
     /// Represents the method that handles the <see cref="EDBConnection.Notification">Notification</see> events.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A <see cref="EDBNotificationEventArgs">EDBNotificationEventArgs</see> that contains the event data.</param>
-    public delegate void NotificationEventHandler(Object sender, EDBNotificationEventArgs e);
+    public delegate void NotificationEventHandler(object sender, EDBNotificationEventArgs e);
 
     /// <summary>
     /// Represents the method that allows the application to provide a certificate collection to be used for SSL client authentication

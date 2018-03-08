@@ -1,14 +1,38 @@
-﻿using System;
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
 using System.Text;
-using Npgsql;
-using NpgsqlTypes;
+using EnterpriseDB.EDBClient;
+using EDBTypes;
 using NUnit.Framework;
 
-namespace Npgsql.Tests.Types
+namespace EnterpriseDB.EDBClient.Tests.Types
 {
     /// <summary>
     /// Tests on the PostgreSQL BitString type
@@ -19,7 +43,7 @@ namespace Npgsql.Tests.Types
     public class BitStringTests : TestBase
     {
         [Test]
-        public void Roundtrip(
+        public void RoundtripBitArray(
             [Values(
                 "1011011000101111010110101101011011",  // 34 bits
                 "10110110",
@@ -32,114 +56,174 @@ namespace Npgsql.Tests.Types
             for (var i = 0; i < bits.Length; i++)
                 expected[i] = bits[i] == '1';
 
-            var cmd = new NpgsqlCommand("SELECT @p1, @p2, @p3, @p4", Conn);
-            var p1 = new NpgsqlParameter("p1", NpgsqlDbType.Varbit);
-            var p2 = new NpgsqlParameter("p2", NpgsqlDbType.Bit);
-            var p3 = new NpgsqlParameter("p3", NpgsqlDbType.Varbit) { Value = bits };
-            var p4 = new NpgsqlParameter { ParameterName = "p4", Value = expected };
-            cmd.Parameters.Add(p1);
-            cmd.Parameters.Add(p2);
-            cmd.Parameters.Add(p3);
-            cmd.Parameters.Add(p4);
-            p1.Value = p2.Value = expected;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-
-            for (var i = 0; i < cmd.Parameters.Count; i++)
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
-                Assert.That(reader.GetFieldValue<BitArray>(i), Is.EqualTo(expected));
-                Assert.That(reader.GetValue(i),                Is.EqualTo(expected));
-                Assert.That(() => reader.GetFieldValue<bool>(i), Throws.Exception.TypeOf<InvalidCastException>());
-            }
+                var p1 = new EDBParameter("p1", EDBDbType.Varbit);
+                var p2 = new EDBParameter("p2", EDBDbType.Bit);
+                var p3 = new EDBParameter("p3", EDBDbType.Varbit) {Value = bits};
+                var p4 = new EDBParameter {ParameterName = "p4", Value = expected};
+                cmd.Parameters.Add(p1);
+                cmd.Parameters.Add(p2);
+                cmd.Parameters.Add(p3);
+                cmd.Parameters.Add(p4);
+                p1.Value = p2.Value = expected;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
 
-            reader.Dispose();
-            cmd.Dispose();
+                    for (var i = 0; i < cmd.Parameters.Count; i++)
+                    {
+                        Assert.That(reader.GetFieldValue<BitArray>(i), Is.EqualTo(expected));
+                        Assert.That(reader.GetValue(i), Is.EqualTo(expected));
+                        Assert.That(() => reader.GetFieldValue<bool>(i), Throws.Exception.TypeOf<InvalidCastException>());
+                    }
+                }
+            }
         }
 
         [Test]
         public void Long()
         {
-            var bitLen = (Conn.BufferSize + 10) * 8;
-            var chars = new char[bitLen];
-            for (var i = 0; i < bitLen; i++)
-                chars[i] = i % 2 == 0 ? '0' : '1';
-            Roundtrip(new string(chars));
+            using (var conn = OpenConnection())
+            {
+                var bitLen = (conn.Settings.WriteBufferSize + 10) * 8;
+                var chars = new char[bitLen];
+                for (var i = 0; i < bitLen; i++)
+                    chars[i] = i % 2 == 0 ? '0' : '1';
+                RoundtripBitArray(new string(chars));
+            }
+        }
+
+        [Test]
+        public void RoundtripBitVector32([Values(15, 0)] int bits)
+        {
+            var expected = new BitVector32(bits);
+
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.AddWithValue("p", expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetFieldValue<BitVector32>(0), Is.EqualTo(expected));
+                }
+            }
+        }
+
+        [Test]
+        public void BitVector32TooLong()
+        {
+            using (var conn = OpenConnection())
+            {
+                using (var cmd = new EDBCommand($"SELECT B'{new string('0', 34)}'", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(() => reader.GetFieldValue<BitVector32>(0), Throws.Exception.TypeOf<EDBException>());
+                }
+                Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
+            }
         }
 
         [Test, Description("Roundtrips a single bit")]
         public void SingleBit()
         {
-            const bool expected = true;
-            var cmd = new NpgsqlCommand("SELECT @p::BIT(1), B'01'::BIT(2)", Conn);
-            var p = new NpgsqlParameter("p", NpgsqlDbType.Bit);
-            // Type inference? But bool is mapped to PG bool
-            cmd.Parameters.Add(p);
-            p.Value = expected;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::BIT(1), B'01'::BIT(2)", conn))
+            {
+                const bool expected = true;
+                var p = new EDBParameter("p", EDBDbType.Bit);
+                // Type inference? But bool is mapped to PG bool
+                cmd.Parameters.Add(p);
+                p.Value = expected;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
 
-            Assert.That(reader.GetBoolean(0), Is.EqualTo(true));
-            Assert.That(reader.GetValue(0), Is.EqualTo(true));
-            Assert.That(reader.GetFieldValue<bool>(0), Is.EqualTo(true));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof (bool)));
+                    Assert.That(reader.GetBoolean(0), Is.EqualTo(true));
+                    Assert.That(reader.GetValue(0), Is.EqualTo(true));
+                    Assert.That(reader.GetFieldValue<bool>(0), Is.EqualTo(true));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(bool)));
+                }
+            }
+        }
 
-            // BIT(N) shouldn't be accessible as bool
-            Assert.That(() => reader.GetBoolean(1), Throws.Exception.TypeOf<InvalidCastException>());
+        [Test, Description("BIT(N) shouldn't be accessible as bool")]
+        public void BitstringAsSingleBit()
+        {
+            using (var conn = OpenConnection())
+            {
+                using (var cmd = new EDBCommand("SELECT B'01'::BIT(2)", conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+                {
+                    reader.Read();
+                    Assert.That(() => reader.GetBoolean(0), Throws.Exception.TypeOf<InvalidCastException>());
 
-            reader.Dispose();
-            cmd.Dispose();
+                }
+                // Connection should still be OK
+                Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
+            }
         }
 
         [Test]
         public void Array()
         {
-            var expected = new[] { new BitArray(new[] { true, false, true }), new BitArray(new[] { false }) };
-            var cmd = new NpgsqlCommand("SELECT @p", Conn);
-            var p = new NpgsqlParameter("p", NpgsqlDbType.Array | NpgsqlDbType.Varbit) { Value = expected };
-            cmd.Parameters.Add(p);
-            p.Value = expected;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                var expected = new[] { new BitArray(new[] { true, false, true }), new BitArray(new[] { false }) };
+                var p = new EDBParameter("p", EDBDbType.Array | EDBDbType.Varbit) { Value = expected };
+                cmd.Parameters.Add(p);
+                p.Value = expected;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
 
-            Assert.That(reader.GetValue(0), Is.EqualTo(expected));
-            Assert.That(reader.GetFieldValue<BitArray[]>(0), Is.EqualTo(expected));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
-
-            reader.Dispose();
-            cmd.Dispose();
+                    Assert.That(reader.GetValue(0), Is.EqualTo(expected));
+                    Assert.That(reader.GetFieldValue<BitArray[]>(0), Is.EqualTo(expected));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
+                }
+            }
         }
 
         [Test]
         public void SingleBitArray()
         {
-            var expected = new[] { true, false };
-            var cmd = new NpgsqlCommand("SELECT @p::BIT(1)[]", Conn);
-            var p = new NpgsqlParameter("p", NpgsqlDbType.Array | NpgsqlDbType.Bit) { Value = expected };
-            cmd.Parameters.Add(p);
-            p.Value = expected;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::BIT(1)[]", conn))
+            {
+                var expected = new[] { true, false };
+                var p = new EDBParameter("p", EDBDbType.Array | EDBDbType.Bit) {Value = expected};
+                cmd.Parameters.Add(p);
+                p.Value = expected;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
 
-            Assert.That(reader.GetValue(0), Is.EqualTo(expected));
-            Assert.That(reader.GetFieldValue<bool[]>(0), Is.EqualTo(expected));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
-
-            reader.Dispose();
-            cmd.Dispose();
+                    Assert.That(reader.GetValue(0), Is.EqualTo(expected));
+                    Assert.That(reader.GetFieldValue<bool[]>(0), Is.EqualTo(expected));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));
+                }
+            }
         }
 
         [Test]
         public void Validation()
         {
-            var cmd = new NpgsqlCommand("SELECT @p1::BIT VARYING", Conn);
-            var p = new NpgsqlParameter("p1", NpgsqlDbType.Bit);
-            cmd.Parameters.Add(p);
-            cmd.Prepare();
-            p.Value = "001q0";
-            Assert.That(() => cmd.ExecuteReader(), Throws.Exception.TypeOf<FormatException>());
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1::BIT VARYING", conn))
+            {
+                var p = new EDBParameter("p1", EDBDbType.Bit);
+                cmd.Parameters.Add(p);
+                cmd.Prepare();
+                p.Value = "001q0";
+                Assert.That(() => cmd.ExecuteReader(), Throws.Exception.TypeOf<FormatException>());
 
-            // Make sure the connection state is OK
-            Assert.That(ExecuteScalar("SELECT 8"), Is.EqualTo(8));
+                // Make sure the connection state is OK
+                Assert.That(conn.ExecuteScalar("SELECT 8"), Is.EqualTo(8));
+            }
         }
 
         // Older tests from here
@@ -152,16 +236,16 @@ namespace Npgsql.Tests.Types
             using (var cmd = Conn.CreateCommand())
             {
                 cmd.CommandText = "Select :bs1 as output, :bs2, :bs3, :bs4, :bs5, array [1::bit, 0::bit], array [bit '10', bit '01'], :ba1, :ba2, :ba3";
-                var output = new NpgsqlParameter() { ParameterName = "output", Direction = ParameterDirection.Output };
+                var output = new EDBParameter() { ParameterName = "output", Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(output);
-                cmd.Parameters.Add(new NpgsqlParameter("bs1", NpgsqlDbType.Bit) { Value = new BitString("1011") });
-                cmd.Parameters.Add(new NpgsqlParameter("bs2", NpgsqlDbType.Bit, 1) { Value = true });
-                cmd.Parameters.Add(new NpgsqlParameter("bs3", NpgsqlDbType.Bit, 1) { Value = false });
-                cmd.Parameters.Add(new NpgsqlParameter("bs4", NpgsqlDbType.Bit, 2) { Value = new BitString("01") });
-                cmd.Parameters.Add(new NpgsqlParameter("bs5", NpgsqlDbType.Varbit) { Value = new BitString("01") });
-                cmd.Parameters.Add(new NpgsqlParameter("ba1", NpgsqlDbType.Varbit | NpgsqlDbType.Array) { Value = new BitString[] { new BitString("10"), new BitString("01") } });
-                cmd.Parameters.Add(new NpgsqlParameter("ba2", NpgsqlDbType.Bit | NpgsqlDbType.Array, 1) { Value = new bool[] { true, false } });
-                cmd.Parameters.Add(new NpgsqlParameter("ba3", NpgsqlDbType.Bit | NpgsqlDbType.Array, 1) { Value = new BitString[] { new BitString("1"), new BitString("0") } });
+                cmd.Parameters.Add(new EDBParameter("bs1", EDBDbType.Bit) { Value = new BitString("1011") });
+                cmd.Parameters.Add(new EDBParameter("bs2", EDBDbType.Bit, 1) { Value = true });
+                cmd.Parameters.Add(new EDBParameter("bs3", EDBDbType.Bit, 1) { Value = false });
+                cmd.Parameters.Add(new EDBParameter("bs4", EDBDbType.Bit, 2) { Value = new BitString("01") });
+                cmd.Parameters.Add(new EDBParameter("bs5", EDBDbType.Varbit) { Value = new BitString("01") });
+                cmd.Parameters.Add(new EDBParameter("ba1", EDBDbType.Varbit | EDBDbType.Array) { Value = new BitString[] { new BitString("10"), new BitString("01") } });
+                cmd.Parameters.Add(new EDBParameter("ba2", EDBDbType.Bit | EDBDbType.Array, 1) { Value = new bool[] { true, false } });
+                cmd.Parameters.Add(new EDBParameter("ba3", EDBDbType.Bit | EDBDbType.Array, 1) { Value = new BitString[] { new BitString("1"), new BitString("0") } });
                 if (prepareCommand)
                     cmd.Prepare();
                 using (var reader = cmd.ExecuteReader())
@@ -189,6 +273,5 @@ namespace Npgsql.Tests.Types
             }
         }
 #endif
-        public BitStringTests(string backendVersion) : base(backendVersion) {}
     }
 }

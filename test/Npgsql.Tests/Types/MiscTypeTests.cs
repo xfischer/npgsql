@@ -1,22 +1,101 @@
-﻿using System;
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
-using Npgsql;
-using NpgsqlTypes;
+using EnterpriseDB.EDBClient;
+using EDBTypes;
 using NUnit.Framework;
 
-namespace Npgsql.Tests.Types
+namespace EnterpriseDB.EDBClient.Tests.Types
 {
     /// <summary>
     /// Tests on PostgreSQL types which don't fit elsewhere
     /// </summary>
     class MiscTypeTests : TestBase
     {
+        [Test, Description("Resolves a base type handler via the different pathways")]
+        public void BaseTypeResolution()
+        {
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                ApplicationName = nameof(BaseTypeResolution),  // Prevent backend type caching in TypeHandlerRegistry
+                Pooling = false
+            };
+
+            using (var conn = OpenConnection(csb))
+            {
+                // Resolve type by EDBDbType
+                using (var cmd = new EDBCommand("SELECT @p", conn))
+                {
+                    cmd.Parameters.AddWithValue("p", EDBDbType.Integer, DBNull.Value);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.That(reader.GetDataTypeName(0), Is.EqualTo("int4"));
+                    }
+                }
+
+                // Resolve type by DbType
+                conn.ReloadTypes();
+                using (var cmd = new EDBCommand("SELECT @p", conn))
+                {
+                    cmd.Parameters.Add(new EDBParameter("p", DbType.Int32) { Value = DBNull.Value });
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.That(reader.GetDataTypeName(0), Is.EqualTo("int4"));
+                    }
+                }
+
+                // Resolve type by ClrType (type inference)
+                conn.ReloadTypes();
+                using (var cmd = new EDBCommand("SELECT @p", conn))
+                {
+                    cmd.Parameters.Add(new EDBParameter { ParameterName="p", Value = 8 });
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.That(reader.GetDataTypeName(0), Is.EqualTo("int4"));
+                    }
+                }
+
+                // Resolve type by OID (read)
+                conn.ReloadTypes();
+                using (var cmd = new EDBCommand("SELECT 8", conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetDataTypeName(0), Is.EqualTo("int4"));
+                }
+            }
+        }
+
         /// <summary>
         /// http://www.postgresql.org/docs/current/static/datatype-boolean.html
         /// </summary>
@@ -24,53 +103,37 @@ namespace Npgsql.Tests.Types
         [Test, Description("Roundtrips a bool")]
         public void Bool()
         {
-            var cmd = new NpgsqlCommand("SELECT @p1, @p2, @p3, @p4", Conn);
-            var p1 = new NpgsqlParameter("p1", NpgsqlDbType.Boolean);
-            var p2 = new NpgsqlParameter("p2", NpgsqlDbType.Boolean);
-            var p3 = new NpgsqlParameter("p3", DbType.Boolean);
-            var p4 = new NpgsqlParameter { ParameterName = "p4", Value = true };
-            Assert.That(p4.NpgsqlDbType, Is.EqualTo(NpgsqlDbType.Boolean));
-            Assert.That(p4.DbType, Is.EqualTo(DbType.Boolean));
-            cmd.Parameters.Add(p1);
-            cmd.Parameters.Add(p2);
-            cmd.Parameters.Add(p3);
-            cmd.Parameters.Add(p4);
-            p1.Value = false;
-            p2.Value = p3.Value = true;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-
-            Assert.That(reader.GetBoolean(0), Is.False);
-
-            for (var i = 1; i < cmd.Parameters.Count; i++)
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
-                Assert.That(reader.GetBoolean(i),               Is.True);
-                Assert.That(reader.GetValue(i),                 Is.True);
-                Assert.That(reader.GetProviderSpecificValue(i), Is.True);
-                Assert.That(reader.GetFieldType(i),             Is.EqualTo(typeof (bool)));
-                Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("bool"));
+                var p1 = new EDBParameter("p1", EDBDbType.Boolean);
+                var p2 = new EDBParameter("p2", EDBDbType.Boolean);
+                var p3 = new EDBParameter("p3", DbType.Boolean);
+                var p4 = new EDBParameter { ParameterName = "p4", Value = true };
+                Assert.That(p4.EDBDbType, Is.EqualTo(EDBDbType.Boolean));
+                Assert.That(p4.DbType, Is.EqualTo(DbType.Boolean));
+                cmd.Parameters.Add(p1);
+                cmd.Parameters.Add(p2);
+                cmd.Parameters.Add(p3);
+                cmd.Parameters.Add(p4);
+                p1.Value = false;
+                p2.Value = p3.Value = true;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+
+                    Assert.That(reader.GetBoolean(0), Is.False);
+
+                    for (var i = 1; i < cmd.Parameters.Count; i++)
+                    {
+                        Assert.That(reader.GetBoolean(i), Is.True);
+                        Assert.That(reader.GetValue(i), Is.True);
+                        Assert.That(reader.GetProviderSpecificValue(i), Is.True);
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(bool)));
+                        Assert.That(reader.GetDataTypeName(i), Is.EqualTo("bool"));
+                    }
+                }
             }
-
-            reader.Close();
-            cmd.Dispose();
-        }
-
-        /// <summary>
-        /// http://www.postgresql.org/docs/current/static/datatype-money.html
-        /// </summary>
-        [Test]
-        public void ReadMoney()
-        {
-            var cmd = new NpgsqlCommand("SELECT '12345.12'::MONEY, '-10.5'::MONEY", Conn);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetDecimal(0), Is.EqualTo(12345.12m));
-            Assert.That(reader.GetValue(0), Is.EqualTo(12345.12m));
-            Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(12345.12m));
-            Assert.That(reader.GetDecimal(1), Is.EqualTo(-10.5m));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(decimal)));
-            reader.Close();
-            cmd.Dispose();
         }
 
         /// <summary>
@@ -79,140 +142,214 @@ namespace Npgsql.Tests.Types
         [Test, Description("Roundtrips a UUID")]
         public void Uuid()
         {
-            var expected = new Guid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
-            var cmd = new NpgsqlCommand("SELECT @p1, @p2, @p3", Conn);
-            var p1 = new NpgsqlParameter("p1", NpgsqlDbType.Uuid);
-            var p2 = new NpgsqlParameter("p2", DbType.Guid);
-            var p3 = new NpgsqlParameter { ParameterName = "p3", Value = expected };
-            cmd.Parameters.Add(p1);
-            cmd.Parameters.Add(p2);
-            cmd.Parameters.Add(p3);
-            p1.Value = p2.Value = expected;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-
-            for (var i = 0; i < cmd.Parameters.Count; i++)
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
             {
-                Assert.That(reader.GetGuid(i),             Is.EqualTo(expected));
-                Assert.That(reader.GetFieldValue<Guid>(i), Is.EqualTo(expected));
-                Assert.That(reader.GetValue(i),            Is.EqualTo(expected));
-                Assert.That(reader.GetString(i),           Is.EqualTo(expected.ToString()));
-                Assert.That(reader.GetFieldType(i),        Is.EqualTo(typeof(Guid)));
-            }
+                var expected = new Guid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
+                var p1 = new EDBParameter("p1", EDBDbType.Uuid);
+                var p2 = new EDBParameter("p2", DbType.Guid);
+                var p3 = new EDBParameter {ParameterName = "p3", Value = expected};
+                cmd.Parameters.Add(p1);
+                cmd.Parameters.Add(p2);
+                cmd.Parameters.Add(p3);
+                p1.Value = p2.Value = expected;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
 
-            reader.Dispose();
-            cmd.Dispose();
+                    for (var i = 0; i < cmd.Parameters.Count; i++)
+                    {
+                        Assert.That(reader.GetGuid(i), Is.EqualTo(expected));
+                        Assert.That(reader.GetFieldValue<Guid>(i), Is.EqualTo(expected));
+                        Assert.That(reader.GetValue(i), Is.EqualTo(expected));
+                        Assert.That(reader.GetString(i), Is.EqualTo(expected.ToString()));
+                        Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(Guid)));
+                    }
+                }
+            }
         }
 
         [Test]
         public void ReadInternalChar()
         {
-            var cmd = new NpgsqlCommand("SELECT typdelim FROM pg_type WHERE typname='int4'", Conn);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetChar(0), Is.EqualTo(','));
-            Assert.That(reader.GetValue(0), Is.EqualTo(','));
-            Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(','));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(char)));
-
-            reader.Dispose();
-            cmd.Dispose();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT typdelim FROM pg_type WHERE typname='int4'", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                reader.Read();
+                Assert.That(reader.GetChar(0), Is.EqualTo(','));
+                Assert.That(reader.GetValue(0), Is.EqualTo(','));
+                Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(','));
+                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(char)));
+            }
         }
 
         [Test, Description("Makes sure that the PostgreSQL 'unknown' type (OID 705) is read properly")]
         public void ReadUnknown()
         {
             const string expected = "some_text";
-            var cmd = new NpgsqlCommand(String.Format("SELECT '{0}'", expected), Conn);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetString(0), Is.EqualTo(expected));
-            Assert.That(reader.GetValue(0), Is.EqualTo(expected));
-            Assert.That(reader.GetFieldValue<char[]>(0), Is.EqualTo(expected.ToCharArray()));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-            reader.Dispose();
-            cmd.Dispose();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand($"SELECT '{expected}'", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                reader.Read();
+                Assert.That(reader.GetString(0), Is.EqualTo(expected));
+                Assert.That(reader.GetValue(0), Is.EqualTo(expected));
+                Assert.That(reader.GetFieldValue<char[]>(0), Is.EqualTo(expected.ToCharArray()));
+                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+            }
         }
 
         [Test, Description("Roundtrips a null value")]
         public void Null()
         {
-            var cmd = new NpgsqlCommand("SELECT @p::INT4", Conn);
-            cmd.Parameters.AddWithValue("p", DBNull.Value);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.IsDBNull(0));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(int)));
-            reader.Dispose();
-            cmd.Dispose();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::INT4", conn))
+            {
+                cmd.Parameters.AddWithValue("p", DBNull.Value);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.IsDBNull(0));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(int)));
+                }
+            }
         }
 
         [Test]
-        [MinPgVersion(9, 2, 0, "JSON data type not yet introduced")]
         public void Json()
         {
-            const string expected = @"{ ""Key"" : ""Value"" }";
-            using (var cmd = new NpgsqlCommand("SELECT @p", Conn))
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
             {
-                cmd.Parameters.AddWithValue("p", NpgsqlDbType.Json, expected);
-                var reader = cmd.ExecuteReader();
-                reader.Read();
-                Assert.That(reader.GetString(0), Is.EqualTo(expected));
-                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-                reader.Close();
+                TestUtil.MinimumPgVersion(conn, "9.2.0", "JSON data type not yet introduced");
+                const string expected = @"{ ""Key"" : ""Value"" }";
+                cmd.Parameters.AddWithValue("p", EDBDbType.Json, expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetString(0), Is.EqualTo(expected));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+
+                    using (var textReader = reader.GetTextReader(0))
+                        Assert.That(textReader.ReadToEnd(), Is.EqualTo(expected));
+                }
             }
         }
 
         [Test]
-        [MinPgVersion(9, 4, 0, "JSONB data type not yet introduced")]
         public void Jsonb()
         {
-            var sb = new StringBuilder();
-            sb.Append(@"{""Key"": """);
-            sb.Append('x', Conn.BufferSize);
-            sb.Append(@"""}");
-            var value = sb.ToString();
-            using (var cmd = new NpgsqlCommand("SELECT @p", Conn))
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
             {
-                cmd.Parameters.AddWithValue("p", NpgsqlDbType.Jsonb, value);
-                var reader = cmd.ExecuteReader();
-                reader.Read();
-                Assert.That(reader.GetString(0), Is.EqualTo(value));
-                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-                reader.Close();
+                TestUtil.MinimumPgVersion(conn, "9.4.0", "JSONB data type not yet introduced");
+                var sb = new StringBuilder();
+                sb.Append(@"{""Key"": """);
+                sb.Append('x', conn.Settings.WriteBufferSize);
+                sb.Append(@"""}");
+                var value = sb.ToString();
+                cmd.Parameters.AddWithValue("p", EDBDbType.Jsonb, value);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetString(0), Is.EqualTo(value));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+
+                    using (var textReader = reader.GetTextReader(0))
+                        Assert.That(textReader.ReadToEnd(), Is.EqualTo(value));
+                }
             }
         }
 
         [Test]
-        [MinPgVersion(9, 1, 0, "HSTORE data type not yet introduced")]
         public void Hstore()
         {
-            ExecuteNonQuery(@"CREATE EXTENSION IF NOT EXISTS hstore");
+            using (var conn = OpenConnection())
+            {
+                TestUtil.MinimumPgVersion(conn, "9.1.0", "HSTORE data type not yet introduced");
+                conn.ExecuteNonQuery(@"CREATE EXTENSION IF NOT EXISTS hstore");
+                conn.ReloadTypes();
 
-            var expected = new Dictionary<string, string> {
-              {"a", "3"},
-              {"b", null},
-              {"cd", "hello"}
-            };
+                var expected = new Dictionary<string, string> {
+                    {"a", "3"},
+                    {"b", null},
+                    {"cd", "hello"}
+                };
 
-            using (var cmd = new NpgsqlCommand("SELECT @p", Conn)) {
-                cmd.Parameters.AddWithValue("p", NpgsqlDbType.Hstore, expected);
-                var reader = cmd.ExecuteReader();
-                reader.Read();
-                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(IDictionary<string, string>)));
-                Assert.That(reader.GetValue(0), Is.EqualTo(expected));
-                Assert.That(reader.GetString(0), Is.EqualTo(@"""a""=>""3"",""b""=>NULL,""cd""=>""hello"""));
-                reader.Close();
+                var expected2 = new Dictionary<string, string> {};
+
+                using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
+                {
+                    cmd.Parameters.AddWithValue("p1", EDBDbType.Hstore, expected);
+                    cmd.Parameters.AddWithValue("p2", expected);
+                    cmd.Parameters.AddWithValue("p3", EDBDbType.Hstore, expected2);
+                    cmd.Parameters.AddWithValue("p4", expected2);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        for (var i = 0; i < 2; i++)
+                        {
+                            Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(Dictionary<string, string>)));
+                            Assert.That(reader.GetFieldValue<Dictionary<string, string>>(i), Is.EqualTo(expected));
+                            Assert.That(reader.GetFieldValue<IDictionary<string, string>>(i), Is.EqualTo(expected));
+                            Assert.That(reader.GetString(i), Is.EqualTo(@"""a""=>""3"",""b""=>NULL,""cd""=>""hello"""));
+                        }
+                        for (var i = 2; i < 4; i++)
+                        {
+                            Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(Dictionary<string, string>)));
+                            Assert.That(reader.GetFieldValue<Dictionary<string, string>>(i), Is.EqualTo(expected2));
+                            Assert.That(reader.GetFieldValue<IDictionary<string, string>>(i), Is.EqualTo(expected2));
+                            Assert.That(reader.GetString(i), Is.EqualTo(""));
+                        }
+                    }
+                }
             }
         }
 
-        [Test, Description("Makes sure that setting DbType.Object makes Npgsql infer the type")]
+        [Test]
+        public void RegType()
+        {
+            const uint expected = 8u;
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                cmd.Parameters.AddWithValue("p", EDBDbType.Regtype, expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(uint)));
+                    Assert.That(reader.GetValue(0), Is.EqualTo(expected));
+                }
+            }
+        }
+
+        [Test, Description("PostgreSQL records should be returned as arrays of objects")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/724")]
+        public void Record()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("CREATE FUNCTION pg_temp.foo () RETURNS RECORD AS $$ SELECT 1,2 $$ LANGUAGE SQL");
+                using (var cmd = new EDBCommand("SELECT pg_temp.foo()", conn))
+                {
+                    var record = cmd.ExecuteScalar();
+                    Assert.That(record, Is.TypeOf<object[]>());
+                    var array = (object[]) record;
+                    Assert.That(array[0], Is.EqualTo(1));
+                    Assert.That(array[1], Is.EqualTo(2));
+                }
+            }
+        }
+
+        [Test, Description("Makes sure that setting DbType.Object makes EnterpriseDB.EDBClient infer the type")]
         [IssueLink("https://github.com/npgsql/npgsql/issues/694")]
         public void DbTypeCausesInference()
         {
-            using (var cmd = new NpgsqlCommand("SELECT @p", Conn))
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
             {
-                cmd.Parameters.Add(new NpgsqlParameter { ParameterName="p", DbType = DbType.Object, Value = 3 });
+                cmd.Parameters.Add(new EDBParameter { ParameterName="p", DbType = DbType.Object, Value = 3 });
                 Assert.That(cmd.ExecuteScalar(), Is.EqualTo(3));
             }
         }
@@ -228,82 +365,165 @@ namespace Npgsql.Tests.Types
         public void UnrecognizedBinary()
         {
             CheckUnrecognizedType();
-            using (var cmd = new NpgsqlCommand("SELECT typinput FROM pg_type WHERE typname='bool'", Conn))
-            using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            using (var conn = OpenConnection())
             {
-                reader.Read();
-                Assert.That(() => reader.GetValue(0), Throws.Exception.TypeOf<NotSupportedException>());
+                using (var cmd = new EDBCommand("SELECT typinput FROM pg_type WHERE typname='bool'", conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+                {
+                    reader.Read();
+                    Assert.That(() => reader.GetValue(0), Throws.Exception.TypeOf<NotSupportedException>());
+                }
+                Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
             }
-
-            Assert.That(ExecuteScalar("SELECT 1"), Is.EqualTo(1));
         }
 
         [Test, Description("Retrieves a type as an unknown type, i.e. untreated string")]
         public void AllResultTypesAreUnknown()
         {
             CheckUnrecognizedType();
+            using (var conn = OpenConnection())
+            {
+                // Fetch as text to have something the value to assert against
+                var expected = (string)conn.ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
 
-            // Fetch as text to have something the value to assert against
-            var expected = (string)ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
-
-            var cmd = new NpgsqlCommand("SELECT typinput FROM pg_type WHERE typname='bool'", Conn);
-            cmd.AllResultTypesAreUnknown = true;
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-            Assert.That(reader.GetString(0), Is.EqualTo(expected));
-            reader.Close();
-            cmd.Dispose();
+                using (var cmd = new EDBCommand("SELECT typinput FROM pg_type WHERE typname='bool'", conn))
+                {
+                    cmd.AllResultTypesAreUnknown = true;
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+                        Assert.That(reader.GetString(0), Is.EqualTo(expected));
+                    }
+                }
+            }
         }
 
         [Test, Description("Mixes and matches an unknown type with a known type")]
         public void UnknownResultTypeList()
         {
             CheckUnrecognizedType();
+            using (var conn = OpenConnection())
+            {
+                // Fetch as text to have something the value to assert against
+                var expected = (string) conn.ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
 
-            // Fetch as text to have something the value to assert against
-            var expected = (string)ExecuteScalar("SELECT typinput::TEXT FROM pg_type WHERE typname='bool'");
-
-            var cmd = new NpgsqlCommand("SELECT typinput, 8 FROM pg_type WHERE typname='bool'", Conn);
-            cmd.UnknownResultTypeList = new[] { true, false };
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-            Assert.That(reader.GetString(0), Is.EqualTo(expected));
-            Assert.That(reader.GetInt32(1), Is.EqualTo(8));
-            reader.Close();
-            cmd.Dispose();
+                using (var cmd = new EDBCommand("SELECT typinput, 8 FROM pg_type WHERE typname='bool'", conn))
+                {
+                    cmd.UnknownResultTypeList = new[] {true, false};
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+                        Assert.That(reader.GetString(0), Is.EqualTo(expected));
+                        Assert.That(reader.GetInt32(1), Is.EqualTo(8));
+                    }
+                }
+            }
         }
 
-        [Test, Description("Sends a null value parameter with no NpgsqlDbType or DbType, but with context for the backend to handle it")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/711")]
+        public void KnownTypeAsUnknown()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 8", conn))
+            {
+                cmd.AllResultTypesAreUnknown = true;
+                Assert.That(cmd.ExecuteScalar(), Is.EqualTo("8"));
+            }
+        }
+
+        [Test, Description("Sends a null value parameter with no EDBDbType or DbType, but with context for the backend to handle it")]
         public void UnrecognizedNull()
         {
-            var cmd = new NpgsqlCommand("SELECT @p::TEXT", Conn);
-            var p = new NpgsqlParameter("p", DBNull.Value);
-            cmd.Parameters.Add(p);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.IsDBNull(0));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
-            reader.Dispose();
-            cmd.Dispose();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::TEXT", conn))
+            {
+                var p = new EDBParameter("p", DBNull.Value);
+                cmd.Parameters.Add(p);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.IsDBNull(0));
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
+                }
+            }
         }
 
-        [Test, Description("Sends a value parameter with an explicit NpgsqlDbType.Unknown, but with context for the backend to handle it")]
+        [Test, Description("Sends a value parameter with an explicit EDBDbType.Unknown, but with context for the backend to handle it")]
         public void SendUnknown()
         {
-            var cmd = new NpgsqlCommand("SELECT @p::INT4", Conn);
-            var p = new NpgsqlParameter("p", "8");
-            cmd.Parameters.Add(p);
-            var reader = cmd.ExecuteReader();
-            reader.Read();
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(int)));
-            Assert.That(reader.GetInt32(0), Is.EqualTo(8));
-            reader.Dispose();
-            cmd.Dispose();
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p::INT4", conn))
+            {
+                var p = new EDBParameter("p", "8");
+                cmd.Parameters.Add(p);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(int)));
+                    Assert.That(reader.GetInt32(0), Is.EqualTo(8));
+                }
+            }
         }
 
         #endregion
+
+        [Test]
+        public void Int2Vector()
+        {
+            var expected = new short[] { 4, 5, 6 };
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
+            {
+                TestUtil.MinimumPgVersion(conn, "9.1.0");
+                cmd.CommandText = "SELECT @p::int2vector";
+                cmd.Parameters.AddWithValue("p", EDBDbType.Int2Vector, expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.That(reader.GetFieldValue<short[]>(0), Is.EqualTo(expected));
+                }
+            }
+        }
+
+        [Test]
+        public void Tid()
+        {
+            var expected = new EDBTid(3, 5);
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT '(1234,40000)'::tid, @p::tid";
+                cmd.Parameters.AddWithValue("p", EDBDbType.Tid, expected);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    Assert.AreEqual(1234, reader.GetFieldValue<EDBTid>(0).BlockNumber);
+                    Assert.AreEqual(40000, reader.GetFieldValue<EDBTid>(0).OffsetNumber);
+                    Assert.AreEqual(expected.BlockNumber, reader.GetFieldValue<EDBTid>(1).BlockNumber);
+                    Assert.AreEqual(expected.OffsetNumber, reader.GetFieldValue<EDBTid>(1).OffsetNumber);
+                }
+            }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1138")]
+        public void Void()
+        {
+            using (var conn = OpenConnection())
+                Assert.That(conn.ExecuteScalar("SELECT pg_sleep(0)"), Is.SameAs(DBNull.Value));
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1364")]
+        public void UnsupportedDbType()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p", conn))
+            {
+                Assert.That(() => cmd.Parameters.Add(new EDBParameter("p", DbType.UInt32) { Value = 8u }),
+                    Throws.Exception.TypeOf<NotSupportedException>());
+            }
+        }
 
         // Older tests
 
@@ -311,21 +531,24 @@ namespace Npgsql.Tests.Types
         public void Bug1011085()
         {
             // Money format is not set in accordance with the system locale format
-            var command = new NpgsqlCommand("select :moneyvalue", Conn);
-            var expectedValue = 8.99m;
-            command.Parameters.Add("moneyvalue", NpgsqlDbType.Money).Value = expectedValue;
-            var result = (Decimal)command.ExecuteScalar();
-            Assert.AreEqual(expectedValue, result);
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select :moneyvalue", conn))
+            {
+                var expectedValue = 8.99m;
+                command.Parameters.Add("moneyvalue", EDBDbType.Money).Value = expectedValue;
+                var result = (decimal) command.ExecuteScalar();
+                Assert.AreEqual(expectedValue, result);
 
-            expectedValue = 100m;
-            command.Parameters[0].Value = expectedValue;
-            result = (Decimal)command.ExecuteScalar();
-            Assert.AreEqual(expectedValue, result);
+                expectedValue = 100m;
+                command.Parameters[0].Value = expectedValue;
+                result = (decimal) command.ExecuteScalar();
+                Assert.AreEqual(expectedValue, result);
 
-            expectedValue = 72.25m;
-            command.Parameters[0].Value = expectedValue;
-            result = (Decimal)command.ExecuteScalar();
-            Assert.AreEqual(expectedValue, result);
+                expectedValue = 72.25m;
+                command.Parameters[0].Value = expectedValue;
+                result = (decimal) command.ExecuteScalar();
+                Assert.AreEqual(expectedValue, result);
+            }
         }
 
         [Test]
@@ -342,7 +565,9 @@ namespace Npgsql.Tests.Types
 
         private void TestXmlParameter_Internal(bool prepare)
         {
-            using (var command = new NpgsqlCommand("select @PrecisionXML", Conn)) {
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select @PrecisionXML", conn))
+            {
                 var sXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <strings type=\"array\"> <string> this is a test with ' single quote </string></strings>";
                 var parameter = command.CreateParameter();
                 parameter.DbType = DbType.Xml;  // To make it work we need to use DbType.String; and then CAST it in the sSQL: cast(@PrecisionXML as xml)
@@ -361,47 +586,55 @@ namespace Npgsql.Tests.Types
         public void TestBoolParameter1()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            var command = new NpgsqlCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", Conn);
-            var p0 = new NpgsqlParameter(":a", true);
-            // with setting pramater type
-            p0.DbType = DbType.Boolean;
-            command.Parameters.Add(p0);
-            command.ExecuteScalar();
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", conn))
+            {
+                var p0 = new EDBParameter(":a", true);
+                // with setting pramater type
+                p0.DbType = DbType.Boolean;
+                command.Parameters.Add(p0);
+                command.ExecuteScalar();
+            }
         }
 
         [Test]
         public void TestBoolParameter2()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            var command = new NpgsqlCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", Conn);
-            var p0 = new NpgsqlParameter(":a", true);
-            // not setting parameter type
-            command.Parameters.Add(p0);
-            command.ExecuteScalar();
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select case when (foo is null) then false else foo end as bar from (select :a as foo) as x", conn))
+            {
+                var p0 = new EDBParameter(":a", true);
+                // not setting parameter type
+                command.Parameters.Add(p0);
+                command.ExecuteScalar();
+            }
         }
 
         private void TestBoolParameter_Internal(bool prepare)
         {
-            // Add test for prepared queries with bool parameter.
-            // This test was created based on a report from Andrus Moor in the help forum:
-            // http://pgfoundry.org/forum/forum.php?thread_id=15672&forum_id=519&group_id=1000140
-
-            var command = new NpgsqlCommand("select :boolValue", Conn);
-
-            command.Parameters.Add(":boolValue", NpgsqlDbType.Boolean);
-
-            if (prepare)
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select :boolValue", conn))
             {
-                command.Prepare();
+                // Add test for prepared queries with bool parameter.
+                // This test was created based on a report from Andrus Moor in the help forum:
+                // http://pgfoundry.org/forum/forum.php?thread_id=15672&forum_id=519&group_id=1000140
+
+                command.Parameters.Add(":boolValue", EDBDbType.Boolean);
+
+                if (prepare)
+                {
+                    command.Prepare();
+                }
+
+                command.Parameters["boolvalue"].Value = false;
+
+                Assert.IsFalse((bool) command.ExecuteScalar());
+
+                command.Parameters["boolvalue"].Value = true;
+
+                Assert.IsTrue((bool) command.ExecuteScalar());
             }
-
-            command.Parameters["boolvalue"].Value = false;
-
-            Assert.IsFalse((bool)command.ExecuteScalar());
-
-            command.Parameters["boolvalue"].Value = true;
-
-            Assert.IsTrue((bool)command.ExecuteScalar());
         }
 
         [Test]
@@ -417,50 +650,56 @@ namespace Npgsql.Tests.Types
         }
 
         [Test]
-        [Ignore]
+        [Ignore("")]
         public void TestBoolParameterPrepared2()
         {
             // will throw exception if bool parameter can't be used as boolean expression
-            var command = new NpgsqlCommand("select :boolValue", Conn);
-            var p0 = new NpgsqlParameter(":boolValue", false);
-            // not setting parameter type
-            command.Parameters.Add(p0);
-            command.Prepare();
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("select :boolValue", conn))
+            {
+                var p0 = new EDBParameter(":boolValue", false);
+                // not setting parameter type
+                command.Parameters.Add(p0);
+                command.Prepare();
 
-            Assert.IsFalse((bool)command.ExecuteScalar());
+                Assert.IsFalse((bool) command.ExecuteScalar());
+            }
         }
 
         [Test]
         public void TestUUIDDataType()
         {
-            const string createTable =
-                @"DROP TABLE if exists public.person;
-                  CREATE TABLE public.person (
-                    person_id serial PRIMARY KEY NOT NULL,
-                    person_uuid uuid NOT NULL
-                  ) WITH(OIDS=FALSE);";
-            var command = new NpgsqlCommand(createTable, Conn);
-            command.ExecuteNonQuery();
+            using (var conn = OpenConnection())
+            {
+                const string createTable =
+                    @"CREATE TEMP TABLE person (
+                        person_id serial PRIMARY KEY NOT NULL,
+                        person_uuid uuid NOT NULL
+                      ) WITH(OIDS=FALSE);";
+                var command = new EDBCommand(createTable, conn);
+                command.ExecuteNonQuery();
 
-            NpgsqlParameter uuidDbParam = new NpgsqlParameter(":param1", NpgsqlDbType.Uuid);
-            uuidDbParam.Value = Guid.NewGuid();
+                var uuidDbParam = new EDBParameter(":param1", EDBDbType.Uuid);
+                uuidDbParam.Value = Guid.NewGuid();
 
-            command = new NpgsqlCommand(@"INSERT INTO person (person_uuid) VALUES (:param1);", Conn);
-            command.Parameters.Add(uuidDbParam);
-            command.ExecuteNonQuery();
+                command = new EDBCommand(@"INSERT INTO person (person_uuid) VALUES (:param1);", conn);
+                command.Parameters.Add(uuidDbParam);
+                command.ExecuteNonQuery();
 
-            command = new NpgsqlCommand("SELECT person_uuid::uuid FROM person LIMIT 1", Conn);
-            var result = command.ExecuteScalar();
-            Assert.AreEqual(typeof(Guid), result.GetType());
+                command = new EDBCommand("SELECT person_uuid::uuid FROM person LIMIT 1", conn);
+                var result = command.ExecuteScalar();
+                Assert.AreEqual(typeof(Guid), result.GetType());
+            }
         }
 
         [Test]
         public void OidVector()
         {
-            using (var cmd = Conn.CreateCommand())
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "Select '1 2 3'::oidvector, :p1";
-                cmd.Parameters.AddWithValue("p1", NpgsqlDbType.Oidvector, new uint[] { 4, 5, 6 });
+                cmd.Parameters.AddWithValue("p1", EDBDbType.Oidvector, new uint[] { 4, 5, 6 });
                 using (var rdr = cmd.ExecuteReader())
                 {
                     rdr.Read();
@@ -475,9 +714,10 @@ namespace Npgsql.Tests.Types
         [Test]
         public void TsVector()
         {
-            using (var cmd = Conn.CreateCommand())
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
             {
-                var inputVec = NpgsqlTsVector.Parse(" a:12345C  a:24D a:25B b c d 1 2 a:25A,26B,27,28");
+                var inputVec = EDBTsVector.Parse(" a:12345C  a:24D a:25B b c d 1 2 a:25A,26B,27,28");
 
                 cmd.CommandText = "Select :p";
                 cmd.Parameters.AddWithValue("p", inputVec);
@@ -489,9 +729,10 @@ namespace Npgsql.Tests.Types
         [Test]
         public void TsQuery()
         {
-            using (var cmd = Conn.CreateCommand())
+            using (var conn = OpenConnection())
+            using (var cmd = conn.CreateCommand())
             {
-                var query = NpgsqlTsQuery.Parse("(a & !(c | d)) & (!!a&b) | ä | d | e");
+                var query = EDBTsQuery.Parse("(a & !(c | d)) & (!!a&b) | ä | d | e");
 
                 cmd.CommandText = "Select :p";
                 cmd.Parameters.AddWithValue("p", query);
@@ -499,7 +740,5 @@ namespace Npgsql.Tests.Types
                 Assert.AreEqual(query.ToString(), output.ToString());
             }
         }
-
-        public MiscTypeTests(string backendVersion) : base(backendVersion) {}
     }
 }

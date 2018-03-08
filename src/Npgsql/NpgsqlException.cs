@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
-#if NET45 || NET451
+#if !NETSTANDARD1_3
 using System.Runtime.Serialization;
 #endif
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// The exception that is thrown when server-related issues occur.
@@ -17,10 +19,10 @@ namespace  EnterpriseDB.EDBClient
     /// <remarks>
     /// PostgreSQL errors (e.g. query SQL issues, constraint violations) are raised via
     /// <see cref="PostgresException"/> which is a subclass of this class.
-    /// Purely  EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
+    /// Purely EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
     /// via the standard CLR exceptions (e.g. ArgumentException).
     /// </remarks>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
     [Serializable]
 #endif
     public class EDBException : DbException
@@ -45,8 +47,15 @@ namespace  EnterpriseDB.EDBClient
         public EDBException(string message)
             : base(message) { }
 
+        /// <summary>
+        /// Specifies whether the exception is considered transient, that is, whether retrying to operation could
+        /// succeed (e.g. a network error).
+        /// </summary>
+        public virtual bool IsTransient =>
+            InnerException is IOException || InnerException is SocketException;
+
         #region Serialization
-#if NET45 || NET451
+#if !NETSTANDARD1_3
         /// <summary>
         /// Initializes a new instance of the <see cref="EDBException"/> class with serialized data.
         /// </summary>

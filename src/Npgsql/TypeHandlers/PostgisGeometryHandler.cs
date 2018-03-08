@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -32,7 +32,7 @@ using EnterpriseDB.EDBClient.Logging;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
-namespace  EnterpriseDB.EDBClient.TypeHandlers
+namespace EnterpriseDB.EDBClient.TypeHandlers
 {
     /// <summary>
     /// Type Handler for the postgis geometry type.
@@ -56,7 +56,7 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
         IChunkingTypeHandler<byte[]>
     {
         [CanBeNull]
-        readonly ByteaHandler _byteaHandler;
+        internal ByteaHandler ByteaHandler { get; }
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
@@ -64,12 +64,12 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             : base(postgresType)
         {
             var byteaHandler = registry[EDBDbType.Bytea];
-            if (_byteaHandler == registry.UnrecognizedTypeHandler)
+            if (byteaHandler == registry.UnrecognizedTypeHandler)
             {
                 Log.Warn("bytea type not present when setting up postgis geometry type. Writing as bytea will not work.");
                 return;
             }
-            _byteaHandler = (ByteaHandler)byteaHandler;
+            ByteaHandler = (ByteaHandler)byteaHandler;
         }
 
         #region Read
@@ -209,8 +209,8 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
 
         ValueTask<byte[]> IChunkingTypeHandler<byte[]>.Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
         {
-            Debug.Assert(_byteaHandler != null);
-            return _byteaHandler.Read(buf, len, async, fieldDescription);
+            Debug.Assert(ByteaHandler != null);
+            return ByteaHandler.Read(buf, len, async, fieldDescription);
         }
 
         #endregion Read
@@ -255,9 +255,9 @@ namespace  EnterpriseDB.EDBClient.TypeHandlers
             var bytes = value as byte[];
             if (bytes != null)
             {
-                if (_byteaHandler == null)
+                if (ByteaHandler == null)
                     throw new EDBException("Bytea handler was not found during initialization of PostGIS handler");
-                return _byteaHandler.WriteInternal(bytes, buf, lengthCache, parameter, async, cancellationToken);
+                return ByteaHandler.WriteInternal(bytes, buf, lengthCache, parameter, async, cancellationToken);
             }
 
             return Write((PostgisGeometry)value, buf, lengthCache, parameter, async, cancellationToken);

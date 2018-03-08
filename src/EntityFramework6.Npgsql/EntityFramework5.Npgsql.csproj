@@ -89,7 +89,7 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EnterpriseDB.EDBClient, Version=3.1.9.3, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+    <Reference Include="EnterpriseDB.EDBClient, Version=3.2.6.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Npgsql\bin\$(Configuration)\net45\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>

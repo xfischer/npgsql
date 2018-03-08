@@ -1,13 +1,45 @@
-﻿using System;
+#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2017 The Npgsql Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using EnterpriseDB.EDBClient;
+using System.Data;
+using System.IO;
 
-namespace Npgsql.Tests
+namespace EnterpriseDB.EDBClient.Tests
 {
     public static class TestUtil
     {
+        public static bool IsOnBuildServer => Environment.GetEnvironmentVariable("TEAMCITY_VERSION") != null;
+
         /// <summary>
         /// Calls Assert.Ignore() unless we're on the build server, in which case calls
         /// Assert.Fail(). We don't to miss any regressions just because something was misconfigured
@@ -15,15 +47,154 @@ namespace Npgsql.Tests
         /// </summary>
         public static void IgnoreExceptOnBuildServer(string message)
         {
-            if (Environment.GetEnvironmentVariable("TEAMCITY_VERSION") == null)
-                Assert.Ignore(message);
-            else
+            if (IsOnBuildServer)
                 Assert.Fail(message);
+            else
+                Assert.Ignore(message);
         }
 
         public static void IgnoreExceptOnBuildServer(string message, params object[] args)
+            => IgnoreExceptOnBuildServer(string.Format(message, args));
+
+
+		public static void closeDB(EDBConnection con)
+		{
+			if (con != null)
+				con.Close();
+		}
+
+        public static void MinimumPgVersion(EDBConnection conn, string minVersion, string ignoreText=null)
         {
-            IgnoreExceptOnBuildServer(String.Format(message, args));
+            var min = new Version(minVersion);
+            if (conn.PostgreSqlVersion < min)
+            {
+                var msg = $"Postgresql backend version {conn.PostgreSqlVersion} is less than the required {min}";
+                if (ignoreText != null)
+                    msg += ": " + ignoreText;
+                Assert.Ignore(msg);
+            }
+        }
+
+        public static string GetUniqueIdentifier(string prefix)
+            => prefix + Interlocked.Increment(ref _counter);
+
+        static int _counter;
+
+		public static void createTempTable(EDBConnection con,String table,String columns)
+		{
+			string strCommandSql = "create temp table " + table + " (" + columns + ")";
+			EDBCommand com = new EDBCommand(strCommandSql, con);
+			com.CommandType = CommandType.Text;
+			try
+			{
+				// Drop the table
+				dropTable(con, table);
+
+				// Now create the table
+				com.ExecuteNonQuery();
+			}
+			catch (EDBException e)
+			{
+				throw new Exception(e.ToString());
+			}
+		}
+
+		public static void ExecuteSqlFile(EDBConnection connection, string sqlFile)
+		{
+			string sql = "";
+			if(!File.Exists(sqlFile))
+				Console.WriteLine("File Not found"); 
+			using (FileStream strm = File.OpenRead(sqlFile))
+			{
+				StreamReader reader = new StreamReader(strm);
+				sql = reader.ReadToEnd();
+			}
+
+			connection.Open();
+			EDBCommand cmd = new EDBCommand(sql,connection);
+			cmd.ExecuteNonQuery();
+            connection.Close();
+
+		}
+
+        public static void ExecuteSql(EDBConnection connection, string sql)
+        {
+            connection.Open();
+            EDBCommand cmd = new EDBCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+            connection.Close();
+
+        }
+
+		public static void dropTable(EDBConnection con, String table)
+		{
+			
+			try
+			{
+				String strCommandSql = "DROP TABLE " + table;
+/*              if (haveMinimumServerVersion(con, "7.3"))
+				{
+					sql += " CASCADE ";
+				}*/
+				EDBCommand com = new EDBCommand(strCommandSql, con);
+				com.CommandType = CommandType.Text;
+				com.ExecuteNonQuery();
+			}
+			catch (EDBException e)
+			{
+				// Since every create table issues a drop table
+				// it's easy to get a table doesn't exist error.
+				// we want to ignore these, but if we're in a
+				// transaction then we've got trouble
+/*				if (!con.getAutoCommit())
+                throw ex;
+				
+*/				
+			}
+		}
+		/// <summary>
+		/// In PG under 9.1 you can't do SELECT pg_sleep(2) in binary because that function returns void and PG doesn't know
+		/// how to transfer that. So cast to text server-side.
+		/// </summary>
+		/// <param name="seconds"></param>
+		/// <returns></returns>
+		public static EDBCommand CreateSleepCommand(EDBConnection conn, int seconds)
+		{
+			return new EDBCommand(string.Format("SELECT pg_sleep({0}){1}", seconds, conn.PostgreSqlVersion < new Version(9, 1, 0) ? "::TEXT" : ""), conn);
+		}
+	}
+
+
+    public static class EDBConnectionExtensions
+    {
+        public static int ExecuteNonQuery(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        {
+            var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
+            using (cmd)
+                return cmd.ExecuteNonQuery();
+        }
+
+        [CanBeNull]
+        public static object ExecuteScalar(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        {
+            var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
+            using (cmd)
+                return cmd.ExecuteScalar();
+        }
+
+        public static async Task<int> ExecuteNonQueryAsync(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        {
+            var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
+            using (cmd)
+                return await cmd.ExecuteNonQueryAsync();
+        }
+
+        [CanBeNull]
+        public static async Task<object> ExecuteScalarAsync(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        {
+            var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
+            using (cmd)
+                return await cmd.ExecuteScalarAsync();
         }
     }
 
@@ -51,7 +222,7 @@ namespace Npgsql.Tests
 
         public MonoIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
 
-        public void BeforeTest(TestDetails testDetails)
+        public void BeforeTest([NotNull] ITest test)
         {
             if (Type.GetType("Mono.Runtime") != null)
             {
@@ -62,43 +233,60 @@ namespace Npgsql.Tests
             }
         }
 
-        public void AfterTest(TestDetails testDetails) { }
-        public ActionTargets Targets { get { return ActionTargets.Test; } }
+        public void AfterTest([NotNull] ITest test) { }
+        public ActionTargets Targets => ActionTargets.Test;
     }
 
     /// <summary>
-    /// Causes the test to be ignored if the Postgresql backend version is less than the given one.
+    /// Causes the test to be ignored on Linux
     /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false)]
-    public class MinPgVersion : Attribute, ITestAction
+    public class LinuxIgnore : Attribute, ITestAction
     {
-        readonly Version _minVersion;
         readonly string _ignoreText;
 
-        public MinPgVersion(int major, int minor, int build, string ignoreText = null)
-        {
-            _minVersion = new Version(major, minor, build);
-            _ignoreText = ignoreText;
-        }
+        public LinuxIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
 
-        public void BeforeTest(TestDetails testDetails)
+        public void BeforeTest([NotNull] ITest test)
         {
-            var asTestBase = testDetails.Fixture as TestBase;
-            if (asTestBase == null)
-                throw new Exception("[MinPgsqlVersion] can only be used in fixtures inheriting from TestBase");
-
-            if (asTestBase.Conn.PostgreSqlVersion < _minVersion)
+            var osEnvVar = Environment.GetEnvironmentVariable("OS");
+            if (osEnvVar == null || osEnvVar != "Windows_NT")
             {
-                var msg = String.Format("Postgresql backend version {0} is less than the required {1}",
-                                        asTestBase.Conn.PostgreSqlVersion, _minVersion);
+                var msg = "Ignored on Linux";
                 if (_ignoreText != null)
                     msg += ": " + _ignoreText;
                 Assert.Ignore(msg);
             }
         }
 
-        public void AfterTest(TestDetails testDetails) { }
-        public ActionTargets Targets { get { return ActionTargets.Test; } }
+        public void AfterTest([NotNull] ITest test) { }
+        public ActionTargets Targets => ActionTargets.Test;
+    }
+
+    /// <summary>
+    /// Causes the test to be ignored on Windows
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false)]
+    public class WindowsIgnore : Attribute, ITestAction
+    {
+        readonly string _ignoreText;
+
+        public WindowsIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
+
+        public void BeforeTest([NotNull] ITest test)
+        {
+            var osEnvVar = Environment.GetEnvironmentVariable("OS");
+            if (osEnvVar == "Windows_NT")
+            {
+                var msg = "Ignored on Windows";
+                if (_ignoreText != null)
+                    msg += ": " + _ignoreText;
+                Assert.Ignore(msg);
+            }
+        }
+
+        public void AfterTest([NotNull] ITest test) { }
+        public ActionTargets Targets => ActionTargets.Test;
     }
 
     public enum PrepareOrNot
@@ -106,4 +294,15 @@ namespace Npgsql.Tests
         Prepared,
         NotPrepared
     }
+
+#if !(NET45 || NET451)
+    // When using netcoreapp, we use NUnit's portable library which doesn't include TimeoutAttribute
+    // (probably because it can't enforce it). So we define it here to allow us to compile, once there's
+    // proper support for netcoreapp this should be removed.
+    [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Method, Inherited = false)]
+    class TimeoutAttribute : Attribute
+    {
+        public TimeoutAttribute(int timeout) {}
+    }
+#endif
 }

@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -30,7 +30,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace  EnterpriseDB.EDBClient
+namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// An interface to remotely control the seekable stream for an opened large object on a PostgreSQL server.
@@ -82,12 +82,13 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="count">The maximum number of bytes that should be read.</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>How many bytes actually read, or 0 if end of file was already reached.</returns>
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 return await Read(buffer, offset, count, true);
-        }
+            });
 
         async Task<int> Read(byte[] buffer, int offset, int count, bool async)
         {
@@ -107,7 +108,7 @@ namespace  EnterpriseDB.EDBClient
 
             while (read < count)
             {
-                var bytesRead = await _manager.ExecuteFunctionGetBytes("loread($1, $2)", buffer, offset + read, count - read, async, _fd, chunkCount);
+                var bytesRead = await _manager.ExecuteFunctionGetBytes("loread($1, $2)", buffer, offset + read, count - read, async, _fd, chunkCount);//EnterpriseDB Team
                 _pos += bytesRead;
                 read += bytesRead;
                 if (bytesRead < chunkCount)
@@ -134,12 +135,12 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="offset">The offset in the buffer at which to begin copying bytes.</param>
         /// <param name="count">The number of bytes to write.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 await Write(buffer, offset, count, true);
-        }
+            });
 
         async Task Write(byte[] buffer, int offset, int count, bool async)
         {
@@ -162,11 +163,11 @@ namespace  EnterpriseDB.EDBClient
             while (totalWritten < count)
             {
                 var chunkSize = Math.Min(count - totalWritten, _manager.MaxTransferBlockSize);
-                var bytesWritten = await _manager.ExecuteFunction<int>("lowrite($1, $2)", async, _fd, new ArraySegment<byte>(buffer, offset + totalWritten, chunkSize));
+                var bytesWritten = await _manager.ExecuteFunction<int>("lowrite($1, $2)", async, _fd, new ArraySegment<byte>(buffer, offset + totalWritten, chunkSize));//EnterpriseDB Team
                 totalWritten += bytesWritten;
 
                 if (bytesWritten != chunkSize)
-                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug, please report");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug, please report");
 
                 _pos += bytesWritten;
             }
@@ -215,11 +216,8 @@ namespace  EnterpriseDB.EDBClient
         /// <summary>
         /// Gets the length of the large object. This internally seeks to the end of the stream to retrieve the length, and then back again.
         /// </summary>
-        public async Task<long> GetLengthAsync()
-        {
-            using (NoSynchronizationContextScope.Enter())
-                return await GetLength(true);
-        }
+        public Task<long> GetLengthAsync()
+            => SynchronizationContextSwitcher.NoContext(async () => await GetLength(true));
 
 #pragma warning disable CA1721 
         async Task<long> GetLength(bool async)
@@ -249,12 +247,12 @@ namespace  EnterpriseDB.EDBClient
         /// <param name="origin">A value of type SeekOrigin indicating the reference point used to obtain the new position.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
-        public async Task<long> SeekAsync(long offset, SeekOrigin origin, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task<long> SeekAsync(long offset, SeekOrigin origin, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 return await Seek(offset, origin, true);
-        }
+            });
 
         async Task<long> Seek(long offset, SeekOrigin origin, bool async)
         {
@@ -266,9 +264,9 @@ namespace  EnterpriseDB.EDBClient
             CheckDisposed();
 
             if (_manager.Has64BitSupport)
-                return _pos = await _manager.ExecuteFunction<long>("lo_lseek64($1, $2, $3)", async, _fd, offset, (int)origin);
+                return _pos = await _manager.ExecuteFunction<long>("lo_lseek64($1, $2, $3)", async, _fd, offset, (int)origin);//EnterpriseDB Team
             else
-                return _pos = await _manager.ExecuteFunction<int>("lo_lseek($1, $2, $3)", async, _fd, (int)offset, (int)origin);
+                return _pos = await _manager.ExecuteFunction<int>("lo_lseek($1, $2, $3)", async, _fd, (int)offset, (int)origin);//EnterpriseDB Team
         }
 
         /// <summary>
@@ -290,12 +288,12 @@ namespace  EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="value">Number of bytes to either truncate or enlarge the large object.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public async Task SetLength(long value, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
+        public Task SetLength(long value, CancellationToken cancellationToken)
+            => SynchronizationContextSwitcher.NoContext(async () =>
+            {
+                cancellationToken.ThrowIfCancellationRequested()            ;
                 await SetLength(value, true);
-        }
+            });
 
         async Task SetLength(long value, bool async)
         {
@@ -310,23 +308,23 @@ namespace  EnterpriseDB.EDBClient
                 throw new NotSupportedException("SetLength cannot be called on a stream opened with no write permissions");
 
             if (_manager.Has64BitSupport)
-                await _manager.ExecuteFunction<int>("lo_truncate64($1, $2)", async, _fd, value);
+                await _manager.ExecuteFunction<int>("lo_truncate64($1, $2)", async, _fd, value);//EnterpriseDB Team
             else
-                await _manager.ExecuteFunction<int>("lo_truncate($1, $2)", async, _fd, (int)value);
+                await _manager.ExecuteFunction<int>("lo_truncate($1, $2)", async, _fd, (int)value);//EnterpriseDB Team
         }
 
         /// <summary>
         /// Releases resources at the backend allocated for this stream.
         /// </summary>
-#if NET45 || NET451
-        public override void Close()
-#else
+#if NETSTANDARD1_3
         void Close()
+#else
+        public override void Close()
 #endif
         {
             if (!_disposed)
             {
-                _manager.ExecuteFunction<int>("lo_close($1)", false, _fd).GetAwaiter().GetResult();
+                _manager.ExecuteFunction<int>("lo_close($1)", false, _fd).GetAwaiter().GetResult();//EnterpriseDB Team
                 _disposed = true;
             }
         }

@@ -1,10 +1,33 @@
-﻿using System;
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace Npgsql.Tests
+namespace EnterpriseDB.EDBClient.Tests
 {
     class ConnectionStringBuilderTests
     {
@@ -34,13 +57,26 @@ namespace Npgsql.Tests
         [Test]
         public void TryGetValue()
         {
-            object value;
             Builder.ConnectionString = "Host=myhost";
 
-            Assert.That(Builder.TryGetValue("Host", out value), Is.True);
+            Assert.That(Builder.TryGetValue("Host", out var value), Is.True);
             Assert.That(value, Is.EqualTo("myhost"));
 
             Assert.That(Builder.TryGetValue("SomethingUnknown", out value), Is.False);
+        }
+
+        [Test]
+        public void Remove()
+        {
+            Assert.That(Builder.ConnectionString, Is.EqualTo(""));
+            Builder.SslMode = SslMode.Prefer;
+            Assert.That(Builder["SSL Mode"], Is.EqualTo(SslMode.Prefer));
+            Builder.Remove("SSL Mode");
+            Assert.That(Builder.ConnectionString, Is.EqualTo(""));
+            Builder.CommandTimeout = 120;
+            Assert.That(Builder["Command Timeout"], Is.EqualTo(120));
+            Builder.Remove("Command Timeout");
+            Assert.That(Builder.ConnectionString, Is.EqualTo(""));
         }
 
         [Test]
@@ -56,10 +92,10 @@ namespace Npgsql.Tests
         [Test]
         public void Default()
         {
-            Assert.That(Builder.Port, Is.EqualTo(NpgsqlConnection.DefaultPort));
+            Assert.That(Builder.Port, Is.EqualTo(EDBConnection.DefaultPort));
             Builder.Port = 8;
             Builder.Remove("Port");
-            Assert.That(Builder.Port, Is.EqualTo(NpgsqlConnection.DefaultPort));
+            Assert.That(Builder.Port, Is.EqualTo(EDBConnection.DefaultPort));
         }
 
         [Test]
@@ -77,7 +113,7 @@ namespace Npgsql.Tests
             var builder2 = Builder.Clone();
             Assert.That(builder2.Host, Is.EqualTo("myhost"));
             Assert.That(builder2["Host"], Is.EqualTo("myhost"));
-            Assert.That(Builder.Port, Is.EqualTo(NpgsqlConnection.DefaultPort));
+            Assert.That(Builder.Port, Is.EqualTo(EDBConnection.DefaultPort));
         }
 
         [Test]
@@ -90,18 +126,18 @@ namespace Npgsql.Tests
         [Test]
         public void InvalidConnectionString()
         {
-            Assert.That(() => Builder.ConnectionString = "Server=127.0.0.1;User Id=npgsql_tests;Pooling:false",
+            Assert.That(() => Builder.ConnectionString = "Server=127.0.0.1;User Id=EDB_tests;Pooling:false",
                 Throws.Exception.TypeOf<ArgumentException>());
         }
 
         #region Setup
 
-        NpgsqlConnectionStringBuilder Builder { get; set; }
+        EDBConnectionStringBuilder Builder { get; set; }
 
         [SetUp]
         public void SetUp()
         {
-            Builder = new NpgsqlConnectionStringBuilder();
+            Builder = new EDBConnectionStringBuilder();
         }
 
         #endregion

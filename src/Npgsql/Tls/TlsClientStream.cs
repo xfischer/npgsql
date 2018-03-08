@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -36,7 +36,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
-namespace  EnterpriseDB.EDBClient.Tls
+namespace EnterpriseDB.EDBClient.Tls
 {
     class TlsClientStream : Stream
     {
@@ -1191,11 +1191,11 @@ namespace  EnterpriseDB.EDBClient.Tls
                 bool? res;
 
                 // .NET Framework has an optimized native implementation here, but it doesn't
-                // exist in CoreCLR (netstandard13) or on mono.
+                // exist in CoreCLR or on mono.
                 // We include two checks - one compile-time and one runtime - to allow everyone
                 // to be happy. The OPTIMIZED_CRYPTOGRAPHY define is only enabled explicitly
                 // at the build server
-#if OPTIMIZED_CRYPTOGRAPHY && !NETSTANDARD1_3
+#if OPTIMIZED_CRYPTOGRAPHY && (NET45 || NET451)
                 if (Type.GetType("Mono.Runtime") != null)
                     res = EllipticCurve.VerifySignature(pkParameters, pkKey, hash, signature);
                 else
@@ -1449,7 +1449,7 @@ namespace  EnterpriseDB.EDBClient.Tls
             var keyDsa = key as DSACryptoServiceProvider;
             var keyRsa = key as RSACryptoServiceProvider;
 #else
-            var keyRsa = new X509Certificate2(_clientCertificates[0].Export(X509ContentType.Cert)).GetRSAPrivateKey();
+            var keyRsa = ((X509Certificate2)_clientCertificates[0]).GetRSAPrivateKey();
 #endif
 
             byte[] signature = null, hash = null;
@@ -1543,7 +1543,7 @@ namespace  EnterpriseDB.EDBClient.Tls
             }
             else
             {
-                SendAlertFatal(AlertDescription.HandshakeFailure);
+                SendAlertFatal(AlertDescription.HandshakeFailure, "No private key in provided certificate");
             }
             _handshakeData.CertificateVerifyHash_SHA1.Dispose();
             _handshakeData.CertificateVerifyHash_SHA1 = null;

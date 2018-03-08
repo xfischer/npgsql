@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The  EnterpriseDB.EDBClient DEVELOPMENT Team
+// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE  EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -36,7 +36,7 @@ namespace EDBTypes
     /// DateTime is capable of storing values from year 1 to 9999 at 100-nanosecond precision,
     /// while PostgreSQL's timestamps store values from 4713BC to 5874897AD with 1-microsecond precision.
     /// </summary>
-#if NET45 || NET451
+#if !NETSTANDARD1_3
     [Serializable]
 #endif
     public struct EDBDateTime : IEquatable<EDBDateTime>, IComparable<EDBDateTime>, IComparable,
@@ -133,7 +133,7 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return false;
                 default:
-                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
                 }
             }
         }
@@ -153,7 +153,7 @@ namespace EDBTypes
                 case InternalType.NegativeInfinity:
                     return DateTimeKind.Unspecified;
                 default:
-                    throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(DateTimeKind)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(DateTimeKind)}. Please file a bug.");
                 }
             }
         }
@@ -201,7 +201,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
@@ -232,7 +232,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
@@ -534,7 +534,7 @@ namespace EDBTypes
             case DateTimeKind.Local:
                 return InternalType.FiniteLocal;
             default:
-                throw new InvalidOperationException($"Internal  EnterpriseDB.EDBClient bug: unexpected value {kind} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {kind} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
