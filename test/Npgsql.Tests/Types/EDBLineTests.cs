@@ -5,7 +5,7 @@ using System.Data;
 using EDBTypes;
 
 
-namespace DOTNET
+namespace EnterpriseDB.EDBClient.Tests.Types
 {
 	/// <summary>
 	/// Tests for EDBLine

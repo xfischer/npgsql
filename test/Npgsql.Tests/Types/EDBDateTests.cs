@@ -5,7 +5,7 @@ using System.Data;
 using EDBTypes;
 
 
-namespace DOTNET
+namespace EnterpriseDB.EDBClient.Tests.Types
 {
 	/// <summary>
 	/// Summary description for DateTest.
@@ -15,7 +15,6 @@ namespace DOTNET
 	public class DateTest : TestBase
     {
 		EDBConnection con;
-		bool testingSetDate = false;
 		
 		[SetUp]
 		public void Init()
