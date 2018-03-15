@@ -98,7 +98,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 				
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 
 			}
@@ -182,7 +182,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
 	
-			catch(Exception exp)
+			catch(Exception )
 			{
 				
 			}
@@ -273,7 +273,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
 			
@@ -355,7 +355,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
 		
@@ -446,7 +446,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
 		
@@ -537,7 +537,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
 
@@ -669,7 +669,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				Assert.Fail("Expected an exception on misuse of aggregate function");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
 
@@ -836,7 +836,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					
 
 				}
-				catch(EDBException exp)
+				catch(EDBException )
 				{
 					Assert.Fail("Unable to execute... Unique Index violated");;
 				}
@@ -915,7 +915,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 				}
 
-				catch(EDBException exp)
+				catch(EDBException )
 				{
 				Assert.Fail("Could not create Hash index");
 				}

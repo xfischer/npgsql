@@ -120,7 +120,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("should not insert duplicate values");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				Console.WriteLine("raising exception");;
 			}
@@ -236,7 +236,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("should not insert duplicate values");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				Console.WriteLine("raising exception");;
 			}

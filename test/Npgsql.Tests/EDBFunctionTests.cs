@@ -3081,7 +3081,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.Dispose();
 
                 }
-                catch (EDBException exp)
+                catch (EDBException )
                 {
                 }
 
@@ -3579,7 +3579,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.ExecuteNonQuery();
                     command.Dispose();
                 }
-                catch (EDBException exp)
+                catch (EDBException )
                 {
                 }
                 command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);

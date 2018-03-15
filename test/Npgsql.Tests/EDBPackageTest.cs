@@ -1184,7 +1184,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1285,7 +1285,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1372,7 +1372,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
                 {
                 }
 
@@ -1469,7 +1469,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
                 {
                 }
 
@@ -1584,7 +1584,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1697,7 +1697,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1778,7 +1778,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1846,7 +1846,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -1955,7 +1955,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -2066,7 +2066,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     com.ExecuteNonQuery();
                     com.Dispose();
                 }
-                catch (EDBException exp)
+                catch (EDBException )
                 {
                 }
 
@@ -2268,7 +2268,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }
@@ -2384,7 +2384,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 }
 
-                catch (EDBException exp)
+                catch (EDBException )
 
                 {
                 }

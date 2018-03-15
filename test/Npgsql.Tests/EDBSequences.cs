@@ -209,7 +209,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Console.WriteLine(Reader.GetValue(0).ToString());
                 Reader.Close();
             }
-            catch (EDBException ex)
+            catch (EDBException )
             {
             }
 			/*try
@@ -309,7 +309,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Reader.Close();
 				Assert.Fail("expecting MaxVal reached error");
 			}
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				//Reader.Close();
 			
@@ -336,7 +336,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
                 Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycle";
 				Command.ExecuteNonQuery();
@@ -363,7 +363,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail(" NOCYCLE functionality.case should fails because EDB doesnot provide NOCYCLE functionality");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 			}
 	
@@ -382,7 +382,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
                 Command.CommandText = "DROP SEQUENCE CreateSequenceStartWithMaxValCycleCache";
 				Command.ExecuteNonQuery();
@@ -409,7 +409,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.ExecuteNonQuery();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
                 Command.CommandText = "DROP SEQUENCE CreateSequenceCache";
 				Command.ExecuteNonQuery();
@@ -462,7 +462,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("ORDER functionality.case should fails because EDB does not provide ORDER functionality");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 			}
 		
@@ -482,7 +482,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("NOORDER functionality.case should fails because EDB does not provide ORDER functionality");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 			}
 			

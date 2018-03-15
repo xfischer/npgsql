@@ -140,7 +140,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				com.CommandType = CommandType.Text;
 				com.ExecuteNonQuery();
 			}
-			catch (EDBException e)
+			catch (EDBException )
 			{
 				// Since every create table issues a drop table
 				// it's easy to get a table doesn't exist error.

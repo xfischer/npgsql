@@ -4284,7 +4284,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
 				com.CommandText="drop table Quote";
@@ -4323,7 +4323,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
 				com.CommandText="drop table Quote";
@@ -4364,7 +4364,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				//Assert.Fail("should fail for negative value of size");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
 				com.CommandText="drop table Quote";
@@ -4399,7 +4399,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 				
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				_conn.Close();
 				return;
@@ -4474,7 +4474,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				return;
 			}
@@ -4508,7 +4508,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				com.CommandText="drop table Quote";
 				com.ExecuteNonQuery();
@@ -4549,7 +4549,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				//Assert.Fail("should fail for negative value of size");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
 				com.CommandText="drop table Quote";
@@ -4584,7 +4584,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 				
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				_conn.Close();
 				return;
@@ -4659,7 +4659,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				return;
 			}
@@ -4693,7 +4693,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				com.CommandText="drop table Quote";
 				com.ExecuteNonQuery();

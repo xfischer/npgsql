@@ -890,7 +890,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				ds.ReadXml("XMLTest.xml");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				Assert.Fail("File not read");
 			}
@@ -994,7 +994,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				ds.ReadXmlSchema("XMLTest.xml");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				Assert.Fail("File not read");
 			}
