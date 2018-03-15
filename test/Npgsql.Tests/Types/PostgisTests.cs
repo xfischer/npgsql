@@ -445,9 +445,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     cmd.CommandText = "SELECT version()";
                     var versionString = (string)cmd.ExecuteScalar();
                     Debug.Assert(versionString != null);
-                    var m = Regex.Match(versionString, @"^PostgreSQL ([0-9.]+(\w*)?)");
+                    var m = Regex.Match(versionString, @"^EnterpriseDB ([0-9.]+(\w*)?)");
                     if (!m.Success)
-                        throw new Exception("Couldn't parse PostgreSQL version string: " + versionString);
+                        throw new Exception("Couldn't parse EnterpriseDB version string: " + versionString);
                     var version = m.Groups[1].Value;
                     var prerelease = m.Groups[2].Value;
                     if (!string.IsNullOrWhiteSpace(prerelease))
