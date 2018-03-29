@@ -284,10 +284,10 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Connection
 
         /// <summary>
-        /// The hostname or IP address of the PostgreSQL server to connect to.
+        /// The hostname or IP address of the EnterpriseDB Postgres server to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The hostname or IP address of the PostgreSQL server to connect to.")]
+        [Description("The hostname or IP address of the EnterpriseDB Postgres server to connect to.")]
         [DisplayName("Host")]
         [EDBConnectionStringProperty("Server")]
         [CanBeNull]
@@ -303,10 +303,10 @@ namespace EnterpriseDB.EDBClient
         string _host;
 
         /// <summary>
-        /// The TCP/IP port of the PostgreSQL server.
+        /// The TCP/IP port of the EnterpriseDB Postgres server.
         /// </summary>
         [Category("Connection")]
-        [Description("The TCP port of the PostgreSQL server.")]
+        [Description("The TCP port of the EnterpriseDB Postgres server.")]
         [DisplayName("Port")]
         [EDBConnectionStringProperty]
         [DefaultValue(EDBConnection.DefaultPort)]
@@ -325,10 +325,10 @@ namespace EnterpriseDB.EDBClient
         int _port;
 
         ///<summary>
-        /// The PostgreSQL database to connect to.
+        /// The EnterpriseDB Postgres database to connect to.
         /// </summary>
         [Category("Connection")]
-        [Description("The PostgreSQL database to connect to.")]
+        [Description("The EnterpriseDB Postgres database to connect to.")]
         [DisplayName("Database")]
         [EDBConnectionStringProperty("DB")]
         [CanBeNull]
@@ -456,10 +456,10 @@ namespace EnterpriseDB.EDBClient
         string _clientEncoding;
 
         /// <summary>
-        /// Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.
+        /// Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres string data.
         /// </summary>
         [Category("Connection")]
-        [Description("Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.")]
+        [Description("Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres string data.")]
         [DisplayName("Encoding")]
         [DefaultValue("UTF8")]
         [EDBConnectionStringProperty]
@@ -580,7 +580,7 @@ namespace EnterpriseDB.EDBClient
         [Description("The Kerberos service name to be used for authentication.")]
         [DisplayName("Kerberos Service Name")]
         [EDBConnectionStringProperty("Krbsrvname")]
-        [DefaultValue("postgres")]
+        [DefaultValue("enterprisedb")]
         public string KerberosServiceName
         {
             get => _kerberosServiceName;
@@ -822,7 +822,7 @@ namespace EnterpriseDB.EDBClient
         /// http://www.postgresql.org/docs/current/static/manage-ag-templatedbs.html
         /// </remarks>
         [Category("Entity Framework")]
-        [Description("The database template to specify when creating a database in Entity Framework. If not specified, PostgreSQL defaults to \"template1\".")]
+        [Description("The database template to specify when creating a database in Entity Framework. If not specified, EnterpriseDB Postgres defaults to \"template1\".")]
         [DisplayName("EF Template Database")]
         [EDBConnectionStringProperty]
         public string EntityTemplateDatabase
@@ -1091,10 +1091,10 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Compatibility
 
         /// <summary>
-        /// A compatibility mode for special PostgreSQL server types.
+        /// A compatibility mode for special EnterpriseDB Postgres server types.
         /// </summary>
         [Category("Compatibility")]
-        [Description("A compatibility mode for special PostgreSQL server types.")]
+        [Description("A compatibility mode for special EnterpriseDB Postgres server types.")]
         [DisplayName("Server Compatibility Mode")]
         [EDBConnectionStringProperty]
         public ServerCompatibilityMode ServerCompatibilityMode
@@ -1131,73 +1131,73 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Obsolete
 
         /// <summary>
-        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
         [DisplayName("Connection Lifetime")]
         [EDBConnectionStringProperty]
         [Obsolete("The ConnectionLifeTime parameter is no longer supported")]
         public int ConnectionLifeTime
         {
             get => 0;
-            set => throw new NotSupportedException("The ConnectionLifeTime parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The ConnectionLifeTime parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
         [DisplayName("Continuous Processing")]
         [EDBConnectionStringProperty]
         [Obsolete("The ContinuousProcessing parameter is no longer supported.")]
         public bool ContinuousProcessing
         {
             get => false;
-            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html
+        /// Obsolete, see http://www.npgsql.org/doc/migration/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html")]
+        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.1.html")]
         [DisplayName("Backend Timeouts")]
         [EDBConnectionStringProperty]
         [Obsolete("The BackendTimeouts parameter is no longer supported")]
         public bool BackendTimeouts
         {
             get => false;
-            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.1.html");
+            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html
+        /// Obsolete, see http://www.npgsql.org/doc/migration/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html")]
+        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.0.html")]
         [DisplayName("Preload Reader")]
         [EDBConnectionStringProperty]
         [Obsolete("The PreloadReader parameter is no longer supported")]
         public bool PreloadReader
         {
             get => false;
-            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html");
+            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.0.html");
         }
 
         /// <summary>
-        /// Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html
+        /// Obsolete, see http://www.npgsql.org/doc/migration/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html")]
+        [Description("Obsolete, see http://www.npgsql.org/doc/migration/3.0.html")]
         [DisplayName("Use Extended Types")]
         [EDBConnectionStringProperty]
         [Obsolete("The UseExtendedTypes parameter is no longer supported")]
         public bool UseExtendedTypes
         {
             get => false;
-            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see http://www.EnterpriseDB.EDBClient.org/doc/migration/3.0.html");
+            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see http://www.npgsql.org/doc/migration/3.0.html");
         }
 
         #endregion
