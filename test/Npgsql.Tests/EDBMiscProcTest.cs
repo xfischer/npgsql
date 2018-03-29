@@ -564,7 +564,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				rst.Close();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				ex=true;
 			}
@@ -641,7 +641,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 	
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				ex=true;
 			}
@@ -717,7 +717,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				rst.Close();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				ex=true;
 			}
@@ -1386,7 +1386,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				rst.Close();
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				ex=true;
 			}
@@ -1428,7 +1428,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			}
 	
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 				ex=true;
 			}

@@ -7,7 +7,7 @@ using System.IO;
 using EDBTypes;
 using System.Collections.Generic;
 
-namespace DOTNET
+namespace EnterpriseDB.EDBClient.Tests.Types
 {
     /// <summary>
     /// Summary description for EDBByteaTest.

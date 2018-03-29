@@ -434,7 +434,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("job".ToUpper(),dt.Columns[2].ColumnName.ToUpper());
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				_conn.Close();
 			}
@@ -470,7 +470,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				_conn.Close();
 			}
@@ -498,7 +498,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("empno".ToUpper(),dt.PrimaryKey.GetValue(0).ToString().ToUpper());
 			}
 
-			catch(Exception exp)
+			catch(Exception )
 			{
 				_conn.Close();
 			}

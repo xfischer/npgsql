@@ -85,7 +85,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
 
-			catch(EDBException exp)
+			catch(EDBException )
 			{
 			}
 			
@@ -138,7 +138,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
     	
@@ -188,7 +188,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
     	
@@ -245,7 +245,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
 			}
     	
@@ -306,7 +306,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     		
 			}
@@ -366,7 +366,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
 				    	
 			}
@@ -420,7 +420,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
 			    	
 			}
@@ -475,7 +475,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -526,7 +526,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -580,7 +580,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -636,7 +636,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -692,7 +692,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
 				Assert.Fail("Expecting Numeric field overflow error");
 			}
@@ -719,7 +719,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -744,7 +744,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -767,7 +767,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
@@ -791,7 +791,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
     	
-			catch(Exception exp)
+			catch(Exception )
 			{
     	
 			}
