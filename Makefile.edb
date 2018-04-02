@@ -35,16 +35,27 @@ export EDB_BUILDNUM_DOTNET ?=1
 
 get-version:
 
-		echo "EDB_VERSION_DOTNET=$(EDB_VERSION_DOTNET)"> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-		echo "EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-		chmod 755 $(DOTNET_STAGING_PATH)/dotnet-version.sh
+	mkdir -p $(DOTNET_STAGING_PATH)
+
+	echo "EDB_VERSION_DOTNET=$(EDB_VERSION_DOTNET)" > $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "# Following variables are required for CM dashboard integration" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export PKG_NAME=$(PKG_NAME)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export RSYNC_PRODUCT_VERSION=$(EDB_VERSION_DOTNET)" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export BUILD_COMPONENTS=\"$(BUILD_COMPONENTS)\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export PRE_BUILD_STEPS=\"$(PRE_BUILD_STEPS)\""  >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export POST_BUILD_STEPS=\"$(POST_BUILD_STEPS)\""  >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export UNSUPPORTED_COMPONENTS=\"\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export DISABLED_COMPONENTS=\"\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export LOG_DIR_PATH=$(PWD)/inst/logs" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	chmod 755 $(DOTNET_STAGING_PATH)/dotnet-version.sh
 
 # Generate installer
-skip-build: 
+skip-build-installer: 
 
 	./pkg/installer/generate-installer.sh $(DOTNET_STAGING_PATH) $(EDB_INSTALLBUILDER_BIN)
 
-installer: staging-dir skip-build
+installer: staging-dir skip-build-installer
 
 # Clean source directory
 edbclean:
