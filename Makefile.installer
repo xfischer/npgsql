@@ -8,7 +8,7 @@ SHELL := env DOTNET_STAGING_PATH=$(DOTNET_STAGING_PATH) $(SHELL)
 export DOTNET_STAGING_PATH ?= "$(DOTNET_SOURCE_PATH)\\\\inst"
 
 # Remote host and location to get packages
-REMOTE_HOST:="centos@172.16.253.7"
+REMOTE_HOST:="centos@redux-store"
 REMOTE_PATH:="/opt/local/Windows64"
 
 PACKAGE_LIST := pgBuild64 BitRock 

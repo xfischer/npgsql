@@ -15,7 +15,7 @@ export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
 
 
 SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
-export GIT_REPO_PATH ?="buildfarm@172.16.253.90:/home/buildfarm/git"
+export GIT_REPO_PATH ?="buildfarm@scm-replica:/home/buildfarm/git"
 
 SHELL := env REDUX_TAG_NAME=$(REDUX_TAG_NAME) $(SHELL)
 export REDUX_TAG_NAME ?="master"
