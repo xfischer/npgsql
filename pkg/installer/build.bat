@@ -8,15 +8,11 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\T
 @SET FRAMEWORK_DEFINE="%5"
 @SET STAGING_DIR="%6"
 
-@SET PATH=%PGBUILD%\bin;%PATH%
+@SET DOTNET_PATH="C:\\Program Files\\dotnet"
+@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
 
 nuget install VSSDK.Shell.12
 nuget install AsyncRewriter -Version 0.6.0 -Output packages
@@ -25,45 +21,55 @@ nuget install EntityFramework
 nuget restore Npgsql.sln
 
 cd src\Npgsql
-msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
+msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
 
 echo %cd%
 echo %RELEASE_CONFIGURATION%
 echo %SOURCE_PATH%
 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE% || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE% || goto :error 
 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
 
-copy bin\%RELEASE_CONFIGURATION%\netstandard1.3\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3
+copy bin\%RELEASE_CONFIGURATION%\netstandard1.3\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3 || goto :error 
 
 cd %SOURCE_PATH%
 cd src\NpgsqlDdexProvider
 nuget restore NpgsqlDdexProvider.sln
 
-msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
+msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
 
-copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
-copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
+copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
 
 cd %SOURCE_PATH%
-cd src\EDBNunit
-msbuild.exe EDBNunit.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
+cd test\Npgsql.Tests
+nuget restore Npgsql.Tests.csproj
+msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
 
 cd %SOURCE_PATH%
 cd src\EntityFramework6.Npgsql
-msbuild.exe EntityFramework5.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
+msbuild.exe EntityFramework5.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
 
 cd %SOURCE_PATH%
 cd src\EntityFramework6.Npgsql
 nuget restore packages.config -PackagesDirectory packages
 
-msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% 
+msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
 
-copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
-copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
+copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
+copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error 
 
-copy %SOURCE_PATH%\src\NpgsqlDdexProvider\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
+copy %SOURCE_PATH%\src\NpgsqlDdexProvider\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+
+:error
+echo "Failed with error %errorlevel%."
+exit /b %errorlevel%

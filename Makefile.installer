@@ -8,22 +8,28 @@ SHELL := env DOTNET_STAGING_PATH=$(DOTNET_STAGING_PATH) $(SHELL)
 export DOTNET_STAGING_PATH ?= "$(DOTNET_SOURCE_PATH)\\\\inst"
 
 # Remote host and location to get packages
-REMOTE_HOST:="centos@172.16.253.7"
+REMOTE_HOST:="centos@redux-store"
 REMOTE_PATH:="/opt/local/Windows64"
 
 PACKAGE_LIST := pgBuild64 BitRock 
 
 export NET45_FRAMEWORK :=4.5
 
+export PRE_BUILD_STEPS=install-builddeps
+export BUILD_COMPONENTS=build-dotnet45
+export POST_BUILD_STEPS=copy-samples
+
 # Build .NET
 build-dotnet45:
 
 	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
-# Install .NET
-install: edbclean get-commit install-builddeps build-dotnet45
+
+copy-samples:
 
 	#mkdir -p $(DOTNET_STAGING_PATH)/samples
 	#cp -rp $(PWD)/edb-samples/driver_samples/dotnet/SAMPLE_TEST.cs $(DOTNET_STAGING_PATH)/samples
 
+# Install .NET
+install: edbclean get-commit $(PRE_BUILD_STEPS) $(BUILD_COMPONENTS) $(POST_BUILD_STEPS)
 
