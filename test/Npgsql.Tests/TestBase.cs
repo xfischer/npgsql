@@ -45,7 +45,8 @@ namespace EnterpriseDB.EDBClient.Tests
         /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"];
+        public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"]
+            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=enterprisedb;Password=edb;Database=test;";
 
         #region Utilities for use by tests
 
