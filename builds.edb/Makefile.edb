@@ -2,17 +2,17 @@
 #######################
 # Environment variables
 #######################
+SRC_DIR=$(PWD)/..
 
 # Determine operating system
 OS := $(shell uname -a)
 
 PKG_NAME:=dotnet
-COMMIT_DOT_GIT_PATH:=.
+COMMIT_DOT_GIT_PATH:=$(SRC_DIR)
 COMMIT_LOG_FILE:=$(PKG_NAME)-commit.log
 
 SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
 export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
-
 
 SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
 export GIT_REPO_PATH ?="buildfarm@scm-replica:/home/buildfarm/git"
@@ -28,7 +28,9 @@ ifneq ($(strip $(COMMON_MAKEFILE_INCLUDES)),)
   include $(COMMON_MAKEFILE_INCLUDES)
 endif
 
-EDB_VERSION_DOTNET=$(shell cat src/CommonAssemblyInfo.cs | grep AssemblyVersion | cut -f2 -d"\"")
+EDB_VERSION_DOTNET=$(shell cat $(SRC_DIR)/src/CommonAssemblyInfo.cs | grep AssemblyVersion | cut -f2 -d"\"")
+
+export EDB_VERSION_PKG :=$(EDB_VERSION_DOTNET)
 
 SHELL := env EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET) $(SHELL)
 export EDB_BUILDNUM_DOTNET ?=1
@@ -60,10 +62,10 @@ installer: staging-dir skip-build-installer
 # Clean source directory
 edbclean:
 	rm -rf $(DOTNET_STAGING_PATH)
-	rm -rf src/Npgsql/bin/Release
-	rm -rf src/NpgsqlDdexProvider/bin/Release
-	rm -rf src/EDBNunit/bin/Release
-	rm -rf src/EntityFramework6.Npgsql/bin/Release
+	rm -rf $(SRC_DIR)/src/Npgsql/bin/Release
+	rm -rf $(SRC_DIR)/src/NpgsqlDdexProvider/bin/Release
+	rm -rf $(SRC_DIR)/src/EDBNunit/bin/Release
+	rm -rf $(SRC_DIR)/src/EntityFramework6.Npgsql/bin/Release
 
 # Build Installer staging
 staging-dir: install get-version
