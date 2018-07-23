@@ -47,8 +47,8 @@ get-version:
 	echo "export BUILD_COMPONENTS=\"$(BUILD_COMPONENTS)\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
 	echo "export PRE_BUILD_STEPS=\"$(PRE_BUILD_STEPS)\""  >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
 	echo "export POST_BUILD_STEPS=\"$(POST_BUILD_STEPS)\""  >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-	echo "export UNSUPPORTED_COMPONENTS=\"\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
-	echo "export DISABLED_COMPONENTS=\"\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export UNSUPPORTED_COMPONENTS=\"$(UNSUPPORTED_COMPONENTS)\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
+	echo "export DISABLED_COMPONENTS=\"$(DISABLED_COMPONENTS)\"" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
 	echo "export LOG_DIR_PATH=$(PWD)/inst/logs" >> $(DOTNET_STAGING_PATH)/dotnet-version.sh; \
 	chmod 755 $(DOTNET_STAGING_PATH)/dotnet-version.sh
 
