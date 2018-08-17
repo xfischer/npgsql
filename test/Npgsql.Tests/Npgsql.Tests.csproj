@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net45;net451;netcoreapp2.0</TargetFrameworks>
-    <DebugType>portable</DebugType>
+    <DebugType>full</DebugType>
     <AssemblyName>Npgsql.Tests</AssemblyName>
     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>

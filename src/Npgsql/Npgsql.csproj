@@ -23,6 +23,7 @@
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
+    <DebugType>full</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
