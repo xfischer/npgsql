@@ -505,7 +505,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				}	
 			}
 
-			[Test, Ignore("Needs Refcursor refactor")]
+			[Test]
 			public void refcur_callee_6param_with_Join()
 			{
 			
@@ -523,15 +523,24 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Prepare();
+
+                    command.Prepare();
 					command.Parameters[0].Value = 7369;
-					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					
+
+                    command.ExecuteNonQuery();
+
+                    String cursorName1 = command.Parameters[1].Value.ToString();
+                    String cursorName2 = command.Parameters[2].Value.ToString();
+                    String cursorName3 = command.Parameters[3].Value.ToString();
+                    String cursorName4 = command.Parameters[5].Value.ToString();
+
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
-				
-					EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-				
-					int fc1=reader.FieldCount;
+					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
+
+                    command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
 					reader.Read();
 					reader.Read();
 
@@ -540,18 +549,23 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
+                
+                    reader.Close();
 
+                    command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-					reader = (EDBDataReader)command.Parameters[2].Value;
-				
-					fc1=reader.FieldCount;
 					reader.Read();
 					
 					Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
 					
-					reader = (EDBDataReader)command.Parameters[3].Value;
-				
-					fc1=reader.FieldCount;
+                    reader.Close();
+					
+                    command.CommandText = "FETCH ALL IN \"" + cursorName3 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
 					reader.Read();
 					reader.Read();
 
@@ -560,23 +574,21 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
-
-					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
+                    reader.Close();
 					
-					reader = (EDBDataReader)command.Parameters[5].Value;
-				
-					fc1=reader.FieldCount;
+                    command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
 					reader.Read();
 					reader.Read();
 
 					Assert.AreEqual("30", Convert.ToString(reader[0].ToString()));
 					Assert.AreEqual("SALES", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("CHICAGO", Convert.ToString(reader.GetString(2)));
-					
 					reader.Close();
-					result.Close();
+
 				    tran.Commit();
-			
 			
 				}
 				catch(Exception ex)
@@ -585,7 +597,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				}
 			}
 
-            [Test, Ignore("Needs Refcursor refactor")]
+            [Test]
 			public void refcur_callee_7param_with_Join()
 			{
 				try
@@ -605,13 +617,22 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Numeric,10,"g",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
-					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					
+                
+                    command.ExecuteNonQuery();
+
+                    String cursorName1 = command.Parameters[1].Value.ToString();
+                    String cursorName2 = command.Parameters[2].Value.ToString();
+                    String cursorName3 = command.Parameters[3].Value.ToString();
+                    String cursorName4 = command.Parameters[5].Value.ToString();
+
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
+					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
+					Assert.AreEqual("106",command.Parameters[6].Value.ToString());
+
+                    command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-				
-					int fc1=reader.FieldCount;
 					reader.Read();
 					reader.Read();
 
@@ -620,18 +641,20 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
-
-
-					reader = (EDBDataReader)command.Parameters[2].Value;
-				
-					fc1=reader.FieldCount;
+					reader.Close();
+                
+                    command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 					reader.Read();
 					
 					Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
+					reader.Close();
 		
-					reader = (EDBDataReader)command.Parameters[3].Value;
-				
-					fc1=reader.FieldCount;
+                    command.CommandText = "FETCH ALL IN \"" + cursorName3 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
 					reader.Read();
 					reader.Read();
 
@@ -640,12 +663,12 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
-
-					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
+					reader.Close();
 					
-					reader = (EDBDataReader)command.Parameters[5].Value;
-				
-					fc1=reader.FieldCount;
+                    command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
 					reader.Read();
 					reader.Read();
 
@@ -653,9 +676,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALES", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("CHICAGO", Convert.ToString(reader.GetString(2)));
 					
-					Assert.AreEqual("106",command.Parameters[6].Value.ToString());
 					reader.Close();
-					result.Close();
 					tran.Commit();
 			
 			
@@ -667,12 +688,11 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			}
 
-            [Test, Ignore("Needs Refcursor refactor")]
+            [Test]
 			public void refcur_callee_8param_with_Join()
 			{
-				
-				
-				try
+
+            try
 				{
 					EDBTransaction tran = con.BeginTransaction();
 				
@@ -690,14 +710,23 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("h",EDBTypes.EDBDbType.Money,10,"h",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
-					EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					
+                    command.ExecuteNonQuery();
+
+                    String cursorName1 = command.Parameters[1].Value.ToString();
+                    String cursorName2 = command.Parameters[2].Value.ToString();
+                    String cursorName3 = command.Parameters[3].Value.ToString();
+                    String cursorName4 = command.Parameters[5].Value.ToString();
+
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
-				
-					EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
-				
-					int fc1=reader.FieldCount;
-					reader.Read();
+					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
+					Assert.AreEqual("106",command.Parameters[6].Value.ToString());
+					Assert.AreEqual("99.9",command.Parameters[7].Value.ToString());
+
+                    command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+                    reader.Read();
 					reader.Read();
 
 					Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
@@ -705,21 +734,21 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1600", Convert.ToString(reader[4].ToString()));
+					reader.Close();
+                
+                    command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-
-					reader = (EDBDataReader)command.Parameters[2].Value;
-				
-					fc1=reader.FieldCount;
 					reader.Read();
 					
 					Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
+					reader.Close();
 					
+                    command.CommandText = "FETCH ALL IN \"" + cursorName3 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-					
-
-					reader = (EDBDataReader)command.Parameters[3].Value;
-				
-					fc1=reader.FieldCount;
 					reader.Read();
 					reader.Read();
 
@@ -728,26 +757,21 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
 					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
+					reader.Close();
+                
+                    command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
+                    command.CommandType = CommandType.Text;
+                    reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
-					
-					reader = (EDBDataReader)command.Parameters[5].Value;
-				
-					fc1=reader.FieldCount;
 					reader.Read();
 					reader.Read();
 
 					Assert.AreEqual("30", Convert.ToString(reader[0].ToString()));
 					Assert.AreEqual("SALES", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("CHICAGO", Convert.ToString(reader.GetString(2)));
-					
-					Assert.AreEqual("106",command.Parameters[6].Value.ToString());
-					Assert.AreEqual("99.90",command.Parameters[7].Value.ToString());
-					
 					reader.Close();
-					result.Close();
-					tran.Commit();
-			
+
+                    tran.Commit();
 			
 				}
 				catch(Exception ex)
@@ -756,7 +780,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				}				
 			}
 			
-			[Test, Ignore("Needs Refcursor refactor")]
+			[Test, Ignore("Investigate")]
 			public void ProcRefCursorOutParameter() 
 			{
 				try 
@@ -792,8 +816,12 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
-					
+                    String cursorName = command.Parameters[0].Value.ToString();
+
+                    command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
 					cur.Read();
 					Assert.AreEqual("1", Convert.ToString(cur[0].ToString()));
 					Assert.AreEqual("False", Convert.ToString(cur[1].ToString()));
@@ -803,7 +831,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Shehzad", Convert.ToString(cur.GetString(11)));
@@ -819,7 +847,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -835,7 +863,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -851,7 +879,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));
@@ -1556,7 +1584,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					com.ExecuteNonQuery();
 
 					EDBTransaction tran = con.BeginTransaction();
-					EDBCommand command = new EDBCommand("RefCurProc(:v_id)",con);
+					EDBCommand command = new EDBCommand("RefCurProc",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));

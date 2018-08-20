@@ -27,10 +27,11 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void CreateTable()
 		{
 			try
-			{
-				//create the table
-				string create="CREATE TABLE NewTable AS Select * From emp";
-				EDBCommand Command=new EDBCommand("",con);
+            {
+
+                //create the table
+                string create="CREATE TABLE NewTable AS Select * From emp";
+                EDBCommand Command = new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
@@ -56,8 +57,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
 			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
+            {
+                Console.WriteLine(exp.Message);
+                throw new Exception(exp.ToString());
 			}
 
 		}
@@ -67,46 +69,46 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void CreateViewOnImportedSchema()
 		{
 			try
-			{
-							string createTable="CREATE TABLE TableForView AS Select * From dept";
-							EDBCommand Command=new EDBCommand("",con);
-							Command.CommandText=createTable;
-							Command.CommandType=CommandType.Text;
-							Command.ExecuteNonQuery();
+            {
 
-							string CreateView="CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
-							Command=new EDBCommand("",con);
-							Command.CommandText=CreateView;
-							Command.ExecuteNonQuery();
+                string createTable="CREATE TABLE TableForView AS Select * From dept";
+                EDBCommand Command = new EDBCommand("",con);
+				Command.CommandText=createTable;
+				Command.CommandType=CommandType.Text;
+				Command.ExecuteNonQuery();
 
-							string Select="SELECT * FROM ImportedSchemaView";
-							Command=new EDBCommand("",con);
-							Command.CommandText=Select;
-							Command.CommandType=CommandType.Text;
+				string CreateView="CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
+				Command=new EDBCommand("",con);
+				Command.CommandText=CreateView;
+				Command.ExecuteNonQuery();
 
-							EDBDataReader Reader=Command.ExecuteReader();
+				string Select="SELECT * FROM ImportedSchemaView";
+				Command=new EDBCommand("",con);
+				Command.CommandText=Select;
+				Command.CommandType=CommandType.Text;
 
-							//Assert.IsTrue(Reader.Read(),"No data returned from Select");
+				EDBDataReader Reader=Command.ExecuteReader();
 
-                            Reader.Close();
+				//Assert.IsTrue(Reader.Read(),"No data returned from Select");
+
+                Reader.Close();
 				
-							string DropView ="Drop View ImportedSchemaView";
-							Command=new EDBCommand("",con);
-							Command.CommandText=DropView;
-							Command.CommandType=CommandType.Text;
-							Command.ExecuteNonQuery();
+				string DropView ="Drop View ImportedSchemaView";
+				Command=new EDBCommand("",con);
+				Command.CommandText=DropView;
+				Command.CommandType=CommandType.Text;
+				Command.ExecuteNonQuery();
 
 				string Drop="Drop TABLE TableForView";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Drop;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
-
-
 				
 			}
 			catch (EDBException exp)
 			{
+                Console.WriteLine(exp.Message);
 				throw new Exception(exp.ToString());
 			}
 		}
@@ -124,9 +126,10 @@ namespace EnterpriseDB.EDBClient.Tests
 		{
 			try
 			{
-				//create the table
-				string create="CREATE TABLE NewTable AS Select * From emp";
-				EDBCommand Command=new EDBCommand("",con);
+
+                //create the table
+                string create="CREATE TABLE NewTable AS Select * From emp";
+                EDBCommand Command = new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
@@ -152,8 +155,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			}
 			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
+            {
+                Console.WriteLine(exp.Message);
+                throw new Exception(exp.ToString());
 			}
 		}
 

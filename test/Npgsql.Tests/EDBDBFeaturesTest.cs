@@ -21,60 +21,66 @@ namespace EnterpriseDB.EDBClient.Tests
 			string connectionString = ConnectionString;
 			con = new EDBConnection(connectionString);			
 		}
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TestExecImmediate()
         {
-//            EDBTransaction tran = con.BeginTransaction();
-//
-//            EDBCommand command = new EDBCommand("SELECT imed_using", con);
-//            command.CommandType = CommandType.Text;
-//            command.Transaction = tran;
-//
-//            //command.Parameters.Add(new EDBParameter("refCursor", EDBTypes.EDBDbType.Refcursor, 10, "refCursor", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-//            //command.Prepare();
-//            //command.Parameters[0].Value = null;
-//
-//            EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-//            int funcReturn = -1;
-//
-//            if (result.Read())
-//            {
-//                Console.WriteLine(result.GetInt32(0));
-//                funcReturn = result.GetInt32(0);
-//            }
-//            //Console.WriteLine(fc.ToString());
-//
-//            Assert.AreEqual(funcReturn, 0);
+            //con.Open();
+            //EDBTransaction tran = con.BeginTransaction();
+
+            //EDBCommand command = new EDBCommand("SELECT imed_using", con);
+            //command.CommandType = CommandType.Text;
+            //command.Transaction = tran;
+
+            //command.Parameters.Add(new EDBParameter("refCursor", EDBTypes.EDBDbType.Refcursor, 10, "refCursor", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            //command.Prepare();
+            //command.Parameters[0].Value = null;
+            //command.ExecuteNonQuery();
+            //String cursorName = command.Parameters[0].Value.ToString();
+
+            //command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            //command.CommandType = CommandType.Text;
+            //EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            //int funcReturn = -1;
+
+            //if (result.Read())
+            //{
+            //    Console.WriteLine(result.GetInt32(0));
+            //    funcReturn = result.GetInt32(0);
+            //}
+            ////Console.WriteLine(fc.ToString());
+
+            //Assert.AreEqual(funcReturn, 0);
         }
 
         [Test]
         public void TestExecImmedWithParameters()
         {
-//            EDBTransaction tran = con.BeginTransaction();
-//
-//            EDBCommand command = new EDBCommand("imed_proc(:param1, :param2)", con);
-//            command.CommandType = CommandType.StoredProcedure;
-//            command.Transaction = tran;
-//
-//            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar2, 25, "param1", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-//            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-//            
-//            command.Prepare();
-//            command.Parameters[0].Value = "SALES";
-//            command.Parameters[1].Value = 1500;
-//
-//            EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-//            bool hasResult = false;
-//            hasResult = result.HasRows;
-//
-//            if (result.Read())
-//            {
-//                Console.WriteLine(result.GetInt32(0));
-//                Console.WriteLine(result.GetInt32(1));
-//            }
-//            //Console.WriteLine(fc.ToString());
-//
-//            Assert.AreEqual(hasResult, false);
+            //con.Open();
+            //EDBTransaction tran = con.BeginTransaction();
+
+            //EDBCommand command = new EDBCommand("imed_proc(:param1, :param2)", con);
+            //command.CommandType = CommandType.StoredProcedure;
+            //command.Transaction = tran;
+
+            //command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 25, "param1", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            //command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+
+            //command.Prepare();
+            //command.Parameters[0].Value = "SALES";
+            //command.Parameters[1].Value = 1500;
+
+            //EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            //bool hasResult = false;
+            //hasResult = result.HasRows;
+
+            //if (result.Read())
+            //{
+            //    Console.WriteLine(result.GetInt32(0));
+            //    Console.WriteLine(result.GetInt32(1));
+            //}
+            ////Console.WriteLine(fc.ToString());
+
+            //Assert.AreEqual(hasResult, false);
         }       
         [Test]
         public void TestSynonyms()

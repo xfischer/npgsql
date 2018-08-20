@@ -994,9 +994,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-/*
-		To verify that maximum 128 OUT parameters are supported in .NET Connector.
-*/
+        /*
+		        To verify that maximum 128 OUT parameters are supported in .NET Connector.
+        */
 		[Test, Ignore("Umar: Investigation needed, throws exception")]
 		public void testMaxParametersSupportInProcedureWithNumericAsOut()
 		{
@@ -2408,72 +2408,47 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		//     [Test]
 				public void TERSE_PROC_NATIVE_INPUT_TYPES()
-
 				{
-
 					try
-
 					{
-
 						EDBCommand Command;
-
 						Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-
 						Command.ExecuteNonQuery();
-
 						Command.Dispose();
 
 						Command = new EDBCommand("BEGIN;", con);
-
 						Command.ExecuteNonQuery();
-
 						Command.Dispose();
 
 						try
-
 						{
-
 							Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
 							Command.ExecuteNonQuery();
-
 							Command.Dispose();
-
 						}
-
 						catch (EDBException )
 						{
 						}
 
 
 						Command = new EDBCommand("create or replace procedure terse_p1( a integer, b integer ) is " +
-
 												 "begin " +
-
 												 "  dbms_output.put_line('a = ' || a); " +
-
 												 "  dbms_output.put_line('b = ' || b); " +
-
 												 "end; ", con);
 
 						Command.ExecuteNonQuery();
-
 						Command.Dispose();
 
 						Command = new EDBCommand("terse_p1(:a,:b)", con);
-
 						Command.CommandType = CommandType.StoredProcedure;
-
 						Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
-
 						Command.Parameters[0].Value = 50;
 
 						Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
-
 						Command.Parameters[1].Value = 51;
 
 						Command.Prepare();
-
 						Command.ExecuteNonQuery();
 
 						Command.Dispose();
@@ -2483,9 +2458,7 @@ namespace EnterpriseDB.EDBClient.Tests
 						Command.Dispose();
 
 						Command = new EDBCommand("END;", con);
-
 						Command.ExecuteNonQuery();
-
 						Command.Dispose();
 
 					}
@@ -2731,24 +2704,19 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-		[Test, Ignore("Needs Refcursor refactor")]
+		[Test]
         public void TERSE_PROC_CURSOR_TYPES()
 
         {
             try
             {
                 EDBCommand command;
-
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-
                 command.ExecuteNonQuery();
-
                 command.Dispose();
-
                 EDBTransaction tran = con.BeginTransaction();
 
                 try
-
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                     command.ExecuteNonQuery();
@@ -2760,43 +2728,37 @@ namespace EnterpriseDB.EDBClient.Tests
                 }
 
                 command = new EDBCommand("cursortest2(:cur1,:cur2)", con);
-
                 command.CommandType = CommandType.StoredProcedure;
-
                 command.Transaction = tran;
 
                 //REFCUSOR CommandBehavior.SequentialAccess
 
                 command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Prepare();
+                command.ExecuteNonQuery();
 
-                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                String cursorName1 = command.Parameters[0].Value.ToString();
+                String cursorName2 = command.Parameters[1].Value.ToString();
 
-                int fc = result.FieldCount;
-
-                EDBDataReader rst = (EDBDataReader)command.Parameters[0].Value;
-
-                int fc1 = result.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 rst.Read();
 
                 Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
-
                 Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
-
                 Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
-
                 Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
+                Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
 
-                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
-
-                rst = (EDBDataReader)command.Parameters[1].Value;
-
-                fc1 = result.FieldCount;
-
+                rst.Close();
+                
+                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                command.CommandType = CommandType.Text;
+                rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
                 rst.Read();
 
                 rst.Read();
@@ -2811,11 +2773,11 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("1250", Convert.ToString(rst[5].ToString()));
 
+                rst.Close();
                 tran.Commit();
-
-                result.Close();
+                
             }
             catch (Exception ex)
             {
@@ -2823,17 +2785,14 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TERSE_PROC_MIXED_NATIVE_CURSOR_TYPES()
         {
             try
             {
                 EDBCommand command;
-
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-
                 command.ExecuteNonQuery();
-
                 command.Dispose();
 
                 EDBTransaction tran = con.BeginTransaction();
@@ -2841,71 +2800,59 @@ namespace EnterpriseDB.EDBClient.Tests
                 try
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
                     command.ExecuteNonQuery();
-
                     command.Dispose();
-
                 }
                 catch (EDBException )
                 {
-
                 }
 
                 command = new EDBCommand("refcur_callee2(:b,:a,:c)", con);
-
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Transaction = tran;
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
-
                 command.Parameters[0].Value = 7369;
-
-                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-
+                
+                command.ExecuteNonQuery();
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
 
-                EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
+                String cursorName1 = command.Parameters[1].Value.ToString();
+                String cursorName2 = command.Parameters[2].Value.ToString();
 
-                int fc1 = reader.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
 
                 //reader.Read();
 
                 Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
-
                 Assert.AreEqual("ALLEN", Convert.ToString(reader[1].ToString()));
-
                 Assert.AreEqual("SALESMAN", Convert.ToString(reader[2].ToString()));
-
                 Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-
-                Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
-
-                reader = (EDBDataReader)command.Parameters[2].Value;
-
-                fc1 = reader.FieldCount;
-
-                reader.Read();
-
-
-
-                Assert.AreEqual("ADAMS", Convert.ToString(reader[0].ToString()));
-
-                tran.Commit();
+                Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
 
                 reader.Close();
 
-                result.Close();
+                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                command.CommandType = CommandType.Text;
+                reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
+                reader.Read();
+                
+                Assert.AreEqual("ADAMS", Convert.ToString(reader[0].ToString()));
+
+                reader.Close();
+
+                tran.Commit();
+                
             }
             catch (Exception ex)
             {

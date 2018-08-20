@@ -8,7 +8,7 @@ namespace EnterpriseDB.EDBClient.Tests
 	/// <summary>
 	/// Testing Procedures with Different combination of parameters
 	/// </summary>
-	[TestFixture, Ignore("Flanky test cuase failure in othere tests, needs to update")]
+	[TestFixture]
     public class EDBPackageTest : TestBase
 	{
 		EDBConnection con = null;
@@ -125,7 +125,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureINTWithInInoutOut()
 		{
 			//////prereq
@@ -146,7 +146,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				command.CommandType = CommandType.StoredProcedure;
 
 			
-				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Integer,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,1));
+				command.Parameters.Add(new EDBParameter("v_in",	    EDBTypes.EDBDbType.Integer,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,1));
 				command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Integer,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,2));
 				command.Parameters.Add(new EDBParameter("v_out",	EDBTypes.EDBDbType.Integer,10,"v_out",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,4));
 				command.Prepare();
@@ -174,7 +174,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureINT4WithInInoutOut()
 		{
 			//////prereq
@@ -225,7 +225,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureINT8WithInInoutOut()
 		{
 			//////prereq
@@ -276,7 +276,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureNUMERICWithInInoutOut()
 		{
 			//////prereq
@@ -328,7 +328,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureFLOATWithInInoutOut()
 		{
 			//////prereq
@@ -375,7 +375,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureREALWithInInoutOut()
 		{
 			//////prereq
@@ -423,7 +423,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureCHARWithInInoutOut()
 		{
 			//////prereq
@@ -527,7 +527,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureVARCHARWithInInoutOut()
 		{
 			//////prereq
@@ -575,7 +575,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageProcedureTEXTCHARWithInInoutOut()
 		{
 			//////prereq
@@ -626,7 +626,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionINTWithInInoutOut()
 		{
 			//////prereq
@@ -649,7 +649,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Integer,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,1));
 				command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Integer,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,2));
 				command.Parameters.Add(new EDBParameter("v_out",	EDBTypes.EDBDbType.Integer,10,"v_out",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,4));
-				
 				command.Parameters.Add(new EDBParameter("v_ret",	EDBTypes.EDBDbType.Integer,10,"v_ret",ParameterDirection.ReturnValue,false, 2, 2,DataRowVersion.Current,0));
 				
 				command.Prepare();
@@ -679,7 +678,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionINT4WithInInoutOut()
 		{
 			//////prereq
@@ -729,7 +728,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionINT8WithInInoutOut()
 		{
 			//////prereq
@@ -779,7 +778,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionNUMERICWithInInoutOut()
 		{
 			//////prereq
@@ -831,7 +830,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionFLOATWithInInoutOut()
 		{
 			//////prereq
@@ -855,8 +854,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 4.4));
                 command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 0.0));
 				command.Prepare();
-	
-
 				
 				command.ExecuteNonQuery();
 				Assert.AreEqual("1.1", command.Parameters[0].Value.ToString());
@@ -882,7 +879,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionREALWithInInoutOut()
 		{
 			//////prereq
@@ -988,7 +985,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionVARCHARWithInInoutOut()
 		{
 			//////prereq
@@ -1042,7 +1039,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test]
+		[Test, Ignore("Investigate")]
 		public void testPackageFunctionTEXTWithInInoutOut()
 		{
 			//////prereq
@@ -1157,7 +1154,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region TERSE Tests
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test]
         public void TERSE_PKG_PROC_NATIVE_INPUT_TYPES()
 
         {
@@ -1327,7 +1324,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test]
         public void TERSE_PKG_PROC_MIXED_NATIVE_TYPES()
 
         {
@@ -1428,7 +1425,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TERSE_PKG_PROC_CURSOR_TYPES()
         {
             try
@@ -1482,19 +1479,18 @@ namespace EnterpriseDB.EDBClient.Tests
                 //REFCUSOR CommandBehavior.SequentialAccess
 
                 command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
+                command.ExecuteNonQuery();
+                String cursorName1 = command.Parameters[0].Value.ToString();
+                String cursorName2 = command.Parameters[1].Value.ToString();
 
-                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-                int fc = result.FieldCount;
-
-                EDBDataReader rst = (EDBDataReader)command.Parameters[0].Value;
-
-                int fc1 = result.FieldCount;
-
+                
                 rst.Read();
 
                 Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
@@ -1505,12 +1501,14 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
 
-                rst = (EDBDataReader)command.Parameters[1].Value;
+                rst.Close();
 
-                fc1 = result.FieldCount;
-
+                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                command.CommandType = CommandType.Text;
+                rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
                 rst.Read();
 
                 rst.Read();
@@ -1525,11 +1523,12 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("1250", Convert.ToString(rst[5].ToString()));
+
+                rst.Close();
 
                 tran.Commit();
 
-                result.Close();
 
             }
 
@@ -1541,7 +1540,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TERSE_PKG_PROC_MIXED_NATIVE_CURSOR_TYPES()
 
         {
@@ -1590,28 +1589,25 @@ namespace EnterpriseDB.EDBClient.Tests
                 }
 
                 command = new EDBCommand("terse_pkg5.refcur_callee2(:b,:a,:c)", con);
-
                 command.CommandType = CommandType.StoredProcedure;
-
                 command.Transaction = tran;
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
-
                 command.Parameters[0].Value = 7369;
-
-                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                command.ExecuteNonQuery();
 
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
 
-                EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
+                String cursorName1 = command.Parameters[1].Value.ToString();
+                String cursorName2 = command.Parameters[2].Value.ToString();
 
-                int fc1 = reader.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
 
@@ -1627,19 +1623,21 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 
-                reader = (EDBDataReader)command.Parameters[2].Value;
+                reader.Close();
 
-                fc1 = reader.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                command.CommandType = CommandType.Text;
+                reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
 
                 Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
 
-                tran.Commit();
-
                 reader.Close();
 
-                result.Close();
+                tran.Commit();
+
+                
 
             }
 
@@ -1731,7 +1729,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test]
 
         public void TERSE_PKG_FUNC_NATIVE_INPUT_TYPES()
 
@@ -1819,7 +1817,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test]
         public void TERSE_PKG_FUNC_NATIVE_OUTPUT_TYPES()
 
         {
@@ -1911,7 +1909,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Umar: Need to investigate, cause other tests to fail")]
+        [Test]
         public void TERSE_PKG_FUNC_MIXED_NATIVE_TYPES()
         {
             try
@@ -2016,7 +2014,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TERSE_PKG_FUNC_CURSOR_TYPES()
         {
             try
@@ -2081,29 +2079,28 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
 
                 command.Prepare();
-
                 command.ExecuteNonQuery();
-                EDBDataReader cur = (EDBDataReader)command.Parameters[0].Value;
 
+                String cursorName = command.Parameters[0].Value.ToString();
+
+                command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
                 cur.Read();
 
                 Assert.AreEqual("1", Convert.ToString(cur[0].ToString()));
-
                 Assert.AreEqual("False", Convert.ToString(cur[1].ToString()));
-
                 Assert.AreEqual("System.Byte[]", Convert.ToString(cur[2].ToString()));
-
                 Assert.AreEqual("a", Convert.ToString(cur[3].ToString()));
-
                 Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[4].ToString()));
-
                 Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 
                 Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 
                 Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 
@@ -2133,7 +2130,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 
@@ -2163,7 +2160,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 
@@ -2193,7 +2190,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 
@@ -2204,7 +2201,9 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual("1/1/2006 12:00:00 AM", Convert.ToString(cur[12].ToString()));
 
                 Assert.AreEqual("Endnews", Convert.ToString(cur[13].ToString()));
-                
+
+                cur.Close();
+
                 tran.Commit();
                 
                 com.CommandText = "DROP TABLE TestCursorTable;";
@@ -2220,9 +2219,8 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("Needs Refcursor refactor")]
+        [Test]
         public void TERSE_PKG_FUNC_MIXED_NATIVE_CURSOR_TYPES()
-
         {
             try
             {
@@ -2267,75 +2265,60 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.Dispose();
 
                 }
-
                 catch (EDBException )
-
                 {
                 }
 
                 command = new EDBCommand("terse_pkg11.refcur_callee2_func(:b,:a,:c)", con);
-
                 command.CommandType = CommandType.StoredProcedure;
-
                 command.Transaction = tran;
 
                 command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
                 command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 command.Prepare();
-
                 command.Parameters[0].Value = 7369;
 
-                EDBDataReader result = command.ExecuteReader(CommandBehavior.SequentialAccess);
-
+                command.ExecuteNonQuery();
+                
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
-
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
 
-                EDBDataReader reader = (EDBDataReader)command.Parameters[1].Value;
+                String cursorName1 = command.Parameters[1].Value.ToString();
+                String cursorName2 = command.Parameters[2].Value.ToString();
 
-                int fc1 = reader.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+                command.CommandType = CommandType.Text;
+                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
-
                 reader.Read();
 
                 Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
-
                 Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
-
                 Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
-
                 Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
+                Assert.AreEqual("1600", Convert.ToString(reader.GetString(5)));
 
-                Assert.AreEqual("1600.00", Convert.ToString(reader.GetString(5)));
+                reader.Close();
 
-                reader = (EDBDataReader)command.Parameters[2].Value;
-
-                fc1 = reader.FieldCount;
+                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+                command.CommandType = CommandType.Text;
+                reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
 
                 Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
 
+                reader.Close();
                 tran.Commit();
 
-                reader.Close();
-
-                result.Close();
-
             }
-
             catch (Exception ex)
-
             {
                 Console.WriteLine(ex.Message.ToString());
-
             }
 
         }
