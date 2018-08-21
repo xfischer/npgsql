@@ -165,9 +165,29 @@ namespace EnterpriseDB.EDBClient.Tests
 				if(con.State != ConnectionState.Closed)
 					con.Close();				
 			}
-		}		
+		}
 
-		[TearDown] 
+        [Test]
+        public void UserDefinedType()
+        {
+            con.Open();
+
+            string sql = "CREATE OR REPLACE TYPE PERSONOBJ AS OBJECT (\n"
+              + "  first_name  VARCHAR2(50),\n"
+              + "  last_name   VARCHAR2(50),\n"
+              + "  date_of_birth  DATE,\n"
+              + "  MEMBER FUNCTION getAge RETURN NUMBER\n"
+              + ");";
+            EDBCommand cmd = new EDBCommand(sql, con);
+            cmd.ExecuteNonQuery();
+            cmd.Dispose();
+
+            sql = "DROP TYPE PERSONOBJ;";
+            cmd = new EDBCommand(sql, con);
+            cmd.ExecuteNonQuery();
+        }
+
+        [TearDown] 
 		public void Dispose()
 		{
 			if (con != null && con.State != ConnectionState.Closed)

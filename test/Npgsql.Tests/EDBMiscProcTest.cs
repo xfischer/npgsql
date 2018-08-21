@@ -508,6 +508,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			TestUtil.closeDB(con);
 		}
         #endregion
+
         [Test, Ignore("Investiage Prompt")]
 		public void RefCursorFunc()
 		{
@@ -523,7 +524,7 @@ namespace EnterpriseDB.EDBClient.Tests
             String cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader();
+            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
 			Assert.IsTrue(rst.Read());
@@ -1036,6 +1037,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			command.Prepare();
             command.ExecuteNonQuery();
+
             String cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
@@ -1199,7 +1201,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}	
 
-		[Test, Ignore("Investigate default params failure")]
+		[Test]//, Ignore("Investigate default params failure")]
 		public void PACKAGEDefaultInAsReturn()
 		{
 			
@@ -1210,7 +1212,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			command.Prepare();
 
-			command.ExecuteReader();
+            command.ExecuteNonQuery();
 			int a= int.Parse(command.Parameters[0].Value.ToString());
 			if(a==29)
 				Assert.IsTrue(true);
@@ -1509,25 +1511,23 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test, Ignore("Investigate default params failure")]
 		public void DefaultInBindAsReturn()
 		{
-			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC(:param0)", con); 
+			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 			
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Integer,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,55)); 
-
-			
+            
 			command.Prepare();
+            command.ExecuteNonQuery();
 
-			EDBDataReader reader= command.ExecuteReader();
+            Console.WriteLine(command.Parameters[1].Value.ToString());
 			int a= int.Parse(command.Parameters[1].Value.ToString());
 			
 			if(a==55)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
-
-            reader.Close();
-
+            
 		}
 
 		[Test]
@@ -1561,8 +1561,8 @@ namespace EnterpriseDB.EDBClient.Tests
             command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
             command.Prepare();
+            command.ExecuteNonQuery();
 
-			command.ExecuteReader();
             Console.WriteLine(command.Parameters[1].Value.ToString());
 			int a= int.Parse(command.Parameters[1].Value.ToString());
 			
@@ -1823,9 +1823,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
 			
 			command.Prepare();
+            command.ExecuteNonQuery();
 
-			command.ExecuteReader();
-			string rst =  command.Parameters[0].Value.ToString();
+            string rst =  command.Parameters[0].Value.ToString();
 			string rst1 = command.Parameters[1].Value.ToString();
 
 			Assert.AreEqual("",rst);
@@ -1834,7 +1834,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}
 
-        #region Function Return
+        #region Function Return Array
 
         [Test, Ignore("Fix Array test")]
 		public void FuncReturningArrayVarchar()
@@ -1852,7 +1852,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.CommandText="public.FuncReturningArrayVarchar(:param0,:param1,:param2,:param3,:param4)";
 			command.CommandType=CommandType.StoredProcedure;
 			
-			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Varchar,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
+			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Varchar,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Varchar,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,"VALUE")); 
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,23)); 
 			command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer,10,"param2",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1000)); 
@@ -1860,11 +1860,10 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer,10,"param4",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,3)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            command.ExecuteNonQuery();
 
             Object rst = command.Parameters[0].Value;
-
-			Reader.Close();
+            
 			
 			Assert.AreEqual(a,(String[])rst);	
 			command=new EDBCommand("drop table tblTest;",con);
@@ -1895,12 +1894,11 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Numeric,10,"param4",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,400)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            command.ExecuteNonQuery();
 
             Object rst = command.Parameters[0].Value;
 			
 			Console.WriteLine(rst);
-			Reader.Close();
 			
 			Assert.AreEqual(a,(Decimal[])rst);	
 			command=new EDBCommand("drop table tblTest;",con);
@@ -1913,8 +1911,6 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test, Ignore("Fix Array test")]
 		public void FuncReturningArrayInteger()
 		{
-
-			
             Int32[] a = {132,897};
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest2 (f1 integer[10],f2 integer[]);  ", con);
 			command.ExecuteNonQuery();
@@ -1930,12 +1926,11 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer,10,"param2",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1000)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            command.ExecuteNonQuery();
 
             Object rst = command.Parameters[0].Value;
 			
 			Console.WriteLine(rst);
-			Reader.Close();
 			
 			Assert.AreEqual(a , (Int32[])rst);	
 			command=new EDBCommand("drop table tblTest2;",con);
@@ -1963,12 +1958,11 @@ namespace EnterpriseDB.EDBClient.Tests
             command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Double, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            command.ExecuteNonQuery();
 
             Object rst = command.Parameters[2].Value;
 			
 			Console.WriteLine(rst);
-			Reader.Close();
 			
 			Assert.AreEqual(a,(Double[])rst);	
 			command=new EDBCommand("drop table tblTest3;",con);
@@ -1996,12 +1990,11 @@ namespace EnterpriseDB.EDBClient.Tests
             command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Double, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
-			EDBDataReader Reader=command.ExecuteReader();
+            command.ExecuteNonQuery();
 
             Object rst = command.Parameters[2].Value;
 			
 			Console.WriteLine(rst);
-			Reader.Close();
 			
 			Assert.AreEqual(a,(Double[])rst);	
 			command=new EDBCommand("drop table tblTest4;",con);
@@ -2035,8 +2028,8 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 			
 			Assert.AreEqual(a,(Int64)rst);	
-			command=new EDBCommand("drop table tblTest5;",con);
 
+			command=new EDBCommand("drop table tblTest5;",con);
 			command.ExecuteNonQuery();
 
 			

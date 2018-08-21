@@ -25,119 +25,297 @@ namespace EnterpriseDB.EDBClient.Tests
 				EDBCommand com = new EDBCommand("",con);
 				com.CommandType = CommandType.Text;
 
-				string RefCurProc = "CREATE OR REPLACE Procedure RefCurProc(Test_RefCursor OUT SYS_REFCURSOR) IS BEGIN OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; END;\n";
+                string RefCurProc = "CREATE OR REPLACE Procedure RefCurProc(Test_RefCursor OUT SYS_REFCURSOR)" +
+                " IS BEGIN" +
+                    " OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable;" +
+                " END;\n";
 				com.CommandText = RefCurProc;
 				com.ExecuteNonQuery();
 
-				string RefCurPackageProc = "CREATE OR REPLACE PACKAGE refcurpackproc IS Procedure RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR); END refcurpackproc;\n";
+				string RefCurPackageProc = "CREATE OR REPLACE PACKAGE refcurpackproc" +
+                " IS" +
+                    " Procedure RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR);" +
+                " END refcurpackproc;\n";
 				com.CommandText = RefCurPackageProc;
 				com.ExecuteNonQuery();
 
-                string RefCurPackageProcBody = "CREATE OR REPLACE PACKAGE BODY refcurpackproc IS Procedure RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) IS BEGIN OPEN Test_RefCursor FOR SELECT * FROM PackFuncRefCursorOutParameter; END; END refcurpackproc;\n";
+                string RefCurPackageProcBody = "CREATE OR REPLACE PACKAGE BODY refcurpackproc" +
+                " IS" +
+                    " Procedure RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR)" +
+                    " IS BEGIN" +
+                        " OPEN Test_RefCursor FOR SELECT * FROM PackFuncRefCursorOutParameter;" +
+                    " END;" +
+                " END refcurpackproc;\n";
 				com.CommandText = RefCurPackageProcBody;
 				com.ExecuteNonQuery();
 				
-				string RefCurPackagefunc = "CREATE OR REPLACE PACKAGE refcurpackfunc IS FUNCTION RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC; END refcurpackfunc;\n";
+				string RefCurPackagefunc = "CREATE OR REPLACE PACKAGE refcurpackfunc" +
+                " IS" +
+                    " FUNCTION RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC;" +
+                " END refcurpackfunc;\n";
 				com.CommandText = RefCurPackagefunc;
 				com.ExecuteNonQuery();
 
-				string RefCurPackagefuncBody = "CREATE OR REPLACE PACKAGE BODY refcurpackfunc IS Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC IS BEGIN OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; return 10; END; END refcurpackfunc;\n";
+				string RefCurPackagefuncBody = "CREATE OR REPLACE PACKAGE BODY refcurpackfunc" +
+                " IS" +
+                    " Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC" +
+                    " IS BEGIN" +
+                        " OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable;" +
+                        " return 10;" +
+                    " END;" +
+                " END refcurpackfunc;\n";
 				com.CommandText = RefCurPackagefuncBody;
 				com.ExecuteNonQuery();
 
-                string RefCurfunc = "CREATE OR REPLACE Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC IS BEGIN OPEN Test_RefCursor FOR SELECT * FROM FuncRefCursorOutParameter; return 10; END;\n";
+                string RefCurfunc = "CREATE OR REPLACE Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC" +
+                " IS BEGIN" +
+                    " OPEN Test_RefCursor FOR SELECT * FROM FuncRefCursorOutParameter;" +
+                    " return 10;" +
+                " END;\n";
 				com.CommandText = RefCurfunc;
 				com.ExecuteNonQuery();
 
-				string RefCursorsReturnFunc = "CREATE OR REPLACE Function RefCursorsReturnFunc return SYS_REFCURSOR IS Test_RefCursor SYS_REFCURSOR; BEGIN OPEN Test_RefCursor FOR SELECT * FROM TbRefCursor; return TestCursorTable; END;\n";
+                string RefCursorsReturnFunc = "CREATE OR REPLACE Function RefCursorsReturnFunc return SYS_REFCURSOR" +
+                " IS" +
+                    " Test_RefCursor SYS_REFCURSOR;" +
+                    " BEGIN OPEN Test_RefCursor FOR SELECT * FROM TbRefCursor;" +
+                    " return TestCursorTable;" +
+                " END;\n";
 				com.CommandText = RefCursorsReturnFunc;
 				com.ExecuteNonQuery();
 
-				string PackFuncRefCursorReturn = "CREATE OR REPLACE PACKAGE PackFuncRefCursorReturn IS Function RefCursorsReturnFunc return SYS_REFCURSOR; END PackFuncRefCursorReturn;\n";
+				string PackFuncRefCursorReturn = "CREATE OR REPLACE PACKAGE PackFuncRefCursorReturn" +
+                " IS" +
+                    " Function RefCursorsReturnFunc return SYS_REFCURSOR;" +
+                " END PackFuncRefCursorReturn;\n";
 				com.CommandText = PackFuncRefCursorReturn;
 				com.ExecuteNonQuery();
 
-				string PackFuncRefCursorReturnBody = "CREATE OR REPLACE PACKAGE BODY PackFuncRefCursorReturn IS Function RefCursorsReturnFunc return SYS_REFCURSOR IS Test_RefCursor SYS_REFCURSOR; BEGIN OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; return Test_RefCursor; END; END PackFuncRefCursorReturn;\n";
+				string PackFuncRefCursorReturnBody = "CREATE OR REPLACE PACKAGE BODY PackFuncRefCursorReturn" +
+                " IS" +
+                    " Function RefCursorsReturnFunc return SYS_REFCURSOR" +
+                    " IS" +
+                        " Test_RefCursor SYS_REFCURSOR;" +
+                        " BEGIN" +
+                        " OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable;" +
+                        " return Test_RefCursor;" +
+                    " END;" +
+                " END PackFuncRefCursorReturn;\n";
 				com.CommandText = PackFuncRefCursorReturnBody;
 				com.ExecuteNonQuery();
 
-				string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor ) IS BEGIN open  c_1 for select * from emp order by empno; open  c_2 for select * from emp order by empno;END;"	;
+				string strRefTwoArg = "CREATE OR REPLACE PROCEDURE public.cursortest2 (c_1 OUT    refcursor,c_2 OUT refcursor )" +
+                " IS BEGIN" +
+                    " open  c_1 for select * from emp order by empno;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                " END;"	;
 				com.CommandText = strRefTwoArg;
 				com.ExecuteNonQuery();
 				
-				string strRefThreeArg = "CREATE OR REPLACE PROCEDURE public.refcur_callee2 (c_1  OUT numeric, c_2 IN OUT refcursor,c_3 IN OUT refcursor ) IS BEGIN c_1 :=100; open  c_2 for select * from emp; open  c_3 for select ename from emp;END;";
+				string strRefThreeArg = "CREATE OR REPLACE PROCEDURE public.refcur_callee2 (c_1  OUT numeric, c_2 IN OUT refcursor,c_3 IN OUT refcursor )" +
+                " IS BEGIN" +
+                    " c_1 :=100;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                    " open  c_3 for select ename from emp order by empno;" +
+                " END;";
 				com.CommandText = strRefThreeArg;
 				com.ExecuteNonQuery();
 				
-				string strRef4ParamWithJoin = "CREATE OR REPLACE PROCEDURE public.refcur_callee_4param_with_Join (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT    refcursor, c_4 IN OUT refcursor)IS BEGIN c_1 :=100;open  c_2 for select * from emp;open  c_3 for select ename from emp; open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30 order by empno;END;";
+				string strRef4ParamWithJoin = "CREATE OR REPLACE PROCEDURE public.refcur_callee_4param_with_Join" +
+                " (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT    refcursor, c_4 IN OUT refcursor)" +
+                " IS BEGIN" +
+                    " c_1 :=100;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                    " open  c_3 for select ename from emp order by empno;" +
+                    " open  c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30 order by empno;" +
+                " END;";
 				com.CommandText =strRef4ParamWithJoin;
 				com.ExecuteNonQuery();
 
-				string strRef5ParamWithJoin ="CREATE OR REPLACE PROCEDURE public.refcur_callee_5param_with_Join (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT    refcursor,c_4 IN OUT refcursor,c_5  OUT varchar)IS BEGIN c_1 :=100;open  c_2 for select * from emp;open  c_3 for select ename from emp;open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;c_5:='EnterpriseDB';END;";
+				string strRef5ParamWithJoin ="CREATE OR REPLACE PROCEDURE public.refcur_callee_5param_with_Join" +
+                " (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT    refcursor,c_4 IN OUT refcursor,c_5  OUT varchar)" +
+                " IS BEGIN" +
+                    " c_1 :=100;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                    " open  c_3 for select ename from emp order by empno;" +
+                    " open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;" +
+                    "c_5:='EnterpriseDB';" +
+                " END;";
 				com.CommandText=strRef5ParamWithJoin;
 				com.ExecuteNonQuery();
 
-				string strRef6ParamWithJoin ="CREATE OR REPLACE PROCEDURE public.refcur_callee_6param_with_Join (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor )IS BEGIN c_1 :=100;open  c_2 for select * from emp;open  c_3 for select ename from emp;open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;c_5:='EnterpriseDB';open c_6 for select * from dept;END;";
+				string strRef6ParamWithJoin ="CREATE OR REPLACE PROCEDURE public.refcur_callee_6param_with_Join" +
+                " (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor )" +
+                " IS BEGIN" +
+                    " c_1 :=100;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                    " open  c_3 for select ename from emp order by empno;" +
+                    " open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;" +
+                    " c_5:='EnterpriseDB';" +
+                    " open c_6 for select * from dept order by deptno;" +
+                " END;";
 				com.CommandText = strRef6ParamWithJoin;
 				com.ExecuteNonQuery();
 
-				string strRef7ParamWithJoin= "CREATE OR REPLACE PROCEDURE public.refcur_callee_7param_with_Join (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor,c_7 OUT NUMERIC  )IS BEGIN c_1 :=100;open  c_2 for select * from emp;open  c_3 for select ename from emp;open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;c_5:='EnterpriseDB';open c_6 for select * from dept;c_7 := 106;END;";
+				string strRef7ParamWithJoin= "CREATE OR REPLACE PROCEDURE public.refcur_callee_7param_with_Join " +
+                " (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor,c_7 OUT NUMERIC  )" +
+                " IS BEGIN" +
+                    " c_1 :=100;" +
+                    " open  c_2 for select * from emp order by empno;" +
+                    " open  c_3 for select ename from emp order by empno;" +
+                    " open c_4 for select  * from emp, dept where emp.deptno = dept.deptno and dept.deptno=30;" +
+                    " c_5:='EnterpriseDB';" +
+                    " open c_6 for select * from dept order by deptno;" +
+                    " c_7 := 106;" +
+                " END;";
 				com.CommandText= strRef7ParamWithJoin;
 				com.ExecuteNonQuery();
 
-				string strRef8ParamWithJoin="CREATE OR REPLACE PROCEDURE public.refcur_callee_8param_with_Join (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor,c_7 OUT NUMERIC,c_8 OUT money  )IS BEGIN c_1 :=100;open  c_2 for select * from emp;open  c_3 for select ename from emp;open c_4 for select  * from emp,dept where emp.deptno = dept.deptno and dept.deptno=30;c_5:='EnterpriseDB';open c_6 for select * from dept;c_7:= 106;c_8:=99.90;END;";
+				string strRef8ParamWithJoin="CREATE OR REPLACE PROCEDURE public.refcur_callee_8param_with_Join " +
+                    " (c_1 OUT numeric,c_2 IN OUT refcursor,c_3 IN OUT refcursor,c_4 IN OUT refcursor,c_5  OUT varchar,c_6 IN OUT refcursor,c_7 OUT NUMERIC,c_8 OUT money  )" +
+                    " IS BEGIN " +
+                        " c_1 :=100;" +
+                        " open  c_2 for select * from emp order by empno;" +
+                        " open  c_3 for select ename from emp order by empno;" +
+                        " open  c_4 for select  * from emp, dept where emp.deptno = dept.deptno and dept.deptno=30;" +
+                        " c_5:='EnterpriseDB';" +
+                        " open c_6 for select * from dept;" +
+                        " c_7:= 106;" +
+                        " c_8:=99.90;" +
+                    " END;";
 				com.CommandText= strRef8ParamWithJoin;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutBool ="CREATE OR REPLACE PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= true;  END;";
+				string RefCurProcOutBool ="CREATE OR REPLACE PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean)" +
+                " IS   BEGIN" +
+                    " open  c_1 for select * from emp order by empno;" +
+                    " c_2:= true;" +
+                "  END;";
 				com.CommandText = RefCurProcOutBool;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutBigInt ="CREATE OR REPLACE PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 200;  END;";
+				string RefCurProcOutBigInt ="CREATE OR REPLACE PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 200;" +
+                "  END;";
 				com.CommandText = RefCurProcOutBigInt;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutChar ="CREATE OR REPLACE PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END;";
+				string RefCurProcOutChar ="CREATE OR REPLACE PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char)" +
+                " IS   BEGIN" +
+                    " open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 'Hashim';" +
+                " END;";
 				com.CommandText = RefCurProcOutChar;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutDoublePrecision ="CREATE OR REPLACE PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 2.9863;  END;";
+				string RefCurProcOutDoublePrecision ="CREATE OR REPLACE PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 2.9863;" +
+                " END;";
 				com.CommandText = RefCurProcOutDoublePrecision;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutInteger ="CREATE OR REPLACE PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263;  END;";
+				string RefCurProcOutInteger ="CREATE OR REPLACE PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 263;" +
+                "  END;";
 				com.CommandText = RefCurProcOutInteger;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutNumeric ="CREATE OR REPLACE PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263000;  END;";
+				string RefCurProcOutNumeric ="CREATE OR REPLACE PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 263000;" +
+                "  END;";
 				com.CommandText = RefCurProcOutNumeric;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutNumeric2 ="CREATE OR REPLACE PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2)) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263000.24598;  END;";
+				string RefCurProcOutNumeric2 ="CREATE OR REPLACE PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2))" +
+                " IS   BEGIN" +
+                    " open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 263000.24598;" +
+                "  END;";
 				com.CommandText = RefCurProcOutNumeric2;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutReal ="CREATE OR REPLACE PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263001.24598;  END;";
+				string RefCurProcOutReal ="CREATE OR REPLACE PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 263001.24598;" +
+                "  END;";
 				com.CommandText = RefCurProcOutReal;
 				com.ExecuteNonQuery();
 				
-				string RefCurProcOutSmallint ="CREATE OR REPLACE PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 26301;  END;";
+				string RefCurProcOutSmallint ="CREATE OR REPLACE PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 26301;" +
+                "  END;";
 				com.CommandText = RefCurProcOutSmallint;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutText ="CREATE OR REPLACE PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END;";
+				string RefCurProcOutText ="CREATE OR REPLACE PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 'Hashim';" +
+                "  END;";
 				com.CommandText = RefCurProcOutText;
 				com.ExecuteNonQuery();
 
-				string RefCurProcOutVarchar ="CREATE OR REPLACE PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar) IS   BEGIN  open  c_1 for select empno from emp order by empno; c_2:= 'Hashim';  END;";
+				string RefCurProcOutVarchar ="CREATE OR REPLACE PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar)" +
+                " IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno;" +
+                    " c_2:= 'Hashim';" +
+                "  END;";
 				com.CommandText = RefCurProcOutVarchar;
 				com.ExecuteNonQuery();
 
-				string RefCursorPackage = "CREATE OR REPLACE PACKAGE RefCursorPackage IS PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean); PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt); PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char); PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision); PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer); PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric); PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2)); PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real); PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint); PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text); PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar); END RefCursorPackage;\n";
+				string RefCursorPackage = "CREATE OR REPLACE PACKAGE RefCursorPackage" +
+                " IS " +
+                    "PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean);" +
+                    " PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt);" +
+                    " PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char);" +
+                    " PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision);" +
+                    " PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer);" +
+                    " PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric);" +
+                    " PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2));" +
+                    " PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real);" +
+                    " PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint);" +
+                    " PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text);" +
+                    " PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar);" +
+                " END RefCursorPackage;\n";
 				com.CommandText = RefCursorPackage;
 				com.ExecuteNonQuery();
 
-				string RefCursorPackageBody = "CREATE OR REPLACE PACKAGE BODY RefCursorPackage IS PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= true;  END; PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 200;  END; PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END; PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 2.9863;  END; PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263;  END; PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263000; END; PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2)) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263000.24598;  END; PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 263001.24598;  END; PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 26301;  END; PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END; PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar) IS   BEGIN  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END; END RefCursorPackage;\n";
+				string RefCursorPackageBody = "CREATE OR REPLACE PACKAGE BODY RefCursorPackage" +
+                " IS" +
+                    " PROCEDURE RefCurProcOutBool(c_1 OUT refcursor,c_2 out Boolean) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= true;  END;" +
+                    " PROCEDURE RefCurProcOutBigInt(c_1 OUT refcursor,c_2 out BigInt) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 200;  END;" +
+                    " PROCEDURE RefCurProcOutChar(c_1 OUT refcursor,c_2 out Char) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END;" +
+                    " PROCEDURE RefCurProcOutDoublePrecision(c_1 OUT refcursor,c_2 out Double Precision) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 2.9863;  END;" +
+                    " PROCEDURE RefCurProcOutInteger(c_1 OUT refcursor,c_2 out Integer) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 263;  END;" +
+                    " PROCEDURE RefCurProcOutNumeric(c_1 OUT refcursor,c_2 out Numeric) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 263000; END;" +
+                    " PROCEDURE RefCurProcOutNumeric2(c_1 OUT refcursor,c_2 out Numeric(10,2)) IS   BEGIN" +
+                    " open  c_1 for select * from emp order by empno; c_2:= 263000.24598;  END;" +
+                    " PROCEDURE RefCurProcOutReal(c_1 OUT refcursor,c_2 out Real) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 263001.24598;  END;" +
+                    " PROCEDURE RefCurProcOutSmallint(c_1 OUT refcursor,c_2 out Smallint) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 26301;  END;" +
+                    " PROCEDURE RefCurProcOutText(c_1 OUT refcursor,c_2 out Text) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END;" +
+                    " PROCEDURE RefCurProcOutVarchar(c_1 OUT refcursor,c_2 out Varchar) IS   BEGIN" +
+                    "  open  c_1 for select * from emp order by empno; c_2:= 'Hashim';  END;" +
+                " END RefCursorPackage;\n";
 				com.CommandText = RefCursorPackageBody;
 				com.ExecuteNonQuery();
 			}
@@ -331,7 +509,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					int fc1=reader.FieldCount;
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -346,8 +524,8 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					EDBDataReader reader2 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					fc1=reader2.FieldCount;
-					reader2.Read();				
+					reader2.Read();
+					reader2.Read();
 					Assert.AreEqual("ALLEN", Convert.ToString(reader2.GetString(0)));
 					reader2.Close();
 					tran.Commit();
@@ -387,7 +565,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					int fc1=reader.FieldCount;
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -402,16 +580,15 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					fc1=reader.FieldCount;
 					reader.Read();
 					
-					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(0)));
+					Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
 					reader.Close();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName3+"\"";
                     command.CommandType = CommandType.Text;
 					reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
-					fc1=reader.FieldCount;
+
 					reader.Read();
 					reader.Read();
 
@@ -462,7 +639,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					int fc1=reader.FieldCount;
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -477,7 +654,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					fc1=reader.FieldCount;
+					reader.Read();
 					reader.Read();
 					
 					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(0)));
@@ -487,7 +664,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
 					reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 				
-					fc1=reader.FieldCount;
 					reader.Read();
 					reader.Read();
 
@@ -568,8 +744,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 					reader.Read();
 					reader.Read();
+					reader.Read();
 
-					Assert.AreEqual("7454", Convert.ToString(reader[0].ToString()));
+					Assert.AreEqual("7654", Convert.ToString(reader[0].ToString()));
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
@@ -580,6 +757,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
                     reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -613,8 +791,8 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("c",EDBTypes.EDBDbType.Refcursor,10,"c",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("d",EDBTypes.EDBDbType.Refcursor,10,"d",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Varchar,10,"e",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("e",EDBTypes.EDBDbType.Numeric,10,"g",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("f",EDBTypes.EDBDbType.Refcursor,10,"f",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("g",EDBTypes.EDBDbType.Numeric,10,"g",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.Parameters[0].Value = 7369;
                 
@@ -657,8 +835,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 					reader.Read();
 					reader.Read();
+					reader.Read();
 
-					Assert.AreEqual("7454", Convert.ToString(reader[0].ToString()));
+					Assert.AreEqual("7654", Convert.ToString(reader[0].ToString()));
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
@@ -669,6 +848,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.CommandType = CommandType.Text;
                     reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -733,7 +913,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1600", Convert.ToString(reader[4].ToString()));
+					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
 					reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
@@ -751,18 +931,20 @@ namespace EnterpriseDB.EDBClient.Tests
 
 					reader.Read();
 					reader.Read();
+					reader.Read();
 
-					Assert.AreEqual("7454", Convert.ToString(reader[0].ToString()));
+					Assert.AreEqual("7654", Convert.ToString(reader[0].ToString()));
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
 					reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
                     command.CommandType = CommandType.Text;
                     reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
+					reader.Read();
 					reader.Read();
 					reader.Read();
 
@@ -780,7 +962,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				}				
 			}
 			
-			[Test, Ignore("Investigate")]
+			[Test]
 			public void ProcRefCursorOutParameter() 
 			{
 				try 
@@ -1340,7 +1522,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					throw new Exception(e.Message.ToString());
 				}
 			}
-/*
+
 			[Test]
 			public void ProcRefCursorOutWithNumeric2() 
 			{
@@ -1358,11 +1540,12 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
-
-			
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
 					
-					Assert.AreEqual("263000.25",Convert.ToString(command.Parameters[1].Value.ToString()));
+					Assert.AreEqual("263000.24598000", Convert.ToString(command.Parameters[1].Value.ToString()));
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
@@ -1384,6 +1567,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
 					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    cur.Close();
 
 					tran.Commit();	
 				}
@@ -1392,7 +1576,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					throw new Exception(e.ToString());
 				}
 			}
-/*
+
 			[Test]
 			public void ProcRefCursorOutWithReal() 
 			{
@@ -1407,16 +1591,17 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Float,10,"v_real",ParameterDirection.Output,false, 15, 15,DataRowVersion.Current,4.4));
+					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Double,10,"v_real",ParameterDirection.Output,false, 15, 15,DataRowVersion.Current,4.4));
 					command.Prepare();
 					command.ExecuteNonQuery();
-
-			
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
 					
 					double start = 263001.25;
 		//			Assert.AreEqual("263001.25",Convert.ToString(command.Parameters[1].Value.ToString()));
 					Assert.AreEqual(start, command.Parameters[1].Value);
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
@@ -1438,6 +1623,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
 					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    cur.Close();
 
 					tran.Commit();	
 				}
@@ -1446,7 +1632,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					throw new Exception(e.ToString());
 				}
 			}
-*/
+
 			[Test]
 			public void ProcRefCursorOutWithSmallInt() 
 			{
@@ -1584,12 +1770,13 @@ namespace EnterpriseDB.EDBClient.Tests
 					com.ExecuteNonQuery();
 
 					EDBTransaction tran = con.BeginTransaction();
-					EDBCommand command = new EDBCommand("RefCurProc",con);
+					EDBCommand command = new EDBCommand("RefCurProc(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Prepare();
 					command.ExecuteNonQuery();
+
                     String cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
@@ -1611,12 +1798,13 @@ namespace EnterpriseDB.EDBClient.Tests
 				}
 				catch(EDBException e)
 				{
+                    Console.WriteLine(e.StackTrace);
 					throw new Exception(e.Message.ToString());
 				}
 			
 			}
 
-/*			[Test]
+			[Test]
 			public void ProcRefCursorOutWithVarchar() 
 			{
 				try 
@@ -1633,12 +1821,14 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("v_varchar",	EDBTypes.EDBDbType.Varchar,10,"v_varchar",ParameterDirection.Output,false, 2, 2,DataRowVersion.Current,"4"));
 					command.Prepare();
 					command.ExecuteNonQuery();
-
-			
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
-					
+                
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
-
+                
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
 					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
@@ -1659,6 +1849,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
 					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    cur.Close();
 
 					tran.Commit();	
 				}
@@ -1667,7 +1858,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					throw new Exception(e.ToString());
 				}
 			}
-*/
+
 			[Test]
 			public void PackProcRefCursorOutWithBoolean() 
 			{
@@ -1994,7 +2185,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				}
 			}
 
-/*			[Test]
+			[Test]
 			public void PackProcRefCursorOutWithNumeric2() 
 			{
 				try 
@@ -2011,11 +2202,12 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("v_numeric", EDBTypes.EDBDbType.Numeric,10,"v_numeric",ParameterDirection.Output,false,4,4,System.Data.DataRowVersion.Current,1)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
-
-			
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
 					
-					Assert.AreEqual("263000.25",Convert.ToString(command.Parameters[1].Value.ToString()));
+					Assert.AreEqual("263000.24598000", Convert.ToString(command.Parameters[1].Value.ToString()));
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
@@ -2037,6 +2229,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
 					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    cur.Close();
 
 					tran.Commit();	
 				}
@@ -2060,14 +2253,15 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
 					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
-					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Float,10,"v_real",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,4.4));
+					command.Parameters.Add(new EDBParameter("v_real",	EDBTypes.EDBDbType.Real,10,"v_real",ParameterDirection.Output,false, 8, 8,DataRowVersion.Current,4.4));
 					command.Prepare();
 					command.ExecuteNonQuery();
-
-			
-					EDBDataReader cur = (EDBDataReader) command.Parameters[0].Value;
-					
-					Assert.AreEqual("263001.25",Convert.ToString(command.Parameters[1].Value.ToString()));
+                
+					Assert.AreEqual("263001.3",Convert.ToString(command.Parameters[1].Value.ToString()));
+                    String cursorName = command.Parameters[0].Value.ToString();
+                    command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
+                    command.CommandType = CommandType.Text;
+                    EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
 					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
@@ -2089,6 +2283,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
 					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    cur.Close();
 
 					tran.Commit();	
 				}
@@ -2097,7 +2292,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					throw new Exception(e.ToString());
 				}
 			}
-*/
+
 			[Test]
 			public void PackProcRefCursorOutWithSmallInt() 
 			{
