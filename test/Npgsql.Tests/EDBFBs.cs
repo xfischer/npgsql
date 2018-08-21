@@ -108,7 +108,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 + "i integer:=0;\n"
                 + "begin\n"
                 + "while i < abc loop\n"
-                + "insert into Quote values(1, 't');\n"
+                + "INSERT INTO Quote values(1, 't');\n"
                 + "i := i+1;\n"
                 + "end loop;\n"
                 + "end;\n";

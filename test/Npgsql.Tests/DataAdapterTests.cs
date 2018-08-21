@@ -393,7 +393,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using (var conn = OpenConnection())
             {
-                var command = new EDBCommand("insert into tableb(field_int2) values (2)", conn);
+                var command = new EDBCommand("INSERT INTO tableb(field_int2) values (2)", conn);
                 command.ExecuteNonQuery();
 
                 var ds = new DataSet();

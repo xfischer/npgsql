@@ -23,9 +23,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			//write setup for following test cases
 			con = OpenConnection();
 
-			EDBCommand command = new EDBCommand("create table LOTest(id serial, f1 oid);", con);
+			EDBCommand command = new EDBCommand("CREATE TABLE LOTest(id serial, f1 oid);", con);
 			int result = command.ExecuteNonQuery();
-			Console.WriteLine("create table returned " + result);
+			Console.WriteLine("CREATE TABLE returned " + result);
 		}
 		[Test]
 		public void LOCreateTest()
@@ -103,9 +103,9 @@ namespace EnterpriseDB.EDBClient.Tests
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand command = new EDBCommand("drop table LOTest;", con);
+			EDBCommand command = new EDBCommand("DROP TABLE LOTest;", con);
 			int result = command.ExecuteNonQuery();
-			Console.WriteLine("drop table returned " + result);
+			Console.WriteLine("DROP TABLE returned " + result);
 			TestUtil.closeDB(con);
 		}
 	}

@@ -122,7 +122,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:p0)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0)", _conn);
             
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Text));
             
@@ -157,7 +157,7 @@ namespace EnterpriseDB.EDBClient.Tests
 //        {
 //            _conn.Open();
 //
-//            EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:p0)", _conn);
+//            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0)", _conn);
 //            
 //            command.Parameters.Add(new EDBParameter("p0","test"));
 //            
@@ -188,7 +188,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_int4) values (:p0)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", _conn);
             
             command.Parameters.Add(new EDBParameter("p0", 5));
             
@@ -219,7 +219,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_int4) values (:p0)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", _conn);
             
             command.Parameters.Add(new EDBParameter("p0", (Int16)5));
             
@@ -410,7 +410,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:p0);", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0);", _conn);
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Text));
             command.Parameters["p0"].Value = "test";
             
@@ -430,7 +430,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_int4) values (:p0);", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0);", _conn);
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Integer));
             command.Parameters["p0"].Value = DBNull.Value;
             
@@ -503,7 +503,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Byte));
 
@@ -527,7 +527,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
 
@@ -556,7 +556,7 @@ namespace EnterpriseDB.EDBClient.Tests
             culture.TimeSeparator = ":";
             DateTime dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
-            command.CommandText = "insert into tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
+            command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
             command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
             command.Parameters[0].Value = dt;
 
@@ -581,7 +581,7 @@ namespace EnterpriseDB.EDBClient.Tests
             culture.TimeSeparator = ":";
             DateTime dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
-            command.CommandText = "insert into tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
+            command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
             command.Parameters[0].Value = dt;
 
@@ -626,7 +626,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_numeric) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
 
             command.Parameters[0].Value = 7.4M;
@@ -658,7 +658,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_numeric) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Numeric));
 
             command.Parameters[0].Value = 7.4M;
@@ -695,7 +695,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tabled(field_float4) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter(":a", DbType.Single));
 
             command.Parameters[0].Value = 7.4F;
@@ -729,7 +729,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tabled(field_float4) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
 
             command.Parameters[0].Value = 7.4F;
@@ -762,7 +762,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tabled(field_float8) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter(":a", DbType.Double));
 
             command.Parameters[0].Value = 7.4D;
@@ -796,7 +796,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tabled(field_float8) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", _conn);
             command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
 
             command.Parameters[0].Value = 7.4D;
@@ -868,7 +868,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.String));
 
@@ -897,7 +897,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Text));
 
@@ -928,7 +928,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_timestamp) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
 
@@ -958,7 +958,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_timestamp) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
 
@@ -990,7 +990,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -1020,7 +1020,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
 
@@ -1050,7 +1050,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_int4) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int32));
 
@@ -1079,7 +1079,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tableb(field_numeric) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
 
@@ -1107,7 +1107,7 @@ namespace EnterpriseDB.EDBClient.Tests
             _conn.Open();
 
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_bool) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_bool) values (:a)", _conn);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Boolean));
 
@@ -1136,7 +1136,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 _conn.Open();
 
-                EDBCommand command = new EDBCommand("insert into tablea(field_text) values (:a)", _conn);
+                EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
 
                 command.Parameters.Add(new EDBParameter("a", DbType.AnsiString));
 
@@ -1169,7 +1169,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _conn.Open();
 
-            EDBCommand command = new EDBCommand("insert into tablea(field_text) values ('a'); select count(*) from tablea;", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values ('a'); select count(*) from tablea;", _conn);
 
             Object result = command.ExecuteScalar();
 
@@ -1429,7 +1429,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual("254.168.1.226",Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="DROP Table INET_TBL";
+			command.CommandText="DROP TABLE INET_TBL";
 			command.ExecuteNonQuery();
             _conn.Close();
 		}
@@ -1469,7 +1469,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="DROP Table CIDR_TBL";
+			command.CommandText="DROP TABLE CIDR_TBL";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1525,7 +1525,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Reader.Close();
 		
-			command.CommandText="DROP Table NETADD_TBL";
+			command.CommandText="DROP TABLE NETADD_TBL";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1567,7 +1567,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="DROP Table NW_HOST";
+			command.CommandText="DROP TABLE NW_HOST";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1609,7 +1609,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="DROP Table NW_FAMILY";
+			command.CommandText="DROP TABLE NW_FAMILY";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1652,7 +1652,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="DROP Table NWK_BROADCAST";
+			command.CommandText="DROP TABLE NWK_BROADCAST";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1706,7 +1706,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 					Reader.Close();
 		
-					command.CommandText="drop table NETADD_MASKLEN;";
+					command.CommandText="DROP TABLE NETADD_MASKLEN;";
 					command.ExecuteNonQuery();
 					_conn.Close();
 				}
@@ -1760,7 +1760,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Reader.Close();
 		
-			command.CommandText="drop table NET_TEXT;";
+			command.CommandText="DROP TABLE NET_TEXT;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1814,7 +1814,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Reader.Close();
 		
-			command.CommandText="drop table tbl_setmasklen;";
+			command.CommandText="DROP TABLE tbl_setmasklen;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1871,7 +1871,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Reader.Close();
 		
-			command.CommandText="drop table tbl_network;";
+			command.CommandText="DROP TABLE tbl_network;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1911,7 +1911,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="drop table tbl_net;";
+			command.CommandText="DROP TABLE tbl_net;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1948,7 +1948,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Reader.Close();
 				
-			command.CommandText="drop table tbl_mac;";
+			command.CommandText="DROP TABLE tbl_mac;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -1990,7 +1990,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual("06201A230221", Reader.GetValue(0).ToString());
 			Reader.Close();
 				
-			command.CommandText="drop table tbl_macadd;";
+			command.CommandText="DROP TABLE tbl_macadd;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -2028,7 +2028,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Reader.Close();
 				
-			command.CommandText="drop table tbl_inet_arr";
+			command.CommandText="DROP TABLE tbl_inet_arr";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -2065,7 +2065,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Reader.Close();
 				
-			command.CommandText="drop table tbl_cidr_arr";
+			command.CommandText="DROP TABLE tbl_cidr_arr";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -2104,9 +2104,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Reader.Close();
 				
-			command.CommandText="drop table inhf;";
+			command.CommandText="DROP TABLE inhf;";
 			command.ExecuteNonQuery();
-			command.CommandText="drop table inhx;";
+			command.CommandText="DROP TABLE inhx;";
 			command.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -2118,16 +2118,16 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 			//EDBTransaction tran=_conn.BeginTransaction();
 
-			EDBCommand command = new EDBCommand("create table p1(ff1 int);", _conn);
+			EDBCommand command = new EDBCommand("CREATE TABLE p1(ff1 int);", _conn);
 			command.ExecuteNonQuery();
-			command = new EDBCommand("create table p2(f1 text);", _conn);
+			command = new EDBCommand("CREATE TABLE p2(f1 text);", _conn);
 			command.ExecuteNonQuery();
 			//tran.Commit();
-			command = new EDBCommand("create table c1(f3 int) inherits(p1,p2);", _conn);
+			command = new EDBCommand("CREATE TABLE c1(f3 int) inherits(p1,p2);", _conn);
 			command.ExecuteNonQuery();
-			command.CommandText=" insert into p2 values ('hello');";
+			command.CommandText=" INSERT INTO p2 values ('hello');";
 			command.ExecuteNonQuery();
-			command.CommandText=" insert into c1(ff1,f1,f3) values(56789, 'hi', 42);";
+			command.CommandText=" INSERT INTO c1(ff1,f1,f3) values(56789, 'hi', 42);";
 			command.ExecuteNonQuery();
 		
 			command.CommandText="SELECT * FROM c1;";
@@ -2150,11 +2150,11 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Reader.Close();
 				
-			command.CommandText="drop table c1;";
+			command.CommandText="DROP TABLE c1;";
 			command.ExecuteNonQuery();
-			command.CommandText="drop table p2;";
+			command.CommandText="DROP TABLE p2;";
 			command.ExecuteNonQuery();
-			command.CommandText="drop table p1;";
+			command.CommandText="DROP TABLE p1;";
 			command.ExecuteNonQuery();
 			//tran.Rollback();
 			
@@ -2170,12 +2170,12 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			EDBCommand command = new EDBCommand("create temp table foo(f1 int, f2 int);", _conn);
 			command.ExecuteNonQuery();
-			command = new EDBCommand("insert into foo values(1,1);insert into foo values(3,3);", _conn);
+			command = new EDBCommand("INSERT INTO foo values(1,1);INSERT INTO foo values(3,3);", _conn);
 			command.ExecuteNonQuery();
 			//tran.Commit();
 			command = new EDBCommand("create temp table bar(f1 int, f2 int);", _conn);
 			command.ExecuteNonQuery();
-			command.CommandText=" insert into bar values(1,1);";
+			command.CommandText=" INSERT INTO bar values(1,1);";
 			command.ExecuteNonQuery();
 			command.CommandText=" update bar set f2 = f2 + 100 where f1 in (select f1 from foo);";
 			command.ExecuteNonQuery();
@@ -2222,12 +2222,12 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 			//EDBTransaction tran=_conn.BeginTransaction();
 
-			EDBCommand command = new EDBCommand("create table base (i varchar);", _conn);
+			EDBCommand command = new EDBCommand("CREATE TABLE base (i varchar);", _conn);
 			command.ExecuteNonQuery();
-			command = new EDBCommand("create table derived() inherits (base);", _conn);
+			command = new EDBCommand("CREATE TABLE derived() inherits (base);", _conn);
 			command.ExecuteNonQuery();
 			//tran.Commit();
-			command = new EDBCommand("insert into derived (i) values ('abc');", _conn);
+			command = new EDBCommand("INSERT INTO derived (i) values ('abc');", _conn);
 			command.ExecuteNonQuery();
             /*ZK: refer to http://www.npgsql.org/doc/faq.html for details*/
 			command.CommandText="select derived::TEXT from derived ;";
@@ -2254,9 +2254,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			/*Assert.AreEqual("101",Reader.GetValue(1).ToString());*/
 			Reader.Close();
 				
-			command.CommandText="drop table derived;";
+			command.CommandText="DROP TABLE derived;";
 			command.ExecuteNonQuery();
-			command.CommandText="drop table base;";
+			command.CommandText="DROP TABLE base;";
 			command.ExecuteNonQuery();
 			
 			//tran.Rollback();
@@ -2302,7 +2302,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 				
 			
-			command.CommandText="drop table on_hand;";
+			command.CommandText="DROP TABLE on_hand;";
 			command.ExecuteNonQuery();
 			command.CommandText="drop TYPE inventory_item;";
 			command.ExecuteNonQuery();
@@ -2351,7 +2351,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 				
 			
-			command.CommandText="drop table on_hand;";
+			command.CommandText="DROP TABLE on_hand;";
 			command.ExecuteNonQuery();
 			command.CommandText="drop TYPE inventory_item;";
 			command.ExecuteNonQuery();
@@ -2408,9 +2408,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 				
 			
-			command.CommandText="drop table on_hand;";
+			command.CommandText="DROP TABLE on_hand;";
 			command.ExecuteNonQuery();
-			command.CommandText="drop table on_hand2;";
+			command.CommandText="DROP TABLE on_hand2;";
 			command.ExecuteNonQuery();
 			command.CommandText="drop TYPE inventory_item;";
 			command.ExecuteNonQuery();
@@ -2464,7 +2464,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 				
 			
-			command.CommandText="drop table on_hand;";
+			command.CommandText="DROP TABLE on_hand;";
 			command.ExecuteNonQuery();
 			command.CommandText="drop TYPE inventory_item;";
 			command.ExecuteNonQuery();
@@ -2502,7 +2502,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
 				
 			
-			command.CommandText="drop table on_hand;";
+			command.CommandText="DROP TABLE on_hand;";
 			command.ExecuteNonQuery();
 			command.CommandText="drop TYPE inventory_item;";
 			command.ExecuteNonQuery();
@@ -4149,9 +4149,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar));
@@ -4163,7 +4163,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4193,9 +4193,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,1));
@@ -4207,7 +4207,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4238,9 +4238,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			EDBDataReader Reader=null;
 			com.CommandText="select id from Quote where b= :No";
@@ -4257,7 +4257,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4269,9 +4269,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			EDBDataReader Reader=null;
 			com.CommandText="select id from Quote where b= :No";
@@ -4287,7 +4287,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 				_conn.Close();
 				return;
@@ -4298,7 +4298,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4309,9 +4309,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			EDBDataReader Reader=null;
 			com.CommandText="select id from Quote where b= :No";
@@ -4326,7 +4326,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 				_conn.Close();
 				return;
@@ -4337,7 +4337,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4348,9 +4348,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			EDBDataReader Reader=null;
 			com.CommandText="select id from Quote where b= :No";
@@ -4367,7 +4367,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 				_conn.Close();
 				return;
@@ -4378,7 +4378,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4438,9 +4438,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,-1));
@@ -4452,7 +4452,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4494,9 +4494,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,-1));
@@ -4510,7 +4510,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			catch(Exception )
 			{
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 
 				return;
@@ -4521,7 +4521,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4533,9 +4533,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			EDBDataReader Reader=null;
 			com.CommandText="select id from Quote where b= :No";
@@ -4552,7 +4552,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			catch(EDBException )
 			{
 				//Console.WriteLine(exp.Message);
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 				_conn.Close();
 				return;
@@ -4563,7 +4563,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4623,9 +4623,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,0));
@@ -4637,7 +4637,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}
@@ -4679,9 +4679,9 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 
 			EDBCommand com=new EDBCommand("",_conn);
-			com.CommandText="create table Quote(id int4, b char)";
+			com.CommandText="CREATE TABLE Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com.CommandText="insert into Quote values(1, 't')";
+			com.CommandText="INSERT INTO Quote values(1, 't')";
 			com.ExecuteNonQuery();
 			com.CommandText="select id from Quote where b= :No";
 			com.Parameters.Add(new EDBParameter("No",EDBTypes.EDBDbType.Varchar,0));
@@ -4695,7 +4695,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			catch(Exception )
 			{
-				com.CommandText="drop table Quote";
+				com.CommandText="DROP TABLE Quote";
 				com.ExecuteNonQuery();
 
 				return;
@@ -4706,7 +4706,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Console.WriteLine( Reader.GetInt32(0));
 			}
 			Reader.Close();
-			com.CommandText="drop table Quote";
+			com.CommandText="DROP TABLE Quote";
 			com.ExecuteNonQuery();
 			_conn.Close();
 		}

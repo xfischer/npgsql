@@ -32,34 +32,34 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 //			
-//			strSqlEmptyArg = "create table test_bytea_proc1( a numeric ,b bytea)";
+//			strSqlEmptyArg = "CREATE TABLE test_bytea_proc1( a numeric ,b bytea)";
 //			com.CommandText = strSqlEmptyArg;
 //			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_two( a bytea ,b bytea)";
+			strSqlEmptyArg = "CREATE TABLE IF NOT EXISTS test_bytea_two( a bytea ,b bytea)";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create or replace procedure test_bytea_two_in(z in bytea,y in bytea) is declare begin insert into test_bytea_two values(y,z);end;";
+			strSqlEmptyArg = "create or replace procedure test_bytea_two_in(z in bytea,y in bytea) is declare begin INSERT INTO test_bytea_two values(y,z);end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
 				
-			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three( a bytea ,b bytea,c bytea);";
+			strSqlEmptyArg = "CREATE TABLE IF NOT EXISTS test_bytea_three( a bytea ,b bytea,c bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
 				
-			strSqlEmptyArg = "create or replace procedure test_bytea_three_in(z in bytea,y in bytea,x in bytea) is declare begin insert into test_bytea_three values(x,y,z);end;";
+			strSqlEmptyArg = "create or replace procedure test_bytea_three_in(z in bytea,y in bytea,x in bytea) is declare begin INSERT INTO test_bytea_three values(x,y,z);end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table IF NOT EXISTS test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
+			strSqlEmptyArg = "CREATE TABLE IF NOT EXISTS test_bytea_three_with_numeric( a bytea ,b bytea,c bytea,d  numeric);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
 //				
-			strSqlEmptyArg = "create or replace procedure test_bytea_three_in_with_numeric(z in bytea,y in bytea,x in bytea,xx numeric) is declare begin insert into test_bytea_three_with_numeric values(x,y,z,xx);end;";
+			strSqlEmptyArg = "create or replace procedure test_bytea_three_in_with_numeric(z in bytea,y in bytea,x in bytea,xx numeric) is declare begin INSERT INTO test_bytea_three_with_numeric values(x,y,z,xx);end;";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 				
@@ -92,7 +92,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 
-			strSqlEmptyArg = "create table IF NOT EXISTS ByteaTest(id serial, f1 bytea);";
+			strSqlEmptyArg = "CREATE TABLE IF NOT EXISTS ByteaTest(id serial, f1 bytea);";
 			com.CommandText = strSqlEmptyArg;
 			com.ExecuteNonQuery();
 		}
@@ -142,17 +142,17 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			com.CommandText = "DROP PROCEDURE test_bytea_in_in";
 			com.ExecuteNonQuery();
 
-			com.CommandText = "Drop table test_bytea_three_with_numeric";
+			com.CommandText = "DROP TABLE test_bytea_three_with_numeric";
 			com.ExecuteNonQuery();
 
 
-			com.CommandText = "DROP table test_bytea_two";
+			com.CommandText = "DROP TABLE test_bytea_two";
 			com.ExecuteNonQuery();
 				
-			com.CommandText = "DROP table test_bytea_three";
+			com.CommandText = "DROP TABLE test_bytea_three";
 			com.ExecuteNonQuery();
 
-			com.CommandText = "DROP table ByteaTest";
+			com.CommandText = "DROP TABLE ByteaTest";
 			com.ExecuteNonQuery();
 
 
@@ -520,7 +520,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 					Console.WriteLine(cmd.Parameters[3].Value.ToString());
 					Console.WriteLine(cmd.Parameters[2].Value.ToString());
                     while (reader.Read()) ;
-					EDBCommand commd = new EDBCommand("DROP table test_bytea_three_with_numeric",conn);				
+					EDBCommand commd = new EDBCommand("DROP TABLE test_bytea_three_with_numeric",conn);				
 			
 					commd.ExecuteNonQuery();
 			} 
