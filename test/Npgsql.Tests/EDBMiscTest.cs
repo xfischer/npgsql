@@ -128,7 +128,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 
-
 		[Test]
 		public void TestAggregateHavingSelectMax()
 		{
@@ -196,7 +195,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				EDBCommand Command = new EDBCommand("",con);
 				Command.CommandText= "select a from TESTTAB group by a,b having min(b)=b order by a";
 				EDBDataReader Reader = Command.ExecuteReader();
-				
 
 				Assert.IsTrue(Reader.Read());
 				Assert.AreEqual("V1",Reader.GetValue(0));
@@ -216,8 +214,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				EDBCommand Command = new EDBCommand("",con);
 				Command.CommandText="select a from TESTTAB group by a,b having b=(select min(b) from testtab);";
-			
-							
+
 				EDBDataReader Reader = Command.ExecuteReader();
 				
 				Assert.IsTrue(Reader.Read());
@@ -230,7 +227,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				throw new Exception(exp.ToString());
 			}
-			
 
 		}
 		
@@ -256,15 +252,13 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				throw new Exception(exp.ToString());
 			}
-			
-			
+
 		}
 
 		[Test]
 		public void TestAggregateInvalidAvg()
 		{
-			
-			
+
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
@@ -347,8 +341,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void TestAggregateInvalidBIT_AND()
 		{
 			EDBCommand Command = new EDBCommand("",con);
-			
-			
+
 			try
 			{
 				Command.CommandText="select a from TESTTAB where b=BIT_AND(b)";
@@ -430,7 +423,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				throw new Exception(exp.ToString());
 			}
 
-
 		}
 
 		[Test]
@@ -438,8 +430,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
-			
-			
+
 			try
 			{
 				Command.CommandText="select a from TESTTAB where b=BIT_OR(b)";
@@ -480,8 +471,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
-			
-			
+
 			try
 			{
 				Command.CommandText="select a from TESTTAB group by a,b having b=(select BIT_OR(b) from testtab);";
@@ -520,7 +510,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				throw new Exception(exp.ToString());
 			}
 
-
 		}
 
 		[Test]
@@ -529,8 +518,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		{
 			
 			EDBCommand Command = new EDBCommand("",con);
-			
-			
+
 			try
 			{
 				Command.CommandText="select a from TESTTAB where b=count(*)";
@@ -543,13 +531,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		
 		[Test]
 		public void TestAggregateHavingCount()
 		{
-			
-			
-			
+
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
@@ -569,7 +554,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				throw new Exception(exp.ToString());
 			}
-
 
 		}
 
@@ -596,8 +580,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				throw new Exception(exp.ToString());
 			}
 		}
-		
-		
+
 		[Test]
 		public void testAggregateSelectCount()
 		{
@@ -622,7 +605,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 
 		}
-		
 
 		[Test]
 		public void testAggregateSelectCountNonNull()
@@ -654,15 +636,12 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		
 		[Test]
 		public void testAggregateInvalidSum()
 		{
-			
-			
+
 			EDBCommand Command = new EDBCommand("",con);
-			
-			
+
 			try
 			{
 				Command.CommandText="select a from TESTTAB where b=sum(b)";
@@ -678,9 +657,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test]
 		public void testAggregateHavingSum()
 		{
-			
 
-			
 			try
 			{
 				EDBCommand Command = new EDBCommand("",con);
@@ -707,7 +684,6 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test]
 		public void testAggregateHavingSelectSum()
 		{
-				
 
 			try
 			{
@@ -726,7 +702,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 
-		
 		[Test]
 		public void testAggregateSelectSum()
 		{
@@ -787,7 +762,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 
-
 		[Test]
 		public void UniqueIndex ()
 		{
@@ -833,15 +807,13 @@ namespace EnterpriseDB.EDBClient.Tests
 				try
 				{
 					Command.ExecuteNonQuery();
-					
 
 				}
 				catch(EDBException )
 				{
 					Assert.Fail("Unable to execute... Unique Index violated");;
 				}
-				
-				
+
 			}
 
 			catch(EDBException exp)
@@ -849,7 +821,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				throw new Exception(exp.ToString());
 			}
 		}
-
 
 		[Test]
 		public void DdlFunctionalIndex ()
@@ -882,7 +853,6 @@ namespace EnterpriseDB.EDBClient.Tests
 						Console.WriteLine(Reader.GetValue(0).ToString());
 					}*/
 				Assert.IsFalse(Reader.Read());
-				
 
 				Reader.Close();
 				
@@ -897,7 +867,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 
-
 		[Test]
 		public void DdlHashIndex ()
 		{
@@ -906,8 +875,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 				Command.CommandText="CREATE TABLE tb_hash (major int,minor int,name varchar)";
 				Command.ExecuteNonQuery();
-
-			
 
 				Command.CommandText="CREATE INDEX tb_hash_idx ON tb_hash USING hash(name);";
 				try
@@ -927,15 +894,9 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.CommandText="DROP TABLE tb_hash;";
 				Command.ExecuteNonQuery();
 
-			
-
-			
 		}
-	
 
 		// Following cases verify Arrays w.r.t various datatypes
-		
-
 
 		[Test]
 		public void ArraysInt2()
@@ -945,8 +906,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (i int2[10],j int2[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{40,50,60,70,81,90,32765}');";
 			Command.ExecuteNonQuery();
@@ -968,12 +927,8 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
 
-		
 		[Test]
 		public void ArraysInt4()
 		{
@@ -982,8 +937,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (i int4[10],j int4[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{-2147483648,100,433,544,2147483647}');";
 			Command.ExecuteNonQuery();
@@ -1007,9 +960,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
 
 		[Test]
@@ -1020,8 +970,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (i int8[10],j int8[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}','{65454545,32769}');";
 			Command.ExecuteNonQuery();
@@ -1044,8 +992,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-			
-
 		}
 
 		[Test]
@@ -1056,8 +1002,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (f1 Float[10],f2 Float[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{2.0,4.21,6.32,3.98,4.00,5.91,6.00,7.66,8.88,9.99}','{43534.234,5534.463}');";
 			Command.ExecuteNonQuery();
@@ -1079,9 +1023,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
 
 		[Test]
@@ -1092,8 +1033,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (f1 Float4[10],f2 Float4[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}','{2132.32,987.145}');";
 			Command.ExecuteNonQuery();
@@ -1115,9 +1054,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
 
 		[Test]
@@ -1128,8 +1064,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtest (f1 Float8[10],f2 Float8[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO arrtest VALUES ('{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}','{8555.233,654.9785}');";
 			Command.ExecuteNonQuery();
@@ -1185,12 +1119,8 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest1";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
 
-		
 		[Test]
 		public void ArraysNumeric()
 		{
@@ -1199,8 +1129,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysNumeric (n1 Numeric[10],n2 numeric[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysNumeric VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');";
 			Command.ExecuteNonQuery();
@@ -1223,11 +1151,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "DROP TABLE ArraysNumeric";
 			Command.ExecuteNonQuery();
 
-			
-
-			
 		}
-
 
 		[Test]
 		public void ArraysNumericWithPrecision()
@@ -1237,8 +1161,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysNumericWithPrecision (n1 Numeric(5,2)[10],n2 Numeric(4,3)[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysNumericWithPrecision VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
 			Command.ExecuteNonQuery();
@@ -1264,7 +1186,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
 		[Test]
 		public void ArraysSmallInt()
 		{
@@ -1273,8 +1194,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysSmallInt (i smallint[10],j smallint[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysSmallInt VALUES ('{-1,-2,-3,-4,0,4,5,6,7,8}','{40,50,60,70,81,90,32765}');";
 			Command.ExecuteNonQuery();
@@ -1368,7 +1287,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
 		[Test]
 		public void ArraysInteger()
 		{
@@ -1377,8 +1295,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysInteger (i integer[],j integer[2]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysInteger VALUES ('{-2147483648,2147483647}','{5,9}');";
 			Command.ExecuteNonQuery();
@@ -1404,7 +1320,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		
 		[Test]
 		public void ArraysNumber()
 		{
@@ -1413,8 +1328,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE arrtestNumber (n1 Number[5],n2 Number[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO arrtestNumber VALUES ('{321.255,654.233,8987,545.23,654.36}','{31.2434,23.1442}');";
 			Command.ExecuteNonQuery();
@@ -1447,8 +1360,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "CREATE TABLE ArraysDecimal (n1 Decimal(5,2)[10],n2 Decimal(4,3)[]);";
 			Command.ExecuteNonQuery();
 
-
-
             Command.CommandText = "INSERT INTO ArraysDecimal VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
 			Command.ExecuteNonQuery();
 
@@ -1472,8 +1383,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
-		/*[Test]
+		[Test]
 		public void ArraysMoney()
 		{
 			
@@ -1482,18 +1392,17 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE arrtest (m1 money[],m2 money[2]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO arrtest VALUES ('{-21474823123326.4128,2123432474836.247}','{2343245.571,523432.3226}');";
 			Command.ExecuteNonQuery();
-			
-            Decimal[] a = 
 
-			Command.CommandText="SELECT * FROM arrtest;";
+            Decimal[] a = { new Decimal((double)-21474823123326.4128), new Decimal((double)2123432474836.247) };
+           
+            Command.CommandText="SELECT * FROM arrtest;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			object[] test={"-$21,474,823,123,326.41","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
-			
+
+            Assert.AreEqual(a, Reader.GetValue(0));
 			Assert.AreEqual("{\""+test[0].ToString()+"\",\""+test[1].ToString()+"\"}",Reader.GetValue(0).ToString());
 			string[] teststr={"$2,343,245.57","$523,432.32"};
 			Assert.AreEqual("{\""+teststr[0]+"\",\""+teststr[1]+"\"}",Reader.GetValue(1));
@@ -1501,7 +1410,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="DROP TABLE arrtest";
 			Command.ExecuteNonQuery();
 
-		}*/
+		}
 
 		[Test]
 		public void ArraysSmallMoney()
@@ -1534,7 +1443,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.ExecuteNonQuery();
 
 		}
-
 
 		[Test]
 		public void ArraysText()
@@ -1577,8 +1485,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE favourite_books( books Varchar[3]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO favourite_books VALUES ('{The Hitchhikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
 			Command.ExecuteNonQuery();
 
@@ -1602,8 +1508,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
-		
 		[Test]
 		public void ArraysTinyText()
 		{
@@ -1612,8 +1516,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE books( books tinytext[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO books VALUES ('{Lord of the Rings,Suffocles}');";
 			Command.ExecuteNonQuery();
@@ -1647,8 +1549,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE favourite_books( books Varchar2[3]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO favourite_books VALUES ('{The Hitchikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
 			Command.ExecuteNonQuery();
 
@@ -1681,8 +1581,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE chartest( ch character(10)[]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO chartest VALUES ('{1st char,sec char}');";
 			Command.ExecuteNonQuery();
 			
@@ -1713,8 +1611,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE chartest( ch char(8)[]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO chartest VALUES ('{1st char,sec char}');";
 			Command.ExecuteNonQuery();
 			
@@ -1735,7 +1631,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.ExecuteNonQuery();
 
 		}
-
 
 		[Test]
 		public void ArraysLong()
@@ -1768,7 +1663,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
 		[Test]
 		public void ArraysLongText()
 		{
@@ -1777,8 +1671,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				
 			Command.CommandText="CREATE TABLE books( books longtext[]);";
 			Command.ExecuteNonQuery();
-
-			
 
 			Command.CommandText="INSERT INTO books VALUES ('{Lord of the War,Suffocles,A walk in the cloudsssss }');";
 			Command.ExecuteNonQuery();
@@ -1813,8 +1705,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="CREATE TABLE arrtest (d1 Date[]);";
 			Command.ExecuteNonQuery();
 
-			
-
 			Command.CommandText="INSERT INTO arrtest VALUES ('{040506,101203}');";
 			Command.ExecuteNonQuery();
 
@@ -1846,8 +1736,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysTimestamp (t Timestamp[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysTimestamp VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
 			Command.ExecuteNonQuery();
@@ -1881,7 +1769,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "CREATE TABLE ArraysDateTime (t DATETIME[]);";
 			Command.ExecuteNonQuery();
 
-			
             DateTime[] a = {Convert.ToDateTime("1999-01-08 04:05:06"),Convert.ToDateTime("2006-12-11 04:05:06")};
             Command.CommandText = "INSERT INTO ArraysDateTime VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
 			Command.ExecuteNonQuery();
@@ -1913,12 +1800,8 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "CREATE TABLE ArraysTime (t TIME[]);";
 			Command.ExecuteNonQuery();
 
-
-
             Command.CommandText = "INSERT INTO ArraysTime VALUES ('{04:05:06,12:10:48 }');";
 			Command.ExecuteNonQuery();
-			
-            
 
             DateTime[] a = {DateTime.Parse("04:05:06"),DateTime.Parse("12:10:48")};
 
@@ -1942,7 +1825,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.ExecuteNonQuery();
 
 		}
-
 
 		public static String BitStreamToString(IEnumerable myList, int myWidth)
 		{
@@ -2022,7 +1904,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		
 		[Test]
 		public void ArraysBoolOneZero()
 		{
@@ -2049,7 +1930,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
 		[Test]
 		public void ArraysTimestampWithoutTimeZone()
 		{
@@ -2058,8 +1938,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysTimestampWithoutTimeZone (t Timestamp[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysTimestampWithoutTimeZone VALUES ('{1999-01-08 04:05:06 -8:00,2005-11-08 12:02:06 -8:00,February 10 00:04:50 2004 PST}');";
 			Command.ExecuteNonQuery();
@@ -2081,10 +1959,8 @@ namespace EnterpriseDB.EDBClient.Tests
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArraysTimestampWithoutTimeZone;";
 			Command.ExecuteNonQuery();
-            
 
 		}
-
 
 		[Test]
 		public void ArraysBitString()
@@ -2124,7 +2000,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
 		[Test]
 		public void ArraysInterval()
 		{
@@ -2133,8 +2008,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraysInterval (t interval[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraysInterval VALUES ('{1 12:59:10,2 01:23:34}');";
 			Command.ExecuteNonQuery();
@@ -2158,7 +2031,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		
 		[Test]
 		public void ArraysInterval2()
 		{
@@ -2168,11 +2040,8 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "CREATE TABLE ArraysInterval2 (t interval[]);";
 			Command.ExecuteNonQuery();
 
-
-
             Command.CommandText = "INSERT INTO ArraysInterval2 VALUES ('{-23:00:00,2 01:23:34,1 day -01:00:00,21 days}');";
 			Command.ExecuteNonQuery();
-
 
             //EDBTypes.EDBInterval[] a = { EDBTypes.EDBInterval.Parse("-23:00:00"), EDBTypes.EDBInterval.Parse("2 days 01:23:34"),
             //EDBTypes.EDBInterval.Parse("1 day -01:00:00"),EDBTypes.EDBInterval.Parse("21 days")};
@@ -2194,8 +2063,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-
-		
 		[Test]
 		public void ArraySelect()
 		{
@@ -2204,8 +2071,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "CREATE TABLE ArraySelect (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
 			Command.ExecuteNonQuery();
-
-
 
             Command.CommandText = "INSERT INTO ArraySelect (a,b, c, e, f, g) " +
   			 " VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
@@ -2249,8 +2114,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "CREATE TABLE ArrayUpdate (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
 			Command.ExecuteNonQuery();
 
-
-
             Command.CommandText = "INSERT INTO ArrayUpdate (a,b, c, e, f, g) " +
 				" VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
 			Command.ExecuteNonQuery();
@@ -2279,7 +2142,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual("",Reader.GetValue(2).ToString());
 //			//Console.WriteLine(Reader.GetValue(0).ToString());
 
-			
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArrayUpdate;";
 			Command.ExecuteNonQuery();
@@ -2302,8 +2164,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    a:=5; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("oneOutArgProc_test", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2330,8 +2190,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    a:=5; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("oneOutArgProc_test2(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2360,8 +2218,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " END; \n";
             Command.ExecuteNonQuery();
 
-
-
             Command = new EDBCommand("oneOutArgProc_test1(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;
             Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 1));
@@ -2388,8 +2244,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    a:= b; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("oneOutOneInArgProc_test(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2419,8 +2273,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    b:= 'HELLO1'; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("twoOutArgProc_test", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2452,8 +2304,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " END; \n";
             Command.ExecuteNonQuery();
 
-
-
             Command = new EDBCommand("allOutMixedArgProc_test()", con);
             Command.CommandType = CommandType.StoredProcedure;
             Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
@@ -2481,8 +2331,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    b:= 'HELLO1'; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("twoInOutArgProc_test(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2513,8 +2361,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " END; \n";
             Command.ExecuteNonQuery();
 
-
-
             Command = new EDBCommand("oneOutArgFunction_test()", con);
             Command.CommandType = CommandType.StoredProcedure;
             Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
@@ -2542,8 +2388,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " return 10;\n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("oneOutArgFunc_test(:param2)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2576,8 +2420,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " END; \n";
             Command.ExecuteNonQuery();
 
-
-
             Command = new EDBCommand("oneOutArgFunc_test()", con);
             Command.CommandType = CommandType.StoredProcedure;
             Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
@@ -2605,8 +2447,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " return 10;\n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("oneOutOneInArgFunc_test(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2638,8 +2478,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + " END; \n";
             Command.ExecuteNonQuery();
 
-
-
             Command = new EDBCommand("twoOutArgFunc_test()", con);
             Command.CommandType = CommandType.StoredProcedure;
             Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
@@ -2670,8 +2508,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    return 'zk'; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("allOutMixedArgFunc_test2(:param1,:param2,:param3,:param4)", con);
             Command.CommandType = CommandType.StoredProcedure;
@@ -2706,8 +2542,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     + "    return 10; \n"
                     + " END; \n";
             Command.ExecuteNonQuery();
-
-
 
             Command = new EDBCommand("twoInOutArgFunc_test(:param1)", con);
             Command.CommandType = CommandType.StoredProcedure;

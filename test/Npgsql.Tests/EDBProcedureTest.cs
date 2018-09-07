@@ -1913,7 +1913,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     Command.ExecuteNonQuery();
                     Command.Dispose();
                 }
-                catch (EDBException exp)
+                catch (EDBException)
                 {
                 }
 
