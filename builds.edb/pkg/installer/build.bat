@@ -38,16 +38,29 @@ copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Exte
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3
 copy bin\%RELEASE_CONFIGURATION%\netstandard1.3\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3 || goto :error 
 
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
+
+REM cd %SOURCE_PATH%
+REM cd src\NpgsqlDdexProvider
+REM nuget restore NpgsqlDdexProvider.sln
+
+REM msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
+
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
+REM copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+REM copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+REM copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+
 cd %SOURCE_PATH%
-cd src\NpgsqlDdexProvider
-nuget restore NpgsqlDdexProvider.sln
+cd src\VSIX
+msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM%
 
-msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
-copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX || goto :error
+copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX
+copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX || goto :error
 
 cd %SOURCE_PATH%
 cd test\Npgsql.Tests
@@ -73,3 +86,4 @@ copy %SOURCE_PATH%\src\NpgsqlDdexProvider\Resources\edb_logo.ico %STAGING_DIR%\%
 :error
 echo "Failed with error %errorlevel%."
 exit /b %errorlevel%
+
