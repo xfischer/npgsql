@@ -1,26 +1,13 @@
 include redux/common/Makefile.common
 
 # Environment variables
-SHELL := env DOTNET_SOURCE_PATH=$(DOTNET_SOURCE_PATH) $(SHELL)
-export DOTNET_SOURCE_PATH ?= C:\\\\CON-DNET
-
-SHELL := env DOTNET_STAGING_PATH=$(DOTNET_STAGING_PATH) $(SHELL)
-export DOTNET_STAGING_PATH ?= "$(DOTNET_SOURCE_PATH)\\\\builds.edb\\\\inst"
 
 export PKG_STAGING_PATH :=$(PWD)/inst
 
 # Files and directories to be excluded from source archive
 ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 
-# Remote host and location to get packages
-REMOTE_HOST:="centos@redux-store"
-REMOTE_PATH:="/opt/local/Windows64"
-
-PACKAGE_LIST := pgBuild64 BitRock 
-
-export NET45_FRAMEWORK :=4.5
-
-export PRE_BUILD_STEPS=createSourceArchive install-builddeps
+export PRE_BUILD_STEPS=createSourceArchive 
 export BUILD_COMPONENTS=build-dotnet45
 export POST_BUILD_STEPS=copy-samples
 

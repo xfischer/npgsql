@@ -2,7 +2,6 @@
 #######################
 # Environment variables
 #######################
-SRC_DIR=$(PWD)/..
 
 # Determine operating system
 OS := $(shell uname -a)
@@ -14,26 +13,12 @@ COMMIT_LOG_FILE:=$(PKG_NAME)-commit.log
 SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
 export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"
 
-SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
-export GIT_REPO_PATH ?="buildfarm@scm-replica:/home/buildfarm/git"
-
-SHELL := env REDUX_TAG_NAME=$(REDUX_TAG_NAME) $(SHELL)
-export REDUX_TAG_NAME ?="master"
-
-# Clone redux repository
-contents:=$(shell rm -rf redux; git clone $(GIT_REPO_PATH)/REDUX redux; cd redux; git checkout "$(REDUX_TAG_NAME)"; cd -)
-
 COMMON_MAKEFILE_INCLUDES:=$(wildcard Makefile.installer)
 ifneq ($(strip $(COMMON_MAKEFILE_INCLUDES)),)
   include $(COMMON_MAKEFILE_INCLUDES)
 endif
 
-EDB_VERSION_DOTNET=$(shell cat $(SRC_DIR)/src/CommonAssemblyInfo.cs | grep AssemblyVersion | cut -f2 -d"\"")
-
 export EDB_VERSION_PKG :=$(EDB_VERSION_DOTNET)
-
-SHELL := env EDB_BUILDNUM_DOTNET=$(EDB_BUILDNUM_DOTNET) $(SHELL)
-export EDB_BUILDNUM_DOTNET ?=1
 
 get-version:
 
