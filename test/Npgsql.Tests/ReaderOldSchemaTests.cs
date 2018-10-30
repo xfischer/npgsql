@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -20,8 +20,6 @@
 // ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
-
-#if !NETCOREAPP1_1
 
 using System;
 using System.Collections.Generic;
@@ -172,7 +170,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1027")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1027")]
         public void GetSchemaTableWithoutResult()
         {
             using (var conn = OpenConnection())
@@ -185,7 +183,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1093")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1093")]
         public void WithoutPersistSecurityInfo()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { Pooling = false };
@@ -248,5 +246,3 @@ namespace EnterpriseDB.EDBClient.Tests
         }
     }
 }
-
-#endif

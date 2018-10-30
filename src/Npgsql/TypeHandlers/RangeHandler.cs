@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -23,12 +23,10 @@
 
 using EnterpriseDB.EDBClient.BackendMessages;
 using System;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 using EDBTypes;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -40,27 +38,26 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/rangetypes.html
     /// </remarks>
     /// <typeparam name="TElement">the range subtype</typeparam>
-    class RangeHandler<TElement> : ChunkingTypeHandler<EDBRange<TElement>>
+    class RangeHandler<TElement> : EDBTypeHandler<EDBRange<TElement>>
     {
         /// <summary>
         /// The type handler for the element that this range type holds
         /// </summary>
-        public TypeHandler ElementHandler { get; }
+        public EDBTypeHandler ElementHandler { get; }
 
-        public RangeHandler(PostgresType postgresType, TypeHandler<TElement> elementHandler)
-            : base(postgresType)
+        public RangeHandler(EDBTypeHandler<TElement> elementHandler)
         {
             ElementHandler = elementHandler;
         }
 
-        internal override TypeHandler CreateRangeHandler(PostgresType backendType)
+        internal override EDBTypeHandler CreateRangeHandler(PostgresType backendType)
         {
             throw new Exception("Can't create range handler of range types, this is an EnterpriseDB.EDBClient bug, please report.");
         }
 
         #region Read
 
-        public override async ValueTask<EDBRange<TElement>> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override async ValueTask<EDBRange<TElement>> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
             await buf.Ensure(1, async);
             var flags = (RangeFlags)buf.ReadByte();
@@ -79,21 +76,17 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter = null)
+        public override int ValidateAndGetLength(EDBRange<TElement> value, ref EDBLengthCache lengthCache, EDBParameter parameter)
         {
-            if (!(value is EDBRange<TElement>))
-                throw CreateConversionException(value.GetType());
-
-            var range = (EDBRange<TElement>)value;
             var totalLen = 1;
 
             var lengthCachePos = lengthCache?.Position ?? 0;
-            if (!range.IsEmpty)
+            if (!value.IsEmpty)
             {
-                if (!range.LowerBoundInfinite)
-                    totalLen += 4 + ElementHandler.ValidateAndGetLength(range.LowerBound, ref lengthCache);
-                if (!range.UpperBoundInfinite)
-                    totalLen += 4 + ElementHandler.ValidateAndGetLength(range.UpperBound, ref lengthCache);
+                if (!value.LowerBoundInfinite)
+                    totalLen += 4 + ElementHandler.ValidateAndGetLength(value.LowerBound, ref lengthCache, null);
+                if (!value.UpperBoundInfinite)
+                    totalLen += 4 + ElementHandler.ValidateAndGetLength(value.UpperBound, ref lengthCache, null);
             }
 
             // If we're traversing an already-populated length cache, rewind to first element slot so that
@@ -104,19 +97,17 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return totalLen;
         }
 
-        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
-            bool async, CancellationToken cancellationToken)
+        public override async Task Write(EDBRange<TElement> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
         {
-            var range = (EDBRange<TElement>)value;
             if (buf.WriteSpaceLeft < 1)
-                await buf.Flush(async, cancellationToken);
-            buf.WriteByte((byte)range.Flags);
-            if (range.IsEmpty)
+                await buf.Flush(async);
+            buf.WriteByte((byte)value.Flags);
+            if (value.IsEmpty)
                 return;
-            if (!range.LowerBoundInfinite)
-                await ElementHandler.WriteWithLength(range.LowerBound, buf, lengthCache, parameter, async, cancellationToken);
-            if (!range.UpperBoundInfinite)
-                await ElementHandler.WriteWithLength(range.UpperBound, buf, lengthCache, parameter, async, cancellationToken);
+            if (!value.LowerBoundInfinite)
+                await ElementHandler.WriteWithLengthInternal(value.LowerBound, buf, lengthCache, parameter, async);
+            if (!value.UpperBoundInfinite)
+                await ElementHandler.WriteWithLengthInternal(value.UpperBound, buf, lengthCache, parameter, async);
         }
 
         #endregion

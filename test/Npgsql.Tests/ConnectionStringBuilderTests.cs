@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -126,7 +126,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void InvalidConnectionString()
         {
-            Assert.That(() => Builder.ConnectionString = "Server=127.0.0.1;User Id=EDB_tests;Pooling:false",
+            Assert.That(() => Builder.ConnectionString = "Server=127.0.0.1;User Id=npgsql_tests;Pooling:false",
                 Throws.Exception.TypeOf<ArgumentException>());
         }
 

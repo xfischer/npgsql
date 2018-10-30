@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,66 +25,78 @@ using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
-    [TypeMapping("int2", EDBDbType.Smallint, new[] { DbType.Int16, DbType.Byte, DbType.SByte }, new[] { typeof(short), typeof(byte), typeof(sbyte) }, DbType.Int16)]
-    class Int16Handler : SimpleTypeHandler<short>,
-        ISimpleTypeHandler<byte>, ISimpleTypeHandler<sbyte>, ISimpleTypeHandler<int>, ISimpleTypeHandler<long>,
-        ISimpleTypeHandler<float>, ISimpleTypeHandler<double>, ISimpleTypeHandler<decimal>,
-        ISimpleTypeHandler<string>
+    [TypeMapping("smallint", EDBDbType.Smallint, new[] { DbType.Int16, DbType.Byte, DbType.SByte }, new[] { typeof(short), typeof(byte), typeof(sbyte) }, DbType.Int16)]
+    class Int16Handler : EDBSimpleTypeHandler<short>,
+        IEDBSimpleTypeHandler<byte>, IEDBSimpleTypeHandler<sbyte>, IEDBSimpleTypeHandler<int>, IEDBSimpleTypeHandler<long>,
+        IEDBSimpleTypeHandler<float>, IEDBSimpleTypeHandler<double>, IEDBSimpleTypeHandler<decimal>
     {
-        internal Int16Handler(PostgresType postgresType) : base(postgresType) { }
+        #region Read
 
-        public override short Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override short Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => buf.ReadInt16();
 
-        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => (byte)Read(buf, len, fieldDescription);
+        byte IEDBSimpleTypeHandler<byte>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => checked((byte)Read(buf, len, fieldDescription));
 
-        sbyte ISimpleTypeHandler<sbyte>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => (sbyte)Read(buf, len, fieldDescription);
+        sbyte IEDBSimpleTypeHandler<sbyte>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => checked((sbyte)Read(buf, len, fieldDescription));
 
-        int ISimpleTypeHandler<int>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        int IEDBSimpleTypeHandler<int>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        long IEDBSimpleTypeHandler<long>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        float ISimpleTypeHandler<float>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        float IEDBSimpleTypeHandler<float>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        double IEDBSimpleTypeHandler<double>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        decimal ISimpleTypeHandler<decimal>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        decimal IEDBSimpleTypeHandler<decimal>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        #endregion Read
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            if (!(value is short))
-            {
-                var converted = Convert.ToInt16(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
-            }
-            return 2;
-        }
+        #region Write
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
-            buf.WriteInt16((short)value);
-        }
+        public override int ValidateAndGetLength(short value, EDBParameter parameter) => 2;
+        public int ValidateAndGetLength(int value, EDBParameter parameter)            => 2;
+        public int ValidateAndGetLength(long value, EDBParameter parameter)           => 2;
+        public int ValidateAndGetLength(byte value, EDBParameter parameter)           => 2;
+        public int ValidateAndGetLength(sbyte value, EDBParameter parameter)          => 2;
+        public int ValidateAndGetLength(float value, EDBParameter parameter)          => 2;
+        public int ValidateAndGetLength(double value, EDBParameter parameter)         => 2;
+        public int ValidateAndGetLength(decimal value, EDBParameter parameter)        => 2;
+
+        public override void Write(short value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(value);
+        public void Write(int value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(checked((short)value));
+        public void Write(long value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(checked((short)value));
+        public void Write(byte value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(value);
+        public void Write(sbyte value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(value);
+        public void Write(decimal value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16((short)value);
+        public void Write(double value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(checked((short)value));
+        public void Write(float value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt16(checked((short)value));
+
+        #endregion Write
     }
 }

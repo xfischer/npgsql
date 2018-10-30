@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -55,10 +55,8 @@ namespace EDBTypes
     /// <seealso cref="JustifyDays"/>
     /// <seealso cref="JustifyMonths"/>
     /// <seealso cref="Canonicalize()"/>
-#if !NETSTANDARD1_3
     [Serializable]
-#endif
-    public struct EDBTimeSpan : IComparable, IComparer, IEquatable<EDBTimeSpan>, IComparable<EDBTimeSpan>,
+    public readonly struct EDBTimeSpan : IComparable, IComparer, IEquatable<EDBTimeSpan>, IComparable<EDBTimeSpan>,
                                    IComparer<EDBTimeSpan>
     {
         #region Constants
@@ -132,9 +130,9 @@ namespace EDBTypes
 
         #endregion
 
-        private readonly int _months;
-        private readonly int _days;
-        private readonly long _ticks;
+        readonly int _months;
+        readonly int _days;
+        readonly long _ticks;
 
         #region Constructors
 

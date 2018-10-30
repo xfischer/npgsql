@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -31,6 +31,8 @@ using EnterpriseDB.EDBClient;
 using EDBTypes;
 using NUnit.Framework;
 
+#pragma warning disable 618  // For EDBInet
+
 namespace EnterpriseDB.EDBClient.Tests.Types
 {
     /// <summary>
@@ -45,22 +47,23 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         public void InetV4()
         {
             using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6", conn))
             {
                 var expectedIp = IPAddress.Parse("192.168.1.1");
-                var expectedInet = new EDBInet(expectedIp, 24);
-                var p1 = new EDBParameter("p1", EDBDbType.Inet) { Value = expectedInet };
-                var p2 = new EDBParameter { ParameterName = "p2", Value = expectedInet };
-                var p3 = new EDBParameter("p3", EDBDbType.Inet) { Value = expectedIp };
-                var p4 = new EDBParameter { ParameterName = "p4", Value = expectedIp };
-                cmd.Parameters.Add(p1);
-                cmd.Parameters.Add(p2);
-                cmd.Parameters.Add(p3);
-                cmd.Parameters.Add(p4);
+                var expectedTuple = (Address: expectedIp, Subnet: 24);
+                var expectedEDBInet = new EDBInet(expectedIp, 24);
+                cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Inet) { Value = expectedIp });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p2", Value = expectedIp });
+                cmd.Parameters.Add(new EDBParameter("p3", EDBDbType.Inet) { Value = expectedTuple });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p4", Value = expectedTuple });
+                cmd.Parameters.Add(new EDBParameter("p5", EDBDbType.Inet) { Value = expectedEDBInet });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p6", Value = expectedEDBInet });
+
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
 
+                    // Address only, no subnet
                     for (var i = 0; i < 2; i++)
                     {
                         // Regular type (IPAddress)
@@ -70,15 +73,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
-                        // Provider-specific type (EDBInet)
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
-                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(expectedInet));
-                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(expectedInet));
-                        Assert.That(reader.GetString(i), Is.EqualTo(expectedInet.ToString()));
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
+                        // Provider-specific type (ValueTuple<IPAddress, int>)
+                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof((IPAddress, int))));
+                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo((expectedIp, 32)));
+                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(new EDBInet(expectedIp)));
                     }
 
-                    for (var i = 2; i < 4; i++)
+                    // Address and subnet
+                    for (var i = 2; i < 6; i++)
                     {
                         // Regular type (IPAddress)
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
@@ -88,11 +90,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
-                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(new EDBInet(expectedIp)));
-                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(new EDBInet(expectedIp)));
-                        Assert.That(reader.GetString(i), Is.EqualTo(new EDBInet(expectedIp).ToString()));
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
+                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof((IPAddress, int))));
+                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(expectedTuple));
+                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(expectedEDBInet));
                     }
                 }
             }
@@ -102,23 +102,24 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         public void InetV6()
         {
             using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6", conn))
             {
                 const string addr = "2001:1db8:85a3:1142:1000:8a2e:1370:7334";
                 var expectedIp = IPAddress.Parse(addr);
-                var expectedInet = new EDBInet(expectedIp, 24);
-                var p1 = new EDBParameter("p1", EDBDbType.Inet) { Value = expectedInet };
-                var p2 = new EDBParameter { ParameterName = "p2", Value = expectedInet };
-                var p3 = new EDBParameter("p3", EDBDbType.Inet) { Value = expectedIp };
-                var p4 = new EDBParameter { ParameterName = "p4", Value = expectedIp };
-                cmd.Parameters.Add(p1);
-                cmd.Parameters.Add(p2);
-                cmd.Parameters.Add(p3);
-                cmd.Parameters.Add(p4);
+                var expectedTuple = (Address: expectedIp, Subnet: 24);
+                var expectedEDBInet = new EDBInet(expectedIp, 24);
+                cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Inet) { Value = expectedIp });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p2", Value = expectedIp });
+                cmd.Parameters.Add(new EDBParameter("p3", EDBDbType.Inet) { Value = expectedTuple });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p4", Value = expectedTuple });
+                cmd.Parameters.Add(new EDBParameter("p5", EDBDbType.Inet) { Value = expectedEDBInet });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p6", Value = expectedEDBInet });
+
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
 
+                    // Address only, no subnet
                     for (var i = 0; i < 2; i++)
                     {
                         // Regular type (IPAddress)
@@ -126,18 +127,16 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(expectedIp));
                         Assert.That(reader[i], Is.EqualTo(expectedIp));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expectedIp));
-                        Assert.That(reader.GetString(i), Is.EqualTo(addr + "/24"));
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
-                        // Provider-specific type (EDBInet)
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
-                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(expectedInet));
-                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(expectedInet));
-                        Assert.That(reader.GetString(i), Is.EqualTo(expectedInet.ToString()));
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
+                        // Provider-specific type (ValueTuple<IPAddress, int>)
+                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof((IPAddress, int))));
+                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo((expectedIp, 128)));
+                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(new EDBInet(expectedIp)));
                     }
 
-                    for (var i = 2; i < 4; i++)
+                    // Address and subnet
+                    for (var i = 2; i < 6; i++)
                     {
                         // Regular type (IPAddress)
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
@@ -147,11 +146,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(IPAddress)));
 
                         // Provider-specific type (EDBInet)
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
-                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(new EDBInet(expectedIp)));
-                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(new EDBInet(expectedIp)));
-                        Assert.That(reader.GetString(i), Is.EqualTo(new EDBInet(expectedIp).ToString()));
-                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBInet)));
+                        Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof((IPAddress, int))));
+                        Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(expectedTuple));
+                        Assert.That(reader.GetFieldValue<EDBInet>(i), Is.EqualTo(expectedEDBInet));
                     }
                 }
             }
@@ -160,7 +157,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         [Test]
         public void Cidr()
         {
-            var expectedInet = new EDBInet("192.168.1.0/24");
+            var expected = (Address: IPAddress.Parse("192.168.1.0"), Subnet: 24);
+            //var expectedInet = new EDBInet("192.168.1.0/24");
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT '192.168.1.0/24'::CIDR", conn))
             using (var reader = cmd.ExecuteReader())
@@ -168,19 +166,15 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 reader.Read();
 
                 // Regular type (IPAddress)
-                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(EDBInet)));
-                Assert.That(reader.GetFieldValue<EDBInet>(0), Is.EqualTo(expectedInet));
-                Assert.That(reader[0], Is.EqualTo(expectedInet));
-                Assert.That(reader.GetValue(0), Is.EqualTo(expectedInet));
-                Assert.That(reader.GetString(0), Is.EqualTo("192.168.1.0/24"));
-                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(EDBInet)));
+                Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof((IPAddress, int))));
+                Assert.That(reader.GetFieldValue<(IPAddress, int)>(0), Is.EqualTo(expected));
+                Assert.That(reader.GetFieldValue<EDBInet>(0), Is.EqualTo(new EDBInet(expected.Address, expected.Subnet)));
+                Assert.That(reader[0], Is.EqualTo(expected));
+                Assert.That(reader.GetValue(0), Is.EqualTo(expected));
             }
         }
 
         [Test]
-#if NETCOREAPP1_0
-        [Ignore("See https://github.com/dotnet/corefx/pull/8413")]
-#endif
         public void Macaddr()
         {
             using (var conn = OpenConnection())
@@ -199,17 +193,44 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     {
                         Assert.That(reader.GetFieldValue<PhysicalAddress>(i), Is.EqualTo(expected));
                         Assert.That(reader.GetValue(i), Is.EqualTo(expected));
-                        Assert.That(reader.GetString(i), Is.EqualTo(expected.ToString()));
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(PhysicalAddress)));
                     }
                 }
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/835")]
-#if NETCOREAPP1_0
-        [Ignore("See https://github.com/dotnet/corefx/pull/8413")]
-#endif
+        [Test]
+        public void Macaddr8()
+        {
+            using (var conn = OpenConnection())
+            {
+                if (conn.PostgreSqlVersion < new Version(10, 0))
+                    Assert.Ignore("macaddr8 only supported on PostgreSQL 10 and above");
+
+                using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
+                {
+                    var send6 = PhysicalAddress.Parse("08-00-2B-01-02-03");
+                    var expected6 = PhysicalAddress.Parse("08-00-2B-FF-FE-01-02-03");  // 6-byte macaddr8 gets FF and FE inserted in the middle
+                    var expected8 = PhysicalAddress.Parse("08-00-2B-01-02-03-04-05");
+                    cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.MacAddr8) { Value = send6 });
+                    cmd.Parameters.Add(new EDBParameter("p2", EDBDbType.MacAddr8) { Value = expected8 });
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        reader.Read();
+
+                        Assert.That(reader.GetFieldValue<PhysicalAddress>(0), Is.EqualTo(expected6));
+                        Assert.That(reader.GetValue(0), Is.EqualTo(expected6));
+                        Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(PhysicalAddress)));
+
+                        Assert.That(reader.GetFieldValue<PhysicalAddress>(1), Is.EqualTo(expected8));
+                        Assert.That(reader.GetValue(1), Is.EqualTo(expected8));
+                        Assert.That(reader.GetFieldType(1), Is.EqualTo(typeof(PhysicalAddress)));
+                    }
+                }
+            }
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/835")]
         public void MacaddrMultiple()
         {
             using (var conn = OpenConnection())

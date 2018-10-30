@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,9 +29,7 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-#if !NETSTANDARD1_3
 using System.Runtime.Serialization;
-#endif
 
 #pragma warning disable CA1032
 
@@ -50,9 +48,7 @@ namespace EnterpriseDB.EDBClient
     /// See http://www.postgresql.org/docs/current/static/errcodes-appendix.html,
     /// http://www.postgresql.org/docs/current/static/protocol-error-fields.html
     /// </remarks>
-#if !NETSTANDARD1_3
     [Serializable]
-#endif
     public sealed class PostgresException : EDBException
     {
         [CanBeNull]
@@ -208,7 +204,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public PostgresException() {}
 
-        internal PostgresException(ReadBuffer buf)
+        internal PostgresException(EDBReadBuffer buf)
         {
             var msg = new ErrorOrNoticeMessage(buf);
             Severity = msg.Severity;
@@ -297,7 +293,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         #region Serialization
-#if !NETSTANDARD1_3
+
         PostgresException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             Severity         = (string)info.GetValue("Severity",         typeof(string));
@@ -345,7 +341,7 @@ namespace EnterpriseDB.EDBClient
             info.AddValue("Line", Line);
             info.AddValue("Routine", Routine);
         }
-#endif
+      
         #endregion
     }
 }

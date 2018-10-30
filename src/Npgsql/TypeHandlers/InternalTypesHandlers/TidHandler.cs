@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,20 +21,22 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
+using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.InternalTypesHandlers
 {
     [TypeMapping("tid", EDBDbType.Tid, typeof(EDBTid))]
-    class TidHandler : SimpleTypeHandler<EDBTid>, ISimpleTypeHandler<string>
+    class TidHandler : EDBSimpleTypeHandler<EDBTid>
     {
-        internal TidHandler(PostgresType postgresType) : base(postgresType) { }
+        #region Read
 
-        public override EDBTid Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBTid Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             Debug.Assert(len == 6);
 
@@ -44,21 +46,19 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.InternalTypesHandlers
             return new EDBTid(blockNumber, offsetNumber);
         }
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        #endregion Read
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        #region Write
+
+        public override int ValidateAndGetLength(EDBTid value, EDBParameter parameter)
+            => 6;
+
+        public override void Write(EDBTid value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBTid))
-                throw CreateConversionException(value.GetType());
-            return 6;
+            buf.WriteUInt32(value.BlockNumber);
+            buf.WriteUInt16(value.OffsetNumber);
         }
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var tid = (EDBTid)value;
-            buf.WriteUInt32(tid.BlockNumber);
-            buf.WriteUInt16(tid.OffsetNumber);
-        }
+        #endregion Write
     }
 }

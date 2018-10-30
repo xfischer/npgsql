@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,12 +25,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using EDBTypes;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 {
@@ -38,15 +37,15 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-textsearch.html
     /// </summary>
     [TypeMapping("tsvector", EDBDbType.TsVector, typeof(EDBTsVector))]
-    class TsVectorHandler : ChunkingTypeHandler<EDBTsVector>
+    class TsVectorHandler : EDBTypeHandler<EDBTsVector>
     {
         // 2561 = 2046 (max length lexeme string) + (1) null terminator +
         // 2 (num_pos) + sizeof(int16) * 256 (max_num_pos (positions/wegihts))
         const int MaxSingleLexemeBytes = 2561;
 
-        internal TsVectorHandler(PostgresType postgresType) : base(postgresType) { }
+        #region Read
 
-        public override async ValueTask<EDBTsVector> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override async ValueTask<EDBTsVector> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var numLexemes = buf.ReadInt32();
@@ -78,30 +77,24 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             return new EDBTsVector(lexemes, true);
         }
 
-        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
+        #endregion Read
+
+        #region Write
+
+        // TODO: Implement length cache
+        public override int ValidateAndGetLength(EDBTsVector value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+            => 4 + value.Sum(l => Encoding.UTF8.GetByteCount(l.Text) + 1 + 2 + l.Count * 2);
+
+        public override async Task Write(EDBTsVector vector, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
         {
-            // TODO: Implement length cache
-            var vec = value as EDBTsVector;
-            if (vec == null) {
-                throw CreateConversionException(value.GetType());
-            }
-
-            return 4 + vec.Sum(l => Encoding.UTF8.GetByteCount(l.Text) + 1 + 2 + l.Count * 2);
-        }
-
-        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
-            bool async, CancellationToken cancellationToken)
-        {
-            var vector = (EDBTsVector)value;
-
             if (buf.WriteSpaceLeft < 4)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
             buf.WriteInt32(vector.Count);
 
             foreach (var lexeme in vector)
             {
                 if (buf.WriteSpaceLeft < MaxSingleLexemeBytes)
-                    await buf.Flush(async, cancellationToken);
+                    await buf.Flush(async);
 
                 buf.WriteString(lexeme.Text);
                 buf.WriteByte(0);
@@ -110,5 +103,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                     buf.WriteInt16(lexeme[i].Value);
             }
         }
+
+        #endregion Write
     }
 }

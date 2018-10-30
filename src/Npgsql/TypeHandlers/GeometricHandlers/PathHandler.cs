@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,6 +26,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -37,13 +39,11 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("path", EDBDbType.Path, typeof(EDBPath))]
-    class PathHandler : ChunkingTypeHandler<EDBPath>
+    class PathHandler : EDBTypeHandler<EDBPath>
     {
-        internal PathHandler(PostgresType postgresType) : base(postgresType) { }
-
         #region Read
 
-        public override async ValueTask<EDBPath> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override async ValueTask<EDBPath> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
             await buf.Ensure(5, async);
             bool open;
@@ -74,27 +74,20 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter=null)
-        {
-            if (!(value is EDBPath))
-                    throw CreateConversionException(value.GetType());
-            return 5 + ((EDBPath)value).Count * 16;
-        }
+        public override int ValidateAndGetLength(EDBPath value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+            => 5 + value.Count * 16;
 
-        protected override async Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter,
-            bool async, CancellationToken cancellationToken)
+        public override async Task Write(EDBPath value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
         {
-            var path = (EDBPath)value;
-
             if (buf.WriteSpaceLeft < 5)
-                await buf.Flush(async, cancellationToken);
-            buf.WriteByte((byte)(path.Open ? 0 : 1));
-            buf.WriteInt32(path.Count);
+                await buf.Flush(async);
+            buf.WriteByte((byte)(value.Open ? 0 : 1));
+            buf.WriteInt32(value.Count);
 
-            foreach (var p in path)
+            foreach (var p in value)
             {
                 if (buf.WriteSpaceLeft < 16)
-                    await buf.Flush(async, cancellationToken);
+                    await buf.Flush(async);
                 buf.WriteDouble(p.X);
                 buf.WriteDouble(p.Y);
             }

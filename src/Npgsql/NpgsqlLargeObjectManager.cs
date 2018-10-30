@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -98,6 +98,7 @@ namespace EnterpriseDB.EDBClient
         /// <exception cref="PostgresException">If an oid is already in use</exception>
         public uint Create(uint preferredOid = 0) => Create(preferredOid, false).GetAwaiter().GetResult();
 
+        // Review unused parameters
         /// <summary>
         /// Create an empty large object in the database. If an oid is specified but is already in use, an PostgresException will be thrown.
         /// </summary>
@@ -105,7 +106,9 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The oid for the large object created</returns>
         /// <exception cref="PostgresException">If an oid is already in use</exception>
+#pragma warning disable CA1801
         public Task<uint> CreateAsync(uint preferredOid, CancellationToken cancellationToken)
+#pragma warning restore CA1801 // Review unused parameters
             => Create(preferredOid, true);
 
         Task<uint> Create(uint preferredOid, bool async)
@@ -132,16 +135,16 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An EDBLargeObjectStream</returns>
         public Task<EDBLargeObjectStream> OpenReadAsync(uint oid, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                return await OpenRead(oid, true);
-            });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return OpenRead(oid, true);
+        }
 
         async Task<EDBLargeObjectStream> OpenRead(uint oid, bool async)
         {
             var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ);//EnterpriseDB Team
-            return new EDBLargeObjectStream(this, oid, fd, false);
+            return new EDBLargeObjectStream(this, fd, false);
         }
 
         /// <summary>
@@ -161,16 +164,16 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>An EDBLargeObjectStream</returns>
         public Task<EDBLargeObjectStream> OpenReadWriteAsync(uint oid, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                return await OpenReadWrite(oid, true);
-            });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return OpenReadWrite(oid, true);
+        }
 
         async Task<EDBLargeObjectStream> OpenReadWrite(uint oid, bool async)
         {
             var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, (int)oid, INV_READ | INV_WRITE);//EnterpriseDB Team
-            return new EDBLargeObjectStream(this, oid, fd, true);
+            return new EDBLargeObjectStream(this, fd, true);
         }
 
         /// <summary>
@@ -186,11 +189,11 @@ namespace EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object to delete</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         public Task UnlinkAsync(uint oid, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await ExecuteFunction<object>("lo_unlink($1)", true, (int)oid);//EnterpriseDB Team
-            });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return ExecuteFunction<object>("lo_unlink($1)", true, (int)oid);//EnterpriseDB Team
+        }
 
         /// <summary>
         /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
@@ -207,11 +210,11 @@ namespace EnterpriseDB.EDBClient
         /// <param name="path">Path to write the file on the backend</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         public Task ExportRemoteAsync(uint oid, string path, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);//EnterpriseDB Team
-            });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return ExecuteFunction<object>("lo_export($1, $2)", true, (int)oid, path);//EnterpriseDB Team
+        }
 
         /// <summary>
         /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
@@ -228,11 +231,11 @@ namespace EnterpriseDB.EDBClient
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         public Task ImportRemoteAsync(string path, uint oid, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);//EnterpriseDB Team
-            });
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using (NoSynchronizationContextScope.Enter())
+                return ExecuteFunction<object>("lo_import($1, $2)", true, path, (int)oid);//EnterpriseDB Team
+        }
 
         /// <summary>
         /// Since PostgreSQL 9.3, large objects larger than 2GB can be handled, up to 4TB.

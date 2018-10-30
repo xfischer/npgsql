@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -54,10 +54,10 @@ namespace EnterpriseDB.EDBClient.FrontendMessages
             return this;
         }
 
-        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+        internal override async Task Write(EDBWriteBuffer buf, bool async)
         {
             if (buf.WriteSpaceLeft < 1 + 4)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
             var queryByteLen = _encoding.GetByteCount(_query);
 
             buf.WriteByte(Code);
@@ -65,9 +65,9 @@ namespace EnterpriseDB.EDBClient.FrontendMessages
                            queryByteLen + // Query byte length
                            1);            // Null terminator
 
-            await buf.WriteString(_query, queryByteLen, async, cancellationToken);
+            await buf.WriteString(_query, queryByteLen, async);
             if (buf.WriteSpaceLeft < 1)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
             buf.WriteByte(0);
         }
 

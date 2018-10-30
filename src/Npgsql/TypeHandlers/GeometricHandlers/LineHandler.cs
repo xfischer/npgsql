@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,6 +24,8 @@
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -35,29 +37,19 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("line", EDBDbType.Line, typeof(EDBLine))]
-    class LineHandler : SimpleTypeHandler<EDBLine>, ISimpleTypeHandler<string>
+    class LineHandler : EDBSimpleTypeHandler<EDBLine>
     {
-        internal LineHandler(PostgresType postgresType) : base(postgresType) { }
-
-        public override EDBLine Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBLine Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => new EDBLine(buf.ReadDouble(), buf.ReadDouble(), buf.ReadDouble());
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength(EDBLine value, EDBParameter parameter)
+            => 24;
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override void Write(EDBLine value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBLine))
-                throw CreateConversionException(value.GetType());
-            return 24;
-        }
-
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var v = (EDBLine)value;
-            buf.WriteDouble(v.A);
-            buf.WriteDouble(v.B);
-            buf.WriteDouble(v.C);
+            buf.WriteDouble(value.A);
+            buf.WriteDouble(value.B);
+            buf.WriteDouble(value.C);
         }
     }
 }

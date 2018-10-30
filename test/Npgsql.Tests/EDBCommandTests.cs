@@ -529,9 +529,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
             EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
 
-            command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
+            command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
 
-            command.Parameters[0].Value = EnumTest.Value1;
+            command.Parameters[0].Value = 0;
             
 
             Int32 rowsAdded = command.ExecuteNonQuery();
@@ -730,7 +730,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
             EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", _conn);
-            command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
+            command.Parameters.Add(new EDBParameter(":a", EDBDbType.Real));
 
             command.Parameters[0].Value = 7.4F;
 

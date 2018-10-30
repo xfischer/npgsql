@@ -329,58 +329,58 @@ namespace EnterpriseDB.EDBClient.Tests
 					con.Close();
                 con.Open();
 
-				EDBCommand com = new EDBCommand("",con);
-				com.CommandType = CommandType.Text;
+				//EDBCommand com = new EDBCommand("",con);
+				//com.CommandType = CommandType.Text;
 
-				com.CommandText = "DROP PROCEDURE cursortest2";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE cursortest2";
+				//com.ExecuteNonQuery();
 
-				com.CommandText="DROP PROCEDURE refcur_callee2";
-				com.ExecuteNonQuery();
+				//com.CommandText="DROP PROCEDURE refcur_callee2";
+				//com.ExecuteNonQuery();
 
-				com.CommandText="DROP PROCEDURE refcur_callee_4param_with_Join";
-				com.ExecuteNonQuery();
+				//com.CommandText="DROP PROCEDURE refcur_callee_4param_with_Join";
+				//com.ExecuteNonQuery();
 
-				com.CommandText="DROP PROCEDURE refcur_callee_5param_with_Join ";
+				//com.CommandText="DROP PROCEDURE refcur_callee_5param_with_Join ";
 
-				com.CommandText="DROP PROCEDURE refcur_callee_6param_with_Join";
-				com.ExecuteNonQuery();
+				//com.CommandText="DROP PROCEDURE refcur_callee_6param_with_Join";
+				//com.ExecuteNonQuery();
 
-				com.CommandText= "DROP PROCEDURE refcur_callee_7param_with_Join";
-				com.ExecuteNonQuery();
+				//com.CommandText= "DROP PROCEDURE refcur_callee_7param_with_Join";
+				//com.ExecuteNonQuery();
 
-				com.CommandText= "DROP PROCEDURE refcur_callee_8param_with_Join";
-				com.ExecuteNonQuery();
+				//com.CommandText= "DROP PROCEDURE refcur_callee_8param_with_Join";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProc;";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProc;";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PACKAGE refcurpackproc;";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PACKAGE refcurpackproc;";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PACKAGE RefCursorPackage;";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PACKAGE RefCursorPackage;";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutBool";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutBool";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutBigint";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutBigint";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutDoublePrecision";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutDoublePrecision";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric2";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric2";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutSmallInt";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutSmallInt";
+				//com.ExecuteNonQuery();
 
-				com.CommandText = "DROP PROCEDURE RefCurProcOutInteger";
-				com.ExecuteNonQuery();
+				//com.CommandText = "DROP PROCEDURE RefCurProcOutInteger";
+				//com.ExecuteNonQuery();
 
 				if(con.State != ConnectionState.Closed)
 					con.Close();
@@ -418,7 +418,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SMITH", Convert.ToString(rst[1].ToString()));
 					Assert.AreEqual("CLERK", Convert.ToString(rst[2].ToString()));
                     Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
-					Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
+					Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 
                     rst.Close();
 					tran.Commit();
@@ -457,7 +457,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
 					Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
 					Assert.AreEqual("7902",Convert.ToString(rst[3].ToString()));
-					Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
+					Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
                     rst.Close();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName2+"\"";
@@ -470,7 +470,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("WARD", Convert.ToString(rst.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(rst[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 				
 					rst.Close();
 					tran.Commit();
@@ -1013,7 +1013,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Shehzad", Convert.ToString(cur.GetString(11)));
@@ -1029,7 +1029,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -1045,7 +1045,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -1061,7 +1061,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));
@@ -1130,7 +1130,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Shehzad", Convert.ToString(cur[11].ToString()));
@@ -1146,7 +1146,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -1162,7 +1162,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -1178,7 +1178,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));
@@ -1541,35 +1541,35 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 					
-					Assert.AreEqual("263000.24598000", Convert.ToString(command.Parameters[1].Value.ToString()));
+					Assert.AreEqual("263000.24598", Convert.ToString(command.Parameters[1].Value.ToString()));
                     String cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
                     cur.Close();
 
-					tran.Commit();	
+                tran.Commit();	
 				}
 				catch(EDBException e)
 				{
@@ -1604,28 +1604,28 @@ namespace EnterpriseDB.EDBClient.Tests
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
                     cur.Close();
 
-					tran.Commit();	
+                tran.Commit();	
 				}
 				catch(EDBException e)
 				{
@@ -1830,28 +1830,28 @@ namespace EnterpriseDB.EDBClient.Tests
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
                 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
                     cur.Close();
 
-					tran.Commit();	
+                tran.Commit();	
 				}
 				catch(EDBException e)
 				{
@@ -2203,32 +2203,32 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 					
-					Assert.AreEqual("263000.24598000", Convert.ToString(command.Parameters[1].Value.ToString()));
+					Assert.AreEqual("263000.24598", Convert.ToString(command.Parameters[1].Value.ToString()));
                     String cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
+					Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
 					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
+					Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
 					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
+					Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
 					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
 					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
+					Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
 					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
 					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+					Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
                     cur.Close();
 
 					tran.Commit();	
@@ -2264,28 +2264,28 @@ namespace EnterpriseDB.EDBClient.Tests
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 					cur.Read();
-					Assert.AreEqual("7369", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7902", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7499", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7521", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7698", Convert.ToString(cur.GetString(3)));
-					cur.Read();
-					Assert.AreEqual("7566", Convert.ToString(cur.GetString(0)));
-					Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
-					Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
-					Assert.AreEqual("7839", Convert.ToString(cur.GetString(3)));
+                    Assert.AreEqual("7369", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("SMITH", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("CLERK", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7902", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7499", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("ALLEN", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7521", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("WARD", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("SALESMAN", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7698", Convert.ToString(cur[3].ToString()));
+                    cur.Read();
+                    Assert.AreEqual("7566", Convert.ToString(cur[0].ToString()));
+                    Assert.AreEqual("JONES", Convert.ToString(cur.GetString(1)));
+                    Assert.AreEqual("MANAGER", Convert.ToString(cur.GetString(2)));
+                    Assert.AreEqual("7839", Convert.ToString(cur[3].ToString()));
                     cur.Close();
 
-					tran.Commit();	
+                tran.Commit();	
 				}
 				catch(EDBException e)
 				{
@@ -2451,7 +2451,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Shehzad", Convert.ToString(cur[11].ToString()));
@@ -2467,7 +2467,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -2483,7 +2483,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -2499,7 +2499,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));
@@ -2528,7 +2528,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					com.CommandType = CommandType.Text;
 
 
-                    string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+                    string CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
                     com.CommandText = CursorTable;
                     com.ExecuteNonQuery();
 
@@ -2590,7 +2590,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Shehzad", Convert.ToString(cur[11].ToString()));
@@ -2606,7 +2606,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));     
 					Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -2622,7 +2622,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -2638,7 +2638,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 					Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 					Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-					Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+					Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 					Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 					Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 					Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));

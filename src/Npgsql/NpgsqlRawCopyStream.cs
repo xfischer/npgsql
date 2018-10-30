@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -30,6 +30,7 @@ using System.Text;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
+using static EnterpriseDB.EDBClient.Statics;
 
 #pragma warning disable 1591
 
@@ -47,8 +48,8 @@ namespace EnterpriseDB.EDBClient
         #region Fields and Properties
 
         EDBConnector _connector;
-        ReadBuffer _readBuf;
-        WriteBuffer _writeBuf;
+        EDBReadBuffer _readBuf;
+        EDBWriteBuffer _writeBuf;
 
         int _leftToReadInDataMsg;
         bool _isDisposed, _isConsumed;
@@ -173,8 +174,8 @@ namespace EnterpriseDB.EDBClient
                     _leftToReadInDataMsg = ((CopyDataMessage)msg).Length;
                     break;
                 case BackendMessageCode.CopyDone:
-                    _connector.ReadExpecting<CommandCompleteMessage>();
-                    _connector.ReadExpecting<ReadyForQueryMessage>();
+                    Expect<CommandCompleteMessage>(_connector.ReadMessage());
+                    Expect<ReadyForQueryMessage>(_connector.ReadMessage());
                     _isConsumed = true;
                     return 0;
                 default:
@@ -253,8 +254,8 @@ namespace EnterpriseDB.EDBClient
                     Flush();
                     _writeBuf.EndCopyMode();
                     _connector.SendMessage(CopyDoneMessage.Instance);
-                    _connector.ReadExpecting<CommandCompleteMessage>();
-                    _connector.ReadExpecting<ReadyForQueryMessage>();
+                    Expect<CommandCompleteMessage>(_connector.ReadMessage());
+                    Expect<ReadyForQueryMessage>(_connector.ReadMessage());
                 }
                 else
                 {

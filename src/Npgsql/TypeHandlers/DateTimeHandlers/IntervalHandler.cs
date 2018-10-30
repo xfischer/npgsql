@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,75 +24,77 @@
 using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
+    [TypeMapping("interval", EDBDbType.Interval, new[] { typeof(TimeSpan), typeof(EDBTimeSpan) })]
+    class IntervalHandlerFactory : EDBTypeHandlerFactory<TimeSpan>
+    {
+        // Check for the legacy floating point timestamps feature
+        protected override EDBTypeHandler<TimeSpan> Create(EDBConnection conn)
+            => new IntervalHandler(conn.HasIntegerDateTimes);
+    }
+
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("interval", EDBDbType.Interval, new[] { typeof(TimeSpan), typeof(EDBTimeSpan) })]
-    class IntervalHandler : SimpleTypeHandlerWithPsv<TimeSpan, EDBTimeSpan>
+    class IntervalHandler : EDBSimpleTypeHandlerWithPsv<TimeSpan, EDBTimeSpan>
     {
         /// <summary>
         /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
-        /// fields. EnterpriseDB.EDBClient (currently) does not support this mode.
+        /// fields. Some PostgreSQL-like databases (e.g. CrateDB) use floating-point representation by default and do not
+        /// provide the option of switching to integer format.
         /// </summary>
         readonly bool _integerFormat;
 
-        public IntervalHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType)
+        public IntervalHandler(bool integerFormat)
         {
-            // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
-            _integerFormat = !registry.Connector.BackendParams.TryGetValue("integer_datetimes", out var s) || s == "on";
+            _integerFormat = integerFormat;
         }
 
-        public override TimeSpan Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
-        {
-            return (TimeSpan)((ISimpleTypeHandler<EDBTimeSpan>)this).Read(buf, len, fieldDescription);
-        }
+        public override TimeSpan Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => (TimeSpan)((IEDBSimpleTypeHandler<EDBTimeSpan>)this).Read(buf, len, fieldDescription);
 
-        internal override EDBTimeSpan ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        protected override EDBTimeSpan ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            if (!_integerFormat) {
-                throw new NotSupportedException("Old floating point representation for timestamps not supported");
-            }
-            var ticks = buf.ReadInt64();
-            var day = buf.ReadInt32();
-            var month = buf.ReadInt32();
-            return new EDBTimeSpan(month, day, ticks * 10);
-        }
-
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            if (!_integerFormat) {
-                throw new NotSupportedException("Old floating point representation for timestamps not supported");
-            }
-
-            var asString = value as string;
-            if (asString != null)
+            if (_integerFormat)
             {
-                var converted = EDBTimeSpan.Parse(asString);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
+                var ticks = buf.ReadInt64();
+                var day = buf.ReadInt32();
+                var month = buf.ReadInt32();
+                return new EDBTimeSpan(month, day, ticks * 10);
             }
-            else if (!(value is TimeSpan) && !(value is EDBTimeSpan))
-                throw CreateConversionException(value.GetType());
-
-            return 16;
+            else
+            {
+                var seconds = buf.ReadDouble();
+                var day = buf.ReadInt32();
+                var month = buf.ReadInt32();
+                return new EDBTimeSpan(month, day, (long)(seconds * TimeSpan.TicksPerSecond));
+            }
         }
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+        public override int ValidateAndGetLength(TimeSpan value, EDBParameter parameter)
+            => 16;
+
+        public override int ValidateAndGetLength(EDBTimeSpan value, EDBParameter parameter)
+            => 16;
+
+        public override void Write(EDBTimeSpan value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
+            if (_integerFormat)
+                buf.WriteInt64(value.Ticks / 10); // TODO: round?
+            else
+                buf.WriteDouble(value.TotalSeconds - (value.Days * 86400) - (value.Months * EDBTimeSpan.DaysPerMonth * 86400));
 
-            var interval = value as TimeSpan? ?? (EDBTimeSpan)value;
-
-            buf.WriteInt64(interval.Ticks / 10); // TODO: round?
-            buf.WriteInt32(interval.Days);
-            buf.WriteInt32(interval.Months);
+            buf.WriteInt32(value.Days);
+            buf.WriteInt32(value.Months);
         }
+
+        // TODO: Can write directly from TimeSpan
+        public override void Write(TimeSpan value, EDBWriteBuffer buf, EDBParameter parameter)
+            => Write(value, buf, parameter);
     }
 }

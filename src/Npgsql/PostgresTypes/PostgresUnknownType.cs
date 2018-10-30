@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -38,10 +38,5 @@ namespace EnterpriseDB.EDBClient.PostgresTypes
 #pragma warning disable CA2222 // Do not decrease inherited member visibility
         UnknownBackendType() : base("", "<unknown>", 0) { }
 #pragma warning restore CA2222 // Do not decrease inherited member visibility
-
-        internal override TypeHandler Activate(TypeHandlerRegistry registry)
-        {
-            throw new NotSupportedException("Cannot activate the unknown type");
-        }
     }
 }

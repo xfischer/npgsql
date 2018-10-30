@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -52,16 +52,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 var dateTime = new DateTime(2002, 3, 4, 0, 0, 0, 0, DateTimeKind.Unspecified);
                 var EDBDate = new EDBDate(dateTime);
 
-                using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
+                using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
                 {
                     var p1 = new EDBParameter("p1", EDBDbType.Date) {Value = EDBDate};
-                    var p2 = new EDBParameter("p2", DbType.Date) {Value = EDBDate.ToString()};
-                    var p3 = new EDBParameter {ParameterName = "p3", Value = EDBDate};
-                    Assert.That(p3.EDBDbType, Is.EqualTo(EDBDbType.Date));
-                    Assert.That(p3.DbType, Is.EqualTo(DbType.Date));
+                    var p2 = new EDBParameter {ParameterName = "p2", Value = EDBDate};
+                    Assert.That(p2.EDBDbType, Is.EqualTo(EDBDbType.Date));
+                    Assert.That(p2.DbType, Is.EqualTo(DbType.Date));
                     cmd.Parameters.Add(p1);
                     cmd.Parameters.Add(p2);
-                    cmd.Parameters.Add(p3);
                     using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
@@ -183,11 +181,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
                 using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5", conn))
                 {
-                    cmd.Parameters.AddWithValue("p1", EDBDbType.TimeTZ, dto);
-                    cmd.Parameters.AddWithValue("p2", EDBDbType.TimeTZ, dtUtc);
-                    cmd.Parameters.AddWithValue("p3", EDBDbType.TimeTZ, dtLocal);
-                    cmd.Parameters.AddWithValue("p4", EDBDbType.TimeTZ, dtUnspecified);
-                    cmd.Parameters.AddWithValue("p5", EDBDbType.TimeTZ, ts);
+                    cmd.Parameters.AddWithValue("p1", EDBDbType.TimeTz, dto);
+                    cmd.Parameters.AddWithValue("p2", EDBDbType.TimeTz, dtUtc);
+                    cmd.Parameters.AddWithValue("p3", EDBDbType.TimeTz, dtLocal);
+                    cmd.Parameters.AddWithValue("p4", EDBDbType.TimeTz, dtUnspecified);
+                    cmd.Parameters.AddWithValue("p5", EDBDbType.TimeTz, ts);
                     Assert.That(cmd.Parameters.All(p => p.DbType == DbType.Object));
 
                     using (var reader = cmd.ExecuteReader())
@@ -198,7 +196,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         {
                             Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(DateTimeOffset)));
 
-                            Assert.That(reader.GetFieldValue<DateTimeOffset>(i), Is.EqualTo(new DateTimeOffset(1, 1, 1, dto.Hour, dto.Minute, dto.Second, dto.Millisecond, dto.Offset)));
+                            Assert.That(reader.GetFieldValue<DateTimeOffset>(i), Is.EqualTo(new DateTimeOffset(1, 1, 2, dto.Hour, dto.Minute, dto.Second, dto.Millisecond, dto.Offset)));
                             Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(DateTimeOffset)));
                             Assert.That(reader.GetFieldValue<DateTime>(i).Kind, Is.EqualTo(DateTimeKind.Local));
                             Assert.That(reader.GetFieldValue<DateTime>(i), Is.EqualTo(reader.GetFieldValue<DateTimeOffset>(i).LocalDateTime));
@@ -206,6 +204,18 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         }
                     }
                 }
+            }
+        }
+
+        [Test]
+        public void TimeWithTimeZoneBeforeUtcZero()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT TIME WITH TIME ZONE '01:00:00+02'", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                reader.Read();
+                Assert.That(reader.GetFieldValue<DateTimeOffset>(0), Is.EqualTo(new DateTimeOffset(1, 1, 2, 1, 0, 0, new TimeSpan(0, 2, 0, 0))));
             }
         }
 
@@ -224,18 +234,16 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         {
             using (var conn = OpenConnection())
             {
-                var EDBTimeStamp = new EDBDateTime(dateTime.Ticks);
-                var offset = TimeSpan.FromHours(2);
-                var dateTimeOffset = new DateTimeOffset(dateTime, offset);
+                var EDBDateTime = new EDBDateTime(dateTime.Ticks);
 
                 using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6", conn))
                 {
                     var p1 = new EDBParameter("p1", EDBDbType.Timestamp);
                     var p2 = new EDBParameter("p2", DbType.DateTime);
                     var p3 = new EDBParameter("p3", DbType.DateTime2);
-                    var p4 = new EDBParameter { ParameterName = "p4", Value = EDBTimeStamp };
+                    var p4 = new EDBParameter { ParameterName = "p4", Value = EDBDateTime };
                     var p5 = new EDBParameter { ParameterName = "p5", Value = dateTime };
-                    var p6 = new EDBParameter("p6", EDBDbType.Timestamp);
+                    var p6 = new EDBParameter<DateTime> { ParameterName = "p6", TypedValue = dateTime };
                     Assert.That(p4.EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
                     Assert.That(p4.DbType, Is.EqualTo(DbType.DateTime));
                     Assert.That(p5.EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
@@ -246,8 +254,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     cmd.Parameters.Add(p4);
                     cmd.Parameters.Add(p5);
                     cmd.Parameters.Add(p6);
-                    p1.Value = p2.Value = p3.Value = EDBTimeStamp;
-                    p6.Value = dateTimeOffset;
+                    p1.Value = p2.Value = p3.Value = EDBDateTime;
                     using (var reader = cmd.ExecuteReader())
                     {
                         reader.Read();
@@ -263,10 +270,10 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                             Assert.That(reader.GetValue(i), Is.EqualTo(dateTime));
 
                             // Provider-specific type (EDBTimeStamp)
-                            Assert.That(reader.GetTimeStamp(i), Is.EqualTo(EDBTimeStamp));
+                            Assert.That(reader.GetTimeStamp(i), Is.EqualTo(EDBDateTime));
                             Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBDateTime)));
-                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(EDBTimeStamp));
-                            Assert.That(reader.GetFieldValue<EDBDateTime>(i), Is.EqualTo(EDBTimeStamp));
+                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(EDBDateTime));
+                            Assert.That(reader.GetFieldValue<EDBDateTime>(i), Is.EqualTo(EDBDateTime));
 
                             // DateTimeOffset
                             Assert.That(() => reader.GetFieldValue<DateTimeOffset>(i), Throws.Exception.TypeOf<InvalidCastException>());
@@ -341,22 +348,19 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 var nDateTimeLocal = nDateTimeUtc.ToLocalTime();
                 var nDateTimeUnspecified = new EDBDateTime(nDateTimeUtc.Ticks, DateTimeKind.Unspecified);
 
-                var dateTimeOffset = new DateTimeOffset(dateTimeLocal, dateTimeLocal - dateTimeUtc);
+                //var dateTimeOffset = new DateTimeOffset(dateTimeLocal, dateTimeLocal - dateTimeUtc);
+                var dateTimeOffset = new DateTimeOffset(dateTimeLocal);
 
-                using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9", conn))
+                using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7", conn))
                 {
-                    cmd.Parameters.AddWithValue("p1", EDBDbType.TimestampTZ, dateTimeUtc);
-                    cmd.Parameters.AddWithValue("p2", EDBDbType.TimestampTZ, dateTimeLocal);
-                    cmd.Parameters.AddWithValue("p3", EDBDbType.TimestampTZ, dateTimeUnspecified);
-                    cmd.Parameters.AddWithValue("p4", EDBDbType.TimestampTZ, nDateTimeUtc);
-                    cmd.Parameters.AddWithValue("p5", EDBDbType.TimestampTZ, nDateTimeLocal);
-                    cmd.Parameters.AddWithValue("p6", EDBDbType.TimestampTZ, nDateTimeUnspecified);
-                    cmd.Parameters.AddWithValue("p7", dateTimeUtc);
-                    Assert.That(cmd.Parameters["p7"].EDBDbType, Is.EqualTo(EDBDbType.TimestampTZ));
-                    cmd.Parameters.AddWithValue("p8", nDateTimeUtc);
-                    Assert.That(cmd.Parameters["p8"].EDBDbType, Is.EqualTo(EDBDbType.TimestampTZ));
-                    cmd.Parameters.AddWithValue("p9", dateTimeOffset);
-                    Assert.That(cmd.Parameters["p9"].EDBDbType, Is.EqualTo(EDBDbType.TimestampTZ));
+                    cmd.Parameters.AddWithValue("p1", EDBDbType.TimestampTz, dateTimeUtc);
+                    cmd.Parameters.AddWithValue("p2", EDBDbType.TimestampTz, dateTimeLocal);
+                    cmd.Parameters.AddWithValue("p3", EDBDbType.TimestampTz, dateTimeUnspecified);
+                    cmd.Parameters.AddWithValue("p4", EDBDbType.TimestampTz, nDateTimeUtc);
+                    cmd.Parameters.AddWithValue("p5", EDBDbType.TimestampTz, nDateTimeLocal);
+                    cmd.Parameters.AddWithValue("p6", EDBDbType.TimestampTz, nDateTimeUnspecified);
+                    cmd.Parameters.AddWithValue("p7", dateTimeOffset);
+                    Assert.That(cmd.Parameters["p7"].EDBDbType, Is.EqualTo(EDBDbType.TimestampTz));
 
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -378,7 +382,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                             Assert.That(reader.GetFieldValue<EDBDateTime>(i), Is.EqualTo(nDateTimeLocal));
 
                             // DateTimeOffset
-                            Assert.That(reader.GetFieldValue<DateTimeOffset>(i), Is.EqualTo(dateTimeOffset.ToUniversalTime()));
+                            Assert.That(reader.GetFieldValue<DateTimeOffset>(i), Is.EqualTo(dateTimeOffset));
+                            var x = reader.GetFieldValue<DateTimeOffset>(i);
                         }
                     }
                 }

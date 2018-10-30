@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,20 +26,30 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
 using JetBrains.Annotations;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
+    [TypeMapping("timestamp with time zone", EDBDbType.TimestampTz, DbType.DateTimeOffset, typeof(DateTimeOffset))]
+    class TimestampTzHandlerFactory : EDBTypeHandlerFactory<DateTime>
+    {
+        // Check for the legacy floating point timestamps feature
+        protected override EDBTypeHandler<DateTime> Create(EDBConnection conn)
+            => new TimestampTzHandler(conn.HasIntegerDateTimes, conn.Connector.ConvertInfinityDateTime);
+    }
+
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("timestamptz", EDBDbType.TimestampTZ, DbType.DateTimeOffset, typeof(DateTimeOffset))]
-    class TimeStampTzHandler : TimeStampHandler, ISimpleTypeHandler<DateTimeOffset>
+    class TimestampTzHandler : TimestampHandler, IEDBSimpleTypeHandler<DateTimeOffset>
     {
-        public TimeStampTzHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType, registry) {}
+        public TimestampTzHandler(bool integerFormat, bool convertInfinityDateTime)
+            : base(integerFormat, convertInfinityDateTime) {}
 
-        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        #region Read
+
+        public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
             var ts = ReadTimeStamp(buf, len, fieldDescription);
@@ -53,74 +63,76 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                     return DateTime.MaxValue;
                 return DateTime.MinValue;
             } catch (Exception e) {
-                throw new SafeReadException(e);
+                throw new EDBSafeReadException(e);
             }
         }
 
-        internal override EDBDateTime ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        protected override EDBDateTime ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             var ts = ReadTimeStamp(buf, len, fieldDescription);
             return new EDBDateTime(ts.Date, ts.Time, DateTimeKind.Utc).ToLocalTime();
         }
 
-        DateTimeOffset ISimpleTypeHandler<DateTimeOffset>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        DateTimeOffset IEDBSimpleTypeHandler<DateTimeOffset>.Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription)
         {
+            // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
+            var ts = ReadTimeStamp(buf, len, fieldDescription);
             try
             {
-                return new DateTimeOffset(ReadTimeStamp(buf, len, fieldDescription).ToDateTime(), TimeSpan.Zero);
+                if (ts.IsFinite)
+                    return ts.ToDateTime().ToLocalTime();
+                if (!ConvertInfinityDateTime)
+                    throw new InvalidCastException("Can't convert infinite timestamptz values to DateTime");
+                if (ts.IsInfinity)
+                    return DateTimeOffset.MaxValue;
+                return DateTimeOffset.MinValue;
             } catch (Exception e) {
-                throw new SafeReadException(e);
+                throw new EDBSafeReadException(e);
             }
         }
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+        #endregion Read
+
+        #region Write
+
+        public int ValidateAndGetLength(DateTimeOffset value, EDBParameter parameter)
+            => 8;
+
+        public override void Write(EDBDateTime value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
-
-            if (value is EDBDateTime)
+            switch (value.Kind)
             {
-                var ts = (EDBDateTime)value;
-                switch (ts.Kind)
-                {
-                case DateTimeKind.Unspecified:
-                case DateTimeKind.Utc:
-                    break;
-                case DateTimeKind.Local:
-                    ts = ts.ToUniversalTime();
-                    break;
-                default:
-                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {ts.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
-                }
-                base.Write(ts, buf, parameter);
-                return;
+            case DateTimeKind.Unspecified:
+            case DateTimeKind.Utc:
+                break;
+            case DateTimeKind.Local:
+                value = value.ToUniversalTime();
+                break;
+            default:
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {value.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
             }
-
-            if (value is DateTime)
-            {
-                var dt = (DateTime)value;
-                switch (dt.Kind)
-                {
-                case DateTimeKind.Unspecified:
-                case DateTimeKind.Utc:
-                    break;
-                case DateTimeKind.Local:
-                    dt = dt.ToUniversalTime();
-                    break;
-                default:
-                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {dt.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
-                }
-                base.Write(dt, buf, parameter);
-                return;
-            }
-
-            if (value is DateTimeOffset)
-            {
-                base.Write(((DateTimeOffset)value).ToUniversalTime(), buf, parameter);
-                return;
-            }
-
-            throw new InvalidOperationException("Internal EnterpriseDB.EDBClient bug, please report.");
+            base.Write(value, buf, parameter);
         }
+
+        public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter parameter)
+        {
+            switch (value.Kind)
+            {
+            case DateTimeKind.Unspecified:
+            case DateTimeKind.Utc:
+                break;
+            case DateTimeKind.Local:
+                value = value.ToUniversalTime();
+                break;
+            default:
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {value.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
+            }
+            base.Write(value, buf, parameter);
+        }
+
+        public void Write(DateTimeOffset value, EDBWriteBuffer buf, EDBParameter parameter)
+            => base.Write(value.ToUniversalTime().DateTime, buf, parameter);
+
+        #endregion Write
     }
 }

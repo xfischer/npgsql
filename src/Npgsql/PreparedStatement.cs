@@ -45,13 +45,13 @@ namespace EnterpriseDB.EDBClient
         internal DateTime LastUsed { get; set; }
 
         /// <summary>
-        /// Contains the parameter types for a prepared statement, for overloaded cases (same SQL, different param types)
+        /// Contains the handler types for a prepared statement's parameters, for overloaded cases (same SQL, different param types)
         /// Only populated after the statement has been prepared (i.e. null for candidates).
         /// </summary>
         [CanBeNull]
-        internal EDBDbType[] ParamTypes { get; private set; }
+        internal Type[] HandlerParamTypes { get; private set; }
 
-        static readonly EDBDbType[] EmptyParamTypes = new EDBDbType[0];
+        static readonly Type[] EmptyParamTypes = Type.EmptyTypes;
 
         internal static PreparedStatement CreateExplicit(
             PreparedStatementManager manager,
@@ -82,28 +82,35 @@ namespace EnterpriseDB.EDBClient
 
         internal void SetParamTypes(List<EDBParameter> parameters)
         {
-            Debug.Assert(ParamTypes == null);
+            //Debug.Assert(HandlerParamTypes == null);EnterpriseDB Team
             if (parameters.Count == 0)
-                ParamTypes = EmptyParamTypes;
-            ParamTypes = new EDBDbType[parameters.Count];
+                HandlerParamTypes = EmptyParamTypes;
+            HandlerParamTypes = new Type[parameters.Count];
             for (var i = 0; i < parameters.Count; i++)
-                ParamTypes[i] = parameters[i].EDBDbType;
+            {
+                Debug.Assert(parameters[i].Handler != null, "Parameter handler type not set when creating prepared statement");
+                HandlerParamTypes[i] = parameters[i].Handler.GetType();
+            }
         }
 
         internal bool DoParametersMatch(List<EDBParameter> parameters)
         {
-            Debug.Assert(ParamTypes != null);
-            if (ParamTypes.Length != parameters.Count)
+            Debug.Assert(HandlerParamTypes != null);
+            if (HandlerParamTypes.Length != parameters.Count)
                 return false;
-            for (var i = 0; i < ParamTypes.Length; i++)
-                if (ParamTypes[i] != parameters[i].EDBDbType)
+            for (var i = 0; i < HandlerParamTypes.Length; i++)
+            {
+                Debug.Assert(parameters[i].Handler != null, "Parameter handler type not set when creating prepared statement");
+                if (HandlerParamTypes[i] != parameters[i].Handler.GetType())
                     return false;
+            }
+
             return true;
         }
 
         internal void CompletePrepare()
         {
-            Debug.Assert(ParamTypes != null);
+            Debug.Assert(HandlerParamTypes != null);
             _manager.BySql[Sql] = this;
             _manager.NumPrepared++;
             State = PreparedState.Prepared;

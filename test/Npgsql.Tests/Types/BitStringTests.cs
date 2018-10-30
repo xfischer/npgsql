@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -121,7 +121,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
-                    Assert.That(() => reader.GetFieldValue<BitVector32>(0), Throws.Exception.TypeOf<EDBException>());
+                    Assert.That(() => reader.GetFieldValue<BitVector32>(0), Throws.Exception.TypeOf<InvalidCastException>());
                 }
                 Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
             }
@@ -201,7 +201,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
-
+                    var x = reader.GetValue(0);
                     Assert.That(reader.GetValue(0), Is.EqualTo(expected));
                     Assert.That(reader.GetFieldValue<bool[]>(0), Is.EqualTo(expected));
                     Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(Array)));

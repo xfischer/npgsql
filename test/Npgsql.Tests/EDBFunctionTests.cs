@@ -2432,7 +2432,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				EDBCommand com = new EDBCommand("",con);
 				com.CommandType = CommandType.Text;
 
-				string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+				string CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
 				com.CommandText = CursorTable;
 				com.ExecuteNonQuery();
 
@@ -2500,7 +2500,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("1.1", Convert.ToString(cur[5].ToString()));
 				Assert.AreEqual("1", Convert.ToString(cur[6].ToString()));
 				Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
-				Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+				Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 				Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 				Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 				Assert.AreEqual("Shehzad", Convert.ToString(cur[11].ToString()));
@@ -2516,7 +2516,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("1.2", Convert.ToString(cur[5].ToString()));
 				Assert.AreEqual("2", Convert.ToString(cur[6].ToString()));
 				Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
-				Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+				Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 				Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 				Assert.AreEqual("2", Convert.ToString(cur[10].ToString()));
 				Assert.AreEqual("EnterpriseDB", Convert.ToString(cur[11].ToString()));
@@ -2532,7 +2532,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("1.3", Convert.ToString(cur[5].ToString()));
 				Assert.AreEqual("3", Convert.ToString(cur[6].ToString()));
 				Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
-				Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+				Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 				Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 				Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 				Assert.AreEqual("Islamabad", Convert.ToString(cur[11].ToString()));
@@ -2548,7 +2548,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("1.4", Convert.ToString(cur[5].ToString()));
 				Assert.AreEqual("4", Convert.ToString(cur[6].ToString()));
 				Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
-				Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+				Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 				Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 				Assert.AreEqual("1", Convert.ToString(cur[10].ToString()));
 				Assert.AreEqual("Pakistan", Convert.ToString(cur[11].ToString()));

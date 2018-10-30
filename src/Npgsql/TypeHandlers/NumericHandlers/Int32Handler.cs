@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,63 +25,72 @@ using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
     /// </remarks>
-    [TypeMapping("int4", EDBDbType.Integer, DbType.Int32, typeof(int))]
-    class Int32Handler : SimpleTypeHandler<int>,
-        ISimpleTypeHandler<byte>, ISimpleTypeHandler<short>, ISimpleTypeHandler<long>,
-        ISimpleTypeHandler<float>, ISimpleTypeHandler<double>, ISimpleTypeHandler<decimal>,
-        ISimpleTypeHandler<string>
+    [TypeMapping("integer", EDBDbType.Integer, DbType.Int32, typeof(int))]
+    class Int32Handler : EDBSimpleTypeHandler<int>,
+        IEDBSimpleTypeHandler<byte>, IEDBSimpleTypeHandler<short>, IEDBSimpleTypeHandler<long>,
+        IEDBSimpleTypeHandler<float>, IEDBSimpleTypeHandler<double>, IEDBSimpleTypeHandler<decimal>
     {
-        internal Int32Handler(PostgresType postgresType) : base(postgresType) { }
+        #region Read
 
-        public override int Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override int Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => buf.ReadInt32();
 
-        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => (byte)Read(buf, len, fieldDescription);
+        byte IEDBSimpleTypeHandler<byte>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => checked((byte)Read(buf, len, fieldDescription));
 
-        short ISimpleTypeHandler<short>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => (short)Read(buf, len, fieldDescription);
+        short IEDBSimpleTypeHandler<short>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+            => checked((short)Read(buf, len, fieldDescription));
 
-        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        long IEDBSimpleTypeHandler<long>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        float ISimpleTypeHandler<float>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        float IEDBSimpleTypeHandler<float>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        double ISimpleTypeHandler<double>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        double IEDBSimpleTypeHandler<double>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        decimal ISimpleTypeHandler<decimal>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        decimal IEDBSimpleTypeHandler<decimal>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => Read(buf, len, fieldDescription);
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        #endregion Read
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            if (!(value is int))
-            {
-                var converted = Convert.ToInt32(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
-            }
-            return 4;
-        }
+        #region Write
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
-            buf.WriteInt32((int)value);
-        }
+        public override int ValidateAndGetLength(int value, EDBParameter parameter) => 4;
+        public int ValidateAndGetLength(short value, EDBParameter parameter)        => 4;
+        public int ValidateAndGetLength(long value, EDBParameter parameter)         => 4;
+        public int ValidateAndGetLength(float value, EDBParameter parameter)        => 4;
+        public int ValidateAndGetLength(double value, EDBParameter parameter)       => 4;
+        public int ValidateAndGetLength(decimal value, EDBParameter parameter)      => 4;
+        public int ValidateAndGetLength(byte value, EDBParameter parameter)         => 4;
+
+        public override void Write(int value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(value);
+        public void Write(short value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(value);
+        public void Write(long value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(checked((int)value));
+        public void Write(byte value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(value);
+        public void Write(float value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(checked((int)value));
+        public void Write(double value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32(checked((int)value));
+        public void Write(decimal value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32((int)value);
+
+        #endregion Write
     }
 }

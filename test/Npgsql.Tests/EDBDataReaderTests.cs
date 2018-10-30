@@ -452,7 +452,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		[Test]
+		[Test, Ignore("Needs Investigation")]
 		public void TypesNames()
 		{
 			_conn.Open();

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,102 +22,29 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace EnterpriseDB.EDBClient.BackendMessages
 {
-    abstract class DataRowMessage : IBackendMessage
+    /// <summary>
+    /// DataRow is special in that it does not parse the actual contents of the backend message,
+    /// because in sequential mode the message will be traversed and processed sequentially by
+    /// <see cref="EDBSequentialDataReader"/>.
+    /// </summary>
+    class DataRowMessage : IBackendMessage
     {
         public BackendMessageCode Code => BackendMessageCode.DataRow;
 
-        internal abstract DataRowMessage Add(DataRowMessage buf); //EnterpriseDB Team
+        internal int Length { get; private set; }
 
-        protected internal ReadBuffer Buffer { get; protected set; }
-
-        /// <summary>
-        /// The number of columns in the current row
-        /// </summary>
-        internal int NumColumns;
-
-        internal bool _isReturnRow = true; //EnterpriseDB Team
-        /// <summary>
-        /// 
-        /// </summary>
-        internal int _InternalreadPosition;//EnterpriseDB Team
-        internal int _InternalActaullReadPosition;//EnterpriseDB Team
-        
-        /// <summary>
-        /// The index of the column that we're on, i.e. that has already been parsed, is
-        /// is memory and can be retrieved. Initialized to -1
-        /// </summary>
-        internal int Column;
-
-        /// <summary>
-        /// For streaming types (e.g. bytea, text), holds the current byte position within the column.
-        /// Does not include the length prefix.
-        /// </summary>
-        internal int PosInColumn;
-
-        /// <summary>
-        /// For streaming types (e.g. bytea), holds the byte length of the column.
-        /// Does not include the length prefix.
-        /// </summary>
-        internal int ColumnLen;
-
-        internal bool IsColumnNull => ColumnLen == -1;
-
-        //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
-
-        internal abstract DataRowMessage Load(ReadBuffer buf);
-
-        //internal abstract DataRowMessage Add(DataRowMessage buf);//TODO EnterpriseDB Team 
-
-        /// <summary>
-        /// Places our position at the beginning of the given column, after the 4-byte length.
-        /// The length is available in ColumnLen.
-        /// </summary>
-        internal abstract Task SeekToColumn(int column, bool async);
-        internal abstract Task SeekInColumn(int posInColumn, bool async);
-
-        /// <summary>
-        /// Returns a stream for the current column.
-        /// </summary>
-        internal abstract Stream GetStream();
-
-        /// <summary>
-        /// Consumes the current row, allowing the reader to read in the next one.
-        /// </summary>
-        internal abstract Task Consume(bool async);
-
-        // TODO: Possibly make this non-async for NonSequential
-        internal async Task SeekToColumnStart(int column, bool async)
+        internal DataRowMessage Load(int len)
         {
-            await SeekToColumn(column, async);
-            if (PosInColumn != 0)
-                await SeekInColumn(0, async);
+            Length = len;
+            return this;
         }
-
-        #region Checks
-
-        // ReSharper disable once UnusedParameter.Global
-        protected void CheckColumnIndex(int column)
-        {
-            if (column < 0 || column >= NumColumns)
-            {
-                throw new IndexOutOfRangeException("Column index out of range");
-            }
-        }
-
-        internal void CheckNotNull()
-        {
-            if (IsColumnNull)
-            {
-                throw new InvalidCastException("Column is null");
-            }
-        }
-
-        #endregion
     }
 }

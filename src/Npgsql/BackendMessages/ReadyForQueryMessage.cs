@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,7 +29,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         internal TransactionStatus TransactionStatusIndicator { get; private set; }
 
-        internal ReadyForQueryMessage Load(ReadBuffer buf) {
+        internal ReadyForQueryMessage Load(EDBReadBuffer buf) {
             TransactionStatusIndicator = (TransactionStatus)buf.ReadByte();
             return this;
         }

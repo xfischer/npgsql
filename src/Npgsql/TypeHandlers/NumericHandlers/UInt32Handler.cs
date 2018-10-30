@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,9 +21,9 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using System;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
@@ -35,30 +35,14 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     [TypeMapping("xid", EDBDbType.Xid)]
     [TypeMapping("cid", EDBDbType.Cid)]
     [TypeMapping("regtype", EDBDbType.Regtype)]
-    class UInt32Handler : SimpleTypeHandler<uint>
+    class UInt32Handler : EDBSimpleTypeHandler<uint>
     {
-        internal UInt32Handler(PostgresType postgresType) : base(postgresType) { }
-
-        public override uint Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override uint Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => (uint)buf.ReadInt32();
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            if (!(value is uint))
-            {
-                var converted = Convert.ToUInt32(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
-            }
-            return 4;
-        }
+        public override int ValidateAndGetLength(uint value, EDBParameter parameter) => 4;
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
-            buf.WriteInt32((int)(uint)value);
-        }
+        public override void Write(uint value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteInt32((int)value);
     }
 }

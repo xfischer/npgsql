@@ -28,6 +28,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
@@ -58,26 +59,26 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             ParameterTypeOIDs = new List<uint>();
         }
 
-        internal ParseOutMessage Populate(string sql, string statementName, EDBParameterCollection _parameter, List<EDBParameter> inputParameters, TypeHandlerRegistry typeHandlerRegistry)
+        internal ParseOutMessage Populate(string sql, string statementName, EDBParameterCollection _parameter, List<EDBParameter> inputParameters, ConnectorTypeMapper typeMapper)
         {
             ParameterTypeOIDs.Clear();
             Query = sql;
             Statement = statementName;
             _parameters = _parameter;
             foreach (var inputParam in inputParameters) {
-                inputParam.ResolveHandler(typeHandlerRegistry);
+                inputParam.ResolveHandler(typeMapper);
                 ParameterTypeOIDs.Add(inputParam.Handler.PostgresType.OID);
             }
             return this;
         }
 
-        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+        internal override async Task Write(EDBWriteBuffer buf, bool async)
         {
             Debug.Assert(Statement != null && Statement.All(c => c < 128));
 
             var queryByteLen = _encoding.GetByteCount(Query);
             if (buf.WriteSpaceLeft < 1 + 4 + Statement.Length + 1)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
 
             var messageLength =
                 1 +                         // Message code
@@ -94,10 +95,10 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             buf.WriteInt32(messageLength - 1);
             buf.WriteNullTerminatedString(Statement);
 
-            await buf.WriteString(Query, queryByteLen, async, cancellationToken);
+            await buf.WriteString(Query, queryByteLen, async);
 
             if (buf.WriteSpaceLeft < 1 + 2 + _parameters.Count * 4 + _parameters.Count * 2)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
             buf.WriteByte(0); // Null terminator for the query
             buf.WriteInt16((short)_parameters.Count);
 

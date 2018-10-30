@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,6 +24,8 @@
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -35,29 +37,19 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("circle", EDBDbType.Circle, typeof(EDBCircle))]
-    class CircleHandler : SimpleTypeHandler<EDBCircle>, ISimpleTypeHandler<string>
+    class CircleHandler : EDBSimpleTypeHandler<EDBCircle>
     {
-        internal CircleHandler(PostgresType postgresType) : base(postgresType) { }
-
-        public override EDBCircle Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBCircle Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => new EDBCircle(buf.ReadDouble(), buf.ReadDouble(), buf.ReadDouble());
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength(EDBCircle value, EDBParameter parameter)
+            => 24;
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override void Write(EDBCircle value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBCircle))
-                throw CreateConversionException(value.GetType());
-            return 24;
-        }
-
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var v = (EDBCircle)value;
-            buf.WriteDouble(v.X);
-            buf.WriteDouble(v.Y);
-            buf.WriteDouble(v.Radius);
+            buf.WriteDouble(value.X);
+            buf.WriteDouble(value.Y);
+            buf.WriteDouble(value.Radius);
         }
     }
 }

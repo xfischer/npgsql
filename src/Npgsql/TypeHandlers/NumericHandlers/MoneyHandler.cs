@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,11 +21,13 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using System;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
+using System;
 using System.Data;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using System.Runtime.CompilerServices;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
@@ -33,37 +35,38 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-money.html
     /// </remarks>
     [TypeMapping("money", EDBDbType.Money, dbType: DbType.Currency)]
-    class MoneyHandler : SimpleTypeHandler<decimal>
+    class MoneyHandler : EDBSimpleTypeHandler<decimal>
     {
-        internal MoneyHandler(PostgresType postgresType) : base(postgresType) { }
+        const int MoneyScale = 2;
 
-        public override decimal Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
-            => buf.ReadInt64() / 100m;
-
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override decimal Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            decimal decimalValue;
-            if (!(value is decimal))
-            {
-                var converted = Convert.ToDecimal(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                decimalValue = converted;
-                parameter.ConvertedValue = converted;
-            }
-            else
-                decimalValue = (decimal)value;
-
-            if (decimalValue < -92233720368547758.08M || decimalValue > 92233720368547758.07M)
-                throw new OverflowException("The supplied value (" + decimalValue + ") is outside the range for a PostgreSQL money value.");
-
-            return 8;
+            var result = new DecimalRaw(buf.ReadInt64()) { Scale = MoneyScale };
+            return Unsafe.As<DecimalRaw, decimal>(ref result);
         }
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+        public override int ValidateAndGetLength(decimal value, EDBParameter parameter)
+            => value < -92233720368547758.08M || value > 92233720368547758.07M
+                ? throw new OverflowException($"The supplied value ({value}) is outside the range for a PostgreSQL money value.")
+                : 8;
+
+        public override void Write(decimal value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            var v = (decimal)(parameter?.ConvertedValue ?? value);
-            buf.WriteInt64((long)(Math.Round(v, 2, MidpointRounding.AwayFromZero) * 100m));
+            var raw = Unsafe.As<decimal, DecimalRaw>(ref value);
+            var scaleDifference = MoneyScale - raw.Scale;
+            if (scaleDifference > 0)
+                DecimalRaw.Multiply(ref raw, DecimalRaw.Powers10[scaleDifference]);
+            else
+                while (scaleDifference < 0)
+                {
+                    var scaleChunk = Math.Min(DecimalRaw.MaxUInt32Scale, -scaleDifference);
+                    DecimalRaw.Divide(ref raw, DecimalRaw.Powers10[scaleChunk]);
+                    scaleDifference -= scaleChunk;
+                }
+
+            var result = (long)raw.Mid << 32 | (long)raw.Low;
+            if (raw.Negative) result = -result;
+            buf.WriteInt64(result);
         }
     }
 }

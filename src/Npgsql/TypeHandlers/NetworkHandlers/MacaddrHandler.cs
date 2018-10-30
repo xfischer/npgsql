@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,7 +26,8 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
@@ -35,11 +36,11 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
     [TypeMapping("macaddr", EDBDbType.MacAddr, typeof(PhysicalAddress))]
-    class MacaddrHandler : SimpleTypeHandler<PhysicalAddress>, ISimpleTypeHandler<string>
+    class MacaddrHandler : EDBSimpleTypeHandler<PhysicalAddress>
     {
-        internal MacaddrHandler(PostgresType postgresType) : base(postgresType) { }
+        #region Read
 
-        public override PhysicalAddress Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override PhysicalAddress Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             Debug.Assert(len == 6);
 
@@ -49,20 +50,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             return new PhysicalAddress(bytes);
         }
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        #endregion Read
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            var address = value as PhysicalAddress;
-            if (address == null)
-                throw CreateConversionException(value.GetType());
-            if (address.GetAddressBytes().Length != 6)
-                throw new FormatException("MAC addresses must have length 6 in PostgreSQL");
-            return 6;
-        }
+        #region Write
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-            => buf.WriteBytes(((PhysicalAddress)value).GetAddressBytes(), 0, 6);
+        public override int ValidateAndGetLength(PhysicalAddress value, EDBParameter parameter)
+             => value.GetAddressBytes().Length == 6
+                 ? 6
+                 : throw new FormatException("MAC addresses must have length 6 in PostgreSQL");
+
+        public override void Write(PhysicalAddress value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteBytes(value.GetAddressBytes(), 0, 6);
+
+        #endregion Write
     }
 }

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,10 +21,15 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
+using System.Net;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
+
+#pragma warning disable 618
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
 {
@@ -32,20 +37,27 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
     [TypeMapping("cidr", EDBDbType.Cidr)]
-    class CidrHandler : SimpleTypeHandler<EDBInet>, ISimpleTypeHandler<string>
+    class CidrHandler : EDBSimpleTypeHandler<(IPAddress Address, int Subnet)>, IEDBSimpleTypeHandler<EDBInet>
     {
-        internal CidrHandler(PostgresType postgresType) : base(postgresType) { }
+        public override (IPAddress Address, int Subnet) Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => InetHandler.DoRead(buf, len, fieldDescription, true);
 
-        public override EDBInet Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
-            => InetHandler.DoRead(buf, fieldDescription, len, true);
+        EDBInet IEDBSimpleTypeHandler<EDBInet>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        {
+            var (address, subnet) = Read(buf, len, fieldDescription);
+            return new EDBInet(address, subnet);
+        }
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength((IPAddress Address, int Subnet) value, EDBParameter parameter)
+            => InetHandler.GetLength(value.Address);
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-            => InetHandler.DoValidateAndGetLength(value);
+        public int ValidateAndGetLength(EDBInet value, EDBParameter parameter)
+            => InetHandler.GetLength(value.Address);
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-            => InetHandler.DoWrite(value, buf, true);
+        public override void Write((IPAddress Address, int Subnet) value, EDBWriteBuffer buf, EDBParameter parameter)
+            => InetHandler.DoWrite(value.Address, value.Subnet, buf, true);
+
+        public void Write(EDBInet value, EDBWriteBuffer buf, EDBParameter parameter)
+            => InetHandler.DoWrite(value.Address, value.Netmask, buf, true);
     }
 }

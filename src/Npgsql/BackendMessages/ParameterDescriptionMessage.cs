@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -38,7 +38,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             TypeOIDs = new List<uint>();
         }
 
-        internal ParameterDescriptionMessage Load(ReadBuffer buf)
+        internal ParameterDescriptionMessage Load(EDBReadBuffer buf)
         {
             var numParams = buf.ReadInt16();
             TypeOIDs.Clear();

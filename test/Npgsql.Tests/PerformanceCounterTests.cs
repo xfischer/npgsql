@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -29,8 +29,9 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-    [Parallelizable(ParallelScope.None)]
+    [NonParallelizable]
     [Explicit]
+    [Ignore("Need performance counter support")]
     public class PerformanceCounterTests : TestBase
     {
         [Test]

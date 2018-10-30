@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,7 +32,8 @@ using JetBrains.Annotations;
 namespace EDBTypes
 {
     /// <summary>
-    /// Represents a PostgreSQL tsquery. This is the base class for lexeme, not, and and or nodes.
+    /// Represents a PostgreSQL tsquery. This is the base class for the
+    /// lexeme, not, or, and, and "followed by" nodes.
     /// </summary>
     public abstract class EDBTsQuery
     {
@@ -47,25 +48,29 @@ namespace EDBTypes
         public enum NodeKind
         {
             /// <summary>
+            /// Represents the empty tsquery. Should only be used at top level.
+            /// </summary>
+            Empty = -1,
+            /// <summary>
             /// Lexeme
             /// </summary>
-            Lexeme,
+            Lexeme = 0,
             /// <summary>
             /// Not operator
             /// </summary>
-            Not,
+            Not = 1,
             /// <summary>
             /// And operator
             /// </summary>
-            And,
+            And = 2,
             /// <summary>
             /// Or operator
             /// </summary>
-            Or,
+            Or = 3,
             /// <summary>
-            /// Represents the empty tsquery. Should only be used at top level.
+            /// "Followed by" operator
             /// </summary>
-            Empty
+            Phrase = 4
         }
 
         internal abstract void Write(StringBuilder sb, bool first = false);
@@ -92,11 +97,13 @@ namespace EDBTypes
                 throw new ArgumentNullException(nameof(value));
 
             var valStack = new Stack<EDBTsQuery>();
-            var opStack = new Stack<char>();
+            var opStack = new Stack<EDBTsQueryOperator>();
 
             var sb = new StringBuilder();
             var pos = 0;
             var expectingBinOp = false;
+
+            var lastFollowedByOpDistance = -1;
 
             NextToken:
             if (pos >= value.Length)
@@ -106,12 +113,49 @@ namespace EDBTypes
                 goto WaitEndComplex;
             if ((ch == ')' || ch == '|' || ch == '&') && !expectingBinOp || (ch == '(' || ch == '!') && expectingBinOp)
                 throw new FormatException("Syntax error in tsquery. Unexpected token.");
-            if (ch == '(' || ch == '!' || ch == '&')
+
+            if (ch == '<')
             {
-                opStack.Push(ch);
+                var endOfOperatorConsumed = false;
+                var sbCurrentLength = sb.Length;
+
+                while (pos < value.Length)
+                {
+                    var c = value[pos++];
+                    if (c == '>')
+                    {
+                        endOfOperatorConsumed = true;
+                        break;
+                    }
+
+                    sb.Append(c);
+                }
+
+                if (sb.Length == sbCurrentLength || !endOfOperatorConsumed)
+                    throw new FormatException("Syntax error in tsquery. Malformed 'followed by' operator.");
+
+                var followedByOpDistanceString = sb.ToString(sbCurrentLength, sb.Length - sbCurrentLength);
+                if (followedByOpDistanceString == "-")
+                {
+                    lastFollowedByOpDistance = 1;
+                }
+                else if (!int.TryParse(followedByOpDistanceString, out lastFollowedByOpDistance)
+                         || lastFollowedByOpDistance < 0)
+                {
+                    throw new FormatException("Syntax error in tsquery. Malformed distance in 'followed by' operator.");
+                }
+
+                sb.Length -= followedByOpDistanceString.Length;
+            }
+
+            if (ch == '(' || ch == '!' || ch == '&' || ch == '<')
+            {
+                opStack.Push(new EDBTsQueryOperator(ch, lastFollowedByOpDistance));
                 expectingBinOp = false;
+                lastFollowedByOpDistance = 0;
                 goto NextToken;
             }
+
             if (ch == '|')
             {
                 if (opStack.Count > 0 && opStack.Peek() == '|')
@@ -128,25 +172,48 @@ namespace EDBTypes
                 expectingBinOp = false;
                 goto NextToken;
             }
+
             if (ch == ')')
             {
                 while (opStack.Count > 0 && opStack.Peek() != '(')
                 {
                     if (valStack.Count < 2 || opStack.Peek() == '!')
                         throw new FormatException("Syntax error in tsquery");
+
                     var right = valStack.Pop();
                     var left = valStack.Pop();
-                    valStack.Push(opStack.Pop() == '&' ? (EDBTsQuery)new EDBTsQueryAnd(left, right) : new EDBTsQueryOr(left, right));
+
+                    var tsOp = opStack.Pop();
+                    switch (tsOp)
+                    {
+                    case '&':
+                        valStack.Push(new EDBTsQueryAnd(left, right));
+                        break;
+
+                    case '|':
+                        valStack.Push(new EDBTsQueryOr(left, right));
+                        break;
+
+                    case '<':
+                        valStack.Push(new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right));
+                        break;
+
+                    default:
+                        throw new FormatException("Syntax error in tsquery");
+                    }
                 }
                 if (opStack.Count == 0)
                     throw new FormatException("Syntax error in tsquery: closing parenthesis without an opening parenthesis");
                 opStack.Pop();
                 goto PushedVal;
             }
+
             if (ch == ':')
                 throw new FormatException("Unexpected : while parsing tsquery");
+
             if (char.IsWhiteSpace(ch))
                 goto NextToken;
+
             pos--;
             if (expectingBinOp)
                 throw new FormatException("Unexpected lexeme while parsing tsquery");
@@ -227,23 +294,45 @@ namespace EDBTypes
 
             PushedVal:
             sb.Clear();
-            while (opStack.Count > 0 && (opStack.Peek() == '&' || opStack.Peek() == '!'))
+            var processTightBindingOperator = true;
+            while (opStack.Count > 0 && processTightBindingOperator)
             {
-                if (opStack.Peek() == '&')
+                var tsOp = opStack.Peek();
+                switch (tsOp)
                 {
+                case '&':
                     if (valStack.Count < 2)
                         throw new FormatException("Syntax error in tsquery");
-                    var right = valStack.Pop();
-                    var left = valStack.Pop();
-                    valStack.Push(new EDBTsQueryAnd(left, right));
-                }
-                else if (opStack.Peek() == '!')
-                {
+                    var andRight = valStack.Pop();
+                    var andLeft = valStack.Pop();
+                    valStack.Push(new EDBTsQueryAnd(andLeft, andRight));
+                    opStack.Pop();
+                    break;
+
+                case '!':
                     if (valStack.Count == 0)
                         throw new FormatException("Syntax error in tsquery");
                     valStack.Push(new EDBTsQueryNot(valStack.Pop()));
+                    opStack.Pop();
+                    break;
+
+                case '<':
+                    if (valStack.Count < 2)
+                        throw new FormatException("Syntax error in tsquery");
+                    var followedByRight = valStack.Pop();
+                    var followedByLeft = valStack.Pop();
+                    valStack.Push(
+                        new EDBTsQueryFollowedBy(
+                            followedByLeft,
+                            tsOp.FollowedByDistance,
+                            followedByRight));
+                    opStack.Pop();
+                    break;
+
+                default:
+                    processTightBindingOperator = false;
+                    break;
                 }
-                opStack.Pop();
             }
             expectingBinOp = true;
             goto NextToken;
@@ -251,16 +340,53 @@ namespace EDBTypes
             Finish:
             while (opStack.Count > 0)
             {
-                if (valStack.Count < 2 || (opStack.Peek() != '|' && opStack.Peek() != '&'))
+                if (valStack.Count < 2)
                     throw new FormatException("Syntax error in tsquery");
+
                 var right = valStack.Pop();
                 var left = valStack.Pop();
-                valStack.Push(opStack.Pop() == '&' ? (EDBTsQuery)new EDBTsQueryAnd(left, right) : new EDBTsQueryOr(left, right));
+
+                EDBTsQuery query;
+                var tsOp = opStack.Pop();
+                switch (tsOp)
+                {
+                case '&':
+                    query = new EDBTsQueryAnd(left, right);
+                    break;
+
+                case '|':
+                    query = new EDBTsQueryOr(left, right);
+                    break;
+
+                case '<':
+                    query = new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right);
+                    break;
+
+                default:
+                    throw new FormatException("Syntax error in tsquery");
+                }
+
+                valStack.Push(query);
             }
             if (valStack.Count != 1)
                 throw new FormatException("Syntax error in tsquery");
             return valStack.Pop();
         }
+    }
+
+    readonly struct EDBTsQueryOperator
+    {
+        public readonly char Char;
+        public readonly int FollowedByDistance;
+
+        public EDBTsQueryOperator(char character, int followedByDistance)
+        {
+            Char = character;
+            FollowedByDistance = followedByDistance;
+        }
+
+        public static implicit operator EDBTsQueryOperator(char c) => new EDBTsQueryOperator(c, 0);
+        public static implicit operator char(EDBTsQueryOperator o) => o.Char;
     }
 
     /// <summary>
@@ -485,6 +611,56 @@ namespace EDBTypes
 
             Left.Write(sb);
             sb.Append(" | ");
+            Right.Write(sb);
+
+            if (!first)
+                sb.Append(" )");
+        }
+    }
+
+    /// <summary>
+    /// TsQuery "Followed by" Node.
+    /// </summary>
+    public sealed class EDBTsQueryFollowedBy : EDBTsQueryBinOp
+    {
+        /// <summary>
+        /// The distance between the 2 nodes, in lexemes.
+        /// </summary>
+        public int Distance { get; set; }
+
+        /// <summary>
+        /// Creates a "followed by" operator, specifying 2 child nodes and the 
+        /// distance between them in lexemes.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="distance"></param>
+        /// <param name="right"></param>
+        public EDBTsQueryFollowedBy(
+            [CanBeNull] EDBTsQuery left,
+            int distance,
+            [CanBeNull] EDBTsQuery right)
+        {
+            if (distance < 0)
+                throw new ArgumentOutOfRangeException(nameof(distance));
+
+            Left = left;
+            Distance = distance;
+            Right = right;
+            Kind = NodeKind.Phrase;
+        }
+
+        internal override void Write(StringBuilder sb, bool first = false)
+        {
+            if (!first)
+                sb.Append("( ");
+
+            Left.Write(sb);
+
+            sb.Append(" <");
+            if (Distance == 1) sb.Append("-");
+            else sb.Append(Distance);
+            sb.Append("> ");
+
             Right.Write(sb);
 
             if (!first)

@@ -33,6 +33,27 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
+        public async Task Async()
+        {
+            using (var conn = OpenConnectionAndUnprepare())
+            {
+                using (var cmd = new EDBCommand("SELECT 1", conn))
+                {
+                    AssertNumPreparedStatements(conn, 0);
+                    Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+                    Assert.That(cmd.IsPrepared, Is.False);
+
+                    await cmd.PrepareAsync();
+                    AssertNumPreparedStatements(conn, 1);
+                    Assert.That(cmd.IsPrepared, Is.True);
+                    Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+                }
+                AssertNumPreparedStatements(conn, 1);
+                conn.UnprepareAll();
+            }
+        }
+
+        [Test]
         public void Unprepare()
         {
             using (var conn = OpenConnectionAndUnprepare())
@@ -57,7 +78,7 @@ namespace EnterpriseDB.EDBClient.Tests
             using (var command = new EDBCommand("SELECT @a, @b", conn))
             {
                 command.Parameters.Add(new EDBParameter("a", DbType.Int32));
-                command.Parameters.Add(new EDBParameter("b", DbType.Int64));
+                command.Parameters.Add(new EDBParameter("b", 8));
                 command.Prepare();
                 command.Parameters[0].Value = 3;
                 command.Parameters[1].Value = 5;
@@ -71,7 +92,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1207")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1207")]
         public void DoublePrepareSameSql()
         {
             using (var conn = OpenConnectionAndUnprepare())
@@ -106,19 +127,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Description("Checks that prepares requires all params to have explicitly set types (EDBDbType or DbType)")]
-        public void RequiresParamTypesSet()
-        {
-            using (var conn = OpenConnectionAndUnprepare())
-            using (var cmd = new EDBCommand("SELECT @p", conn))
-            {
-                var p = new EDBParameter("p", 8);
-                cmd.Parameters.Add(p);
-                Assert.That(() => cmd.Prepare(), Throws.InvalidOperationException);
-            }
-        }
-
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/395")]
         public void AcrossCloseOpenSameConnector()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -240,6 +249,33 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
+        public void OneCommandSameSqlTwiceWithParams()
+        {
+            using (var conn = OpenConnectionAndUnprepare())
+            using (var cmd = new EDBCommand("SELECT @p1; SELECT @p2", conn))
+            {
+                cmd.Parameters.Add("p1", EDBDbType.Integer);
+                cmd.Parameters.Add("p2", EDBDbType.Integer);
+                cmd.Prepare();
+                AssertNumPreparedStatements(conn, 1);
+
+                cmd.Parameters[0].Value = 8;
+                cmd.Parameters[1].Value = 9;
+                using (var reader = cmd.ExecuteReader())
+                {
+                    Assert.That(reader.Read(), Is.True);
+                    Assert.That(reader.GetInt32(0), Is.EqualTo(8));
+                    Assert.That(reader.NextResult(), Is.True);
+                    Assert.That(reader.Read(), Is.True);
+                    Assert.That(reader.GetInt32(0), Is.EqualTo(9));
+                    Assert.That(reader.NextResult(), Is.False);
+                }
+
+                cmd.Unprepare();
+            }
+        }
+
+        [Test]
         public void UnprepareViaDifferentCommand()
         {
             using (var conn = OpenConnectionAndUnprepare())
@@ -344,6 +380,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 using (var cmd = new EDBCommand("SELECT 1", conn))
                 {
                     cmd.Prepare();
+                    Assert.That(cmd.IsPrepared, Is.True);
                     AssertNumPreparedStatements(conn, 1);
                     Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
                 }

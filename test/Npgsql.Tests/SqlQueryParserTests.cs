@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -81,7 +81,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(_queries.Single().InputParameters.Single(), Is.SameAs(_params.Single()));
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1177")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1177")]
         public void ParamGetsBoundNonAscii()
         {
             _params.AddWithValue("漢字", "foo");

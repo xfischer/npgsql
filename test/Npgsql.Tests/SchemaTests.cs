@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -20,8 +20,6 @@
 // ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
-
-#if !NETCOREAPP1_1
 
 using System;
 using System.Collections.Generic;
@@ -199,12 +197,82 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(integer["numeric_precision"], Is.EqualTo(32));
                 Assert.That(integer["numeric_scale"], Is.EqualTo(0));
 
-                var text = rows.Single(r => (string)r["column_name"] == "text");
-                Assert.That(text["numeric_precision"], Is.EqualTo(DBNull.Value));
-                Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
+                //var text = rows.Single(r => (string)r["column_name"] == "text");
+                //Assert.That(text["numeric_precision"], Is.EqualTo(DBNull.Value));
+                //Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
             }
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1831")]
+        public void NoSystemTables()
+        {
+            using (var conn = OpenConnection())
+            {
+                var tables = conn.GetSchema("Tables").Rows
+                    .Cast<DataRow>()
+                    .Select(r => (string)r["TABLE_NAME"])
+                    .ToList();
+                Assert.That(tables, Does.Not.Contain("pg_type"));  // schema pg_catalog
+                Assert.That(tables, Does.Not.Contain("tables"));   // schema information_schema
+            }
+
+            using (var conn = OpenConnection())
+            {
+                var views = conn.GetSchema("Views").Rows
+                    .Cast<DataRow>()
+                    .Select(r => (string)r["TABLE_NAME"])
+                    .ToList();
+                Assert.That(views, Does.Not.Contain("pg_user"));  // schema pg_catalog
+                Assert.That(views, Does.Not.Contain("views"));    // schema information_schema
+            }
+        }
+
+        [Test]
+        public void GetSchemaWithRestrictions()
+        {
+            // We can't use temporary tables because GetSchema filters out that in WHERE clause.
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("DROP TABLE IF EXISTS data");
+                conn.ExecuteNonQuery("CREATE TABLE data (bar INTEGER)");
+
+                try
+                {
+                    string[] restrictions = { null, null, "data" };
+                    var dt = conn.GetSchema("Tables", restrictions);
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        var d = row["table_name"];
+                        Assert.That(row["table_name"], Is.EqualTo("data"));
+                    }
+                }
+                finally
+                {
+                    conn.ExecuteNonQuery("DROP TABLE IF EXISTS data");
+                }
+            }
+
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery("DROP VIEW IF EXISTS view");
+                conn.ExecuteNonQuery("CREATE VIEW view AS SELECT 8 AS foo");
+
+                try
+                {
+                    string[] restrictions = { null, null, "view" };
+                    var dt = conn.GetSchema("Views", restrictions);
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        var d = row["table_name"];
+                        Assert.That(row["table_name"], Is.EqualTo("view"));
+                    }
+                }
+                finally
+                {
+                    conn.ExecuteNonQuery("DROP VIEW IF EXISTS view");
+                }
+            }
+
         }
     }
 }
-
-#endif

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -33,7 +33,7 @@ namespace EnterpriseDB.EDBClient.Tests
 {
     class WriteBufferTests
     {
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1275")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1275")]
         public void WriteZeroChars()
         {
             // Fill up the buffer entirely
@@ -42,11 +42,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
             int charsUsed;
             bool completed;
-#if !NETCOREAPP1_1
             WriteBuffer.WriteStringChunked("hello", 0, 5, true, out charsUsed, out completed);
             Assert.That(charsUsed, Is.Zero);
             Assert.That(completed, Is.False);
-#endif
             WriteBuffer.WriteStringChunked("hello".ToCharArray(), 0, 5, true, out charsUsed, out completed);
             Assert.That(charsUsed, Is.Zero);
             Assert.That(completed, Is.False);
@@ -56,11 +54,11 @@ namespace EnterpriseDB.EDBClient.Tests
         public void SetUp()
         {
             Underlying = new MemoryStream();
-            WriteBuffer = new WriteBuffer(null, Underlying, ReadBuffer.DefaultSize, PGUtil.UTF8Encoding);
+            WriteBuffer = new EDBWriteBuffer(null, Underlying, EDBReadBuffer.DefaultSize, PGUtil.UTF8Encoding);
         }
 
         // ReSharper disable once InconsistentNaming
-        WriteBuffer WriteBuffer;
+        EDBWriteBuffer WriteBuffer;
         // ReSharper disable once InconsistentNaming
         MemoryStream Underlying;
     }

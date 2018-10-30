@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -20,6 +20,10 @@
 // ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
+
+using System;
+using System.Collections.Generic;
+using EnterpriseDB.EDBClient.Logging;
 
 namespace EnterpriseDB.EDBClient.BackendMessages
 {
@@ -59,7 +63,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         internal byte[] Salt { get; private set; }
 
-        internal static AuthenticationMD5PasswordMessage Load(ReadBuffer buf)
+        internal static AuthenticationMD5PasswordMessage Load(EDBReadBuffer buf)
         {
             var salt = new byte[4];
             buf.ReadBytes(salt, 0, 4);
@@ -94,7 +98,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         internal byte[] AuthenticationData { get; private set; }
 
-        internal static AuthenticationGSSContinueMessage Load(ReadBuffer buf, int len)
+        internal static AuthenticationGSSContinueMessage Load(EDBReadBuffer buf, int len)
         {
             len -= 4;   // The AuthRequestType code
             var authenticationData = new byte[len];
@@ -116,6 +120,106 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         AuthenticationSSPIMessage() { }
     }
 
+    #region SASL
+
+    class AuthenticationSASLMessage : AuthenticationRequestMessage
+    {
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationSASL;
+        internal List<string> Mechanisms { get; } = new List<string>();
+
+        internal AuthenticationSASLMessage(EDBReadBuffer buf)
+        {
+            while (buf.Buffer[buf.ReadPosition] != 0)
+                Mechanisms.Add(buf.ReadNullTerminatedString());
+            buf.ReadByte();
+            if (Mechanisms.Count == 0)
+                throw new EDBException("Received AuthenticationSASL message with 0 mechanisms!");
+        }
+    }
+
+    class AuthenticationSASLContinueMessage : AuthenticationRequestMessage
+    {
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationSASLContinue;
+        internal byte[] Payload { get; }
+
+        internal AuthenticationSASLContinueMessage(EDBReadBuffer buf, int len)
+        {
+            Payload = new byte[len];
+            buf.ReadBytes(Payload, 0, len);
+        }
+    }
+
+    class AuthenticationSCRAMServerFirstMessage
+    {
+        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+
+        internal string Nonce { get; }
+        internal string Salt { get; }
+        internal int Iteration { get; } = -1;
+
+        internal AuthenticationSCRAMServerFirstMessage(byte[] bytes)
+        {
+            var data = PGUtil.UTF8Encoding.GetString(bytes);
+
+            foreach (var part in data.Split(','))
+            {
+                if (part.StartsWith("r="))
+                    Nonce = part.Substring(2);
+                else if (part.StartsWith("s="))
+                    Salt = part.Substring(2);
+                else if (part.StartsWith("i="))
+                    Iteration = int.Parse(part.Substring(2));
+                else
+                    Log.Debug("Unknown part in SCRAM server-first message:" + part);
+            }
+
+            if (Nonce == null)
+                throw new EDBException("Server nonce not received in SCRAM server-first message");
+            if (Salt == null)
+                throw new EDBException("Server salt not received in SCRAM server-first message");
+            if (Iteration == -1)
+                throw new EDBException("Server iterations not received in SCRAM server-first message");
+        }
+    }
+
+    class AuthenticationSASLFinalMessage : AuthenticationRequestMessage
+    {
+        internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.AuthenticationSASLFinal;
+        internal byte[] Payload { get; }
+
+        internal AuthenticationSASLFinalMessage(EDBReadBuffer buf, int len)
+        {
+            Payload = new byte[len];
+            buf.ReadBytes(Payload, 0, len);
+        }
+    }
+
+    class AuthenticationSCRAMServerFinalMessage
+    {
+        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+
+        internal string ServerSignature { get; }
+
+        internal AuthenticationSCRAMServerFinalMessage(byte[] bytes)
+        {
+            var data = PGUtil.UTF8Encoding.GetString(bytes);
+
+            foreach (var part in data.Split(','))
+            {
+                if (part.StartsWith("v="))
+                    ServerSignature = part.Substring(2);
+                else
+                    Log.Debug("Unknown part in SCRAM server-first message:" + part);
+            }
+
+            if (ServerSignature == null)
+                throw new EDBException("Server signature not received in SCRAM server-final message");
+        }
+    }
+
+    #endregion SASL
+
+    // TODO: Remove Authentication prefix from everything
     enum AuthenticationRequestType
     {
         AuthenticationOk = 0,
@@ -127,6 +231,9 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         AuthenticationSCMCredential = 6,
         AuthenticationGSS = 7,
         AuthenticationGSSContinue = 8,
-        AuthenticationSSPI = 9
+        AuthenticationSSPI = 9,
+        AuthenticationSASL = 10,
+        AuthenticationSASLContinue = 11,
+        AuthenticationSASLFinal = 12
     }
 }

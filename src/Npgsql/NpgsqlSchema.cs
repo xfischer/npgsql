@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,8 +21,6 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-#if !NETSTANDARD1_3
-
 using System;
 using System.Data;
 using System.Globalization;
@@ -35,7 +33,7 @@ namespace EnterpriseDB.EDBClient
     /// <summary>
     /// Provides the underlying mechanism for reading schema information.
     /// </summary>
-    internal static class EDBSchema
+    static class EDBSchema
     {
         const string MetaDataResourceName = "EnterpriseDB.EDBClient.NpgsqlMetaData.xml";
 
@@ -62,9 +60,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         static EDBCommand BuildCommand(EDBConnection conn, StringBuilder query, [CanBeNull] string[] restrictions, [CanBeNull] params string[] names)
-        {
-            return BuildCommand(conn, query, restrictions, true, names);
-        }
+            => BuildCommand(conn, query, restrictions, true, names);
 
         static EDBCommand BuildCommand(EDBConnection conn, StringBuilder query, [CanBeNull] string[] restrictions, bool addWhere, [CanBeNull] params string[] names)
         {
@@ -72,7 +68,7 @@ namespace EnterpriseDB.EDBClient
 
             if (restrictions != null && names != null)
             {
-                for (int i = 0; i < restrictions.Length && i < names.Length; ++i)
+                for (var i = 0; i < restrictions.Length && i < names.Length; ++i)
                 {
                     if (restrictions[i] != null && restrictions[i].Length != 0)
                     {
@@ -101,9 +97,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         static string RemoveSpecialChars(string paramName)
-        {
-            return paramName.Replace("(", "").Replace(")", "").Replace(".", "");
-        }
+            => paramName.Replace("(", "").Replace(")", "").Replace(".", "");
 
         /// <summary>
         /// Returns the Databases that contains a list of all accessable databases.
@@ -179,9 +173,13 @@ namespace EnterpriseDB.EDBClient
 
             var getTables = new StringBuilder();
 
-            getTables.Append("SELECT * FROM (SELECT table_catalog, table_schema, table_name, table_type FROM information_schema.tables WHERE table_type = 'BASE TABLE') tmp");
+            //getTables.Append("SELECT * FROM (SELECT table_catalog, table_schema, table_name, table_type FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')) tmp");
+            getTables.Append(@"
+SELECT table_catalog, table_schema, table_name, table_type
+FROM information_schema.tables
+WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')");
 
-            using (var command = BuildCommand(conn, getTables, restrictions, "table_catalog", "table_schema", "table_name", "table_type"))
+            using (var command = BuildCommand(conn, getTables, restrictions, false, "table_catalog", "table_schema", "table_name", "table_type"))
             using (var adapter = new EDBDataAdapter(command))
                 adapter.Fill(tables);
 
@@ -238,10 +236,14 @@ namespace EnterpriseDB.EDBClient
 
             var getViews = new StringBuilder();
 
-            getViews.Append("SELECT table_catalog, table_schema, table_name, check_option, is_updatable FROM information_schema.views");
+            //getViews.Append("SELECT table_catalog, table_schema, table_name, check_option, is_updatable FROM information_schema.views WHERE table_schema NOT IN ('pg_catalog', 'information_schema')");
+            getViews.Append(@"
+SELECT table_catalog, table_schema, table_name, check_option, is_updatable
+FROM information_schema.views
+WHERE table_schema NOT IN ('pg_catalog', 'information_schema')");
 
-            using (var command = BuildCommand(conn, getViews, restrictions, "table_catalog", "table_schema", "table_name"))
-            using (EDBDataAdapter adapter = new EDBDataAdapter(command))
+            using (var command = BuildCommand(conn, getViews, restrictions, false, "table_catalog", "table_schema", "table_name"))
+            using (var adapter = new EDBDataAdapter(command))
                 adapter.Fill(views);
 
             return views;
@@ -508,6 +510,7 @@ and n.nspname not in ('pg_catalog', 'pg_toast')");
             "IS",
             "ISNULL",
             "JOIN",
+            "LATERAL",
             "LEADING",
             "LEFT",
             "LIKE",
@@ -556,4 +559,3 @@ and n.nspname not in ('pg_catalog', 'pg_toast')");
         #endregion Reserved Keywords
     }
 }
-#endif

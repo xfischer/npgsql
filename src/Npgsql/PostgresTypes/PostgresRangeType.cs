@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -46,25 +46,7 @@ namespace EnterpriseDB.EDBClient.PostgresTypes
             : base(ns, name, oid)
         {
             Subtype = subtypePostgresType;
-            if (subtypePostgresType.EDBDbType.HasValue)
-                EDBDbType = EDBTypes.EDBDbType.Range | subtypePostgresType.EDBDbType;
             Subtype.Range = this;
-        }
-
-        internal override TypeHandler Activate(TypeHandlerRegistry registry)
-        {
-            if (!registry.TryGetByOID(Subtype.OID, out var subtypeHandler))
-            {
-                // Subtype hasn't been set up yet, do it now
-                subtypeHandler = Subtype.Activate(registry);
-            }
-
-            var handler = subtypeHandler.CreateRangeHandler(this);
-            registry.ByOID[OID] = handler;
-            if (EDBDbType.HasValue)
-                registry.ByEDBDbType.Add(EDBDbType.Value, handler);
-            registry.ByType[handler.GetFieldType()] = handler;
-            return handler;
         }
     }
 }

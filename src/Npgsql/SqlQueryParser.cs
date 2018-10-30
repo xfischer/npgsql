@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -46,12 +46,16 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="sql">Raw user-provided query.</param>
         /// <param name="standardConformantStrings">Whether the PostgreSQL session is configured to use standard conformant strings.</param>
-        /// <param name="parameters">The parameters configured on the <see cref="EDBCommand"/> of this query.</param>
+        /// <param name="parameters">The parameters configured on the <see cref="EDBCommand"/> of this query
+        /// or an empty <see cref="EDBParameterCollection"/> if deriveParameters is set to true.</param>
         /// <param name="statements">An empty list to be populated with the statements parsed by this method</param>
-        internal void ParseRawQuery(string sql, bool standardConformantStrings, EDBParameterCollection parameters, List<EDBStatement> statements)
+        /// <param name="deriveParameters">A bool indicating whether parameters contains a list of preconfigured parameters or an empty list to be filled with derived parameters.</param>
+        internal void ParseRawQuery(string sql, bool standardConformantStrings, EDBParameterCollection parameters, List<EDBStatement> statements, bool deriveParameters = false)
         {
             Debug.Assert(sql != null);
             Debug.Assert(statements != null);
+            Debug.Assert(parameters != null);
+            Debug.Assert(deriveParameters == false || parameters.Count == 0);
 
             _statements = statements;
             _statementIndex = -1;
@@ -166,10 +170,10 @@ namespace EnterpriseDB.EDBClient
                         if (!isProcedure)
                         {
                             if (!IsLetter(lastChar))
-                                goto EscapedStart;
-                            else
-                                break;
-                        }
+                        goto EscapedStart;
+                    else
+                        break;
+                }
                         else
                         {
                             break;
@@ -208,20 +212,32 @@ namespace EnterpriseDB.EDBClient
             // We have already at least one character of the param name
             for (;;) {
                 lastChar = ch;
-                if (currCharOfs >= end || !IsParamNameChar(ch = sql[currCharOfs])) {
-                    var paramName = sql.Substring(currTokenBeg, currCharOfs - currTokenBeg);
+                if (currCharOfs >= end || !IsParamNameChar(ch = sql[currCharOfs]))
+                {
+                    var paramName = sql.Substring(currTokenBeg + 1, currCharOfs - (currTokenBeg + 1));
 
-                    if (!_paramIndexMap.TryGetValue(paramName, out var index)) {
+                    if (!_paramIndexMap.TryGetValue(paramName, out var index))
+                    {
                         // Parameter hasn't been seen before in this query
                         if (!parameters.TryGetValue(paramName, out var parameter))
                         {
-                            _rewrittenSql.Append(paramName);
-                            currTokenBeg = currCharOfs;
-                            if (currCharOfs >= end)
-                                goto Finish;
+                            if (deriveParameters)
+                            {
+                                parameter = new EDBParameter { ParameterName = paramName };
+                                parameters.Add(parameter);
+                            }
+                            else
+                            {
+                                // Parameter placeholder does not match a parameter on this command.
+                                // Leave the text as it was in the SQL, it may not be a an actual placeholder
+                                _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg));
+                                currTokenBeg = currCharOfs;
+                                if (currCharOfs >= end)
+                                    goto Finish;
 
-                            currCharOfs++;
-                            goto NoneContinue;
+                                currCharOfs++;
+                                goto NoneContinue;
+                            }
                         }
 
                         if (!parameter.IsInputDirection)

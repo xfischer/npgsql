@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,9 +10,7 @@ using System.Linq;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
-#if !NETSTANDARD1_3
 using System.Transactions;
-#endif
 
 namespace EnterpriseDB.EDBClient.Schema
 {
@@ -30,9 +29,13 @@ namespace EnterpriseDB.EDBClient.Schema
 
         #region Columns queries
 
-        static string GenerateColumnsQuery(string columnFieldFilter) =>
+        static string GenerateColumnsQuery(Version pgVersion, string columnFieldFilter) =>
+            pgVersion < new Version(8, 2)
+                ? GenerateOldColumnsQuery(columnFieldFilter)
+                :
 $@"SELECT
-     typ.oid AS typoid, nspname, relname, attname, typ.typname, attrelid, attnum, attnotnull,
+     typ.oid AS typoid, nspname, relname, attname, attrelid, attnum, attnotnull,
+     {(pgVersion >= new Version(10, 0) ? "attidentity != ''" : "FALSE")} AS isidentity,
      CASE WHEN typ.typtype = 'd' THEN typ.typtypmod ELSE atttypmod END AS typmod,
      CASE WHEN atthasdef THEN (SELECT pg_get_expr(adbin, cls.oid) FROM pg_attrdef WHERE adrelid = cls.oid AND adnum = attr.attnum) ELSE NULL END AS default,
      CASE WHEN col.is_updatable = 'YES' THEN true ELSE false END AS is_updatable,
@@ -69,7 +72,7 @@ ORDER BY attnum";
         /// </summary>
         static string GenerateOldColumnsQuery(string columnFieldFilter) =>
             $@"SELECT
-     typ.oid AS typoid, nspname, relname, attname, typ.typname, attrelid, attnum, attnotnull,
+     typ.oid AS typoid, nspname, relname, attname, attrelid, attnum, attnotnull,
      CASE WHEN typ.typtype = 'd' THEN typ.typtypmod ELSE atttypmod END AS typmod,
      CASE WHEN atthasdef THEN (SELECT pg_get_expr(adbin, cls.oid) FROM pg_attrdef WHERE adrelid = cls.oid AND adnum = attr.attnum) ELSE NULL END AS default,
      TRUE AS is_updatable,  /* Supported only since PG 8.2 */
@@ -95,8 +98,8 @@ ORDER BY attnum";
 
         internal ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
         {
-            var fields = _rowDescription.Fields;
-            if (fields.Count == 0)
+            var fields = _rowDescription?.Fields;
+            if ((fields?.Count ?? 0) == 0)
                 return new List<EDBDbColumn>().AsReadOnly();
 
             var result = new List<EDBDbColumn>(fields.Count);
@@ -115,16 +118,10 @@ ORDER BY attnum";
 
             if (_fetchAdditionalInfo && columnFieldFilter != "")
             {
-                var query = _connection.PostgreSqlVersion >= new Version(8, 2)
-                    ? GenerateColumnsQuery(columnFieldFilter)
-                    : GenerateOldColumnsQuery(columnFieldFilter);
+                var query = GenerateColumnsQuery(_connection.PostgreSqlVersion, columnFieldFilter);
 
-#if NETSTANDARD1_3
-                using (var connection = _connection.Clone())
-#else
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                 using (var connection = (EDBConnection)((ICloneable)_connection).Clone())
-#endif
                 {
                     connection.Open();
 
@@ -133,7 +130,7 @@ ORDER BY attnum";
                     {
                         for (; reader.Read(); populatedColumns++)
                         {
-                            var column = LoadColumnDefinition(reader, _connection.Connector.TypeHandlerRegistry);
+                            var column = LoadColumnDefinition(reader, _connection.Connector.TypeMapper.DatabaseInfo);
 
                             var ordinal = fields.FindIndex(f => f.TableOID == column.TableOID && f.ColumnAttributeNumber - 1 == column.ColumnAttributeNumber);
                             Debug.Assert(ordinal >= 0);
@@ -168,7 +165,7 @@ ORDER BY attnum";
             return result.AsReadOnly();
         }
 
-        EDBDbColumn LoadColumnDefinition(EDBDataReader reader, TypeHandlerRegistry registry)
+        EDBDbColumn LoadColumnDefinition(EDBDataReader reader, EDBDatabaseInfo databaseInfo)
         {
             // Note: we don't set ColumnName and BaseColumnName. These should always contain the
             // column alias rather than the table column name (i.e. in case of "SELECT foo AS foo_alias").
@@ -185,18 +182,19 @@ ORDER BY attnum";
                 IsKey = reader.GetBoolean(reader.GetOrdinal("isprimarykey")),
                 IsReadOnly = !reader.GetBoolean(reader.GetOrdinal("is_updatable")),
                 IsUnique = reader.GetBoolean(reader.GetOrdinal("isunique")),
-                DataTypeName = reader.GetString(reader.GetOrdinal("typname")),
 
                 TableOID = reader.GetFieldValue<uint>(reader.GetOrdinal("attrelid")),
                 TypeOID = reader.GetFieldValue<uint>(reader.GetOrdinal("typoid"))
             };
 
-            column.PostgresType = registry.PostgresTypes.ByOID[column.TypeOID];
+            column.PostgresType = databaseInfo.ByOID[column.TypeOID];
+            column.DataTypeName = column.PostgresType.DisplayName; // Facets do not get included
 
             var defaultValueOrdinal = reader.GetOrdinal("default");
             column.DefaultValue = reader.IsDBNull(defaultValueOrdinal) ? null : reader.GetString(defaultValueOrdinal);
 
-            column.IsAutoIncrement = column.DefaultValue != null && column.DefaultValue.StartsWith("nextval(");
+            column.IsAutoIncrement = reader.GetBoolean(reader.GetOrdinal("isidentity")) ||
+                column.DefaultValue != null && column.DefaultValue.StartsWith("nextval(");
 
             ColumnPostConfig(column, reader.GetInt32(reader.GetOrdinal("typmod")));
 
@@ -228,7 +226,18 @@ ORDER BY attnum";
         /// </summary>
         void ColumnPostConfig(EDBDbColumn column, int typeModifier)
         {
-            column.DataType = _connection.Connector.TypeHandlerRegistry.TryGetByOID(column.TypeOID, out var handler)
+            var typeMapper = _connection.Connector.TypeMapper;
+
+            if (typeMapper.Mappings.TryGetValue(column.PostgresType.Name, out var mapping))
+                column.EDBDbType = mapping.EDBDbType;
+            else if (
+                column.PostgresType.Name.Contains(".") &&
+                typeMapper.Mappings.TryGetValue(column.PostgresType.Name.Split('.')[1], out mapping)
+            ) {
+                column.EDBDbType = mapping.EDBDbType;
+            }
+
+            column.DataType = typeMapper.TryGetByOID(column.TypeOID, out var handler)
                 ? handler.GetFieldType()
                 : null;
 
@@ -236,31 +245,17 @@ ORDER BY attnum";
             {
                 column.IsLong = handler is ByteaHandler;
 
-                if (handler is ICompositeHandler)
+                if (handler is IMappedCompositeHandler)
                     column.UdtAssemblyQualifiedName = column.DataType.AssemblyQualifiedName;
             }
 
-            if (typeModifier == -1)
-                return;
-
-            // If the column's type is a domain, use its base data type to interpret the typmod
-            var dataTypeName = column.PostgresType is PostgresDomainType
-                ? ((PostgresDomainType)column.PostgresType).BaseType.Name
-                : column.DataTypeName;
-            switch (dataTypeName)
-            {
-            case "bpchar":
-            case "char":
-            case "varchar":
-                column.ColumnSize = typeModifier - 4;
-                break;
-            case "numeric":
-            case "decimal":
-                // See http://stackoverflow.com/questions/3350148/where-are-numeric-precision-and-scale-for-a-field-found-in-the-pg-catalog-tables
-                column.NumericPrecision = ((typeModifier - 4) >> 16) & 65535;
-                column.NumericScale = (typeModifier - 4) & 65535;
-                break;
-            }
+            var facets = column.PostgresType.GetFacets(typeModifier);
+            if (facets.Size != null)
+                column.ColumnSize = facets.Size;
+            if (facets.Precision != null)
+                column.NumericPrecision = facets.Precision;
+            if (facets.Scale != null)
+                column.NumericScale = facets.Scale;
         }
     }
 }

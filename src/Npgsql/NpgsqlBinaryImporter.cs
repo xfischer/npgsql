@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,18 +22,12 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
 using EDBTypes;
+using static EnterpriseDB.EDBClient.Statics;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -49,10 +43,9 @@ namespace EnterpriseDB.EDBClient
         #region Fields and Properties
 
         EDBConnector _connector;
-        WriteBuffer _buf;
-        TypeHandlerRegistry _registry;
-        LengthCache _lengthCache;
-        bool _isDisposed;
+        EDBWriteBuffer _buf;
+
+        ImporterState _state;
 
         /// <summary>
         /// The number of columns in the current (not-yet-written) row.
@@ -64,11 +57,10 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         internal int NumColumns { get; }
 
-        /// <summary>
-        /// EDBParameter instance needed in order to pass the <see cref="EDBParameter.ConvertedValue"/> from
-        /// the validation phase to the writing phase.
-        /// </summary>
-        readonly EDBParameter _dummyParam;
+        bool InMiddleOfRow => _column != -1 && _column != NumColumns;
+
+        [ItemCanBeNull]
+        readonly EDBParameter[] _params;
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
@@ -80,10 +72,7 @@ namespace EnterpriseDB.EDBClient
         {
             _connector = connector;
             _buf = connector.WriteBuffer;
-            _registry = connector.TypeHandlerRegistry;
-            _lengthCache = new LengthCache();
             _column = -1;
-            _dummyParam = new EDBParameter();
 
             try
             {
@@ -108,6 +97,7 @@ namespace EnterpriseDB.EDBClient
                 }
 
                 NumColumns = copyInResponse.NumColumns;
+                _params = new EDBParameter[NumColumns];
                 _buf.StartCopyMode();
                 WriteHeader();
             }
@@ -134,7 +124,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public void StartRow()
         {
-            CheckDisposed();
+            CheckReady();
 
             if (_column != -1 && _column != NumColumns)
                 throw new InvalidOperationException("Row has already been started and must be finished");
@@ -157,66 +147,105 @@ namespace EnterpriseDB.EDBClient
         /// </typeparam>
         public void Write<T>(T value)
         {
-            CheckDisposed();
-            if (_column == -1)
-                throw new InvalidOperationException("A row hasn't been started");
-
-            if (value == null || typeof(T) == typeof(DBNull))
+            var p = _params[_column];
+            if (p == null)
             {
-                WriteNull();
-                return;
+                // First row, create the parameter objects
+                _params[_column] = p = typeof(T) == typeof(object)
+                    ? new EDBParameter()
+                    : new EDBParameter<T>();
             }
 
-            var handler = _registry[value];
-            DoWrite(handler, value);
+            Write(value, p);
         }
 
         /// <summary>
-        /// Writes a single column in the current row as type <paramref name="type"/>.
+        /// Writes a single column in the current row as type <paramref name="EDBDbType"/>.
         /// </summary>
         /// <param name="value">The value to be written</param>
-        /// <param name="type">
+        /// <param name="EDBDbType">
         /// In some cases <typeparamref name="T"/> isn't enough to infer the data type to be written to
         /// the database. This parameter and be used to unambiguously specify the type. An example is
         /// the JSONB type, for which <typeparamref name="T"/> will be a simple string but for which
-        /// <paramref name="type"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
+        /// <paramref name="EDBDbType"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
         /// </param>
         /// <typeparam name="T">The .NET type of the column to be written.</typeparam>
-        public void Write<T>(T value, EDBDbType type)
+        public void Write<T>(T value, EDBDbType EDBDbType)
         {
-            CheckDisposed();
+            var p = _params[_column];
+            if (p == null)
+            {
+                // First row, create the parameter objects
+                _params[_column] = p = typeof(T) == typeof(object)
+                    ? new EDBParameter()
+                    : new EDBParameter<T>();
+                p.EDBDbType = EDBDbType;
+            }
+
+            if (EDBDbType != p.EDBDbType)
+                throw new InvalidOperationException($"Can't change {nameof(p.EDBDbType)} from {p.EDBDbType} to {EDBDbType}");
+
+            Write(value, p);
+        }
+
+        /// <summary>
+        /// Writes a single column in the current row as type <paramref name="dataTypeName"/>.
+        /// </summary>
+        /// <param name="value">The value to be written</param>
+        /// <param name="dataTypeName">
+        /// In some cases <typeparamref name="T"/> isn't enough to infer the data type to be written to
+        /// the database. This parameter and be used to unambiguously specify the type.
+        /// </param>
+        /// <typeparam name="T">The .NET type of the column to be written.</typeparam>
+        public void Write<T>(T value, string dataTypeName)
+        {
+            var p = _params[_column];
+            if (p == null)
+            {
+                // First row, create the parameter objects
+                _params[_column] = p = typeof(T) == typeof(object)
+                    ? new EDBParameter()
+                    : new EDBParameter<T>();
+                p.DataTypeName = dataTypeName;
+            }
+
+            //if (dataTypeName!= p.DataTypeName)
+            //    throw new InvalidOperationException($"Can't change {nameof(p.DataTypeName)} from {p.DataTypeName} to {dataTypeName}");
+
+            Write(value, p);
+        }
+
+        void Write<T>([CanBeNull] T value, EDBParameter param)
+        {
+            CheckReady();
             if (_column == -1)
                 throw new InvalidOperationException("A row hasn't been started");
 
-            if (value == null || typeof(T) == typeof(DBNull))
+            if (value == null || value is DBNull)
             {
                 WriteNull();
                 return;
             }
 
-            var handler = _registry[type];
-            DoWrite(handler, value);
-        }
-
-        void DoWrite<T>(TypeHandler handler, [CanBeNull] T value)
-        {
-            try
+            if (typeof(T) == typeof(object))
             {
-                // We simulate the regular writing process with a validation/length calculation pass,
-                // followed by a write pass
-                _dummyParam.ConvertedValue = null;
-                _lengthCache.Clear();
-                handler.ValidateAndGetLength(value, ref _lengthCache, _dummyParam);
-                _lengthCache.Rewind();
-                handler.WriteWithLength(value, _buf, _lengthCache, _dummyParam, false, CancellationToken.None);
-                _column++;
+                param.Value = value;
             }
-            catch
+            else
             {
-                _connector.Break();
-                Cleanup();
-                throw;
+                if (!(param is EDBParameter<T> typedParam))
+                {
+                    _params[_column] = typedParam = new EDBParameter<T>();
+                    typedParam.EDBDbType = param.EDBDbType;
+                }
+                typedParam.TypedValue = value;
             }
+            param.ResolveHandler(_connector.TypeMapper);
+            param.ValidateAndGetLength();
+            param.LengthCache?.Rewind();
+            param.WriteWithLength(_buf, false);
+            param.LengthCache?.Clear();
+            _column++;
         }
 
         /// <summary>
@@ -224,7 +253,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public void WriteNull()
         {
-            CheckDisposed();
+            CheckReady();
             if (_column == -1)
                 throw new InvalidOperationException("A row hasn't been started");
 
@@ -250,17 +279,55 @@ namespace EnterpriseDB.EDBClient
 
         #endregion
 
-        #region Cancel / Close / Dispose
+        #region Commit / Cancel / Close / Dispose
 
         /// <summary>
-        /// Cancels and terminates an ongoing import. Any data already written will be discarded.
+        /// Completes the import operation. The writer is unusable after this operation.
         /// </summary>
-        public void Cancel()
+        public void Complete()
         {
-            _isDisposed = true;
+            CheckReady();
+
+            if (InMiddleOfRow)
+            {
+                Cancel();
+                throw new InvalidOperationException("Binary importer closed in the middle of a row, cancelling import.");
+            }
+
+            try
+            {
+                WriteTrailer();
+                _buf.Flush();
+                _buf.EndCopyMode();
+
+                _connector.SendMessage(CopyDoneMessage.Instance);
+                Expect<CommandCompleteMessage>(_connector.ReadMessage());
+                Expect<ReadyForQueryMessage>(_connector.ReadMessage());
+                _state = ImporterState.Committed;
+            }
+            catch
+            {
+                // An exception here will have already broken the connection etc.
+                Cleanup();
+                throw;
+            }
+        }
+
+        void ICancelable.Cancel() => Close();
+
+        /// <summary>
+        /// Completes that binary import and sets the connection back to idle state
+        /// </summary>
+        public void Dispose() => Close();
+
+        void Cancel()
+        {
+            _state = ImporterState.Cancelled;
+            _buf.Clear();
             _buf.EndCopyMode();
             _connector.SendMessage(new CopyFailMessage());
-            try {
+            try
+            {
                 var msg = _connector.ReadMessage();
                 // The CopyFail should immediately trigger an exception from the read above.
                 _connector.Break();
@@ -271,14 +338,7 @@ namespace EnterpriseDB.EDBClient
                 if (e.SqlState != "57014")
                     throw;
             }
-            // Note that the exception has already ended the user action for us
-            Cleanup();
         }
-
-        /// <summary>
-        /// Completes that binary import and sets the connection back to idle state
-        /// </summary>
-        public void Dispose() => Close();
 
         /// <summary>
         /// Completes the import process and signals to the database to write everything.
@@ -286,33 +346,23 @@ namespace EnterpriseDB.EDBClient
         [PublicAPI]
         public void Close()
         {
-            if (_isDisposed)
-                return;
-
-            if (_column != -1 && _column != NumColumns)
+            switch (_state)
             {
-                Log.Error("Binary importer closed in the middle of a row, cancelling import.");
-                _buf.Clear();
-                Cancel();
+            case ImporterState.Disposed:
                 return;
+            case ImporterState.Ready:
+                Cancel();
+                break;
+            case ImporterState.Cancelled:
+            case ImporterState.Committed:
+                break;
+            default:
+                throw new Exception("Invalid state: " + _state);
             }
-
-            WriteTrailer();
-            _buf.Flush();
-            _buf.EndCopyMode();
 
             var connector = _connector;
-            connector.SendMessage(CopyDoneMessage.Instance);
-            try
-            {
-                connector.ReadExpecting<CommandCompleteMessage>();
-                connector.ReadExpecting<ReadyForQueryMessage>();
-            }
-            finally
-            {
-                Cleanup();
-                connector.EndUserAction();
-            }
+            Cleanup();
+            connector.EndUserAction();
         }
 
         void Cleanup()
@@ -320,9 +370,8 @@ namespace EnterpriseDB.EDBClient
             Log.Debug("COPY operation ended", _connector.Id);
             _connector.CurrentCopyOperation = null;
             _connector = null;
-            _registry = null;
             _buf = null;
-            _isDisposed = true;
+            _state = ImporterState.Disposed;
         }
 
         void WriteTrailer()
@@ -332,12 +381,35 @@ namespace EnterpriseDB.EDBClient
             _buf.WriteInt16(-1);
         }
 
-        void CheckDisposed()
+        void CheckReady()
         {
-            if (_isDisposed)
+            switch (_state)
+            {
+            case ImporterState.Ready:
+                return;
+            case ImporterState.Disposed:
                 throw new ObjectDisposedException(GetType().FullName, "The COPY operation has already ended.");
+            case ImporterState.Cancelled:
+                throw new InvalidOperationException("The COPY operation has already been cancelled.");
+            case ImporterState.Committed:
+                throw new InvalidOperationException("The COPY operation has already been committed.");
+            default:
+                throw new Exception("Invalid state: " + _state);
+            }
         }
 
         #endregion
+
+        #region Enums
+
+        enum ImporterState
+        {
+            Ready,
+            Committed,
+            Cancelled,
+            Disposed
+        }
+
+        #endregion Enums
     }
 }

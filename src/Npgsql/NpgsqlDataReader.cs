@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -30,7 +30,9 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -39,7 +41,11 @@ using EnterpriseDB.EDBClient.Logging;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.Schema;
 using EnterpriseDB.EDBClient.TypeHandlers;
+using EnterpriseDB.EDBClient.TypeHandling;
 using EDBTypes;
+using static EnterpriseDB.EDBClient.Statics;
+
+#pragma warning disable CA2222 // Do not decrease inherited member visibility
 
 namespace EnterpriseDB.EDBClient
 {
@@ -47,277 +53,100 @@ namespace EnterpriseDB.EDBClient
     /// Reads a forward-only stream of rows from a data source.
     /// </summary>
 #pragma warning disable CA1010
-    public sealed class EDBDataReader : DbDataReader
+    public abstract class EDBDataReader : DbDataReader
 #pragma warning restore CA1010
-#if NETSTANDARD1_3
+#if !NET45 && !NET451
         , IDbColumnSchemaGenerator
 #endif
     {
-        internal EDBCommand Command { get; }
-        readonly EDBConnector _connector;
-        readonly EDBConnection _connection;
-        readonly CommandBehavior _behavior;
-        readonly Task _sendTask;
+        internal EDBCommand Command { get; private set; }
+        internal EDBConnector Connector { get; }
+        EDBConnection _connection;
+        internal IBackendMessage pendingmsg;
 
-        ReaderState _state;
+        /// <summary>
+        /// The behavior of the command with which this reader was executed.
+        /// </summary>
+        protected CommandBehavior Behavior;
+
+        Task _sendTask;
+
+        internal ReaderState State;
+
+        internal EDBReadBuffer Buffer;
+        internal EDBReadBuffer RetRowBuffer;
 
         /// <summary>
         /// Holds the list of statements being executed by this reader.
         /// </summary>
-        readonly List<EDBStatement> _statements;
+        List<EDBStatement> _statements;
 
         /// <summary>
         /// The index of the current query resultset we're processing (within a multiquery)
         /// </summary>
-        int _statementIndex;
+        internal int StatementIndex { get; private set; }
+
+        /// <summary>
+        /// For streaming types (e.g. bytea), holds the byte length of the column.
+        /// Does not include the length prefix.
+        /// </summary>
+        internal int ColumnLen;
+
+        internal int PosInColumn;
+
+        int _charPos;
 
         /// <summary>
         /// The RowDescription message for the current resultset being processed
         /// </summary>
-        RowDescriptionMessage _rowDescription;
-
         [CanBeNull]
-        DataRowMessage _row;//EnterpriseDB Team
-        DataRowMessage _outRow;//EnterpriseDB Team
-        DataRowMessage _tempDataRow;//EnterpriseDB Team
+        internal RowDescriptionMessage RowDescription;
 
-        //  RowDescriptionMessage _return_descrition;
-        RowDescriptionMessage _callable_descrition; //EDB
         uint? _recordsAffected;
-
-        /// <summary>
-        /// Indicates that at least one row has been read across all result sets
-        /// </summary>
-        bool _readOneRow;
 
         /// <summary>
         /// Whether the current result set has rows
         /// </summary>
-        bool? _hasRows;
-
-        /// <summary>
-        /// If HasRows was called before any rows were read, it was forced to read messages. A pending
-        /// message may be stored here for processing in the next Read() or NextResult().
-        /// </summary>
-        [CanBeNull]
-        IBackendMessage _pendingMessage;
+        bool _hasRows;
 
         /// <summary>
         /// Is raised whenever Close() is called.
         /// </summary>
         public event EventHandler ReaderClosed;
 
-        // static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        bool IsSchemaOnly => (Behavior & CommandBehavior.SchemaOnly) != 0;
+        bool IsSequential => (Behavior & CommandBehavior.SequentialAccess) != 0;
 
-        bool IsSequential => (_behavior & CommandBehavior.SequentialAccess) != 0;
-        bool IsSchemaOnly => (_behavior & CommandBehavior.SchemaOnly) != 0;
+        /// <summary>
+        /// A stream that has been opened on a column.
+        /// </summary>
+        [CanBeNull]
+        private protected EDBReadBuffer.ColumnStream ColumnStream;
+
+        /// <summary>
+        /// Used for internal temporary purposes
+        /// </summary>
+        [CanBeNull]
+        char[] _tempCharBuf;
 
         static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
 
-        internal EDBDataReader(EDBCommand command, CommandBehavior behavior, List<EDBStatement> statements, Task sendTask)
+        internal EDBDataReader(EDBConnector connector)
+        {
+            Connector = connector;
+        }
+
+        internal void Init(EDBCommand command, CommandBehavior behavior, List<EDBStatement> statements, Task sendTask)
         {
             Command = command;
+            Debug.Assert(command.Connection == Connector.Connection);
             _connection = command.Connection;
-            _connector = _connection.Connector;
-            _behavior = behavior;
+            Behavior = behavior;
             _statements = statements;
-            _statementIndex = -1;
+            StatementIndex = -1;
             _sendTask = sendTask;
-            _state = ReaderState.BetweenResults;
-        }
-
-        /// <summary>
-        /// The first row in a stored procedure command that has output parameters needs to be traversed twice -
-        /// once for populating the output parameters and once for the actual result set traversal. So in this
-        /// case we can't be sequential.
-        /// </summary>
-        void PopulateNotPreparedOutputParameters()//EnterpriseDB Team
-        {
-            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
-            Debug.Assert(_statementIndex == 0);
-            Debug.Assert(_pendingMessage != null);
-            Debug.Assert(_rowDescription != null);
-
-            var asDataRow = _pendingMessage as DataRowMessage;
-            if (asDataRow == null) // The first resultset was empty
-                return;
-            Debug.Assert(asDataRow is DataRowNonSequentialMessage);
-            Debug.Assert(asDataRow.NumColumns == _rowDescription.NumFields);
-
-            // Temporarily set _row to the pending data row in order to retrieve the values
-            _row = asDataRow;
-
-            var pending = new Queue<EDBParameter>();
-            var taken = new List<int>();
-            foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection))
-            {
-                if (_rowDescription.TryGetFieldIndex(p.CleanName, out var idx))
-                {
-                    // TODO: Provider-specific check?
-                    p.Value = GetValue(idx);
-                    taken.Add(idx);
-                }
-                else
-                    pending.Enqueue(p);
-            }
-            for (var i = 0; pending.Count != 0 && i != _row.NumColumns; ++i)
-            {
-                // TODO: Need to get the provider-specific value based on the out param's type
-                if (!taken.Contains(i))
-                    pending.Dequeue().Value = GetValue(i);
-            }
-
-            _row = null;
-        }
-
-        void PopulateOutputParameters()//EnterpriseDB Team
-        {
-            bool paramdata = false;
-            bool retDataFetched = false;
-            // TODO: Should we really use Contract here, instead of throwing an Exception?
-            Debug.Assert(_rowDescription != null);
-            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
-
-            var asDataRow = _pendingMessage as DataRowMessage;
-            if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
-                return;
-
-            while (_row == null)
-            {
-                var msg = _connector.ReadMessage(DataRowLoadingMode.NonSequential);
-                if (msg.Code == BackendMessageCode.CompletedResponse && paramdata != true)
-                    continue;
-                else
-                    switch (msg.Code)
-                    {
-                        case BackendMessageCode.DataRow:
-                            _pendingMessage = msg;
-                            paramdata = true;
-
-                            if (Command.CommandType == CommandType.StoredProcedure)
-                            {
-
-
-                                if (Command.Parameters._hasReturnParam && retDataFetched != true)
-                                {
-                                    _tempDataRow = (DataRowNonSequentialMessage)msg;
-                                    _tempDataRow._isReturnRow = false;
-                                    retDataFetched = true;
-                                    paramdata = false;
-                                    continue;
-                                }
-                                else
-                                {
-                                    _outRow = (DataRowNonSequentialMessage)msg;
-                                    _row = _outRow; // _tempDataRow; ZK 
-                                    continue;
-                                }
-                            }
-                            else
-                            {
-                                _row = (DataRowNonSequentialMessage)msg;
-                                _row._isReturnRow = false;
-                                break;
-                            }
-                        case BackendMessageCode.CompletedResponse:
-                        case BackendMessageCode.EmptyQueryResponse:
-                            _pendingMessage = msg;
-                            return;
-                        case BackendMessageCode.OutDescription:
-                        case BackendMessageCode.RowDescription:
-                            if (Command.Parameters.Any(p => p.IsOutputDirection))
-                            {
-                                _callable_descrition = (RowDescriptionMessage)msg;
-                            }
-                            else
-                            {
-                                _callable_descrition = _rowDescription;
-                            }
-                            continue;
-
-
-
-                        //        var description = (RowDescriptionMessage)msg;
-                        //   FixupRowDescription(description, _queryIndex == 0);
-                        // _queries[_queryIndex].Description = description;
-                        //   if ((behavior & CommandBehavior.SchemaOnly) != 0) {
-                        //       _queryIndex++;
-                        //}
-
-                        case BackendMessageCode.BindComplete:
-                        case BackendMessageCode.ParameterDescription:
-                        case BackendMessageCode.NoData:
-                            if (!Command.Parameters.Any(p => p.IsOutputDirection))
-                            {
-                                _callable_descrition = _rowDescription;
-                            }
-                            continue;
-
-                        default:
-                            throw new ArgumentOutOfRangeException("Unexpected message type while populating output parameter: " + msg.Code);
-                    }
-            }
-            byte[] tmp = new byte[8500];
-            if (Command.CommandType == CommandType.StoredProcedure)
-            {
-                _rowDescription = _callable_descrition;
-                if (Command.Parameters._hasReturnParam)
-                {
-                    Array.Copy(_row.Buffer.Buffer, tmp, Row.Buffer.Buffer.Length);
-                    Command.Parameters.Insert(Command.Parameters.ReturnIndex, Command.Parameters.ReturnParam);
-                    _rowDescription.AddReturnData((FieldDescription)_callable_descrition[0]);
-                    _row.Add(_tempDataRow); // ZK
-                }
-            }
-
-            if (Command.Parameters.Any(p => p.IsOutputDirection))
-            {
-                Debug.Assert(_rowDescription.NumFields == _row.NumColumns);
-            }
-
-            //      if (IsCaching) { _rowCache.Clear(); }
-
-            var pending = new Queue<EDBParameter>();
-            var taken = new List<int>();
-
-            foreach (var p in Command.Parameters.Where(p => p.IsOutReturnDirection))
-            {
-                int idx;
-                if (_rowDescription.TryGetFieldIndex(p.CleanName, out idx))
-                {
-                    // TODO: Provider-specific check?
-                    p.Value = GetValue(idx);
-                    taken.Add(idx);
-                }
-                else
-                {
-                    pending.Enqueue(p);
-                }
-            }
-            for (var i = 0; pending.Count != 0 && i != _row.NumColumns; ++i)
-            {
-                if (!taken.Contains(i))
-                {
-                    // TODO: Need to get the provider-specific value based on the out param's type
-                    pending.Dequeue().Value = GetValue(i);
-                    //   Console.WriteLine((string)pending.Dequeue().Value.ToString());
-                }
-            }
-
-
-            if (Command.Parameters._hasReturnParam)
-            {
-                _row.Buffer.Buffer = tmp;
-                _row.Buffer.Seek(_row._InternalActaullReadPosition, SeekOrigin.Begin);
-                var msg = _connector.ReadMessage(DataRowLoadingMode.NonSequential);
-                _state = ReaderState.Consumed;
-                //     if (msg.Code == BackendMessageCode.CompletedResponse )
-                {
-                    //       _state = ReaderState.Consumed;
-
-                }
-            }
-            // _state = ReaderState.Consumed;
+            State = ReaderState.BetweenResults;
+            _recordsAffected = null;
         }
 
         #region Read
@@ -337,75 +166,123 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cancellationToken">Ignored for now.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () => await Read(true));
-
-        async Task<bool> Read(bool async)
         {
-            if (_row != null) {
-                await _row.Consume(async );
-                _row = null;
-            }
+            using (NoSynchronizationContextScope.Enter())
+                return Read(true);
+        }
 
-            switch (_state)
+        /// <summary>
+        /// Implementation of read
+        /// </summary>
+        Task<bool> Read(bool async)
+        {
+            // This is an optimized execution path that avoids calling any async methods for the (usual)
+            // case where the next row (or CommandComplete) is already in memory.
+
+            if ((Behavior & CommandBehavior.SingleRow) != 0)
+                return ReadLong();
+
+            switch (State)
             {
+            case ReaderState.BeforeResult:
+                // First Read() after NextResult. Data row has already been processed.
+                State = ReaderState.InResult;
+                return PGUtil.TrueTask;
             case ReaderState.InResult:
+                ConsumeRow(false);
                 break;
             case ReaderState.BetweenResults:
             case ReaderState.Consumed:
             case ReaderState.Closed:
-                return false;
-            default:
-                throw new ArgumentOutOfRangeException();
+                return PGUtil.FalseTask;
             }
 
-            try
+            var readBuf = Connector.ReadBuffer;
+            if (readBuf.ReadBytesLeft < 5)
+                return ReadLong();
+            var messageCode = (BackendMessageCode)readBuf.ReadByte();
+            var len = readBuf.ReadInt32() - 4;  // Transmitted length includes itself
+            if (messageCode != BackendMessageCode.DataRow || readBuf.ReadBytesLeft < len)
             {
-                if ((_behavior & CommandBehavior.SingleRow) != 0 && _readOneRow)
-                {
-                    // TODO: See optimization proposal in #410
-                    await Consume(async);
-                    return false;
-                }
+                readBuf.ReadPosition -= 5;
+                return ReadLong();
+            }
 
-                while (true)
+            var msg = Connector.ParseServerMessage(readBuf, messageCode, len, false);
+            ProcessMessage(msg);
+            return msg.Code == BackendMessageCode.DataRow
+                ? PGUtil.TrueTask : PGUtil.FalseTask;
+
+            // If the above fast-path failed, we call into this async slow path
+            async Task<bool> ReadLong()
+            {
+                switch (State)
                 {
-                    var msg = await ReadMessage(async);
-                    switch (ProcessMessage(msg))
+                case ReaderState.BeforeResult:
+                    // First Read() after NextResult. Data row has already been processed.
+                    State = ReaderState.InResult;
+                    return true;
+
+                case ReaderState.InResult:
+                    await ConsumeRow(async);
+                    if ((Behavior & CommandBehavior.SingleRow) != 0)
                     {
-                    case ReadResult.RowRead:
-                        return true;
-                    case ReadResult.RowNotRead:
+                        // TODO: See optimization proposal in #410
+                        await Consume(async);
                         return false;
-                    case ReadResult.ReadAgain:
-                        continue;
-                    default:
-                        throw new ArgumentOutOfRangeException();
                     }
+                    break;
+
+                case ReaderState.BetweenResults:
+                case ReaderState.Consumed:
+                case ReaderState.Closed:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException();
                 }
-            }
-            catch (PostgresException)
-            {
-                _state = ReaderState.Consumed;
-                throw;
+
+                try
+                {
+                    var msg2 = await ReadMessage(async);
+                    ProcessMessage(msg2);
+                    return msg2.Code == BackendMessageCode.DataRow;
+                }
+                catch (PostgresException)
+                {
+                    State = ReaderState.Consumed;
+                    throw;
+                }
             }
         }
 
-        ReadResult ProcessMessage(IBackendMessage msg)
+        internal void ProcessMessage(IBackendMessage msg)
         {
             Debug.Assert(msg != null);
 
             switch (msg.Code)
             {
             case BackendMessageCode.DataRow:
-                Debug.Assert(_rowDescription != null);
-                _connector.State = ConnectorState.Fetching;
-                _row = (DataRowMessage)msg;
-                Debug.Assert(_rowDescription.NumFields == _row.NumColumns);
-                _readOneRow = true;
+                Debug.Assert(RowDescription != null);
+                if (Connector.State != ConnectorState.Fetching)
+                    Connector.State = ConnectorState.Fetching;
+                ProcessDataMessage((DataRowMessage)msg);
                 _hasRows = true;
-                return ReadResult.RowRead;
+                switch (State)
+                {
+                case ReaderState.BetweenResults:
+                    State = ReaderState.BeforeResult;
+                    break;
+                case ReaderState.BeforeResult:
+                    State = ReaderState.InResult;
+                    break;
+                case ReaderState.InResult:
+                    break;
+                default:
+                    throw Connector.UnexpectedMessageReceived(BackendMessageCode.DataRow);
+                }
+                return;
 
-            case BackendMessageCode.CompletedResponse:
+                case BackendMessageCode.CompletedResponse:
                 var completed = (CommandCompleteMessage) msg;
                 switch (completed.StatementType)
                 {
@@ -414,35 +291,34 @@ namespace EnterpriseDB.EDBClient
                 case StatementType.Delete:
                 case StatementType.Copy:
                 case StatementType.Move:
-                    if (!_recordsAffected.HasValue) {
+                    if (!_recordsAffected.HasValue)
                         _recordsAffected = 0;
-                    }
                     _recordsAffected += completed.Rows;
                     break;
                 }
 
-                _statements[_statementIndex].ApplyCommandComplete(completed);
-
+                _statements[StatementIndex].ApplyCommandComplete(completed);
                 goto case BackendMessageCode.EmptyQueryResponse;
 
             case BackendMessageCode.EmptyQueryResponse:
-                if (!_hasRows.HasValue)
-                    _hasRows = false;
-                _state = ReaderState.BetweenResults;
-                return ReadResult.RowNotRead;
+                State = ReaderState.BetweenResults;
+                return;
 
             case BackendMessageCode.ReadyForQuery:
-                _state = ReaderState.Consumed;
-                return ReadResult.RowNotRead;
-
-            case BackendMessageCode.BindComplete:
-            case BackendMessageCode.CloseComplete:
-                return ReadResult.ReadAgain;
+                State = ReaderState.Consumed;
+                return;
 
             default:
                 throw new Exception("Received unexpected backend message of type " + msg.Code);
             }
         }
+
+        internal abstract ValueTask<IBackendMessage> ReadMessage(bool async);
+        internal abstract void ProcessDataMessage(DataRowMessage dataMsg);
+        internal abstract void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow);
+        internal abstract Task SeekToColumn(int column, bool async);
+        internal abstract Task SeekInColumn(int posInColumn, bool async);
+        internal abstract Task ConsumeRow(bool async);
 
         #endregion
 
@@ -461,9 +337,9 @@ namespace EnterpriseDB.EDBClient
             }
             catch (PostgresException e)
             {
-                _state = ReaderState.Consumed;
-                if (_statementIndex >= 0 && _statementIndex < _statements.Count)
-                    e.Statement = _statements[_statementIndex];
+                State = ReaderState.Consumed;
+                if (StatementIndex >= 0 && StatementIndex < _statements.Count)
+                    e.Statement = _statements[StatementIndex];
                 throw;
             }
         }
@@ -475,43 +351,60 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cancellationToken">Currently ignored.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                try
-                {
-                    return IsSchemaOnly ? await NextResultSchemaOnly(true) : await NextResult(true);
-                }
-                catch (PostgresException e)
-                {
-                    _state = ReaderState.Consumed;
-                    if (_statementIndex >= 0 && _statementIndex < _statements.Count)
-                        e.Statement = _statements[_statementIndex];
-                    throw;
-                }
-            });
-
-        async Task<bool> NextResult(bool async, bool isConsuming = false)
         {
+            try
+            {
+                using (NoSynchronizationContextScope.Enter())
+                    return IsSchemaOnly ? NextResultSchemaOnly(true) : NextResult(true);
+            }
+            catch (PostgresException e)
+            {
+                State = ReaderState.Consumed;
+                if (StatementIndex >= 0 && StatementIndex < _statements.Count)
+                    e.Statement = _statements[StatementIndex];
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Internal implementation of NextResult
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected virtual async Task<bool> NextResult(bool async, bool isConsuming=false)
+        {
+            IBackendMessage msg;
             Debug.Assert(!IsSchemaOnly);
             var completedMsg = (IBackendMessage)null;//EnterpriseDB Team
 
             // If we're in the middle of a resultset, consume it
-            switch (_state)
+            switch (State)
             {
+            case ReaderState.BeforeResult:
             case ReaderState.InResult:
-                if (_row != null) {
-                    await _row.Consume(async);
-                    _row = null;
+                await ConsumeRow(async);
+                    //if (Command.CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+                    //    Connector.SkipUntil(BackendMessageCode.CompletedResponse);
+                    //else
+                    //    Connector.SkipUntil(BackendMessageCode.EmptyQueryResponse);
+                    while (true)
+                {
+                    completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
+                    switch (completedMsg.Code)
+                    {
+                    case BackendMessageCode.CompletedResponse:
+                    case BackendMessageCode.EmptyQueryResponse:
+                        ProcessMessage(completedMsg);
+                        break;
+                    default:
+                        continue;
+                    }
+
+                    break;
                 }
 
-                if (Command.CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
-                    completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
-                else
-                    completedMsg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.EmptyQueryResponse, async);
-                ProcessMessage(completedMsg);
                 break;
 
-                case ReaderState.BetweenResults:
+            case ReaderState.BetweenResults:
                 break;
 
             case ReaderState.Consumed:
@@ -521,10 +414,10 @@ namespace EnterpriseDB.EDBClient
                 throw new ArgumentOutOfRangeException();
             }
 
-            Debug.Assert(_state == ReaderState.BetweenResults);
-            _hasRows = null;
+            Debug.Assert(State == ReaderState.BetweenResults);
+            _hasRows = false;
 
-            if ((_behavior & CommandBehavior.SingleResult) != 0 && _statementIndex == 0 && !isConsuming)
+            if ((Behavior & CommandBehavior.SingleResult) != 0 && StatementIndex == 0 && !isConsuming)
             {
                 await Consume(async);
                 return false;
@@ -533,13 +426,13 @@ namespace EnterpriseDB.EDBClient
             // We are now at the end of the previous result set. Read up to the next result set, if any.
             // Non-prepared statements receive ParseComplete, BindComplete, DescriptionRow/NoData,
             // prepared statements receive only BindComplete
-            for (_statementIndex++; _statementIndex < _statements.Count; _statementIndex++)
+            for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
             {
-                var statement = _statements[_statementIndex];
+                var statement = _statements[StatementIndex];
                 if (statement.IsPrepared)
                 {
-                    await _connector.ReadExpecting<BindCompleteMessage>(async);
-                    _rowDescription = statement.Description;
+                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async));
+                    RowDescription = statement.Description;
                 }
                 else  // Non-prepared flow
                 {
@@ -550,26 +443,26 @@ namespace EnterpriseDB.EDBClient
                         Debug.Assert(pStatement.Description == null);
                         if (pStatement.StatementBeingReplaced != null)
                         {
-                            await _connector.ReadExpecting<CloseCompletedMessage>(async);
+                            Expect<CloseCompletedMessage>(await Connector.ReadMessage(async));
                             pStatement.StatementBeingReplaced.CompleteUnprepare();
                             pStatement.StatementBeingReplaced = null;
                         }
                     }
 
-                    await _connector.ReadExpecting<ParseCompleteMessage>(async);
-                    await _connector.ReadExpecting<BindCompleteMessage>(async);
-                    var msg = await _connector.ReadMessage(async);
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async));
+                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async));
+                    msg = await Connector.ReadMessage(async);
                     switch (msg.Code)
                     {
                     case BackendMessageCode.NoData:
-                        _rowDescription = statement.Description = null;
+                        RowDescription = statement.Description = null;
                         break;
                     case BackendMessageCode.RowDescription:
                         // We have a resultset
-                        _rowDescription = statement.Description = (RowDescriptionMessage)msg;
+                        RowDescription = statement.Description = (RowDescriptionMessage)msg;
                         break;
                     default:
-                        throw _connector.UnexpectedMessageReceived(msg.Code);
+                        throw Connector.UnexpectedMessageReceived(msg.Code);
                     }
 
                     if (pStatement != null)
@@ -579,53 +472,51 @@ namespace EnterpriseDB.EDBClient
                     }
                 }
 
-                if (_rowDescription == null)
+                msg = await ReadMessage(async);
+                if (RowDescription == null)
                 {
                     // Statement did not generate a resultset (e.g. INSERT)
-                    // Read and process its completion message and move on to the next
-                    var msg = await _connector.ReadMessage(async);
-                    if (msg.Code != BackendMessageCode.CompletedResponse && msg.Code != BackendMessageCode.EmptyQueryResponse)
-                        throw _connector.UnexpectedMessageReceived(msg.Code);
+                    // Read and process its completion message and move on to the next statement
+
+                    switch (msg.Code)
+                    {
+                    case BackendMessageCode.CompletedResponse:
+                    case BackendMessageCode.EmptyQueryResponse:
+                        break;
+
+                        case BackendMessageCode.NoData:
+                            return true;
+                        default:
+                        throw Connector.UnexpectedMessageReceived(msg.Code);
+                    }
+
                     ProcessMessage(msg);
                     continue;
                 }
 
-                // We got a new resultset.
-
-                // Read the next message and store it in _pendingRow, this is to make sure that if the
-                // statement generated an error, it gets thrown here and not on the first call to Read().
-
-                if (_statementIndex == 0 && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//EnterpriseDB Team
+                switch (msg.Code)
                 {
-                    // If output parameters are present and this is the first row of the first resultset,
-                    // we must read it in non-sequential mode because it will be traversed twice (once
-                    // here for the parameters, then as a regular row).
-                    _pendingMessage = await _connector.ReadMessage(async);
-                    if (Command.IsPrepared)
-                    {
-                        PopulateOutputParameters();
-                    }
-                    else
-                    {
-                        PopulateNotPreparedOutputParameters();
-                    }
-                }
-                else
-                {
-                    _pendingMessage = await _connector.ReadMessage(async, IsSequential ? DataRowLoadingMode.Sequential : DataRowLoadingMode.NonSequential);
+                    case BackendMessageCode.NoData:
+                    case BackendMessageCode.RowDescription:
+                        State = ReaderState.InResult;
+                        return true;
 
-                    _state = ReaderState.InResult;
+                case BackendMessageCode.DataRow:
+                        pendingmsg = msg;
+                        break;
+                case BackendMessageCode.CompletedResponse:
+                    break;
+                default:
+                    throw Connector.UnexpectedMessageReceived(msg.Code);
                 }
-                if (Command.CommandType != CommandType.StoredProcedure)
-                {
-                    _state = ReaderState.InResult;
-                }
+
+                ProcessMessage(msg);
                 return true;
             }
 
             // There are no more queries, we're done. Read to the RFQ.
-            ProcessMessage(_connector.ReadExpecting<ReadyForQueryMessage>());
-            _rowDescription = null;
+            ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async)));
+            RowDescription = null;
             return false;
         }
 
@@ -637,77 +528,50 @@ namespace EnterpriseDB.EDBClient
         {
             Debug.Assert(IsSchemaOnly);
 
-            for (_statementIndex++; _statementIndex < _statements.Count; _statementIndex++)
+            for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
             {
-                var statement = _statements[_statementIndex];
+                var statement = _statements[StatementIndex];
                 if (statement.IsPrepared)
                 {
                     // Row descriptions have already been populated in the statement objects at the
                     // Prepare phase
-                    _rowDescription = _statements[_statementIndex].Description;
+                    RowDescription = _statements[StatementIndex].Description;
                 }
                 else
                 {
-                    await _connector.ReadExpecting<ParseCompleteMessage>(async);
-                    await _connector.ReadExpecting<ParameterDescriptionMessage>(async);
-                    var msg = await _connector.ReadMessage(async);
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async));
+                    Expect<ParameterDescriptionMessage>(await Connector.ReadMessage(async));
+                    var msg = await Connector.ReadMessage(async);
                     switch (msg.Code)
                     {
                     case BackendMessageCode.NoData:
-                        _rowDescription = _statements[_statementIndex].Description = null;
+                        RowDescription = _statements[StatementIndex].Description = null;
                         break;
                     case BackendMessageCode.RowDescription:
                         // We have a resultset
-                        _rowDescription = _statements[_statementIndex].Description = (RowDescriptionMessage)msg;
-                        Command.FixupRowDescription(_rowDescription, _statementIndex == 0);
+                        RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
+                        Command.FixupRowDescription(RowDescription, StatementIndex == 0);
                         break;
                     default:
-                        throw _connector.UnexpectedMessageReceived(msg.Code);
+                        throw Connector.UnexpectedMessageReceived(msg.Code);
                     }
                 }
 
                 // Found a resultset
-                if (_rowDescription != null)
+                if (RowDescription != null)
                     return true;
             }
 
             // There are no more queries, we're done. Read to the RFQ.
             if (!_statements.All(s => s.IsPrepared))
             {
-                ProcessMessage(await _connector.ReadExpecting<ReadyForQueryMessage>(async));
-                _rowDescription = null;
+                ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async)));
+                RowDescription = null;
             }
             return false;
         }
 
         #endregion
-
-        ValueTask<IBackendMessage> ReadMessage(bool async)
-        {
-            if (_pendingMessage != null) {
-                var msg = _pendingMessage;
-                _pendingMessage = null;
-                return new ValueTask<IBackendMessage>(msg);
-            }
-            return _connector.ReadMessage(async, IsSequential ? DataRowLoadingMode.Sequential : DataRowLoadingMode.NonSequential);
-        }
-
-        async ValueTask<IBackendMessage> SkipUntil(BackendMessageCode stopAt1, BackendMessageCode stopAt2, bool async)
-        {
-            if (_pendingMessage != null) {
-                if (_pendingMessage.Code == stopAt1 || _pendingMessage.Code == stopAt2) {
-                    var msg = _pendingMessage;
-                    _pendingMessage = null;
-                    return msg;
-                }
-                var asDataRow = _pendingMessage as DataRowMessage;
-                // ReSharper disable once UseNullPropagation
-                if (asDataRow != null)
-                    await asDataRow.Consume(async);
-                _pendingMessage = null;
-            }
-            return await _connector.SkipUntil(stopAt1, stopAt2, async);
-        }
 
         /// <summary>
         /// Gets a value indicating the depth of nesting for the current row.  Always returns zero.
@@ -717,7 +581,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets a value indicating whether the data reader is closed.
         /// </summary>
-        public override bool IsClosed => _state == ReaderState.Closed;
+        public override bool IsClosed => State == ReaderState.Closed;
 
         /// <summary>
         /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
@@ -740,42 +604,9 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Gets a value that indicates whether this DbDataReader contains one or more rows.
         /// </summary>
-        public override bool HasRows
-        {
-            get
-            {
-                if (_hasRows.HasValue)
-                    return _hasRows.Value;
-                if (_statementIndex >= _statements.Count)
-                    return false;
-                while (true)
-                {
-                    var msg = ReadMessage(false).Result;
-                    switch (msg.Code)
-                    {
-                    case BackendMessageCode.BindComplete:
-                    case BackendMessageCode.RowDescription:
-                        ProcessMessage(msg);
-                        continue;
-                    case BackendMessageCode.DataRow:
-                        _pendingMessage = msg;
-                        _hasRows = true;
-                        return true;
-                    case BackendMessageCode.CompletedResponse:
-                    case BackendMessageCode.EmptyQueryResponse:
-                    case BackendMessageCode.ReadyForQuery:
-                        _pendingMessage = msg;
-                        _hasRows = false;
-                        return false;
-                    case BackendMessageCode.CloseComplete:
-                        _hasRows = false;
-                        return false;
-                    default:
-                        throw new InvalidOperationException("Got unexpected message type: " + msg.Code);
-                    }
-                }
-            }
-        }
+        public override bool HasRows => State == ReaderState.Closed
+            ? throw new InvalidOperationException("Invalid attempt to call HasRows when reader is closed.")
+            : _hasRows;
 
         /// <summary>
         /// Indicates whether the reader is currently positioned on a row, i.e. whether reading a
@@ -785,7 +616,7 @@ namespace EnterpriseDB.EDBClient
         /// has been called
         /// </summary>
         [PublicAPI]
-        public bool IsOnRow => _row != null;
+        public bool IsOnRow => State == ReaderState.InResult;
 
         /// <summary>
         /// Gets the name of the column, given the zero-based column ordinal.
@@ -795,15 +626,15 @@ namespace EnterpriseDB.EDBClient
         public override string GetName(int ordinal)
         {
             CheckResultSet();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
 
-            return _rowDescription[ordinal].Name;
+            return RowDescription[ordinal].Name;
         }
 
         /// <summary>
         /// Gets the number of columns in the current row.
         /// </summary>
-        public override int FieldCount => _rowDescription?.NumFields ?? 0;
+        public override int FieldCount => RowDescription?.NumFields ?? 0;
 
         #region Cleanup / Dispose
 
@@ -813,41 +644,73 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         async Task Consume(bool async)
         {
-            //// Skip over the other result sets. Note that this does tally records affected
-            //// from CommandComplete messages, and properly sets state for auto-prepared statements
+            // Skip over the other result sets. Note that this does tally records affected
+            // from CommandComplete messages, and properly sets state for auto-prepared statements
             //if (IsSchemaOnly)
-            //    while (await NextResultSchemaOnly(async)) {}
+            //    while (await NextResultSchemaOnly(async)) { }
             //else
-            //    while (await NextResult(async, true)) {}
+            //    while (await NextResult(async, true)) { }
+            //while (await NextResult(async, true)) { }
             //EnterpriseDB Team
             if (IsSchemaOnly && _statements.All(s => s.IsPrepared))
             {
-                _state = ReaderState.Consumed;
+                State = ReaderState.Consumed;
                 return;
             }
 
-            if (_row != null)
+            //if (_row != null)
+            //{
+            //    await ConsumeRow(async);
+            //    _row = null;
+            //}
+
+            if (State == ReaderState.InResult && Command.CommandType != CommandType.StoredProcedure)
             {
-                await _row.Consume(async);
-                _row = null;
+               await ConsumeRow(async);
             }
 
             // Skip over the other result sets, processing only CommandCompleted for RecordsAffected
             while (true)
             {
-                var msg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
-                switch (msg.Code)
+                try
                 {
-                    case BackendMessageCode.CompletedResponse:
-                        ProcessMessage(msg);
-                        continue;
-                    case BackendMessageCode.ReadyForQuery:
-                        ProcessMessage(msg);
-                        return;
-                    default:
-                        throw new EDBException("Unexpected message of type " + msg.Code);
+                    var msg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
+                    switch (msg.Code)
+                    {
+                        case BackendMessageCode.CompletedResponse:
+                            ProcessMessage(msg);
+                            continue;
+                        case BackendMessageCode.ReadyForQuery:
+                            ProcessMessage(msg);
+                            return;
+                        default:
+                            throw new EDBException("Unexpected message of type " + msg.Code);
+                    }
+                } catch (Exception e)
+                {
+                    e.ToString();
+                    break;
                 }
             }
+        }
+
+        async ValueTask<IBackendMessage> SkipUntil(BackendMessageCode stopAt1, BackendMessageCode stopAt2, bool async)
+        {
+            if (pendingmsg != null)
+            {
+                if (pendingmsg.Code == stopAt1 || pendingmsg.Code == stopAt2)
+                {
+                    var msg = pendingmsg;
+                    pendingmsg = null;
+                    return msg;
+                }
+                var asDataRow = pendingmsg as DataRowMessage;
+                // ReSharper disable once UseNullPropagation
+                if (asDataRow != null)
+                    await ConsumeRow(async);
+                pendingmsg = null;
+            }
+            return await Connector.SkipUntil(stopAt1, stopAt2, async);
         }
 
         /// <summary>
@@ -858,12 +721,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
         /// </summary>
-#if NETSTANDARD1_3
-        public void Close()
-#else
-        public override void Close()
-#endif
-            => Close(false, false).GetAwaiter().GetResult();
+        public override void Close() => Close(false, false).GetAwaiter().GetResult();
 
         /// <summary>
         /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
@@ -872,23 +730,23 @@ namespace EnterpriseDB.EDBClient
 
         internal async Task Close(bool connectionClosing, bool async)
         {
-            if (_state == ReaderState.Closed)
+            if (State == ReaderState.Closed)
                 return;
 
-            switch (_connector.State)
+            switch (Connector.State)
             {
             case ConnectorState.Broken:
             case ConnectorState.Closed:
                 // This may have happen because an I/O error while reading a value, or some non-safe
                 // exception thrown from a type handler. Or if the connection was closed while the reader
                 // was still open
-                _state = ReaderState.Closed;
+                State = ReaderState.Closed;
                 Command.State = CommandState.Idle;
                 ReaderClosed?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
-            if (_state != ReaderState.Consumed)
+            if (State != ReaderState.Consumed)
                 await Consume(async);
 
             await Cleanup(async, connectionClosing);
@@ -896,7 +754,7 @@ namespace EnterpriseDB.EDBClient
 
         internal async Task Cleanup(bool async, bool connectionClosing=false)
         {
-            Log.Trace("Cleaning up reader", _connector.Id);
+            Log.Trace("Cleaning up reader", Connector.Id);
 
             // Make sure the send task for this command, which may have executed asynchronously and in
             // parallel with the reading, has completed, throwing any exceptions it generated.
@@ -905,14 +763,14 @@ namespace EnterpriseDB.EDBClient
             else
                 _sendTask.GetAwaiter().GetResult();
 
-            _state = ReaderState.Closed;
+            State = ReaderState.Closed;
             Command.State = CommandState.Idle;
-            _connector.CurrentReader = null;
-            _connector.EndUserAction();
+            Connector.CurrentReader = null;
+            Connector.EndUserAction();
 
             // If the reader is being closed as part of the connection closing, we don't apply
             // the reader's CommandBehavior.CloseConnection
-            if ((_behavior & CommandBehavior.CloseConnection) != 0 && !connectionClosing)
+            if ((Behavior & CommandBehavior.CloseConnection) != 0 && !connectionClosing)
                 _connection.Close();
 
             if (ReaderClosed != null)
@@ -922,21 +780,54 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-#endregion
+        #endregion
 
-        /// <summary>
-        /// Returns the current row, or throws an exception if a row isn't available
-        /// </summary>
-        DataRowMessage Row
+        #region Generic value getters
+
+        internal delegate T ReadDelegate<T>(EDBReadBuffer buffer, int columnLen, FieldDescription fieldDescription);
+
+        internal delegate ValueTask<T> ReadAsyncDelegate<T>(EDBReadBuffer buffer, int columnLen, bool async, FieldDescription fieldDescription);
+
+        internal static class NullableHandler<T>
         {
-            get
+            public static readonly ReadDelegate<T> Read;
+            public static readonly ReadAsyncDelegate<T> ReadAsync;
+            public static readonly bool Exists;
+
+            static NullableHandler()
+                => Exists = NullableHandler.Construct(out Read, out ReadAsync);
+        }
+
+        static class NullableHandler
+        {
+            static readonly MethodInfo _readNullableMethod = new ReadDelegate<int?>(ReadNullable<int>).Method.GetGenericMethodDefinition();
+            static readonly MethodInfo _readNullableAsyncMethod = new ReadAsyncDelegate<int?>(ReadNullable<int>).Method.GetGenericMethodDefinition();
+
+            static T? ReadNullable<T>(EDBReadBuffer buffer, int columnLen, FieldDescription fieldDescription) where T : struct
+                => fieldDescription.Handler.Read<T>(buffer, columnLen, fieldDescription);
+
+            static async ValueTask<T?> ReadNullable<T>(EDBReadBuffer buffer, int columnLen, bool async, FieldDescription fieldDescription) where T : struct
+                => await fieldDescription.Handler.Read<T>(buffer, columnLen, async, fieldDescription);
+
+            public static bool Construct<T>(out ReadDelegate<T> read, out ReadAsyncDelegate<T> readAsync)
             {
-                if (_row == null) {
-                    throw new InvalidOperationException("Invalid attempt to read when no data is present.");
+                var underlyingType = Nullable.GetUnderlyingType(typeof(T));
+                if (underlyingType != null)
+                {
+                    read = (ReadDelegate<T>)_readNullableMethod.MakeGenericMethod(underlyingType).CreateDelegate(typeof(ReadDelegate<T>));
+                    readAsync = (ReadAsyncDelegate<T>)_readNullableAsyncMethod.MakeGenericMethod(underlyingType).CreateDelegate(typeof(ReadAsyncDelegate<T>));
+                    return true;
                 }
-                return _row;
+                else
+                {
+                    read = null;
+                    readAsync = null;
+                    return false;
+                }
             }
         }
+
+        #endregion Generic value getters
 
         #region Simple value getters
 
@@ -945,84 +836,84 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override bool GetBoolean(int ordinal) => ReadColumn<bool>(ordinal);
+        public override bool GetBoolean(int ordinal) => GetFieldValue<bool>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a byte.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override byte GetByte(int ordinal) => ReadColumn<byte>(ordinal);
+        public override byte GetByte(int ordinal) => GetFieldValue<byte>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a single character.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override char GetChar(int ordinal) => ReadColumn<char>(ordinal);
+        public override char GetChar(int ordinal) => GetFieldValue<char>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a 16-bit signed integer.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override short GetInt16(int ordinal) => ReadColumn<short>(ordinal);
+        public override short GetInt16(int ordinal) => GetFieldValue<short>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a 32-bit signed integer.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override int GetInt32(int ordinal) => ReadColumn<int>(ordinal);
+        public override int GetInt32(int ordinal) => GetFieldValue<int>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a 64-bit signed integer.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override long GetInt64(int ordinal) => ReadColumn<long>(ordinal);
+        public override long GetInt64(int ordinal) => GetFieldValue<long>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a <see cref="DateTime"/> object.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override DateTime GetDateTime(int ordinal) => ReadColumn<DateTime>(ordinal);
+        public override DateTime GetDateTime(int ordinal) => GetFieldValue<DateTime>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as an instance of <see cref="string"/>.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override string GetString(int ordinal) => ReadColumn<string>(ordinal);
+        public override string GetString(int ordinal) => GetFieldValue<string>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a <see cref="decimal"/> object.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override decimal GetDecimal(int ordinal) => ReadColumn<decimal>(ordinal);
+        public override decimal GetDecimal(int ordinal) => GetFieldValue<decimal>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a double-precision floating point number.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override double GetDouble(int ordinal) => ReadColumn<double>(ordinal);
+        public override double GetDouble(int ordinal) => GetFieldValue<double>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a single-precision floating point number.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override float GetFloat(int ordinal) => ReadColumn<float>(ordinal);
+        public override float GetFloat(int ordinal) => GetFieldValue<float>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a globally-unique identifier (GUID).
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public override Guid GetGuid(int ordinal) => ReadColumn<Guid>(ordinal);
+        public override Guid GetGuid(int ordinal) => GetFieldValue<Guid>(ordinal);
 
         /// <summary>
         /// Populates an array of objects with the column values of the current row.
@@ -1059,13 +950,13 @@ namespace EnterpriseDB.EDBClient
         /// <remarks>
         /// PostgreSQL's date type represents dates from 4713 BC to 5874897 AD, while .NET's DateTime
         /// only supports years from 1 to 1999. If you require years outside this range use this accessor.
-        /// The standard <see cref="GetProviderSpecificValue"/> method will also return this type, but has
+        /// The standard <see cref="DbDataReader.GetProviderSpecificValue"/> method will also return this type, but has
         /// the disadvantage of boxing the value.
         /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html
         /// </remarks>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public EDBDate GetDate(int ordinal) => ReadColumn<EDBDate>(ordinal);
+        public EDBDate GetDate(int ordinal) => GetFieldValue<EDBDate>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as a TimeSpan,
@@ -1078,7 +969,7 @@ namespace EnterpriseDB.EDBClient
         /// </remarks>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public TimeSpan GetTimeSpan(int ordinal) => ReadColumn<TimeSpan>(ordinal);
+        public TimeSpan GetTimeSpan(int ordinal) => GetFieldValue<TimeSpan>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBTimeSpan"/>,
@@ -1089,13 +980,13 @@ namespace EnterpriseDB.EDBClient
         /// -178000000 to 178000000 years, while .NET's TimeSpan has a resolution of 100 nanoseconds
         /// and ranges from roughly -29247 to 29247 years. If you require values from outside TimeSpan's
         /// range use this accessor.
-        /// The standard ADO.NET <see cref="GetProviderSpecificValue"/> method will also return this
+        /// The standard ADO.NET <see cref="DbDataReader.GetProviderSpecificValue"/> method will also return this
         /// type, but has the disadvantage of boxing the value.
         /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html
         /// </remarks>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public EDBTimeSpan GetInterval(int ordinal) => ReadColumn<EDBTimeSpan>(ordinal);
+        public EDBTimeSpan GetInterval(int ordinal) => GetFieldValue<EDBTimeSpan>(ordinal);
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDateTime"/>,
@@ -1106,13 +997,13 @@ namespace EnterpriseDB.EDBClient
         /// <remarks>
         /// PostgreSQL's timestamp type represents dates from 4713 BC to 5874897 AD, while .NET's DateTime
         /// only supports years from 1 to 1999. If you require years outside this range use this accessor.
-        /// The standard <see cref="GetProviderSpecificValue"/> method will also return this type, but has
+        /// The standard <see cref="DbDataReader.GetProviderSpecificValue"/> method will also return this type, but has
         /// the disadvantage of boxing the value.
         /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html
         /// </remarks>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public EDBDateTime GetTimeStamp(int ordinal) => ReadColumn<EDBDateTime>(ordinal);
+        public EDBDateTime GetTimeStamp(int ordinal) => GetFieldValue<EDBDateTime>(ordinal);
 
         #endregion
 
@@ -1137,16 +1028,33 @@ namespace EnterpriseDB.EDBClient
             if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
                 throw new IndexOutOfRangeException($"length must be between {0} and {buffer.Length - bufferOffset}");
 
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ByteaHandler ??
-                (fieldDescription.Handler as PostgisGeometryHandler)?.ByteaHandler;
-            if (handler == null)
+            var fieldDescription = RowDescription[ordinal];
+            var handler = fieldDescription.Handler;
+            if (!(handler is ByteaHandler))
                 throw new InvalidCastException("GetBytes() not supported for type " + fieldDescription.Name);
 
-            var row = Row;
-            row.SeekToColumn(ordinal, false).GetAwaiter().GetResult();
-            row.CheckNotNull();
-            return handler.GetBytes(row, (int)dataOffset, buffer, bufferOffset, length, fieldDescription);
+            SeekToColumn(ordinal, false).GetAwaiter().GetResult();
+            if (ColumnLen == -1)
+                throw new InvalidCastException("Column is null");
+            if (buffer == null)
+                return ColumnLen;
+
+            var dataOffset2 = (int)dataOffset;
+            SeekInColumn(dataOffset2, false).GetAwaiter().GetResult();
+
+            // Attempt to read beyond the end of the column
+            if (dataOffset2 + length > ColumnLen)
+                length = ColumnLen - dataOffset2;
+
+            var left = length;
+            while (left > 0)
+            {
+                var read = Buffer.ReadBytes(buffer, bufferOffset, left, false).GetAwaiter().GetResult();
+                bufferOffset += read;
+                left -= read;
+            }
+
+            return length;
         }
 
         /// <summary>
@@ -1154,20 +1062,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The returned object.</returns>
-        public override Stream GetStream(int ordinal)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ByteaHandler;
-            if (handler == null)
-                throw new InvalidCastException("GetStream() not supported for type " + fieldDescription.Handler.PgDisplayName);
-
-            var row = Row;
-            row.SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
-            row.CheckNotNull();
-            return row.GetStream();
-        }
+        public override Stream GetStream(int ordinal) => GetStream(ordinal, false).Result;
 
         /// <summary>
         /// Retrieves data as a <see cref="Stream"/>.
@@ -1176,20 +1071,43 @@ namespace EnterpriseDB.EDBClient
         /// <returns>The returned object.</returns>
         public Task<Stream> GetStreamAsync(int ordinal)
         {
+            using (NoSynchronizationContextScope.Enter())
+                return GetStream(ordinal, true).AsTask();
+        }
+
+        ValueTask<Stream> GetStream(int ordinal, bool async)
+        {
             CheckRowAndOrdinal(ordinal);
 
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ByteaHandler;
-            if (handler == null)
-                throw new InvalidCastException("GetStream() not supported for type " + fieldDescription.Handler.PgDisplayName);
+            var fieldDescription = RowDescription[ordinal];
+            if (!(fieldDescription.Handler is ByteaHandler))
+                throw new InvalidCastException($"GetStream() not supported for type {fieldDescription.Handler.PgDisplayName}");
 
-            return SynchronizationContextSwitcher.NoContext(async () =>
+            return GetStreamInternal(ordinal, async);
+        }
+
+        ValueTask<Stream> GetStreamInternal(int ordinal, bool async)
+        {
+            if (ColumnStream != null && !ColumnStream.IsDisposed)
+                throw new InvalidOperationException("A stream is already open for this reader");
+
+            var t = SeekToColumn(ordinal, async);
+            if (!t.IsCompleted)
+                return new ValueTask<Stream>(GetStreamLong(t));
+
+            if (ColumnLen == -1)
+                throw new InvalidCastException("Column is null");
+            PosInColumn += ColumnLen;
+            return new ValueTask<Stream>(ColumnStream = (EDBReadBuffer.ColumnStream)Buffer.GetStream(ColumnLen, !IsSequential));
+
+            async Task<Stream> GetStreamLong(Task seekTask)
             {
-                var row = Row;
-                await row.SeekToColumnStart(ordinal, false);
-                row.CheckNotNull();
-                return row.GetStream();
-            });
+                await seekTask;
+                if (ColumnLen == -1)
+                    throw new InvalidCastException("Column is null");
+                PosInColumn += ColumnLen;
+                return ColumnStream = (EDBReadBuffer.ColumnStream)Buffer.GetStream(ColumnLen, !IsSequential);
+            }
         }
 
         #endregion
@@ -1215,15 +1133,101 @@ namespace EnterpriseDB.EDBClient
             if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
                 throw new IndexOutOfRangeException($"length must be between {0} and {buffer.Length - bufferOffset}");
 
-            var fieldDescription = _rowDescription[ordinal];
+            var fieldDescription = RowDescription[ordinal];
             var handler = fieldDescription.Handler as TextHandler;
             if (handler == null)
                 throw new InvalidCastException("GetChars() not supported for type " + fieldDescription.Name);
 
-            var row = Row;
-            row.SeekToColumn(ordinal, false).GetAwaiter().GetResult(); ;
-            row.CheckNotNull();
-            return handler.GetChars(row, (int)dataOffset, buffer, bufferOffset, length, fieldDescription);
+            SeekToColumn(ordinal, false).GetAwaiter().GetResult();
+            if (ColumnLen == -1)
+                throw new InvalidCastException("Column is null");
+            if (PosInColumn == 0)
+                _charPos = 0;
+
+            var decoder = Buffer.TextEncoding.GetDecoder();
+
+            if (buffer == null)
+            {
+                // Note: Getting the length of a text column means decoding the entire field,
+                // very inefficient and also consumes the column in sequential mode. But this seems to
+                // be SqlClient's behavior as well.
+                var (bytesSkipped, charsSkipped) = SkipChars(decoder, int.MaxValue, ColumnLen - PosInColumn);
+                Debug.Assert(bytesSkipped == ColumnLen - PosInColumn);
+                PosInColumn += bytesSkipped;
+                _charPos += charsSkipped;
+                return _charPos;
+            }
+
+            if (PosInColumn == ColumnLen || dataOffset < _charPos)
+            {
+                // Either the column has already been read (e.g. GetString()) or a previous GetChars()
+                // has positioned us in the column *after* the requested read start offset. Seek back
+                // (this will throw for sequential)
+                SeekInColumn(0, false).GetAwaiter().GetResult();
+                _charPos = 0;
+            }
+
+            if (dataOffset > _charPos)
+            {
+                var charsToSkip = (int)dataOffset - _charPos;
+                var (bytesSkipped, charsSkipped) = SkipChars(decoder, charsToSkip, ColumnLen - PosInColumn);
+                decoder.Reset();
+                PosInColumn += bytesSkipped;
+                _charPos += charsSkipped;
+                if (charsSkipped < charsToSkip)
+                {
+                    // TODO: What is the actual required behavior here?
+                    throw new IndexOutOfRangeException();
+                }
+            }
+
+            // We're now positioned at the start of the segment of characters we need to read.
+            if (length == 0)
+                return 0;
+
+            var (bytesRead, charsRead) = DecodeChars(decoder, buffer, bufferOffset, length, ColumnLen - PosInColumn);
+
+            PosInColumn += bytesRead;
+            _charPos += charsRead;
+            return charsRead;
+        }
+
+        (int BytesRead, int CharsRead) DecodeChars(Decoder decoder, char[] output, int outputOffset, int charCount, int byteCount)
+        {
+            var (bytesRead, charsRead) = (0, 0);
+
+            while (true)
+            {
+                Buffer.Ensure(1); // Make sure we have at least some data
+
+                var maxBytes = Math.Min(byteCount - bytesRead, Buffer.ReadBytesLeft);
+                decoder.Convert(Buffer.Buffer, Buffer.ReadPosition, maxBytes, output, outputOffset, charCount - charsRead, false,
+                    out var bytesUsed, out var charsUsed, out var completed);
+                Buffer.ReadPosition += bytesUsed;
+                bytesRead += bytesUsed;
+                charsRead += charsUsed;
+                if (charsRead == charCount || bytesRead == byteCount)
+                    break;
+                outputOffset += charsUsed;
+                Buffer.Clear();
+            }
+
+            return (bytesRead, charsRead);
+        }
+
+        internal (int BytesSkipped, int CharsSkipped) SkipChars(Decoder decoder, int charCount, int byteCount)
+        {
+            // TODO: Allocate on the stack with Span
+            if (_tempCharBuf == null)
+                _tempCharBuf = new char[1024];
+            var (charsSkipped, bytesSkipped) = (0, 0);
+            while (charsSkipped < charCount && bytesSkipped < byteCount)
+            {
+                var (bytesRead, charsRead) = DecodeChars(decoder, _tempCharBuf, 0, Math.Min(charCount, _tempCharBuf.Length), byteCount);
+                bytesSkipped += bytesRead;
+                charsSkipped += charsRead;
+            }
+            return (bytesSkipped, charsSkipped);
         }
 
         /// <summary>
@@ -1232,20 +1236,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The returned object.</returns>
         public override TextReader GetTextReader(int ordinal)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ITextReaderHandler;
-            if (handler == null)
-                throw new InvalidCastException("GetTextReader() not supported for type " + fieldDescription.Handler.PgDisplayName);
-
-            var row = Row;
-            row.SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
-            row.CheckNotNull();
-
-            return handler.GetTextReader(row.GetStream());
-        }
+            => GetTextReader(ordinal, false).Result;
 
         /// <summary>
         /// Retrieves data as a <see cref="TextReader"/>.
@@ -1254,51 +1245,23 @@ namespace EnterpriseDB.EDBClient
         /// <returns>The returned object.</returns>
         public Task<TextReader> GetTextReaderAsync(int ordinal)
         {
-            CheckRowAndOrdinal(ordinal);
-
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler as ITextReaderHandler;
-            if (handler == null)
-                throw new InvalidCastException("GetTextReader() not supported for type " + fieldDescription.Handler.PgDisplayName);
-
-            return SynchronizationContextSwitcher.NoContext(async () =>
-            {
-                var row = Row;
-                await row.SeekToColumnStart(ordinal, false);
-                row.CheckNotNull();
-                return handler.GetTextReader(row.GetStream());
-            });
+            using (NoSynchronizationContextScope.Enter())
+                return GetTextReader(ordinal, true).AsTask();
         }
 
-        #endregion
-
-        #region IsDBNull
-
-        /// <summary>
-        /// Gets a value that indicates whether the column contains nonexistent or missing values.
-        /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <returns><b>true</b> if the specified column is equivalent to <see cref="DBNull"/>; otherwise <b>false</b>.</returns>
-        public override bool IsDBNull(int ordinal) => IsDBNull(ordinal, false).GetAwaiter().GetResult();
-
-        /// <summary>
-        /// An asynchronous version of <see cref="IsDBNull(int)"/>, which gets a value that indicates whether the column contains non-existent or missing values.
-        /// The <paramref name="cancellationToken"/> parameter is currently ignored.
-        /// </summary>
-        /// <param name="ordinal">The zero-based column to be retrieved.</param>
-        /// <param name="cancellationToken">Currently ignored.</param>
-        /// <returns><b>true</b> if the specified column value is equivalent to <see cref="DBNull"/> otherwise <b>false</b>.</returns>
-        public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () => await IsDBNull(ordinal, true));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // ReSharper disable once InconsistentNaming
-        async Task<bool> IsDBNull(int ordinal, bool async)
+        async ValueTask<TextReader> GetTextReader(int ordinal, bool async)
         {
             CheckRowAndOrdinal(ordinal);
 
-            await Row.SeekToColumn(ordinal, async);
-            return Row.IsColumnNull;
+            var fieldDescription = RowDescription[ordinal];
+            if (!(fieldDescription.Handler is ITextReaderHandler handler))
+                throw new InvalidCastException($"GetTextReader() not supported for type {fieldDescription.Handler.PgDisplayName}");
+
+            var stream = async
+                ? await GetStreamInternal(ordinal, async)
+                : GetStreamInternal(ordinal, async).Result;
+
+            return handler.GetTextReader(stream);
         }
 
         #endregion
@@ -1321,7 +1284,7 @@ namespace EnterpriseDB.EDBClient
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentException("name cannot be empty", nameof(name));
 
-            return _rowDescription.GetFieldIndex(name);
+            return RowDescription.GetFieldIndex(name);
         }
 
         /// <summary>
@@ -1333,19 +1296,24 @@ namespace EnterpriseDB.EDBClient
         public PostgresType GetPostgresType(int ordinal)
         {
             CheckResultSet();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
 
-            return _rowDescription[ordinal].PostgresType;
+            return RowDescription[ordinal].PostgresType;
         }
 
         /// <summary>
         /// Gets the data type information for the specified field.
-        /// This will be the PostgreSQL type name (e.g. int4) as in the pg_type table,
-        /// not the .NET type (see <see cref="GetFieldType"/> for that).
+        /// This will be the PostgreSQL type name (e.g. double precision), not the .NET type
+        /// (see <see cref="GetFieldType"/> for that).
         /// </summary>
         /// <param name="ordinal">The zero-based column index.</param>
-        /// <returns></returns>
-        public override string GetDataTypeName(int ordinal) => GetPostgresType(ordinal).DisplayName;
+        public override string GetDataTypeName(int ordinal)
+        {
+            CheckResultSet();
+            CheckColumn(ordinal);
+
+            return RowDescription[ordinal].TypeDisplayName;
+        }
 
         /// <summary>
         /// Gets the OID for the PostgreSQL type for the specified field, as it appears in the pg_type table.
@@ -1358,9 +1326,9 @@ namespace EnterpriseDB.EDBClient
         public uint GetDataTypeOID(int ordinal)
         {
             CheckResultSet();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
 
-            return _rowDescription[ordinal].TypeOID;
+            return RowDescription[ordinal].TypeOID;
         }
 
         /// <summary>
@@ -1372,10 +1340,10 @@ namespace EnterpriseDB.EDBClient
         public override Type GetFieldType(int ordinal)
         {
             CheckResultSet();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
 
             var type = Command.ObjectResultTypes?[ordinal];
-            return type ?? _rowDescription[ordinal].FieldType;
+            return type ?? RowDescription[ordinal].FieldType;
         }
 
         /// <summary>
@@ -1386,132 +1354,10 @@ namespace EnterpriseDB.EDBClient
         public override Type GetProviderSpecificFieldType(int ordinal)
         {
             CheckResultSet();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
 
-            var fieldDescription = _rowDescription[ordinal];
+            var fieldDescription = RowDescription[ordinal];
             return fieldDescription.Handler.GetProviderSpecificFieldType(fieldDescription);
-        }
-
-        /// <summary>
-        /// Gets the value of the specified column as an instance of <see cref="object"/>.
-        /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <returns>The value of the specified column.</returns>
-        public override object GetValue(int ordinal)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            // TODO: Code duplication with ReadColumn<T>
-            _row.SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
-            if (_row.IsColumnNull)
-                return DBNull.Value;
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler;
-
-            object result;
-            try {
-                result = handler.ReadAsObject(_row, fieldDescription);
-            } catch (SafeReadException e) {
-                throw e.InnerException;
-            } catch {
-                _connector.Break();
-                throw;
-            }
-
-            // Used for Entity Framework <= 6 compability
-            if (Command.ObjectResultTypes?[ordinal] != null)
-            {
-                var type = Command.ObjectResultTypes[ordinal];
-                result = type == typeof(DateTimeOffset)
-                    ? new DateTimeOffset((DateTime)result)
-                    : Convert.ChangeType(result, type);
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Synchronously gets the value of the specified column as a type.
-        /// </summary>
-        /// <typeparam name="T">Synchronously gets the value of the specified column as a type.</typeparam>
-        /// <param name="ordinal">The column to be retrieved.</param>
-        /// <returns>The column to be retrieved.</returns>
-        public override T GetFieldValue<T>(int ordinal) => GetFieldValue<T>(ordinal, false).Result;
-
-        /// <summary>
-        /// Asynchronously gets the value of the specified column as a type.
-        /// The <paramref name="cancellationToken"/> parameter is currently ignored.
-        /// </summary>
-        /// <typeparam name="T">The type of the value to be returned.</typeparam>
-        /// <param name="ordinal">The column to be retrieved.</param>
-        /// <param name="cancellationToken">Currently ignored.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
-            => SynchronizationContextSwitcher.NoContext(async () => await GetFieldValue<T>(ordinal, true));
-
-        async ValueTask<T> GetFieldValue<T>(int ordinal, bool async)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            var t = typeof(T);
-            if (!t.IsArray) {
-                if (t == typeof(object))
-                    return (T)GetValue(ordinal);  // TODO: Sync...
-                return await ReadColumn<T>(ordinal, async);
-            }
-
-            // Getting an array
-
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler;
-
-            // If the type handler can simply return the requested array, call it as usual. This is the case
-            // of reading a string as char[], a bytea as a byte[]...
-            var tHandler = handler as ITypeHandler<T>;
-            if (tHandler != null)
-                return await ReadColumn<T>(ordinal, async);
-
-            // We need to treat this as an actual array type, these need special treatment because of
-            // typing/generics reasons
-            var elementType = t.GetElementType();
-            var arrayHandler = handler as ArrayHandler;
-            if (arrayHandler == null)
-                throw new InvalidCastException($"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(T).Name}");
-
-            if (arrayHandler.GetElementFieldType(fieldDescription) == elementType)
-                return (T)GetValue(ordinal);
-            if (arrayHandler.GetElementPsvType(fieldDescription) == elementType)
-                return (T)GetProviderSpecificValue(ordinal);
-            throw new InvalidCastException($"Can't cast database type {handler.PgDisplayName} to {typeof(T).Name}");
-        }
-
-        /// <summary>
-        /// Gets the value of the specified column as an instance of <see cref="object"/>.
-        /// </summary>
-        /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <returns>The value of the specified column.</returns>
-        public override object GetProviderSpecificValue(int ordinal)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            // TODO: Code duplication with ReadColumn<T>
-            _row.SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
-            if (_row.IsColumnNull)
-                return DBNull.Value;
-            var fieldDescription = _rowDescription[ordinal];
-            var handler = fieldDescription.Handler;
-
-            object result;
-            try {
-                result = handler.ReadPsvAsObject(_row, fieldDescription);
-            } catch (SafeReadException e) {
-                throw e.InnerException;
-            } catch {
-                _connector.Break();
-                throw;
-            }
-
-            return result;
         }
 
         /// <summary>
@@ -1536,39 +1382,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <returns>An <see cref="IEnumerator"/> that can be used to iterate through the rows in the data reader.</returns>
         public override IEnumerator GetEnumerator()
-        {
-#if NETSTANDARD1_3
-            throw new NotSupportedException("GetEnumerator not yet supported in .NET Core");
-#else
-            return new DbEnumerator(this);
-#endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        async ValueTask<T> ReadColumn<T>(int ordinal, bool async)
-        {
-            CheckRowAndOrdinal(ordinal);
-
-            await _row.SeekToColumnStart(ordinal, false);
-            Row.CheckNotNull();
-            var fieldDescription = _rowDescription[ordinal];
-            try
-            {
-                return await fieldDescription.Handler.Read<T>(_row, Row.ColumnLen, async, fieldDescription);
-            }
-            catch (SafeReadException e)
-            {
-                throw e.InnerException;
-            }
-            catch
-            {
-                _connector.Break();
-                throw;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        T ReadColumn<T>(int ordinal) => ReadColumn<T>(ordinal, false).Result;
+            => new DbEnumerator(this);
 
         #region New (CoreCLR) schema API
 
@@ -1577,10 +1391,10 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <returns></returns>
         public ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
-            => new DbColumnSchemaGenerator(_connection, _rowDescription, (_behavior & CommandBehavior.KeyInfo) != 0)
+            => new DbColumnSchemaGenerator(_connection, RowDescription, (Behavior & CommandBehavior.KeyInfo) != 0)
                 .GetColumnSchema();
 
-#if NETSTANDARD1_3
+#if !NET45 && !NET451
         ReadOnlyCollection<DbColumn> IDbColumnSchemaGenerator.GetColumnSchema()
             => new ReadOnlyCollection<DbColumn>(GetColumnSchema().Cast<DbColumn>().ToList());
 #endif
@@ -1588,7 +1402,6 @@ namespace EnterpriseDB.EDBClient
         #endregion
 
         #region Schema metadata table
-#if !NETSTANDARD1_3
 
         /// <summary>
         /// Returns a System.Data.DataTable that describes the column metadata of the DataReader.
@@ -1617,7 +1430,7 @@ namespace EnterpriseDB.EDBClient
             table.Columns.Add("BaseTableName", typeof(string));
             table.Columns.Add("DataType", typeof(Type));
             table.Columns.Add("AllowDBNull", typeof(bool));
-            table.Columns.Add("ProviderType", typeof(Type));
+            table.Columns.Add("ProviderType", typeof(int));
             table.Columns.Add("IsAliased", typeof(bool));
             table.Columns.Add("IsExpression", typeof(bool));
             table.Columns.Add("IsIdentity", typeof(bool));
@@ -1645,8 +1458,9 @@ namespace EnterpriseDB.EDBClient
                 row["BaseColumnName"] = column.BaseColumnName;
                 row["BaseSchemaName"] = column.BaseSchemaName;
                 row["BaseTableName"] = column.BaseTableName;
-                row["DataType"] = row["ProviderType"] = column.DataType; // Non-standard
+                row["DataType"] = column.DataType;
                 row["AllowDBNull"] = (object)column.AllowDBNull ?? DBNull.Value;
+                row["ProviderType"] = column.EDBDbType ?? EDBDbType.Unknown;
                 row["IsAliased"] = column.IsAliased == true;
                 row["IsExpression"] = column.IsExpression == true;
                 row["IsIdentity"] = column.IsIdentity == true;
@@ -1662,17 +1476,18 @@ namespace EnterpriseDB.EDBClient
             return table;
         }
 
-#endif
         #endregion Schema metadata table
 
         #region Checks
 
-        void CheckRowAndOrdinal(int ordinal)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void CheckRowAndOrdinal(int ordinal)
         {
             CheckRow();
-            CheckOrdinal(ordinal);
+            CheckColumn(ordinal);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CheckRow()
         {
             if (!IsOnRow)
@@ -1680,12 +1495,14 @@ namespace EnterpriseDB.EDBClient
         }
 
         // ReSharper disable once UnusedParameter.Local
-        void CheckOrdinal(int ordinal)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void CheckColumn(int column)
         {
-            if (ordinal < 0 || ordinal >= FieldCount)
+            if (column < 0 || column >= FieldCount)
                 throw new IndexOutOfRangeException($"Column must be between {0} and {(FieldCount - 1)}");
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CheckResultSet()
         {
             if (FieldCount == 0)
@@ -1693,24 +1510,14 @@ namespace EnterpriseDB.EDBClient
         }
 
         #endregion
+    }
 
-        #region Enums
-
-        enum ReaderState
-        {
-            InResult,
-            BetweenResults,
-            Consumed,
-            Closed,
-        }
-
-        enum ReadResult
-        {
-            RowRead,
-            RowNotRead,
-            ReadAgain,
-        }
-
-        #endregion
+    enum ReaderState
+    {
+        BeforeResult,
+        InResult,
+        BetweenResults,
+        Consumed,
+        Closed,
     }
 }

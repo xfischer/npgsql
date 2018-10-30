@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,12 +21,11 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using EDBTypes;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -40,19 +39,70 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// </summary>
     class UnknownTypeHandler : TextHandler
     {
-        internal UnknownTypeHandler(TypeHandlerRegistry registry) : base(UnknownBackendType.Instance, registry) {}
+        readonly EDBConnector _connector;
 
-        public override ValueTask<string> Read(ReadBuffer buf, int byteLen, bool async, FieldDescription fieldDescription = null)
+        internal UnknownTypeHandler(EDBConnection connection) : base(connection)
+        {
+            _connector = connection.Connector;
+            PostgresType = UnknownBackendType.Instance;
+        }
+
+        #region Read
+
+        public override ValueTask<string> Read(EDBReadBuffer buf, int byteLen, bool async, FieldDescription fieldDescription = null)
         {
             if (fieldDescription == null)
                 throw new Exception($"Received an unknown field but {nameof(fieldDescription)} is null (i.e. COPY mode)");
 
             if (fieldDescription.IsBinaryFormat)
             {
+                // We can't do anything with a binary representation of an unknown type - the user should have
+                // requested text. Skip the data and throw.
                 buf.Skip(byteLen);
-                throw new SafeReadException(new NotSupportedException($"The field '{fieldDescription.Name}' has a type currently unknown to EnterpriseDB.EDBClient (OID {fieldDescription.TypeOID}). You can retrieve it as a string by marking it as unknown, please see the FAQ."));
+                // At least get the name of the PostgreSQL type for the exception
+                throw new EDBSafeReadException(new NotSupportedException(
+                    _connector.TypeMapper.DatabaseInfo.ByOID.TryGetValue(fieldDescription.TypeOID, out var pgType)
+                        ? $"The field '{fieldDescription.Name}' has type '{pgType.DisplayName}', which is currently unknown to EnterpriseDB.EDBClient. You can retrieve it as a string by marking it as unknown, please see the FAQ."
+                        : $"The field '{fieldDescription.Name}' has a type currently unknown to EnterpriseDB.EDBClient (OID {fieldDescription.TypeOID}). You can retrieve it as a string by marking it as unknown, please see the FAQ."
+                ));
             }
             return base.Read(buf, byteLen, async, fieldDescription);
         }
+
+        #endregion Read
+
+        #region Write
+
+        // Allow writing anything that is a string or can be converted to one via the unknown type handler
+
+        protected internal override int ValidateAndGetLength<T2>(T2 value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+            => ValidateObjectAndGetLength(value, ref lengthCache, parameter);
+
+        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        {
+            if (value is string asString)
+                return base.ValidateAndGetLength(asString, ref lengthCache, parameter);
+
+            var converted = Convert.ToString(value);
+            if (parameter == null)
+                throw CreateConversionButNoParamException(value.GetType());
+            parameter.ConvertedValue = converted;
+            return base.ValidateAndGetLength(converted, ref lengthCache, parameter);
+        }
+
+        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        {
+            if (value == null || value is DBNull)
+                return base.WriteObjectWithLength(value, buf, lengthCache, parameter, async);
+
+            buf.WriteInt32(ValidateObjectAndGetLength(value, ref lengthCache, parameter));
+            return base.Write(
+                value is string asString
+                    ? asString
+                    : (string)parameter.ConvertedValue,
+                buf, lengthCache, parameter, async);
+        }
+
+        #endregion Write
     }
 }

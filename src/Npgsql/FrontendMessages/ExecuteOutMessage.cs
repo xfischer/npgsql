@@ -49,7 +49,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         internal override int Length => 1 + 4 + (Portal.Length + 1);
 
-        internal override void WriteFully(WriteBuffer buf)
+        internal override void WriteFully(EDBWriteBuffer buf)
         {
             Debug.Assert(Portal != null && Portal.All(c => c < 128));
 

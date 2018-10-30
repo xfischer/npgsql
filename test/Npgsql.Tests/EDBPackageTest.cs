@@ -67,13 +67,13 @@ namespace EnterpriseDB.EDBClient.Tests
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand com = new EDBCommand("",con);
-			com.CommandType = CommandType.Text;
+			//EDBCommand com = new EDBCommand("",con);
+			//com.CommandType = CommandType.Text;
 
-			com.CommandText = "DROP PACKAGE PKG_INVOKE_exec_pro;";
-			com.ExecuteNonQuery();
-			com.CommandText = "DROP PACKAGE PKG_Variable_Test;";
-			com.ExecuteNonQuery();
+			//com.CommandText = "DROP PACKAGE PKG_INVOKE_exec_pro;";
+			//com.ExecuteNonQuery();
+			//com.CommandText = "DROP PACKAGE PKG_Variable_Test;";
+			//com.ExecuteNonQuery();
 	
 			TestUtil.closeDB(con);
 		}
@@ -1498,7 +1498,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 
                 rst.Close();
 
@@ -1520,7 +1520,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 
                 rst.Close();
 
@@ -1946,7 +1946,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 EDBCommand com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
 
-                string CursorTable = "CREATE TABLE TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+                string CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
                 com.CommandText = CursorTable;
                 com.ExecuteNonQuery();
                 CursorTable = "CREATE OR REPLACE package terse_pkg10 is " +
@@ -2024,7 +2024,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("1", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 
@@ -2054,7 +2054,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("2", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("3.3000", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("3.30", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("3.3", Convert.ToString(cur[9].ToString()));
 
@@ -2084,7 +2084,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("3", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.1000", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.10", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 
@@ -2114,7 +2114,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("5", Convert.ToString(cur[7].ToString()));
 
-                Assert.AreEqual("2.2000", Convert.ToString(cur[8].ToString()));
+                Assert.AreEqual("2.20", Convert.ToString(cur[8].ToString()));
 
                 Assert.AreEqual("2.2", Convert.ToString(cur[9].ToString()));
 

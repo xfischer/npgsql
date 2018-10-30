@@ -68,7 +68,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             return this;
         }
 
-        internal override async Task Write(WriteBuffer buf, bool async, CancellationToken cancellationToken)
+        internal override async Task Write(EDBWriteBuffer buf, bool async)
         {
             Debug.Assert(Statement != null && Statement.All(c => c < 128));
             Debug.Assert(Portal != null && Portal.All(c => c < 128));
@@ -94,7 +94,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             if (buf.WriteSpaceLeft < headerLength)
             {
                 Debug.Assert(buf.Size >= headerLength, "Buffer too small for Bind header");
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
             }
 
 
@@ -116,7 +116,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             if (formatCodeListLength == 1)
             {
                 if (buf.WriteSpaceLeft < 2)
-                    await buf.Flush(async, cancellationToken);
+                    await buf.Flush(async);
                 buf.WriteInt16((short)FormatCode.Binary);
             }
             else if (formatCodeListLength > 1)
@@ -130,7 +130,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             }
 
             if (buf.WriteSpaceLeft < 2)
-                await buf.Flush(async, cancellationToken);
+                await buf.Flush(async);
 
             buf.WriteInt16(_parameters.Count);
 
@@ -139,12 +139,12 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
                 try
                 {
                     param.LengthCache?.Rewind();
-                    if (param.Handler == null)
+                    if (param.Direction == System.Data.ParameterDirection.Output)
                     {
                         buf.WriteInt32(-1);
                         continue;
                     }
-                    await param.WriteWithLength(buf, async, cancellationToken);
+                    await param.WriteWithLength(buf, async);
                 } catch (Exception e)
                 {
                     e.ToString();
@@ -155,7 +155,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             if (UnknownResultTypeList != null)
             {
                 if (buf.WriteSpaceLeft < 2 + UnknownResultTypeList.Length * 2)
-                    await buf.Flush(async, cancellationToken);
+                    await buf.Flush(async);
                 buf.WriteInt16(UnknownResultTypeList.Length);
                 foreach (var t in UnknownResultTypeList)
                     buf.WriteInt16(t ? 0 : 1);
@@ -163,7 +163,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             else
             {
                 if (buf.WriteSpaceLeft < 4)
-                    await buf.Flush(async, cancellationToken);
+                    await buf.Flush(async);
                 buf.WriteInt16(1);
                 buf.WriteInt16(AllResultTypesAreUnknown ? 0 : 1);
             }

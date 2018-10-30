@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EnterpriseDB.EDBClient;
-using EnterpriseDB.EDBClient.Tests;
+using System.Globalization;
 using EDBTypes;
 using NUnit.Framework;
 
@@ -16,12 +12,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types
     /// </remarks>
     class RangeTests : TestBase
     {
-        [Test, Description("Resolves a range type handler via the different pathways")]
+        [Test, NUnit.Framework.Description("Resolves a range type handler via the different pathways")]
         public void RangeTypeResolution()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
-                ApplicationName = nameof(RangeTypeResolution),  // Prevent backend type caching in TypeHandlerRegistry
+                ApplicationName = nameof(RangeTypeResolution), // Prevent backend type caching in TypeHandlerRegistry
                 Pooling = false
             };
 
@@ -100,12 +96,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 var value = new EDBRange<string>(
                     new string('a', conn.Settings.WriteBufferSize + 10),
                     new string('z', conn.Settings.WriteBufferSize + 10)
-                    );
+                );
 
                 //var value = new EDBRange<string>("bar", "foo");
                 using (var cmd = new EDBCommand("SELECT @p", conn))
                 {
-                    cmd.Parameters.Add(new EDBParameter("p", EDBDbType.Range | EDBDbType.Text) {Value = value});
+                    cmd.Parameters.Add(new EDBParameter("p", EDBDbType.Range | EDBDbType.Text) { Value = value });
                     using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                     {
                         reader.Read();
@@ -138,50 +134,80 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         [Test]
         public void RangeEquality_FiniteRange()
         {
-           var r1 = new EDBRange<int>(0, true, false, 1, false, false);
+            var r1 = new EDBRange<int>(0, true, false, 1, false, false);
 
-           //different bounds
-           var r2 = new EDBRange<int>(1, true, false, 2, false, false);
-           Assert.IsFalse(r1 == r2);
+            //different bounds
+            var r2 = new EDBRange<int>(1, true, false, 2, false, false);
+            Assert.IsFalse(r1 == r2);
 
-           //lower bound is not inclusive
-           var r3 = new EDBRange<int>(0, false, false, 1, false, false);
-           Assert.IsFalse(r1 == r3);
-           
-           //upper bound is inclusive
-           var r4 = new EDBRange<int>(0, true, false, 1, true, false);
-           Assert.IsFalse(r1 == r4);
+            //lower bound is not inclusive
+            var r3 = new EDBRange<int>(0, false, false, 1, false, false);
+            Assert.IsFalse(r1 == r3);
 
-           var r5 = new EDBRange<int>(0, true, false, 1, false, false);
-           Assert.IsTrue(r1 == r5);
+            //upper bound is inclusive
+            var r4 = new EDBRange<int>(0, true, false, 1, true, false);
+            Assert.IsFalse(r1 == r4);
+
+            var r5 = new EDBRange<int>(0, true, false, 1, false, false);
+            Assert.IsTrue(r1 == r5);
 
             //check some other combinations while we are here
-           Assert.IsFalse(r2 == r3);
-           Assert.IsFalse(r2 == r4);
-           Assert.IsFalse(r3 == r4);
+            Assert.IsFalse(r2 == r3);
+            Assert.IsFalse(r2 == r4);
+            Assert.IsFalse(r3 == r4);
         }
 
         [Test]
         public void RangeEquality_InfiniteRange()
         {
-           var r1 = new EDBRange<int>(0, false, true, 1, false, false);
+            var r1 = new EDBRange<int>(0, false, true, 1, false, false);
 
-           //different upper bound (lower bound shoulnd't matter since it is infinite)
-           var r2 = new EDBRange<int>(1, false, true, 2, false, false);
-           Assert.IsFalse(r1 == r2);
+            //different upper bound (lower bound shoulnd't matter since it is infinite)
+            var r2 = new EDBRange<int>(1, false, true, 2, false, false);
+            Assert.IsFalse(r1 == r2);
 
-           //upper bound is inclusive
-           var r3 = new EDBRange<int>(0, false, true, 1, true, false);
-           Assert.IsFalse(r1 == r3);
-           
-           //value of lower bound shoulnd't matter since it is infinite
-           var r4 = new EDBRange<int>(10, false, true, 1, false, false);
-           Assert.IsTrue(r1 == r4);
+            //upper bound is inclusive
+            var r3 = new EDBRange<int>(0, false, true, 1, true, false);
+            Assert.IsFalse(r1 == r3);
+
+            //value of lower bound shoulnd't matter since it is infinite
+            var r4 = new EDBRange<int>(10, false, true, 1, false, false);
+            Assert.IsTrue(r1 == r4);
 
             //check some other combinations while we are here
-           Assert.IsFalse(r2 == r3);
-           Assert.IsFalse(r2 == r4);
-           Assert.IsFalse(r3 == r4);
+            Assert.IsFalse(r2 == r3);
+            Assert.IsFalse(r2 == r4);
+            Assert.IsFalse(r3 == r4);
+        }
+
+        [Test]
+        public void RangeHashCode_ValueTypes()
+        {
+            EDBRange<int> a = default;
+            EDBRange<int> b = EDBRange<int>.Empty;
+            EDBRange<int> c = EDBRange<int>.Parse("(,)");
+
+            Assert.IsFalse(a.Equals(b));
+            Assert.IsFalse(a.Equals(c));
+            Assert.IsFalse(b.Equals(c));
+            Assert.AreNotEqual(a.GetHashCode(), b.GetHashCode());
+            Assert.AreNotEqual(a.GetHashCode(), c.GetHashCode());
+            Assert.AreNotEqual(b.GetHashCode(), c.GetHashCode());
+        }
+
+        [Test]
+        public void RangeHashCode_ReferenceTypes()
+        {
+            EDBRange<string> a= default;
+            EDBRange<string> b = EDBRange<string>.Empty;
+            EDBRange<string> c = EDBRange<string>.Parse("(,)");
+
+            Assert.IsFalse(a.Equals(b));
+            Assert.IsFalse(a.Equals(c));
+            Assert.IsFalse(b.Equals(c));
+            Assert.AreNotEqual(a.GetHashCode(), b.GetHashCode());
+            Assert.AreNotEqual(a.GetHashCode(), c.GetHashCode());
+            Assert.AreNotEqual(b.GetHashCode(), c.GetHashCode());
         }
 
         [OneTimeSetUp]
@@ -190,5 +216,214 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             using (var conn = OpenConnection())
                 TestUtil.MinimumPgVersion(conn, "9.2.0");
         }
+
+        #region ParseTests
+
+        [Theory]
+        [TestCaseSource(nameof(DateTimeRangeTheoryData))]
+        public void GivenDateRangeLiteral_WhenConverted_ThenReturnsDateRange(EDBRange<DateTime> input)
+        {
+            // Arrange
+            var wellKnownText = input.ToString();
+
+            // Act
+            var result = EDBRange<DateTime>.Parse(wellKnownText);
+
+            // Assert
+            Assert.AreEqual(input, result);
+        }
+
+        [Theory]
+        [TestCase("empty")]
+        [TestCase("EMPTY")]
+        [TestCase("  EmPtY  ")]
+        public void GivenEmptyIntRangeLiteral_WhenParsed_ThenReturnsEmptyIntRange(string value)
+        {
+            // Act
+            var result = EDBRange<int>.Parse(value);
+
+            // Assert
+            Assert.AreEqual(EDBRange<int>.Empty, result);
+        }
+
+        [Theory]
+        [TestCase("(0,1)")]
+        [TestCase("(0,1]")]
+        [TestCase("[0,1)")]
+        [TestCase("[0,1]")]
+        [TestCase(" [ 0 , 1 ] ")]
+        public void GivenIntRangeLiteral_WhenParsed_ThenReturnsIntRange(string input)
+        {
+            // Act
+            var result = EDBRange<int>.Parse(input);
+
+            // Assert
+            Assert.AreEqual(input.Replace(" ", null), result.ToString());
+        }
+
+        [Theory]
+        [TestCase("(1,1)", "empty")]
+        [TestCase("[1,1)", "empty")]
+        [TestCase("[,1]", "(,1]")]
+        [TestCase("[1,]", "[1,)")]
+        [TestCase("[,]", "(,)")]
+        [TestCase("[-infinity,infinity]", "(,)")]
+        [TestCase("[ -infinity , infinity ]", "(,)")]
+        [TestCase("[-infinity,infinity)", "(,)")]
+        [TestCase("(-infinity,infinity]", "(,)")]
+        [TestCase("(-infinity,infinity)", "(,)")]
+        [TestCase("[null,null]", "(,)")]
+        [TestCase("[null,infinity]", "(,)")]
+        [TestCase("[-infinity,null]", "(,)")]
+        public void GivenPoorlyFormedIntRangeLiteral_WhenParsed_ThenReturnsIntRange(string input, string normalized)
+        {
+            // Act
+            var result = EDBRange<int>.Parse(input);
+
+            // Assert
+            Assert.AreEqual(normalized, result.ToString());
+        }
+
+        [Theory]
+        [TestCase("(1,1)", "empty")]
+        [TestCase("[1,1)", "empty")]
+        [TestCase("[,1]", "(,1]")]
+        [TestCase("[1,]", "[1,)")]
+        [TestCase("[,]", "(,)")]
+        [TestCase("[-infinity,infinity]", "(,)")]
+        [TestCase("[ -infinity , infinity ]", "(,)")]
+        [TestCase("[-infinity,infinity)", "(,)")]
+        [TestCase("(-infinity,infinity]", "(,)")]
+        [TestCase("(-infinity,infinity)", "(,)")]
+        [TestCase("[null,null]", "(,)")]
+        [TestCase("[null,infinity]", "(,)")]
+        [TestCase("[-infinity,null]", "(,)")]
+        public void GivenPoorlyFormedNullableIntRangeLiteral_WhenParsed_ThenReturnsNullableIntRange(string input, string normalized)
+        {
+            // Act
+            var result = EDBRange<int?>.Parse(input);
+
+            // Assert
+            Assert.AreEqual(normalized, result.ToString());
+        }
+
+        [Theory]
+        [TestCase("(a,a)", "empty")]
+        [TestCase("[a,a)", "empty")]
+        [TestCase("[a,a]", "[a,a]")]
+        [TestCase("(a,b)", "(a,b)")]
+        public void GivenStringRangeLiteral_WhenParsed_ThenReturnsStringRange(string input, string normalized)
+        {
+            // Act
+            var result = EDBRange<string>.Parse(input);
+
+            // Assert
+            Assert.AreEqual(normalized, result.ToString());
+        }
+
+        [Theory]
+        [TestCase("(one,two)")]
+        public void GivenSimpleTypeRangeLiteral_WhenParsed_ThenReturnsSimpleTypeRange(string input)
+        {
+            // Act
+            var result = EDBRange<SimpleType>.Parse(input);
+
+            // Assert
+            Assert.AreEqual(input, result.ToString());
+        }
+
+        [Theory]
+        [TestCase("0, 1)")]
+        [TestCase("(0 1)")]
+        [TestCase("(0, 1")]
+        [TestCase(" 0, 1 ")]
+        public void GivenMalformedRangeLiteral_WhenParsed_ThenThrowsFormatException(string input)
+        {
+            Assert.Throws<FormatException>(() => EDBRange<int>.Parse(input));
+        }
+
+        [Test]
+        public void CanGetTypeConverter()
+        {
+            // Arrange
+            EDBRange<int>.RangeTypeConverter.Register();
+            var converter = TypeDescriptor.GetConverter(typeof(EDBRange<int>));
+
+            // Act
+            Assert.IsInstanceOf<EDBRange<int>.RangeTypeConverter>(converter);
+            Assert.IsTrue(converter.CanConvertFrom(typeof(string)));
+            var result = converter.ConvertFromString("empty");
+
+            // Assert
+            Assert.AreEqual(EDBRange<int>.Empty, result);
+        }
+
+        #endregion
+
+        #region TheoryData
+
+        [TypeConverter(typeof(SimpleTypeConverter))]
+        class SimpleType
+        {
+            string Value { get; }
+
+            SimpleType(string value)
+            {
+                Value = value;
+            }
+
+            public override string ToString()
+            {
+                return Value;
+            }
+
+            class SimpleTypeConverter : TypeConverter
+            {
+                public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+                    => typeof(string) == sourceType;
+
+                public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+                    => new SimpleType(value?.ToString());
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        static readonly DateTime May_17_2018 = DateTime.Parse("2018-05-17");
+
+        // ReSharper disable once InconsistentNaming
+        static readonly DateTime May_18_2018 = DateTime.Parse("2018-05-18");
+
+        /// <summary>
+        /// Provides theory data for <see cref="EDBRange{T}"/> of <see cref="DateTime"/>.
+        /// </summary>
+        static object[][] DateTimeRangeTheoryData =>
+            new object[][]
+            {
+                // (2018-05-17, 2018-05-18)
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, false) },
+
+                // [2018-05-17, 2018-05-18]
+                new object[] { new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, true, false) },
+
+                // [2018-05-17, 2018-05-18)
+                new object[] { new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, false, false) },
+
+                // (2018-05-17, 2018-05-18]
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, true, false) },
+
+                // (,)
+                new object[] { new EDBRange<DateTime>(default, false, true, default, false, true) },
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, true) },
+
+                // (2018-05-17,)
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, false, default, false, true) },
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, true) },
+
+                // (,2018-05-18)
+                new object[] { new EDBRange<DateTime>(default, false, true, May_18_2018, false, false) },
+                new object[] { new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, false) }
+            };
+
+        #endregion
     }
 }

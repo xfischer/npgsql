@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -24,6 +24,8 @@
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -35,28 +37,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("point", EDBDbType.Point, typeof(EDBPoint))]
-    class PointHandler : SimpleTypeHandler<EDBPoint>, ISimpleTypeHandler<string>
+    class PointHandler : EDBSimpleTypeHandler<EDBPoint>
     {
-        internal PointHandler(PostgresType postgresType) : base(postgresType) { }
-
-        public override EDBPoint Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBPoint Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => new EDBPoint(buf.ReadDouble(), buf.ReadDouble());
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength(EDBPoint value, EDBParameter parameter)
+            => 16;
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override void Write(EDBPoint value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBPoint))
-                throw CreateConversionException(value.GetType());
-            return 16;
-        }
-
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var v = (EDBPoint)value;
-            buf.WriteDouble(v.X);
-            buf.WriteDouble(v.Y);
+            buf.WriteDouble(value.X);
+            buf.WriteDouble(value.Y);
         }
     }
 }

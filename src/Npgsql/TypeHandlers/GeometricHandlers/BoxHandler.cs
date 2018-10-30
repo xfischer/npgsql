@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,9 +21,9 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -35,33 +35,23 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("box", EDBDbType.Box, typeof(EDBBox))]
-    class BoxHandler : SimpleTypeHandler<EDBBox>, ISimpleTypeHandler<string>
+    class BoxHandler : EDBSimpleTypeHandler<EDBBox>
     {
-        internal BoxHandler(PostgresType postgresType) : base(postgresType) { }
-
-        public override EDBBox Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBBox Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => new EDBBox(
                 new EDBPoint(buf.ReadDouble(), buf.ReadDouble()),
                 new EDBPoint(buf.ReadDouble(), buf.ReadDouble())
             );
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength(EDBBox value, EDBParameter parameter)
+            => 32;
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override void Write(EDBBox value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBBox))
-                throw CreateConversionException(value.GetType());
-            return 32;
-        }
-
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var v = (EDBBox)value;
-            buf.WriteDouble(v.Right);
-            buf.WriteDouble(v.Top);
-            buf.WriteDouble(v.Left);
-            buf.WriteDouble(v.Bottom);
+            buf.WriteDouble(value.Right);
+            buf.WriteDouble(value.Top);
+            buf.WriteDouble(value.Left);
+            buf.WriteDouble(value.Bottom);
         }
     }
 }

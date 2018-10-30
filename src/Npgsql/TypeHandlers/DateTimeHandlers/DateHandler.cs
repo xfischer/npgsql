@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -26,15 +26,22 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
 using JetBrains.Annotations;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
+    [TypeMapping("date", EDBDbType.Date, DbType.Date, typeof(EDBDate))]
+    class DateHandlerFactory : EDBTypeHandlerFactory<DateTime>
+    {
+        protected override EDBTypeHandler<DateTime> Create(EDBConnection conn)
+            => new DateHandler(conn.Connector.ConvertInfinityDateTime);
+    }
+
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("date", EDBDbType.Date, DbType.Date, typeof(EDBDate))]
-    class DateHandler : SimpleTypeHandlerWithPsv<DateTime, EDBDate>
+    class DateHandler : EDBSimpleTypeHandlerWithPsv<DateTime, EDBDate>
     {
         internal const int PostgresEpochJdate = 2451545; // == date2j(2000, 1, 1)
         internal const int MonthsPerYear = 12;
@@ -45,16 +52,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         readonly bool _convertInfinityDateTime;
 
-        public DateHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType)
+        public DateHandler(bool convertInfinityDateTime)
         {
-            _convertInfinityDateTime = registry.Connector.ConvertInfinityDateTime;
+            _convertInfinityDateTime = convertInfinityDateTime;
         }
 
-        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        #region Read
+
+        public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            // TODO: Convert directly to DateTime without passing through EDBDate?
-            var EDBDate = ((ISimpleTypeHandler<EDBDate>) this).Read(buf, len, fieldDescription);
+            var EDBDate = ReadPsv(buf, len, fieldDescription);
             try {
                 if (EDBDate.IsFinite)
                     return (DateTime)EDBDate;
@@ -64,14 +71,14 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                     return DateTime.MaxValue;
                 return DateTime.MinValue;
             } catch (Exception e) {
-                throw new SafeReadException(e);
+                throw new EDBSafeReadException(e);
             }
         }
 
         /// <remarks>
         /// Copied wholesale from Postgresql backend/utils/adt/datetime.c:j2date
         /// </remarks>
-        internal override EDBDate ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        protected override EDBDate ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             var binDate = buf.ReadInt32();
 
@@ -86,50 +93,44 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public override int ValidateAndGetLength(object value, [CanBeNull] EDBParameter parameter)
-        {
-            if (!(value is DateTime) && !(value is EDBDate))
-            {
-                var converted = Convert.ToDateTime(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
-            }
-            return 4;
-        }
+        #endregion Read
 
-        protected override void Write(object value, WriteBuffer buf, [CanBeNull] EDBParameter parameter)
-        {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
+        #region Write
 
-            EDBDate date;
-            if (value is EDBDate)
-                date = (EDBDate)value;
-            else if (value is DateTime)
+        public override int ValidateAndGetLength(DateTime value, EDBParameter parameter)
+            => 4;
+
+        public override int ValidateAndGetLength(EDBDate value, EDBParameter parameter)
+            => 4;
+
+        public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter parameter)
+        {
+            EDBDate value2;
+            if (_convertInfinityDateTime)
             {
-                var dt = (DateTime)value;
-                if (_convertInfinityDateTime)
-                {
-                    if (dt == DateTime.MaxValue)
-                        date = EDBDate.Infinity;
-                    else if (dt == DateTime.MinValue)
-                        date = EDBDate.NegativeInfinity;
-                    else
-                        date = new EDBDate(dt);
-                }
+                if (value == DateTime.MaxValue)
+                    value2 = EDBDate.Infinity;
+                else if (value == DateTime.MinValue)
+                    value2 = EDBDate.NegativeInfinity;
                 else
-                    date = new EDBDate(dt);
+                    value2 = new EDBDate(value);
             }
             else
-                throw new InvalidOperationException("Internal EnterpriseDB.EDBClient bug, please report.");
+                value2 = new EDBDate(value);
 
-            if (date == EDBDate.NegativeInfinity)
+            Write(value2, buf, parameter);
+        }
+
+        public override void Write(EDBDate value, EDBWriteBuffer buf, EDBParameter parameter)
+        {
+            if (value == EDBDate.NegativeInfinity)
                 buf.WriteInt32(int.MinValue);
-            else if (date == EDBDate.Infinity)
+            else if (value == EDBDate.Infinity)
                 buf.WriteInt32(int.MaxValue);
             else
-                buf.WriteInt32(date.DaysSinceEra - 730119);
+                buf.WriteInt32(value.DaysSinceEra - 730119);
         }
+
+        #endregion Write
     }
 }

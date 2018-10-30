@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -32,11 +32,9 @@ using JetBrains.Annotations;
 // ReSharper disable once CheckNamespace
 namespace EDBTypes
 {
-#if !NETSTANDARD1_3
     [Serializable]
-#endif
-    public struct EDBDate : IEquatable<EDBDate>, IComparable<EDBDate>, IComparable, IComparer<EDBDate>,
-                               IComparer
+    public readonly struct EDBDate : IEquatable<EDBDate>, IComparable<EDBDate>, IComparable,
+        IComparer<EDBDate>, IComparer
     {
         //Number of days since January 1st CE (January 1st EV). 1 Jan 1 CE = 0, 2 Jan 1 CE = 1, 31 Dec 1 BCE = -1, etc.
         readonly int _daysSinceEra;

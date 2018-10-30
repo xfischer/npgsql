@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The Npgsql Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -39,18 +39,18 @@ namespace EnterpriseDB.EDBClient.Tests
         /// May be overridden in fixtures, e.g. to set special connection parameters
         /// </summary>
         public static string ConnectionString =>
-            Environment.GetEnvironmentVariable("NPGSQL_TEST_DB") ?? DefaultConnectionString;
+            Environment.GetEnvironmentVariable("EDB_TEST_DB") ?? DefaultConnectionString;
 
         /// <summary>
-        /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
+        /// Unless the EDB_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
         public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"]
-            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=enterprisedb;Password=edb;Database=test;";
+            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;";
 
         #region Utilities for use by tests
 
-        protected EDBConnection OpenConnection(string connectionString = null)
+        protected virtual EDBConnection OpenConnection(string connectionString = null)
         {
             if (connectionString == null)
                 connectionString = ConnectionString;

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,19 +25,30 @@ using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
+    [TypeMapping("timestamp", EDBDbType.Timestamp, new[] { DbType.DateTime, DbType.DateTime2 }, new[] { typeof(EDBDateTime), typeof(DateTime) }, DbType.DateTime)]
+    class TimestampHandlerFactory : EDBTypeHandlerFactory<DateTime>
+    {
+        // Check for the legacy floating point timestamps feature
+        protected override EDBTypeHandler<DateTime> Create(EDBConnection conn)
+            => new TimestampHandler(conn.HasIntegerDateTimes, conn.Connector.ConvertInfinityDateTime);
+    }
+
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
     /// </remarks>
-    [TypeMapping("timestamp", EDBDbType.Timestamp, new[] { DbType.DateTime, DbType.DateTime2 }, new [] { typeof(EDBDateTime), typeof(DateTime) }, DbType.DateTime)]
-    class TimeStampHandler : SimpleTypeHandlerWithPsv<DateTime, EDBDateTime>
+    class TimestampHandler : EDBSimpleTypeHandlerWithPsv<DateTime, EDBDateTime>
     {
+        internal const uint TypeOID = 1114;
+
         /// <summary>
         /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
-        /// fields. EnterpriseDB.EDBClient (currently) does not support this mode.
+        /// fields. Some PostgreSQL-like databases (e.g. CrateDB) use floating-point representation by default and do not
+        /// provide the option of switching to integer format.
         /// </summary>
         readonly bool _integerFormat;
 
@@ -47,15 +58,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// </summary>
         protected readonly bool ConvertInfinityDateTime;
 
-        internal TimeStampHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType)
+        internal TimestampHandler(bool integerFormat, bool convertInfinityDateTime)
         {
             // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
-            _integerFormat = !registry.Connector.BackendParams.TryGetValue("integer_datetimes", out var s) || s == "on";
-            ConvertInfinityDateTime = registry.Connector.ConvertInfinityDateTime;
+            _integerFormat = integerFormat;
+            ConvertInfinityDateTime = convertInfinityDateTime;
         }
 
-        public override DateTime Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        #region Read
+
+        public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
             // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
             var ts = ReadTimeStamp(buf, len, fieldDescription);
@@ -71,19 +83,22 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
             catch (Exception e)
             {
-                throw new SafeReadException(e);
+                throw new EDBSafeReadException(e);
             }
         }
 
-        internal override EDBDateTime ReadPsv(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        protected override EDBDateTime ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => ReadTimeStamp(buf, len, fieldDescription);
 
-        protected EDBDateTime ReadTimeStamp(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
-        {
-            if (!_integerFormat) {
-                throw new NotSupportedException("Old floating point representation for timestamps not supported");
-            }
+#pragma warning disable CA1801 // Review unused parameters
+        protected EDBDateTime ReadTimeStamp(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => _integerFormat
+                ? ReadInteger(buf)
+                : ReadDouble(buf);
+#pragma warning restore CA1801 // Review unused parameters
 
+        EDBDateTime ReadInteger(EDBReadBuffer buf)
+        {
             var value = buf.ReadInt64();
             if (value == long.MaxValue)
                 return EDBDateTime.Infinity;
@@ -112,78 +127,136 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        EDBDateTime ReadDouble(EDBReadBuffer buf)
         {
-            if (!(value is DateTime) && !(value is EDBDateTime) && !(value is DateTimeOffset))
-            {
-                var converted = Convert.ToDateTime(value);
-                if (parameter == null)
-                    throw CreateConversionButNoParamException(value.GetType());
-                parameter.ConvertedValue = converted;
+            var value = buf.ReadDouble();
+            if (double.IsPositiveInfinity(value))
+                return EDBDateTime.Infinity;
+            if (double.IsNegativeInfinity(value))
+                return EDBDateTime.NegativeInfinity;
+            if (value >= 0d) {
+                var date = (int)(value / 86400d);
+                var time = value % 86400d;
+
+                date += 730119; // 730119 = days since era (0001-01-01) for 2000-01-01
+                time *= TimeSpan.TicksPerSecond; // seconds to Ticks
+
+                return new EDBDateTime(new EDBDate(date), new TimeSpan((long)time));
+            } else {
+                value = -value;
+                var date = (int)(value / 86400d);
+                var time = value % 86400d;
+                if (time != 0d)
+                {
+                    ++date;
+                    time = 86400d - time;
+                }
+
+                date = 730119 - date; // 730119 = days since era (0001-01-01) for 2000-01-01
+                time *= TimeSpan.TicksPerSecond; // seconds to Ticks
+
+                return new EDBDateTime(new EDBDate(date), new TimeSpan((long)time));
             }
-            return 8;
         }
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
+        #endregion Read
+
+        #region Write
+
+        public override int ValidateAndGetLength(DateTime value, EDBParameter parameter)
+            => 8;
+
+        public override int ValidateAndGetLength(EDBDateTime value, EDBParameter parameter)
+            => 8;
+
+        public override void Write(EDBDateTime value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (parameter?.ConvertedValue != null)
-                value = parameter.ConvertedValue;
-
-            EDBDateTime ts;
-            if (value is EDBDateTime) {
-                ts = (EDBDateTime)value;
-                if (!ts.IsFinite)
-                {
-                    if (ts.IsInfinity)
-                    {
-                        buf.WriteInt64(long.MaxValue);
-                        return;
-                    }
-
-                    if (ts.IsNegativeInfinity)
-                    {
-                        buf.WriteInt64(long.MinValue);
-                        return;
-                    }
-
-                    throw new InvalidOperationException("Internal EnterpriseDB.EDBClient bug, please report.");
-                }
-            }
-            else if (value is DateTime)
-            {
-                var dt = (DateTime)value;
-                if (ConvertInfinityDateTime)
-                {
-                    if (dt == DateTime.MaxValue)
-                    {
-                        buf.WriteInt64(long.MaxValue);
-                        return;
-                    }
-                    if (dt == DateTime.MinValue)
-                    {
-                        buf.WriteInt64(long.MinValue);
-                        return;
-                    }
-                }
-                ts = new EDBDateTime(dt);
-            }
-            else if (value is DateTimeOffset)
-                ts = new EDBDateTime(((DateTimeOffset)value).DateTime);
+            if (_integerFormat)
+                WriteInteger(value, buf);
             else
-                throw new InvalidOperationException("Internal EnterpriseDB.EDBClient bug, please report.");
+                WriteDouble(value, buf);
+        }
 
-            var uSecsTime = ts.Time.Ticks / 10;
-
-            if (ts >= new EDBDateTime(2000, 1, 1, 0, 0, 0))
+        void WriteInteger(EDBDateTime value, EDBWriteBuffer buf)
+        {
+            if (value.IsInfinity)
             {
-                var uSecsDate = (ts.Date.DaysSinceEra - 730119) * 86400000000L;
+                buf.WriteInt64(long.MaxValue);
+                return;
+            }
+
+            if (value.IsNegativeInfinity)
+            {
+                buf.WriteInt64(long.MinValue);
+                return;
+            }
+
+            var uSecsTime = value.Time.Ticks / 10;
+
+            if (value >= new EDBDateTime(2000, 1, 1, 0, 0, 0))
+            {
+                var uSecsDate = (value.Date.DaysSinceEra - 730119) * 86400000000L;
                 buf.WriteInt64(uSecsDate + uSecsTime);
             }
             else
             {
-                var uSecsDate = (730119 - ts.Date.DaysSinceEra) * 86400000000L;
+                var uSecsDate = (730119 - value.Date.DaysSinceEra) * 86400000000L;
                 buf.WriteInt64(-(uSecsDate - uSecsTime));
             }
         }
+
+        void WriteDouble(EDBDateTime value, EDBWriteBuffer buf)
+        {
+            if (value.IsInfinity)
+            {
+                buf.WriteDouble(double.PositiveInfinity);
+                return;
+            }
+
+            if (value.IsNegativeInfinity)
+            {
+                buf.WriteDouble(double.NegativeInfinity);
+                return;
+            }
+
+            var dSecsTime = value.Time.TotalSeconds;
+
+            if (value >= new EDBDateTime(2000, 1, 1, 0, 0, 0))
+            {
+                var dSecsDate = (value.Date.DaysSinceEra - 730119d) * 86400d;
+                buf.WriteDouble(dSecsDate + dSecsTime);
+            }
+            else
+            {
+                var dSecsDate = (730119d - value.Date.DaysSinceEra) * 86400d;
+                buf.WriteDouble(-(dSecsDate - dSecsTime));
+            }
+        }
+
+        public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter parameter)
+        {
+            if (ConvertInfinityDateTime)
+            {
+                if (value == DateTime.MaxValue)
+                {
+                    if (_integerFormat)
+                        buf.WriteInt64(long.MaxValue);
+                    else
+                        buf.WriteDouble(double.PositiveInfinity);
+                    return;
+                }
+                if (value == DateTime.MinValue)
+                {
+                    if (_integerFormat)
+                        buf.WriteInt64(long.MinValue);
+                    else
+                        buf.WriteDouble(double.NegativeInfinity);
+                    return;
+                }
+            }
+            Write(new EDBDateTime(value), buf, parameter);
+        }
+
+        #endregion Write
     }
 }

@@ -1270,7 +1270,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				EDBCommand command=new EDBCommand("REFCURSOR_PKG.getrefcursorproc(:param1)",con);
 				command.CommandType=CommandType.StoredProcedure;
 			
-				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
 			
 				command.Prepare();
                 command.ExecuteNonQuery();

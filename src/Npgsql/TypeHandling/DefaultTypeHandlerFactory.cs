@@ -1,0 +1,62 @@
+﻿#region License
+// The PostgreSQL License
+//
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+//
+// Permission to use, copy, modify, and distribute this software and its
+// documentation for any purpose, without fee, and without a written
+// agreement is hereby granted, provided that the above copyright notice
+// and this paragraph and the following two paragraphs appear in all copies.
+//
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+//
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+#endregion
+
+using System;
+using System.Reflection;
+using EnterpriseDB.EDBClient.PostgresTypes;
+
+namespace EnterpriseDB.EDBClient.TypeHandling
+{
+    /// <summary>
+    /// A type handler factory used to instantiate EnterpriseDB.EDBClient's built-in type handlers.
+    /// </summary>
+    class DefaultTypeHandlerFactory : EDBTypeHandlerFactory
+    {
+        readonly Type _handlerType;
+
+        internal DefaultTypeHandlerFactory(Type handlerType)
+        {
+            // Recursively look for the TypeHandler<T> superclass to extract its T as the
+            // DefaultValueType
+            var baseClass = handlerType;
+            while (!baseClass.GetTypeInfo().IsGenericType || baseClass.GetGenericTypeDefinition() != typeof(EDBTypeHandler<>))
+            {
+                baseClass = baseClass.GetTypeInfo().BaseType;
+                if (baseClass == null)
+                    throw new Exception($"EnterpriseDB.EDBClient type handler {handlerType} doesn't inherit from TypeHandler<>?");
+            }
+
+            DefaultValueType = baseClass.GetGenericArguments()[0];
+            _handlerType = handlerType;
+        }
+
+        internal override EDBTypeHandler Create(PostgresType pgType, EDBConnection conn)
+        {
+            var handler = (EDBTypeHandler)Activator.CreateInstance(_handlerType);
+            handler.PostgresType = pgType;
+            return handler;
+        }
+
+        internal override Type DefaultValueType { get; }
+    }
+}

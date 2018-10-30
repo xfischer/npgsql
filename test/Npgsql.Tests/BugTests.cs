@@ -6,15 +6,51 @@ using System.Text;
 using System.Threading.Tasks;
 using EDBTypes;
 using NUnit.Framework;
-#if !NETCOREAPP1_1
 using System.Transactions;
-#endif
 
 namespace EnterpriseDB.EDBClient.Tests
 {
     public class BugTests : TestBase
     {
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1210")]
+        #region Sequential reader bugs
+
+        [Test, Description("In sequential access, performing a null check on a non-first field would check the first field")]
+        public void SequentialNullCheckOnNonFirstField()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 'X', NULL", conn))
+            using (var dr = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            {
+                dr.Read();
+                Assert.That(dr.IsDBNull(1), Is.True);
+            }
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1034")]
+        public void SequentialSkipOverFirstRow()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1; SELECT 2", conn))
+            using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            {
+                Assert.That(reader.NextResult(), Is.True);
+                Assert.That(reader.Read(), Is.True);
+                Assert.That(reader.GetInt32(0), Is.EqualTo(2));
+            }
+        }
+
+        [Test]
+        public void SequentialConsumeWithNull()
+        {
+            using (var conn = OpenConnection())
+            using (var command = new EDBCommand("SELECT 1, NULL", conn))
+            using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
+                reader.Read();
+        }
+
+        #endregion
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1210")]
         public void ManyParametersWithMixedFormatCode()
         {
             using (var conn = OpenConnection())
@@ -39,7 +75,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1238")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1238")]
         public void RecordWithNonIntField()
         {
             using (var conn = OpenConnection())
@@ -53,7 +89,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1450")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1450")]
         public void Bug1450()
         {
             using (var conn = OpenConnection())
@@ -93,8 +129,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-#if !NETCOREAPP1_1
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1497")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1497")]
         public void Bug1497()
         {
             using (var conn = OpenConnection())
@@ -109,10 +144,8 @@ namespace EnterpriseDB.EDBClient.Tests
                 }
             }
         }
-#endif
 
-#if !NETCOREAPP1_1
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1558")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1558")]
         public void Bug1558()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -126,7 +159,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 conn.Open();
             }
         }
-#endif
 
         [Test]
         public void Bug1695()
@@ -135,7 +167,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 Pooling = false,
                 MaxAutoPrepare = 10,
-                //AutoPrepareMinUsages = 1
+                AutoPrepareMinUsages = 1
             };
             using (var conn = OpenConnection(csb))
             {
@@ -150,9 +182,114 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1700")]
+        public void Bug1700()
+        {
+            Assert.That(() =>
+            {
+                using (var conn = OpenConnection())
+                using (var tx = conn.BeginTransaction())
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT 1";
+                    var reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        // Simulate exception whilst processing the data reader...
+                        throw new InvalidOperationException("Some problem parsing the returned data");
+
+                        // As this exception unwinds the stack, it calls Dispose on the EDBTransaction
+                        // which then throws a EDBOperationInProgressException as it tries to rollback
+                        // the transaction. This hides the underlying cause of the problem (in this case
+                        // our InvalidOperationException exception)
+                    }
+
+                    // Note, we never get here
+                    tx.Commit();
+                }
+            }, Throws.InvalidOperationException.With.Message.EqualTo("Some problem parsing the returned data"));
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1964")]
+        public void Bug1964()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("INVALID SQL", conn))
+            {
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p", Direction = ParameterDirection.Output });
+                Assert.That(() => cmd.ExecuteNonQuery(), Throws.Exception.TypeOf<PostgresException>()
+                    .With.Property(nameof(PostgresException.SqlState)).EqualTo("42601"));
+            }
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1986")]
+        public void Bug1986()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 'hello', 'goodbye'", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                reader.Read();
+                using (var textReader1 = reader.GetTextReader(0))
+                {
+
+                }
+                using (var textReader2 = reader.GetTextReader(1))
+                {
+
+                }
+            }
+        }
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1987")]
+        public void Bug1987()
+        {
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                MaxAutoPrepare = 10,
+                AutoPrepareMinUsages = 2,
+                Pooling = false
+            };
+
+            using (var conn = OpenConnection(csb))
+            {
+                conn.ExecuteNonQuery("CREATE TYPE pg_temp.mood AS ENUM ('sad', 'ok', 'happy')");
+                conn.ReloadTypes();
+                conn.TypeMapper.MapEnum<Mood>("mood");
+                for (var i = 0; i < 2; i++)
+                {
+                    using (var cmd = new EDBCommand("SELECT @p", conn))
+                    {
+                        cmd.Parameters.AddWithValue("p", Mood.Happy);
+                        Assert.That(cmd.ExecuteScalar(), Is.EqualTo(Mood.Happy));
+                    }
+                }
+            }
+        }
+
+        enum Mood { Sad, Ok, Happy };
+
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2003")]
+        public void Bug2003()
+        {
+            // A big RowDescription (larger than buffer size) causes an oversize buffer allocation, but which isn't
+            // picked up by sequential reader which continues to read from the original buffer.
+            using (var conn = OpenConnection())
+            {
+                var longFieldName = new string('x', conn.Settings.ReadBufferSize);
+                using (var cmd = new EDBCommand($"SELECT 8 AS {longFieldName}", conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+                {
+                    reader.Read();
+                    Assert.That(reader.GetInt32(0), Is.EqualTo(8));
+                }
+            }
+        }
+
         #region Bug1285
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1285")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1285")]
         public void Bug1285()
         {
             using (var conn = OpenConnection())

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -39,7 +39,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             ColumnFormatCodes = new List<FormatCode>();
         }
 
-        internal void Load(ReadBuffer buf)
+        internal void Load(EDBReadBuffer buf)
         {
             ColumnFormatCodes.Clear();
 
@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     {
         public override BackendMessageCode Code => BackendMessageCode.CopyInResponse;
 
-        internal new CopyInResponseMessage Load(ReadBuffer buf)
+        internal new CopyInResponseMessage Load(EDBReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     {
         public override BackendMessageCode Code => BackendMessageCode.CopyOutResponse;
 
-        internal new CopyOutResponseMessage Load(ReadBuffer buf)
+        internal new CopyOutResponseMessage Load(EDBReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -87,7 +87,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     {
         public override BackendMessageCode Code => BackendMessageCode.CopyBothResponse;
 
-        internal new CopyBothResponseMessage Load(ReadBuffer buf)
+        internal new CopyBothResponseMessage Load(EDBReadBuffer buf)
         {
             base.Load(buf);
             return this;
@@ -122,7 +122,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         internal override int Length => 5;
 
-        internal override void WriteFully(WriteBuffer buf)
+        internal override void WriteFully(EDBWriteBuffer buf)
         {
             buf.WriteByte((byte)BackendMessageCode.CopyDone);
             buf.WriteInt32(4);

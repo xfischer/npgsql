@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -458,6 +458,12 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual(@"a\b'cde", ((EDBTsQueryLexeme)query).Text);
             Assert.AreEqual(@"'a\\b''cde'", query.ToString());
 
+            query = EDBTsQuery.Parse(@"a <-> b");
+            Assert.AreEqual("'a' <-> 'b'", query.ToString());
+
+            query = EDBTsQuery.Parse("((a & b) <5> c) <-> !d <0> e");
+            Assert.AreEqual("( ( 'a' & 'b' <5> 'c' ) <-> !'d' ) <0> 'e'", query.ToString());
+
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("a b c & &"));
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("&"));
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("|"));
@@ -465,6 +471,21 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("("));
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse(")"));
             Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("()"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("<"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("<-"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("<->"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("a <->"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("<>"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("a <a> b"));
+            Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("a <-1> b"));
+        }
+
+        [Test]
+        public void TsQueryOperatorPrecedence()
+        {
+            var query = EDBTsQuery.Parse("!a <-> b & c | d & e");
+            var expectedGrouping = EDBTsQuery.Parse("((!(a) <-> b) & c) | (d & e)");
+            Assert.AreEqual(expectedGrouping.ToString(), query.ToString());
         }
 
         [Test]
@@ -476,8 +497,9 @@ namespace EnterpriseDB.EDBClient.Tests
             var o = p.Value;
         }
 
+#pragma warning disable 618
         [Test]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/750")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/750")]
         public void EDBInet()
         {
             var v = new EDBInet(IPAddress.Parse("2001:1db8:85a3:1142:1000:8a2e:1370:7334"), 32);
@@ -485,5 +507,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Assert.That(v != null);  // #776
         }
+#pragma warning restore 618
     }
 }

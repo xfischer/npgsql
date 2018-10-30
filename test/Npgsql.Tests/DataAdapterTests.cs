@@ -1,7 +1,7 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -20,8 +20,6 @@
 // ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
-
-#if !NETCOREAPP1_1
 
 using System;
 using System.Data;
@@ -199,7 +197,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 da.Fill(ds);
 
                 //## Insert a new row with id = 1
-                ds.Tables[0].Rows.Add(new Object[] {0.4, 0.5});
+                ds.Tables[0].Rows.Add(0.4, 0.5);
                 da.Update(ds);
 
                 //## change id from 1 to 2
@@ -393,7 +391,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using (var conn = OpenConnection())
             {
-                var command = new EDBCommand("INSERT INTO tableb(field_int2) values (2)", conn);
+                var command = new EDBCommand("insert into tableb(field_int2) values (2)", conn);
                 command.ExecuteNonQuery();
 
                 var ds = new DataSet();
@@ -530,7 +528,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure that the INSERT/UPDATE/DELETE commands are auto-populated on EDBDataAdapter")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/179")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/179")]
         [Ignore("Somehow related to us using a temporary table???")]
         public void AutoPopulateAdapterCommands()
         {
@@ -571,7 +569,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure a correct SQL string is built with GetUpdateCommand(true) using correct parameter names and placeholders")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/397")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/397")]
         [Ignore("Somehow related to us using a temporary table???")]
         public void GetUpdateCommand()
         {
@@ -636,5 +634,3 @@ namespace EnterpriseDB.EDBClient.Tests
         }
     }
 }
-
-#endif

@@ -209,7 +209,7 @@ namespace EnterpriseDB.EDBClient
                     return;
                 }
             }
-            Debug.Assert(i < _candidates.Length);
+            //Debug.Assert(i < _candidates.Length); //TODO Enterprisedb team
         }
 
         internal void ClearAll()

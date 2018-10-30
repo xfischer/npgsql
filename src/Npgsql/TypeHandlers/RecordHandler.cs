@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -22,14 +22,20 @@
 #endregion
 
 using System;
-using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
+    [TypeMapping("record")]
+    class RecordHandlerFactory : EDBTypeHandlerFactory<object[]>
+    {
+        protected override EDBTypeHandler<object[]> Create(EDBConnection conn)
+            => new RecordHandler(conn.Connector.TypeMapper);
+    }
+
     /// <summary>
     /// Type handler for PostgreSQL record types.
     /// </summary>
@@ -42,20 +48,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// * The length of the column(32-bit integer), or -1 if null
     /// * The column data encoded as binary
     /// </remarks>
-    [TypeMapping("record")]
-    class RecordHandler : ChunkingTypeHandler<object[]>
+    class RecordHandler : EDBTypeHandler<object[]>
     {
-        readonly TypeHandlerRegistry _registry;
+        readonly ConnectorTypeMapper _typeMapper;
 
-        public RecordHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType)
+        public RecordHandler(ConnectorTypeMapper typeMapper)
         {
-            _registry = registry;
+            _typeMapper = typeMapper;
         }
 
         #region Read
 
-        public override async ValueTask<object[]> Read(ReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override async ValueTask<object[]> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var fieldCount = buf.ReadInt32();
@@ -68,7 +72,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                 var fieldLen = buf.ReadInt32();
                 if (fieldLen == -1)  // Null field, simply skip it and leave at default
                     continue;
-                result[i] = await _registry[typeOID].ReadAsObject(buf, fieldLen, async);
+                result[i] = await _typeMapper.GetByOID(typeOID).ReadAsObject(buf, fieldLen, async);
             }
 
             return result;
@@ -78,10 +82,10 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write (unsupported)
 
-        public override int ValidateAndGetLength(object value, ref LengthCache lengthCache, EDBParameter parameter)
+        public override int ValidateAndGetLength(object[] value, ref EDBLengthCache lengthCache, EDBParameter parameter)
             => throw new NotSupportedException("Can't write record types");
 
-        protected override Task Write(object value, WriteBuffer buf, LengthCache lengthCache, EDBParameter parameter, bool async, CancellationToken cancellationToken)
+        public override Task Write(object[] value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
             => throw new NotSupportedException("Can't write record types");
 
         #endregion

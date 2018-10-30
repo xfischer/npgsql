@@ -51,7 +51,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
 
         internal override int Length => 1 + 4 + 1 + (Name.Length + 1);
 
-        internal override void WriteFully(WriteBuffer buf)
+        internal override void WriteFully(EDBWriteBuffer buf)
         {
             Debug.Assert(Name != null && Name.All(c => c < 128));
 

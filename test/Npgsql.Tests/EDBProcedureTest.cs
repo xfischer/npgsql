@@ -2109,7 +2109,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
                 Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
                 Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
-                Assert.AreEqual("800", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
 
                 rst.Close();
                 
@@ -2131,7 +2131,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
 
-                Assert.AreEqual("1250", Convert.ToString(rst[5].ToString()));
+                Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
 
                 rst.Close();
                 tran.Commit();

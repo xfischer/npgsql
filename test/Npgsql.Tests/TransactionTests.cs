@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -203,7 +203,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure the creating a transaction via DbConnection sets the proper isolation level")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/559")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/559")]
         public void DbConnectionDefaultIsolation()
         {
             using (var conn = OpenConnection())
@@ -275,8 +275,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("If a custom command timeout is set, a failed transaction could not be rollbacked to a previous savepoint")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/363")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/184")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/363")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/184")]
         public void FailedTransactionCantRollbackToSavepointWithCustomTimeout()
         {
             using (var conn = OpenConnection())
@@ -301,7 +301,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Closes a (pooled) connection with a failed transaction and a custom timeout")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/719")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/719")]
         public void FailedTransactionOnCloseWithCustom()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -326,7 +326,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/555")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/555")]
         public void TransactionOnRecycledConnection()
         {
             // Use application name to make sure we have our very own private connection pool
@@ -379,7 +379,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedCommit()
         {
             using (var conn = OpenConnection())
@@ -395,7 +395,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedRollback()
         {
             using (var conn = OpenConnection())
@@ -412,7 +412,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
         [Test, Description("Check IsCompleted before, during, and after a failed then rolled back transaction")]
-        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedRollbackFailed()
         {
             using (var conn = OpenConnection())
@@ -428,6 +428,61 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
             }
+        }
+
+        [Test, Description("Tests that a if a DatabaseInfoFactory is registered for a database that doesn't support transactions, no transactions are created")]
+        [Parallelizable(ParallelScope.None)]
+        public void TransactionNotSupported()
+        {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                ApplicationName = nameof(TransactionNotSupported)
+            }.ToString();
+
+            EDBDatabaseInfo.RegisterFactory(new NoTransactionDatabaseInfoFactory());
+            using (var conn = OpenConnection(connString))
+            using (var tx = conn.BeginTransaction())
+            {
+                // Detect that we're not really in a transaction
+                var prevTxId = conn.ExecuteScalar("SELECT txid_current()");
+                var nextTxId = conn.ExecuteScalar("SELECT txid_current()");
+                // If we're in an actual transaction, the two IDs should be the same
+                // https://stackoverflow.com/questions/1651219/how-to-check-for-pending-operations-in-a-postgresql-transaction
+                Assert.That(nextTxId, Is.Not.EqualTo(prevTxId));
+                conn.Close();
+            }
+
+            EDBDatabaseInfo.ResetFactories();
+
+            using (var conn = OpenConnection(connString))
+            {
+                EDBConnection.ClearPool(conn);
+                conn.ReloadTypes();
+            }
+
+            // Check that everything is back to normal
+            using (var conn = OpenConnection(connString))
+            using (var tx = conn.BeginTransaction())
+            {
+                var prevTxId = conn.ExecuteScalar("SELECT txid_current()");
+                var nextTxId = conn.ExecuteScalar("SELECT txid_current()");
+                Assert.That(nextTxId, Is.EqualTo(prevTxId));
+            }
+        }
+
+        class NoTransactionDatabaseInfoFactory : IEDBDatabaseInfoFactory
+        {
+            public async Task<EDBDatabaseInfo> Load(EDBConnection conn, EDBTimeout timeout, bool async)
+            {
+                var db = new NoTransactionDatabaseInfo();
+                await db.LoadPostgresInfo(conn, timeout, async);
+                return db;
+            }
+        }
+
+        class NoTransactionDatabaseInfo : PostgresDatabaseInfo
+        {
+            public override bool SupportsTransactions => false;
         }
 
         // Older tests

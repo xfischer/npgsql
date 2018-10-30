@@ -1,28 +1,29 @@
-#region License
+﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The Npgsql Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE NPGSQL DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE NPGSQL DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE NPGSQL DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE NPGSQL DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -30,15 +31,13 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using EnterpriseDB.EDBClient;
-using System.Data;
 using System.IO;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
     public static class TestUtil
     {
-        public static bool IsOnBuildServer => Environment.GetEnvironmentVariable("TEAMCITY_VERSION") != null;
+        public static bool IsOnBuildServer => Environment.GetEnvironmentVariable("CI") != null;
 
         /// <summary>
         /// Calls Assert.Ignore() unless we're on the build server, in which case calls
@@ -63,6 +62,79 @@ namespace EnterpriseDB.EDBClient.Tests
 				con.Close();
 		}
 
+        public static void createTempTable(EDBConnection con, String table, String columns)
+        {
+            string strCommandSql = "create temp table " + table + " (" + columns + ")";
+            EDBCommand com = new EDBCommand(strCommandSql, con);
+            com.CommandType = CommandType.Text;
+            try
+            {
+                // Drop the table
+                dropTable(con, table);
+
+                // Now create the table
+                com.ExecuteNonQuery();
+            }
+            catch (EDBException e)
+            {
+                throw new Exception(e.ToString());
+            }
+        }
+
+        public static void ExecuteSqlFile(EDBConnection connection, string sqlFile)
+        {
+            string sql = "";
+            if (!File.Exists(sqlFile))
+                Console.WriteLine("File Not found");
+            using (FileStream strm = File.OpenRead(sqlFile))
+            {
+                StreamReader reader = new StreamReader(strm);
+                sql = reader.ReadToEnd();
+            }
+
+            connection.Open();
+            EDBCommand cmd = new EDBCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+            connection.Close();
+
+        }
+
+        public static void ExecuteSql(EDBConnection connection, string sql)
+        {
+            connection.Open();
+            EDBCommand cmd = new EDBCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+            connection.Close();
+
+        }
+
+        public static void dropTable(EDBConnection con, String table)
+        {
+
+            try
+            {
+                String strCommandSql = "DROP TABLE " + table;
+                /*              if (haveMinimumServerVersion(con, "7.3"))
+                                {
+                                    sql += " CASCADE ";
+                                }*/
+                EDBCommand com = new EDBCommand(strCommandSql, con);
+                com.CommandType = CommandType.Text;
+                com.ExecuteNonQuery();
+            }
+            catch (EDBException)
+            {
+                // Since every create table issues a drop table
+                // it's easy to get a table doesn't exist error.
+                // we want to ignore these, but if we're in a
+                // transaction then we've got trouble
+                /*				if (!con.getAutoCommit())
+                                throw ex;
+
+                */
+            }
+        }
+
         public static void MinimumPgVersion(EDBConnection conn, string minVersion, string ignoreText=null)
         {
             var min = new Version(minVersion);
@@ -80,90 +152,42 @@ namespace EnterpriseDB.EDBClient.Tests
 
         static int _counter;
 
-		public static void createTempTable(EDBConnection con,String table,String columns)
-		{
-			string strCommandSql = "create temp table " + table + " (" + columns + ")";
-			EDBCommand com = new EDBCommand(strCommandSql, con);
-			com.CommandType = CommandType.Text;
-			try
-			{
-				// Drop the table
-				dropTable(con, table);
-
-				// Now create the table
-				com.ExecuteNonQuery();
-			}
-			catch (EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
-		}
-
-		public static void ExecuteSqlFile(EDBConnection connection, string sqlFile)
-		{
-			string sql = "";
-			if(!File.Exists(sqlFile))
-				Console.WriteLine("File Not found"); 
-			using (FileStream strm = File.OpenRead(sqlFile))
-			{
-				StreamReader reader = new StreamReader(strm);
-				sql = reader.ReadToEnd();
-			}
-
-			connection.Open();
-			EDBCommand cmd = new EDBCommand(sql,connection);
-			cmd.ExecuteNonQuery();
-            connection.Close();
-
-		}
-
-        public static void ExecuteSql(EDBConnection connection, string sql)
+        /// <summary>
+        /// Utility to generate a bytea literal in Postgresql hex format
+        /// See http://www.postgresql.org/docs/current/static/datatype-binary.html
+        /// </summary>
+        internal static string EncodeByteaHex(ICollection<byte> buf)
         {
-            connection.Open();
-            EDBCommand cmd = new EDBCommand(sql, connection);
-            cmd.ExecuteNonQuery();
-            connection.Close();
-
+            var hex = new StringBuilder(@"E'\\x", buf.Count * 2 + 3);
+            foreach (var b in buf)
+                hex.Append($"{b:x2}");
+            hex.Append("'");
+            return hex.ToString();
         }
 
-		public static void dropTable(EDBConnection con, String table)
-		{
-			
-			try
-			{
-				String strCommandSql = "DROP TABLE " + table;
-/*              if (haveMinimumServerVersion(con, "7.3"))
-				{
-					sql += " CASCADE ";
-				}*/
-				EDBCommand com = new EDBCommand(strCommandSql, con);
-				com.CommandType = CommandType.Text;
-				com.ExecuteNonQuery();
-			}
-			catch (EDBException )
-			{
-				// Since every create table issues a drop table
-				// it's easy to get a table doesn't exist error.
-				// we want to ignore these, but if we're in a
-				// transaction then we've got trouble
-/*				if (!con.getAutoCommit())
-                throw ex;
-				
-*/				
-			}
-		}
-		/// <summary>
-		/// In PG under 9.1 you can't do SELECT pg_sleep(2) in binary because that function returns void and PG doesn't know
-		/// how to transfer that. So cast to text server-side.
-		/// </summary>
-		/// <param name="seconds"></param>
-		/// <returns></returns>
-		public static EDBCommand CreateSleepCommand(EDBConnection conn, int seconds)
-		{
-			return new EDBCommand(string.Format("SELECT pg_sleep({0}){1}", seconds, conn.PostgreSqlVersion < new Version(9, 1, 0) ? "::TEXT" : ""), conn);
-		}
-	}
+        internal static IDisposable SetEnvironmentVariable(string name, string value)
+        {
+            var resetter = new EnvironmentVariableResetter(name, Environment.GetEnvironmentVariable(name));
+            Environment.SetEnvironmentVariable(name, value);
+            return resetter;
+        }
 
+        class EnvironmentVariableResetter : IDisposable
+        {
+            readonly string _name, _value;
+
+            internal EnvironmentVariableResetter(string name, string value)
+            {
+                _name = name;
+                _value = value;
+            }
+
+            public void Dispose()
+            {
+                Environment.SetEnvironmentVariable(_name, _value);
+            }
+        }
+    }
 
     public static class EDBConnectionExtensions
     {
@@ -196,6 +220,28 @@ namespace EnterpriseDB.EDBClient.Tests
             using (cmd)
                 return await cmd.ExecuteScalarAsync();
         }
+    }
+
+    public static class EDBCommandExtensions
+    {
+        public static T ExecuteScalar<T>(this EDBCommand cmd)
+        {
+            using (var rdr = cmd.ExecuteReader())
+                return rdr.Read() ? rdr.GetFieldValue<T>(0) : default;
+        }
+
+        public static EDBDataReader ExecuteRecord(this EDBCommand cmd)
+        {
+            var rdr = cmd.ExecuteReader();
+            Assert.That(rdr.Read());
+            return rdr;
+        }
+    }
+
+    public static class CommandBehaviorExtensions
+    {
+        public static bool IsSequential(this CommandBehavior behavior)
+            => (behavior & CommandBehavior.SequentialAccess) != 0;
     }
 
     /// <summary>

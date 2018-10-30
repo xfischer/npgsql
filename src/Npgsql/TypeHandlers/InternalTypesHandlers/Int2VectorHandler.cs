@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,33 +21,37 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using EnterpriseDB.EDBClient.Logging;
-using EDBTypes;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
+using System;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.InternalTypesHandlers
 {
+    [TypeMapping("int2vector", EDBDbType.Int2Vector)]
+    class Int2VectorHandlerFactory : EDBTypeHandlerFactory
+    {
+        internal override EDBTypeHandler Create(PostgresType pgType, EDBConnection conn)
+            => new Int2VectorHandler(conn.Connector.TypeMapper.DatabaseInfo.ByName["smallint"])
+            {
+                PostgresType = pgType
+            };
+
+        internal override Type DefaultValueType => null;
+    }
+
     /// <summary>
     /// An int2vector is simply a regular array of shorts, with the sole exception that its lower bound must
     /// be 0 (we send 1 for regular arrays).
     /// </summary>
-    [TypeMapping("int2vector", EDBDbType.Int2Vector)]
     class Int2VectorHandler : ArrayHandler<short>
     {
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        public Int2VectorHandler(PostgresType postgresShortType)
+            : base(new Int16Handler { PostgresType = postgresShortType }, 0) { }
 
-        public Int2VectorHandler(PostgresType postgresType, TypeHandlerRegistry registry)
-            : base(postgresType, null, 0)
-        {
-            // The pg_type SQL query makes sure that the int2 type comes before int2vector, so we can
-            // depend on it already being in the registry
-            var shortHandler = registry[EDBDbType.Smallint];
-            if (shortHandler == registry.UnrecognizedTypeHandler)
-            {
-                Log.Warn("smallint type not present when setting up int2vector type. int2vector will not work.");
-                return;
-            }
-            ElementHandler = shortHandler;
-        }
+        protected internal override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
+            => new ArrayHandler<ArrayHandler<short>>(this) { PostgresType = arrayBackendType };
     }
 }

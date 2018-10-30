@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -25,7 +25,8 @@ using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using JetBrains.Annotations;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
@@ -36,46 +37,50 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-character.html
     /// </remarks>
     [TypeMapping("char", EDBDbType.InternalChar)]
-    class InternalCharHandler : SimpleTypeHandler<char>,
-        ISimpleTypeHandler<byte>, ISimpleTypeHandler<short>, ISimpleTypeHandler<int>, ISimpleTypeHandler<long>
+    class InternalCharHandler : EDBSimpleTypeHandler<char>,
+        IEDBSimpleTypeHandler<byte>, IEDBSimpleTypeHandler<short>, IEDBSimpleTypeHandler<int>, IEDBSimpleTypeHandler<long>
     {
-        internal InternalCharHandler(PostgresType postgresType) : base(postgresType) { }
-
         #region Read
 
-        public override char Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override char Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => (char)buf.ReadByte();
 
-        byte ISimpleTypeHandler<byte>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        byte IEDBSimpleTypeHandler<byte>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => buf.ReadByte();
 
-        short ISimpleTypeHandler<short>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        short IEDBSimpleTypeHandler<short>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => buf.ReadByte();
 
-        int ISimpleTypeHandler<int>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        int IEDBSimpleTypeHandler<int>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => buf.ReadByte();
 
-        long ISimpleTypeHandler<long>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        long IEDBSimpleTypeHandler<long>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
             => buf.ReadByte();
 
         #endregion
 
         #region Write
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
-        {
-            if (!(value is byte))
-            {
-                // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                Convert.ToByte(value);
-            }
-            return 1;
-        }
+        public override int ValidateAndGetLength(char value, EDBParameter parameter) => 1;
+        public int ValidateAndGetLength(byte value, EDBParameter parameter)          => 1;
+        public int ValidateAndGetLength(short value, EDBParameter parameter)         => 1;
+        public int ValidateAndGetLength(int value, EDBParameter parameter)           => 1;
+        public int ValidateAndGetLength(long value, EDBParameter parameter)          => 1;
 
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            buf.WriteByte(value as byte? ?? Convert.ToByte(value));
-        }
+        public override void Write(char value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteByte((byte)value);
+
+        public void Write(byte value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteByte(value);
+
+        public void Write(short value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteByte((byte)value);
+
+        public void Write(int value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteByte((byte)value);
+
+        public void Write(long value, EDBWriteBuffer buf, EDBParameter parameter)
+            => buf.WriteByte((byte)value);
 
         #endregion
     }

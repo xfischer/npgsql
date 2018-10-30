@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -80,7 +80,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetValue(i), Is.EqualTo(8));
                         Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(8));
                         Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(short)));
-                        Assert.That(reader.GetDataTypeName(i), Is.EqualTo("int2"));
+                        Assert.That(reader.GetDataTypeName(i), Is.EqualTo("smallint"));
                     }
                 }
             }
@@ -117,7 +117,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetValue(i),                 Is.EqualTo(8));
                         Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(8));
                         Assert.That(reader.GetFieldType(i),             Is.EqualTo(typeof(int)));
-                        Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("int4"));
+                        Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("integer"));
                     }
                 }
             }
@@ -173,7 +173,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader.GetValue(i),                 Is.EqualTo(8));
                         Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(8));
                         Assert.That(reader.GetFieldType(i),             Is.EqualTo(typeof(long)));
-                        Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("int8"));
+                        Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("bigint"));
                     }
                 }
             }
@@ -263,72 +263,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test]
-        public void Numeric()
-        {
-            using (var conn = OpenConnection())
-            {
-                using (var cmd = new EDBCommand("SELECT '-1234567.890123'::numeric", conn))
-                {
-                    var result = cmd.ExecuteScalar();
-                    Assert.AreEqual(-1234567.890123M, result);
-                }
-
-                using (var cmd = new EDBCommand("SELECT '" + string.Join("", Enumerable.Range(0, 131072).Select(i => "1")) + "." + string.Join("", Enumerable.Range(0, 16383).Select(i => "1")) + "'::numeric::text", conn))
-                using (var rdr = cmd.ExecuteReader())
-                {
-                    rdr.Read();
-                }
-
-                var decimals = new decimal[] { 499.0M / 375.0M, 0, 1, -1, 2, -2, decimal.MaxValue, decimal.MinValue, 9999, 10000, -0.0001M, 0.00001M, 0.00000000111143243221M, 4372894738294782934.5832947839247M, 7483927483400000000000M };
-
-                using (var cmd = new EDBCommand("SELECT " + string.Join(", ", Enumerable.Range(0, decimals.Length).Select(i => "@p" + i.ToString())), conn))
-                {
-                    for (var i = 0; i < decimals.Length; i++)
-                    {
-                        cmd.Parameters.Add(new EDBParameter("p" + i, EDBDbType.Numeric) { Value = decimals[i] });
-                    }
-                    using (var rdr = cmd.ExecuteReader())
-                    {
-                        rdr.Read();
-                        for (var i = 0; i < decimals.Length; i++)
-                            Assert.AreEqual(decimals[i], rdr.GetValue(i));
-                    }
-                }
-
-                using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
-                {
-                    var p1 = new EDBParameter("p1", EDBDbType.Numeric);
-                    var p2 = new EDBParameter("p2", DbType.Decimal);
-                    var p3 = new EDBParameter("p3", DbType.VarNumeric);
-                    var p4 = new EDBParameter { ParameterName = "p4", Value = (decimal)8 };
-                    cmd.Parameters.Add(p1);
-                    cmd.Parameters.Add(p2);
-                    cmd.Parameters.Add(p3);
-                    cmd.Parameters.Add(p4);
-                    p1.Value = p2.Value = p3.Value = 8;
-                    using (var reader = cmd.ExecuteReader()) {
-                        reader.Read();
-
-                        for (var i = 0; i < cmd.Parameters.Count; i++)
-                        {
-                            Assert.That(reader.GetDecimal(i),               Is.EqualTo(8.0m));
-                            Assert.That(reader.GetInt32(i),                 Is.EqualTo(8));
-                            Assert.That(reader.GetInt64(i),                 Is.EqualTo(8));
-                            Assert.That(reader.GetInt16(i),                 Is.EqualTo(8));
-                            Assert.That(reader.GetByte(i),                  Is.EqualTo(8));
-                            Assert.That(reader.GetFloat(i),                 Is.EqualTo(8.0f));
-                            Assert.That(reader.GetDouble(i),                Is.EqualTo(8.0d));
-                            Assert.That(reader.GetValue(i),                 Is.EqualTo(8));
-                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(8));
-                            Assert.That(reader.GetFieldType(i),             Is.EqualTo(typeof(decimal)));
-                            Assert.That(reader.GetDataTypeName(i),          Is.EqualTo("numeric"));
-                        }
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// http://www.postgresql.org/docs/current/static/datatype-money.html
         /// </summary>
@@ -355,6 +289,80 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
+        [Test, Description("Tests handling of numeric overflow when writing data")]
+        [TestCase(EDBDbType.Smallint, 1 + short.MaxValue)]
+        [TestCase(EDBDbType.Smallint, 1L + short.MaxValue)]
+        [TestCase(EDBDbType.Smallint, 1F + short.MaxValue)]
+        [TestCase(EDBDbType.Smallint, 1D + short.MaxValue)]
+        [TestCase(EDBDbType.Integer, 1L + int.MaxValue)]
+        [TestCase(EDBDbType.Integer, 1F + int.MaxValue)]
+        [TestCase(EDBDbType.Integer, 1D + int.MaxValue)]
+        [TestCase(EDBDbType.Bigint, 1F + long.MaxValue)]
+        [TestCase(EDBDbType.Bigint, 1D + long.MaxValue)]
+        public void WriteOverflow(EDBDbType type, object value)
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1", conn))
+            {
+                var p1 = new EDBParameter("p1", type)
+                {
+                    Value = value
+                };
+                cmd.Parameters.Add(p1);
+                Assert.Throws<OverflowException>(() =>
+                {
+                    using (var reader = cmd.ExecuteReader()) { }
+                });
+            }
+        }
+
+        static IEnumerable<TestCaseData> ReadOverflowTestCases
+        {
+            get
+            {
+                yield return new TestCaseData(EDBDbType.Smallint, 1D + byte.MaxValue){ };
+            }
+        }
+        [Test, Description("Tests handling of numeric overflow when reading data")]
+        [TestCase((byte)0, EDBDbType.Smallint, 1D + byte.MaxValue)]
+        [TestCase((sbyte)0, EDBDbType.Smallint, 1D + sbyte.MaxValue)]
+        [TestCase((byte)0, EDBDbType.Integer, 1D + byte.MaxValue)]
+        [TestCase((short)0, EDBDbType.Integer, 1D + short.MaxValue)]
+        [TestCase((byte)0, EDBDbType.Bigint, 1D + byte.MaxValue)]
+        [TestCase((short)0, EDBDbType.Bigint, 1D + short.MaxValue)]
+        [TestCase(0, EDBDbType.Bigint, 1D + int.MaxValue)]
+        public void ReadOverflow<T>(T readingType, EDBDbType type, double value)
+        {
+            var typeString = GetTypeAsString(type);
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand($"SELECT {value}::{typeString}", conn))
+            {
+                Assert.Throws<OverflowException>(() =>
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        Assert.True(reader.Read());
+                        reader.GetFieldValue<T>(0);
+                    }
+                });
+            }
+
+            string GetTypeAsString(EDBDbType dbType)
+            {
+                switch (dbType)
+                {
+                case EDBDbType.Smallint:
+                    return "int2";
+                case EDBDbType.Integer:
+                    return "int4";
+                case EDBDbType.Bigint:
+                    return "int8";
+                default:
+                    throw new NotSupportedException();
+                }
+            }
+        }
+
         // Older tests
 
         [Test]
@@ -368,21 +376,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 command.Parameters[0].Value = x;
                 var valueReturned = command.ExecuteScalar();
                 Assert.That(valueReturned, Is.EqualTo(x).Within(100).Ulps);
-            }
-        }
-
-        [Test]
-        public void PrecisionScaleNumericSupport()
-        {
-            using (var conn = OpenConnection())
-            using (var command = new EDBCommand("SELECT -4.3::NUMERIC", conn))
-            using (var dr = command.ExecuteReader())
-            {
-                dr.Read();
-                var result = dr.GetDecimal(0);
-                Assert.AreEqual(-4.3000000M, result);
-                //Assert.AreEqual(11, result.Precision);
-                //Assert.AreEqual(7, result.Scale);
             }
         }
 

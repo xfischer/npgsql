@@ -123,7 +123,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("SMITH",reader.GetValue(1).ToString().ToUpper());
 				Assert.AreEqual("CLERK",reader.GetValue(2).ToString().ToUpper());
 				Assert.AreEqual("7902",reader.GetValue(3).ToString());	
-				Assert.AreEqual("800",reader.GetValue(5).ToString());
+				Assert.AreEqual("800.00",reader.GetValue(5).ToString());
 				
 				Console.WriteLine("Success...");
 				reader.Close();
@@ -157,7 +157,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("SMITH",reader.GetValue(1).ToString().ToUpper());
 				Assert.AreEqual("CLERK",reader.GetValue(2).ToString().ToUpper());
 				Assert.AreEqual("7902",reader.GetValue(3).ToString());	
-				Assert.AreEqual("800",reader.GetValue(5).ToString());
+				Assert.AreEqual("800.00",reader.GetValue(5).ToString());
 				reader.Close();
 				Console.WriteLine("Success...");
 			
@@ -197,7 +197,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("SMITH",reader.GetValue(1).ToString().ToUpper());
 				Assert.AreEqual("CLERK",reader.GetValue(2).ToString().ToUpper());
 				Assert.AreEqual("7902",reader.GetValue(3).ToString());	
-				Assert.AreEqual("800",reader.GetValue(5).ToString());
+				Assert.AreEqual("800.00",reader.GetValue(5).ToString());
 				Assert.AreEqual("20",reader.GetValue(7).ToString());
 				reader.Close();
 				
@@ -235,7 +235,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual("SMITH",reader.GetValue(1).ToString().ToUpper());
 				Assert.AreEqual("CLERK",reader.GetValue(2).ToString().ToUpper());
 				Assert.AreEqual("7902",reader.GetValue(3).ToString());	
-				Assert.AreEqual("800",reader.GetValue(5).ToString());
+				Assert.AreEqual("800.00",reader.GetValue(5).ToString());
 				Assert.AreEqual("20",reader.GetValue(7).ToString());
 				reader.Close();
 				Console.WriteLine("Success...");

@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -21,9 +21,9 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
@@ -35,30 +35,20 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.GeometricHandlers
     /// http://www.postgresql.org/docs/current/static/datatype-geometric.html
     /// </remarks>
     [TypeMapping("lseg", EDBDbType.LSeg, typeof(EDBLSeg))]
-    class LineSegmentHandler : SimpleTypeHandler<EDBLSeg>, ISimpleTypeHandler<string>
+    class LineSegmentHandler : EDBSimpleTypeHandler<EDBLSeg>
     {
-        internal LineSegmentHandler(PostgresType postgresType) : base(postgresType) { }
-
-        public override EDBLSeg Read(ReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override EDBLSeg Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
             => new EDBLSeg(buf.ReadDouble(), buf.ReadDouble(), buf.ReadDouble(), buf.ReadDouble());
 
-        string ISimpleTypeHandler<string>.Read(ReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
-            => Read(buf, len, fieldDescription).ToString();
+        public override int ValidateAndGetLength(EDBLSeg value, EDBParameter parameter)
+            => 32;
 
-        public override int ValidateAndGetLength(object value, EDBParameter parameter = null)
+        public override void Write(EDBLSeg value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            if (!(value is EDBLSeg))
-                throw CreateConversionException(value.GetType());
-            return 32;
-        }
-
-        protected override void Write(object value, WriteBuffer buf, EDBParameter parameter = null)
-        {
-            var v = (EDBLSeg)value;
-            buf.WriteDouble(v.Start.X);
-            buf.WriteDouble(v.Start.Y);
-            buf.WriteDouble(v.End.X);
-            buf.WriteDouble(v.End.Y);
+            buf.WriteDouble(value.Start.X);
+            buf.WriteDouble(value.Start.Y);
+            buf.WriteDouble(value.End.X);
+            buf.WriteDouble(value.End.Y);
         }
     }
 }

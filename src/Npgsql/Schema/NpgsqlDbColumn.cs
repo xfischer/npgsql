@@ -1,8 +1,9 @@
 ﻿using System;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EDBTypes;
 
-#if NETSTANDARD1_3 || NETSTANDARD2_0
+#if NETSTANDARD2_0
 using System.Data.Common;
 #endif
 
@@ -161,6 +162,8 @@ namespace EnterpriseDB.EDBClient.Schema
         public short? ColumnAttributeNumber { get; internal set; }
         [PublicAPI]
         public string DefaultValue { get; internal set; }
+        [PublicAPI]
+        public EDBDbType? EDBDbType { get; internal set; }
 
         [CanBeNull]
         public override object this[string propertyName]
@@ -179,6 +182,8 @@ namespace EnterpriseDB.EDBClient.Schema
                     return ColumnAttributeNumber;
                 case nameof(DefaultValue):
                     return DefaultValue;
+                case nameof(EDBDbType):
+                    return EDBDbType;
                 }
 
                 return base[propertyName];

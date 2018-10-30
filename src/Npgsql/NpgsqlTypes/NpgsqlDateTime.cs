@@ -1,7 +1,7 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2017 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
@@ -36,11 +36,9 @@ namespace EDBTypes
     /// DateTime is capable of storing values from year 1 to 9999 at 100-nanosecond precision,
     /// while PostgreSQL's timestamps store values from 4713BC to 5874897AD with 1-microsecond precision.
     /// </summary>
-#if !NETSTANDARD1_3
     [Serializable]
-#endif
-    public struct EDBDateTime : IEquatable<EDBDateTime>, IComparable<EDBDateTime>, IComparable,
-                                    IComparer<EDBDateTime>, IComparer
+    public readonly struct EDBDateTime : IEquatable<EDBDateTime>, IComparable<EDBDateTime>, IComparable,
+        IComparer<EDBDateTime>, IComparer
     {
         #region Fields
 
@@ -179,7 +177,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToUniversalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToUniversalTime()
@@ -211,7 +209,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToLocalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToLocalTime()
