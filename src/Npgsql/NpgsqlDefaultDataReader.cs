@@ -29,6 +29,7 @@ namespace EnterpriseDB.EDBClient
         List<(int Offset, int Length)> _retColumns = new List<(int Offset, int Length)>();//EnterpriseDB Team
         int _dataMsgEnd;
         internal bool _isReturnRow = true; //EnterpriseDB Team
+        bool isOutParamReceived;//EnterpriseDB Team
         internal int _InternalreadPosition;//EnterpriseDB Team
         internal int _InternalActaullReadPosition;//EnterpriseDB Team
         RowDescriptionMessage _callable_descrition; //EDB
@@ -98,6 +99,7 @@ namespace EnterpriseDB.EDBClient
             var paramdata = false;
             var retDataFetched = false;
             var done = false;
+            isOutParamReceived = false;
             // TODO: Should we really use Contract here, instead of throwing an Exception?
             Debug.Assert(RowDescription != null);
             Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
@@ -135,8 +137,16 @@ namespace EnterpriseDB.EDBClient
                                 {
                                     //_outRow = (DataRowNonSequentialMessage)msg;
                                     //_row = _outRow; // _tempDataRow; ZK 
-                                    done = true;
+                                    
+                                    if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                                    {
+                                        done = false;
+                                    } else
+                                    {
+                                        done = true;
+                                    }
                                     continue;
+
                                 }
                             }
                             else
@@ -149,6 +159,10 @@ namespace EnterpriseDB.EDBClient
                         case BackendMessageCode.CompletedResponse:
                         case BackendMessageCode.EmptyQueryResponse:
                            // _pendingMessage = msg;
+                           if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                            {
+                                continue;
+                            }
                             return;
                         case BackendMessageCode.OutDescription:
                         case BackendMessageCode.RowDescription:
@@ -406,6 +420,9 @@ namespace EnterpriseDB.EDBClient
                 if (isReturnRow)
                 {
                     _InternalreadPosition = buf.ReadPosition;//EnterpriseDB Team
+                } else
+                {
+                    isOutParamReceived = true;
                 }
                 
                 var numColumns = buf.ReadInt16();
