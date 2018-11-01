@@ -904,14 +904,14 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (i int2[10],j int2[]);";
+			Command.CommandText= "CREATE TABLE arrtestInt2 (i int2[10],j int2[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{40,50,60,70,81,90,32765}');";
+			Command.CommandText= "INSERT INTO arrtestInt2 VALUES ('{0,1,2,3,4,5,6,7,8,9}','{40,50,60,70,81,90,32765}');";
 			Command.ExecuteNonQuery();
             Int16[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
             Int16[] b = { 40, 50, 60, 70, 81, 90, 32765 };
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestInt2;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 				/*while(Reader.Read())
@@ -924,7 +924,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Int16[])Reader.GetValue(0));
             Assert.AreEqual(b, (Int16[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestInt2";
 			Command.ExecuteNonQuery();
 
 		}
@@ -935,16 +935,16 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (i int4[10],j int4[]);";
+			Command.CommandText= "CREATE TABLE arrtestInt4 (i int4[10],j int4[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{0,1,2,3,4,5,6,7,8,9}','{-2147483648,100,433,544,2147483647}');";
+			Command.CommandText= "INSERT INTO arrtestInt4 VALUES ('{0,1,2,3,4,5,6,7,8,9}','{-2147483648,100,433,544,2147483647}');";
 			Command.ExecuteNonQuery();
 
             Int32[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
             Int32[] b = { -2147483648, 100, 433, 544, 2147483647 };
 
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestInt4;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			/*while(Reader.Read())
@@ -957,7 +957,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Int32[])Reader.GetValue(0));
 			Assert.AreEqual(b,(Int32[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestInt4";
 			Command.ExecuteNonQuery();
 
 		}
@@ -968,16 +968,16 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (i int8[10],j int8[]);";
+			Command.CommandText= "CREATE TABLE arrtestInt8 (i int8[10],j int8[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}','{65454545,32769}');";
+			Command.CommandText= "INSERT INTO arrtestInt8 VALUES ('{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}','{65454545,32769}');";
 			Command.ExecuteNonQuery();
 
             Int64[] a = { 1000, 2000, 3000, 4000, 50000, 6000, 7000, 8000, 9000, 10000 };
             Int64[] b = { 65454545, 32769 };
 
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestInt8;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			/*while(Reader.Read())
@@ -989,7 +989,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Int64[])Reader.GetValue(0));
             Assert.AreEqual(b, (Int64[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestInt8";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1000,15 +1000,15 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (f1 Float[10],f2 Float[]);";
+			Command.CommandText= "CREATE TABLE arrtestFloat (f1 Float[10],f2 Float[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{2.0,4.21,6.32,3.98,4.00,5.91,6.00,7.66,8.88,9.99}','{43534.234,5534.463}');";
+			Command.CommandText= "INSERT INTO arrtestFloat VALUES ('{2.0,4.21,6.32,3.98,4.00,5.91,6.00,7.66,8.88,9.99}','{43534.234,5534.463}');";
 			Command.ExecuteNonQuery();
 
             Double[] a = { 2, 4.21, 6.32, 3.98, 4, 5.91, 6, 7.66, 8.88, 9.99 };
             Double[] b = { 43534.234, 5534.463 };
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestFloat;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			/*while(Reader.Read())
@@ -1020,7 +1020,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Double[] )Reader.GetValue(0));
             Assert.AreEqual(b, (Double[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestFloat";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1031,15 +1031,15 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (f1 Float4[10],f2 Float4[]);";
+			Command.CommandText= "CREATE TABLE arrtestFloat4 (f1 Float4[10],f2 Float4[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}','{2132.32,987.145}');";
+			Command.CommandText= "INSERT INTO arrtestFloat4 VALUES ('{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}','{2132.32,987.145}');";
 			Command.ExecuteNonQuery();
             Single[] a = { 65.2F, 23.1F, 56.42F, 334.5F, 46.3F, 532.33F, 69.64F, 75.234F, 8.75F, 92.1F };
             Single[] b = { 2132.32F, 987.145F};
 
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestFloat4;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			/*while(Reader.Read())
@@ -1051,7 +1051,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Single[])Reader.GetValue(0));
             Assert.AreEqual(b, (Single[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestFloat4";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1062,15 +1062,15 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (f1 Float8[10],f2 Float8[]);";
+			Command.CommandText= "CREATE TABLE arrtestFloat8 (f1 Float8[10],f2 Float8[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}','{8555.233,654.9785}');";
+			Command.CommandText= "INSERT INTO arrtestFloat8 VALUES ('{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}','{8555.233,654.9785}');";
 			Command.ExecuteNonQuery();
 
             Double[] a = { 122.33, 230.32, 1342.24, 28766.33, 343245.234, 462.33, 575.323, 6787.433, 7004.344, 865.345, 983.433 };
             Double[] b = { 8555.233, 654.9785 };
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestFloat8;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			/*while(Reader.Read())
@@ -1082,7 +1082,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a,(Double[])Reader.GetValue(0));
 			Assert.AreEqual(b,(Double[])Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestFloat8";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1389,15 +1389,15 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (m1 money[],m2 money[2]);";
+			Command.CommandText= "CREATE TABLE arrtestMoney (m1 money[],m2 money[2]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{-21474823123326.4128,2123432474836.247}','{2343245.571,523432.3226}');";
+			Command.CommandText= "INSERT INTO arrtestMoney VALUES ('{-21474823123326.4128,2123432474836.247}','{2343245.571,523432.3226}');";
 			Command.ExecuteNonQuery();
 
             Decimal[] a = { new Decimal((double)-21474823123326.4128), new Decimal((double)2123432474836.247) };
            
-            Command.CommandText="SELECT * FROM arrtest;";
+            Command.CommandText= "SELECT * FROM arrtestMoney;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			object[] test={"-$21,474,823,123,326.41","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
@@ -1407,7 +1407,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			string[] teststr={"$2,343,245.57","$523,432.32"};
 			Assert.AreEqual("{\""+teststr[0]+"\",\""+teststr[1]+"\"}",Reader.GetValue(1));
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest";
+			Command.CommandText= "DROP TABLE arrtestMoney";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1702,15 +1702,15 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE arrtest (d1 Date[]);";
+			Command.CommandText= "CREATE TABLE arrtestDate (d1 Date[]);";
 			Command.ExecuteNonQuery();
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{040506,101203}');";
+			Command.CommandText= "INSERT INTO arrtestDate VALUES ('{040506,101203}');";
 			Command.ExecuteNonQuery();
 
             DateTime[] a = { Convert.ToDateTime("2004-05-06 00:00:00"), Convert.ToDateTime("2010-12-03 00:00:00") };
 
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestDate;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			
 			//															while(Reader.Read())
@@ -1723,7 +1723,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest;";
+			Command.CommandText= "DROP TABLE arrtestDate;";
 			Command.ExecuteNonQuery();
 
 		}
@@ -1968,7 +1968,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			EDBCommand Command = new EDBCommand("",con);
 				
-			Command.CommandText="CREATE TABLE IF NOT EXISTS arrtest (t bit(3)[]);";
+			Command.CommandText= "CREATE TABLE IF NOT EXISTS arrtestBitString (t bit(3)[]);";
 			Command.ExecuteNonQuery();
 
 			BitArray []a = new BitArray[3] {
@@ -1976,10 +1976,10 @@ namespace EnterpriseDB.EDBClient.Tests
 				new BitArray(new bool[] { true, true, false }),
 				new BitArray(new bool[] { false, true, true }) };
 
-			Command.CommandText="INSERT INTO arrtest VALUES ('{101,110,011}');";
+			Command.CommandText= "INSERT INTO arrtestBitString VALUES ('{101,110,011}');";
 			Command.ExecuteNonQuery();
 			
-			Command.CommandText="SELECT * FROM arrtest;";
+			Command.CommandText= "SELECT * FROM arrtestBitString;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
@@ -1995,7 +1995,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.AreEqual(a[2], b2, MakeDebugMessage(a[2], b2));
 
 			Reader.Close();
-			Command.CommandText="DROP TABLE arrtest;";
+			Command.CommandText= "DROP TABLE arrtestBitString;";
 			Command.ExecuteNonQuery();
 
 		}

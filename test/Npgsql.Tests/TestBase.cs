@@ -46,7 +46,7 @@ namespace EnterpriseDB.EDBClient.Tests
         /// test database.
         /// </summary>
         public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"]
-            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;";
+            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=enterprisedb;Password=edb;Database=test;";
 
         #region Utilities for use by tests
 
