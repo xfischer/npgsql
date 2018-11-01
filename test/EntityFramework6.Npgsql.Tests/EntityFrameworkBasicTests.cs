@@ -1,4 +1,4 @@
-﻿using Npgsql;
+﻿using EnterpriseDB.EDBClient;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -7,23 +7,21 @@ using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.ComponentModel.DataAnnotations.Schema;
-using Npgsql.Tests;
+using EnterpriseDB.EDBClient.Tests;
 
 namespace EntityFramework6.Npgsql.Tests
 {
     [TestFixture]
     public class EntityFrameworkBasicTests : TestBase
     {
-        public EntityFrameworkBasicTests(string backendVersion)
-            : base(backendVersion)
+        public EntityFrameworkBasicTests()
         {
         }
 
-        [TestFixtureSetUp]
-        public override void TestFixtureSetup()
+        [OneTimeSetUp]
+        public void TestFixtureSetup()
         {
-            base.TestFixtureSetup();
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 if (context.Database.Exists())
                     context.Database.Delete();//We delete to be 100% schema is synced
@@ -31,11 +29,11 @@ namespace EntityFramework6.Npgsql.Tests
             }
 
             // Create sequence for the IntComputedValue property.
-            using (var createSequenceConn = new NpgsqlConnection(ConnectionStringEF))
+            using (var createSequenceConn = new EDBConnection(ConnectionString))
             {
                 createSequenceConn.Open();
-                ExecuteNonQuery("create sequence blog_int_computed_value_seq", createSequenceConn);
-                ExecuteNonQuery("alter table \"dbo\".\"Blogs\" alter column \"IntComputedValue\" set default nextval('blog_int_computed_value_seq');", createSequenceConn);
+                createSequenceConn.ExecuteNonQuery("create sequence blog_int_computed_value_seq");
+                createSequenceConn.ExecuteNonQuery("alter table \"dbo\".\"Blogs\" alter column \"IntComputedValue\" set default nextval('blog_int_computed_value_seq');");
 
             }
 
@@ -46,10 +44,9 @@ namespace EntityFramework6.Npgsql.Tests
         /// Clean any previous entites before our test
         /// </summary>
         [SetUp]
-        protected override void SetUp()
+        protected  void SetUp()
         {
-            base.SetUp();
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 context.Blogs.RemoveRange(context.Blogs);
                 context.Posts.RemoveRange(context.Posts);
@@ -87,7 +84,7 @@ namespace EntityFramework6.Npgsql.Tests
         public class BloggingContext : DbContext
         {
             public BloggingContext(string connection)
-                : base(new NpgsqlConnection(connection), true)
+                : base(new EDBConnection(connection), true)
             {
             }
 
@@ -99,7 +96,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void InsertAndSelect()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var blog = new Blog()
                 {
@@ -118,7 +115,7 @@ namespace EntityFramework6.Npgsql.Tests
                 context.SaveChanges();
             }
 
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var posts = from p in context.Posts
                             select p;
@@ -134,7 +131,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void SelectWithWhere()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var blog = new Blog()
                 {
@@ -152,7 +149,7 @@ namespace EntityFramework6.Npgsql.Tests
                 context.SaveChanges();
             }
 
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var posts = from p in context.Posts
                             where p.Rating < 3
@@ -169,7 +166,7 @@ namespace EntityFramework6.Npgsql.Tests
         public void SelectWithWhere_Ef_TruncateTime()
         {
             DateTime createdOnDate = new DateTime(2014, 05, 08);
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var blog = new Blog()
                 {
@@ -189,7 +186,7 @@ namespace EntityFramework6.Npgsql.Tests
                 context.SaveChanges();
             }
 
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var posts = from p in context.Posts
                             let datePosted = DbFunctions.TruncateTime(p.CreationDate)
@@ -207,7 +204,7 @@ namespace EntityFramework6.Npgsql.Tests
 		public void SelectWithLike_SpecialCharacters()
 		{
 			DateTime createdOnDate = new DateTime(2014, 05, 08);
-			using (var context = new BloggingContext(ConnectionStringEF))
+			using (var context = new BloggingContext(ConnectionString))
 			{
 				var blog = new Blog()
 				{
@@ -240,7 +237,7 @@ namespace EntityFramework6.Npgsql.Tests
 				context.SaveChanges();
 			}
 
-			using (var context = new BloggingContext(ConnectionStringEF))
+			using (var context = new BloggingContext(ConnectionString))
 			{
 				var posts1 = from p in context.Posts
 				             where p.Content.Contains("_")
@@ -262,7 +259,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void OrderBy()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 Random random = new Random();
                 var blog = new Blog()
@@ -282,7 +279,7 @@ namespace EntityFramework6.Npgsql.Tests
                 context.SaveChanges();
             }
 
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var posts = from p in context.Posts
                             orderby p.Rating
@@ -300,7 +297,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void OrderByThenBy()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 Random random = new Random();
                 var blog = new Blog()
@@ -320,7 +317,7 @@ namespace EntityFramework6.Npgsql.Tests
                 context.SaveChanges();
             }
 
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var posts = context.Posts.AsQueryable<Post>().OrderBy((p) => p.Title).ThenByDescending((p) => p.Rating);
                 Assert.AreEqual(10, posts.Count());
@@ -335,7 +332,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void TestComputedValue()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 var blog = new Blog()
                 {
@@ -354,7 +351,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void Operators()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 context.Database.Log = Console.Out.WriteLine;
 
@@ -378,7 +375,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Category("TodoFor3.0")]
         public void DataTypes()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 context.Database.Log = Console.Out.WriteLine;
 
@@ -431,7 +428,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void DateFunctions()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 IQueryable<int> oneRow = context.Posts.Where(p => false).Select(p => 1).Concat(new int[] { 1 });
 
@@ -486,7 +483,7 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void TestComplicatedQueries()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 context.Database.Log = Console.Out.WriteLine;
 
@@ -547,7 +544,7 @@ namespace EntityFramework6.Npgsql.Tests
         [MonoIgnore("Probably bug in mono. See https://github.com/npgsql/Npgsql/issues/289.")]
         public void TestComplicatedQueriesMonoFails()
         {
-            using (var context = new BloggingContext(ConnectionStringEF))
+            using (var context = new BloggingContext(ConnectionString))
             {
                 context.Database.Log = Console.Out.WriteLine;
 
@@ -570,28 +567,29 @@ namespace EntityFramework6.Npgsql.Tests
         [Test]
         public void TestComplicatedQueriesWithApply()
         {
-            if ((BackendVersion.Major > 9) || (BackendVersion.Major == 9 && BackendVersion.Minor >= 3))
+
+            using (var conn = OpenConnection(ConnectionString))
+                TestUtil.MinimumPgVersion(conn, "9.3.0");
+            using (var context = new BloggingContext(ConnectionString))
             {
-                using (var context = new BloggingContext(ConnectionStringEF))
-                {
-                    context.Database.Log = Console.Out.WriteLine;
+                context.Database.Log = Console.Out.WriteLine;
 
-                    // Test Apply
-                    (from t1 in context.Blogs
-                     from t2 in context.Posts.Where(p => p.BlogId == t1.BlogId).Take(1)
-                     select new { t1, t2 }).ToArray();
+                // Test Apply
+                (from t1 in context.Blogs
+                    from t2 in context.Posts.Where(p => p.BlogId == t1.BlogId).Take(1)
+                    select new { t1, t2 }).ToArray();
 
-                    Action<string> elinq = (string query) => {
-                        new System.Data.Entity.Core.Objects.ObjectQuery<System.Data.Common.DbDataRecord>(query, ((System.Data.Entity.Infrastructure.IObjectContextAdapter)context).ObjectContext).ToArray();
-                    };
+                Action<string> elinq = (string query) => {
+                    new System.Data.Entity.Core.Objects.ObjectQuery<System.Data.Common.DbDataRecord>(query, ((System.Data.Entity.Infrastructure.IObjectContextAdapter)context).ObjectContext).ToArray();
+                };
 
-                    // Joins, apply
-                    elinq("Select value Blogs.BlogId From Blogs outer apply (Select p1.BlogId as bid, p1.PostId as bid2 from Posts as p1 left outer join (Select value p.PostId from Posts as p where p.PostId < Blogs.BlogId)) as b outer apply (Select p.PostId from Posts as p where p.PostId < b.bid)");
+                // Joins, apply
+                elinq("Select value Blogs.BlogId From Blogs outer apply (Select p1.BlogId as bid, p1.PostId as bid2 from Posts as p1 left outer join (Select value p.PostId from Posts as p where p.PostId < Blogs.BlogId)) as b outer apply (Select p.PostId from Posts as p where p.PostId < b.bid)");
 
-                    // Just some really crazy query that results in an apply as well
-                    context.Blogs.Select(b => new { b, b.BlogId, n = b.Posts.Select(p => new { t = p.Title + b.Name, n = p.Blog.Posts.Count(p2 => p2.BlogId < 4) }).Take(2) }).ToArray();
-                }
+                // Just some really crazy query that results in an apply as well
+                context.Blogs.Select(b => new { b, b.BlogId, n = b.Posts.Select(p => new { t = p.Title + b.Name, n = p.Blog.Posts.Count(p2 => p2.BlogId < 4) }).Take(2) }).ToArray();
             }
+            
         }
     }
 }
