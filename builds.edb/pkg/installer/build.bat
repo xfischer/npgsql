@@ -35,25 +35,12 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3
-copy bin\%RELEASE_CONFIGURATION%\netstandard1.3\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard1.3 || goto :error 
-
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
 
-REM cd %SOURCE_PATH%
-REM cd src\NpgsqlDdexProvider
-REM nuget restore NpgsqlDdexProvider.sln
-
-REM msbuild.exe NpgsqlDdexProvider2010.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
-
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider
-REM copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
-REM copy bin\%RELEASE_CONFIGURATION%\EDBDdexProvider.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
-REM copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
-
 cd %SOURCE_PATH%
 cd src\VSIX
+nuget restore VSIX.csproj
 msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM%
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX
@@ -80,8 +67,6 @@ msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATI
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error 
-
-copy %SOURCE_PATH%\src\NpgsqlDdexProvider\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\DDexProvider || goto :error 
 
 :error
 echo "Failed with error %errorlevel%."
