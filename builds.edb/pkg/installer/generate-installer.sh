@@ -41,6 +41,6 @@ fi
 ExecuteCommand "cp $PWD/pkg/installer/BitRock/installer.xml.in $PWD/pkg/installer/BitRock/installer.xml"
 ReplacePlaceHolders $PWD/pkg/installer/BitRock/installer.xml
 
-PackageInstaller "dotnet" "$DOTNET_STAGING_PATH" "DOTNET_INSTALLER_NAME_PREFIX" "$PWD/redux"
+PackageInstaller "dotnet" "$PWD/inst" "DOTNET_INSTALLER_NAME_PREFIX" "$PWD/redux"
 
 ExecuteCommand "rm -f $PWD/pkg/installer/BitRock/installer.xml"
