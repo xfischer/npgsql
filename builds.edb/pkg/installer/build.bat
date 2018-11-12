@@ -27,13 +27,13 @@ echo %cd%
 echo %RELEASE_CONFIGURATION%
 echo %SOURCE_PATH%
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE% || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE% || goto :error 
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net45
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\%FRAMEWORK_DEFINE%1 || goto :error 
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net451
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
@@ -43,11 +43,12 @@ cd src\VSIX
 nuget restore VSIX.csproj
 msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM%
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
 
-copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\VSIX || goto :error
+copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy bin\%RELEASE_CONFIGURATION%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
+copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
 
 cd %SOURCE_PATH%
 cd test\Npgsql.Tests
@@ -71,4 +72,3 @@ copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRA
 :error
 echo "Failed with error %errorlevel%."
 exit /b %errorlevel%
-

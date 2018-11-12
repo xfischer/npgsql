@@ -818,10 +818,10 @@ EOF
           <name>programfileswindows</name>
           <platforms>windows</platforms>
           <distributionFileList>
-            <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\VSIX"/>
+            <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\vsix"/>
 	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\EF"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\NET45"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\NET451"/>
+	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net45"/>
+	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net451"/>
 	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\netstandard2.0"/>
           </distributionFileList>
         </folder>
