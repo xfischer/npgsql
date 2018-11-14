@@ -69,6 +69,14 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error 
 
+mkdir %STAGING_DIR%\4.0
+mkdir %STAGING_DIR%\4.0\net40
+
+cd %SOURCE_PATH%\Net40\EDBDataProvider2.0.2\src
+msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% || goto :error
+copy bin\Release\EDBDataProvider2.0.2.dll %STAGING_DIR%\4.0\net40
+copy bin\Release\Mono.Security.dll %STAGING_DIR%\4.0\net40
+
 :error
 echo "Failed with error %errorlevel%."
 exit /b %errorlevel%

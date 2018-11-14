@@ -2,13 +2,13 @@
 <project>
   <!-- Package details -->
   <shortName>DOTNET_SHORT_NAME</shortName>
-  <fullName>Dotnet</fullName>
+  <fullName>DotNet</fullName>
   <version>EDB_VERSION_DOTNET-EDB_BUILDNUM_DOTNET</version>
   <windowsResourceProductVersion>EDB_VERSION_DOTNET</windowsResourceProductVersion>
   <allowWindowResize>1</allowWindowResize>
   <!-- Product Specific Options -->
   <startMenuGroupName/>
-  <productComments>Dotnet for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB</productComments>
+  <productComments>${product_fullname} for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB</productComments>
   <productUrlHelpLink>http://www.enterprisedb.com/learning/documentation.do </productUrlHelpLink>
   <productUrlInfoAbout>http://www.enterprisedb.com</productUrlInfoAbout>
   <productDisplayName>${product_fullname} ${product_version}</productDisplayName>
@@ -22,10 +22,10 @@
   <installerFilename>DOTNET_INSTALLER_NAME_PREFIX-${product_version}-${platform_name}.${platform_exec_suffix}</installerFilename>
   <compressionAlgorithm>lzma</compressionAlgorithm>
   <unattendedModeUI>minimal</unattendedModeUI>
-  <description>Dotnet for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB </description>
+  <description>${product_fullname} for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB </description>
   <enableRollback>0</enableRollback>
   <saveRelativePaths>1</saveRelativePaths>
-  <summary>Dotnet drivers for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB</summary>
+  <summary>${product_fullname} drivers for EDB_MAIN_MENU EDB_BRANDING, by EnterpriseDB</summary>
   <vendor>EnterpriseDB</vendor>
   <outputDirectory>../output</outputDirectory>
   <uninstallerName>uninstall-DOTNET_INSTALLER_NAME_PREFIX</uninstallerName>
@@ -639,7 +639,7 @@ EOF
         <actionGroup>
           <actionList>
             <registryDelete>
-                <key>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Dotnet ${dotnetVersion}</key>
+                <key>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${product_fullname} ${dotnetVersion}</key>
                 <showMessageOnError>0</showMessageOnError>
                 <abortOnError>0</abortOnError>
             </registryDelete>
