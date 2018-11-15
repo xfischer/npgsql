@@ -32,7 +32,7 @@ namespace EDBClientTest
                   else
                         Console.WriteLine("Job" + " null ");
                     if (SelectResult.IsDBNull(3) == false)
-                    Console.WriteLine("Mgr" + " " + SelectResult.GetString(3));
+                    Console.WriteLine("Mgr" + " " + SelectResult.GetInt32(3));
                    else
                     Console.WriteLine("Mgr" + "null");
                     if (SelectResult.IsDBNull(4) == false)
@@ -60,22 +60,19 @@ namespace EDBClientTest
 				{
 				EDBCommand callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn);
 				callable_command.CommandType = CommandType.StoredProcedure;
-				callable_command.Parameters.Add(new EDBParameter("p_deptno",EDBTypes.EDBDbType.Numeric,10,"p_deptno",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,10));
-				callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric,10,"p_empno",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,10));
-				callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar,10,"p_ename",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,"zk"));
+				callable_command.Parameters.Add(new EDBParameter("p_deptno",EDBTypes.EDBDbType.Numeric,10,"p_deptno",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,20));
+				callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric,10,"p_empno",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,7369));
+				callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar,10,"p_ename",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,"SMITH"));
 				callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar,10,"p_job",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 				callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date,200,"p_hiredate",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 				callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric,200,"p_sal",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 				callable_command.Prepare();
-				callable_command.Parameters[0].Value = 30;
-				callable_command.Parameters[1].Value = 7521;
+				callable_command.Parameters[0].Value = 20;
+				callable_command.Parameters[1].Value = 7369;
 					EDBDataReader result = callable_command.ExecuteReader();
 					int fc	=	result.FieldCount;
-					while(result.Read())
-					{
-						for(int i=0;i<fc;i++)
+					for(int i=0;i<fc;i++)
 							Console.WriteLine("RESULT["+i+"]="+ Convert.ToString(callable_command.Parameters[i].Value));
-					}
 					result.Close();
 				}
 				catch(EDBException exp)
