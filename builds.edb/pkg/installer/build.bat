@@ -30,13 +30,19 @@ echo %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net45
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net451
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
 
 cd %SOURCE_PATH%
 cd src\VSIX
