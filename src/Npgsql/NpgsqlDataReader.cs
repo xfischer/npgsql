@@ -147,6 +147,7 @@ namespace EnterpriseDB.EDBClient
             _sendTask = sendTask;
             State = ReaderState.BetweenResults;
             _recordsAffected = null;
+            pendingmsg = null;//Enterprisedb Team
         }
 
         #region Read
