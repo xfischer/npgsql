@@ -12,9 +12,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
+    <!--<AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>-->
     <SignAssembly>false</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">false</PublicSign>
     <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
     <PackageIconUrl>http://www.npgsql.org/img/postgresql.gif</PackageIconUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/npgsql/npgsql/master/LICENSE.txt</PackageLicenseUrl>
