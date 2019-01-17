@@ -13,8 +13,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!--<AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>-->
-    <SignAssembly>false</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">false</PublicSign>
+    <SignAssembly>true</SignAssembly>
+    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
     <PackageIconUrl>http://www.npgsql.org/img/postgresql.gif</PackageIconUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/npgsql/npgsql/master/LICENSE.txt</PackageLicenseUrl>
@@ -45,6 +45,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>Npgsql.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
