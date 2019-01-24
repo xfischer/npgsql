@@ -68,9 +68,9 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             if (isCallableStmt != true)//EnterpriseDB Team
             {
                 for (var i = 0; i != numFields; ++i)
-            {
-                // TODO: Recycle
-                var field = new FieldDescription();
+                {
+                    // TODO: Recycle
+                    var field = new FieldDescription();
                 field.Populate(
                     typeMapper,
                     buf.ReadNullTerminatedString(), // Name
@@ -151,7 +151,6 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 Fields.Add(fdData[i]);
             //  Fields =(FieldDescription) fdData;
         }
-
 
         internal FieldDescription this[int index] => Fields[index];
 
@@ -280,7 +279,6 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         /// /// Incase of callable statements we should store the returning index on returned parameters.
         internal short ReturningIndex { get; set; }//EnterpriseDB Team
-
 
         /// <summary>
         /// If the field can be identified as a column of a specific table, the attribute number of the column; otherwise zero.

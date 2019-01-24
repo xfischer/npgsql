@@ -62,11 +62,10 @@ namespace EnterpriseDB.EDBClient
 
         public int WriteSpaceLeft => Size - WritePosition;
 
-        internal byte[] Buffer;
+        internal byte[] Buffer;//EnterpriseDB Team
         readonly Encoder _textEncoder;
 
         internal int WritePosition;
-
         internal int writePosition { get { return WritePosition; } set { WritePosition = value; } }//EnterpriseDB Team
 
         [CanBeNull]
@@ -198,18 +197,10 @@ namespace EnterpriseDB.EDBClient
         #region Write Simple
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteSByte(sbyte value)
-        {
-            Debug.Assert(sizeof(sbyte) <= WriteSpaceLeft);
-            Buffer[WritePosition++] = (byte)value;
-        }
+        public void WriteSByte(sbyte value) => Write(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteByte(byte value)
-        {
-            Debug.Assert(sizeof(byte) <= WriteSpaceLeft);
-            Buffer[WritePosition++] = value;
-        }
+        public void WriteByte(byte value) => Write(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void WriteInt16(int value)
@@ -269,7 +260,7 @@ namespace EnterpriseDB.EDBClient
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteSingle(float value, bool littleEndian)
-            => Write(littleEndian == BitConverter.IsLittleEndian ? value : PGUtil.ReverseEndianness(value));
+            => WriteInt32(Unsafe.As<float, int>(ref value), littleEndian);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteDouble(double value)
@@ -277,15 +268,21 @@ namespace EnterpriseDB.EDBClient
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteDouble(double value, bool littleEndian)
-            => Write(littleEndian == BitConverter.IsLittleEndian ? value : PGUtil.ReverseEndianness(value));
+            => WriteInt64(Unsafe.As<double, long>(ref value), littleEndian);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Write<T>(T value)
+        void Write<T>(T value)
         {
-            Debug.Assert(Unsafe.SizeOf<T>() <= WriteSpaceLeft);
+            if (Unsafe.SizeOf<T>() > WriteSpaceLeft)
+                ThrowNotSpaceLeft();
+
             Unsafe.WriteUnaligned(ref Buffer[WritePosition], value);
             WritePosition += Unsafe.SizeOf<T>();
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowNotSpaceLeft()
+            => throw new InvalidOperationException("There is not enough space left in the buffer.");
 
         public Task WriteString(string s, int byteLen, bool async)
             => WriteString(s, s.Length, byteLen, async);

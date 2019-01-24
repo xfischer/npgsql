@@ -302,61 +302,61 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void Dispose()
 		{
 			
-			EDBCommand Command=new EDBCommand("",con);
-			Command.CommandText="DROP Table TESTTAB";
-			Command.CommandType=CommandType.Text;
-			Command.ExecuteNonQuery();
+			//EDBCommand Command=new EDBCommand("",con);
+			//Command.CommandText="DROP Table TESTTAB";
+			//Command.CommandType=CommandType.Text;
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP FUNCTION GETREFCURSOR";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP FUNCTION GETREFCURSOR";
+			//Command.ExecuteNonQuery();
 
-            Command.CommandText = "DROP FUNCTION GETREFCURSOR_OUT(R OUT REFCURSOR)";
-			Command.ExecuteNonQuery();
+   //         Command.CommandText = "DROP FUNCTION GETREFCURSOR_OUT(R OUT REFCURSOR)";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETREFCURSORPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETREFCURSORPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETREFCURSORSVVPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETREFCURSORSVVPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETREFCURSORSVPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETREFCURSORSVPROC";
+			//Command.ExecuteNonQuery();
 
-            Command.CommandText = "DROP FUNCTION DEFAULTINRETURNFUNC(IN INT4 )";
-			Command.ExecuteNonQuery();
+   //         Command.CommandText = "DROP FUNCTION DEFAULTINRETURNFUNC(IN INT4 )";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE DEFAULTINPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE DEFAULTINPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP FUNCTION GETSYSREFCURSOR";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP FUNCTION GETSYSREFCURSOR";
+			//Command.ExecuteNonQuery();
 
-            Command.CommandText = "DROP FUNCTION  GETSYSREFCURSOR_OUT(OUT SYS_REFCURSOR)";
-			Command.ExecuteNonQuery();
+   //         Command.CommandText = "DROP FUNCTION  GETSYSREFCURSOR_OUT(OUT SYS_REFCURSOR)";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETSYSREFCURSORPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVVPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVVPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP PROCEDURE GETSYSREFCURSORSVPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP procedure GETREFCURSORSIVPROC;";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP procedure GETREFCURSORSIVPROC;";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP procedure GETSYSREFCURSORSIVPROC;";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP procedure GETSYSREFCURSORSIVPROC;";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP procedure GETREFCURSORSIIPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP procedure GETREFCURSORSIIPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP procedure GETSYSREFCURSORSIIPROC";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP procedure GETSYSREFCURSORSIIPROC";
+			//Command.ExecuteNonQuery();
 
-			Command.CommandText="DROP Package REFCURSOR_PKG";
-			Command.ExecuteNonQuery();
+			//Command.CommandText="DROP Package REFCURSOR_PKG";
+			//Command.ExecuteNonQuery();
 
 			TestUtil.closeDB(con);
 		}

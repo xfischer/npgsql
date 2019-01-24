@@ -46,18 +46,30 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
            => _wrappedHandler.Write(value, buf, lengthCache, parameter, async);
     }
 
-    class MappedCompositeTypeHandlerFactory<T> : EDBTypeHandlerFactory<T>
+    /// <summary>
+    /// Interface implemented by all mapped composite handler factories.
+    /// Used to expose the name translator for those reflecting enum mappings (e.g. EF Core).
+    /// </summary>
+    public interface IMappedCompositeTypeHandlerFactory
+    {
+        /// <summary>
+        /// The name translator used for this enum.
+        /// </summary>
+        IEDBNameTranslator NameTranslator { get; }
+    }
+
+    class MappedCompositeTypeHandlerFactory<T> : EDBTypeHandlerFactory<T>, IMappedCompositeTypeHandlerFactory
         where T : new()
     {
-        readonly IEDBNameTranslator _nameTranslator;
+        public IEDBNameTranslator NameTranslator { get; }
 
         internal MappedCompositeTypeHandlerFactory(IEDBNameTranslator nameTranslator)
         {
-            _nameTranslator = nameTranslator;
+            NameTranslator = nameTranslator;
         }
 
         internal override EDBTypeHandler Create(PostgresType pgType, EDBConnection conn)
-            => new MappedCompositeHandler<T>(_nameTranslator, pgType, conn);
+            => new MappedCompositeHandler<T>(NameTranslator, pgType, conn);
 
         protected override EDBTypeHandler<T> Create(EDBConnection conn)
             => throw new InvalidOperationException($"Expect {nameof(PostgresType)}");

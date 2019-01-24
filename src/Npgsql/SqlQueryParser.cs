@@ -72,6 +72,7 @@ namespace EnterpriseDB.EDBClient
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
+
             string temp = sql.ToUpper();//EnterpriseDB Team
             if (temp.StartsWith("CREATE") && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("PACKAGE ")))
                 isProcedure = true;
@@ -170,7 +171,7 @@ namespace EnterpriseDB.EDBClient
                         if (!isProcedure)
                         {
                             if (!IsLetter(lastChar))
-                        goto EscapedStart;
+                                goto EscapedStart;
                     else
                         break;
                 }
@@ -336,7 +337,7 @@ namespace EnterpriseDB.EDBClient
                     goto NoneContinue;
 
                 }
-                if (ch != ' ' && ch != '\t' && ch != '\n' & ch != '\r' && ch != '\f') {
+                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f') {
                     lastChar = '\0';
                     goto NoneContinue;
                 }

@@ -69,7 +69,7 @@ namespace EnterpriseDB.EDBClient.PostgresTypes
             switch (Name)
             {
             case "character":
-                return typeModifier - 4 == 1 ? PostgresFacets.None : new PostgresFacets(typeModifier - 4, null, null);
+                return new PostgresFacets(typeModifier - 4, null, null);
             case "character varying":
                 return new PostgresFacets(typeModifier - 4, null, null);  // Max length
             case "numeric":
@@ -90,7 +90,6 @@ namespace EnterpriseDB.EDBClient.PostgresTypes
                 precision = typeModifier & 0xFFFF;
                 return new PostgresFacets(null, precision, null);
             case "bit":
-                return new PostgresFacets(typeModifier == 1 ? (int?)null : typeModifier, null, null);
             case "bit varying":
                 return new PostgresFacets(typeModifier, null, null);
             default:

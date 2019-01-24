@@ -84,7 +84,11 @@ namespace EnterpriseDB.EDBClient
         {
             //Debug.Assert(HandlerParamTypes == null);EnterpriseDB Team
             if (parameters.Count == 0)
+            {
                 HandlerParamTypes = EmptyParamTypes;
+                return;
+            }
+
             HandlerParamTypes = new Type[parameters.Count];
             for (var i = 0; i < parameters.Count; i++)
             {

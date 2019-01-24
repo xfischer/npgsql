@@ -241,6 +241,7 @@ namespace EnterpriseDB.EDBClient
         internal readonly BindOutMessage BindOutMessage = new BindOutMessage();//EnterpriseDB Team
         internal readonly DescribeMessage DescribeMessage = new DescribeMessage();
         internal readonly DescribeOutMessage DescribeOutMessage = new DescribeOutMessage();//EnterpriseDB Team
+
         internal readonly CloseMessage    CloseMessage    = new CloseMessage();
         // ParseMessage and QueryMessage depend on the encoding, which isn't known until open-time
         internal ParseMessage ParseMessage;
@@ -256,7 +257,7 @@ namespace EnterpriseDB.EDBClient
         readonly ReadyForQueryMessage        _readyForQueryMessage        = new ReadyForQueryMessage();
         readonly ParameterDescriptionMessage _parameterDescriptionMessage = new ParameterDescriptionMessage();
         readonly DataRowMessage              _dataRowMessage              = new DataRowMessage();
-        readonly DataRowMessage             _outParamDataRowMessage = new DataRowMessage();
+        readonly DataRowMessage _outParamDataRowMessage = new DataRowMessage();
 
         // Since COPY is rarely used, allocate these lazily
         CopyInResponseMessage _copyInResponseMessage;
@@ -1014,7 +1015,7 @@ namespace EnterpriseDB.EDBClient
                         case BackendMessageCode.NoticeResponse:
                         case BackendMessageCode.NotificationResponse:
                         case BackendMessageCode.ParameterStatus:
-                                //Debug.Assert(msg == null);//EnterpriseDB Team
+                            //Debug.Assert(msg == null);//EnterpriseDB Team
                                 if (!readingNotifications2)
                                 continue;
                             return null;
@@ -1049,7 +1050,6 @@ namespace EnterpriseDB.EDBClient
                     // TODO: Recycle
                     var rowDescriptionMessage = new RowDescriptionMessage();
                     return rowDescriptionMessage.Load(buf, TypeMapper, false);
-
                 /* EnterpriseDB Team */
                 case BackendMessageCode.OutDescription:
 
@@ -1059,16 +1059,14 @@ namespace EnterpriseDB.EDBClient
                     try
                     {
                         CurrentReader.ProcessDataRowMessage(buf, true);
-                    } catch(Exception)
-                    {}
-                    
+                    }
+                    catch (Exception)
+                    { }
                     return _dataRowMessage.Load(len);
                 /* EnterpriseDB Team */
                 case BackendMessageCode.ParamData:
                     CurrentReader.ProcessDataRowMessage(buf, false);
-                    return _outParamDataRowMessage.Load(len); 
-                    
-
+                    return _outParamDataRowMessage.Load(len);
                 case BackendMessageCode.CompletedResponse:
                     return _commandCompleteMessage.Load(buf, len);
                 case BackendMessageCode.ReadyForQuery:

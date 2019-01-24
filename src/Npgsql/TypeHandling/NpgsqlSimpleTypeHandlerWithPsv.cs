@@ -114,10 +114,8 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null)
             => typeof(TPsv);
 
-        /// <summary>
-        /// Creates a type handler for arrays of this handler's type.
-        /// </summary>
-        protected internal override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
+        /// <inheeritdoc />
+        public override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
             => new ArrayHandlerWithPsv<TDefault, TPsv>(this) { PostgresType = arrayBackendType };
 
         #endregion Misc

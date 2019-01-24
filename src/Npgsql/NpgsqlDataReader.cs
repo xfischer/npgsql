@@ -62,7 +62,13 @@ namespace EnterpriseDB.EDBClient
         internal EDBCommand Command { get; private set; }
         internal EDBConnector Connector { get; }
         EDBConnection _connection;
-        internal IBackendMessage pendingmsg;
+        internal IBackendMessage pendingmsg;//Enterprisedb Team
+        internal bool _isReturnRow = true; //EnterpriseDB Team
+        internal bool isOutParamReceived;//EnterpriseDB Team
+        internal int _InternalreadPosition;//EnterpriseDB Team
+        internal int _InternalActaullReadPosition;//EnterpriseDB Team
+        RowDescriptionMessage _callable_descrition; //EDB
+
 
         /// <summary>
         /// The behavior of the command with which this reader was executed.
@@ -74,8 +80,10 @@ namespace EnterpriseDB.EDBClient
         internal ReaderState State;
 
         internal EDBReadBuffer Buffer;
-        internal EDBReadBuffer RetRowBuffer;
-
+        internal EDBReadBuffer RetRowBuffer;//Enterprisedb Team
+        internal List<(int Offset, int Length)> _columns = new List<(int Offset, int Length)>();//EnterpriseDB Team
+        internal List<(int Offset, int Length)> _retColumns = new List<(int Offset, int Length)>();//EnterpriseDB Team
+        internal int _column;
         /// <summary>
         /// Holds the list of statements being executed by this reader.
         /// </summary>
@@ -148,7 +156,13 @@ namespace EnterpriseDB.EDBClient
             State = ReaderState.BetweenResults;
             _recordsAffected = null;
             pendingmsg = null;//Enterprisedb Team
-        }
+            _column = 0;
+            _isReturnRow = true; //EnterpriseDB Team
+        isOutParamReceived = false;//EnterpriseDB Team
+        _InternalreadPosition = 0;//EnterpriseDB Team
+        _InternalActaullReadPosition = 0;//EnterpriseDB Team
+        _callable_descrition = null; //EDB
+    }
 
         #region Read
 
@@ -283,7 +297,7 @@ namespace EnterpriseDB.EDBClient
                 }
                 return;
 
-                case BackendMessageCode.CompletedResponse:
+            case BackendMessageCode.CompletedResponse:
                 var completed = (CommandCompleteMessage) msg;
                 switch (completed.StatementType)
                 {
@@ -316,7 +330,7 @@ namespace EnterpriseDB.EDBClient
 
         internal abstract ValueTask<IBackendMessage> ReadMessage(bool async);
         internal abstract void ProcessDataMessage(DataRowMessage dataMsg);
-        internal abstract void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow);
+        internal abstract void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow);//EnterpriseDB Team
         internal abstract Task SeekToColumn(int column, bool async);
         internal abstract Task SeekInColumn(int posInColumn, bool async);
         internal abstract Task ConsumeRow(bool async);
@@ -371,7 +385,7 @@ namespace EnterpriseDB.EDBClient
         /// Internal implementation of NextResult
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected virtual async Task<bool> NextResult(bool async, bool isConsuming=false)
+        async Task<bool> NextResult(bool async, bool isConsuming=false)
         {
             IBackendMessage msg;
             Debug.Assert(!IsSchemaOnly);
@@ -388,7 +402,7 @@ namespace EnterpriseDB.EDBClient
                     //else
                     //    Connector.SkipUntil(BackendMessageCode.EmptyQueryResponse);
                     while (true)
-                {
+                    {
                     completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
                     switch (completedMsg.Code)
                     {
@@ -473,7 +487,31 @@ namespace EnterpriseDB.EDBClient
                     }
                 }
 
-                msg = await ReadMessage(async);
+                // The following is a pretty awful hack to bring back output parameters for sequential readers (#2091)
+                // We should definitely clean up the entire reader design (#1853)
+                if (StatementIndex == 0 && RowDescription != null && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//EnterpriseDB Team
+                {
+                    // If output parameters are present and this is the first row of the first resultset,
+                    // we must read it in non-sequential mode because it will be traversed twice (once
+                    // here for the parameters, then as a regular row).
+                    msg = await Connector.ReadMessage(async);
+
+                    // If we got an actual first row (i.e. resultset wasn't empty), we process the message so it can
+                    // be read by PopulateOutputParameters(). We then rewind the buffer to the start of the row, and
+                    // continue to the normal flow, where we will process it again, as if we're reading a totally
+                    // new row (using the same first row).
+                    
+                    if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
+                    {
+                        var pos = Connector.ReadBuffer.ReadPosition;
+                        ProcessMessage(row);
+                        PopulateNonPreparedOutputParameters();
+                        Connector.ReadBuffer.ReadPosition = pos;
+                    }
+                }
+                else
+                    msg = await ReadMessage(async);
+
                 if (RowDescription == null)
                 {
                     // Statement did not generate a resultset (e.g. INSERT)
@@ -484,11 +522,10 @@ namespace EnterpriseDB.EDBClient
                     case BackendMessageCode.CompletedResponse:
                     case BackendMessageCode.EmptyQueryResponse:
                         break;
-
                         case BackendMessageCode.NoData:
                             return true;
                         default:
-                        throw Connector.UnexpectedMessageReceived(msg.Code);
+                            throw Connector.UnexpectedMessageReceived(msg.Code);
                     }
 
                     ProcessMessage(msg);
@@ -500,12 +537,15 @@ namespace EnterpriseDB.EDBClient
                     case BackendMessageCode.NoData:
                     case BackendMessageCode.RowDescription:
                         State = ReaderState.InResult;
+                        if (Command.CommandType == CommandType.StoredProcedure && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//EnterpriseDB Team
+                        {
+                            PopulateOutputParameters();
+                        }
                         return true;
-
-                case BackendMessageCode.DataRow:
+                    case BackendMessageCode.DataRow:
                         pendingmsg = msg;
                         break;
-                case BackendMessageCode.CompletedResponse:
+                    case BackendMessageCode.CompletedResponse:
                     break;
                 default:
                     throw Connector.UnexpectedMessageReceived(msg.Code);
@@ -519,6 +559,327 @@ namespace EnterpriseDB.EDBClient
             ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async)));
             RowDescription = null;
             return false;
+        }
+
+        void PopulateOutputParameters()//EnterpriseDB Team
+        {
+            var paramdata = false;
+            var retDataFetched = false;
+            var done = false;
+            isOutParamReceived = false;
+            // TODO: Should we really use Contract here, instead of throwing an Exception?
+            Debug.Assert(RowDescription != null);
+            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
+
+            //var asDataRow = _pendingMessage as DataRowMessage;
+            //if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
+            //  return;
+
+            while (done != true)
+            {
+                var msg = Connector.ReadMessage(DataRowLoadingMode.NonSequential);
+                if (msg.Code == BackendMessageCode.CompletedResponse && paramdata != true)
+                    continue;
+                else
+                    switch (msg.Code)
+                    {
+                        case BackendMessageCode.DataRow:
+                            // _pendingMessage = msg;
+                            paramdata = true;
+
+                            if (Command.CommandType == CommandType.StoredProcedure)
+                            {
+
+
+                                if (Command.Parameters._hasReturnParam && retDataFetched != true)
+                                {
+                                    //_tempDataRow = (DataRowNonSequentialMessage)msg;
+                                    _isReturnRow = false;
+                                    retDataFetched = true;
+                                    paramdata = false;
+                                    //ConsumeRow(false);
+                                    continue;
+                                }
+                                else
+                                {
+                                    //_outRow = (DataRowNonSequentialMessage)msg;
+                                    //_row = _outRow; // _tempDataRow; ZK 
+
+                                    if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                                    {
+                                        done = false;
+                                    }
+                                    else
+                                    {
+                                        done = true;
+                                    }
+                                    continue;
+
+                                }
+                            }
+                            else
+                            {
+                                //_row = (DataRowNonSequentialMessage)msg;
+                                _isReturnRow = false;
+                                done = true;
+                                break;
+                            }
+                        case BackendMessageCode.CompletedResponse:
+                        case BackendMessageCode.EmptyQueryResponse:
+                            // _pendingMessage = msg;
+                            if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                            {
+                                continue;
+                            }
+                            return;
+                        case BackendMessageCode.OutDescription:
+                        case BackendMessageCode.RowDescription:
+                            if (Command.Parameters.Any(p => p.IsOutputDirection))
+                            {
+                                _callable_descrition = (RowDescriptionMessage)msg;
+                            }
+                            else
+                            {
+                                _callable_descrition = RowDescription;
+                            }
+                            continue;
+
+
+
+                        //        var description = (RowDescriptionMessage)msg;
+                        //   FixupRowDescription(description, _queryIndex == 0);
+                        // _queries[_queryIndex].Description = description;
+                        //   if ((behavior & CommandBehavior.SchemaOnly) != 0) {
+                        //       _queryIndex++;
+                        //}
+
+                        case BackendMessageCode.BindComplete:
+                        case BackendMessageCode.ParameterDescription:
+                        case BackendMessageCode.NoData:
+                            if (!Command.Parameters.Any(p => p.IsOutputDirection))
+                            {
+                                _callable_descrition = RowDescription;
+                            }
+                            continue;
+
+                        default:
+                            throw new ArgumentOutOfRangeException("Unexpected message type while populating output parameter: " + msg.Code);
+                    }
+            }
+            var tmp = new byte[8500];
+            if (Command.CommandType == CommandType.StoredProcedure)
+            {
+                RowDescription = _callable_descrition;
+                if (Command.Parameters._hasReturnParam)
+                {
+                    Array.Copy(Buffer.Buffer, tmp, Buffer.Buffer.Length);
+                    Command.Parameters.Insert(Command.Parameters.ReturnIndex, Command.Parameters.ReturnParam);
+                    RowDescription.AddReturnData((FieldDescription)_callable_descrition[0]);
+                    Add(RetRowBuffer); // ZK
+                }
+            }
+
+            if (Command.Parameters.Any(p => p.IsOutputDirection))
+            {
+                //check Debug.Assert(RowDescription.NumFields == _row.NumColumns);
+            }
+
+            //      if (IsCaching) { _rowCache.Clear(); }
+
+            var pending = new Queue<EDBParameter>();
+            var taken = new List<int>();
+
+            foreach (var p in Command.Parameters.Where(p => p.IsOutReturnDirection))
+            {
+                int idx;
+                if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
+                {
+                    // TODO: Provider-specific check?
+                    p.Value = GetValue(idx);
+                    taken.Add(idx);
+                }
+                else
+                {
+                    pending.Enqueue(p);
+                }
+            }
+            for (var i = 0; pending.Count != 0 && i != RowDescription.NumFields; ++i)
+            {
+                if (!taken.Contains(i))
+                {
+                    // TODO: Need to get the provider-specific value based on the out param's type
+                    pending.Dequeue().Value = GetValue(i);
+                    //   Console.WriteLine((string)pending.Dequeue().Value.ToString());
+                }
+            }
+
+
+            if (Command.Parameters._hasReturnParam)
+            {
+                Buffer.Buffer = tmp;
+                Buffer.Seek(_InternalActaullReadPosition, SeekOrigin.Begin);
+                var msg = Connector.ReadMessage(DataRowLoadingMode.NonSequential);
+                State = ReaderState.Consumed;
+                //     if (msg.Code == BackendMessageCode.CompletedResponse )
+                {
+                    //       _state = ReaderState.Consumed;
+
+                }
+            }
+            // _state = ReaderState.Consumed;
+        }
+
+        internal void Add(EDBReadBuffer retRowBuf)//EnterpriseDB Team 
+
+        {
+            _InternalActaullReadPosition = Buffer.ReadPosition;
+            //   ReadBuffer buf_new = new ReadBuffer(Buffer.Connector, Buffer.Connector.Connection. + 100, Buffer.TextEncoding);
+            var rd = new EDBReadBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
+            var wt = new EDBWriteBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
+
+            var buf_new_length = Buffer.Size;// retRow.Buffer.Size - sizeof(Int16);
+
+            //TODO     retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
+
+            retRowBuf.Seek(_InternalreadPosition, SeekOrigin.Begin);
+
+            // ISSUE 1 - Starting Position = Buffer.Seek(0, SeekOrigin.Begin);
+
+            var RetRowNumColumns = (int)retRowBuf.ReadInt16();
+            var OutParamNumColumns = (int)_columns.Count;
+            var TotalNumColumns = OutParamNumColumns + RetRowNumColumns;
+            //NumColumns = TotalNumColumns;
+
+            wt.WriteInt16(TotalNumColumns);
+
+            // Get length of the buffer retRow
+            _column = -1;
+            ColumnLen = -1;
+            PosInColumn = 0;
+
+            // TODO: Recycle message objects rather than recreating for each row
+            //_columnOffsets = new List<int>(TotalNumColumns);
+            var AllColumnOffsets = new List<(int Offset, int Length)>();//EnterpriseDB Team
+
+            for (var i = 0; i < OutParamNumColumns; i++)
+            {
+
+                var wp = wt.WritePosition;
+                Buffer.Seek(_columns[i].Offset, SeekOrigin.Begin);
+                var len = Buffer.ReadInt32();
+                wt.WriteInt32(len);
+                AllColumnOffsets.Add((wp, len));
+                if (len != -1)
+                {
+                    var output_data = new byte[len + 1];
+
+                    Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
+                    wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                }
+            }
+
+            for (var i = 0; i < RetRowNumColumns; i++)
+            {
+                var wp = wt.WritePosition;
+                retRowBuf.Seek(_retColumns[i].Offset, SeekOrigin.Begin);
+                var len = retRowBuf.ReadInt32();
+                AllColumnOffsets.Add((wp, len));
+                wt.WriteInt32(len);
+
+                if (len != -1)
+                {
+                    var output_data = new byte[len + 1];
+
+                    retRowBuf.ReadBytes(output_data, (int)SeekOrigin.Current, len);
+                    wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                }
+            }
+
+            //_endOffset = wt.WritePosition;
+            //TODO   buf_new.SetFilledBytes = _endOffset;
+
+            Buffer.Buffer = wt.Buffer;
+
+            _columns = AllColumnOffsets;
+
+            // Both buffers start at 108 bytes
+            // We need to preserve _columnOffsets for outparams
+
+            /*
+                        retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
+
+                        EDBBuffer buf_new = new EDBBuffer(Buffer.Underlying, Buffer.Size + 100, Buffer.TextEncoding);
+                        int buf_new_length = Buffer.Size + 100;// retRow.Buffer.Size - sizeof(Int16);
+
+                        int TotalNumColumns = NumColumns + 1;  // add 1 ret param
+                        //  buf_new = buf_new.EnsureOrAllocateTemp(buf_new_length);
+                        NumColumns = NumColumns + 1;
+
+                        Column = -1;
+                        ColumnLen = -1;
+                        PosInColumn = 0;
+                        // TODO: Recycle message objects rather than recreating for each row
+                        _columnOffsets = new List<int>(TotalNumColumns);
+                        for (var i = 0; i < 1 ; i++)
+                        {
+                            int tmpColumn = retRow.Buffer.ReadInt16();
+                            _columnOffsets.Add(retRow.Buffer.ReadPosition);
+                            var len = retRow.Buffer.ReadInt32();
+                            Buffer.WriteInt32(len);
+
+                            if (len != -1)
+                            {
+                                byte[] output_data = new byte[len+1];
+
+                                retRow.Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
+                                Buffer.WriteBytes(output_data, (int)SeekOrigin.Current, len);
+                            }
+                        }
+                    //    Buffer = buf_new;
+            */
+
+
+
+            //check return this;
+        }
+
+        void PopulateNonPreparedOutputParameters()
+        {
+            // The first row in a stored procedure command that has output parameters needs to be traversed twice -
+            // once for populating the output parameters and once for the actual result set traversal. So in this
+            // case we can't be sequential.
+            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
+            Debug.Assert(StatementIndex == 0);
+            Debug.Assert(RowDescription != null);
+            Debug.Assert(State == ReaderState.BeforeResult);
+
+            // Temporarily set our state to InResult to allow us to read the values
+            State = ReaderState.InResult;
+
+            var pending = new Queue<object>();
+            var taken = new List<EDBParameter>();
+            for (var i = 0; i < FieldCount; i++)
+            {
+                if (Command.Parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
+                {
+                    p.Value = GetValue(i);
+                    taken.Add(p);
+                }
+                else
+                    pending.Enqueue(GetValue(i));
+            }
+
+            // Not sure where this odd behavior comes from: all output parameters which did not get matched by
+            // name now get populated with column values which weren't matched. Keeping this for backwards compat,
+            // opened #2252 for investigation.
+            foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection && !taken.Contains(p)))
+            {
+                if (pending.Count == 0)
+                    break;
+                p.Value = pending.Dequeue();
+            }
+
+            State = ReaderState.BeforeResult;  // Set the state back
         }
 
         /// <summary>
@@ -667,7 +1028,7 @@ namespace EnterpriseDB.EDBClient
 
             if (State == ReaderState.InResult && Command.CommandType != CommandType.StoredProcedure)
             {
-               await ConsumeRow(async);
+                await ConsumeRow(async);
             }
 
             // Skip over the other result sets, processing only CommandCompleted for RecordsAffected
@@ -687,7 +1048,8 @@ namespace EnterpriseDB.EDBClient
                         default:
                             throw new EDBException("Unexpected message of type " + msg.Code);
                     }
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     e.ToString();
                     break;

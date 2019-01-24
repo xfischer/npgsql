@@ -755,6 +755,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual((byte)42, paramBase.Precision);
         }
 #endif
+
         [Test]
         public void ScaleViaInterface()
         {
@@ -765,6 +766,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Assert.AreEqual((byte)42, paramIface.Scale);
         }
+
 #if !NET45
         [Test]
         public void ScaleViaBaseClass()

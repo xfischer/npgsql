@@ -329,60 +329,60 @@ namespace EnterpriseDB.EDBClient.Tests
 					con.Close();
                 con.Open();
 
-				//EDBCommand com = new EDBCommand("",con);
-				//com.CommandType = CommandType.Text;
+            EDBCommand com = new EDBCommand("", con);
+            com.CommandType = CommandType.Text;
 
-				//com.CommandText = "DROP PROCEDURE cursortest2";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE cursortest2";
+            com.ExecuteNonQuery();
 
-				//com.CommandText="DROP PROCEDURE refcur_callee2";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE refcur_callee2";
+            com.ExecuteNonQuery();
 
-				//com.CommandText="DROP PROCEDURE refcur_callee_4param_with_Join";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE refcur_callee_4param_with_Join";
+            com.ExecuteNonQuery();
 
-				//com.CommandText="DROP PROCEDURE refcur_callee_5param_with_Join ";
+            com.CommandText = "DROP PROCEDURE refcur_callee_5param_with_Join ";
 
-				//com.CommandText="DROP PROCEDURE refcur_callee_6param_with_Join";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE refcur_callee_6param_with_Join";
+            com.ExecuteNonQuery();
 
-				//com.CommandText= "DROP PROCEDURE refcur_callee_7param_with_Join";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE refcur_callee_7param_with_Join";
+            com.ExecuteNonQuery();
 
-				//com.CommandText= "DROP PROCEDURE refcur_callee_8param_with_Join";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE refcur_callee_8param_with_Join";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProc;";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProc;";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PACKAGE refcurpackproc;";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PACKAGE refcurpackproc;";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PACKAGE RefCursorPackage;";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PACKAGE RefCursorPackage;";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutBool";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutBool";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutBigint";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutBigint";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutDoublePrecision";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutDoublePrecision";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric2";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutNumeric2";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutSmallInt";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutSmallInt";
+            com.ExecuteNonQuery();
 
-				//com.CommandText = "DROP PROCEDURE RefCurProcOutInteger";
-				//com.ExecuteNonQuery();
+            com.CommandText = "DROP PROCEDURE RefCurProcOutInteger";
+            com.ExecuteNonQuery();
 
-				if(con.State != ConnectionState.Closed)
+            if (con.State != ConnectionState.Closed)
 					con.Close();
 			}
 

@@ -35,6 +35,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     [TypeMapping("xid", EDBDbType.Xid)]
     [TypeMapping("cid", EDBDbType.Cid)]
     [TypeMapping("regtype", EDBDbType.Regtype)]
+    [TypeMapping("regconfig", EDBDbType.Regconfig)]
     class UInt32Handler : EDBSimpleTypeHandler<uint>
     {
         public override uint Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)

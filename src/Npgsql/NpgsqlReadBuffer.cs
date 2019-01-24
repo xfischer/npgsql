@@ -253,18 +253,10 @@ namespace EnterpriseDB.EDBClient
         #region Read Simple
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sbyte ReadSByte()
-        {
-            Debug.Assert(sizeof(sbyte) <= ReadBytesLeft);
-            return (sbyte)Buffer[ReadPosition++];
-        }
+        public sbyte ReadSByte() => Read<sbyte>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte ReadByte()
-        {
-            Debug.Assert(sizeof(byte) <= ReadBytesLeft);
-            return Buffer[ReadPosition++];
-        }
+        public byte ReadByte() => Read<byte>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short ReadInt16()
@@ -345,9 +337,8 @@ namespace EnterpriseDB.EDBClient
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadSingle(bool littleEndian)
         {
-            var result = Read<float>();
-            return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+            var result = ReadInt32(littleEndian);
+            return Unsafe.As<int, float>(ref result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -357,19 +348,24 @@ namespace EnterpriseDB.EDBClient
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble(bool littleEndian)
         {
-            var result = Read<double>();
-            return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+            var result = ReadInt64(littleEndian);
+            return Unsafe.As<long, double>(ref result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private T Read<T>()
         {
-            Debug.Assert(Unsafe.SizeOf<T>() <= ReadBytesLeft);
+            if (Unsafe.SizeOf<T>() > ReadBytesLeft)
+                ThrowNotSpaceLeft();
+
             var result = Unsafe.ReadUnaligned<T>(ref Buffer[ReadPosition]);
             ReadPosition += Unsafe.SizeOf<T>();
             return result;
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowNotSpaceLeft()
+            => throw new InvalidOperationException("There is not enough space left in the buffer.");
 
         public string ReadString(int byteLen)
         {

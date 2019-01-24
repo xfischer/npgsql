@@ -31,7 +31,6 @@ namespace EnterpriseDB.EDBClient.Tests
 {
     [NonParallelizable]
     [Explicit]
-    [Ignore("Need performance counter support")]
     public class PerformanceCounterTests : TestBase
     {
         [Test]

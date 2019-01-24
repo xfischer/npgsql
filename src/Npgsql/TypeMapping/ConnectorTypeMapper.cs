@@ -1,4 +1,5 @@
 ﻿#region License
+
 // The PostgreSQL License
 //
 // Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
@@ -19,17 +20,15 @@
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
 // ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
 #endregion
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Logging;
 using EnterpriseDB.EDBClient.PostgresTypes;
@@ -80,13 +79,12 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         #region Construction
 
-        internal ConnectorTypeMapper(EDBConnector connector)
+        internal ConnectorTypeMapper(EDBConnector connector): base(GlobalTypeMapper.Instance.DefaultNameTranslator)
         {
             _connector = connector;
             UnrecognizedTypeHandler = new UnknownTypeHandler(_connector.Connection);
             ClearBindings();
             ResetMappings();
-            DefaultNameTranslator = GlobalTypeMapper.Instance.DefaultNameTranslator;
         }
 
         #endregion Constructors

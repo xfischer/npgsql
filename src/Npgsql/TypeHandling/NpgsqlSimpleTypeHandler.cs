@@ -187,6 +187,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
 
             Debug.Assert(this is IEDBSimpleTypeHandler<TAny>);
             var typedHandler = (IEDBSimpleTypeHandler<TAny>)this;
+
             var elementLen = -1;
             if (parameter != null && parameter.Direction == System.Data.ParameterDirection.Output)//EnterpriseDB Team
             {
@@ -201,7 +202,6 @@ namespace EnterpriseDB.EDBClient.TypeHandling
                 typedHandler.Write(value, buf, parameter);
             }
             return PGUtil.CompletedTask;
-
 
             async Task WriteWithLengthLong()
             {

@@ -165,10 +165,11 @@ namespace EnterpriseDB.EDBClient
         {
             if (value.Collection != null)
                 throw new InvalidOperationException("The parameter already belongs to a collection");
+
             if (value.Direction != System.Data.ParameterDirection.ReturnValue)//EnterpriseDB Team
             {
                 _internalList.Add(value);
-            value.Collection = this;
+                value.Collection = this;
             InvalidateHashLookups();
             }
             else//EnterpriseDB Team

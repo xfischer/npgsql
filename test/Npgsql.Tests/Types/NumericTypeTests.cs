@@ -263,32 +263,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        /// <summary>
-        /// http://www.postgresql.org/docs/current/static/datatype-money.html
-        /// </summary>
-        [Test]
-        public void Money()
-        {
-            using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
-            {
-                var expected1 = 12345.12m;
-                var expected2 = -10.5m;
-                cmd.Parameters.AddWithValue("p1", EDBDbType.Money, expected1);
-                cmd.Parameters.Add(new EDBParameter("p2", DbType.Currency) { Value = expected2 });
-                using (var reader = cmd.ExecuteReader())
-                {
-                    reader.Read();
-                    Assert.That(reader.GetDecimal(0), Is.EqualTo(12345.12m));
-                    Assert.That(reader.GetValue(0), Is.EqualTo(12345.12m));
-                    Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(12345.12m));
-                    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(decimal)));
-
-                    Assert.That(reader.GetDecimal(1), Is.EqualTo(-10.5m));
-                }
-            }
-        }
-
         [Test, Description("Tests handling of numeric overflow when writing data")]
         [TestCase(EDBDbType.Smallint, 1 + short.MaxValue)]
         [TestCase(EDBDbType.Smallint, 1L + short.MaxValue)]

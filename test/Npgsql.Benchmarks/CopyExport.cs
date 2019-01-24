@@ -11,7 +11,6 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks
 {
-    [Config("columns=OperationPerSecond")]
     public class CopyExport
     {
         EDBConnection _conn;

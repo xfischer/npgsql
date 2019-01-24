@@ -7,7 +7,6 @@ using BenchmarkDotNet.Attributes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks
 {
-    [Config("columns=OperationPerSecond")]
     public class ReadColumns
     {
         EDBConnection _conn;

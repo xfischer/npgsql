@@ -10,7 +10,6 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks.Types
 {
-    [Config("columns=OperationPerSecond"), MemoryDiagnoser]
     public class WriteVaryingNumberOfParameters
     {
         EDBConnection _conn;

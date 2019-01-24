@@ -329,7 +329,7 @@ namespace EDBTypes
                     return 1;
                 default:
                     var cmp = _date.CompareTo(other._date);
-                    return cmp == 0 ? _time.CompareTo(_time) : cmp;
+                    return cmp == 0 ? _time.CompareTo(other._time) : cmp;
                 }
             }
         }

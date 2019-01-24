@@ -544,14 +544,14 @@ namespace EnterpriseDB.EDBClient
 
             if (Direction == ParameterDirection.Input)//EnterpriseDB Team
                 if (_value == null)
-                throw new InvalidCastException($"Parameter {ParameterName} must be set");
+                    throw new InvalidCastException($"Parameter {ParameterName} must be set");
             if (_value is DBNull)
                 return 0;
+
             if (Direction == ParameterDirection.Output && Handler.PostgresType.DisplayName.Contains("cursor"))
             {
                 _value = null;
             }
-
 
             var lengthCache = LengthCache;
             var len = Handler.ValidateObjectAndGetLength(Value, ref lengthCache, this);

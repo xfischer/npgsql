@@ -345,7 +345,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using (var conn = OpenConnection())
             {
-                // We can't use temporary tables b ecause GetColumnSchema opens another connection
+                // We can't use temporary tables because GetColumnSchema opens another connection
                 // internally, which doesn't have our temporary schema
                 conn.ExecuteNonQuery("DROP VIEW IF EXISTS view; DROP TABLE IF EXISTS data");
                 conn.ExecuteNonQuery("CREATE VIEW view AS SELECT 8 AS foo; CREATE TABLE data (bar INTEGER)");
@@ -553,7 +553,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [TestCase("character varying")]
         [TestCase("character varying(10)[]", 10)]
         [TestCase("character(10)", 10)]
-        [TestCase("character")]
+        [TestCase("character", 1)]
         [TestCase("numeric(1000, 2)", null, 1000, 2)]
         [TestCase("numeric(1000)", null, 1000, null)]
         [TestCase("numeric")]
@@ -565,7 +565,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [TestCase("time(2) with time zone", null, 2)]
         [TestCase("interval")]
         [TestCase("interval(2)", null, 2)]
-        [TestCase("bit")]   // Size is implicitly 1
+        [TestCase("bit", 1)]
         [TestCase("bit(3)", 3)]
         [TestCase("bit varying")]
         [TestCase("bit varying(3)", 3)]

@@ -119,8 +119,8 @@ namespace EnterpriseDB.EDBClient
         PortalSuspended       = (byte)'s',
         ReadyForQuery         = (byte)'Z',
         RowDescription        = (byte)'T',
-        OutDescription        = (byte)'u', //EnterpriseDB Team Describe Out from server
-        ParamData             = (byte)'v'  //EnterpriseDB Team Parameter Out data
+        OutDescription = (byte)'u', //EnterpriseDB Team Describe Out from server
+        ParamData = (byte)'v'  //EnterpriseDB Team Parameter Out data
     }
 
     enum StatementOrPortal : byte

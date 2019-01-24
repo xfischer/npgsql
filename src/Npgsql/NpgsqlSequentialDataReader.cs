@@ -34,10 +34,10 @@ namespace EnterpriseDB.EDBClient
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1
         /// </summary>
-        int _column;
+        int _seqcolumn;//EnterpriseDB Team
 
         internal EDBSequentialDataReader(EDBConnector connector)
-            : base(connector) { }
+            : base(connector) {}
 
         internal override ValueTask<IBackendMessage> ReadMessage(bool async)
             => Connector.ReadMessage(async, DataRowLoadingMode.Sequential);
@@ -49,7 +49,7 @@ namespace EnterpriseDB.EDBClient
             // than the buffer, an oversize buffer will be allocated (see #2003). This is hacky and needs to be redone.
             Buffer = Connector.ReadBuffer;
 
-            _column = -1;
+            _seqcolumn = -1;
             ColumnLen = -1;
             PosInColumn = 0;
         }
@@ -74,8 +74,9 @@ namespace EnterpriseDB.EDBClient
             {
                 if (NullableHandler<T>.Exists)
                     return default;
-                else
-                    throw new InvalidCastException("Column is null");
+                if (typeof(T) == typeof(object))
+                    return (T)(object)DBNull.Value;
+                throw new InvalidCastException("Column is null");
             }
 
             var fieldDescription = RowDescription[column];
@@ -206,7 +207,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         internal override async Task SeekToColumn(int column, bool async)
         {
-            if (_column == -1)
+            if (_seqcolumn == -1)
             {
                 await Buffer.Ensure(2, async);
                 _numColumns = Buffer.ReadInt16();
@@ -215,10 +216,10 @@ namespace EnterpriseDB.EDBClient
             if (column < 0 || column >= _numColumns)
                 throw new IndexOutOfRangeException("Column index out of range");
 
-            if (column < _column)
-                throw new InvalidOperationException($"Invalid attempt to read from column ordinal '{column}'. With CommandBehavior.SequentialAccess, you may only read from column ordinal '{_column}' or greater.");
+            if (column < _seqcolumn)
+                throw new InvalidOperationException($"Invalid attempt to read from column ordinal '{column}'. With CommandBehavior.SequentialAccess, you may only read from column ordinal '{_seqcolumn}' or greater.");
 
-            if (column == _column)
+            if (column == _seqcolumn)
                 return;
 
             // Need to seek forward
@@ -233,13 +234,13 @@ namespace EnterpriseDB.EDBClient
             }
 
             // Skip to end of column if needed
-            // TODO: Simplify by better initializing _columnLen/_posInColumn
+            // TODO: Simplify by better initializing _seqcolumnLen/_posInColumn
             var remainingInColumn = ColumnLen == -1 ? 0 : ColumnLen - PosInColumn;
             if (remainingInColumn > 0)
                 await Buffer.Skip(remainingInColumn, async);
 
             // Skip over unwanted fields
-            for (; _column < column - 1; _column++)
+            for (; _seqcolumn < column - 1; _seqcolumn++)
             {
                 await Buffer.Ensure(4, async);
                 var len = Buffer.ReadInt32();
@@ -250,12 +251,12 @@ namespace EnterpriseDB.EDBClient
             await Buffer.Ensure(4, async);
             ColumnLen = Buffer.ReadInt32();
             PosInColumn = 0;
-            _column = column;
+            _seqcolumn = column;
         }
 
         internal override async Task SeekInColumn(int posInColumn, bool async)
         {
-            Debug.Assert(_column > -1);
+            Debug.Assert(_seqcolumn > -1);
 
             if (posInColumn < PosInColumn)
                 throw new InvalidOperationException("Attempt to read a position in the column which has already been read");
@@ -270,12 +271,13 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        internal override void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow) {
+        internal override void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow)//EnterpriseDB Team
+        {
         }
 
         internal override async Task ConsumeRow(bool async)
         {
-            if (_column == -1)
+            if (_seqcolumn == -1)
             {
                 await Buffer.Ensure(2, async);
                 _numColumns = Buffer.ReadInt16();
@@ -296,7 +298,7 @@ namespace EnterpriseDB.EDBClient
                 await Buffer.Skip(remainingInColumn, async);
 
             // Skip over the remaining columns in the row
-            for (; _column < _numColumns - 1; _column++)
+            for (; _seqcolumn < _numColumns - 1; _seqcolumn++)
             {
                 await Buffer.Ensure(4, async);
                 var len = Buffer.ReadInt32();

@@ -197,9 +197,9 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(integer["numeric_precision"], Is.EqualTo(32));
                 Assert.That(integer["numeric_scale"], Is.EqualTo(0));
 
-                //var text = rows.Single(r => (string)r["column_name"] == "text");
-                //Assert.That(text["numeric_precision"], Is.EqualTo(DBNull.Value));
-                //Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
+                var text = rows.Single(r => (string)r["column_name"] == "text");
+                Assert.That(text["numeric_precision"], Is.EqualTo(DBNull.Value));
+                Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
             }
         }
 

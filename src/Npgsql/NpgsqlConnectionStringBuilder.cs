@@ -282,7 +282,7 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Connection
 
         /// <summary>
-        /// The hostname or IP address of the PostgreSQL server to connect to.
+        /// The hostname or IP address of the EnterpriseDB Postgres server to connect to.
         /// </summary>
         [Category("Connection")]
         [Description("The hostname or IP address of the EnterpriseDB Postgres server to connect to.")]
@@ -301,7 +301,7 @@ namespace EnterpriseDB.EDBClient
         string _host;
 
         /// <summary>
-        /// The TCP/IP port of the PostgreSQL server.
+        /// The TCP/IP port of the EnterpriseDB Postgres server.
         /// </summary>
         [Category("Connection")]
         [Description("The TCP port of the EnterpriseDB Postgres server.")]
@@ -323,7 +323,7 @@ namespace EnterpriseDB.EDBClient
         int _port;
 
         ///<summary>
-        /// The PostgreSQL database to connect to.
+        /// The EnterpriseDB Postgres database to connect to.
         /// </summary>
         [Category("Connection")]
         [Description("The EnterpriseDB Postgres database to connect to.")]
@@ -381,7 +381,7 @@ namespace EnterpriseDB.EDBClient
         string _password;
 
         /// <summary>
-        /// Path to a PostgreSQL password file (PGPASSFILE), from which the password would be taken.
+        /// Path to a EnterpriseDB Postgres password file (PGPASSFILE), from which the password would be taken.
         /// </summary>
         [Category("Connection")]
         [Description("Path to a EnterpriseDB Postgres password file (PGPASSFILE), from which the password would be taken.")]
@@ -475,7 +475,7 @@ namespace EnterpriseDB.EDBClient
         string _clientEncoding;
 
         /// <summary>
-        /// Gets or sets the .NET encoding that will be used to encode/decode PostgreSQL string data.
+        /// Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres string data.
         /// </summary>
         [Category("Connection")]
         [Description("Gets or sets the .NET encoding that will be used to encode/decode EnterpriseDB Postgres string data.")]
@@ -494,7 +494,7 @@ namespace EnterpriseDB.EDBClient
         string _encoding;
 
         /// <summary>
-        /// Gets or sets the PostgreSQL session timezone, in Olson/IANA database format.
+        /// Gets or sets the EnterpriseDB Postgres session timezone, in Olson/IANA database format.
         /// </summary>
         [Category("Connection")]
         [Description("Gets or sets the EnterpriseDB Postgres session timezone, in Olson/IANA database format.")]
@@ -1168,7 +1168,7 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Compatibility
 
         /// <summary>
-        /// A compatibility mode for special PostgreSQL server types.
+        /// A compatibility mode for special EnterpriseDB Postgres server types.
         /// </summary>
         [Category("Compatibility")]
         [Description("A compatibility mode for special EnterpriseDB Postgres server types.")]
@@ -1424,7 +1424,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         Redshift,
         /// <summary>
-        /// The server is doesn't support full type loading from the PostgreSQL catalogs, support the basic set
+        /// The server is doesn't support full type loading from the EnterpriseDB Postgres catalogs, support the basic set
         /// of types via information hardcoded inside EnterpriseDB.EDBClient.
         /// </summary>
         NoTypeLoading,

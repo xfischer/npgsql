@@ -21,15 +21,23 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
-using EnterpriseDB.EDBClient.BackendMessages;
 using System;
 using System.Threading.Tasks;
-using EDBTypes;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
+using EDBTypes;
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
+    public abstract class RangeHandler : EDBTypeHandler
+    {
+        public override RangeHandler CreateRangeHandler(PostgresType rangeBackendType)
+            => throw new NotSupportedException();
+    }
+
     /// <summary>
     /// Type handler for PostgreSQL range types
     /// </summary>
@@ -38,37 +46,63 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// http://www.postgresql.org/docs/current/static/rangetypes.html
     /// </remarks>
     /// <typeparam name="TElement">the range subtype</typeparam>
-    class RangeHandler<TElement> : EDBTypeHandler<EDBRange<TElement>>
+    public class RangeHandler<TElement> : RangeHandler, IEDBTypeHandler<EDBRange<TElement>>
     {
         /// <summary>
         /// The type handler for the element that this range type holds
         /// </summary>
-        public EDBTypeHandler ElementHandler { get; }
+        readonly EDBTypeHandler _elementHandler;
 
-        public RangeHandler(EDBTypeHandler<TElement> elementHandler)
-        {
-            ElementHandler = elementHandler;
-        }
+        public RangeHandler(EDBTypeHandler elementHandler)
+            => _elementHandler = elementHandler;
 
-        internal override EDBTypeHandler CreateRangeHandler(PostgresType backendType)
-        {
-            throw new Exception("Can't create range handler of range types, this is an EnterpriseDB.EDBClient bug, please report.");
-        }
+        /// <inheritdoc />
+        public override ArrayHandler CreateArrayHandler(PostgresType arrayBackendType)
+            => new ArrayHandler<EDBRange<TElement>>(this) { PostgresType = arrayBackendType };
+
+        internal override Type GetFieldType(FieldDescription fieldDescription = null) => typeof(EDBRange<TElement>);
+        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null) => typeof(EDBRange<TElement>);
 
         #region Read
 
-        public override async ValueTask<EDBRange<TElement>> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => Read<TAny>(buf, len, false, fieldDescription).Result;
+
+        protected internal override ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        {
+            if (this is IEDBTypeHandler<TAny> typedHandler)
+                return typedHandler.Read(buf, len, async, fieldDescription);
+
+            buf.Skip(len); // Perform this in sync for performance
+            throw new EDBSafeReadException(new InvalidCastException(fieldDescription == null
+                ? $"Can't cast database type to {typeof(TAny).Name}"
+                : $"Can't cast database type {fieldDescription.Handler.PgDisplayName} to {typeof(TAny).Name}"
+            ));
+        }
+
+        internal override async ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+            => await Read(buf, len, async, fieldDescription);
+
+        internal override object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            => Read(buf, len, false, fieldDescription).Result;
+
+        public async ValueTask<EDBRange<TElement>> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
         {
             await buf.Ensure(1, async);
+
             var flags = (RangeFlags)buf.ReadByte();
             if ((flags & RangeFlags.Empty) != 0)
                 return EDBRange<TElement>.Empty;
 
-            TElement lowerBound = default(TElement), upperBound = default(TElement);
+            var lowerBound = default(TElement);
+            var upperBound = default(TElement);
+
             if ((flags & RangeFlags.LowerBoundInfinite) == 0)
-                lowerBound = await ElementHandler.ReadWithLength<TElement>(buf, async);
+                lowerBound = await _elementHandler.ReadWithLength<TElement>(buf, async);
+
             if ((flags & RangeFlags.UpperBoundInfinite) == 0)
-                upperBound = await ElementHandler.ReadWithLength<TElement>(buf, async);
+                upperBound = await _elementHandler.ReadWithLength<TElement>(buf, async);
+
             return new EDBRange<TElement>(lowerBound, upperBound, flags);
         }
 
@@ -76,17 +110,25 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(EDBRange<TElement> value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        protected internal override int ValidateAndGetLength<TAny>(TAny value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+            => this is IEDBTypeHandler<TAny> typedHandler
+                ? typedHandler.ValidateAndGetLength(value, ref lengthCache, parameter)
+                : throw new InvalidCastException($"Can't write CLR type {typeof(TAny)} to database type {PgDisplayName}");
+
+        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache lengthCache, EDBParameter parameter = null)
+            => ValidateAndGetLength((EDBRange<TElement>)value, ref lengthCache, parameter);
+
+        public int ValidateAndGetLength(EDBRange<TElement> value, ref EDBLengthCache lengthCache, EDBParameter parameter)
         {
             var totalLen = 1;
-
             var lengthCachePos = lengthCache?.Position ?? 0;
             if (!value.IsEmpty)
             {
                 if (!value.LowerBoundInfinite)
-                    totalLen += 4 + ElementHandler.ValidateAndGetLength(value.LowerBound, ref lengthCache, null);
+                    totalLen += 4 + _elementHandler.ValidateAndGetLength(value.LowerBound, ref lengthCache, null);
+
                 if (!value.UpperBoundInfinite)
-                    totalLen += 4 + ElementHandler.ValidateAndGetLength(value.UpperBound, ref lengthCache, null);
+                    totalLen += 4 + _elementHandler.ValidateAndGetLength(value.UpperBound, ref lengthCache, null);
             }
 
             // If we're traversing an already-populated length cache, rewind to first element slot so that
@@ -97,17 +139,67 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return totalLen;
         }
 
-        public override async Task Write(EDBRange<TElement> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        internal override Task WriteWithLengthInternal<TAny>(TAny value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        {
+            if (buf.WriteSpaceLeft < 4)
+                return WriteWithLengthLong();
+
+            if (value == null || typeof(TAny) == typeof(DBNull))
+            {
+                buf.WriteInt32(-1);
+                return PGUtil.CompletedTask;
+            }
+
+            return WriteWithLengthCore();
+
+            async Task WriteWithLengthLong()
+            {
+                if (buf.WriteSpaceLeft < 4)
+                    await buf.Flush(async);
+
+                if (value == null || typeof(TAny) == typeof(DBNull))
+                {
+                    buf.WriteInt32(-1);
+                    return;
+                }
+
+                await WriteWithLengthCore();
+            }
+
+            Task WriteWithLengthCore()
+            {
+                if (this is IEDBTypeHandler<TAny> typedHandler)
+                {
+                    buf.WriteInt32(typedHandler.ValidateAndGetLength(value, ref lengthCache, parameter));
+                    return typedHandler.Write(value, buf, lengthCache, parameter, async);
+                }
+                else
+                    throw new InvalidCastException($"Can't write CLR type {typeof(TAny)} to database type {PgDisplayName}");
+            }
+        }
+
+        // The default WriteObjectWithLength casts the type handler to IEDBTypeHandler<T>, but that's not sufficient for
+        // us (need to handle many types of T, e.g. int[], int[,]...)
+        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+            => value == null || value is DBNull
+                ? WriteWithLengthInternal(DBNull.Value, buf, lengthCache, parameter, async)
+                : WriteWithLengthInternal((EDBRange<TElement>)value, buf, lengthCache, parameter, async);
+
+        public async Task Write(EDBRange<TElement> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
         {
             if (buf.WriteSpaceLeft < 1)
                 await buf.Flush(async);
+
             buf.WriteByte((byte)value.Flags);
+
             if (value.IsEmpty)
                 return;
+
             if (!value.LowerBoundInfinite)
-                await ElementHandler.WriteWithLengthInternal(value.LowerBound, buf, lengthCache, parameter, async);
+                await _elementHandler.WriteWithLengthInternal(value.LowerBound, buf, lengthCache, null, async);
+
             if (!value.UpperBoundInfinite)
-                await ElementHandler.WriteWithLengthInternal(value.UpperBound, buf, lengthCache, parameter, async);
+                await _elementHandler.WriteWithLengthInternal(value.UpperBound, buf, lengthCache, null, async);
         }
 
         #endregion

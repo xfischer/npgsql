@@ -199,10 +199,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         public void Null()
         {
             using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand("SELECT @p1::TEXT, @p2::TEXT", conn))
+            using (var cmd = new EDBCommand("SELECT @p1::TEXT, @p2::TEXT, @p3::TEXT", conn))
             {
                 cmd.Parameters.AddWithValue("p1", DBNull.Value);
-                cmd.Parameters.Add(new EDBParameter<DBNull>("p2", DBNull.Value));
+                cmd.Parameters.Add(new EDBParameter<string>("p2", null));
+                cmd.Parameters.Add(new EDBParameter<DBNull>("p3", DBNull.Value));
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
@@ -305,13 +306,15 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test]
-        public void RegType()
+        [TestCase(EDBDbType.Regtype)]
+        [TestCase(EDBDbType.Regconfig)]
+        public void InternalUintTypes(EDBDbType EDBDbType)
         {
             const uint expected = 8u;
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
-                cmd.Parameters.AddWithValue("p", EDBDbType.Regtype, expected);
+                cmd.Parameters.AddWithValue("p", EDBDbType, expected);
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();

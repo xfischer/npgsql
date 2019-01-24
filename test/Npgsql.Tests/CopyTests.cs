@@ -361,7 +361,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
         [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
         [Explicit]
-        [Ignore("Takes too much time")]
         public void ImportByteaMassive()
         {
             using (var conn = OpenConnection())

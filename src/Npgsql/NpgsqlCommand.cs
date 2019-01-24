@@ -39,8 +39,8 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
 using EDBTypes;
-using System.Text.RegularExpressions;//EnterpriseDB Team
 using static EnterpriseDB.EDBClient.Statics;
+using System.Text.RegularExpressions;//EnterpriseDB Team
 
 namespace EnterpriseDB.EDBClient
 {
@@ -323,11 +323,11 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public Type[] ObjectResultTypes { get; set; }//EnterpriseDB Team
 
-    #endregion
+        #endregion
 
-    #region State management
+        #region State management
 
-    int _state;
+        int _state;
 
         /// <summary>
         /// Gets the current state of the connector
@@ -477,6 +477,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         {
                             param.ParameterName = names[i];
                         }
+
                     else
                         param.ParameterName = "parameter" + (i + 1);
 
@@ -908,7 +909,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     ////   sb.Append(')');
                     ////   _statements.Add(new EDBStatement(sb.ToString(), inputList));
                     break;
-            default:
+                default:
                 throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
             }
 
@@ -987,6 +988,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         .Populate(statement.SQL, statement.StatementName, statement.InputParameters, connector.TypeMapper)
                         .Write(buf, async);
                 }
+
                 if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     var bind = connector.BindOutMessage;
@@ -1003,13 +1005,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 {
 
                     var bind = connector.BindMessage;
-                bind.Populate(statement.InputParameters, "", statement.StatementName);
+                    bind.Populate(statement.InputParameters, "", statement.StatementName);
                 if (AllResultTypesAreUnknown)
                     bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
                 else if (i == 0 && UnknownResultTypeList != null)
                     bind.UnknownResultTypeList = UnknownResultTypeList;
                 await connector.BindMessage.Write(buf, async);
                 }//EnterpriseDB Team
+
 
                 if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
@@ -1127,7 +1130,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         .Populate(StatementOrPortal.Statement, statementToClose.Name)
                         .Write(buf, async);
                 }
-
                 if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                 {
                     connector._isCallableStmt = true;
@@ -1138,7 +1140,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 }
                 else
                 {
-
                     await connector.ParseMessage
                     .Populate(statement.SQL, pStatement.Name, statement.InputParameters, connector.TypeMapper)
                     .Write(buf, async);
@@ -1221,7 +1222,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             using (var reader = await ExecuteDbDataReader(CommandBehavior.Default, async, cancellationToken))
             {
                 if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
-                    while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) {}
+                    while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) { }
                 reader.Close();
                 return reader.RecordsAffected;
             }
@@ -1318,8 +1319,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 using (cancellationToken.Register(cmd => ((EDBCommand)cmd).Cancel(), this))
                 {
                     ValidateParameters();
-                    //if ((behavior & CommandBehavior.SequentialAccess) != 0 && Parameters.HasOutputParameters && CommandType != CommandType.StoredProcedure)
-                      //  throw new NotSupportedException("Output parameters aren't supported with SequentialAccess");
 
                     if (IsExplicitlyPrepared)
                     {
@@ -1403,8 +1402,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             catch
             {
                 State = CommandState.Idle;
-                connector.CurrentReader = null;//EnterpriseDB Team
                 Connection.Connector?.EndUserAction();
+                connector.CurrentReader = null;//EnterpriseDB Team
 
                 // Close connection if requested even when there is an error.
                 if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)

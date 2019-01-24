@@ -114,7 +114,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The default TCP/IP port for PostgreSQL.
         /// </summary>
-        public const int DefaultPort = 5444;
+        public const int DefaultPort = 5444;//EnterpriseDB Team
 
         /// <summary>
         /// Maximum value for connection timeout.
@@ -179,15 +179,13 @@ namespace EnterpriseDB.EDBClient
 
             if (!_countersInitialized)
             {
-                _countersInitialized = true;
                 Counters.Initialize(Settings.UsePerfCounters);
+                _countersInitialized = true;
             }
 
             // Maybe pooling is off
             if (!Settings.Pooling)
-            {
                 return;
-            }
 
             // Connstring may be equivalent to one that has already been seen though (e.g. different
             // ordering). Have EDBConnectionStringBuilder produce a canonical string representation
@@ -239,9 +237,10 @@ namespace EnterpriseDB.EDBClient
             var mapper = Connector.TypeMapper;
             if (mapper.ChangeCounter != TypeMapping.GlobalTypeMapper.Instance.ChangeCounter)
             {
-                // We always do this synchronously which isn't amazing but not very important
+                // We always do this synchronously which isn't amazing but not very important, because
+                // it's supposed to be a pretty rare event and the whole point is to keep this method
+                // non-async
                 Connector.LoadDatabaseInfo(EDBTimeout.Infinite, false).GetAwaiter().GetResult();
-                mapper.Reset();
             }
 
             Debug.Assert(Connector.Connection != null, "Open done but connector not set on Connection");
@@ -309,10 +308,7 @@ namespace EnterpriseDB.EDBClient
                         // or global mappings may have changed. Bring this up to date if needed.
                         mapper = Connector.TypeMapper;
                         if (mapper.ChangeCounter != TypeMapping.GlobalTypeMapper.Instance.ChangeCounter)
-                        {
                             await Connector.LoadDatabaseInfo(EDBTimeout.Infinite, async);
-                            mapper.Reset();
-                        }
                     }
 
                     // We may have gotten an already enlisted pending connector above, no need to enlist in that case
@@ -321,7 +317,15 @@ namespace EnterpriseDB.EDBClient
                 }
                 catch
                 {
-                    Connector = null;
+                    if (Connector != null)
+                    {
+                        if (_pool == null)
+                            Connector.Close();
+                        else
+                            _pool.Release(Connector);
+                        Connector = null;
+                    }
+
                     throw;
                 }
                 Debug.Assert(Connector.Connection != null, "Open done but connector not set on Connection");

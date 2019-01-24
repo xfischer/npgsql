@@ -190,7 +190,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
             => value == null || value is DBNull
                 ? WriteWithLengthInternal<DBNull>(null, buf, lengthCache, parameter, async)
-                : WriteWithLength(value, buf, lengthCache, parameter, async);
+                : WriteWithLengthInternal(value, buf, lengthCache, parameter, async);
 
         protected override Task WriteWithLength<T2>(T2 value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
         {
@@ -216,7 +216,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                     await buf.Flush(async);
 
                 buf.WriteUInt32(fieldDescriptor.OID);
-                await fieldHandler.WriteObjectWithLength(fieldValue, buf, lengthCache, parameter, async);
+                await fieldHandler.WriteObjectWithLength(fieldValue, buf, lengthCache, parameter, async);//EnterpriseDB TEam
             }
         }
 

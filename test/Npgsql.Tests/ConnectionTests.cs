@@ -1165,7 +1165,6 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
-        [Ignore("")]
         public void TcpKeepaliveTime()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -1177,7 +1176,6 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
-        [Ignore("")]
         public void TcpKeepalive()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
