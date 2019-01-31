@@ -44,7 +44,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             new TestCaseData(new LocalDateTime(1999, 12, 31, 23, 59, 59, 999).PlusNanoseconds(456000)).SetName(nameof(Timestamp) + "Microseconds"),
         };
 
-        [Test, TestCaseSource(nameof(TimestampCases))]
+        [Test, TestCaseSource(nameof(TimestampCases)), Ignore("Fails with community driver as well against EPAS")]
         public void Timestamp(LocalDateTime localDateTime)
         {
             using (var conn = OpenConnection())

@@ -21,6 +21,8 @@
     <Deterministic>true</Deterministic>
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
+    <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.NodaTime</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

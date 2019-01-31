@@ -21,6 +21,8 @@
     <Deterministic>true</Deterministic>
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
+    <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.Json.NET</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

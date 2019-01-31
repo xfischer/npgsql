@@ -22,6 +22,8 @@
     <Deterministic>true</Deterministic>
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
+    <AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.NetTopologySuite</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

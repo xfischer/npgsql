@@ -20,6 +20,8 @@
     <Deterministic>true</Deterministic>
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
+    <AssemblyName>EnterpriseDB.EDBClient.RawPostgis</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.RawPostgis</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <!-- Causes issues in Appveyor and Travis
