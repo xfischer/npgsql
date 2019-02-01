@@ -1092,12 +1092,10 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				throw new Exception(exp.ToString());
 			}
-
-			//Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+            
+			Assert.AreEqual("(192.168.1.0, 24)",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("182.90.6.0/26",Reader.GetValue(0).ToString());
-			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("(182.90.6.0, 26)",Reader.GetValue(0).ToString());
 			Reader.Close();
 				
 			command.CommandText="DROP TABLE CIDR_TBL";
@@ -1141,18 +1139,14 @@ namespace EnterpriseDB.EDBClient.Tests
 			{
 				throw new Exception(exp.ToString());
 			}
-
-			//Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+            
+			Assert.AreEqual("(192.168.1.0, 24)",Reader.GetValue(0).ToString());
 			Reader.Read();
-            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
-			Assert.AreEqual("10.1.2.3",Reader.GetValue(0).ToString());
-			//Console.WriteLine(Reader.GetValue(0).ToString());
+			Assert.AreEqual("(10.1.2.3, 32)",Reader.GetValue(0).ToString());
 			Reader.Read();
-			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
+			Assert.AreEqual("(10.0.0.0, 8)",Reader.GetValue(0).ToString());
 			Reader.Read();
-            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
-		    Assert.AreEqual("10.0.0.0",Reader.GetValue(0).ToString());
+		    Assert.AreEqual("(10.0.0.0, 32)",Reader.GetValue(0).ToString());
 
 			Reader.Close();
 		
@@ -1486,19 +1480,17 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 
 			Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("192.168.1.0/24",Reader.GetValue(0).ToString());
+			Assert.AreEqual("(192.168.1.0, 24)",Reader.GetValue(0).ToString());
 			Reader.Read();
-            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
-		    Assert.AreEqual("10.1.2.3",Reader.GetValue(0).ToString());
+		    Assert.AreEqual("(10.1.2.3, 32)",Reader.GetValue(0).ToString());
 			Console.WriteLine(Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
-			Assert.AreEqual("10.0.0.0/8",Reader.GetValue(0).ToString());
+			Assert.AreEqual("(10.0.0.0, 8)",Reader.GetValue(0).ToString());
 			Reader.Read();
 			Console.WriteLine(Reader.GetValue(0).ToString());
-            /*ZK: changed exepcted after Npgsql 3.0.5 merge*/
 		
-            Assert.AreEqual("10.0.0.0",Reader.GetValue(0).ToString());
+            Assert.AreEqual("(10.0.0.0, 32)",Reader.GetValue(0).ToString());
 
 			Reader.Close();
 		
