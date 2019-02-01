@@ -746,10 +746,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.CommandText="SELECT name FROM test_Index WHERE major = 2000 AND minor = 3000;";
 				EDBDataReader Reader = Command.ExecuteReader();
 
-			/*	while(Reader.Read())
-				{
-					Console.WriteLine(Reader.GetValue(0).ToString());
-				}*/
 				Assert.IsTrue(Reader.Read());
 				Assert.AreEqual("Ali",Reader.GetValue(0));
 
@@ -779,10 +775,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.CommandText="SELECT name FROM test_Index WHERE major = 3000 AND minor = 4000;";
 				EDBDataReader Reader = Command.ExecuteReader();
 
-				/*	while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-					}*/
 				Assert.IsTrue(Reader.Read());
 				Assert.AreEqual("Usman",Reader.GetValue(0));
 
@@ -848,10 +840,6 @@ namespace EnterpriseDB.EDBClient.Tests
 				Command.CommandText="SELECT * from functional_index where upper(name) ='Ali';";
 				EDBDataReader Reader = Command.ExecuteReader();
 
-				/*	while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-					}*/
 				Assert.IsFalse(Reader.Read());
 
 				Reader.Close();
@@ -886,11 +874,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				{
 				Assert.Fail("Could not create Hash index");
 				}
-				
-				/*	while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-					}*/
+
 				Command.CommandText="DROP TABLE tb_hash;";
 				Command.ExecuteNonQuery();
 
@@ -913,12 +897,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Int16[] b = { 40, 50, 60, 70, 81, 90, 32765 };
 			Command.CommandText= "SELECT * FROM arrtestInt2;";
 			EDBDataReader Reader = Command.ExecuteReader();
-
-				/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Int16[])Reader.GetValue(0));
@@ -947,12 +925,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText= "SELECT * FROM arrtestInt4;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
-
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Int32[])Reader.GetValue(0));
 			Assert.AreEqual(b,(Int32[])Reader.GetValue(1));
@@ -980,11 +952,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText= "SELECT * FROM arrtestInt8;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Int64[])Reader.GetValue(0));
             Assert.AreEqual(b, (Int64[])Reader.GetValue(1));
@@ -1011,11 +978,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText= "SELECT * FROM arrtestFloat;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Double[] )Reader.GetValue(0));
             Assert.AreEqual(b, (Double[])Reader.GetValue(1));
@@ -1042,11 +1004,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText= "SELECT * FROM arrtestFloat4;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Single[])Reader.GetValue(0));
             Assert.AreEqual(b, (Single[])Reader.GetValue(1));
@@ -1073,11 +1030,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText= "SELECT * FROM arrtestFloat8;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Double[])Reader.GetValue(0));
 			Assert.AreEqual(b,(Double[])Reader.GetValue(1));
@@ -1106,11 +1058,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM arrtest1;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Single[])Reader.GetValue(0));
@@ -1138,11 +1085,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysNumeric;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			/*while(Reader.Read())
-					{
-						Console.WriteLine(Reader.GetValue(0).ToString());
-						Console.WriteLine(Reader.GetValue(1).ToString());
-					}*/
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Decimal[])Reader.GetValue(0));
@@ -1171,11 +1113,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysNumericWithPrecision;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//			while(Reader.Read())
-//					{
-//						Console.WriteLine(Reader.GetValue(0).ToString());
-//						Console.WriteLine(Reader.GetValue(1).ToString());
-//					}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Decimal[])Reader.GetValue(0));
@@ -1203,11 +1140,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysSmallInt;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			//			while(Reader.Read())
-			//					{
-			//						Console.WriteLine(Reader.GetValue(0).ToString());
-			//						Console.WriteLine(Reader.GetValue(1).ToString());
-			//					}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Int16[])Reader.GetValue(0));
@@ -1236,11 +1168,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysBigInt;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			//			while(Reader.Read())
-			//					{
-			//						Console.WriteLine(Reader.GetValue(0).ToString());
-			//						Console.WriteLine(Reader.GetValue(1).ToString());
-			//					}
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, (Int64[])Reader.GetValue(0));
             Assert.AreEqual(b, (Int64[])Reader.GetValue(1));
@@ -1269,11 +1196,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysDoublePrecision;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//						while(Reader.Read())
-//								{
-//									Console.WriteLine(Reader.GetValue(0).ToString());
-//									Console.WriteLine(Reader.GetValue(1).ToString());
-//								}
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, (Double[])Reader.GetValue(0));
             Assert.AreEqual(b, (Double[])Reader.GetValue(1));
@@ -1305,11 +1227,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysInteger;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			//						while(Reader.Read())
-			//								{
-			//									Console.WriteLine(Reader.GetValue(0).ToString());
-			//									Console.WriteLine(Reader.GetValue(1).ToString());
-			//								}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Int32[])Reader.GetValue(0));
@@ -1336,11 +1253,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM arrtestNumber;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			//						while(Reader.Read())
-			//								{
-			//									Console.WriteLine(Reader.GetValue(0).ToString());
-			//									Console.WriteLine(Reader.GetValue(1).ToString());
-			//								}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Decimal[])Reader.GetValue(0));
@@ -1368,11 +1280,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysDecimal;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//									while(Reader.Read())
-//											{
-//												Console.WriteLine(Reader.GetValue(0).ToString());
-//												Console.WriteLine(Reader.GetValue(1).ToString());
-//											}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Decimal[])Reader.GetValue(0));
@@ -1429,11 +1336,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "SELECT * FROM ArraysSmallMoney;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//															while(Reader.Read())
-//																	{
-//																		Console.WriteLine(Reader.GetValue(0).ToString());
-//																		Console.WriteLine(Reader.GetValue(1).ToString());
-//																	}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(Decimal[])Reader.GetValue(0));
@@ -1461,11 +1363,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM  books;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//																		while(Reader.Read())
-//																				{
-//																					Console.WriteLine(Reader.GetValue(0).ToString());
-//																					Console.WriteLine(Reader.GetValue(1).ToString());
-//																				}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
@@ -1493,11 +1390,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM  favourite_books;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//			while(Reader.Read())
-//			{
-//				Console.WriteLine(Reader.GetValue(0).ToString());
-//				Console.WriteLine(Reader.GetValue(1).ToString());
-//			}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
@@ -1525,11 +1417,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM  books;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-			//			while(Reader.Read())
-			//			{
-			//				Console.WriteLine(Reader.GetValue(0).ToString());
-			//				Console.WriteLine(Reader.GetValue(1).ToString());
-			//			}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
@@ -1557,11 +1444,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM  favourite_books;";
 			EDBDataReader Reader = Command.ExecuteReader();
 
-//						while(Reader.Read())
-//						{
-//							Console.WriteLine(Reader.GetValue(0).ToString());
-//							//Console.WriteLine(Reader.GetValue(1).ToString());
-//						}
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
@@ -1586,13 +1468,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Command.CommandText="SELECT * FROM chartest;";
 			EDBDataReader Reader = Command.ExecuteReader();
-//
-//									while(Reader.Read())
-//									{
-//										Console.WriteLine(Reader.GetValue(0).ToString());
-//										//Console.WriteLine(Reader.GetValue(1).ToString());
-//									}
-			
+
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
 			
@@ -1616,13 +1492,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Command.CommandText="SELECT * FROM chartest;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-//												while(Reader.Read())
-//												{
-//													Console.WriteLine(Reader.GetValue(0).ToString());
-//													//Console.WriteLine(Reader.GetValue(1).ToString());
-//												}
-			
+
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
 			
@@ -1649,11 +1519,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			Command.CommandText="SELECT * FROM books;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			
-//															while(Reader.Read())
-//															{
-//																Console.WriteLine(Reader.GetValue(0).ToString());
-//																//Console.WriteLine(Reader.GetValue(1).ToString());
-//															}
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
 			
@@ -1679,15 +1544,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Command.CommandText="SELECT * FROM books;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(String[])Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
 			Command.CommandText="DROP TABLE books";
@@ -1712,15 +1571,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			Command.CommandText= "SELECT * FROM arrtestDate;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
 			//Assert.AreEqual(a,(D)Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
 			Command.CommandText= "DROP TABLE arrtestDate;";
@@ -1744,12 +1597,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "SELECT * FROM ArraysTimestamp;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
 			//Console.WriteLine(Reader.GetValue(0).ToString());
@@ -1775,12 +1623,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "SELECT * FROM ArraysDateTime;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
 			//Console.WriteLine(Reader.GetValue(0).ToString());
@@ -1807,12 +1650,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "SELECT * FROM ArraysTime;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//															while(Reader.Read())
-			//															{
-			//																Console.WriteLine(Reader.GetValue(0).ToString());
-			//																//Console.WriteLine(Reader.GetValue(1).ToString());
-			//															}
+
 			Assert.IsTrue(Reader.Read());
           //  DateTime[] data = (DateTime[])Reader.GetValue(0);
 
@@ -1946,56 +1784,12 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "SELECT * FROM ArraysTimestampWithoutTimeZone;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//	while(Reader.Read())
-			//	{
-			//		Console.WriteLine(Reader.GetValue(0).ToString());
-			//		Console.WriteLine(Reader.GetValue(1).ToString());
-			//	}
+
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
-			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
             Command.CommandText = "DROP TABLE ArraysTimestampWithoutTimeZone;";
-			Command.ExecuteNonQuery();
-
-		}
-
-		[Test, Ignore("Needs Investigation")]
-		public void ArraysBitString()
-		{
-			
-			EDBCommand Command = new EDBCommand("",con);
-				
-			Command.CommandText= "CREATE TABLE IF NOT EXISTS arrtestBitString (t bit(3)[]);";
-			Command.ExecuteNonQuery();
-
-			BitArray []a = new BitArray[3] {
-				new BitArray(new bool[] { true, false, true }),
-				new BitArray(new bool[] { true, true, false }),
-				new BitArray(new bool[] { false, true, true }) };
-
-			Command.CommandText= "INSERT INTO arrtestBitString VALUES ('{101,110,011}');";
-			Command.ExecuteNonQuery();
-			
-			Command.CommandText= "SELECT * FROM arrtestBitString;";
-			EDBDataReader Reader = Command.ExecuteReader();
-
-			Assert.IsTrue(Reader.Read());
-			BitArray[] myBools = (BitArray[])Reader.GetValue(0);
-			Assert.AreEqual(3, myBools.Length);
-			BitArray b0 = (BitArray)myBools.GetValue(0);
-			BitArray b1 = (BitArray)myBools.GetValue(1);
-			BitArray b2 = (BitArray)myBools.GetValue(2);
-
-			BitStreamToString((IEnumerable)b1, 8);
-			Assert.AreEqual(a[0], b0, MakeDebugMessage(a[0],b0));
-			Assert.AreEqual(a[1], b1, MakeDebugMessage(a[1], b1));
-			Assert.AreEqual(a[2], b2, MakeDebugMessage(a[2], b2));
-
-			Reader.Close();
-			Command.CommandText= "DROP TABLE arrtestBitString;";
 			Command.ExecuteNonQuery();
 
 		}
@@ -2011,18 +1805,18 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "INSERT INTO ArraysInterval VALUES ('{1 12:59:10,2 01:23:34}');";
 			Command.ExecuteNonQuery();
-//            EDBTypes.EDBInterval[] a = { EDBTypes.EDBInterval.Parse("1 day 12:59:10"), EDBTypes.EDBInterval.Parse("2 days 01:23:34") };
+            EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("1 day 12:59:10"), EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34") };
 
             Command.CommandText = "SELECT * FROM ArraysInterval;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-			//	while(Reader.Read())
-			//	{
-			//		Console.WriteLine(Reader.GetValue(0).ToString());
-			//		Console.WriteLine(Reader.GetValue(1).ToString());
-			//	}
-			Assert.IsTrue(Reader.Read());
-            //Assert.AreEqual(a,(EDBTypes.EDBInterval[])Reader.GetValue(0));
+
+            //while (Reader.Read())
+            //{
+            //    Console.WriteLine(Reader.GetValue(0).ToString());
+            //    Console.WriteLine(Reader.GetValue(1).ToString());
+            //}
+            Assert.IsTrue(Reader.Read());
+            //Assert.AreEqual(a,(TimeSpan[])Reader.GetValue(0));
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
@@ -2043,8 +1837,8 @@ namespace EnterpriseDB.EDBClient.Tests
             Command.CommandText = "INSERT INTO ArraysInterval2 VALUES ('{-23:00:00,2 01:23:34,1 day -01:00:00,21 days}');";
 			Command.ExecuteNonQuery();
 
-            //EDBTypes.EDBInterval[] a = { EDBTypes.EDBInterval.Parse("-23:00:00"), EDBTypes.EDBInterval.Parse("2 days 01:23:34"),
-            //EDBTypes.EDBInterval.Parse("1 day -01:00:00"),EDBTypes.EDBInterval.Parse("21 days")};
+            EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("-23:00:00"), EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34"),
+                                         EDBTypes.EDBTimeSpan.Parse("1 day -01:00:00"),EDBTypes.EDBTimeSpan.Parse("21 days")};
             Command.CommandText = "SELECT * FROM ArraysInterval2;";
 			EDBDataReader Reader = Command.ExecuteReader();
 			
@@ -2054,7 +1848,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			//		Console.WriteLine(Reader.GetValue(1).ToString());
 			//	}
 			Assert.IsTrue(Reader.Read());
-            //Assert.AreEqual(a,(EDBTypes.EDBInterval[])Reader.GetValue(0));
+            //Assert.AreEqual(a,(EDBTypes.EDBTimeSpan[])Reader.GetValue(0));
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
@@ -2085,16 +1879,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Command.CommandText = "SELECT  * FROM ArraySelect where b = 101;";
 			EDBDataReader Reader = Command.ExecuteReader();
-			
-//				while(Reader.Read())
-//				{
-//					Console.WriteLine(Reader.GetValue(0).ToString());
-//					Console.WriteLine(Reader.GetValue(1).ToString());
-//					Console.WriteLine(Reader.GetValue(2).ToString());
-//					Console.WriteLine(Reader.GetValue(3).ToString());
-//					Console.WriteLine(Reader.GetValue(4).ToString());
-//					Console.WriteLine(Reader.GetValue(5).ToString());
-//				}
+
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Int16[])Reader.GetValue(0));
             Assert.AreEqual(101, (Int32)Reader.GetValue(1));
@@ -2128,14 +1913,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Int16[] a = { 100, 200, 300, 400, 500 };
             Command.CommandText = "SELECT a, e[0] ,e[1]  FROM ArrayUpdate where a[2] = 200;";
 			EDBDataReader Reader = Command.ExecuteReader();
-//			
-//							while(Reader.Read())
-//							{
-//								Console.WriteLine(Reader.GetValue(0).ToString());
-//								Console.WriteLine(Reader.GetValue(1).ToString());
-//								Console.WriteLine(Reader.GetValue(2).ToString());
-//								
-//							}
+
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(Int16[])Reader.GetValue(0));
 			Assert.AreEqual("1.1",Reader.GetValue(1).ToString());

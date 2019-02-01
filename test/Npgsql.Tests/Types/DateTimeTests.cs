@@ -431,7 +431,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                         Assert.That(reader[0], Is.EqualTo(expectedTimeSpan));
                         Assert.That(reader.GetValue(0), Is.EqualTo(expectedTimeSpan));
 
-                        // Provider-specific type (EDBInterval)
+                        // Provider-specific type (EDBTimeSpan)
                         Assert.That(reader.GetInterval(0), Is.EqualTo(expectedEDBInterval));
                         Assert.That(reader.GetProviderSpecificFieldType(0), Is.EqualTo(typeof(EDBTimeSpan)));
                         Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(expectedEDBInterval));
