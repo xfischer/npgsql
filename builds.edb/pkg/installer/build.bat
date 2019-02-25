@@ -76,6 +76,36 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error 
 
+cd %SOURCE_PATH%
+cd src\Npgsql.GeoJSON
+nuget restore Npgsql.GeoJSON.csproj
+msbuild.exe Npgsql.GeoJSON.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
+cd %SOURCE_PATH%
+cd src\Npgsql.Json.NET
+nuget restore Npgsql.Json.NET.csproj
+msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
+cd %SOURCE_PATH%
+cd src\Npgsql.LegacyPostgis
+nuget restore Npgsql.LegacyPostgis.csproj
+msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
+cd %SOURCE_PATH%
+cd src\Npgsql.NetTopologySuite
+nuget restore Npgsql.NetTopologySuite.csproj
+msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
+cd %SOURCE_PATH%
+cd src\Npgsql.NodaTime
+nuget restore Npgsql.NodaTime.csproj
+msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
+cd %SOURCE_PATH%
+cd src\Npgsql.RawPostgis
+nuget restore Npgsql.RawPostgis.csproj
+msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+
 mkdir %STAGING_DIR%\4.0
 mkdir %STAGING_DIR%\4.0\net40
 
