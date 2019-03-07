@@ -21,7 +21,7 @@ nuget install EntityFramework
 nuget restore Npgsql.sln
 
 cd src\Npgsql
-msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
+msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 echo %cd%
 echo %RELEASE_CONFIGURATION%
@@ -48,7 +48,7 @@ copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.ValueTuple.dll %STAG
 cd %SOURCE_PATH%
 cd src\VSIX
 nuget restore VSIX.csproj
-msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM%
+msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
 
@@ -60,17 +60,17 @@ copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWO
 cd %SOURCE_PATH%
 cd test\Npgsql.Tests
 nuget restore Npgsql.Tests.csproj
-msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 cd %SOURCE_PATH%
 cd src\EntityFramework6.Npgsql
-msbuild.exe EntityFramework5.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
+msbuild.exe EntityFramework5.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 cd %SOURCE_PATH%
 cd src\EntityFramework6.Npgsql
 nuget restore packages.config -PackagesDirectory packages
 
-msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error 
+msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
 copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
@@ -84,7 +84,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.GeoJSON
 nuget restore Npgsql.GeoJSON.csproj
-msbuild.exe Npgsql.GeoJSON.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.GeoJSON.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net45 || goto :error
 copy bin\Release\net45\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net45 || goto :error
@@ -98,7 +98,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.Json.NET
 nuget restore Npgsql.Json.NET.csproj
-msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net45 || goto :error
 copy bin\Release\net45\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net45 || goto :error
@@ -111,7 +111,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.LegacyPostgis
 nuget restore Npgsql.LegacyPostgis.csproj
-msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net45 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
@@ -123,7 +123,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.NetTopologySuite
 nuget restore Npgsql.NetTopologySuite.csproj
-msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
 copy bin\Release\net45\GeoAPI.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
@@ -138,7 +138,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.NodaTime
 nuget restore Npgsql.NodaTime.csproj
-msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net45 || goto :error
 copy bin\Release\net45\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net45 || goto :error
@@ -151,7 +151,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0
 cd %SOURCE_PATH%
 cd src\Npgsql.RawPostgis
 nuget restore Npgsql.RawPostgis.csproj
-msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net45 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
@@ -160,7 +160,7 @@ mkdir %STAGING_DIR%\4.0
 mkdir %STAGING_DIR%\4.0\net40
 
 cd %SOURCE_PATH%\Net40\EDBDataProvider2.0.2\src
-msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% || goto :error
+msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 copy bin\Release\EDBDataProvider2.0.2.dll %STAGING_DIR%\4.0\net40
 copy bin\Release\Mono.Security.dll %STAGING_DIR%\4.0\net40
 
