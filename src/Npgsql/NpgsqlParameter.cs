@@ -552,7 +552,10 @@ namespace EnterpriseDB.EDBClient
             {
                 _value = null;
             }
-
+            if (Direction == ParameterDirection.InputOutput && _value == null)//EnterpriseDB Team 
+            {
+                return 0;
+            }
             var lengthCache = LengthCache;
             var len = Handler.ValidateObjectAndGetLength(Value, ref lengthCache, this);
             LengthCache = lengthCache;

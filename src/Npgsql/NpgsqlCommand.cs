@@ -505,6 +505,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         }
                     }
                     paramNames = paramNames + ":" + param.ParameterName + ", ";//EnterpriseDB Team
+                    if (postgresType is PostgresTypes.PostgresDomainType)
+                    {
+                        var obj = postgresType as PostgresTypes.PostgresDomainType;
+                        param.PostgresType = obj.BaseType;
+                        param.DataTypeName = obj.BaseType.DisplayName;
+                    }
                     Parameters.Add(param);
                 }
                 if (hasParams && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
