@@ -14,7 +14,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <!--<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>-->
     <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
     <PackageIconUrl>http://www.npgsql.org/img/postgresql.gif</PackageIconUrl>
     <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
@@ -25,8 +25,8 @@
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
-    <Version>4.0.4.1</Version>
-    <AssemblyVersion>4.0.4.1</AssemblyVersion>
+    <Version>4.0.4.3</Version>
+    <AssemblyVersion>4.0.4.3</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
