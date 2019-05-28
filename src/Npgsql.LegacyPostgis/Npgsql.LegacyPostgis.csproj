@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <VersionPrefix>4.0.4.1</VersionPrefix>
+    <VersionPrefix>4.0.4.3</VersionPrefix>
     <Description>PostGIS plugin for Npgsql, allowing mapping of PostGIS types to the legacy types (e.g. PostgisPoint).</Description>
     <Authors>Shay Rojansky</Authors>
     <Copyright>Copyright 2018 © The Npgsql Development Team</Copyright>
@@ -9,7 +9,7 @@
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <!--<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>-->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
