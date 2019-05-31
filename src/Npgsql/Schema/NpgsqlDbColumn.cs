@@ -150,7 +150,7 @@ namespace EnterpriseDB.EDBClient.Schema
 
         #endregion Standard fields
 
-        #region EnterpriseDB.EDBClient-specific fields
+        #region EDB-specific fields
 
         [PublicAPI]
         public PostgresType PostgresType { get; internal set; }
@@ -190,6 +190,6 @@ namespace EnterpriseDB.EDBClient.Schema
             }
         }
 
-        #endregion EnterpriseDB.EDBClient-specific fields
+        #endregion EDB-specific fields
     }
 }

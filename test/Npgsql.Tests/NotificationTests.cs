@@ -24,7 +24,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         //[Test, Description("Generates a notification that arrives after reader data that is already being read")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/252")]
+        [IssueLink("https://github.com/EDB/EDB/issues/252")]
         public void NotificationAfterData()
         {
             var receivedNotification = false;
@@ -39,7 +39,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 using (var reader = cmd.ExecuteReader())
                 {
                     //After "notify notifytest1", a notification message will be sent to client,
-                    //And so the notification message will stick with the last response message of "select generate_series(1,10000)" in EnterpriseDB.EDBClient's tcp receiving buffer.
+                    //And so the notification message will stick with the last response message of "select generate_series(1,10000)" in EDB's tcp receiving buffer.
                     using (var conn2 = new EDBConnection(ConnectionString))
                     {
                         conn2.Open();
@@ -62,7 +62,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1024")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
         [Timeout(10000)]
         public void Wait()
         {
@@ -79,7 +79,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1024")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
         //[Timeout(10000)]
         public void WaitWithTimeout()
         {
@@ -98,7 +98,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(conn.Wait(100), Is.EqualTo(false));
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1024")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
         [Timeout(10000)]
         public async Task WaitAsync()
         {

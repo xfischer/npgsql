@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -36,7 +36,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
     /// <summary>
     /// Base class for all simple type handlers, which read and write short, non-arbitrary lengthed
     /// values to PostgreSQL. Provides a simpler API to implement when compared to <see cref="EDBTypeHandler"/> -
-    /// EnterpriseDB.EDBClient takes care of all I/O before calling into this type, so no I/O needs to be performed by it.
+    /// EDB takes care of all I/O before calling into this type, so no I/O needs to be performed by it.
     /// </summary>
     /// <typeparam name="TDefault">
     /// The default CLR type that this handler will read and write. For example, calling <see cref="DbDataReader.GetValue"/>
@@ -154,7 +154,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
 
         /// <summary>
         /// Writes a value to the provided buffer, with the assumption that there is enough space in the buffer
-        /// (no I/O will occur). The EnterpriseDB.EDBClient core will have taken care of that.
+        /// (no I/O will occur). The EDB core will have taken care of that.
         /// </summary>
         /// <param name="value">The value to write.</param>
         /// <param name="buf">The buffer to which to write.</param>

@@ -34,6 +34,7 @@ namespace EnterpriseDB.EDBClient
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1
         /// </summary>
+        
         int _seqcolumn;//EnterpriseDB Team
 
         internal EDBSequentialDataReader(EDBConnector connector)
@@ -270,11 +271,9 @@ namespace EnterpriseDB.EDBClient
                 PosInColumn = posInColumn;
             }
         }
-
         internal override void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow)//EnterpriseDB Team
         {
         }
-
         internal override async Task ConsumeRow(bool async)
         {
             if (_seqcolumn == -1)

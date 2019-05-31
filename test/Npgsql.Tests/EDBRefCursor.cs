@@ -517,7 +517,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("WARD", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
                     reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \""+cursorName2+"\"";
@@ -573,7 +573,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("WARD", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
                     reader.Close();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName2+"\"";
@@ -647,7 +647,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("WARD", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
                     reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \""+cursorName2+"\"";
@@ -671,7 +671,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("WARD", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
 					reader.Close();
 					tran.Commit();
 				}
@@ -724,7 +724,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
                 
                     reader.Close();
 
@@ -750,7 +750,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
 					Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
                     reader.Close();
 					
                     command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
@@ -818,7 +818,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 					reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
@@ -841,7 +841,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
 					reader.Close();
 					
                     command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";
@@ -900,7 +900,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
 					Assert.AreEqual("106",command.Parameters[6].Value.ToString());
-					Assert.AreEqual("99.9",command.Parameters[7].Value.ToString());
+					Assert.AreEqual("99.90",command.Parameters[7].Value.ToString());
 
                     command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                     command.CommandType = CommandType.Text;
@@ -913,7 +913,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 					reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
@@ -937,7 +937,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("MARTIN", Convert.ToString(reader.GetString(1)));
 					Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
                     Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-					Assert.AreEqual("1250", Convert.ToString(reader[5].ToString()));
+					Assert.AreEqual("1250.00", Convert.ToString(reader[5].ToString()));
 					reader.Close();
                 
                     command.CommandText = "FETCH ALL IN \"" + cursorName4 + "\"";

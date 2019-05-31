@@ -352,7 +352,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        // Exclude some internal EnterpriseDB.EDBClient queries which include pg_type as well as the count statement itself
+        // Exclude some internal EDB queries which include pg_type as well as the count statement itself
         const string CountPreparedStatements = @"
 SELECT COUNT(*) FROM pg_prepared_statements
     WHERE statement NOT LIKE '%pg_prepared_statements%'

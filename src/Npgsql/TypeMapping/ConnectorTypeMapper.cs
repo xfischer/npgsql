@@ -2,23 +2,23 @@
 
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #endregion
@@ -112,7 +112,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         internal EDBTypeHandler GetByDbType(DbType dbType)
             => _byDbType.TryGetValue(dbType, out var handler)
                 ? handler
-                : throw new NotSupportedException("This DbType is not supported in EnterpriseDB.EDBClient: " + dbType);
+                : throw new NotSupportedException("This DbType is not supported in EDB: " + dbType);
 
         internal EDBTypeHandler GetByDataTypeName(string typeName)
             => _byTypeName.TryGetValue(typeName, out var handler)
@@ -130,18 +130,18 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             {
                 if (_arrayHandlerByClrType.TryGetValue(arrayElementType, out var elementHandler))
                     return elementHandler;
-                throw new NotSupportedException($"The CLR array type {type} isn't supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
+                throw new NotSupportedException($"The CLR array type {type} isn't supported by EDB or your PostgreSQL. " +
                                                 "If you wish to map it to an  PostgreSQL composite type array you need to register it before usage, please refer to the documentation.");
             }
 
             // Nothing worked
             if (type.GetTypeInfo().IsEnum)
-                throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with EnterpriseDB.EDBClient before usage, please refer to the documentation.");
+                throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with EDB before usage, please refer to the documentation.");
 
             if (typeof(IEnumerable).IsAssignableFrom(type))
-                throw new NotSupportedException("EnterpriseDB.EDBClient 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
+                throw new NotSupportedException("EDB 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
 
-            throw new NotSupportedException($"The CLR type {type} isn't natively supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
+            throw new NotSupportedException($"The CLR type {type} isn't natively supported by EDB or your PostgreSQL. " +
                                             $"To use it with a PostgreSQL composite you need to specify {nameof(EDBParameter.DataTypeName)} or to map it, please refer to the documentation.");
         }
 
@@ -268,7 +268,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
                 BindType(dynamicCompositeFactory.Create(compType, _connector.Connection), compType);
         }
 
-        void BindType(EDBTypeMapping mapping, EDBConnector connector, bool throwOnError)
+        void BindType(EDBTypeMapping mapping, EDBConnector connector, bool externalCall)
         {
             // Binding can occur at two different times:
             // 1. When a user adds a mapping for a specific connection (and exception should bubble up to them)
@@ -283,7 +283,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             if (!found)
             {
                 var msg = $"A PostgreSQL type with the name {mapping.PgTypeName} was not found in the database";
-                if (throwOnError)
+                if (externalCall)
                     throw new ArgumentException(msg);
                 Log.Debug(msg);
                 return;
@@ -291,7 +291,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             else if (pgType == null)
             {
                 var msg = $"More than one PostgreSQL type was found with the name {mapping.PgTypeName}, please specify a full name including schema";
-                if (throwOnError)
+                if (externalCall)
                     throw new ArgumentException(msg);
                 Log.Debug(msg);
                 return;
@@ -299,7 +299,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             else if (pgType is PostgresDomainType)
             {
                 var msg = "Cannot add a mapping to a PostgreSQL domain type";
-                if (throwOnError)
+                if (externalCall)
                     throw new NotSupportedException(msg);
                 Log.Debug(msg);
                 return;
@@ -307,6 +307,17 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
             var handler = mapping.TypeHandlerFactory.Create(pgType, connector.Connection);
             BindType(handler, pgType, mapping.EDBDbType, mapping.DbTypes, mapping.ClrTypes);
+
+            if (!externalCall)
+                return;
+
+            foreach (var domain in DatabaseInfo.DomainTypes)
+                if (domain.BaseType.OID == pgType.OID)
+                {
+                    _byOID[domain.OID] = handler;
+                    if (domain.Array != null)
+                        BindType(handler.CreateArrayHandler(domain.Array), domain.Array);
+                }
         }
 
         void BindType(EDBTypeHandler handler, PostgresType pgType, EDBDbType? EDBDbType = null, DbType[] dbTypes = null, Type[] clrTypes = null)

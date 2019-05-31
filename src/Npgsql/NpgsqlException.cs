@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient
     /// <remarks>
     /// PostgreSQL errors (e.g. query SQL issues, constraint violations) are raised via
     /// <see cref="PostgresException"/> which is a subclass of this class.
-    /// Purely EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
+    /// Purely EDB-related issues which aren't related to the server will be raised
     /// via the standard CLR exceptions (e.g. ArgumentException).
     /// </remarks>
     [Serializable]

@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -154,6 +154,24 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
+        [Test, Description("Tests support for ReadOnlyIPAddress, see https://github.com/dotnet/corefx/issues/33373")]
+        public void IPAddressAny()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3", conn))
+            {
+                cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Inet) { Value = IPAddress.Any });
+                cmd.Parameters.Add(new EDBParameter<IPAddress>("p2", EDBDbType.Inet) { TypedValue = IPAddress.Any });
+                cmd.Parameters.Add(new EDBParameter { ParameterName = "p3", Value = IPAddress.Any });
+                using (var reader = cmd.ExecuteReader())
+                {
+                    reader.Read();
+                    for (var i = 0; i < reader.FieldCount; i++)
+                        Assert.That(reader.GetFieldValue<IPAddress>(i), Is.EqualTo(IPAddress.Any));
+                }
+            }
+        }
+
         [Test]
         public void Cidr()
         {
@@ -230,7 +248,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/835")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/835")]
         public void MacaddrMultiple()
         {
             using (var conn = OpenConnection())

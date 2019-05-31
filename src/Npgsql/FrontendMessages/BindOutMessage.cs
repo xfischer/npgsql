@@ -123,8 +123,6 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             {
                 foreach (EDBParameter p in _parameters)
                 {
-               //     if (buf.WriteSpaceLeft < 2)
-               //         await buf.Flush(async, cancellationToken);
                     buf.WriteInt16((short)p.FormatCode);
                 }
             }

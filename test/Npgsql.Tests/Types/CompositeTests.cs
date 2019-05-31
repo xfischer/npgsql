@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -179,7 +179,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1779")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1779")]
         public void CompositePostgresType()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -531,7 +531,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/859")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/859")]
         public void NameTranslation()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -565,7 +565,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             public int SomeClrName { get; set; }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/856")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/856")]
         public void Domain()
         {
             var setupSql = @"SET search_path=pg_temp;
@@ -621,7 +621,7 @@ CREATE TYPE address AS
 
         #region Table as Composite
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/990")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/990")]
         public void TableAsCompositeNotSupportedByDefault()
         {
             using (var conn = OpenConnection())
@@ -632,7 +632,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/990")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/990")]
         public void TableAsComposite()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -653,7 +653,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1267")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1267")]
         public void TableAsCompositeWithDeleteColumns()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -678,7 +678,7 @@ CREATE TYPE address AS
 
         #endregion Table as Composite
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1125")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1125")]
         public void NullableProperty()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -714,7 +714,7 @@ CREATE TYPE address AS
             public int? Foo { get; set; }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1168")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1168")]
         public void WithSchema()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -750,7 +750,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1168")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1168")]
         public void InDifferentSchemas()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -804,7 +804,7 @@ CREATE TYPE address AS
         class Composite2 { public int Bar { get; set; } }
         class Composite3 { public int Bar { get; set; } }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1612")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1612")]
         public void LocalMappingDontLeak()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)

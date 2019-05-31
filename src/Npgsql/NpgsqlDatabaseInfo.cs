@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -28,6 +28,7 @@ using System.Data.Common;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -77,35 +78,35 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Whether the backend supports range types.
         /// </summary>
-        public virtual bool SupportsRangeTypes => Version >= new Version(9, 2, 0);
+        public virtual bool SupportsRangeTypes => Version.IsGreaterOrEqual(9, 2, 0);
         /// <summary>
         /// Whether the backend supports enum types.
         /// </summary>
-        public virtual bool SupportsEnumTypes => Version >= new Version(8, 3, 0);
+        public virtual bool SupportsEnumTypes => Version.IsGreaterOrEqual(8, 3, 0);
         /// <summary>
         /// Whether the backend supports the CLOSE ALL statement.
         /// </summary>
-        public virtual bool SupportsCloseAll => Version >= new Version(8, 3, 0);
+        public virtual bool SupportsCloseAll => Version.IsGreaterOrEqual(8, 3, 0);
         /// <summary>
         /// Whether the backend supports advisory locks.
         /// </summary>
-        public virtual bool SupportsAdvisoryLocks => Version >= new Version(8, 2, 0);
+        public virtual bool SupportsAdvisoryLocks => Version.IsGreaterOrEqual(8, 2, 0);
         /// <summary>
         /// Whether the backend supports the DISCARD SEQUENCES statement.
         /// </summary>
-        public virtual bool SupportsDiscardSequences => Version >= new Version(9, 4, 0);
+        public virtual bool SupportsDiscardSequences => Version.IsGreaterOrEqual(9, 4, 0);
         /// <summary>
         /// Whether the backend supports the UNLISTEN statement.
         /// </summary>
-        public virtual bool SupportsUnlisten => Version >= new Version(6, 4, 0);  // overridden by PostgresDatabase
+        public virtual bool SupportsUnlisten => Version.IsGreaterOrEqual(6, 4, 0);  // overridden by PostgresDatabase
         /// <summary>
         /// Whether the backend supports the DISCARD TEMP statement.
         /// </summary>
-        public virtual bool SupportsDiscardTemp => Version >= new Version(8, 3, 0);
+        public virtual bool SupportsDiscardTemp => Version.IsGreaterOrEqual(8, 3, 0);
         /// <summary>
         /// Whether the backend supports the DISCARD statement.
         /// </summary>
-        public virtual bool SupportsDiscard => Version >= new Version(8, 3, 0);
+        public virtual bool SupportsDiscard => Version.IsGreaterOrEqual(8, 3, 0);
 
         /// <summary>
         /// Reports whether the backend uses the newer integer timestamp representation.

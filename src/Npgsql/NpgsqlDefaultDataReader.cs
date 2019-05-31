@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeHandlers;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -24,8 +25,9 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The number of columns in the current row
         /// </summary>
-        int _dataMsgEnd;
         
+        int _dataMsgEnd;
+
         internal EDBDefaultDataReader(EDBConnector connector) : base(connector) {}
 
         internal override ValueTask<IBackendMessage> ReadMessage(bool async)
@@ -68,7 +70,6 @@ namespace EnterpriseDB.EDBClient
             var len = Buffer.ReadInt32();
             _columns.Add((Buffer.ReadPosition, len));
         }
-
         internal override void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow)
         {
             if (Command.CommandType == CommandType.StoredProcedure && Command.IsPrepared)
@@ -177,7 +178,15 @@ namespace EnterpriseDB.EDBClient
             object result;
             try
             {
-                result = fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
+                if (fieldDescription._isUnsupportedField)
+                {
+                    var _textHandler = new TextHandler(Connector.Connection);
+                    result = _textHandler.Read(Buffer, ColumnLen, false, fieldDescription);
+                }
+                else
+                {
+                    result = fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
+                }
             }
             catch (EDBSafeReadException e)
             {

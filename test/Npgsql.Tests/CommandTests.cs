@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -134,7 +134,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure a later command can depend on an earlier one")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/641")]
+        [IssueLink("https://github.com/EDB/EDB/issues/641")]
         public void MultipleStatementsWithDependencies()
         {
             using (var conn = OpenConnection())
@@ -145,7 +145,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Forces async write mode when the first statement in a multi-statement command is big")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/641")]
+        [IssueLink("https://github.com/EDB/EDB/issues/641")]
         public void MultipleStatementsLargeFirstCommand()
         {
             using (var conn = OpenConnection())
@@ -212,7 +212,7 @@ namespace EnterpriseDB.EDBClient.Tests
         #region Timeout
 
         [Test, Description("Checks that CommandTimeout gets enforced as a socket timeout")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/327")]
+        [IssueLink("https://github.com/EDB/EDB/issues/327")]
         [Timeout(10000)]
         public void Timeout()
         {
@@ -251,7 +251,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/395")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
         public void TimeoutSwitchConnection()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -408,7 +408,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region CommandBehavior.CloseConnection
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/693")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/693")]
         public void CloseConnection()
         {
             using (var conn = OpenConnection())
@@ -420,7 +420,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1194")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1194")]
         public void CloseConnectionWithOpenReaderWithCloseConnection()
         {
             using (var conn = OpenConnection())
@@ -459,7 +459,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
                     using (var reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
                     {
+                        Assert.That(() => reader.GetInt32(0), Throws.Exception.TypeOf<InvalidOperationException>());
                         Assert.That(reader.Read(), Is.True);
+                        Assert.That(reader.GetInt32(0), Is.EqualTo(1));
                         Assert.That(reader.Read(), Is.False);
                     }
                 }
@@ -527,7 +529,7 @@ namespace EnterpriseDB.EDBClient.Tests
         public void GenericParameter()
         {
             using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3,@p4", conn))
+            using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4", conn))
             {
                 cmd.Parameters.Add(new EDBParameter<int>("p1", 8));
                 cmd.Parameters.Add(new EDBParameter<short>("p2", 8) { EDBDbType = EDBDbType.Integer });
@@ -625,7 +627,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("Ignore for now")]
+        [Test]
         public void StringEscapeSyntax()
         {
             using (var conn = OpenConnection())
@@ -677,7 +679,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("Ignore for now")]
+        [Test]
         public void ParameterAndOperatorUnclear()
         {
             using (var conn = OpenConnection())
@@ -763,6 +765,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
                 command.Parameters[1].Direction = ParameterDirection.Output;
                 command.Prepare();
+
                 var result = command.ExecuteScalar();
 
                 Assert.AreEqual(3, command.Parameters[0].Value);
@@ -775,7 +778,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using (var conn = OpenConnection())
             {
-                // This is caused by having an error with the prepared statement and later, EnterpriseDB.EDBClient is trying to release the plan as it was successful created.
+                // This is caused by having an error with the prepared statement and later, EDB is trying to release the plan as it was successful created.
                 var cmd = new EDBCommand("sele", conn);
                 Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<EDBException>());
             }
@@ -817,20 +820,20 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test]
-        public void InputAndOutputParameters()
+        [Test, Ignore("Ignore for now")]
+        [TestCase(CommandBehavior.Default)]
+        [TestCase(CommandBehavior.SequentialAccess)]
+        public void InputAndOutputParameters(CommandBehavior behavior)
         {
             using (var conn = OpenConnection())
-            using (var cmd = new EDBCommand())
+            using (var cmd = new EDBCommand("SELECT @c-1 AS c, @a+2 AS b", conn))
             {
-                cmd.Connection = conn;
-                cmd.CommandText = "Select :a + 2 as b, :c - 1 as c";
+                cmd.Parameters.Add(new EDBParameter("a", 3));
                 var b = new EDBParameter { ParameterName = "b", Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(b);
-                cmd.Parameters.Add(new EDBParameter("a", 3));
                 var c = new EDBParameter { ParameterName = "c", Direction = ParameterDirection.InputOutput, Value = 4 };
                 cmd.Parameters.Add(c);
-                using (cmd.ExecuteReader())
+                using (cmd.ExecuteReader(behavior))
                 {
                     Assert.AreEqual(5, b.Value);
                     Assert.AreEqual(3, c.Value);
@@ -856,7 +859,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/503")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/503")]
         public void InvalidUTF8()
         {
             const string badString = "SELECT 'abc\uD801\uD802d'";
@@ -866,7 +869,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/395"), Ignore("Ignore for now")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/395"), Ignore("Ignore for now")]
         public void UseAcrossConnectionChange([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             using (var conn1 = OpenConnection())
@@ -884,7 +887,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("CreateCommand before connection open")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/565")]
+        [IssueLink("https://github.com/EDB/EDB/issues/565")]
         public void CreateCommandBeforeConnectionOpen()
         {
             using (var conn = new EDBConnection(ConnectionString)) {
@@ -907,7 +910,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/831")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/831")]
         [Timeout(10000)]
         public void ManyParameters()
         {
@@ -921,8 +924,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Bypasses PostgreSQL's int16 limitation on the number of parameters")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/831")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/858")]
+        [IssueLink("https://github.com/EDB/EDB/issues/831")]
+        [IssueLink("https://github.com/EDB/EDB/issues/858")]
         public void TooManyParameters()
         {
             using (var conn = OpenConnection())
@@ -947,7 +950,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("An individual statement cannot have more than 65535 parameters, but a command can (across multiple statements).")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1199")]
+        [IssueLink("https://github.com/EDB/EDB/issues/1199")]
         public void ManyParametersAcrossStatements()
         {
             // Create a command with 1000 statements which have 70 params each
@@ -980,7 +983,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Description("Makes sure that EnterpriseDB.EDBClient doesn't attempt to send all data before the user can start reading. That would cause a deadlock.")]
+        [Test, Description("Makes sure that EDB doesn't attempt to send all data before the user can start reading. That would cause a deadlock.")]
         public void ReadWriteDeadlock()
         {
             // We're going to send a large multistatement query that would exhaust both the client's and server's
@@ -1007,7 +1010,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1037")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1037")]
         public void Statements()
         {
             // See also ReaderTests.Statements()
@@ -1041,7 +1044,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1429")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1429")]
         public void SameCommandDifferentParamValues()
         {
             using (var conn = OpenConnection())
@@ -1055,7 +1058,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1429")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1429")]
         public void SameCommandDifferentParamInstances()
         {
             using (var conn = OpenConnection())

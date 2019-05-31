@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -71,7 +71,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 {
                     // TODO: Recycle
                     var field = new FieldDescription();
-                field.Populate(
+                    field.Populate(
                     typeMapper,
                     buf.ReadNullTerminatedString(), // Name
                     buf.ReadUInt32(), // TableOID
@@ -249,6 +249,10 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             FormatCode = formatCode;
 
             RealHandler = typeMapper.GetByOID(TypeOID);
+            if (RealHandler != null && RealHandler.PgDisplayName != null && RealHandler.PgDisplayName == "dbms_aq.message_properties_t")
+            {
+                _isUnsupportedField = true;
+            }
             ResolveHandler();
         }
 
@@ -256,6 +260,8 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         /// The field name.
         /// </summary>
         internal string Name { get; set; }
+
+        internal bool _isUnsupportedField { get; set; }
 
         /// <summary>
         /// The object ID of the field's data type.
@@ -305,7 +311,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         internal string TypeDisplayName => PostgresType.GetDisplayNameWithFacets(TypeModifier);
 
         /// <summary>
-        /// The EnterpriseDB.EDBClient type handler assigned to handle this field.
+        /// The EDB type handler assigned to handle this field.
         /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
         public EDBTypeHandler Handler { get; set; }//EnterpriseDB Team

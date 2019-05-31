@@ -1,33 +1,9 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
+﻿using System;
+using System.Data;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
-using System;
-using System.Data;
-using System.Runtime.CompilerServices;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
@@ -41,8 +17,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 
         public override decimal Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
         {
-            var result = new DecimalRaw(buf.ReadInt64()) { Scale = MoneyScale };
-            return Unsafe.As<DecimalRaw, decimal>(ref result);
+            return new DecimalRaw(buf.ReadInt64()) { Scale = MoneyScale }.Value;
         }
 
         public override int ValidateAndGetLength(decimal value, EDBParameter parameter)
@@ -52,14 +27,15 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 
         public override void Write(decimal value, EDBWriteBuffer buf, EDBParameter parameter)
         {
-            var raw = Unsafe.As<decimal, DecimalRaw>(ref value);
+            var raw = new DecimalRaw(value);
+
             var scaleDifference = MoneyScale - raw.Scale;
             if (scaleDifference > 0)
                 DecimalRaw.Multiply(ref raw, DecimalRaw.Powers10[scaleDifference]);
             else
             {
                 value = Math.Round(value, MoneyScale, MidpointRounding.AwayFromZero);
-                raw = Unsafe.As<decimal, DecimalRaw>(ref value);
+                raw = new DecimalRaw(value);
             }
 
             var result = (long)raw.Mid << 32 | (long)raw.Low;
