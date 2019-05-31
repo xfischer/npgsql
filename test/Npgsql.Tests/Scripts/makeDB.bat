@@ -5,31 +5,31 @@ set SCRIPTDIR=%~dp0
 
 set PSQL=edb-psql
 
-set EDB_HOST=127.0.0.1
+set NPGSQL_HOST=127.0.0.1
 
-set EDB_PORT=5444
+set NPGSQL_PORT=5444
 
-set EDB_UID=enterprisedb
+set NPGSQL_UID=enterprisedb
 
-set EDB_PWD=edb
+set NPGSQL_PWD=edb
 
-set EDB_template_DB=template1
+set NPGSQL_template_DB=template1
 
-set EDB_DB=test
+set NPGSQL_DB=test
 
-set EDB_TESTS_LOG=%SCRIPTDIR%tests.log
+set NPGSQL_TESTS_LOG=%SCRIPTDIR%tests.log
 
-set PGPASSWORD=%EDB_PWD%
+set PGPASSWORD=%NPGSQL_PWD%
 
-set PGUSER=%EDB_UID%
+set PGUSER=%NPGSQL_UID%
 
-set EDB_TEST_STRING=-U %EDB_UID% -h %EDB_HOST% -d %EDB_DB% -p %EDB_PORT%
-
-
-echo Creating test database '%EDB_DB%'...
+set NPGSQL_TEST_STRING=-U %NPGSQL_UID% -h %NPGSQL_HOST% -d %NPGSQL_DB% -p %NPGSQL_PORT%
 
 
-%PSQL% -U %EDB_UID% -h %EDB_HOST% -p %EDB_PORT% -d %EDB_template_DB% -c "create database %EDB_DB% ;" > %EDB_TESTS_LOG% 2>&1
+echo Creating test database '%NPGSQL_DB%'...
+
+
+%PSQL% -U %NPGSQL_UID% -h %NPGSQL_HOST% -p %NPGSQL_PORT% -d %NPGSQL_template_DB% -c "create database %NPGSQL_DB% ;" > %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
@@ -37,7 +37,7 @@ if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
 echo Adding test tables...
 
-%PSQL% %EDB_TEST_STRING% -f %SCRIPTDIR%add_tables.sql >> %EDB_TESTS_LOG% 2>&1
+%PSQL% %NPGSQL_TEST_STRING% -f %SCRIPTDIR%add_tables.sql >> %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
@@ -45,7 +45,7 @@ if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
 echo Adding test functions...
 
-%PSQL% %EDB_TEST_STRING% -f %SCRIPTDIR%add_functions.sql >> %EDB_TESTS_LOG% 2>&1
+%PSQL% %NPGSQL_TEST_STRING% -f %SCRIPTDIR%add_functions.sql >> %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
@@ -53,7 +53,7 @@ if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
 echo Adding test views...
 
-%PSQL% %EDB_TEST_STRING% -f %SCRIPTDIR%add_views.sql >> %EDB_TESTS_LOG% 2>&1
+%PSQL% %NPGSQL_TEST_STRING% -f %SCRIPTDIR%add_views.sql >> %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
@@ -61,13 +61,13 @@ if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
 echo Adding test data...
 
-%PSQL% %EDB_TEST_STRING% -f %SCRIPTDIR%add_data.sql >> %EDB_TESTS_LOG% 2>&1
+%PSQL% %NPGSQL_TEST_STRING% -f %SCRIPTDIR%add_data.sql >> %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
 
 
 echo Adding sample...
 
-%PSQL% %EDB_TEST_STRING% -f %SCRIPTDIR%edb-sample.sql >> %EDB_TESTS_LOG% 2>&1
+%PSQL% %NPGSQL_TEST_STRING% -f %SCRIPTDIR%edb-sample.sql >> %NPGSQL_TESTS_LOG% 2>&1
 
 if not errorlevel 1 (echo OK) else (echo FAILED && exit /b 1)
