@@ -38,31 +38,38 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Connection to be used for AQ operations
         /// </summary>
+        /// <value>The connection to be used.</value>
         public EDBConnection Connection { get; set; }
         /// <summary>
         /// Name of the queue
         /// </summary>
+        /// <value>.</value>
         public string Name { get; set; }
         /// <summary>
         /// MessageType of the message.
         /// </summary>
+        /// <value>The name of the queue.</value>
         [System.ComponentModel.DefaultValue(EDBAQMessageType.Udt)]
         public EDBAQMessageType MessageType { get; set; }
         /// <summary>
         /// Name of the user defined type.
         /// </summary>
+        /// <value>The message type that is enqueued/dequeued from this queue. For example EDBAQMessageType.Udt.</value>
         public string UdtTypeName { get; set; }
         /// <summary>
         /// EDBAQEnqueueOptions to be used.
         /// </summary>
+        /// <value>The enqueue options to be used.</value>
         public EDBAQEnqueueOptions EnqueueOptions { get; set; }
         /// <summary>
         /// EDBAQDequeueOptions to be used 
         /// </summary>
+        /// <value>The dequeue options to be used.</value>
         public EDBAQDequeueOptions DequeueOptions { get; set; }
         /// <summary>
         /// EDBAQMessageProperties to be used 
         /// </summary>
+        /// <value>The message properties to be used.</value>
         public EDBAQMessageProperties MessageProperties { get; set; }
 
         /// <summary>

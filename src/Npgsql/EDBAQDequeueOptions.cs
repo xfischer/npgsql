@@ -36,47 +36,58 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// 
         /// </summary>
+        /// <value>Confirms receipt of the message.</value>
         public object ConsumerName { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The name of the consumer for which to dequeue the message.</value>
         public int DequeueMode { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>This is set from EDBAQDequeueMode. It represents the locking behavior linked with the dequeue option.</value>
         public int Navigation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>This is set from EDBAQNavigationMode.  It represents the position of the message that will be fetched.</value>
         public int Visibility { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>This is set from EDBAQVisibility. It represents whether the new message is dequeued or not as part of the current transaction.</value>
         public int Wait { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The wait time for a message as per the search criteria.</value>
         public object msgid { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The message identifier.</value>
         public object Correlation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The correlation identifier.</value>
         public object DeqCondition { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The dequeuer condition. It is a Boolean expression.</value>
         public object Transformation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The transformation that will be applied before dequeuing the message.</value>
         public int DeliveryMode { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The delivery mode of the dequeued message.</value>
         public EDBAQDequeueOptions() { }
 
         /// <summary>

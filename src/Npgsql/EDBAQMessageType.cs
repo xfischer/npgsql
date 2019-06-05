@@ -36,15 +36,18 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Raw (Not Sopported)
         /// </summary>
+        /// <value>The raw message type.Note: Currently, this payload type is not supported.</value>
         Raw = 1,
         /// <summary>
         /// User Defined Type
         /// </summary>
+        /// <value>The user defined type message.</value>
         Udt = 2,
 
         /// <summary>
         /// Xml (Not Sopported)
         /// </summary>
+        /// <value>The XML type message.Note: Currently, this payload type is not supported.</value>
         Xml = 3
     }
 }
