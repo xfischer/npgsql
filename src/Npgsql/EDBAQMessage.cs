@@ -36,10 +36,12 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Payload
         /// </summary>
+        /// <value>The actual message to be queued.</value>
         public object Payload { get; set; }
         /// <summary>
         /// MessageId
         /// </summary>
+        /// <value>The ID of the queued message.</value>
         public byte[] MessageId { get; set; }
         
     }

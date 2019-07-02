@@ -36,22 +36,27 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// 
         /// </summary>
+        /// <value>This is set from EDBAQVisibility. It represents whether the new message is enqueued or not as part of the current transaction.</value>
         public int Visibility { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The relative message identifier.</value>
         public object RelativeMsgid { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The sequence when the message should be dequeued.</value>
         public object SequenceDeviation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The transformation that will be applied before enqueuing the message.</value>
         public object Transformation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The delivery mode of the enqueued message.</value>
         public int DeliveryMode { get; set; }
 
         /// <summary>

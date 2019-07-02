@@ -37,51 +37,63 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The priority of the message.</value>
         public int Priority { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The duration post which the message is available for dequeuing. This is specified in second.</value>
         public int Delay { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The duration for which the message is available for dequeuing. This is specified in seconds.</value>
         public object Expiration { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The correlation identifie.</value>
         public object Correlation { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The number of attempts taken to dequeue the message.</value>
         public object Attempts { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The receipients list that overthrows the default queue subscribers.</value>
         public object RecipientList { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The name of the queue where the unprocessed messages should be moved.</value>
         public object ExceptionQueue { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The time when the message was enqueued.</value>
         public object EnqueueTime { get; set; }
         /// <summary>
         /// 
         /// </summary>
-        
+        /// <value>The state of the message while dequeue.</value>
+
         public object State { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The message identifier in the last queue.</value>
         public object OriginalMsgid { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The transaction group for the dequeued messages.</value>
         public object TransactionGroup { get; set; }
         /// <summary>
         /// 
         /// </summary>
+        /// <value>The delivery mode of the dequeued message.</value>
         public int DeliveryMode { get; set; }
 
         /// <summary>
