@@ -1016,6 +1016,7 @@ namespace EnterpriseDB.EDBClient.Tests
             // See also ReaderTests.Statements()
             using (var conn = OpenConnection())
             {
+                TestUtil.MaximumPgVersion(conn, "12.0", "OID support has been removed in V12");
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
                     "INSERT INTO data (name) VALUES (@p1);" +

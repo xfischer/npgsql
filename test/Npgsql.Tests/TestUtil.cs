@@ -146,6 +146,18 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+        public static void MaximumPgVersion(EDBConnection conn, string maxVersion, string ignoreText = null)
+        {
+            var max = new Version(maxVersion);
+            if (conn.PostgreSqlVersion >= max)
+            {
+                var msg = $"Postgresql backend version {conn.PostgreSqlVersion} is higher than the required {max}";
+                if (ignoreText != null)
+                    msg += ": " + ignoreText;
+                Assert.Ignore(msg);
+            }
+        }
+
         public static string GetUniqueIdentifier(string prefix)
             => prefix + Interlocked.Increment(ref _counter);
 
