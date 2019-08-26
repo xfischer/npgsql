@@ -1,0 +1,12 @@
+{#
+    edb/layout.html
+    ~~~~~~~~~~~~~~~~~~~
+
+    Sphinx layout template for the edb theme.
+
+    :copyright: Copyright (C) 2016 - 2019, EnterpriseDB Corporation
+#}
+{% if not favicon %}
+{% set favicon = 'favicon32.ico' %}
+{% endif %}
+{%- extends "classic/layout.html" %}
