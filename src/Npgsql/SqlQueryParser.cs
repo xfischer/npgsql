@@ -78,13 +78,15 @@ namespace EnterpriseDB.EDBClient
                 isProcedure = true;
 
             None:
-            if (currCharOfs >= end) {
+            if (currCharOfs >= end)
+            {
                 goto Finish;
             }
             var lastChar = ch;
             ch = sql[currCharOfs++];
         NoneContinue:
-            for (; ; lastChar = ch, ch = sql[currCharOfs++]) {
+            for (; ; lastChar = ch, ch = sql[currCharOfs++])
+            {
                 //EnterpriseDB Team
                 if (isProcedure)
                 {
@@ -129,52 +131,53 @@ namespace EnterpriseDB.EDBClient
                         variableDeclare++;
                     }
                 }
-                switch (ch) {
-                case '/':
-                    goto BlockCommentBegin;
-                case '-':
-                    goto LineCommentBegin;
-                case '\'':
-                    if (standardConformantStrings)
-                        goto Quoted;
-                    else
-                        goto Escaped;
-                case '$':
-                    if (!IsIdentifier(lastChar))
-                        goto DollarQuotedStart;
-                    else
+                switch (ch)
+                {
+                    case '/':
+                        goto BlockCommentBegin;
+                    case '-':
+                        goto LineCommentBegin;
+                    case '\'':
+                        if (standardConformantStrings)
+                            goto Quoted;
+                        else
+                            goto Escaped;
+                    case '$':
+                        if (!IsIdentifier(lastChar))
+                            goto DollarQuotedStart;
+                        else
+                            break;
+                    case '"':
+                        goto DoubleQuoted;
+                    case ':':
+                        if (lastChar != ':')
+                            goto ParamStart;
+                        else
+                            break;
+                    case '@':
+                        if (lastChar != '@')
+                            goto ParamStart;
+                        else
+                            break;
+                    case ';':
+                        if (parenthesisLevel == 0)
+                            goto SemiColon;
                         break;
-                case '"':
-                    goto DoubleQuoted;
-                case ':':
-                    if (lastChar != ':')
-                        goto ParamStart;
-                    else
+                    case '(':
+                        parenthesisLevel++;
                         break;
-                case '@':
-                    if (lastChar != '@')
-                        goto ParamStart;
-                    else
+                    case ')':
+                        parenthesisLevel--;
                         break;
-                case ';':
-                    if (parenthesisLevel == 0)
-                        goto SemiColon;
-                    break;
-                case '(':
-                    parenthesisLevel++;
-                    break;
-                case ')':
-                    parenthesisLevel--;
-                    break;
-                case 'e':
-                case 'E'://EnterpriseDB Team
+                    case 'e':
+                    case 'E'://EnterpriseDB Team
                         if (!isProcedure)
                         {
                             if (!IsLetter(lastChar))
                                 goto EscapedStart;
-                    else
-                        break;
-                }
+                            else
+                                break;
+                        }
                         else
                         {
                             break;
@@ -187,22 +190,28 @@ namespace EnterpriseDB.EDBClient
                             break;
                 }
 
-                if (currCharOfs >= end) {
+                if (currCharOfs >= end)
+                {
                     goto Finish;
                 }
             }
 
         ParamStart:
-            if (currCharOfs < end) {
+            if (currCharOfs < end)
+            {
                 lastChar = ch;
                 ch = sql[currCharOfs];
-                if (IsParamNameChar(ch)) {
-                    if (currCharOfs - 1 > currTokenBeg) {
+                if (IsParamNameChar(ch))
+                {
+                    if (currCharOfs - 1 > currTokenBeg)
+                    {
                         _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - 1 - currTokenBeg));
                     }
                     currTokenBeg = currCharOfs++ - 1;
                     goto Param;
-                } else {
+                }
+                else
+                {
                     currCharOfs++;
                     goto NoneContinue;
                 }
@@ -211,7 +220,8 @@ namespace EnterpriseDB.EDBClient
 
         Param:
             // We have already at least one character of the param name
-            for (;;) {
+            for (; ; )
+            {
                 lastChar = ch;
                 if (currCharOfs >= end || !IsParamNameChar(ch = sql[currCharOfs]))
                 {
@@ -251,20 +261,25 @@ namespace EnterpriseDB.EDBClient
                     _rewrittenSql.Append(index);
                     currTokenBeg = currCharOfs;
 
-                    if (currCharOfs >= end) {
+                    if (currCharOfs >= end)
+                    {
                         goto Finish;
                     }
 
                     currCharOfs++;
                     goto NoneContinue;
-                } else {
+                }
+                else
+                {
                     currCharOfs++;
                 }
             }
 
         Quoted:
-            while (currCharOfs < end) {
-                if (sql[currCharOfs++] == '\'') {
+            while (currCharOfs < end)
+            {
+                if (sql[currCharOfs++] == '\'')
+                {
                     ch = '\0';
                     goto None;
                 }
@@ -272,8 +287,10 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         DoubleQuoted:
-            while (currCharOfs < end) {
-                if (sql[currCharOfs++] == '"') {
+            while (currCharOfs < end)
+            {
+                if (sql[currCharOfs++] == '"')
+                {
                     ch = '\0';
                     goto None;
                 }
@@ -281,10 +298,12 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         EscapedStart:
-            if (currCharOfs < end) {
+            if (currCharOfs < end)
+            {
                 lastChar = ch;
                 ch = sql[currCharOfs++];
-                if (ch == '\'') {
+                if (ch == '\'')
+                {
                     goto Escaped;
                 }
                 goto NoneContinue;
@@ -292,13 +311,17 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         Escaped:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '\'') {
+                if (ch == '\'')
+                {
                     goto MaybeConcatenatedEscaped;
                 }
-                if (ch == '\\') {
-                    if (currCharOfs >= end) {
+                if (ch == '\\')
+                {
+                    if (currCharOfs >= end)
+                    {
                         goto Finish;
                     }
                     currCharOfs++;
@@ -307,12 +330,15 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         MaybeConcatenatedEscaped:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '\r' || ch == '\n') {
+                if (ch == '\r' || ch == '\n')
+                {
                     goto MaybeConcatenatedEscaped2;
                 }
-                if (ch != ' ' && ch != '\t' && ch != '\f') {
+                if (ch != ' ' && ch != '\t' && ch != '\f')
+                {
                     lastChar = '\0';
                     goto NoneContinue;
                 }
@@ -320,24 +346,30 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         MaybeConcatenatedEscaped2:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '\'') {
+                if (ch == '\'')
+                {
                     goto Escaped;
                 }
-                if (ch == '-') {
-                    if (currCharOfs >= end) {
+                if (ch == '-')
+                {
+                    if (currCharOfs >= end)
+                    {
                         goto Finish;
                     }
                     ch = sql[currCharOfs++];
-                    if (ch == '-') {
+                    if (ch == '-')
+                    {
                         goto MaybeConcatenatedEscapeAfterComment;
                     }
                     lastChar = '\0';
                     goto NoneContinue;
 
                 }
-                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f') {
+                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f')
+                {
                     lastChar = '\0';
                     goto NoneContinue;
                 }
@@ -345,24 +377,29 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         MaybeConcatenatedEscapeAfterComment:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '\r' || ch == '\n') {
+                if (ch == '\r' || ch == '\n')
+                {
                     goto MaybeConcatenatedEscaped2;
                 }
             }
             goto Finish;
 
         DollarQuotedStart:
-            if (currCharOfs < end) {
+            if (currCharOfs < end)
+            {
                 ch = sql[currCharOfs];
-                if (ch == '$') {
+                if (ch == '$')
+                {
                     // Empty tag
                     dollarTagStart = dollarTagEnd = currCharOfs;
                     currCharOfs++;
                     goto DollarQuoted;
                 }
-                if (IsIdentifierStart(ch)) {
+                if (IsIdentifierStart(ch))
+                {
                     dollarTagStart = currCharOfs;
                     currCharOfs++;
                     goto DollarQuotedInFirstDelim;
@@ -374,23 +411,28 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         DollarQuotedInFirstDelim:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 lastChar = ch;
                 ch = sql[currCharOfs++];
-                if (ch == '$') {
+                if (ch == '$')
+                {
                     dollarTagEnd = currCharOfs - 1;
                     goto DollarQuoted;
                 }
-                if (!IsDollarTagIdentifier(ch)) {
+                if (!IsDollarTagIdentifier(ch))
+                {
                     goto NoneContinue;
                 }
             }
             goto Finish;
 
-        DollarQuoted: {
+        DollarQuoted:
+            {
                 var tag = sql.Substring(dollarTagStart - 1, dollarTagEnd - dollarTagStart + 2);
                 var pos = sql.IndexOf(tag, dollarTagEnd + 1); // Not linear time complexity, but that's probably not a problem, since PostgreSQL backend's isn't either
-                if (pos == -1) {
+                if (pos == -1)
+                {
                     currCharOfs = end;
                     goto Finish;
                 }
@@ -400,9 +442,11 @@ namespace EnterpriseDB.EDBClient
             }
 
         LineCommentBegin:
-            if (currCharOfs < end) {
+            if (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '-') {
+                if (ch == '-')
+                {
                     goto LineComment;
                 }
                 lastChar = '\0';
@@ -411,23 +455,29 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         LineComment:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '\r' || ch == '\n') {
+                if (ch == '\r' || ch == '\n')
+                {
                     goto None;
                 }
             }
             goto Finish;
 
         BlockCommentBegin:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '*') {
+                if (ch == '*')
+                {
                     blockCommentLevel++;
                     goto BlockComment;
                 }
-                if (ch != '/') {
-                    if (blockCommentLevel > 0) {
+                if (ch != '/')
+                {
+                    if (blockCommentLevel > 0)
+                    {
                         goto BlockComment;
                     }
                     lastChar = '\0';
@@ -437,27 +487,34 @@ namespace EnterpriseDB.EDBClient
             goto Finish;
 
         BlockComment:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '*') {
+                if (ch == '*')
+                {
                     goto BlockCommentEnd;
                 }
-                if (ch == '/') {
+                if (ch == '/')
+                {
                     goto BlockCommentBegin;
                 }
             }
             goto Finish;
 
         BlockCommentEnd:
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs++];
-                if (ch == '/') {
-                    if (--blockCommentLevel > 0) {
+                if (ch == '/')
+                {
+                    if (--blockCommentLevel > 0)
+                    {
                         goto BlockComment;
                     }
                     goto None;
                 }
-                if (ch != '*') {
+                if (ch != '*')
+                {
                     goto BlockComment;
                 }
             }
@@ -485,9 +542,11 @@ namespace EnterpriseDB.EDBClient
           */
             _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
             _statement.SQL = _rewrittenSql.ToString();
-            while (currCharOfs < end) {
+            while (currCharOfs < end)
+            {
                 ch = sql[currCharOfs];
-                if (char.IsWhiteSpace(ch)) {
+                if (char.IsWhiteSpace(ch))
+                {
                     currCharOfs++;
                     continue;
                 }
@@ -507,7 +566,7 @@ namespace EnterpriseDB.EDBClient
             _rewrittenSql.Append(sql.Substring(currTokenBeg, end - currTokenBeg));
             _statement.SQL = _rewrittenSql.ToString();
             if (statements.Count > _statementIndex + 1)
-               statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
+                statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
         }
 
         void MoveToNextStatement()

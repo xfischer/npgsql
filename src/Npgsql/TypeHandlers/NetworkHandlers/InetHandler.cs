@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -25,6 +25,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.TypeHandling;
@@ -38,7 +39,10 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
     /// </remarks>
-    [TypeMapping("inet", EDBDbType.Inet, new[] { typeof(IPAddress), typeof((IPAddress Address, int Subnet)), typeof(EDBInet) })]
+    [TypeMapping(
+        "inet",
+        EDBDbType.Inet,
+        new[] { typeof(IPAddress), typeof((IPAddress Address, int Subnet)), typeof(EDBInet) })]
     class InetHandler : EDBSimpleTypeHandlerWithPsv<IPAddress, (IPAddress Address, int Subnet)>,
         IEDBSimpleTypeHandler<EDBInet>
     {
@@ -59,23 +63,25 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
             [CanBeNull] FieldDescription fieldDescription,
             bool isCidrHandler)
         {
-            buf.ReadByte();  // addressFamily
+            buf.ReadByte(); // addressFamily
             var mask = buf.ReadByte();
             var isCidr = buf.ReadByte() == 1;
             Debug.Assert(isCidrHandler == isCidr);
             var numBytes = buf.ReadByte();
             var bytes = new byte[numBytes];
-            for (var i = 0; i < numBytes; i++) {
+            for (var i = 0; i < numBytes; i++)
                 bytes[i] = buf.ReadByte();
-            }
+
             return (new IPAddress(bytes), mask);
         }
 #pragma warning restore CA1801 // Review unused parameters
 
-        protected override (IPAddress Address, int Subnet) ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        protected override (IPAddress Address, int Subnet) ReadPsv(EDBReadBuffer buf, int len,
+            FieldDescription fieldDescription = null)
             => DoRead(buf, len, fieldDescription, false);
 
-        EDBInet IEDBSimpleTypeHandler<EDBInet>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        EDBInet IEDBSimpleTypeHandler<EDBInet>.Read(EDBReadBuffer buf, int len,
+            [CanBeNull] FieldDescription fieldDescription)
         {
             var (address, subnet) = DoRead(buf, len, fieldDescription, false);
             return new EDBInet(address, subnet);
@@ -84,6 +90,44 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
         #endregion Read
 
         #region Write
+
+        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        {
+            switch (value)
+            {
+            case null:
+                return -1;
+            case DBNull _:
+                return -1;
+            case IPAddress ip:
+                return ValidateAndGetLength(ip, parameter);
+            case ValueTuple<IPAddress, int> tup:
+                return ValidateAndGetLength(tup, parameter);
+            case EDBInet inet:
+                return ValidateAndGetLength(inet, parameter);
+            default:
+                throw new InvalidCastException($"Can't write CLR type {value.GetType().Name} to database type {PgDisplayName}");
+            }
+        }
+
+        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        {
+            switch (value)
+            {
+            case null:
+                return WriteWithLengthInternal<DBNull>(null, buf, lengthCache, parameter, async);
+            case DBNull _:
+                return WriteWithLengthInternal<DBNull>(null, buf, lengthCache, parameter, async);
+            case IPAddress ip:
+                return WriteWithLengthInternal(ip, buf, lengthCache, parameter, async);
+            case ValueTuple<IPAddress, int> tup:
+                return WriteWithLengthInternal(tup, buf, lengthCache, parameter, async);
+            case EDBInet inet:
+                return WriteWithLengthInternal(inet, buf, lengthCache, parameter, async);
+            default:
+                throw new InvalidCastException($"Can't write CLR type {value.GetType().Name} to database type {PgDisplayName}");
+            }
+        }
 
         public override int ValidateAndGetLength(IPAddress value, EDBParameter parameter)
             => GetLength(value);

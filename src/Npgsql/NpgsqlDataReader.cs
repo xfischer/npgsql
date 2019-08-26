@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -69,7 +69,6 @@ namespace EnterpriseDB.EDBClient
         internal int _InternalActaullReadPosition;//EnterpriseDB Team
         RowDescriptionMessage _callable_descrition; //EDB
 
-
         /// <summary>
         /// The behavior of the command with which this reader was executed.
         /// </summary>
@@ -84,6 +83,7 @@ namespace EnterpriseDB.EDBClient
         internal List<(int Offset, int Length)> _columns = new List<(int Offset, int Length)>();//EnterpriseDB Team
         internal List<(int Offset, int Length)> _retColumns = new List<(int Offset, int Length)>();//EnterpriseDB Team
         internal int _column;
+
         /// <summary>
         /// Holds the list of statements being executed by this reader.
         /// </summary>
@@ -158,11 +158,11 @@ namespace EnterpriseDB.EDBClient
             pendingmsg = null;//Enterprisedb Team
             _column = 0;
             _isReturnRow = true; //EnterpriseDB Team
-        isOutParamReceived = false;//EnterpriseDB Team
-        _InternalreadPosition = 0;//EnterpriseDB Team
-        _InternalActaullReadPosition = 0;//EnterpriseDB Team
-        _callable_descrition = null; //EDB
-    }
+            isOutParamReceived = false;//EnterpriseDB Team
+            _InternalreadPosition = 0;//EnterpriseDB Team
+            _InternalActaullReadPosition = 0;//EnterpriseDB Team
+            _callable_descrition = null; //EDB
+        }
 
         #region Read
 
@@ -330,6 +330,7 @@ namespace EnterpriseDB.EDBClient
 
         internal abstract ValueTask<IBackendMessage> ReadMessage(bool async);
         internal abstract void ProcessDataMessage(DataRowMessage dataMsg);
+
         internal abstract void ProcessDataRowMessage(EDBReadBuffer buf, bool isReturnRow);//EnterpriseDB Team
         internal abstract Task SeekToColumn(int column, bool async);
         internal abstract Task SeekInColumn(int posInColumn, bool async);
@@ -403,8 +404,9 @@ namespace EnterpriseDB.EDBClient
                     //    Connector.SkipUntil(BackendMessageCode.EmptyQueryResponse);
                     while (true)
                     {
-                    completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
-                    switch (completedMsg.Code)
+                     completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
+
+                     switch (completedMsg.Code)
                     {
                     case BackendMessageCode.CompletedResponse:
                     case BackendMessageCode.EmptyQueryResponse:
@@ -500,13 +502,13 @@ namespace EnterpriseDB.EDBClient
                     // be read by PopulateOutputParameters(). We then rewind the buffer to the start of the row, and
                     // continue to the normal flow, where we will process it again, as if we're reading a totally
                     // new row (using the same first row).
-                    
                     if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
                     {
                         var pos = Connector.ReadBuffer.ReadPosition;
                         ProcessMessage(row);
                         PopulateNonPreparedOutputParameters();
                         Connector.ReadBuffer.ReadPosition = pos;
+                        State = ReaderState.BetweenResults;
                     }
                 }
                 else
@@ -522,10 +524,10 @@ namespace EnterpriseDB.EDBClient
                     case BackendMessageCode.CompletedResponse:
                     case BackendMessageCode.EmptyQueryResponse:
                         break;
-                        case BackendMessageCode.NoData:
-                            return true;
-                        default:
-                            throw Connector.UnexpectedMessageReceived(msg.Code);
+                    case BackendMessageCode.NoData:
+                        return true;
+                    default:
+                        throw Connector.UnexpectedMessageReceived(msg.Code);
                     }
 
                     ProcessMessage(msg);
@@ -546,7 +548,7 @@ namespace EnterpriseDB.EDBClient
                         pendingmsg = msg;
                         break;
                     case BackendMessageCode.CompletedResponse:
-                    break;
+                        break;
                 default:
                     throw Connector.UnexpectedMessageReceived(msg.Code);
                 }
@@ -844,7 +846,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         void PopulateNonPreparedOutputParameters()
-        {
+            {
             // The first row in a stored procedure command that has output parameters needs to be traversed twice -
             // once for populating the output parameters and once for the actual result set traversal. So in this
             // case we can't be sequential.
@@ -1308,7 +1310,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDate"/>,
-        /// EnterpriseDB.EDBClient's provider-specific type for dates.
+        /// EDB's provider-specific type for dates.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's date type represents dates from 4713 BC to 5874897 AD, while .NET's DateTime
@@ -1336,7 +1338,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBTimeSpan"/>,
-        /// EnterpriseDB.EDBClient's provider-specific type for time spans.
+        /// EDB's provider-specific type for time spans.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's interval type has has a resolution of 1 microsecond and ranges from
@@ -1353,7 +1355,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDateTime"/>,
-        /// EnterpriseDB.EDBClient's provider-specific type for date/time timestamps. Note that this type covers
+        /// EDB's provider-specific type for date/time timestamps. Note that this type covers
         /// both PostgreSQL's "timestamp with time zone" and "timestamp without time zone" types,
         /// which differ only in how they are converted upon input/output.
         /// </summary>

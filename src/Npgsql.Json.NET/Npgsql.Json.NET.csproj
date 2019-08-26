@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>4.0.4.1</VersionPrefix>
+    <VersionPrefix>4.0.6.1</VersionPrefix>
     <Description>Json.NET plugin for Npgsql, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
     <Authors>Shay Rojansky</Authors>
-    <Copyright>Copyright 2018 © The Npgsql Development Team</Copyright>
+    <Copyright>Copyright 2019 © The Npgsql Development Team</Copyright>
     <Company>Npgsql</Company>
     <PackageTags>npgsql postgresql json postgres ado ado.net database sql</PackageTags>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <!--<TargetFrameworks Condition="'$(OS)' != 'Windows_NT' OR '$(CoreOnly)' == 'True'">netstandard2.0</TargetFrameworks>-->
     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <!--<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>-->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
@@ -22,7 +23,6 @@
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
-    <RootNamespace>EnterpriseDB.EDBClient.Json.NET</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

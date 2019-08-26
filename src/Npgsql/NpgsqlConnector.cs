@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -47,7 +47,7 @@ namespace EnterpriseDB.EDBClient
 {
     /// <summary>
     /// Represents a connection to a PostgreSQL backend. Unlike EDBConnection objects, which are
-    /// exposed to users, connectors are internal to EnterpriseDB.EDBClient and are recycled by the connection pool.
+    /// exposed to users, connectors are internal to EDB and are recycled by the connection pool.
     /// </summary>
     sealed partial class EDBConnector : IDisposable
     {
@@ -241,7 +241,6 @@ namespace EnterpriseDB.EDBClient
         internal readonly BindOutMessage BindOutMessage = new BindOutMessage();//EnterpriseDB Team
         internal readonly DescribeMessage DescribeMessage = new DescribeMessage();
         internal readonly DescribeOutMessage DescribeOutMessage = new DescribeOutMessage();//EnterpriseDB Team
-
         internal readonly CloseMessage    CloseMessage    = new CloseMessage();
         // ParseMessage and QueryMessage depend on the encoding, which isn't known until open-time
         internal ParseMessage ParseMessage;
@@ -844,7 +843,7 @@ namespace EnterpriseDB.EDBClient
             {
                 if (!PGUtil.IsWindows)
                     throw new PlatformNotSupportedException(
-                        "EnterpriseDB.EDBClient management of TCP keepalive is supported only on Windows. " +
+                        "EDB management of TCP keepalive is supported only on Windows. " +
                         "TCP keepalives can still be used on other systems but are enabled via the TcpKeepAlive option or configured globally for the machine, see the relevant docs.");
 
                 var time = Settings.TcpKeepAliveTime;
@@ -1015,7 +1014,7 @@ namespace EnterpriseDB.EDBClient
                         case BackendMessageCode.NoticeResponse:
                         case BackendMessageCode.NotificationResponse:
                         case BackendMessageCode.ParameterStatus:
-                            //Debug.Assert(msg == null);//EnterpriseDB Team
+                                //Debug.Assert(msg == null);//EnterpriseDB Team
                                 if (!readingNotifications2)
                                 continue;
                             return null;
@@ -1161,7 +1160,7 @@ namespace EnterpriseDB.EDBClient
                     // We don't use the obsolete function call protocol
                     throw new EDBException("Unexpected backend message: " + code);
                 default:
-                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
             }
         }
 
@@ -1183,7 +1182,6 @@ namespace EnterpriseDB.EDBClient
                     return msg;
             }
         }
-
         /// <summary>
         /// Reads backend messages and discards them, stopping only after a message of the given types has
         /// been seen.
@@ -1203,7 +1201,6 @@ namespace EnterpriseDB.EDBClient
                 }
             }
         }
-
         #endregion Backend message processing
 
         #region Transactions
@@ -1228,7 +1225,7 @@ namespace EnterpriseDB.EDBClient
                 case TransactionStatus.InFailedTransactionBlock:
                     return true;
                 default:
-                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
                 }
             }
         }
@@ -1249,7 +1246,7 @@ namespace EnterpriseDB.EDBClient
             case TransactionStatus.Pending:
                 throw new Exception("Invalid TransactionStatus (should be frontend-only)");
             default:
-                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EDB bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
             }
             TransactionStatus = newStatus;
         }
@@ -1323,7 +1320,7 @@ namespace EnterpriseDB.EDBClient
                 // Now wait for the server to close the connection, better chance of the cancellation
                 // actually being delivered before we continue with the user's logic.
                 var count = _stream.Read(ReadBuffer.Buffer, 0, 1);
-                if (count != -1)
+                if (count > 0)
                     Log.Error("Received response after sending cancel request, shouldn't happen! First byte: " + ReadBuffer.Buffer[0]);
             }
             finally
@@ -1573,7 +1570,7 @@ namespace EnterpriseDB.EDBClient
             case ConnectorState.Waiting:
                 throw new InvalidOperationException("Reset() called on connector with state " + State);
             default:
-                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EDB bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
             }
 
             // Our buffer may contain unsent prepended messages (such as BeginTransaction), clear it out completely
@@ -1602,7 +1599,7 @@ namespace EnterpriseDB.EDBClient
                 Rollback(false);
                 break;
             default:
-                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EDB bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
             }
 
             if (!Settings.NoResetOnClose && DatabaseInfo.SupportsDiscard)
@@ -1800,7 +1797,7 @@ namespace EnterpriseDB.EDBClient
         public bool Wait(int timeout)
         {
             if ((timeout == 0 || timeout == -1) && IsSecure)
-                throw new NotSupportedException("Wait() with timeout isn't supported when SSL is used, see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1501");
+                throw new NotSupportedException("Wait() with timeout isn't supported when SSL is used, see https://github.com/EDB/EDB/issues/1501");
 
             using (StartUserAction(ConnectorState.Waiting))
             {

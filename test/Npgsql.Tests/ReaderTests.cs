@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -182,6 +182,7 @@ namespace EnterpriseDB.EDBClient.Tests
             // See also CommandTests.Statements()
             using (var conn = OpenConnection())
             {
+                TestUtil.MaximumPgVersion(conn, "12.0", "OID support has been removed in V12");
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
                     "INSERT INTO data (name) VALUES ('a');" +
@@ -292,7 +293,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/794")]
+        [IssueLink("https://github.com/EDB/EDB/issues/794")]
         public void GetFieldType()
         {
             using (var conn = OpenConnection())
@@ -315,7 +316,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1096")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1096")]
         public void GetFieldTypeSchemaOnly()
         {
             using (var conn = OpenConnection())
@@ -362,7 +363,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         /// <seealso cref="ReaderNewSchemaTests.DataTypeName"/>
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/787")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/787")]
         [TestCase("integer")]
         [TestCase("real")]
         [TestCase("integer[]")]
@@ -432,7 +433,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/794")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/794")]
         public void GetDataTypeNameTypesUnknown()
         {
             using (var conn = OpenConnection())
@@ -450,8 +451,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/791")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/794")]
+        [IssueLink("https://github.com/EDB/EDB/issues/791")]
+        [IssueLink("https://github.com/EDB/EDB/issues/794")]
         public void GetDataTypeOID()
         {
             using (var conn = OpenConnection())
@@ -504,7 +505,7 @@ namespace EnterpriseDB.EDBClient.Tests
         public void GetValues()
         {
             using (var conn = OpenConnection())
-            using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01 00:00:00'::DATE", conn))
+            using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01'::DATE", conn))
             {
                 using (var dr = command.ExecuteReader(Behavior))
                 {
@@ -617,7 +618,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/400")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/400")]
         public void ExceptionThrownFromExecuteQuery([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             using (var conn = OpenConnection())
@@ -637,7 +638,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1032")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1032")]
         public void ExceptionThrownFromNextResult([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             using (var conn = OpenConnection())
@@ -658,7 +659,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/967")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/967")]
         public void EDBExceptionReferencesStatement()
         {
             using (var conn = OpenConnection())
@@ -841,10 +842,10 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/742")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/800")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1234")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1898")]
+        [IssueLink("https://github.com/EDB/EDB/issues/742")]
+        [IssueLink("https://github.com/EDB/EDB/issues/800")]
+        [IssueLink("https://github.com/EDB/EDB/issues/1234")]
+        [IssueLink("https://github.com/EDB/EDB/issues/1898")]
         public void HasRows([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
             using (var conn = OpenConnection())
@@ -937,7 +938,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/1266")]
+        [Test, IssueLink("https://github.com/EDB/EDB/pull/1266")]
         [Description("NextResult was throwing an ArgumentOutOfRangeException when trying to determine the statement to associate with the PostgresException")]
         public void ReaderNextResultExceptionHandling()
         {

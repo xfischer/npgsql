@@ -92,7 +92,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1207")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1207")]
         public void DoublePrepareSameSql()
         {
             using (var conn = OpenConnectionAndUnprepare())
@@ -127,7 +127,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/395")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
         public void AcrossCloseOpenSameConnector()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)

@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient
     ///
     /// Instances aren't constructed directly; users should construct an <see cref="EDBCommand"/>
     /// object and populate its <see cref="EDBCommand.CommandText"/> property as in standard ADO.NET.
-    /// EnterpriseDB.EDBClient will analyze that property and constructed instances of <see cref="EDBStatement"/>
+    /// EDB will analyze that property and constructed instances of <see cref="EDBStatement"/>
     /// internally.
     ///
     /// Users can retrieve instances from <see cref="EDBDataReader.Statements"/>

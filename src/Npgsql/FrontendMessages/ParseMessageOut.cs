@@ -29,6 +29,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.TypeMapping;
+using EnterpriseDB.EDBClient.TypeHandling;
 
 namespace  EnterpriseDB.EDBClient.FrontendMessages
 {
@@ -43,12 +44,13 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         /// The name of the destination prepared statement (an empty string selects the unnamed prepared statement).
         /// </summary>
         string Statement { get; set; }
+        ConnectorTypeMapper mapper { get; set; }
 
         // ReSharper disable once InconsistentNaming
         internal List<uint> ParameterTypeOIDs { get; private set; }
 
         readonly Encoding _encoding;
-        string name;
+        //string name;
 
         EDBParameterCollection _parameters;
         const byte Code = (byte)'O';
@@ -62,6 +64,7 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
         internal ParseOutMessage Populate(string sql, string statementName, EDBParameterCollection _parameter, List<EDBParameter> inputParameters, ConnectorTypeMapper typeMapper)
         {
             ParameterTypeOIDs.Clear();
+            mapper = typeMapper;
             Query = sql;
             Statement = statementName;
             _parameters = _parameter;
@@ -112,8 +115,29 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             {
                 // PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
 
-                name = _parameters[i].EDBDbType.ToString();
-                buf.WriteInt32((Int32)EDBParameter.ParamToOid((string)_parameters[i].EDBDbType.ToString()));
+                //name = _parameters[i].EDBDbType.ToString();
+                uint oid = 0;
+                
+                if (mapper != null)
+                {
+                    if (_parameters[i]._dataTypeName != null)
+                    {
+                        EDBTypeHandler handler = mapper.GetByDataTypeName(_parameters[i]._dataTypeName);
+                        if (handler != null)
+                        {
+                            oid = handler.PostgresType.OID;
+                        }
+                    }
+                }
+
+                if (oid != 0)
+                {
+                    buf.WriteInt32((Int32) oid);
+                } else
+                {
+                    buf.WriteInt32((Int32)EDBParameter.ParamToOid((string)_parameters[i].EDBDbType.ToString()));
+                }
+                
             }
 
             for (Int32 i = 0; i < _parameters.Count; i++)

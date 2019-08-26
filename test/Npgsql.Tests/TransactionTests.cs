@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -203,7 +203,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure the creating a transaction via DbConnection sets the proper isolation level")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/559")]
+        [IssueLink("https://github.com/EDB/EDB/issues/559")]
         public void DbConnectionDefaultIsolation()
         {
             using (var conn = OpenConnection())
@@ -275,8 +275,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("If a custom command timeout is set, a failed transaction could not be rollbacked to a previous savepoint")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/363")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/184")]
+        [IssueLink("https://github.com/EDB/EDB/issues/363")]
+        [IssueLink("https://github.com/EDB/EDB/issues/184")]
         public void FailedTransactionCantRollbackToSavepointWithCustomTimeout()
         {
             using (var conn = OpenConnection())
@@ -301,7 +301,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Closes a (pooled) connection with a failed transaction and a custom timeout")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/719")]
+        [IssueLink("https://github.com/EDB/EDB/issues/719")]
         public void FailedTransactionOnCloseWithCustom()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -326,7 +326,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/555")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/555")]
         public void TransactionOnRecycledConnection()
         {
             // Use application name to make sure we have our very own private connection pool
@@ -379,7 +379,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
+        [IssueLink("https://github.com/EDB/EDB/issues/985")]
         public void IsCompletedCommit()
         {
             using (var conn = OpenConnection())
@@ -395,7 +395,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
+        [IssueLink("https://github.com/EDB/EDB/issues/985")]
         public void IsCompletedRollback()
         {
             using (var conn = OpenConnection())
@@ -412,7 +412,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
         [Test, Description("Check IsCompleted before, during, and after a failed then rolled back transaction")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
+        [IssueLink("https://github.com/EDB/EDB/issues/985")]
         public void IsCompletedRollbackFailed()
         {
             using (var conn = OpenConnection())

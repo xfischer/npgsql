@@ -1,23 +1,23 @@
 #region License
-// The PostgreSQL License
+// The EnterpriseDB PostgreSql License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -47,7 +47,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 namespace EnterpriseDB.EDBClient
 {
     /// <summary>
-    /// This class represents a connection to a PostgreSQL server.
+    /// This class represents a connection to a EnterpriseDB PostgreSql server.
     /// </summary>
     // ReSharper disable once RedundantNameQualifier
     [System.ComponentModel.DesignerCategory("")]
@@ -112,7 +112,7 @@ namespace EnterpriseDB.EDBClient
 
         ///
         /// <summary>
-        /// The default TCP/IP port for PostgreSQL.
+        /// The default TCP/IP port for EnterpriseDB PostgreSql.
         /// </summary>
         public const int DefaultPort = 5444;//EnterpriseDB Team
 
@@ -142,7 +142,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Initializes a new instance of <see cref="EDBConnection"/> with the given connection string.
         /// </summary>
-        /// <param name="connectionString">The connection used to open the PostgreSQL database.</param>
+        /// <param name="connectionString">The connection used to open the EnterpriseDB PostgreSql database.</param>
         public EDBConnection(string connectionString) : this()
             => ConnectionString = connectionString;
 
@@ -339,7 +339,7 @@ namespace EnterpriseDB.EDBClient
         #region Connection string management
 
         /// <summary>
-        /// Gets or sets the string used to connect to a PostgreSQL database. See the manual for details.
+        /// Gets or sets the string used to connect to a EnterpriseDB PostgreSql database. See the manual for details.
         /// </summary>
         /// <value>The connection string that includes the server name,
         /// the database name, and other parameters needed to establish
@@ -431,6 +431,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public string EntityAdminDatabase => Settings.EntityAdminDatabase;//EnterpriseDB Team
 
+
         #endregion Configuration settings
 
         #region State management
@@ -466,7 +467,7 @@ namespace EnterpriseDB.EDBClient
                 case ConnectorState.Broken:
                     return ConnectionState.Broken;
                 default:
-                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.");
                 }
             }
         }
@@ -525,7 +526,7 @@ namespace EnterpriseDB.EDBClient
         /// <returns>An <see cref="System.Data.Common.DbTransaction">DbTransaction</see>
         /// object representing the new transaction.</returns>
         /// <remarks>
-        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
+        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the EnterpriseDB PostgreSql backend.
         /// There's no support for nested transactions.
         /// </remarks>
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
@@ -550,7 +551,7 @@ namespace EnterpriseDB.EDBClient
         /// <returns>A <see cref="EDBTransaction">EDBTransaction</see>
         /// object representing the new transaction.</returns>
         /// <remarks>
-        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
+        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the EnterpriseDB PostgreSql backend.
         /// There's no support for nested transactions.
         /// </remarks>
         public new EDBTransaction BeginTransaction(IsolationLevel level)
@@ -680,16 +681,29 @@ namespace EnterpriseDB.EDBClient
 
         #endregion
 
-        #region Notifications
+        #region Notifications and Notices
 
         /// <summary>
-        /// Occurs on NoticeResponses from the PostgreSQL backend.
+        /// Fires when EnterpriseDB PostgreSql notices are received from EnterpriseDB PostgreSql.
         /// </summary>
+        /// <remarks>
+        /// EnterpriseDB PostgreSql notices are non-critical messages generated by EnterpriseDB PostgreSql, either as a result of a user query
+        /// (e.g. as a warning or informational notice), or due to outside activity (e.g. if the database administrator
+        /// initiates a "fast" database shutdown).
+        ///
+        /// Note that notices are very different from notifications (see the <see cref="Notification"/> event).
+        /// </remarks>
         public event NoticeEventHandler Notice;
 
         /// <summary>
-        /// Occurs on NotificationResponses from the PostgreSQL backend.
+        /// Fires when EnterpriseDB PostgreSql notifications are received from EnterpriseDB PostgreSql.
         /// </summary>
+        /// <remarks>
+        /// EnterpriseDB PostgreSql notifications are sent when your connection has registered for notifications on a specific channel via the
+        /// LISTEN command. NOTIFY can be used to generate such notifications, allowing for an inter-connection communication channel.
+        ///
+        /// Note that notifications are very different from notices (see the <see cref="Notice"/> event).
+        /// </remarks>
         public event NotificationEventHandler Notification;
 
         internal void OnNotice(PostgresNotice e)
@@ -718,7 +732,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        #endregion Notifications
+        #endregion Notifications and Notices
 
         #region SSL
 
@@ -759,7 +773,7 @@ namespace EnterpriseDB.EDBClient
         #region Backend version, capabilities, settings
 
         /// <summary>
-        /// Version of the PostgreSQL backend.
+        /// Version of the EnterpriseDB PostgreSql backend.
         /// This can only be called when there is an active connection.
         /// </summary>
         [Browsable(false)]
@@ -774,7 +788,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// PostgreSQL server version.
+        /// EnterpriseDB PostgreSql server version.
         /// </summary>
         public override string ServerVersion => PostgreSqlVersion.ToString();
 
@@ -812,7 +826,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// The connection's timezone as reported by PostgreSQL, in the IANA/Olson database format.
+        /// The connection's timezone as reported by EnterpriseDB PostgreSql, in the IANA/Olson database format.
         /// </summary>
         [Browsable(false)]
         [PublicAPI]
@@ -827,7 +841,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Holds all PostgreSQL parameters received for this connection. Is updated if the values change
+        /// Holds all EnterpriseDB PostgreSql parameters received for this connection. Is updated if the values change
         /// (e.g. as a result of a SET command).
         /// </summary>
         [Browsable(false)]
@@ -847,12 +861,12 @@ namespace EnterpriseDB.EDBClient
         #region Copy
 
         /// <summary>
-        /// Begins a binary COPY FROM STDIN operation, a high-performance data import mechanism to a PostgreSQL table.
+        /// Begins a binary COPY FROM STDIN operation, a high-performance data import mechanism to a EnterpriseDB PostgreSql table.
         /// </summary>
         /// <param name="copyFromCommand">A COPY FROM STDIN SQL command</param>
         /// <returns>A <see cref="EDBBinaryImporter"/> which can be used to write rows and columns</returns>
         /// <remarks>
-        /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
+        /// See http://www.EnterpriseDB PostgreSql.org/docs/current/static/sql-copy.html.
         /// </remarks>
         public EDBBinaryImporter BeginBinaryImport(string copyFromCommand)
         {
@@ -878,12 +892,12 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Begins a binary COPY TO STDOUT operation, a high-performance data export mechanism from a PostgreSQL table.
+        /// Begins a binary COPY TO STDOUT operation, a high-performance data export mechanism from a EnterpriseDB PostgreSql table.
         /// </summary>
         /// <param name="copyToCommand">A COPY TO STDOUT SQL command</param>
         /// <returns>A <see cref="EDBBinaryExporter"/> which can be used to read rows and columns</returns>
         /// <remarks>
-        /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
+        /// See http://www.EnterpriseDB PostgreSql.org/docs/current/static/sql-copy.html.
         /// </remarks>
         public EDBBinaryExporter BeginBinaryExport(string copyToCommand)
         {
@@ -909,7 +923,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Begins a textual COPY FROM STDIN operation, a data import mechanism to a PostgreSQL table.
+        /// Begins a textual COPY FROM STDIN operation, a data import mechanism to a EnterpriseDB PostgreSql table.
         /// It is the user's responsibility to send the textual input according to the format specified
         /// in <paramref name="copyFromCommand"/>.
         /// </summary>
@@ -917,7 +931,7 @@ namespace EnterpriseDB.EDBClient
         /// <returns>
         /// A TextWriter that can be used to send textual data.</returns>
         /// <remarks>
-        /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
+        /// See http://www.EnterpriseDB PostgreSql.org/docs/current/static/sql-copy.html.
         /// </remarks>
         public TextWriter BeginTextImport(string copyFromCommand)
         {
@@ -943,7 +957,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Begins a textual COPY TO STDOUT operation, a data export mechanism from a PostgreSQL table.
+        /// Begins a textual COPY TO STDOUT operation, a data export mechanism from a EnterpriseDB PostgreSql table.
         /// It is the user's responsibility to parse the textual input according to the format specified
         /// in <paramref name="copyToCommand"/>.
         /// </summary>
@@ -951,7 +965,7 @@ namespace EnterpriseDB.EDBClient
         /// <returns>
         /// A TextReader that can be used to read textual data.</returns>
         /// <remarks>
-        /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
+        /// See http://www.EnterpriseDB PostgreSql.org/docs/current/static/sql-copy.html.
         /// </remarks>
         public TextReader BeginTextExport(string copyToCommand)
         {
@@ -977,7 +991,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Begins a raw binary COPY operation (TO STDOUT or FROM STDIN), a high-performance data export/import mechanism to a PostgreSQL table.
+        /// Begins a raw binary COPY operation (TO STDOUT or FROM STDIN), a high-performance data export/import mechanism to a EnterpriseDB PostgreSql table.
         /// Note that unlike the other COPY API methods, <see cref="BeginRawBinaryCopy"/> doesn't implement any encoding/decoding
         /// and is unsuitable for structured import/export operation. It is useful mainly for exporting a table as an opaque
         /// blob, for the purpose of importing it back later.
@@ -985,7 +999,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="copyCommand">A COPY TO STDOUT or COPY FROM STDIN SQL command</param>
         /// <returns>A <see cref="EDBRawCopyStream"/> that can be used to read or write raw binary data.</returns>
         /// <remarks>
-        /// See http://www.postgresql.org/docs/current/static/sql-copy.html.
+        /// See http://www.EnterpriseDB PostgreSql.org/docs/current/static/sql-copy.html.
         /// </remarks>
         public EDBRawCopyStream BeginRawBinaryCopy(string copyCommand)
         {
@@ -1021,13 +1035,13 @@ namespace EnterpriseDB.EDBClient
         #region Enum mapping
 
         /// <summary>
-        /// Maps a CLR enum to a PostgreSQL enum type for use with this connection.
+        /// Maps a CLR enum to a EnterpriseDB PostgreSql enum type for use with this connection.
         /// </summary>
         /// <remarks>
-        /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+        /// CLR enum labels are mapped by name to EnterpriseDB PostgreSql enum labels.
         /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
         /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
-        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
+        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a EnterpriseDB PostgreSql enum label.
         /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
         /// an exception will be raised.
         ///
@@ -1036,7 +1050,7 @@ namespace EnterpriseDB.EDBClient
         /// To avoid mapping the type for each connection, use the <see cref="MapEnumGlobally{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1050,20 +1064,20 @@ namespace EnterpriseDB.EDBClient
             => TypeMapper.MapEnum<TEnum>(pgName, nameTranslator);
 
         /// <summary>
-        /// Maps a CLR enum to a PostgreSQL enum type for use with all connections created from now on. Existing connections aren't affected.
+        /// Maps a CLR enum to a EnterpriseDB PostgreSql enum type for use with all connections created from now on. Existing connections aren't affected.
         /// </summary>
         /// <remarks>
-        /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+        /// CLR enum labels are mapped by name to EnterpriseDB PostgreSql enum labels.
         /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
         /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
-        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
+        /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a EnterpriseDB PostgreSql enum label.
         /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
         /// an exception will be raised.
         ///
         /// To map the type for a specific connection, use the <see cref="MapEnum{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1080,7 +1094,7 @@ namespace EnterpriseDB.EDBClient
         /// Removes a previous global enum mapping.
         /// </summary>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1096,13 +1110,13 @@ namespace EnterpriseDB.EDBClient
         #region Composite registration
 
         /// <summary>
-        /// Maps a CLR type to a PostgreSQL composite type for use with this connection.
+        /// Maps a CLR type to a EnterpriseDB PostgreSql composite type for use with this connection.
         /// </summary>
         /// <remarks>
-        /// CLR fields and properties by string to PostgreSQL enum labels.
+        /// CLR fields and properties by string to EnterpriseDB PostgreSql enum labels.
         /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
         /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
-        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a PostgreSQL enum label.
+        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a EnterpriseDB PostgreSql enum label.
         /// If there is a discrepancy between the .NET and database labels while a composite is read or written,
         /// an exception will be raised.
         ///
@@ -1111,7 +1125,7 @@ namespace EnterpriseDB.EDBClient
         /// To avoid mapping the type for each connection, use the <see cref="MapCompositeGlobally{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1124,20 +1138,20 @@ namespace EnterpriseDB.EDBClient
             => TypeMapper.MapComposite<T>(pgName, nameTranslator);
 
         /// <summary>
-        /// Maps a CLR type to a PostgreSQL composite type for use with all connections created from now on. Existing connections aren't affected.
+        /// Maps a CLR type to a EnterpriseDB PostgreSql composite type for use with all connections created from now on. Existing connections aren't affected.
         /// </summary>
         /// <remarks>
-        /// CLR fields and properties by string to PostgreSQL enum labels.
+        /// CLR fields and properties by string to EnterpriseDB PostgreSql enum labels.
         /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
         /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
-        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a PostgreSQL enum label.
+        /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a EnterpriseDB PostgreSql enum label.
         /// If there is a discrepancy between the .NET and database labels while a composite is read or written,
         /// an exception will be raised.
         ///
         /// To map the type for a specific connection, use the <see cref="MapEnum{T}"/> method.
         /// </remarks>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1153,7 +1167,7 @@ namespace EnterpriseDB.EDBClient
         /// Removes a previous global enum mapping.
         /// </summary>
         /// <param name="pgName">
-        /// A PostgreSQL type name for the corresponding enum type in the database.
+        /// A EnterpriseDB PostgreSql type name for the corresponding enum type in the database.
         /// If null, the name translator given in <paramref name="nameTranslator"/>will be used.
         /// </param>
         /// <param name="nameTranslator">
@@ -1169,7 +1183,7 @@ namespace EnterpriseDB.EDBClient
         #region Wait
 
         /// <summary>
-        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// Waits until an asynchronous EnterpriseDB PostgreSql messages (e.g. a notification) arrives, and
         /// exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// </summary>
@@ -1192,7 +1206,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// Waits until an asynchronous EnterpriseDB PostgreSql messages (e.g. a notification) arrives, and
         /// exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// </summary>
@@ -1204,7 +1218,7 @@ namespace EnterpriseDB.EDBClient
         public bool Wait(TimeSpan timeout) => Wait((int)timeout.TotalMilliseconds);
 
         /// <summary>
-        /// Waits until an asynchronous PostgreSQL messages (e.g. a notification) arrives, and
+        /// Waits until an asynchronous EnterpriseDB PostgreSql messages (e.g. a notification) arrives, and
         /// exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// </summary>
@@ -1212,7 +1226,7 @@ namespace EnterpriseDB.EDBClient
         public void Wait() => Wait(0);
 
         /// <summary>
-        /// Waits asynchronously until an asynchronous PostgreSQL messages (e.g. a notification)
+        /// Waits asynchronously until an asynchronous EnterpriseDB PostgreSql messages (e.g. a notification)
         /// arrives, and exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// CancelationToken can not cancel wait operation if underlying NetworkStream does not support it
@@ -1229,7 +1243,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Waits asynchronously until an asynchronous PostgreSQL messages (e.g. a notification)
+        /// Waits asynchronously until an asynchronous EnterpriseDB PostgreSql messages (e.g. a notification)
         /// arrives, and exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// </summary>
@@ -1319,7 +1333,7 @@ namespace EnterpriseDB.EDBClient
                     throw new NotSupportedException();
                 case "RESERVEDWORDS":
                     return EDBSchema.GetReservedWords();
-                // custom collections for EnterpriseDB.EDBClient
+                // custom collections for EDB
                 case "DATABASES":
                     return EDBSchema.GetDatabases(this, restrictions);
                 case "SCHEMATA":
@@ -1455,17 +1469,17 @@ namespace EnterpriseDB.EDBClient
     #region Delegates
 
     /// <summary>
-    /// Represents the method that handles the <see cref="EDBConnection.Notification">Notice</see> events.
+    /// Represents a method that handles the <see cref="EDBConnection.Notice"/> event.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">A <see cref="EDBNoticeEventArgs">EDBNoticeEventArgs</see> that contains the event data.</param>
+    /// <param name="e">A <see cref="EDBNoticeEventArgs"/> that contains the notice information (e.g. message, severity...).</param>
     public delegate void NoticeEventHandler(object sender, EDBNoticeEventArgs e);
 
     /// <summary>
-    /// Represents the method that handles the <see cref="EDBConnection.Notification">Notification</see> events.
+    /// Represents a method that handles the <see cref="EDBConnection.Notification"/> event.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">A <see cref="EDBNotificationEventArgs">EDBNotificationEventArgs</see> that contains the event data.</param>
+    /// <param name="e">A <see cref="EDBNotificationEventArgs"/> that contains the notification payload.</param>
     public delegate void NotificationEventHandler(object sender, EDBNotificationEventArgs e);
 
     /// <summary>

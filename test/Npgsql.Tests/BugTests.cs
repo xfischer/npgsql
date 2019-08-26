@@ -27,7 +27,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1034")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1034")]
         public void SequentialSkipOverFirstRow()
         {
             using (var conn = OpenConnection())
@@ -51,7 +51,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #endregion
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1210")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1210")]
         public void ManyParametersWithMixedFormatCode()
         {
             using (var conn = OpenConnection())
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1238")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1238")]
         public void RecordWithNonIntField()
         {
             using (var conn = OpenConnection())
@@ -90,7 +90,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1450")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1450")]
         public void Bug1450()
         {
             using (var conn = OpenConnection())
@@ -130,7 +130,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1497")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1497")]
         public void Bug1497()
         {
             using (var conn = OpenConnection())
@@ -146,7 +146,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1558")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1558")]
         public void Bug1558()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -183,7 +183,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1700")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1700")]
         public void Bug1700()
         {
             Assert.That(() =>
@@ -212,7 +212,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }, Throws.InvalidOperationException.With.Message.EqualTo("Some problem parsing the returned data"));
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1964")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1964")]
         public void Bug1964()
         {
             using (var conn = OpenConnection())
@@ -224,7 +224,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1986")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1986")]
         public void Bug1986()
         {
             using (var conn = OpenConnection())
@@ -243,7 +243,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1987")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1987")]
         public void Bug1987()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -271,7 +271,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         enum Mood { Sad, Ok, Happy };
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2003")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/2003")]
         public void Bug2003()
         {
             // A big RowDescription (larger than buffer size) causes an oversize buffer allocation, but which isn't
@@ -344,9 +344,68 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+        [Test]
+        public void Bug2274()
+        {
+            using (var conn = OpenConnection())
+            using (var cmd = new EDBCommand("SELECT 1", conn))
+            {
+                cmd.Parameters.Add(new EDBParameter
+                {
+                    ParameterName = "p",
+                    Direction = ParameterDirection.Output
+                });
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SingleRow))
+                {
+                    Assert.That(() => reader.GetInt32(0), Throws.Exception.TypeOf<InvalidOperationException>());
+                    Assert.That(reader.Read(), Is.True);
+                    Assert.That(reader.GetInt32(0), Is.EqualTo(1));
+                    Assert.That(reader.Read(), Is.False);
+                }
+            }
+        }
+
+        [Test]
+        public void Bug2278()
+        {
+            using (var conn = OpenConnection())
+            {
+                try
+                {
+                    conn.ExecuteNonQuery("CREATE TYPE enum_type AS ENUM ('left', 'right')");
+                    conn.ExecuteNonQuery("CREATE DOMAIN enum_domain AS enum_type NOT NULL");
+                    conn.ExecuteNonQuery("CREATE TYPE composite_type AS (value enum_domain)");
+                    conn.ExecuteNonQuery("CREATE TEMP TABLE data (value composite_type)");
+                    conn.ExecuteNonQuery("INSERT INTO data (value) VALUES (ROW('left'))");
+
+                    conn.ReloadTypes();
+                    conn.TypeMapper.MapComposite<Bug2278CompositeType>("composite_type");
+                    conn.TypeMapper.MapEnum<Bug2278EnumType>("enum_type");
+
+                    conn.ExecuteScalar("SELECT * FROM data AS d");
+                }
+                finally
+                {
+                    conn.ExecuteNonQuery("DROP TABLE IF EXISTS data; DROP TYPE IF EXISTS composite_type; DROP DOMAIN IF EXISTS enum_domain; DROP TYPE IF EXISTS enum_type");
+                    conn.ReloadTypes();
+                }
+            }
+        }
+
+        class Bug2278CompositeType
+        {
+            public Bug2278EnumType Value { get; set; }
+        }
+
+        enum Bug2278EnumType
+        {
+            Left,
+            Right
+        }
+
         #region Bug1285
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1285")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1285")]
         public void Bug1285()
         {
             using (var conn = OpenConnection())

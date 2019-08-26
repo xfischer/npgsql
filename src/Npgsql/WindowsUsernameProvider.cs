@@ -20,7 +20,7 @@ namespace EnterpriseDB.EDBClient
         [CanBeNull]
         internal static string GetUsername(bool includeRealm)
         {
-            // Side note: This maintains the hack fix mentioned before for https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/133.
+            // Side note: This maintains the hack fix mentioned before for https://github.com/EDB/EDB/issues/133.
             // In a nutshell, starting with .NET 4.5 WindowsIdentity inherits from ClaimsIdentity
             // which doesn't exist in mono, and calling a WindowsIdentity method bombs.
             // The workaround is that this function that actually deals with WindowsIdentity never

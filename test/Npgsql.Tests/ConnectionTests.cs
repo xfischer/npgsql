@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -229,7 +229,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Description("Tests that mandatory connection string parameters are indeed mandatory")]
         public void MandatoryConnectionStringParams()
         {
-            Assert.That(() => new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests").Open(), Throws.Exception.TypeOf<ArgumentException>());
+            Assert.That(() => new EDBConnection("User ID=EDB_tests;Password=EDB_tests;Database=EDB_tests").Open(), Throws.Exception.TypeOf<ArgumentException>());
         }
 
 
@@ -367,14 +367,14 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region Client Encoding
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1065")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
         public void ClientEncodingIsUTF8ByDefault()
         {
             using (var conn = OpenConnection())
                 Assert.That(conn.ExecuteScalar("SHOW client_encoding"), Is.EqualTo("UTF8"));
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1065")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
         [NonParallelizable]
         public void ClientEncodingEnvVar()
         {
@@ -393,7 +393,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1065")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
         public void ClientEncodingConnectionParam()
         {
             using (var conn = OpenConnection())
@@ -410,7 +410,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region Timezone
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1634")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1634")]
         [NonParallelizable]
         public void TimezoneEnvVar()
         {
@@ -435,7 +435,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1634")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1634")]
         public void TimezoneConnectionParam()
         {
             string newTimezone;
@@ -472,7 +472,7 @@ namespace EnterpriseDB.EDBClient.Tests
             var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
                 Host=dir,
-                Username=null  // Let EnterpriseDB.EDBClient detect the username
+                Username=null  // Let EDB detect the username
             };
             using (var conn = OpenConnection(csb))
             {
@@ -480,7 +480,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/903")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/903")]
         public void DataSource()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -507,7 +507,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(() => conn.Open(), Throws.Exception.TypeOf<ArgumentException>());
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/703")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/703")]
         public void NoDatabaseDefaultsToUsername()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
@@ -586,7 +586,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1331")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1331")]
         public void ChangeDatabaseConnectionNotOpen()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -831,7 +831,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/783")]
+        [IssueLink("https://github.com/EDB/EDB/issues/783")]
         public void PersistSecurityInfoIsOn([Values(true, false)] bool pooling)
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -849,7 +849,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/783")]
+        [IssueLink("https://github.com/EDB/EDB/issues/783")]
         public void NoPasswordWithoutPersistSecurityInfo([Values(true, false)] bool pooling)
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -867,8 +867,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/743")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/783")]
+        [IssueLink("https://github.com/EDB/EDB/issues/743")]
+        [IssueLink("https://github.com/EDB/EDB/issues/783")]
         public void Clone()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -893,7 +893,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/824")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/824")]
         public void ReloadTypes()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -930,7 +930,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(conn1.Connector.DatabaseInfo, Is.SameAs(conn2.Connector.DatabaseInfo));
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/736")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/736")]
         public void ManyOpenClose()
         {
             // The connector's _sentRfqPrependedMessages is a byte, too many open/closes made it overflow
@@ -952,7 +952,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/736")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/736")]
         public void ManyOpenCloseWithTransaction()
         {
             // The connector's _sentRfqPrependedMessages is a byte, too many open/closes made it overflow
@@ -966,12 +966,12 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/927")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/736")]
+        [IssueLink("https://github.com/EDB/EDB/issues/927")]
+        [IssueLink("https://github.com/EDB/EDB/issues/736")]
         [Ignore("Fails when running the entire test suite but not on its own...")]
         public void RollbackOnClose()
         {
-            // EnterpriseDB.EDBClient 3.0.0 to 3.0.4 prepended a rollback for the next time the connector is used, as an optimization.
+            // EDB 3.0.0 to 3.0.4 prepended a rollback for the next time the connector is used, as an optimization.
             // This caused some issues (#927) and was removed.
 
             // Clear connections in pool as we're going to need to reopen the same connection
@@ -994,7 +994,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Tests an exception happening when sending the Terminate message while closing a ready connector")]
-        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/777")]
+        [IssueLink("https://github.com/EDB/EDB/issues/777")]
         [Ignore("Flaky")]
         public void ExceptionDuringClose()
         {
@@ -1010,7 +1010,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1180")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1180")]
         [Ignore("Flaky")]
         public void PoolByPassword()
         {
@@ -1040,23 +1040,31 @@ namespace EnterpriseDB.EDBClient.Tests
             var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
                 ApplicationName = nameof(NoTypeLoading),
-                ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading,
-                Pooling = false
+                ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading
             }.ToString();
 
-            using (var conn = OpenConnection(connString))
+            try
             {
-                // Arrays should not be supported in this mode
-                Assert.That(() => conn.ExecuteScalar("SELECT '{1,2,3}'::INTEGER[]"), Throws.Exception.TypeOf<NotSupportedException>());
-                // Test that some basic types do work
-                Assert.That(conn.ExecuteScalar("SELECT 8"), Is.EqualTo(8));
-                Assert.That(conn.ExecuteScalar("SELECT 'foo'"), Is.EqualTo("foo"));
-                Assert.That(conn.ExecuteScalar("SELECT TRUE"), Is.EqualTo(true));
-                Assert.That(conn.ExecuteScalar("SELECT INET '192.168.1.1'"), Is.EqualTo(IPAddress.Parse("192.168.1.1")));
+                using (var conn = OpenConnection(connString))
+                {
+                    // Arrays should not be supported in this mode
+                    Assert.That(() => conn.ExecuteScalar("SELECT '{1,2,3}'::INTEGER[]"),
+                        Throws.Exception.TypeOf<NotSupportedException>());
+                    // Test that some basic types do work
+                    Assert.That(conn.ExecuteScalar("SELECT 8"), Is.EqualTo(8));
+                    Assert.That(conn.ExecuteScalar("SELECT 'foo'"), Is.EqualTo("foo"));
+                    Assert.That(conn.ExecuteScalar("SELECT TRUE"), Is.EqualTo(true));
+                    Assert.That(conn.ExecuteScalar("SELECT INET '192.168.1.1'"),
+                        Is.EqualTo(IPAddress.Parse("192.168.1.1")));
+                }
+            }
+            finally
+            {
+                EDBConnection.ClearPool(new EDBConnection(connString));
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1158")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1158")]
         public void TableNamedRecord()
         {
             using (var conn = OpenConnection())
@@ -1075,7 +1083,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
 #if NET451
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/392")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/392")]
         public void NonUTF8Encoding()
         {
             using (var adminConn = OpenConnection())

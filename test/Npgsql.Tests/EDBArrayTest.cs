@@ -704,7 +704,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-        //ZK CHECKME: Date[] to DateTime[] cast not supported in npgsql
+        //ZK CHECKME: Date[] to DateTime[] cast not supported in EDB
 		[Test]
 		public void ArraysDate()
 		{

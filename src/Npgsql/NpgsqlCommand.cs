@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -270,7 +270,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Marks all of the query's result columns as either known or unknown.
-        /// Unknown results column are requested them from PostgreSQL in text format, and EnterpriseDB.EDBClient makes no
+        /// Unknown results column are requested them from PostgreSQL in text format, and EDB makes no
         /// attempt to parse them. They will be accessible as strings only.
         /// </summary>
         public bool AllResultTypesAreUnknown
@@ -288,7 +288,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Marks the query's result columns as known or unknown, on a column-by-column basis.
-        /// Unknown results column are requested them from PostgreSQL in text format, and EnterpriseDB.EDBClient makes no
+        /// Unknown results column are requested them from PostgreSQL in text format, and EDB makes no
         /// attempt to parse them. They will be accessible as strings only.
         /// </summary>
         /// <remarks>
@@ -543,7 +543,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     {
                         connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                         Parameters.Clear();
-                        throw new EDBException("There was a mismatch in the number of derived parameters between the EnterpriseDB.EDBClient SQL parser and the PostgreSQL parser. Please report this as bug to the EnterpriseDB.EDBClient developers (https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues).");
+                        throw new EDBException("There was a mismatch in the number of derived parameters between the EDB SQL parser and the PostgreSQL parser. Please report this as bug to the EDB developers (https://github.com/EDB/EDB/issues).");
                     }
 
                     for (var i = 0; i < paramTypeOIDs.Count; i++)
@@ -781,7 +781,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
             return result;
         }
-
         void ProcessRawQuery(bool deriveParameters = false)
         {
             EDBStatement statement;
@@ -916,7 +915,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     ////   _statements.Add(new EDBStatement(sb.ToString(), inputList));
                     break;
                 default:
-                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
             }
 
             foreach (var s in _statements)
@@ -1012,13 +1011,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     var bind = connector.BindMessage;
                     bind.Populate(statement.InputParameters, "", statement.StatementName);
-                if (AllResultTypesAreUnknown)
+                    if (AllResultTypesAreUnknown)
                     bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
                 else if (i == 0 && UnknownResultTypeList != null)
                     bind.UnknownResultTypeList = UnknownResultTypeList;
                 await connector.BindMessage.Write(buf, async);
                 }//EnterpriseDB Team
-
 
                 if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
@@ -1136,6 +1134,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         .Populate(StatementOrPortal.Statement, statementToClose.Name)
                         .Write(buf, async);
                 }
+
                 if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                 {
                     connector._isCallableStmt = true;
@@ -1280,7 +1279,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// Executes the CommandText against the Connection, and returns an DbDataReader.
         /// </summary>
         /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a EnterpriseDB.EDBClient-specific
+        /// Unlike the ADO.NET method which it replaces, this method returns a EDB-specific
         /// DataReader.
         /// </remarks>
         /// <returns>A DbDataReader object.</returns>
@@ -1291,7 +1290,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// of the CommandBehavior values.
         /// </summary>
         /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a EnterpriseDB.EDBClient-specific
+        /// Unlike the ADO.NET method which it replaces, this method returns a EDB-specific
         /// DataReader.
         /// </remarks>
         /// <returns>A DbDataReader object.</returns>
@@ -1410,7 +1409,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 State = CommandState.Idle;
                 Connection.Connector?.EndUserAction();
                 connector.CurrentReader = null;//EnterpriseDB Team
-
                 // Close connection if requested even when there is an error.
                 if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
                     _connection.Close();

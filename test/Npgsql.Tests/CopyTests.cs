@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -35,6 +35,40 @@ namespace EnterpriseDB.EDBClient.Tests
 {
     public class CopyTests : TestBase
     {
+        #region issue 2257
+
+        [Test, Description("Reproduce #2257")]
+        public void Issue2257()
+        {
+            using (var conn = OpenConnection(new EDBConnectionStringBuilder(ConnectionString) { CommandTimeout = 3 }))
+            {
+                const int rowCount = 1000000;
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = $"CREATE TEMP TABLE test_2257_master AS SELECT * FROM generate_series(1, {rowCount}) id";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = "ALTER TABLE test_2257_master ADD CONSTRAINT master_pk PRIMARY KEY (id)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = "CREATE TEMP TABLE test_2257_detail (master_id integer NOT NULL REFERENCES test_2257_master (id))";
+                    cmd.ExecuteNonQuery();
+                }
+
+                using (var writer = conn.BeginBinaryImport("COPY test_2257_detail FROM STDIN BINARY"))
+                {
+                    for (var i = 1; i <= rowCount; ++i)
+                    {
+                        writer.StartRow();
+                        writer.Write(i);
+                    }
+
+                    var e = Assert.Throws<EDBException>(() => writer.Complete());
+                    Assert.That(e.InnerException, Is.TypeOf<IOException>());
+                }
+            }
+        }
+
+        #endregion
+
         #region Raw
 
         [Test, Description("Exports data in binary format (raw mode) and then loads it back in")]
@@ -256,7 +290,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/657")]
         public void ImportBytea()
         {
             using (var conn = OpenConnection())
@@ -295,7 +329,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/816")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/816")]
         public void ImportStringWithBufferLength()
         {
             using (var conn = OpenConnection())
@@ -313,7 +347,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/662")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/662")]
         public void ImportDirectBuffer()
         {
             using (var conn = OpenConnection())
@@ -333,7 +367,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/661")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/661")]
         [Ignore("Unreliable")]
         public void UnexpectedExceptionBinaryImport()
         {
@@ -359,7 +393,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/657")]
         [Explicit]
         public void ImportByteaMassive()
         {
@@ -412,7 +446,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1134")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1134")]
         public void ReadBitString()
         {
             using (var conn = OpenConnection())
@@ -487,7 +521,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         enum Mood { Sad, Ok, Happy };
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1440")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1440")]
         public void ErrorDuringImport()
         {
             using (var conn = OpenConnection())
@@ -695,7 +729,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 );
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/621")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/621")]
         public void CloseDuringCopy()
         {
             // TODO: Check no broken connections were returned to the pool
@@ -730,7 +764,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/994")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/994")]
         public void NonAsciiColumnName()
         {
             using (var conn = OpenConnection())

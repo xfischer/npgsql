@@ -1,23 +1,23 @@
 ﻿#region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -35,7 +35,7 @@ using JetBrains.Annotations;
 namespace EnterpriseDB.EDBClient
 {
     /// <summary>
-    /// A buffer used by EnterpriseDB.EDBClient to write data to the socket efficiently.
+    /// A buffer used by EDB to write data to the socket efficiently.
     /// Provides methods which encode different values types and tracks the current position.
     /// </summary>
     public sealed partial class EDBWriteBuffer
@@ -67,6 +67,7 @@ namespace EnterpriseDB.EDBClient
 
         internal int WritePosition;
         internal int writePosition { get { return WritePosition; } set { WritePosition = value; } }//EnterpriseDB Team
+
 
         [CanBeNull]
         ParameterStream _parameterStream;
@@ -371,14 +372,15 @@ namespace EnterpriseDB.EDBClient
             WritePosition += TextEncoding.GetBytes(chars, offset, charCount, Buffer, WritePosition);
         }
 
-        public void WriteBytes(byte[] buf) => WriteBytes(buf, 0, buf.Length);
+        public void WriteBytes(ReadOnlySpan<byte> buf)
+        {
+            Debug.Assert(buf.Length <= WriteSpaceLeft);
+            buf.CopyTo(new Span<byte>(Buffer, WritePosition, Buffer.Length - WritePosition));
+            WritePosition += buf.Length;
+        }
 
         public void WriteBytes(byte[] buf, int offset, int count)
-        {
-            Debug.Assert(count <= WriteSpaceLeft);
-            System.Buffer.BlockCopy(buf, offset, Buffer, WritePosition, count);
-            WritePosition += count;
-        }
+            => WriteBytes(new ReadOnlySpan<byte>(buf, offset, count));
 
         public Task WriteBytesRaw(byte[] bytes, bool async)
         {

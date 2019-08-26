@@ -1,23 +1,23 @@
 #region License
 // The PostgreSQL License
 //
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
+// Copyright (C) 2018 The EDB Development Team
 //
 // Permission to use, copy, modify, and distribute this software and its
 // documentation for any purpose, without fee, and without a written
 // agreement is hereby granted, provided that the above copyright notice
 // and this paragraph and the following two paragraphs appear in all copies.
 //
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
+// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
 // FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
 // INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
+// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
 // INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
+// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 
@@ -42,7 +42,7 @@ namespace EnterpriseDB.EDBClient
     /// <remarks>
     /// This exception only corresponds to a PostgreSQL-delivered error.
     /// Other errors (e.g. network issues) will be raised via <see cref="EDBException"/>,
-    /// and purely EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
+    /// and purely EDB-related issues which aren't related to the server will be raised
     /// via the standard CLR exceptions (e.g. ArgumentException).
     /// 
     /// See http://www.postgresql.org/docs/current/static/errcodes-appendix.html,
@@ -52,7 +52,7 @@ namespace EnterpriseDB.EDBClient
     public sealed class PostgresException : EDBException
     {
         [CanBeNull]
-        Dictionary<object, object> _data;
+        bool _dataInitialized;
 
         #region Message Fields
 
@@ -278,9 +278,11 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                // Remarks: return Dictionary with object keys although all our keys are string keys
-                // because System.Windows.Threading.Dispatcher relies on that
-                return _data ?? (_data = (
+                if (_dataInitialized)
+                    return base.Data;
+
+                var data = base.Data;
+                foreach (var pair in
                     from p in typeof(PostgresException).GetProperties()
                     let k = p.Name
                     where p.Name != nameof(Data)
@@ -288,9 +290,13 @@ namespace EnterpriseDB.EDBClient
                     let v = p.GetValue(this)
                     where v != null
                     where k != nameof(Position) && k != nameof(InternalPosition) || (int)v != 0
-                    select new { Key = k, Value = v }
-                    ).ToDictionary(kv => (object)kv.Key, kv => kv.Value)
-                );
+                    select new KeyValuePair<string, object>(k, v))
+                {
+                    data.Add(pair.Key, pair.Value);
+                }
+
+                _dataInitialized = true;
+                return data;
             }
         }
 

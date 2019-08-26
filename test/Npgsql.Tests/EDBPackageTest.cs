@@ -1606,7 +1606,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual("ALLEN", Convert.ToString(reader[1].ToString()));
                 Assert.AreEqual("SALESMAN", Convert.ToString(reader[2].ToString()));
                 Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-                Assert.AreEqual("1600", Convert.ToString(reader[5].ToString()));
+                Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
 
                 reader.Close();
 
