@@ -71,7 +71,7 @@ namespace EnterpriseDB.EDBClient
             (byte)'\n', 255, (byte)'\r', (byte)'\n', 0
         };
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBRawCopyStream));
 
         #endregion
 
@@ -174,8 +174,8 @@ namespace EnterpriseDB.EDBClient
                     _leftToReadInDataMsg = ((CopyDataMessage)msg).Length;
                     break;
                 case BackendMessageCode.CopyDone:
-                    Expect<CommandCompleteMessage>(_connector.ReadMessage());
-                    Expect<ReadyForQueryMessage>(_connector.ReadMessage());
+                    Expect<CommandCompleteMessage>(_connector.ReadMessage(), _connector);
+                    Expect<ReadyForQueryMessage>(_connector.ReadMessage(), _connector);
                     _isConsumed = true;
                     return 0;
                 default:
@@ -254,8 +254,8 @@ namespace EnterpriseDB.EDBClient
                     Flush();
                     _writeBuf.EndCopyMode();
                     _connector.SendMessage(CopyDoneMessage.Instance);
-                    Expect<CommandCompleteMessage>(_connector.ReadMessage());
-                    Expect<ReadyForQueryMessage>(_connector.ReadMessage());
+                    Expect<CommandCompleteMessage>(_connector.ReadMessage(), _connector);
+                    Expect<ReadyForQueryMessage>(_connector.ReadMessage(), _connector);
                 }
                 else
                 {

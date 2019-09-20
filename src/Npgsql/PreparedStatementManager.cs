@@ -33,7 +33,7 @@ namespace EnterpriseDB.EDBClient
         internal string NextPreparedStatementName() => "_p" + (++_preparedStatementIndex);
         ulong _preparedStatementIndex;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(PreparedStatementManager));
 
         internal const int CandidateCount = 100;
 
@@ -209,7 +209,7 @@ namespace EnterpriseDB.EDBClient
                     return;
                 }
             }
-            //Debug.Assert(i < _candidates.Length); //TODO Enterprisedb team
+            //Debug.Assert(i < _candidates.Length);
         }
 
         internal void ClearAll()

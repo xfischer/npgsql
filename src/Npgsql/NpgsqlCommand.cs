@@ -84,7 +84,7 @@ namespace EnterpriseDB.EDBClient
 
         static readonly SingleThreadSynchronizationContext SingleThreadSynchronizationContext = new SingleThreadSynchronizationContext("EDBRemainingAsyncSendWorker");
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBCommand));
 
         #endregion Fields
 
@@ -536,8 +536,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 foreach (var statement in _statements)
                 {
-                    Expect<ParseCompleteMessage>(connector.ReadMessage());
-                    var paramTypeOIDs = Expect<ParameterDescriptionMessage>(connector.ReadMessage()).TypeOIDs;
+                    Expect<ParseCompleteMessage>(connector.ReadMessage(), connector);
+                    var paramTypeOIDs = Expect<ParameterDescriptionMessage>(connector.ReadMessage(), connector).TypeOIDs;
 
                     if (statement.InputParameters.Count != paramTypeOIDs.Count)
                     {
@@ -582,7 +582,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     }
                 }
 
-                Expect<ReadyForQueryMessage>(connector.ReadMessage());
+                Expect<ReadyForQueryMessage>(connector.ReadMessage(), connector);
                 sendTask.GetAwaiter().GetResult();
             }
         }
@@ -662,13 +662,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         Debug.Assert(pStatement.Description == null);
                         if (pStatement.StatementBeingReplaced != null)
                         {
-                            Expect<CloseCompletedMessage>(await connector.ReadMessage(async));
+                            Expect<CloseCompletedMessage>(await connector.ReadMessage(async), connector);
                             pStatement.StatementBeingReplaced.CompleteUnprepare();
                             pStatement.StatementBeingReplaced = null;
                         }
 
-                        Expect<ParseCompleteMessage>(await connector.ReadMessage(async));
-                        Expect<ParameterDescriptionMessage>(await connector.ReadMessage(async));
+                        Expect<ParseCompleteMessage>(await connector.ReadMessage(async), connector);
+                        Expect<ParameterDescriptionMessage>(await connector.ReadMessage(async), connector);
                         var msg = await connector.ReadMessage(async);
                         switch (msg.Code)
                         {
@@ -687,7 +687,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         isFirst = false;
                     }
 
-                    Expect<ReadyForQueryMessage>(await connector.ReadMessage(async));
+                    Expect<ReadyForQueryMessage>(await connector.ReadMessage(async), connector);
 
                     if (async)
                         await sendTask;
@@ -714,12 +714,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 var sendTask = SendClose(false);
                 foreach (var statement in _statements.Where(s => s.PreparedStatement?.State == PreparedState.BeingUnprepared))
                 {
-                    Expect<CloseCompletedMessage>(connector.ReadMessage());
+                    Expect<CloseCompletedMessage>(connector.ReadMessage(), connector);
                     Debug.Assert(statement.PreparedStatement != null);
                     statement.PreparedStatement.CompleteUnprepare();
                     statement.PreparedStatement = null;
                 }
-                Expect<ReadyForQueryMessage>(connector.ReadMessage());
+                Expect<ReadyForQueryMessage>(connector.ReadMessage(), connector);
                 sendTask.GetAwaiter().GetResult();
             }
         }
@@ -915,7 +915,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     ////   _statements.Add(new EDBStatement(sb.ToString(), inputList));
                     break;
                 default:
-                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EDB bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
             }
 
             foreach (var s in _statements)
@@ -1012,11 +1012,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     var bind = connector.BindMessage;
                     bind.Populate(statement.InputParameters, "", statement.StatementName);
                     if (AllResultTypesAreUnknown)
-                    bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
-                else if (i == 0 && UnknownResultTypeList != null)
-                    bind.UnknownResultTypeList = UnknownResultTypeList;
-                await connector.BindMessage.Write(buf, async);
+                        bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
+                    else if (i == 0 && UnknownResultTypeList != null)
+                        bind.UnknownResultTypeList = UnknownResultTypeList;
+                    await connector.BindMessage.Write(buf, async);
                 }//EnterpriseDB Team
+
 
                 if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
@@ -1409,6 +1410,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 State = CommandState.Idle;
                 Connection.Connector?.EndUserAction();
                 connector.CurrentReader = null;//EnterpriseDB Team
+
                 // Close connection if requested even when there is an error.
                 if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
                     _connection.Close();
@@ -1507,15 +1509,17 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         void LogCommand()
         {
             var sb = new StringBuilder();
-            sb.Append("Executing statement(s):");
+            sb.AppendLine("Executing statement(s):");
             foreach (var s in _statements)
-                sb.AppendLine().Append("\t").Append(s.SQL);
-
-            if (EDBLogManager.IsParameterLoggingEnabled && Parameters.Any())
             {
-                sb.AppendLine().AppendLine("Parameters:");
-                for (var i = 0; i < Parameters.Count; i++)
-                    sb.Append("\t$").Append(i + 1).Append(": ").Append(Convert.ToString(Parameters[i].Value, CultureInfo.InvariantCulture));
+                sb.Append("\t").AppendLine(s.SQL);
+                var p = s.InputParameters;
+                if (EDBLogManager.IsParameterLoggingEnabled && p.Count > 0)
+                {
+                    sb.Append('\t').Append("Parameters:");
+                    for (var i = 0; i < p.Count; i++)
+                        sb.Append("\t$").Append(i + 1).Append(": ").Append(Convert.ToString(p[i].Value, CultureInfo.InvariantCulture));
+                }
             }
 
             Log.Debug(sb.ToString(), Connection.Connector.Id);

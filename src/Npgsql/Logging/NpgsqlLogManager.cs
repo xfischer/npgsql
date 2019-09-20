@@ -31,7 +31,7 @@ using System.Text;
 namespace EnterpriseDB.EDBClient.Logging
 {
     /// <summary>
-    /// Manages logging for EDB, used to set the loggging provider.
+    /// Manages logging for EDB, used to set the logging provider.
     /// </summary>
     public static class EDBLogManager
     {
@@ -63,42 +63,7 @@ namespace EnterpriseDB.EDBClient.Logging
         static IEDBLoggingProvider _provider;
         static bool _providerRetrieved;
 
-        internal static EDBLogger CreateLogger(string name)
-        {
-            return Provider.CreateLogger(name);
-        }
-
-        internal static EDBLogger GetCurrentClassLogger()
-        {
-            return CreateLogger(GetClassFullName());
-        }
-
-        // Copied from NLog
-        static string GetClassFullName()
-        {
-            string className;
-            Type declaringType;
-            int framesToSkip = 2;
-
-            do {
-#if SILVERLIGHT
-                StackFrame frame = new StackTrace().GetFrame(framesToSkip);
-#else
-                StackFrame frame = new StackFrame(framesToSkip, false);
-#endif
-                MethodBase method = frame.GetMethod();
-                declaringType = method.DeclaringType;
-                if (declaringType == null) {
-                    className = method.Name;
-                    break;
-                }
-
-                framesToSkip++;
-                className = declaringType.FullName;
-            } while (declaringType.Module.Name.Equals("mscorlib.dll", StringComparison.OrdinalIgnoreCase));
-
-            return className;
-        }
+        internal static EDBLogger CreateLogger(string name) => Provider.CreateLogger("EnterpriseDB.EDBClient." + name);
 
         static EDBLogManager()
         {

@@ -35,7 +35,7 @@ namespace EnterpriseDB.EDBClient
     [Serializable]
     public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     {
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBFactory));
 
         /// <summary>
         /// Gets an instance of the <see cref="EDBFactory"/>.
@@ -101,7 +101,7 @@ namespace EnterpriseDB.EDBClient
 
             // First time, attempt to find the EntityFramework5.EDB assembly and load the type via reflection
             var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-            assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
+            assemblyName.Name = "EntityFramework5.EDB";
             Assembly EDBEfAssembly;
             try {
                 EDBEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));

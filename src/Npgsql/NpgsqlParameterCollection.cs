@@ -44,19 +44,11 @@ namespace EnterpriseDB.EDBClient
         Dictionary<string, int> _lookup;
         [CanBeNull]
         Dictionary<string, int> _lookupIgnoreCase;
+
         // EnterpriseDB Team
         private EDBParameter return_param = null;
         private int return_index = -1;
         internal bool _hasReturnParam = false;
-
-        /// <summary>
-        /// Initializes a new instance of the EDBParameterCollection class.
-        /// </summary>
-        internal EDBParameterCollection()
-        {
-
-            InvalidateHashLookups();
-        }
 
         /* EnterpriseDB Team */
         /// <summary>
@@ -83,6 +75,11 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
+        /// Initializes a new instance of the EDBParameterCollection class.
+        /// </summary>
+        internal EDBParameterCollection() => InvalidateHashLookups();
+
+        /// <summary>
         /// Invalidate the hash lookup tables.  This should be done any time a change
         /// may throw the lookups out of sync with the list.
         /// </summary>
@@ -104,8 +101,10 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                var index = IndexOf(parameterName);
+                if (parameterName is null)
+                    throw new ArgumentNullException(nameof(parameterName));
 
+                var index = IndexOf(parameterName);
                 if (index == -1)
                     throw new ArgumentException("Parameter not found");
 
@@ -113,14 +112,18 @@ namespace EnterpriseDB.EDBClient
             }
             set
             {
+                if (parameterName is null)
+                    throw new ArgumentNullException(nameof(parameterName));
+                if (value is null)
+                    throw new ArgumentNullException(nameof(value));
+
                 var index = IndexOf(parameterName);
 
                 if (index == -1)
                     throw new ArgumentException("Parameter not found");
 
                 var oldValue = _internalList[index];
-
-                if (value.ParameterName != oldValue.ParameterName)
+                if (oldValue.ParameterName != value.ParameterName)
                     InvalidateHashLookups();
 
                 _internalList[index] = value;
@@ -138,6 +141,8 @@ namespace EnterpriseDB.EDBClient
             get => _internalList[index];
             set
             {
+                if (value is null)
+                    throw new ArgumentNullException(nameof(value));
                 if (value.Collection != null)
                     throw new InvalidOperationException("The parameter already belongs to a collection");
 
@@ -297,26 +302,16 @@ namespace EnterpriseDB.EDBClient
         [PublicAPI]
         // ReSharper disable once ImplicitNotNullOverridesUnknownExternalMember
         public override void RemoveAt(string parameterName)
-        {
-            if (parameterName == null)
-                throw new ArgumentNullException(nameof(parameterName));
-
-            RemoveAt(IndexOf(parameterName));
-        }
+            => RemoveAt(IndexOf(parameterName ?? throw new ArgumentNullException(nameof(parameterName))));
 
         /// <inheritdoc />
         public override bool Contains(string parameterName)
-        {
-            if (parameterName == null)
-                throw new ArgumentNullException(nameof(parameterName));
-
-            return IndexOf(parameterName) != -1;
-        }
+            => IndexOf(parameterName ?? throw new ArgumentNullException(nameof(parameterName))) != -1;
 
         /// <inheritdoc />
         public override int IndexOf([CanBeNull] string parameterName)
         {
-            if (parameterName == null)
+            if (parameterName is null)
                 return -1;
 
             if (parameterName.Length > 0 && (parameterName[0] == ':' || parameterName[0] == '@'))
@@ -390,24 +385,14 @@ namespace EnterpriseDB.EDBClient
         public override void RemoveAt(int index)
         {
             if (_internalList.Count - 1 < index)
-                throw new IndexOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(index));
+
             Remove(_internalList[index]);
         }
 
         /// <inheritdoc />
         public override void Insert(int index, object value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (!(value is EDBParameter param))
-                throw new InvalidCastException($"{nameof(value)} must be an EDBParameter");
-            if (param.Collection != null)
-                throw new InvalidOperationException("The parameter already belongs to a collection");
-
-            param.Collection = this;
-            _internalList.Insert(index, param);
-            InvalidateHashLookups();
-        }
+            => Insert(index, Cast(value));
 
         /// <summary>
         /// Removes the specified <see cref="EDBParameter">EDBParameter</see> from the collection.
@@ -416,9 +401,13 @@ namespace EnterpriseDB.EDBClient
         [PublicAPI]
         public void Remove(string parameterName)
         {
+            if (parameterName is null)
+                throw new ArgumentNullException(nameof(parameterName));
+
             var index = IndexOf(parameterName);
             if (index < 0)
                 throw new InvalidOperationException("No parameter with the specified name exists in the collection");
+
             RemoveAt(index);
         }
 
@@ -427,14 +416,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="value">The <see cref="EDBParameter">EDBParameter</see> to remove from the collection.</param>
         public override void Remove(object value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (!(value is EDBParameter param))
-                throw new InvalidCastException($"{nameof(value)} must be an EDBParameter");
-
-            Remove(param);
-        }
+            => Remove(Cast(value));
 
         /// <inheritdoc />
         public override bool Contains(object value)
@@ -449,6 +431,9 @@ namespace EnterpriseDB.EDBClient
         [ContractAnnotation("=>true,parameter:notnull; =>false,parameter:null")]
         public bool TryGetValue(string parameterName, [CanBeNull] out EDBParameter parameter)
         {
+            if (parameterName is null)
+                throw new ArgumentNullException(nameof(parameterName));
+
             var index = IndexOf(parameterName);
 
             if (index != -1)
@@ -456,6 +441,7 @@ namespace EnterpriseDB.EDBClient
                 parameter = _internalList[index];
                 return true;
             }
+
             parameter = null;
             return false;
         }
@@ -465,33 +451,22 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public override void Clear()
         {
+            // clean up parameters so they can be added to another command if required.
             foreach (var toRemove in _internalList)
-            {
-                // clean up the parameter so it can be added to another command if required.
                 toRemove.Collection = null;
-            }
+
             _internalList.Clear();
             InvalidateHashLookups();
         }
 
         /// <inheritdoc />
         public override int IndexOf(object value)
-        {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (!(value is EDBParameter param))
-                throw new InvalidCastException($"{nameof(value)} must be an EDBParameter");
-            return _internalList.IndexOf(param);
-        }
+            => IndexOf(Cast(value));
 
         /// <inheritdoc />
         public override int Add(object value)
         {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (!(value is EDBParameter param))
-                throw new InvalidCastException($"{nameof(value)} must be an EDBParameter");
-            Add(param);
+            Add(Cast(value));
             return Count - 1;
         }
 
@@ -513,12 +488,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <inheritdoc />
         public override void CopyTo(Array array, int index)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-
-            ((ICollection)_internalList).CopyTo(array, index);
-        }
+            => ((ICollection)_internalList).CopyTo(array, index);
 
         /// <inheritdoc />
         bool ICollection<EDBParameter>.IsReadOnly => false;
@@ -541,15 +511,16 @@ namespace EnterpriseDB.EDBClient
         /// <inheritdoc />
         public override void AddRange(Array values)
         {
-            foreach (EDBParameter parameter in values)
-                Add(parameter);
+            if (values is null)
+                throw new ArgumentNullException(nameof(values));
+
+            foreach (object parameter in values)
+                Add(Cast(parameter) ?? throw new ArgumentException("Collection contains a null value.", nameof(values)));
         }
 
         /// <inheritdoc />
-        protected override DbParameter GetParameter([CanBeNull] string parameterName)
-            => parameterName == null
-                ? throw new ArgumentNullException(nameof(parameterName))
-                : this[parameterName];
+        protected override DbParameter GetParameter(string parameterName)
+            => this[parameterName];
 
         /// <inheritdoc />
         protected override DbParameter GetParameter(int index)
@@ -557,15 +528,11 @@ namespace EnterpriseDB.EDBClient
 
         /// <inheritdoc />
         protected override void SetParameter(string parameterName, DbParameter value)
-        {
-            if (parameterName == null)
-                throw new ArgumentNullException(nameof(parameterName));
-            this[parameterName] = (EDBParameter) value;
-        }
+            => this[parameterName] = Cast(value);
 
         /// <inheritdoc />
         protected override void SetParameter(int index, DbParameter value)
-            => this[index] = (EDBParameter) value;
+            => this[index] = Cast(value);
 
         /// <summary>
         /// Report the offset within the collection of the given parameter.
@@ -584,7 +551,7 @@ namespace EnterpriseDB.EDBClient
         [PublicAPI]
         public void Insert(int index, EDBParameter item)
         {
-            if (item == null)
+            if (item is null)
                 throw new ArgumentNullException(nameof(item));
             if (item.Collection != null)
                 throw new Exception("The parameter already belongs to a collection");
@@ -621,6 +588,7 @@ namespace EnterpriseDB.EDBClient
                 InvalidateHashLookups();
                 return true;
             }
+
             return false;
         }
 
@@ -661,6 +629,18 @@ namespace EnterpriseDB.EDBClient
                     if (p.IsOutputDirection)
                         return true;
                 return false;
+            }
+        }
+
+        static EDBParameter Cast(object value)
+        {
+            try
+            {
+                return (EDBParameter)value;
+            }
+            catch (Exception)
+            {
+                throw new InvalidCastException($"The value \"{value}\" is not of type \"{nameof(EDBParameter)}\" and cannot be used in this parameter collection.");
             }
         }
     }

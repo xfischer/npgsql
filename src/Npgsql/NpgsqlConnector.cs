@@ -221,7 +221,7 @@ namespace EnterpriseDB.EDBClient
 
         internal int ClearCounter { get; set; }
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBConnector));
 
         #endregion
 
@@ -237,11 +237,12 @@ namespace EnterpriseDB.EDBClient
         #region Reusable Message Objects
 
         // Frontend
-        internal readonly BindMessage     BindMessage     = new BindMessage();
+        internal readonly BindMessage BindMessage = new BindMessage();
         internal readonly BindOutMessage BindOutMessage = new BindOutMessage();//EnterpriseDB Team
         internal readonly DescribeMessage DescribeMessage = new DescribeMessage();
         internal readonly DescribeOutMessage DescribeOutMessage = new DescribeOutMessage();//EnterpriseDB Team
-        internal readonly CloseMessage    CloseMessage    = new CloseMessage();
+
+        internal readonly CloseMessage CloseMessage = new CloseMessage();
         // ParseMessage and QueryMessage depend on the encoding, which isn't known until open-time
         internal ParseMessage ParseMessage;
         internal ParseOutMessage ParseOutMessage;//EnterpriseDB Team
@@ -252,10 +253,10 @@ namespace EnterpriseDB.EDBClient
         PregeneratedMessage _resetWithoutDeallocateMessage;
 
         // Backend
-        readonly CommandCompleteMessage      _commandCompleteMessage      = new CommandCompleteMessage();
-        readonly ReadyForQueryMessage        _readyForQueryMessage        = new ReadyForQueryMessage();
+        readonly CommandCompleteMessage _commandCompleteMessage = new CommandCompleteMessage();
+        readonly ReadyForQueryMessage _readyForQueryMessage = new ReadyForQueryMessage();
         readonly ParameterDescriptionMessage _parameterDescriptionMessage = new ParameterDescriptionMessage();
-        readonly DataRowMessage              _dataRowMessage              = new DataRowMessage();
+        readonly DataRowMessage _dataRowMessage = new DataRowMessage();
         readonly DataRowMessage _outParamDataRowMessage = new DataRowMessage();
 
         // Since COPY is rarely used, allocate these lazily
@@ -1014,8 +1015,8 @@ namespace EnterpriseDB.EDBClient
                         case BackendMessageCode.NoticeResponse:
                         case BackendMessageCode.NotificationResponse:
                         case BackendMessageCode.ParameterStatus:
-                                //Debug.Assert(msg == null);//EnterpriseDB Team
-                                if (!readingNotifications2)
+                            //Debug.Assert(msg == null);
+                            if (!readingNotifications2)
                                 continue;
                             return null;
                         }
@@ -1182,6 +1183,7 @@ namespace EnterpriseDB.EDBClient
                     return msg;
             }
         }
+
         /// <summary>
         /// Reads backend messages and discards them, stopping only after a message of the given types has
         /// been seen.
@@ -1201,6 +1203,7 @@ namespace EnterpriseDB.EDBClient
                 }
             }
         }
+
         #endregion Backend message processing
 
         #region Transactions
@@ -2024,8 +2027,8 @@ namespace EnterpriseDB.EDBClient
 
             await message.Write(WriteBuffer, async);
             await WriteBuffer.Flush(async);
-            Expect<CommandCompleteMessage>(await ReadMessage(async));
-            Expect<ReadyForQueryMessage>(await ReadMessage(async));
+            Expect<CommandCompleteMessage>(await ReadMessage(async), this);
+            Expect<ReadyForQueryMessage>(await ReadMessage(async), this);
         }
 
         #endregion

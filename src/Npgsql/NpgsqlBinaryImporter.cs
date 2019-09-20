@@ -62,7 +62,7 @@ namespace EnterpriseDB.EDBClient
         [ItemCanBeNull]
         readonly EDBParameter[] _params;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBBinaryImporter));
 
         #endregion
 
@@ -301,8 +301,8 @@ namespace EnterpriseDB.EDBClient
                 _buf.EndCopyMode();
 
                 _connector.SendMessage(CopyDoneMessage.Instance);
-                Expect<CommandCompleteMessage>(_connector.ReadMessage());
-                Expect<ReadyForQueryMessage>(_connector.ReadMessage());
+                Expect<CommandCompleteMessage>(_connector.ReadMessage(), _connector);
+                Expect<ReadyForQueryMessage>(_connector.ReadMessage(), _connector);
                 _state = ImporterState.Committed;
             }
             catch
@@ -316,7 +316,7 @@ namespace EnterpriseDB.EDBClient
         void ICancelable.Cancel() => Close();
 
         /// <summary>
-        /// Completes that binary import and sets the connection back to idle state
+        /// Cancels that binary import and sets the connection back to idle state
         /// </summary>
         public void Dispose() => Close();
 

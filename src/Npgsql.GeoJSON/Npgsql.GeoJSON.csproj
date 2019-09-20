@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>4.0.6.1</VersionPrefix>
+    <VersionPrefix>4.0.10.1</VersionPrefix>
     <Description>GeoJSON plugin for Npgsql, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
     <Authors>Yoh Deadfall, Shay Rojansky</Authors>
     <Copyright>Copyright 2019 © The Npgsql Development Team</Copyright>
@@ -22,6 +22,7 @@
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
+    <Version>4.0.10.1</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net45|AnyCPU'">

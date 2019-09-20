@@ -40,7 +40,7 @@ namespace EnterpriseDB.EDBClient
         static string _principalWithRealm;
         static string _principalWithoutRealm;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(KerberosUsernameProvider));
 
         [CanBeNull]
         internal static string GetUsername(bool includeRealm)

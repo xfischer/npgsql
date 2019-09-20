@@ -81,7 +81,7 @@ namespace EnterpriseDB.EDBClient
         }
         readonly IsolationLevel _isolationLevel;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBTransaction));
 
         const IsolationLevel DefaultIsolationLevel = IsolationLevel.ReadCommitted;
 

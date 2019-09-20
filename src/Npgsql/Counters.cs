@@ -50,7 +50,7 @@ namespace EnterpriseDB.EDBClient
         static bool _initialized;
         static readonly object InitLock = new object();
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(Counters));
 
 #pragma warning disable CA1801 // Review unused parameters
         internal static void Initialize(bool usePerfCounters)

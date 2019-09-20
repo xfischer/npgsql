@@ -23,7 +23,7 @@ namespace EnterpriseDB.EDBClient
         {
             Log.Trace("Authenticating...", Id);
 
-            var msg = Expect<AuthenticationRequestMessage>(await ReadMessage(async));
+            var msg = Expect<AuthenticationRequestMessage>(await ReadMessage(async), this);
             timeout.Check();
             switch (msg.AuthRequestType)
             {
@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient
                 .CreateClearText(passwd)
                 .Write(WriteBuffer, async);
             await WriteBuffer.Flush(async);
-            Expect<AuthenticationRequestMessage>(await ReadMessage(async));
+            Expect<AuthenticationRequestMessage>(await ReadMessage(async), this);
         }
 
         async Task AuthenticateSASL(List<string> mechanisms, bool async)
@@ -86,7 +86,7 @@ namespace EnterpriseDB.EDBClient
                 .Write(WriteBuffer, async);
             await WriteBuffer.Flush(async);
 
-            var saslContinueMsg = Expect<AuthenticationSASLContinueMessage>(await ReadMessage(async));
+            var saslContinueMsg = Expect<AuthenticationSASLContinueMessage>(await ReadMessage(async), this);
             if (saslContinueMsg.AuthRequestType != AuthenticationRequestType.AuthenticationSASLContinue)
                 throw new EDBException("[SASL] AuthenticationSASLFinal message expected");
             var firstServerMsg = new AuthenticationSCRAMServerFirstMessage(saslContinueMsg.Payload);
@@ -97,7 +97,7 @@ namespace EnterpriseDB.EDBClient
             await scramFinalClientMsg.Write(WriteBuffer, async);
             await WriteBuffer.Flush(async);
 
-            var saslFinalServerMsg = Expect<AuthenticationSASLFinalMessage>(await ReadMessage(async));
+            var saslFinalServerMsg = Expect<AuthenticationSASLFinalMessage>(await ReadMessage(async), this);
             if (saslFinalServerMsg.AuthRequestType != AuthenticationRequestType.AuthenticationSASLFinal)
                 throw new EDBException("[SASL] AuthenticationSASLFinal message expected");
             var scramFinalServerMsg = new AuthenticationSCRAMServerFinalMessage(saslFinalServerMsg.Payload);
@@ -105,7 +105,7 @@ namespace EnterpriseDB.EDBClient
             if (scramFinalServerMsg.ServerSignature != Convert.ToBase64String(scramFinalClientMsg.ServerSignature))
                 throw new EDBException("[SCRAM] Unable to verify server signature");
 
-            var okMsg = Expect<AuthenticationRequestMessage>(await ReadMessage(async));
+            var okMsg = Expect<AuthenticationRequestMessage>(await ReadMessage(async), this);
             if (okMsg.AuthRequestType != AuthenticationRequestType.AuthenticationOk)
                 throw new EDBException("[SASL] Expected AuthenticationOK message");
 
@@ -129,7 +129,7 @@ namespace EnterpriseDB.EDBClient
                 .CreateMD5(passwd, username, salt)
                 .Write(WriteBuffer, async);
             await WriteBuffer.Flush(async);
-            Expect<AuthenticationRequestMessage>(await ReadMessage(async));
+            Expect<AuthenticationRequestMessage>(await ReadMessage(async), this);
         }
 
 #pragma warning disable CA1801 // Review unused parameters
@@ -144,7 +144,7 @@ namespace EnterpriseDB.EDBClient
                 {
                     var targetName = $"{KerberosServiceName}/{Host}";
                     if (async)
-                        await negotiateStream.AuthenticateAsClientAsync(CredentialCache.DefaultNetworkCredentials, targetName);                        
+                        await negotiateStream.AuthenticateAsClientAsync(CredentialCache.DefaultNetworkCredentials, targetName);
                     else
                         negotiateStream.AuthenticateAsClient(CredentialCache.DefaultNetworkCredentials, targetName);
                 }
@@ -233,7 +233,7 @@ namespace EnterpriseDB.EDBClient
             {
                 if (_leftToRead == 0)
                 {
-                    var response = Expect<AuthenticationRequestMessage>(await _connector.ReadMessage(async));
+                    var response = Expect<AuthenticationRequestMessage>(await _connector.ReadMessage(async), _connector);
                     if (response.AuthRequestType == AuthenticationRequestType.AuthenticationOk)
                         throw new AuthenticationCompleteException();
                     var gssMsg = response as AuthenticationGSSContinueMessage;

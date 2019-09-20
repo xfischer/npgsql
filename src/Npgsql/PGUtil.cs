@@ -34,10 +34,14 @@ namespace EnterpriseDB.EDBClient
     static class Statics
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T Expect<T>(IBackendMessage msg)
-            => msg is T asT
-                ? asT
-                : throw new EDBException($"Received backend message {msg.Code} while expecting {typeof(T).Name}. Please file a bug.");
+        internal static T Expect<T>(IBackendMessage msg, EDBConnector connector)
+        {
+            if (msg is T asT)
+                return asT;
+
+            connector.Break();
+            throw new EDBException($"Received backend message {msg.Code} while expecting {typeof(T).Name}. Please file a bug.");
+        }
     }
 
     // ReSharper disable once InconsistentNaming

@@ -48,7 +48,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         internal string Line { get; private set; }
         internal string Routine { get; private set; }
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(ErrorOrNoticeMessage));
 
         // ReSharper disable once FunctionComplexityOverflow
         internal ErrorOrNoticeMessage(EDBReadBuffer buf)

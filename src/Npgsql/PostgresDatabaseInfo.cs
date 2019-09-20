@@ -58,7 +58,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The EDB logger instance.
         /// </summary>
-        [NotNull] static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        [NotNull] static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(PostgresDatabaseInfo));
 
         /// <summary>
         /// The PostgreSQL types detected in the database.

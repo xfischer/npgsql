@@ -137,7 +137,7 @@ namespace EnterpriseDB.EDBClient
         [CanBeNull]
         char[] _tempCharBuf;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBConnection));
 
         internal EDBDataReader(EDBConnector connector)
         {
@@ -448,7 +448,7 @@ namespace EnterpriseDB.EDBClient
                 var statement = _statements[StatementIndex];
                 if (statement.IsPrepared)
                 {
-                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async));
+                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
                     RowDescription = statement.Description;
                 }
                 else  // Non-prepared flow
@@ -460,14 +460,14 @@ namespace EnterpriseDB.EDBClient
                         Debug.Assert(pStatement.Description == null);
                         if (pStatement.StatementBeingReplaced != null)
                         {
-                            Expect<CloseCompletedMessage>(await Connector.ReadMessage(async));
+                            Expect<CloseCompletedMessage>(await Connector.ReadMessage(async), Connector);
                             pStatement.StatementBeingReplaced.CompleteUnprepare();
                             pStatement.StatementBeingReplaced = null;
                         }
                     }
 
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async));
-                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async));
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
                     msg = await Connector.ReadMessage(async);
                     switch (msg.Code)
                     {
@@ -558,7 +558,7 @@ namespace EnterpriseDB.EDBClient
             }
 
             // There are no more queries, we're done. Read to the RFQ.
-            ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async)));
+            ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
             RowDescription = null;
             return false;
         }
@@ -903,8 +903,8 @@ namespace EnterpriseDB.EDBClient
                 }
                 else
                 {
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async));
-                    Expect<ParameterDescriptionMessage>(await Connector.ReadMessage(async));
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                    Expect<ParameterDescriptionMessage>(await Connector.ReadMessage(async), Connector);
                     var msg = await Connector.ReadMessage(async);
                     switch (msg.Code)
                     {
@@ -929,7 +929,7 @@ namespace EnterpriseDB.EDBClient
             // There are no more queries, we're done. Read to the RFQ.
             if (!_statements.All(s => s.IsPrepared))
             {
-                ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async)));
+                ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
                 RowDescription = null;
             }
             return false;

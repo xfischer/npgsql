@@ -48,7 +48,7 @@ namespace EnterpriseDB.EDBClient
         bool IsPrepared => _preparedTxName != null;
         bool _isDisposed;
 
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(VolatileResourceManager));
 
         const int MaximumRollbackAttempts = 20;
 

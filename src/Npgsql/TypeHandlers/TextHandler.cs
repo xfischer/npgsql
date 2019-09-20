@@ -252,7 +252,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             if (parameter?.Size > 0)
                 throw new ArgumentException($"Parameter {parameter.ParameterName} is of type ArraySegment<char> and should not have its Size set", parameter.ParameterName);
 
-            return lengthCache.Set(_encoding.GetByteCount(value.Array, value.Offset, value.Count));
+            return lengthCache.Set(value.Array is null ? 0 : _encoding.GetByteCount(value.Array, value.Offset, value.Count));
         }
 
         public int ValidateAndGetLength(char value, ref EDBLengthCache lengthCache, EDBParameter parameter)
@@ -275,8 +275,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return buf.WriteChars(value, 0, charLen, lengthCache.GetLast(), async);
         }
 
-        public virtual Task Write(ArraySegment<char> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async) => 
-            buf.WriteChars(value.Array, value.Offset, value.Count, lengthCache.GetLast(), async);
+        public virtual Task Write(ArraySegment<char> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+            => value.Array is null ? PGUtil.CompletedTask : buf.WriteChars(value.Array, value.Offset, value.Count, lengthCache.GetLast(), async);
 
         Task WriteString(string str, EDBWriteBuffer buf, EDBLengthCache lengthCache, [CanBeNull] EDBParameter parameter, bool async)
         {

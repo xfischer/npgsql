@@ -151,7 +151,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
     class AuthenticationSCRAMServerFirstMessage
     {
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(AuthenticationSCRAMServerFirstMessage));
 
         internal string Nonce { get; }
         internal string Salt { get; }
@@ -196,7 +196,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
     class AuthenticationSCRAMServerFinalMessage
     {
-        static readonly EDBLogger Log = EDBLogManager.GetCurrentClassLogger();
+        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(AuthenticationSCRAMServerFinalMessage));
 
         internal string ServerSignature { get; }
 

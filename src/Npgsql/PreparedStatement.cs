@@ -82,7 +82,7 @@ namespace EnterpriseDB.EDBClient
 
         internal void SetParamTypes(List<EDBParameter> parameters)
         {
-            //Debug.Assert(HandlerParamTypes == null);EnterpriseDB Team
+            //Debug.Assert(HandlerParamTypes == null);
             if (parameters.Count == 0)
             {
                 HandlerParamTypes = EmptyParamTypes;
@@ -144,15 +144,14 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// The statement has been selected for preparation, but the preparation hasn't started yet.
-        /// This is a temporary state that only occurs during preparation.
-        /// Specifically, no protocol message (Parse) has been sent yet. Specifically, it means that
-        /// a Parse message for the statement has already been written to the write buffer.
+        /// This is a temporary state that only occurs during preparation, and indicates that no
+        /// no protocol message (Parse) has been sent yet.
         /// </summary>
         ToBePrepared,
 
         /// <summary>
         /// The statement is in the process of being prepared. This is a temporary state that only occurs during
-        /// preparation. Specifically, it means that a Parse message for the statement has already been written
+        /// preparation, and indicates that a Parse protocol message for the statement has already been written
         /// to the write buffer.
         /// </summary>
         BeingPrepared,

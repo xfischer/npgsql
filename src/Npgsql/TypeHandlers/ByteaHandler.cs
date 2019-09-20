@@ -98,6 +98,9 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         /// <inheritdoc />
         public async Task Write(ArraySegment<byte> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, [CanBeNull] EDBParameter parameter, bool async)
         {
+            if (value.Array is null)
+                return;
+
             if (!(parameter == null || parameter.Size <= 0 || parameter.Size >= value.Count))
                 value = new ArraySegment<byte>(value.Array, value.Offset, Math.Min(parameter.Size, value.Count));
 
