@@ -8,13 +8,13 @@
     <PackageTags>EDB postgresql postgres ado ado.net database sql</PackageTags>
     <LangVersion>latest</LangVersion>
     <TargetFrameworks>net45;net451;netstandard2.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT' OR '$(CoreOnly)' == 'True'">netstandard2.0</TargetFrameworks>
+    <!--<TargetFrameworks Condition="'$(OS)' != 'Windows_NT' OR '$(CoreOnly)' == 'True'">netstandard2.0</TargetFrameworks>-->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+    <!--<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>-->
     <PackageProjectUrl>http://www.EnterpriseDB.EDBClient.org</PackageProjectUrl>
     <PackageIconUrl>http://www.EnterpriseDB.EDBClient.org/img/postgresql.gif</PackageIconUrl>
     <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
