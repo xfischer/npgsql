@@ -29,8 +29,8 @@ Enqueueing or Dequeueing a Message
 .. index:: enqueue message
 .. index:: dequeue message
 
-Serve-side Setup
-----------------
+Server-side Setup
+-----------------
 
 To use Advanced Queueing functionality on your .NET application, you
 must first create a user defined type, queue table, and queue, and then
