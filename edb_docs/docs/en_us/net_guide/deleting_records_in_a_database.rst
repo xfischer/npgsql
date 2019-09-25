@@ -1,8 +1,8 @@
 .. _deleting_records_in_a_database:
 
-***************************************
-`Deleting Records in a Database`:index:
-***************************************
+*****************************************
+`Deleting Records from a Database`:index:
+*****************************************
 
 You can use the ``ExecuteNonQuery()`` method of ``EDBCommand`` to delete records
 from a database stored on an Advanced Server host with a ``DELETE``
@@ -65,7 +65,7 @@ inserted in the previous example:
   }
   </script>
 
-Save the sample code in a file in a web root directory named:
+To exercise the sample code, save the code in a file in a web root directory named:
 
    ``deleteEmployee.aspx``
 

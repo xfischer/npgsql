@@ -125,7 +125,7 @@ The following example executes the stored procedure:
   }
   </script>
 
-Save the sample code in a file in a web root directory named:
+To exercise the sample code, save the code in a file in a web root directory named:
 
    ``storedProc.aspx``
 
@@ -272,7 +272,7 @@ parameterized stored procedure from a C#.
 
   </script>
 
-Save the sample code in a file in a web root directory named:
+To exercise the sample code, save the code in a file in a web root directory named:
 
    ``storedProcInParam.aspx``
 

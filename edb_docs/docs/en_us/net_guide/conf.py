@@ -140,7 +140,7 @@ html_sidebars = {
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'EnterpriseDBDocumentationdoc'
 
-html_logo = 'images/edb_logo.svg'
+html_logo = 'images/EDB_logo.png'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -175,7 +175,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 
 latex_documents = [
-    (master_doc, 'NET_Connector.tex', '.Net Connector',
+    (master_doc, 'NET.tex', '.Net Connector',
      'EDB Postgres™ Advanced Server .NET Connector Guide', 'manual'),
 ]
 
@@ -202,3 +202,5 @@ latex_logo = 'images/EDB_logo.png'
 #      author, 'EnterpriseDBDocumentation', 'One line description of project.',
 #      'Miscellaneous'),
 # ]
+
+

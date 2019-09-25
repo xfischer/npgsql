@@ -4,9 +4,9 @@
 `Using Plugins`:index:
 **********************
 
-EDB .Net driver plugins are introduced to support the enhanced
-capabilities for different data types, which are otherwise not available
-in .Net. The different plugins available support:
+EDB .Net driver plugins are introduced to support  enhanced
+capabilities for different data types that are otherwise not available
+in .Net. EnterpriseDB provides plugins that support:
 
 -  GeoJSON
 
@@ -20,7 +20,7 @@ in .Net. The different plugins available support:
 
 -  Rawpostgis
 
-The plugins support the use of spatial, data/time and Json types. The
+These plugins support the use of spatial, data/time and Json types. The
 following sections detail the supported frameworks and data provider
 installation path for these plugins.
 

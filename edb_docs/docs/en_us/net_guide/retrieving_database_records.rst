@@ -12,10 +12,10 @@ a ``SELECT`` command. To execute a ``SELECT`` statement you must:
 -  Create an ``EDBCommand`` object that represents the ``SELECT`` statement.
 
 -  Execute the command with the ``ExecuteReader()`` method of the ``EDBCommand``
-   object returning a ``EDBDataReader``
+   object returning a ``EDBDataReader``.
 
 -  Loop through the ``EDBDataReader`` displaying the results or binding the
-   ``EDBDataReader`` to some control.
+   ``EDBDataReader`` to a control.
 
 An ``EDBDataReader`` object represents a forward-only and read-only stream
 of database records, presented one record at a time. To view a
@@ -32,8 +32,6 @@ The example that follows:
 
 4. Executes the ``EDBCommand`` by calling the ``ExecuteReader`` method of the
    ``EDBCommand`` object.
-
-..
 
    The results of the SQL statement are retrieved into an ``EDBDataReader``
    object.
@@ -147,7 +145,7 @@ the specified query.
   }
   </script>
 
-Save the sample code in a file in a web root directory named:
+To exercise the sample code, save the code in a file in a web root directory named:
 
    ``selectscalar.aspx``
 
