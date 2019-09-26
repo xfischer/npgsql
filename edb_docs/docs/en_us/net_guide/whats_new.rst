@@ -4,11 +4,14 @@
 `What’s New`:index:
 *******************
 
-The following features are added to create Advanced Server .NET
-Connector 4.0.6.1.
+The following features are added to create Advanced Server .NET Connector ``4.0.10.1``:
 
--  The Advanced Server .NET Connector has added Advanced Queueing
-   feature to provide message queueing and message processing support
-   for the EDB Advanced Server database.
+-  EDB .NET Connector now supports EDB Postgres Advanced Server 12.
 
--  Merged with the upstream community driver version 4.0.6.
+-  EDB .NET Connector is now also supported on Windows Server 2019 platform. 
+
+-  Merged with the upstream community driver version 4.0.10.
+
+-  Supports VSIX for Visual Studio 2019.  
+
+

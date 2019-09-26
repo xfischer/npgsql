@@ -14,7 +14,7 @@ On the server side, procedures in the ``DBMS_AQADM`` package create and
 manage message queues and queue tables. Use the ``DBMS_AQ`` package to add
 or remove messages from a queue, or register or unregister a PL/SQL
 callback procedure. For more information about ``DBMS_AQ`` and ``DBMS_AQADM``,
-visit `the EnterpriseDB website <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA>`_.
+click `here <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA>`_.
 
 On the client side, application uses EDB.NET driver to enqueue/dequeue
 message.
@@ -23,14 +23,14 @@ message.
 
     \newpage
 
-Enqueueing or Dequeueing a Message
-==================================
+Enqueue or Dequeue a message
+============================
 
 .. index:: enqueue message
 .. index:: dequeue message
 
-Server-side Setup
------------------
+Serve-side setup
+----------------
 
 To use Advanced Queueing functionality on your .NET application, you
 must first create a user defined type, queue table, and queue, and then
@@ -82,8 +82,8 @@ line to start a queue in the EDB database.
   (queue_name => 'MSG_QUEUE');
   END;
 
-Client-side Example
--------------------
+Client-side sample
+------------------
 
 Once you have created user defined type, followed by queue table and
 queue, start the queue. Then, you can enqueue or dequeue a message using
@@ -213,7 +213,7 @@ The following code listing demonstrates using the ``Queue.enqueue`` method:
       }
   }
 
-**Dequeueing a message**
+**Dequeue a message**
 
 To dequeue a message on your .NET application, you must:
 
@@ -548,7 +548,7 @@ On_Commit The enqueue/dequeue is part of the current transaction.
 
 .. note::
 
-  -  To review the default options for the above parameters, please see the `EDB Postgres Database Compatibility for Oracle Developer's Built-in Package Guide <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA/>`_.
+  -  To review the default options for the above parameters, click `here <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA/>`_.
 
   -  EDBAQ functionality uses user defined types for calling
      enqueue/dequeue operations. ``Server Compatibility Mode=NoTypeLoading``

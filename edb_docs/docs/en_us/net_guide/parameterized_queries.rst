@@ -63,7 +63,7 @@ statement that increases an employee salary:
   }
   </script>
 
-To exercise the sample code, save the code in a file in a web root directory named:
+Save the sample code in a file in a web root directory named:
 
    ``updateSalary.aspx``
 

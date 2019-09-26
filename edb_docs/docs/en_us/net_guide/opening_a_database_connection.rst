@@ -19,7 +19,7 @@ an instance of Advanced Server. You must:
 3. Initialize the ``EDBConnection`` object by passing a connection string as
    a parameter to the constructor for the ``EDBConnection`` class.
 
-4. Call the ``Open`` method of the ``EDBConnection`` object to open the
+4. Call the Open method of the ``EDBConnection`` object to open the
    connection.
 
 .. _connection_string_parameters:
@@ -362,4 +362,4 @@ display:
    :alt: Dialog
    :align: center
 
-   *Dialog*
+   *A successful connection*
