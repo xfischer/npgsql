@@ -17,7 +17,7 @@ Advanced Server .NET Connector:
 
 This document assumes that you have a solid working knowledge of both C#
 and .NET. The Advanced Server .NET Connector functionality is built on
-the core functionality of the Npgsql open source project. The *Npgsql User's Manual* 
+the core functionality of the Npgsql open source project. The *Npgsql User's Manual*
 is available `online <http://www.npgsql.org/doc/index.html>`_.
 
 .. toctree::
@@ -27,6 +27,7 @@ is available `online <http://www.npgsql.org/doc/index.html>`_.
    requirements_overview
    the_advanced_server_net_connector_overview
    installing_and_configuring_the_net_connector
+   security_and_encryption
    using_the_net_connector
    opening_a_database_connection
    retrieving_database_records
