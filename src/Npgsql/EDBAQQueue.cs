@@ -138,7 +138,9 @@ namespace EnterpriseDB.EDBClient
                     Value = msg.Payload
                 });
                 command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
+                var connector = Connection.CheckReadyAndGetConnector();//  CheckReadyAndGetConnector();
+                //var ressult = connector._isCallableStmt;
+                connector._AQcalled = true;
                 command.Prepare();
                 var reader = command.ExecuteNonQuery();
                 msg.MessageId = (byte[])command.Parameters[4].Value;

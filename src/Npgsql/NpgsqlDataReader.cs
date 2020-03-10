@@ -510,11 +510,36 @@ namespace EnterpriseDB.EDBClient
                         Connector.ReadBuffer.ReadPosition = pos;
                         State = ReaderState.BetweenResults;
                     }
-                }
-                else
-                    msg = await ReadMessage(async);
+                } //Command.CommandType == CommandType.StoredProcedure ZK: checkme
+                else if (Command.Parameters.Count > 0 && Connector._isCallableStmt == true) {
 
-                if (RowDescription == null)
+                    msg = await Connector.ReadMessage(async);
+
+                    // If we got an actual first row (i.e. resultset wasn't empty), we process the message so it can
+                    // be read by PopulateOutputParameters(). We then rewind the buffer to the start of the row, and
+                    // continue to the normal flow, where we will process it again, as if we're reading a totally
+                    // new row (using the same first row).
+                    //if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
+                    //{
+                    //    var pos = Connector.ReadBuffer.ReadPosition;
+                    //    ProcessMessage(row);
+                    //    PopulateNonPreparedOutputParameters();
+                    //    Connector.ReadBuffer.ReadPosition = pos;
+                    //    State = ReaderState.BetweenResults;
+                    //}
+                }
+                        
+                        
+                else
+                {
+                    msg = await ReadMessage(async);
+                    if (msg.Code == BackendMessageCode.NoData && Connector._isCallableStmt == true && Connector._isScaler == true && Connector._hasRefCursor == false)
+                      msg = await ReadMessage(async);
+                    if (msg.Code == BackendMessageCode.RowDescription && Connector._isCallableStmt == true && Connector._isScaler == true && Connector._hasRefCursor == false)
+                        msg = await ReadMessage(async);
+
+                } //Command.CommandType != CommandType.StoredProcedure
+                if (RowDescription == null && Connector._isCallableStmt != true )
                 {
                     // Statement did not generate a resultset (e.g. INSERT)
                     // Read and process its completion message and move on to the next statement
@@ -523,6 +548,7 @@ namespace EnterpriseDB.EDBClient
                     {
                     case BackendMessageCode.CompletedResponse:
                     case BackendMessageCode.EmptyQueryResponse:
+                        case BackendMessageCode.RowDescription:
                         break;
                     case BackendMessageCode.NoData:
                         return true;
@@ -539,7 +565,7 @@ namespace EnterpriseDB.EDBClient
                     case BackendMessageCode.NoData:
                     case BackendMessageCode.RowDescription:
                         State = ReaderState.InResult;
-                        if (Command.CommandType == CommandType.StoredProcedure && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//EnterpriseDB Team
+                        if (Command.CommandType == CommandType.StoredProcedure && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam || Connector._isScaler))//EnterpriseDB Team
                         {
                             PopulateOutputParameters();
                         }
@@ -570,9 +596,12 @@ namespace EnterpriseDB.EDBClient
             var done = false;
             isOutParamReceived = false;
             // TODO: Should we really use Contract here, instead of throwing an Exception?
-            Debug.Assert(RowDescription != null);
-            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
 
+            if (Connector._isScaler != true)
+            {
+          //      Debug.Assert(RowDescription != null);
+            //    Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection) || Command.Parameters._hasReturnParam);
+            }
             //var asDataRow = _pendingMessage as DataRowMessage;
             //if (Command.CommandType != CommandType.StoredProcedure && asDataRow == null) // The first resultset was empty
             //  return;
@@ -1010,51 +1039,57 @@ namespace EnterpriseDB.EDBClient
         {
             // Skip over the other result sets. Note that this does tally records affected
             // from CommandComplete messages, and properly sets state for auto-prepared statements
-            //if (IsSchemaOnly)
-            //    while (await NextResultSchemaOnly(async)) { }
-            //else
-            //    while (await NextResult(async, true)) { }
-            //while (await NextResult(async, true)) { }
-            //EnterpriseDB Team
-            if (IsSchemaOnly && _statements.All(s => s.IsPrepared))
+            if (Command.CommandType != CommandType.StoredProcedure)
             {
-                State = ReaderState.Consumed;
-                return;
+                if (IsSchemaOnly)
+                    while (await NextResultSchemaOnly(async)) { }
+                else
+                    while (await NextResult(async, true)) { }
             }
-
-            //if (_row != null)
-            //{
-            //    await ConsumeRow(async);
-            //    _row = null;
-            //}
-
-            if (State == ReaderState.InResult && Command.CommandType != CommandType.StoredProcedure)
+            else
             {
-                await ConsumeRow(async);
-            }
 
-            // Skip over the other result sets, processing only CommandCompleted for RecordsAffected
-            while (true)
-            {
-                try
+                //EnterpriseDB Team
+                if (IsSchemaOnly && _statements.All(s => s.IsPrepared))
                 {
-                    var msg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
-                    switch (msg.Code)
-                    {
-                        case BackendMessageCode.CompletedResponse:
-                            ProcessMessage(msg);
-                            continue;
-                        case BackendMessageCode.ReadyForQuery:
-                            ProcessMessage(msg);
-                            return;
-                        default:
-                            throw new EDBException("Unexpected message of type " + msg.Code);
-                    }
+                    State = ReaderState.Consumed;
+                    return;
                 }
-                catch (Exception e)
+
+                //if (_row != null)
+                //{
+                //    await ConsumeRow(async);
+                //    _row = null;
+                //}
+
+                if (State == ReaderState.InResult && Command.CommandType != CommandType.StoredProcedure)
                 {
-                    e.ToString();
-                    break;
+                    await ConsumeRow(async);
+                }
+
+                // Skip over the other result sets, processing only CommandCompleted for RecordsAffected
+                while (true)
+                {
+                    try
+                    {
+                        var msg = await SkipUntil(BackendMessageCode.CompletedResponse, BackendMessageCode.ReadyForQuery, async);
+                        switch (msg.Code)
+                        {
+                            case BackendMessageCode.CompletedResponse:
+                                ProcessMessage(msg);
+                                continue;
+                            case BackendMessageCode.ReadyForQuery:
+                                ProcessMessage(msg);
+                                return;
+                            default:
+                                throw new EDBException("Unexpected message of type " + msg.Code);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        e.ToString();
+                        break;
+                    }
                 }
             }
         }

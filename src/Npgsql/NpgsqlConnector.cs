@@ -248,6 +248,13 @@ namespace EnterpriseDB.EDBClient
         internal ParseOutMessage ParseOutMessage;//EnterpriseDB Team
         internal QueryMessage QueryMessage;
         public bool _isCallableStmt = false;//EnterpriseDB Team
+        public bool _isScaler = false;
+        public bool _is_Scaler_fallthrough = false;
+        public bool _hasRefCursor = false;
+        public bool _hasReturnParams = false;
+        public bool _AQcalled = false;
+        public bool _hasParams = false;
+        public bool _calledderiveparam = false;
         // The reset message depends on the server version, which isn't known until open-time
         [CanBeNull]
         PregeneratedMessage _resetWithoutDeallocateMessage;

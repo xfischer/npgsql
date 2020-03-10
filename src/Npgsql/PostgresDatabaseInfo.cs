@@ -116,6 +116,8 @@ namespace EnterpriseDB.EDBClient
         /// <param name="withEnum">True to load enum types.</param>
         /// <param name="withEnumSortOrder"></param>
         /// <param name="loadTableComposites">True to load table composites.</param>
+        /// <param name="loadRoleBasedTables">True to load role based tables. </param>
+
         /// <returns>
         /// A raw SQL query string that selects type information.
         /// </returns>
@@ -127,7 +129,7 @@ namespace EnterpriseDB.EDBClient
         /// types).
         /// </remarks>
         [NotNull]
-        static string GenerateTypesQuery(bool withRange, bool withEnum, bool withEnumSortOrder, bool loadTableComposites)
+        static string GenerateTypesQuery(bool withRange, bool withEnum, bool withEnumSortOrder, bool loadTableComposites, bool loadRoleBasedTables)
             => $@"
 /*** Load all supported types ***/
 SELECT ns.nspname, a.typname, a.oid, a.typrelid, a.typbasetype,
@@ -149,8 +151,10 @@ JOIN pg_proc ON pg_proc.oid = a.typreceive
 LEFT OUTER JOIN pg_class AS cls ON (cls.oid = a.typrelid)
 LEFT OUTER JOIN pg_type AS b ON (b.oid = a.typelem)
 LEFT OUTER JOIN pg_class AS elemcls ON (elemcls.oid = b.typrelid)
+{(loadRoleBasedTables ? "LEFT join pg_roles rol on rol.oid = elemcls.relowner " : "")}
 {(withRange ? "LEFT OUTER JOIN pg_range ON (pg_range.rngtypid = a.oid) " : "")}
 WHERE
+{(loadRoleBasedTables ? "((elemcls.relkind != 'r' OR rol.rolname is null) OR (rol.rolname = current_user and elemcls.relkind = 'r')) AND " : "")}
   a.typtype IN ('b', 'r', 'e', 'd') OR         /* Base, range, enum, domain */
   (a.typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" : "cls.relkind='c'")}) OR /* User-defined free-standing composites (not table composites) by default */
   (pg_proc.proname='array_recv' AND (
@@ -158,7 +162,9 @@ WHERE
     (b.typtype = 'p' AND b.typname IN ('record', 'void')) OR /* Arrays of special supported pseudo-types */
     (b.typtype = 'c' AND elemcls.relkind='c')  /* Array of user-defined free-standing composites (not table composites) */
   )) OR
-  (a.typtype = 'p' AND a.typname IN ('record', 'void'))  /* Some special supported pseudo-types */
+  (a.typtype = 'p'  AND a.typname IN ('record', 'void')) OR /* Some special supported pseudo-types */
+  (a.typtype = 'N' )  /* Some special supported pseudo-types */
+
 ORDER BY ord;
 
 /*** Load field definitions for (free-standing) composite types ***/
@@ -203,7 +209,7 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                     throw new TimeoutException();
             }
 
-            var typeLoadingQuery = GenerateTypesQuery(SupportsRangeTypes, SupportsEnumTypes, HasEnumSortOrder, conn.Settings.LoadTableComposites);
+            var typeLoadingQuery = GenerateTypesQuery(SupportsRangeTypes, SupportsEnumTypes, HasEnumSortOrder, conn.Settings.LoadTableComposites, conn.Settings.LoadRoleBasedTables);
 
             using (var command = new EDBCommand(typeLoadingQuery, conn))
             {
@@ -221,7 +227,7 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                         var ns = reader.GetString(reader.GetOrdinal("nspname"));
                         var internalName = reader.GetString(reader.GetOrdinal("typname"));
                         var oid = Convert.ToUInt32(reader[reader.GetOrdinal("oid")]);
-
+                        var relmoid = Convert.ToUInt32(reader[reader.GetOrdinal("elemoid")]);
                         Debug.Assert(internalName != null);
                         Debug.Assert(oid != 0);
 
@@ -239,8 +245,11 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                             Debug.Assert(elementOID > 0);
                             if (!byOID.TryGetValue(elementOID, out var elementPostgresType))
                             {
-                                Log.Trace($"Array type '{internalName}' refers to unknown element with OID {elementOID}, skipping", conn.ProcessID);
-                                continue;
+                                        var compositeType1 = new PostgresCompositeType(ns, internalName, relmoid);
+                                        byOID[compositeType1.OID] = compositeType1;
+                                        continue;
+                                 //       Log.Trace($"Array type '{internalName}' refers to unknown element with OID {elementOID}, skipping", conn.ProcessID);
+                               // continue;
                             }
 
                             var arrayType = new PostgresArrayType(ns, internalName, oid, elementPostgresType);

@@ -1162,15 +1162,32 @@ namespace EnterpriseDB.EDBClient
             }
         }
         bool _loadTableComposites;
-
-        #endregion
-
-        #region Properties - Compatibility
-
+        
         /// <summary>
-        /// A compatibility mode for special PostgreSQL server types.
+        /// Load table composite type definitions, and not just free-standing composite types.
         /// </summary>
-        [Category("Compatibility")]
+        [Category("Advanced")]
+        [Description("Load Role Based Tables and not all tables by default")]
+        [DisplayName("Load Role Based Tables")]
+        [EDBConnectionStringProperty]
+        public bool LoadRoleBasedTables
+        {
+            get => _loadRoleBasedTables;
+            set
+            {
+                _loadRoleBasedTables = value;
+                SetValue(nameof(LoadRoleBasedTables), value);
+            }
+        }
+        bool _loadRoleBasedTables;
+#endregion
+
+#region Properties - Compatibility
+
+/// <summary>
+/// A compatibility mode for special PostgreSQL server types.
+/// </summary>
+[Category("Compatibility")]
         [Description("A compatibility mode for special PostgreSQL server types.")]
         [DisplayName("Server Compatibility Mode")]
         [EDBConnectionStringProperty]
@@ -1428,6 +1445,10 @@ namespace EnterpriseDB.EDBClient
         /// of types via information hardcoded inside EnterpriseDB.EDBClient.
         /// </summary>
         NoTypeLoading,
+        ///<summary>
+        ///
+        /// </summary>
+        LoadCompositeTypes,
     }
 
     /// <summary>

@@ -511,6 +511,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         param.PostgresType = obj.BaseType;
                         param.DataTypeName = obj.BaseType.DisplayName;
                     }
+                    if(postgresType is PostgresTypes.PostgresCompositeType)
+                    {
+                        var obj = postgresType as PostgresTypes.PostgresCompositeType;
+                        param.FormatCode = FormatCode.Text;
+
+                    }
                     Parameters.Add(param);
                 }
                 if (hasParams && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
@@ -620,7 +626,17 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         {
             var connector = CheckReadyAndGetConnector();
             for (var i = 0; i < Parameters.Count; i++)
+            {
                 Parameters[i].Bind(connector.TypeMapper);
+            //  if(connector._AQcalled != true)
+            //    if (Parameters[i].EDBDbType == EDBDbType.Refcursor || Parameters[i].Direction == ParameterDirection.InputOutput || Parameters[i].Direction == ParameterDirection.Output)
+              //      connector._hasRefCursor = true;
+            }
+            if (Parameters.Count > 0)
+                connector._hasParams = true;
+            if (Parameters.Count == 0 && Parameters._hasReturnParam)
+                connector._hasReturnParams = true;
+
 
             ProcessRawQuery();
             Log.Debug($"Preparing: {CommandText}", connector.Id);
@@ -1225,13 +1241,26 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
         {
+         //   if (Connection.Connector._isCallableStmt == true)
+            if (CommandType == CommandType.StoredProcedure) // && Connection.Connector._hasRefCursor == false
+            { 
+                Connection.Connector._isScaler = true; //ZKK
+                Connection.Connector._is_Scaler_fallthrough = true;
+            }
             using (var reader = await ExecuteDbDataReader(CommandBehavior.Default, async, cancellationToken))
             {
-                if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
+                 if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
+               // if (Connection.Connector._isCallableStmt != true) //EDB Team
                     while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) { }
                 reader.Close();
+                Connection.Connector._isScaler = false; //ZKK
+                Connection.Connector._is_Scaler_fallthrough = false;
+                Connection.Connector._hasRefCursor = false;
                 return reader.RecordsAffected;
+               
             }
+            
+
         }
 
         #endregion Execute Non Query
@@ -1325,7 +1354,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 using (cancellationToken.Register(cmd => ((EDBCommand)cmd).Cancel(), this))
                 {
                     ValidateParameters();
-
+                    if(connector._is_Scaler_fallthrough == false)
+                    connector._isScaler = false;
                     if (IsExplicitlyPrepared)
                     {
                         Debug.Assert(_connectorPreparedOn != null);
@@ -1399,7 +1429,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     reader.Init(this, behavior, _statements, sendTask);
                     connector.CurrentReader = reader;
                     if (async)
+                    {
                         await reader.NextResultAsync(cancellationToken);
+                        if (connector._is_Scaler_fallthrough == true)
+                        {
+                            connector._isScaler = false;
+                            connector._is_Scaler_fallthrough = false;
+                        }
+                    }
                     else
                         reader.NextResult();
                     return reader;
@@ -1410,6 +1447,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 State = CommandState.Idle;
                 Connection.Connector?.EndUserAction();
                 connector.CurrentReader = null;//EnterpriseDB Team
+                if (connector._is_Scaler_fallthrough == true)
+                {
+                    connector._isScaler = false;
+                    connector._is_Scaler_fallthrough = false;
+                    connector._hasRefCursor = false;
+                }
 
                 // Close connection if requested even when there is an error.
                 if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)

@@ -106,12 +106,20 @@ namespace EnterpriseDB.EDBClient
                         numActiveBlocks--;
                 }
 
-                if (isProcedure && temp.StartsWith("IS") || temp.StartsWith("AS"))
+                if (isProcedure && temp.StartsWith("IS") || temp.StartsWith("AS") || temp.StartsWith("TRIGGER"))
                 {
                     char next = ' ';
-                    if (temp.Length > 2)
+                    if (temp.StartsWith("TRIGGER") && temp.Length > 7)
                     {
-                        next = temp[2];
+
+                        next = temp[7];
+                    }
+                    else
+                    {
+                        if (temp.Length > 2)
+                        {
+                            next = temp[2];
+                        }
                     }
                     if (next == ' ' || next == '\n' || next == '\t' || next == ';')
                     {
