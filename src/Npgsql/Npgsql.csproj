@@ -25,7 +25,7 @@
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
-    <Version>4.0.10.1</Version>
+    <Version>4.0.10.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
