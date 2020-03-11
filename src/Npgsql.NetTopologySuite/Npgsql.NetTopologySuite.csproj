@@ -24,7 +24,7 @@
     <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
     <Features>IOperation</Features>
     <AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
-    <Version>4.0.10.1</Version>
+    <Version>4.0.10.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
