@@ -23,14 +23,14 @@ message.
 
     \newpage
 
-Enqueue or Dequeue a message
-============================
+Enqueueing or Dequeueing a Message
+==================================
 
 .. index:: enqueue message
 .. index:: dequeue message
 
-Serve-side setup
-----------------
+Server-Side Setup
+-----------------
 
 To use Advanced Queueing functionality on your .NET application, you
 must first create a user defined type, queue table, and queue, and then
@@ -38,7 +38,7 @@ start the queue on the database server. Invoke EDB-PSQL and connect to
 the Advanced Server host database. Use the following SPL commands at the
 command line:
 
-**Creating user defined type**
+**Creating a User-defined Type**
 
 To specify a RAW data type, you should create a user-defined type. The
 following example demonstrates creating a user-defined type named as
@@ -46,7 +46,7 @@ following example demonstrates creating a user-defined type named as
 
 ``CREATE TYPE myxml AS (value XML)``;
 
-**Creating the Queue table**
+**Creating the Queue Table**
 
 A queue table can hold multiple queues with the same payload type. The
 following example demonstrates creating a table named ``MSG_QUEUE_TABLE``.
@@ -59,7 +59,7 @@ following example demonstrates creating a table named ``MSG_QUEUE_TABLE``.
          comment => 'Message queue table');
   END;
 
-**Creating Queue**
+**Creating the Queue**
 
 The following example demonstrates creating a queue named ``MSG_QUEUE``
 within the table ``MSG_QUEUE_TABLE``.
@@ -70,7 +70,7 @@ within the table ``MSG_QUEUE_TABLE``.
   DBMS_AQADM.CREATE_QUEUE ( queue_name => 'MSG_QUEUE', queue_table => 'MSG_QUEUE_TABLE', comment => 'This queue contains pending messages.');
   END;
 
-**Starting Queue**
+**Starting the Queue**
 
 Once the queue is created, invoke the following SPL code at the command
 line to start a queue in the EDB database.
@@ -82,10 +82,10 @@ line to start a queue in the EDB database.
   (queue_name => 'MSG_QUEUE');
   END;
 
-Client-side sample
-------------------
+Client-side Example
+-------------------
 
-Once you have created user defined type, followed by queue table and
+Once you have created a user-defined type, followed by queue table and
 queue, start the queue. Then, you can enqueue or dequeue a message using
 EDB .Net drivers.
 
@@ -97,7 +97,7 @@ To enqueue a message on your .NET application, you must:
 
 2. Pass the name of the queue and create the instance of the ``EDBAQQueue``.
 
-3. Create the enqueue message and define payload.
+3. Create the enqueue message and define a payload.
 
 4. Call the ``queue.Enqueue`` method.
 
@@ -213,7 +213,7 @@ The following code listing demonstrates using the ``Queue.enqueue`` method:
       }
   }
 
-**Dequeue a message**
+**Dequeueing a message**
 
 To dequeue a message on your .NET application, you must:
 
@@ -550,7 +550,7 @@ On_Commit The enqueue/dequeue is part of the current transaction.
 
   -  To review the default options for the above parameters, click `here <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA/>`_.
 
-  -  EDBAQ functionality uses user defined types for calling
+  -  EDBAQ functionality uses user-defined types for calling
      enqueue/dequeue operations. ``Server Compatibility Mode=NoTypeLoading``
      cannot be used with EDBAQ because ``NoTypeLoading`` will not load any
-     user defined types.
+     user-defined types.

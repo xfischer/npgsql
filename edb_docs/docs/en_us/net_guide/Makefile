@@ -18,3 +18,9 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+epub: Makefile
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) 
+	rm -rf _build/NET.epub
+	cp _build/epub/EDBPostgresAdvancedServerNETDataProviderGuide.epub _build/NET.epub
+	chmod -R 777 _build/*

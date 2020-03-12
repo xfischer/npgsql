@@ -4,14 +4,6 @@
 `What’s New`:index:
 *******************
 
-The following features are added to create Advanced Server .NET Connector ``4.0.10.1``:
+The following features are added to create Advanced Server .NET Connector ``4.0.10.2``:
 
--  EDB .NET Connector now supports EDB Postgres Advanced Server 12.
-
--  EDB .NET Connector is now also supported on Windows Server 2019 platform. 
-
--  Merged with the upstream community driver version 4.0.10.
-
--  Supports VSIX for Visual Studio 2019.  
-
-
+-  This version introduced a new connection parameter, ``Load Role Based Tables``. For more information, see :ref:`Connection String Parameters <connection_string_parameters>`.

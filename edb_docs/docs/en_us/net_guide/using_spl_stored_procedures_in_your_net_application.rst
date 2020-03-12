@@ -175,7 +175,7 @@ SPL code at the command line:
 When Advanced Server has validated the stored procedure it will echo
 ``CREATE PROCEDURE``.
 
-**Passing Input values to a Stored Procedure**
+**Passing Input Values to a Stored Procedure**
 
 Calling a stored procedure that contains parameters is very similar to
 executing a stored procedure without parameters. The major difference is
@@ -352,7 +352,7 @@ Server host database. Enter the following SPL code at the command line:
 When Advanced Server has validated the stored procedure it will echo
 ``CREATE PROCEDURE``.
 
-**Receiving Output values from a Stored Procedure**
+**Receiving Output Values from a Stored Procedure**
 
 When retrieving values from ``OUT`` parameters you must explicitly specify
 the direction of out parameters as ``Output``. You can retrieve the values

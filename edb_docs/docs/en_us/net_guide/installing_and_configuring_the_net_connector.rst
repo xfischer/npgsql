@@ -182,10 +182,9 @@ The following shared library files are required:
 
    ``Mono.Security.dll``
 
-see :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
-Depending upon the type of application you use, you may be required to import the namespace into the
-source code (see :ref:`Referencing the Library Files <referencing_the_library_files>`).
+
 
 .. _framework_setup_4_5:
 
@@ -223,10 +222,8 @@ You must also add the following dependencies to your project:
 
    ``System.Memory.dll``
 
-See :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
-Depending upon the type of application you use, you may be required to import the namespace into the
-source code (see :ref:`Referencing the Library Files <referencing_the_library_files>`).
 
 .. _framework_setup_4_5_1:
 
@@ -264,10 +261,7 @@ You must also add the following dependencies to your project:
 
    ``System.Memory.dll``
 
-See :ref:`Referencing the Library Files <referencing_the_library_files>` for information on referencing library files.
-
-Depending upon the type of application you use, you may be required to import the namespace into the
-source code (see :ref:`Referencing the Library Files <referencing_the_library_files>`).
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
 .. _standard_setup_2:
 
@@ -303,10 +297,7 @@ You must also add the following dependencies to your project:
 
    ``System.Threading.Tasks.Extensions.dll``
 
-See :ref:`Referencing the Library Files <referencing_the_library_files>` for information about library files.
-
-Depending upon the application type you use, you may be required to import the namespace into the
-source code (see :ref:`Referencing the Library Files <referencing_the_library_files>`).
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
 .. _entity_setup_5_6:
 
@@ -328,8 +319,7 @@ The following shared library files are required:
 
    ``EntityFramework6.EnterpriseDB.EDBClient.dll``
 
-.. note:: Entity Framework can be used with ``EnterpriseDB.EDBClient.dll``
- available in the ``net45`` and ``net451`` subdirectories.
+.. note:: Entity Framework can be used with the ``EnterpriseDB.EDBClient.dll`` library available in the ``net45`` and ``net451`` subdirectories.
 
 See :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
 
@@ -383,8 +373,7 @@ The following is an example of the ``app.config`` file:
   </configuration>
 
 
-.. note:: The same entries for <providers> and <DbProviderFactories> are
- valid for the ``web.config`` file and the ``app.config`` file.
+.. note:: The same entries for ``<providers>`` and ``<DbProviderFactories>`` are valid for the ``web.config`` file and the ``app.config`` file.
 
 Depending upon the type of application you are using, you may be required to import the namespace into the
 source code (see :ref:`Referencing the Library Files <referencing_the_library_files>`).
@@ -400,50 +389,46 @@ For usage information about Entity Framework, refer to the Microsoft documentati
 EnterpriseDB VSIX for Visual Studio 2015/2017/2019
 --------------------------------------------------
 
-``EDB Data Designer Extensibility Provider (EnterpriseDB VSIX)`` is a
+The EDB Data Designer Extensibility Provider (EnterpriseDB VSIX) is a
 component that integrates Advanced Server database access into Visual
 Studio, thus providing Visual Studio integrated features.
 
-It allows connecting to Advanced Server from within Visual Studio's
-Server Explorer, creating a model from an existing database, etc.
+EnterpriseDB VSIX allows you to connect to Advanced Server from within Visual Studio's
+Server Explorer and create a model from an existing database.
 Therefore, if Visual Studio features are desired, then EnterpriseDB VSIX
 must be utilized.
 
-EnterpriseDB VSIX is located in the following directory:
+EnterpriseDB VSIX files are located in the following directory:
 
    ``C:\Program Files\edb\dotnet\vsix\``
 
-The files available at the above location are the following:
+The files available at the above location are:
 
    | ``EnterpriseDB.vsix``
    | ``SSDLToPgSQL.tt``
 
-.. raw:: latex
-
-    \newpage
-
 Installation and Configuration for Visual Studio 2015/2017/2019
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following are the steps to install and configure EnterpriseDB VSIX.
+Use the following steps to install and configure EnterpriseDB VSIX.
 
 **Step 1:** Install EnterpriseDB VSIX to the desired version of Visual
-Studio with the ``EnterpriseDB.vsix`` installer at the following location:
+Studio with the ``EnterpriseDB.vsix`` installer:
 
   ``C:\Program Files\edb\dotnet\vsix\EnterpriseDB.vsix``
 
-If you already have an earlier version of the VSIX installed, it’s
-highly recommended that you uninstall them to avoid conflicts.
+If you already have an earlier version of the VSIX installed, we
+highly recommended that you uninstall it to avoid conflicts.
 
 It is no longer necessary or recommended to have ``EnterpriseDB.EDBClient``
 in your global assembly cache (GAC).
 
-**Step 2:** Relaunch Visual Studio and verify from ``Tools > Extensions
+**Step 2:** Relaunch Visual Studio and verify from the ``Tools > Extensions
 and Updates…`` menu that the EnterpriseDB extension is installed.
 
-**Step 3:** Add the ``System.ValueTuple.dll`` assembly in the global
-assembly cache (GAC) with the ``gacutil`` utility using the Visual Studio
-Developers Command line from the following location.
+**Step 3:** Use the ``gacutil`` utility at the Visual Studio Developers 
+Command Line from the following location to add the ``System.ValueTuple.dll`` 
+library to the global assembly cache (GAC):
 
   ``C:\Program Files\edb\dotnet\vsix\System.ValueTuple.dll``
 
@@ -451,8 +436,8 @@ For example:
 
   ``> gacutil.exe /i System.ValueTuple.dll``
 
-**Step 4:** From Server Explorer, right-click on ``Data Connections``, click
-``Add Connection``, and verify the ``Enterprisedb Postgres Database`` data
+**Step 4:** From the Server Explorer, right-click on ``Data Connections``, click
+``Add Connection``, and verify that the ``Enterprisedb Postgres Database`` data
 source is available.
 
 .. raw:: latex
@@ -462,17 +447,16 @@ source is available.
 Model First and Database First Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Step 1:** Add the ``EntityFramework5.EnterpriseDB.EDBClient.dll`` assembly
-in the global assembly cache (GAC) with the ``gacutil`` utility using the
-Visual Studio Developers Command line.
+**Step 1:** Use the ``gacutil`` utility at the Visual Studio Developers 
+Command Line to add the ``EntityFramework5.EnterpriseDB.EDBClient.dll`` library
+to the global assembly cache (GAC):
 
 For example:
 
   ``> gacutil.exe /i EntityFramework5.EnterpriseDB.EDBClient.dll``
 
 **Step 2:** Add the ``<DbProviderFactories>`` entries for the ADO.NET driver
-of EDB Postgres in the ``machine.config`` file. The following are the
-entries:
+to the ``machine.config`` file. Include the following entries:
 
 .. code-block:: text
 
@@ -501,7 +485,7 @@ location:
 ``C:\Windows\Microsoft.NET\Framework\v4.0.30319\Config\machine.config``
 
 **Step 3:** Place the DDL generation template ``SSDLToPgSQL.tt`` in the
-Visual Studio ``EntityFramework Tools\DBGen\`` folder as in the following
+Visual Studio ``EntityFramework Tools\DBGen\`` folder as shown in the following
 example:
 
 .. code-block:: text
@@ -511,11 +495,9 @@ example:
 .. note:: Select this template ``SSDLToPgSQL.tt`` in your EDMX file
  properties.
 
-**Step 4:** Add files ``EnterpriseDB.EDBClient.dll`` and
-``EntityFramework6.EnterpriseDB.EDBClient.dll`` in project references. see :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
+**Step 4:** Add the ``EnterpriseDB.EDBClient.dll`` and ``EntityFramework6.EnterpriseDB.EDBClient.dll`` files to project references. see :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
 
-**Step 5:** In the project’s ``app.config`` file add the following entry for
-provider services under the EntityFramework/providers tag.
+**Step 5:** In the project’s ``app.config`` file, add the following entry for provider services under the EntityFramework/providers tag.
 
 .. code-block:: text
 

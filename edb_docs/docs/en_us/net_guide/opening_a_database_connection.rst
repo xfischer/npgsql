@@ -19,7 +19,7 @@ an instance of Advanced Server. You must:
 3. Initialize the ``EDBConnection`` object by passing a connection string as
    a parameter to the constructor for the ``EDBConnection`` class.
 
-4. Call the Open method of the ``EDBConnection`` object to open the
+4. Call the ``Open`` method of the ``EDBConnection`` object to open the
    connection.
 
 .. _connection_string_parameters:
@@ -71,6 +71,10 @@ The following parameters may be included in the connection string:
    By default, ``Integrated Security`` is set to ``false``, and Windows
    Integrated Security is disabled. Specify a value of ``true`` to use
    Windows Integrated Security.
+
+``Load Role Based Tables``
+
+   Use ``Load Role Based Tables`` to load table OIDs based on role. This change only impacts the loading of table type OID, and not the composite type. The default value is ``false``. Setting this parameter to ``true`` triggers the new functionality.
 
 ``MaxPoolSize``
 
@@ -159,8 +163,8 @@ Example - Opening a Database Connection using ASP.NET
 The following example demonstrates how to open a connection to an
 instance of Advanced Server and then close the connection. The
 connection is established using the credentials specified in the
-``DB_CONN_STRING`` configuration parameter (see :ref:`Chapter - Using the .Net Connector <using_the_net_connector>`
-for an introduction to connection information and also see :ref:`Section - Connection String Parameters <connection_string_parameters>` for
+``DB_CONN_STRING`` configuration parameter (see :ref:`Using the .Net Connector <using_the_net_connector>`
+for an introduction to connection information and also see :ref:`Connection String Parameters <connection_string_parameters>` for
 connection parameters).
 
 .. code-block:: Text
