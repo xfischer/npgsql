@@ -602,7 +602,7 @@ namespace EnterpriseDB.EDBClient.Tests
             => Assert.That(new EDBParameter("@p", DbType.String).ParameterName, Is.EqualTo("@p"));
 
         [Test]
-        [Ignore("")]
+        /*[Ignore("")]*/
         public void SourceColumn()
         {
             var p = new EDBParameter();
@@ -612,7 +612,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             p.SourceColumn = null;
             Assert.AreEqual(string.Empty, p.ParameterName, "#B:ParameterName");
-            Assert.AreEqual(string.Empty, p.SourceColumn, "#B:SourceColumn");
+            Assert.AreEqual(null, p.SourceColumn, "#B:SourceColumn");
 
             p.SourceColumn = " ";
             Assert.AreEqual(string.Empty, p.ParameterName, "#C:ParameterName");

@@ -452,7 +452,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 		}
 
-		[Test, Ignore("Needs Investigation")]
+		[Test, /*Ignore("Needs Investigation")*/]
 		public void TypesNames()
 		{
 			_conn.Open();
@@ -462,11 +462,17 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			dr.Read();
 
-			Assert.AreEqual("int4", dr.GetDataTypeName(0));
-			Assert.AreEqual("text", dr.GetDataTypeName(1));
-			Assert.AreEqual("int4", dr.GetDataTypeName(2));
-			Assert.AreEqual("int8", dr.GetDataTypeName(3));
-			Assert.AreEqual("bool", dr.GetDataTypeName(4));
+            string t0 = dr.GetDataTypeName(0);
+            string t1 = dr.GetDataTypeName(1);
+            string t2 = dr.GetDataTypeName(2);
+            string t3 = dr.GetDataTypeName(3);
+            string t4 = dr.GetDataTypeName(4);
+
+            Assert.AreEqual("integer", t0);
+			Assert.AreEqual("text", t1);
+			Assert.AreEqual("integer", t2);
+			Assert.AreEqual("bigint", t3);
+			Assert.AreEqual("boolean", t4);
 
 			dr.Close();
 
@@ -475,12 +481,17 @@ namespace EnterpriseDB.EDBClient.Tests
 			dr = command.ExecuteReader();
 
 			dr.Read();
+            t0 = dr.GetDataTypeName(0);
+            t1 = dr.GetDataTypeName(1);
+            t2 = dr.GetDataTypeName(2);
+            t3 = dr.GetDataTypeName(3);
 
-			Assert.AreEqual("int4", dr.GetDataTypeName(0));
-			Assert.AreEqual("int2", dr.GetDataTypeName(1));
-			Assert.AreEqual("timestamp", dr.GetDataTypeName(2));
-			Assert.AreEqual("numeric", dr.GetDataTypeName(3));
+            Assert.AreEqual("integer", t0);
+			Assert.AreEqual("smallint", t1);
+			Assert.AreEqual("timestamp", t2);
+			Assert.AreEqual("numeric(11, 7)", t3);
 
+            dr.Close();
 		}
 		
 		[Test]

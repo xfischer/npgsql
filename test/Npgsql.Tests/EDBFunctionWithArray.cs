@@ -32,7 +32,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				"    Ret VARCHAR[];  "+
 				"	    BEGIN "+
 				"	      CheckOut:=100;  "+
-				"	        OPEN Test_RefCursor FOR SELECT c2 FROM tblTest;  "+
+				"	        OPEN Test_RefCursor FOR SELECT c2 FROM tblTest1;  "+
 				"		FETCH Test_RefCursor INTO Temp2;  "+
 				"		 Temp1:=Temp2;  "+
 				"		  LOOP  "+
@@ -187,34 +187,39 @@ namespace EnterpriseDB.EDBClient.Tests
 		{
 
             String[] a = { "100", "200", "300", "400" };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest (c1 VARCHAR, c2 INT); ", con);
+			EDBCommand command = new EDBCommand("CREATE TABLE tblTest1 (c1 VARCHAR, c2 INT); ", con);
 			command.ExecuteNonQuery();
-			command = new EDBCommand("INSERT INTO tblTest VALUES ('Ahmar',100);INSERT INTO tblTest VALUES ('Nauman',200);", con);
+			command = new EDBCommand("INSERT INTO tblTest1 VALUES ('Ahmar',100);INSERT INTO tblTest1 VALUES ('Nauman',200);", con);
 			command.ExecuteNonQuery();
 			
-			command = new EDBCommand("INSERT INTO tblTest VALUES ('Testing',300);INSERT INTO tblTest VALUES ('DOTNET',400);", con);
+			command = new EDBCommand("INSERT INTO tblTest1 VALUES ('Testing',300);INSERT INTO tblTest1 VALUES ('DOTNET',400);", con);
 			command.ExecuteNonQuery();
-					
-			command.CommandText="public.FuncReturningArrayVarchar(:param0,:param1,:param2,:param3,:param4)";
-			command.CommandType=CommandType.StoredProcedure;
-			
-			command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Varchar,10,"param",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
-			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Varchar,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,"VALUE")); 
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,23)); 
-			command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer,10,"param2",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1000)); 
-			command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar,10,"param3",ParameterDirection.InputOutput,false,2,2,System.Data.DataRowVersion.Current,"4")); 
-			command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer,10,"param4",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,3)); 
-			
-			command.Prepare();
+
+            command.CommandText = "public.FuncReturningArrayVarchar(:param0,:param1,:param2,:param3,:param4)";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Varchar, 10, "param0", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, "VALUE"));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 23));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 3));
+            command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Text, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+            command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[0].Value;
+            try
+            {
+                Object rst = command.Parameters[5].Value;
 
-			Assert.AreEqual(a,(String[])rst);	
-			command=new EDBCommand("drop table tblTest;",con);
+                Assert.AreEqual(a, (String[])rst);
+            }
+            finally
+            {
+                command = new EDBCommand("drop table tblTest1;", con);
 
-			command.ExecuteNonQuery();
-
+                command.ExecuteNonQuery();
+            }
 		}
 
 		[Test, Ignore("Fix Array test")]
@@ -295,8 +300,8 @@ namespace EnterpriseDB.EDBClient.Tests
 			command.CommandText="public.FuncReturningArrayFLOAT(:param0,:param1)";
 			command.CommandType=CommandType.StoredProcedure;
 
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Double, 10, "param0", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 110.345));
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Double, 10, "param1", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 200.123));
+            command.Parameters.Add(new EDBParameter("param0", /*EDBTypes.EDBDbType.Array | */EDBTypes.EDBDbType.Double, 10, "param0", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 110.345));
+            command.Parameters.Add(new EDBParameter("param1", /*EDBTypes.EDBDbType.Array | */EDBTypes.EDBDbType.Double, 10, "param1", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 200.123));
             command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Double, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();

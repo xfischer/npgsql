@@ -126,24 +126,24 @@ namespace EnterpriseDB.EDBClient.Tests
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, Ignore("Investigate")]
+        [Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureINTWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in int,p_inout inout int,p_out out int) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePI1  IS  procedure get_c1(p_in in int,p_inout inout int,p_out out int) ;   END check_packagePI1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in int,p_inout inout int,p_out out int)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePI1  IS procedure get_c1(p_in in int,p_inout inout int,p_out out int)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePI1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePI1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -166,7 +166,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePI1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -175,24 +175,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureINT4WithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePI2  IS  procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4) ;   END check_packagePI2; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePI2  IS procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePI2;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePI2.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -215,7 +215,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePI2;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -223,24 +223,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureINT8WithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePI3  IS  procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8) ;   END check_packagePI3; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePI3  IS procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePI3;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePI3.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -266,7 +266,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePI3;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -274,24 +274,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureNUMERICWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePN1  IS  procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) ;   END check_packagePN1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePN1  IS procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePN1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePN1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 				
@@ -317,7 +317,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePN1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -326,29 +326,29 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureFLOATWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePF1  IS  procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) ;   END check_packagePF1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePF1  IS procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePF1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePF1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Bigint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Bigint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Bigint, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 4.4));
+                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
+                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
+                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 4.4));
 				command.Prepare();
 
 				command.ExecuteNonQuery();
@@ -365,7 +365,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePF1;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -373,24 +373,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureREALWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePR1  IS  procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) ;   END check_packagePR1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePR1  IS procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePR1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePR1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Real, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
@@ -412,7 +412,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePR1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -421,24 +421,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureCHARWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePC1  IS  procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) ;   END check_packagePC1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePC1  IS procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePC1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePC1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -461,7 +461,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePC1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -522,24 +522,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureVARCHARWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePVC1  IS  procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) ;   END check_packagePVC1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePVC1  IS procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePVC1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePVC1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 		
 				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Varchar,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,"1"));
@@ -561,7 +561,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePVC1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -570,24 +570,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageProcedureTEXTCHARWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) ;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packagePTC1  IS  procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) ;   END check_packagePTC1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packagePTC1  IS procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT)   IS   BEGIN  p_out:=p_inout; p_inout:=p_in;   END;END check_packagePTC1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packagePTC1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -610,7 +610,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packagePTC1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -623,24 +623,24 @@ namespace EnterpriseDB.EDBClient.Tests
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, Ignore("Investigate")]
+        [Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionINTWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  Function get_c1(p_in in int,p_inout inout int,p_out out int) return int;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageI3  IS  Function get_c1(p_in in int,p_inout inout int,p_out out int) return int;   END check_packageI3; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS Function get_c1(p_in in int,p_inout inout int,p_out out int) return int  IS a int :=3;  BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageI3  IS Function get_c1(p_in in int,p_inout inout int,p_out out int) return int  IS a int :=3;  BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_packageI3;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageI3.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Integer,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,1));
@@ -666,7 +666,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageI3;";
 			command.ExecuteNonQuery();
 		}
 
@@ -675,24 +675,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionINT4WithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageI2  IS  function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4;   END check_packageI2; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4  IS  a int4:=3; BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_package;";
+			strSql ="CREATE OR REPLACE PACKAGE BODY check_packageI2  IS function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4  IS  a int4:=3; BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_packageI2;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageI2.get_c1(:v_in,:v_inout,:v_out)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 			
@@ -717,7 +717,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageI2;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -725,24 +725,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionINT8WithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageI1  IS  function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8;   END check_packageI1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8  IS  a int8:=3; BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageI1  IS function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8  IS  a int8:=3; BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_packageI1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageI1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 			
 				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Bigint,10,"v_in",ParameterDirection.Input,false, 2, 2,DataRowVersion.Current,1));
@@ -766,7 +766,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageI1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -775,23 +775,23 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionNUMERICWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageN1  IS  function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC;   END check_packageN1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC  IS a NUMERIC:=3;  BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_package;";
+			strSql ="CREATE OR REPLACE PACKAGE BODY check_packageN1  IS function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC  IS a NUMERIC:=3;  BEGIN  p_out:=p_inout; p_inout:=p_in; return a;  END;END check_packageN1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageN1.get_c1(:v_in,:v_inout,:v_out)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -818,7 +818,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageN1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -827,24 +827,26 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionFLOATWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) return FLOAT;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageF1  IS  function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) return FLOAT;   END check_packageF1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT)  return FLOAT IS  a FLOAT:=3.3; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_package;";
+			strSql ="CREATE OR REPLACE PACKAGE BODY check_packageF1  IS function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT)  return FLOAT IS  a FLOAT:=3.3; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_packageF1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
+
+            command.Dispose();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
-				command.CommandType = CommandType.StoredProcedure;
+                command = new EDBCommand("check_packageF1.get_c1(:v_in,:v_inout,:v_out)",con);
+                command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
                 command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
@@ -866,9 +868,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			//////////tear down
 			///
-			command.Dispose();
+			//command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageF1;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -876,24 +878,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
-		public void testPackageFunctionREALWithInInoutOut()
+		[Test, /*Ignore("Investigate")*/]
+        public void testPackageFunctionREALWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageR1  IS  function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL;   END check_packageR1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL  IS  a REAL := 3.3; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageR1  IS function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL  IS  a REAL := 3.3; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_packageR1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageR1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Real, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
@@ -920,7 +922,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageR1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -936,17 +938,17 @@ namespace EnterpriseDB.EDBClient.Tests
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageC1  IS  function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR;   END check_packageC1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR  IS  a CHAR := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageC1  IS function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR  IS  a CHAR := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_packageC1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageC1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -974,7 +976,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageC1;";
 			command.ExecuteNonQuery();
 		}
 		/// <summary>
@@ -982,24 +984,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionVARCHARWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageVC1  IS  function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR;   END check_packageVC1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR  IS  a VARCHAR := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageVC1  IS function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR  IS  a VARCHAR := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_packageVC1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageVC1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -1027,7 +1029,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageVC1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -1036,24 +1038,24 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void testPackageFunctionTEXTWithInInoutOut()
 		{
 			//////prereq
 			EDBCommand command = new EDBCommand("",con);
 			command.CommandType = CommandType.Text;
 
-			string strSql = "CREATE OR REPLACE PACKAGE check_package  IS  function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT;   END check_package; ";
+			string strSql = "CREATE OR REPLACE PACKAGE check_packageT1  IS  function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT;   END check_packageT1; ";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 				
-			strSql ="CREATE OR REPLACE PACKAGE BODY check_package  IS function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT  IS  a TEXT := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_package;";
+			strSql = "CREATE OR REPLACE PACKAGE BODY check_packageT1  IS function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT  IS  a TEXT := '3'; BEGIN  p_out:=p_inout; p_inout:=p_in;  return a; END;END check_packageT1;";
 			command.CommandText = strSql;
 			command.ExecuteNonQuery();
 			//////////////code
 			try
 			{
-				command = new EDBCommand("check_package.get_c1(:v_in,:v_inout,:v_out)",con);
+				command = new EDBCommand("check_packageT1.get_c1(:v_in,:v_inout,:v_out)", con);
 				command.CommandType = CommandType.StoredProcedure;
 
 		
@@ -1078,7 +1080,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			///
 			command.Dispose();
 			command = new EDBCommand("",con);
-			command.CommandText = "DROP package check_package;";
+			command.CommandText = "DROP package check_packageT1;";
 			command.ExecuteNonQuery();
 		}
 
@@ -1691,7 +1693,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Investigate exception caught")]
+        [Test, /*Ignore("Investigate exception caught")*/]
         public void TERSE_PKG_FUNC_NATIVE_INPUT_TYPES()
         {
             try
@@ -1908,7 +1910,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
                 command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
                 command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
                 command.Prepare();
                 command.Parameters[0].Value = 1;

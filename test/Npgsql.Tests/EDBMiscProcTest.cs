@@ -362,7 +362,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
         #endregion
 
-        [Test, Ignore("Investiage Prompt")]
+        [Test, /*Ignore("Investiage Prompt")*/]
 		public void RefCursorFunc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -507,7 +507,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			if(!ex) 
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void RefCursorProc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -701,7 +701,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Reader.Close();
 		}	
 
-		[Test, Ignore("Investiage Prompt")]
+		[Test, /*Ignore("Investiage Prompt")*/]
 		public void SYSRefCursorFunc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -874,7 +874,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}
 
-		[Test, Ignore("Investiage Prompt")]
+		[Test, /*Ignore("Investiage Prompt")*/]
 		public void PACKAGERefCursorFunc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -900,7 +900,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}
 
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void PACKAGERefCursorProc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -1087,7 +1087,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}	
 
-		[Test, Ignore("Investiage Prompt")]
+		[Test, /*Ignore("Investiage Prompt")*/]
 		public void PACKSYSRefCursorFunc()
 		{
 			EDBTransaction tran=con.BeginTransaction();
@@ -1352,14 +1352,14 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
 
-		[Test, Ignore("Investigate default params failure")]
+		[Test, /*Ignore("Investigate default params failure")*/]
 		public void DefaultInBindAsReturn()
 		{
-			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC", con); 
+			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC(:param0)", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 			
 			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
-			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Integer,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,55)); 
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Integer,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,55)); 
             
 			command.Prepare();
             command.ExecuteNonQuery();
@@ -1394,14 +1394,15 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.IsTrue(false);
 
             reader.Close();
-		}	
-		[Test, Ignore("Investigate default params failure")]
+		}
+
+        [Test, /*Ignore("Investigate default params failure")*/]
 		public void PACKDefaultInBindAsReturn()
 		{
 			EDBCommand command = new EDBCommand("REFCURSOR_PKG.DEFAULTINRETURNFUNC(:param0)", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 			
-			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Integer,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,55));
+			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Integer,10,"param0",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,55));
             command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
             command.Prepare();
@@ -1594,26 +1595,29 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}	
 
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void SYSRefcursorsII()
 		{
-			EDBTransaction tran=con.BeginTransaction();
-			EDBCommand command = new EDBCommand("public.GETSYSREFCURSORSIIPROC(:param1,:param0)", con); 
-			command.CommandType = CommandType.StoredProcedure; 
-			command.Transaction=tran;
-			command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
-			command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor,10,"param0",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,null)); 
-			
-			command.Prepare();
+            using (EDBTransaction tran = con.BeginTransaction())
+            {
+                using (EDBCommand command = new EDBCommand("public.GETSYSREFCURSORSIIPROC(:param1,:param0)", con))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Transaction = tran;
+                    command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                    command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-			command.ExecuteReader();
-			string rst =  command.Parameters[0].Value.ToString();
-			string rst1 = command.Parameters[1].Value.ToString();
+                    command.Prepare();
 
-			Assert.AreEqual("",rst);
-			Assert.AreEqual("",rst1);
-			tran.Commit();
-			
+                    command.ExecuteReader();
+                    string rst = command.Parameters[0].Value.ToString();
+                    string rst1 = command.Parameters[1].Value.ToString();
+
+                    Assert.AreEqual("", rst);
+                    Assert.AreEqual("", rst1);
+                }
+                //tran.Commit();
+            }
 		}	
 
 		[Test]
@@ -1654,7 +1658,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 	
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate")*/]
 		public void PACKSYSRefcursorsII()
 		{
 			EDBTransaction tran=con.BeginTransaction();

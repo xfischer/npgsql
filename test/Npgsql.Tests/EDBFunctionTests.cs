@@ -106,10 +106,10 @@ namespace EnterpriseDB.EDBClient.Tests
 				EDBCommand command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
 				command.CommandType = CommandType.StoredProcedure; 
 
-				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
-				command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric,10,"param2",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
-				command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric,10,"param3",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
-				command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Numeric,10,"param4",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer,10,"param1",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10,"param2",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10,"param3",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
+				command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10,"param4",ParameterDirection.Output,false,2,2,System.Data.DataRowVersion.Current,1)); 
 				command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar,10,"param5",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,1)); 
 
 				command.Prepare(); 
@@ -159,7 +159,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test, Ignore("Investigate Prompt")]
 		public void testOneInArg()
 		{
-			EDBCommand command = new EDBCommand("public.FunconeInArg_test", con); 
+			EDBCommand command = new EDBCommand("public.FunconeInArg_test(:a)", con); 
 			command.CommandType = CommandType.StoredProcedure; 
 
 			command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Numeric,10,"a",ParameterDirection.Input,false,2,2,System.Data.DataRowVersion.Current,1)); 
@@ -176,13 +176,13 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
 		/* To verify the sanity of functions with three IN parameters*/
-		[Test, Ignore("Investigate Prompt")]
+		[Test, /*Ignore("Investigate Prompt")*/]
 		public void testThreeInArg()
 		{
 			try 
 			{
 				//EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
-				EDBCommand command = new EDBCommand("public.funcThreeInArg", con);
+				EDBCommand command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
 
 				command.CommandType = CommandType.StoredProcedure; 
 
@@ -1297,7 +1297,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
 		/* To verify the sanity of IN, INOUT and OUT parameters in functions with MONEY datatype */
-		[Test, Ignore("Investigate")]
+		[Test, /*Ignore("Investigate Prompt")*/]
 		public void testFunctionWithMONEYASInInoutOut()
 		{
 			//////prereq
@@ -1314,22 +1314,22 @@ namespace EnterpriseDB.EDBClient.Tests
 				command = new EDBCommand("FunctionWithMONEY(:v_in,:v_inout,:v_out)",con);
 				command.CommandType = CommandType.StoredProcedure;
 				
-				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Money,10,"v_in",ParameterDirection.Input,false, 0, 0,DataRowVersion.Current,10000));
-				command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Money,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,-2.0));
-				command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Money,10,"v_out",ParameterDirection.InputOutput,false, 0, 0,DataRowVersion.Current,40000));
-				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Money,10,"v_ret",ParameterDirection.ReturnValue,false,0,0,System.Data.DataRowVersion.Current,100)); 
+				command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Money,10,"v_in",ParameterDirection.Input,false, 0, 0,DataRowVersion.Current,10000m));
+				command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Money,10,"v_inout",ParameterDirection.InputOutput,false, 2, 2,DataRowVersion.Current,-2.0m));
+				command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Money,10,"v_out",ParameterDirection.Output,false, 0, 0,DataRowVersion.Current,40000m));
+				command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Money,10,"v_ret",ParameterDirection.ReturnValue,false,0,0,System.Data.DataRowVersion.Current,100m)); 
 				command.Prepare();
 			
 				command.ExecuteNonQuery();
 
-				Assert.AreEqual("10000",command.Parameters[0].Value.ToString());
+				Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[0].Value.ToString())));
 				Console.WriteLine(command.Parameters[0].Value.ToString());
 				
-				Assert.AreEqual("10000",command.Parameters[1].Value.ToString());	
+				Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[1].Value.ToString())));	
 				Console.WriteLine(command.Parameters[1].Value.ToString());
-				Assert.AreEqual("-2",command.Parameters[2].Value.ToString());
+				Assert.AreEqual(-2, (int)(float.Parse(command.Parameters[2].Value.ToString())));
 				Console.WriteLine(command.Parameters[2].Value.ToString());
-				Assert.AreEqual("1234",command.Parameters[3].Value.ToString());	
+				Assert.AreEqual(1234, (int)(float.Parse(command.Parameters[3].Value.ToString())));	
 				Console.WriteLine(command.Parameters[3].Value.ToString());
 			}
 			catch(EDBException e)
@@ -1345,7 +1345,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
 		/* To verify the sanity of IN, INOUT and OUT parameters in functions with SMALLMONEY datatype */
-		[Test, Ignore("Investigate Prompt")]
+		[Test, /*Ignore("Investigate Prompt")*/]
 		public void testFunctionWithSmallMoneyASInInoutOut()
 		{
 			//////prereq
@@ -1652,7 +1652,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test, Ignore("Investigate Prompt")]
+		[Test, /*Ignore("Investigate Prompt")*/]
 		public void testMaxParametersSupportInFunctionWithNumericAsOut()
 		{
 			//////prereq
@@ -1702,7 +1702,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/// ////////////////////////and with Parameter types IN, INOUT, OUT
 		/// ////////////////////////DB feature used = Procedure
 		/// </summary>
-		[Test, Ignore("Investigate Prompt")]
+		[Test, /*Ignore("Investigate Prompt")*/]
 		public void testMaxParametersSupportInFunctionWithNumericAsInAndOut()
 		{
 			//////prereq
@@ -2233,7 +2233,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region TERSE
 
-        [Test, Ignore("Investigate")]
+        [Test, /*Ignore("Investigate")*/]
 
         public void TERSE_FUNC_NATIVE_INPUT_TYPES()
         {
@@ -2282,6 +2282,9 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
 
                 Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+                result.Close();
+                command.Dispose();
                 
                 command = new EDBCommand("END;", con);
 
@@ -2297,7 +2300,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Temp")]
+        [Test, /*Ignore("Temp")*/]
         public void TERSE_FUNC_NATIVE_OUTPUT_TYPES()
         {
             try
@@ -2569,7 +2572,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		
 		}
 
-        [Test, Ignore("Investigate")]
+        [Test, /*Ignore("Investigate")*/]
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
         {
             EDBCommand command = null;
@@ -2656,7 +2659,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-        [Test, Ignore("Investigate")]
+        [Test, /*Ignore("Investigate")*/]
         public void TERSE_FUNC_DEFAULT_TYPES()
         {
             try
@@ -2701,6 +2704,9 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
                 Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+                result.Close();
+                command.Dispose();
 
                 command = new EDBCommand("END;", con);
                 command.ExecuteNonQuery();

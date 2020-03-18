@@ -529,7 +529,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         [Test, Description("Makes sure that the INSERT/UPDATE/DELETE commands are auto-populated on EDBDataAdapter")]
         [IssueLink("https://github.com/EDB/EDB/issues/179")]
-        [Ignore("Somehow related to us using a temporary table???")]
+        /*[Ignore("Somehow related to us using a temporary table???")]*/
         public void AutoPopulateAdapterCommands()
         {
             using (var conn = OpenConnection())
@@ -570,7 +570,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         [Test, Description("Makes sure a correct SQL string is built with GetUpdateCommand(true) using correct parameter names and placeholders")]
         [IssueLink("https://github.com/EDB/EDB/issues/397")]
-        [Ignore("Somehow related to us using a temporary table???")]
+        /*[Ignore("Somehow related to us using a temporary table???")]*/
         public void GetUpdateCommand()
         {
             using (var conn = OpenConnection())

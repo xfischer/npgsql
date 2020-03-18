@@ -820,7 +820,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("Ignore for now")]
+        [Test, /*Ignore("Ignore for now")*/]
         [TestCase(CommandBehavior.Default)]
         [TestCase(CommandBehavior.SequentialAccess)]
         public void InputAndOutputParameters(CommandBehavior behavior)
@@ -833,10 +833,21 @@ namespace EnterpriseDB.EDBClient.Tests
                 cmd.Parameters.Add(b);
                 var c = new EDBParameter { ParameterName = "c", Direction = ParameterDirection.InputOutput, Value = 4 };
                 cmd.Parameters.Add(c);
-                using (cmd.ExecuteReader(behavior))
+                using (EDBDataReader br = cmd.ExecuteReader(behavior))
                 {
-                    Assert.AreEqual(5, b.Value);
-                    Assert.AreEqual(3, c.Value);
+                    if (behavior == CommandBehavior.Default)
+                    {
+                        Assert.AreEqual(5, b.Value);
+                        Assert.AreEqual(3, c.Value);
+                    }
+                    else
+                    {
+                        //In case of CommandBehavior.SequentialAccess data should be read sequentially.
+                        //Microsoft Docs: https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/retrieving-binary-data
+                        br.Read();
+                        Assert.AreEqual(3, br[0]);
+                        Assert.AreEqual(5, br[1]);
+                    }
                 }
             }
         }

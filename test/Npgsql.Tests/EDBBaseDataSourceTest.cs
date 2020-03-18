@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.Tests
 	/// <summary>
 	/// Summary description for BaseDataSourceTest.
 	/// </summary>
-	[TestFixture, Ignore("Fix open without pooling ")]
+	[TestFixture, /*Ignore("Fix open without pooling ")*/]
 	public class EDBBaseDataSourceTest : TestBase
     {
 		EDBConnection con = null;
