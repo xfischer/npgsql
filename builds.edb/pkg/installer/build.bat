@@ -1,4 +1,4 @@
-CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
 
 @SET PGBUILD=C:\\pgBuild64
 @SET SOURCE_PATH="%1"
