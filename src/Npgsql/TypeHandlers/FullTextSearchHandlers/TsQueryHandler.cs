@@ -1,46 +1,34 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using EnterpriseDB.EDBClient.BackendMessages;
-using EDBTypes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
+
+// TODO: Need to work on the nullbility here
+#nullable disable
+#pragma warning disable CS8632
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
 {
     /// <summary>
-    /// http://www.postgresql.org/docs/current/static/datatype-textsearch.html
+    /// A type handler for the PostgreSQL tsquery data type.
     /// </summary>
+    /// <remarks>
+    /// See http://www.postgresql.org/docs/current/static/datatype-textsearch.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
     [TypeMapping("tsquery", EDBDbType.TsQuery, new[] {
         typeof(EDBTsQuery), typeof(EDBTsQueryAnd), typeof(EDBTsQueryEmpty), typeof(EDBTsQueryFollowedBy),
         typeof(EDBTsQueryLexeme), typeof(EDBTsQueryNot), typeof(EDBTsQueryOr), typeof(EDBTsQueryBinOp) })
     ]
-    class TsQueryHandler : EDBTypeHandler<EDBTsQuery>,
+    public class TsQueryHandler : EDBTypeHandler<EDBTsQuery>,
         IEDBTypeHandler<EDBTsQueryEmpty>, IEDBTypeHandler<EDBTsQueryLexeme>,
         IEDBTypeHandler<EDBTsQueryNot>, IEDBTypeHandler<EDBTsQueryAnd>,
         IEDBTypeHandler<EDBTsQueryOr>, IEDBTypeHandler<EDBTsQueryFollowedBy>
@@ -48,21 +36,23 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
         // 1 (type) + 1 (weight) + 1 (is prefix search) + 2046 (max str len) + 1 (null terminator)
         const int MaxSingleTokenBytes = 2050;
 
-        Stack<Tuple<EDBTsQuery, int>> _nodes;
-        EDBTsQuery _value;
-
         readonly Stack<EDBTsQuery> _stack = new Stack<EDBTsQuery>();
+
+        /// <inheritdoc />
+        public TsQueryHandler(PostgresType postgresType) : base(postgresType) {}
 
         #region Read
 
-        public override async ValueTask<EDBTsQuery> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public override async ValueTask<EDBTsQuery> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var numTokens = buf.ReadInt32();
             if (numTokens == 0)
                 return new EDBTsQueryEmpty();
 
-            _nodes = new Stack<Tuple<EDBTsQuery, int>>();
+            EDBTsQuery? value = null;
+            var nodes = new Stack<Tuple<EDBTsQuery, int>>();
             len -= 4;
 
             for (var tokenPos = 0; tokenPos < numTokens; tokenPos++)
@@ -77,32 +67,23 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                     if (operKind == EDBTsQuery.NodeKind.Not)
                     {
                         var node = new EDBTsQueryNot(null);
-                        InsertInTree(node);
-                        _nodes.Push(new Tuple<EDBTsQuery, int>(node, 0));
+                        InsertInTree(node, nodes, ref value);
+                        nodes.Push(new Tuple<EDBTsQuery, int>(node, 0));
                     }
                     else
                     {
-                        EDBTsQuery node;
-                        switch (operKind)
+                        var node = operKind switch
                         {
-                        case EDBTsQuery.NodeKind.And:
-                            node = new EDBTsQueryAnd(null, null);
-                            break;
-                        case EDBTsQuery.NodeKind.Or:
-                            node = new EDBTsQueryOr(null, null);
-                            break;
-                        case EDBTsQuery.NodeKind.Phrase:
-                            var distance = buf.ReadInt16();
-                            node = new EDBTsQueryFollowedBy(null, distance, null);
-                            break;
-                        default:
-                            throw new InvalidOperationException($"Internal EDB bug: unexpected value {operKind} of enum {nameof(EDBTsQuery.NodeKind)}. Please file a bug.");
-                        }
+                            EDBTsQuery.NodeKind.And    => (EDBTsQuery)new EDBTsQueryAnd(null, null),
+                            EDBTsQuery.NodeKind.Or     => new EDBTsQueryOr(null, null),
+                            EDBTsQuery.NodeKind.Phrase => new EDBTsQueryFollowedBy(null, buf.ReadInt16(), null),
+                            _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {operKind} of enum {nameof(EDBTsQuery.NodeKind)}. Please file a bug.")
+                        };
 
-                        InsertInTree(node);
+                        InsertInTree(node, nodes, ref value);
 
-                        _nodes.Push(new Tuple<EDBTsQuery, int>(node, 2));
-                        _nodes.Push(new Tuple<EDBTsQuery, int>(node, 1));
+                        nodes.Push(new Tuple<EDBTsQuery, int>(node, 2));
+                        nodes.Push(new Tuple<EDBTsQuery, int>(node, 1));
                     }
                 }
                 else
@@ -110,63 +91,65 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                     var weight = (EDBTsQueryLexeme.Weight)buf.ReadByte();
                     var prefix = buf.ReadByte() != 0;
                     var str = buf.ReadNullTerminatedString();
-                    InsertInTree(new EDBTsQueryLexeme(str, weight, prefix));
+                    InsertInTree(new EDBTsQueryLexeme(str, weight, prefix), nodes, ref value);
                 }
 
                 len -= buf.ReadPosition - readPos;
             }
 
-            if (_nodes.Count != 0)
+            if (nodes.Count != 0)
                 throw new InvalidOperationException("Internal EDB bug, please report.");
 
-            return _value;
+            return value!;
+
+            static void InsertInTree(EDBTsQuery node, Stack<Tuple<EDBTsQuery, int>> nodes, ref EDBTsQuery? value)
+            {
+                if (nodes.Count == 0)
+                    value = node;
+                else
+                {
+                    var parent = nodes.Pop();
+                    if (parent.Item2 == 0)
+                        ((EDBTsQueryNot)parent.Item1).Child = node;
+                    else if (parent.Item2 == 1)
+                        ((EDBTsQueryBinOp)parent.Item1).Left = node;
+                    else
+                        ((EDBTsQueryBinOp)parent.Item1).Right = node;
+                }
+            }
         }
 
-        async ValueTask<EDBTsQueryEmpty> IEDBTypeHandler<EDBTsQueryEmpty>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryEmpty> IEDBTypeHandler<EDBTsQueryEmpty>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryEmpty)await Read(buf, len, async, fieldDescription);
 
-        async ValueTask<EDBTsQueryLexeme> IEDBTypeHandler<EDBTsQueryLexeme>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryLexeme> IEDBTypeHandler<EDBTsQueryLexeme>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryLexeme)await Read(buf, len, async, fieldDescription);
 
-        async ValueTask<EDBTsQueryNot> IEDBTypeHandler<EDBTsQueryNot>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryNot> IEDBTypeHandler<EDBTsQueryNot>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryNot)await Read(buf, len, async, fieldDescription);
 
-        async ValueTask<EDBTsQueryAnd> IEDBTypeHandler<EDBTsQueryAnd>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryAnd> IEDBTypeHandler<EDBTsQueryAnd>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryAnd)await Read(buf, len, async, fieldDescription);
 
-        async ValueTask<EDBTsQueryOr> IEDBTypeHandler<EDBTsQueryOr>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryOr> IEDBTypeHandler<EDBTsQueryOr>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryOr)await Read(buf, len, async, fieldDescription);
 
-        async ValueTask<EDBTsQueryFollowedBy> IEDBTypeHandler<EDBTsQueryFollowedBy>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<EDBTsQueryFollowedBy> IEDBTypeHandler<EDBTsQueryFollowedBy>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (EDBTsQueryFollowedBy)await Read(buf, len, async, fieldDescription);
 
         #endregion Read
 
         #region Write
 
-        void InsertInTree([CanBeNull] EDBTsQuery node)
-        {
-            if (_nodes.Count == 0)
-                _value = node;
-            else
-            {
-                var parent = _nodes.Pop();
-                if (parent.Item2 == 0)
-                    ((EDBTsQueryNot)parent.Item1).Child = node;
-                else if (parent.Item2 == 1)
-                    ((EDBTsQueryBinOp)parent.Item1).Left = node;
-                else
-                    ((EDBTsQueryBinOp)parent.Item1).Right = node;
-            }
-        }
-
-        public override int ValidateAndGetLength(EDBTsQuery value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(EDBTsQuery value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.Kind == EDBTsQuery.NodeKind.Empty
                 ? 4
                 : 4 + GetNodeLength(value);
 
         int GetNodeLength(EDBTsQuery node)
         {
+            // TODO: Figure out the nullability strategy here
             switch (node.Kind)
             {
             case EDBTsQuery.NodeKind.Lexeme:
@@ -189,7 +172,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             }
         }
 
-        public override async Task Write(EDBTsQuery query, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public override async Task Write(EDBTsQuery query, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var numTokens = GetTokenCount(query);
 
@@ -257,44 +241,56 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             return -1;
         }
 
-        public int ValidateAndGetLength(EDBTsQueryOr value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryOr value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public int ValidateAndGetLength(EDBTsQueryAnd value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryAnd value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public int ValidateAndGetLength(EDBTsQueryNot value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryNot value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public int ValidateAndGetLength(EDBTsQueryLexeme value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryLexeme value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public int ValidateAndGetLength(EDBTsQueryEmpty value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryEmpty value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public int ValidateAndGetLength(EDBTsQueryFollowedBy value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBTsQueryFollowedBy value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((EDBTsQuery)value, ref lengthCache, parameter);
 
-        public Task Write(EDBTsQueryOr value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public Task Write(EDBTsQueryOr value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 
-        public Task Write(EDBTsQueryAnd value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public Task Write(EDBTsQueryAnd value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 
-        public Task Write(EDBTsQueryNot value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public Task Write(EDBTsQueryNot value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 
-        public Task Write(EDBTsQueryLexeme value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public Task Write(EDBTsQueryLexeme value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 
-        public Task Write(EDBTsQueryEmpty value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public Task Write(EDBTsQueryEmpty value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 
+        /// <inheritdoc />
         public Task Write(
             EDBTsQueryFollowedBy value,
             EDBWriteBuffer buf,
-            EDBLengthCache lengthCache,
-            EDBParameter parameter,
+            EDBLengthCache? lengthCache,
+            EDBParameter? parameter,
             bool async)
             => Write((EDBTsQuery)value, buf, lengthCache, parameter, async);
 

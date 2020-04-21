@@ -1,28 +1,6 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EDBTypes;
 
@@ -41,7 +19,8 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// (schema.typename) - the latter can be used if you have two types with the same
         /// name in different schemas.
         /// </remarks>
-        public string PgTypeName { get; set; }
+        [DisallowNull]
+        public string? PgTypeName { get; set; }
 
         /// <summary>
         /// The <see cref="EDBDbType"/> that corresponds to this type. Setting an
@@ -55,14 +34,14 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.DbType"/> property
         /// to one of these values will make EDB write its value to PostgreSQL with this mapping.
         /// </summary>
-        public DbType[] DbTypes { get; set; }
+        public DbType[]? DbTypes { get; set; }
 
         /// <summary>
         /// A set of CLR types that correspond to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.Value"/> property
         /// to one of these types will make EDB write its value to PostgreSQL with this mapping.
         /// </summary>
-        public Type[] ClrTypes { get; set; }
+        public Type[]? ClrTypes { get; set; }
 
         /// <summary>
         /// Determines what is returned from <see cref="EDBParameter.DbType"/> when this mapping
@@ -73,7 +52,8 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// <summary>
         /// A factory for a type handler that will be used to read and write values for PostgreSQL type.
         /// </summary>
-        public EDBTypeHandlerFactory TypeHandlerFactory { get; set; }
+        [DisallowNull]
+        public EDBTypeHandlerFactory? TypeHandlerFactory { get; set; }
 
         /// <summary>
         /// Builds an <see cref="EDBTypeMapping"/> that can be added to an <see cref="IEDBTypeMapper"/>.
@@ -82,10 +62,12 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         public EDBTypeMapping Build()
         {
             if (string.IsNullOrWhiteSpace(PgTypeName))
-                throw new ArgumentException($"{PgTypeName} must contain the name of a PostgreSQL data type");
-            if (TypeHandlerFactory == null)
-                throw new ArgumentException($"{TypeHandlerFactory} must refer to a type handler factory");
-            return new EDBTypeMapping(PgTypeName, EDBDbType, DbTypes, ClrTypes, InferredDbType, TypeHandlerFactory);
+                throw new ArgumentException($"{nameof(PgTypeName)} must contain the name of a PostgreSQL data type", nameof(PgTypeName));
+
+            if (TypeHandlerFactory is null)
+                throw new ArgumentException($"{nameof(TypeHandlerFactory)} must refer to a type handler factory");
+
+            return new EDBTypeMapping(PgTypeName!, EDBDbType, DbTypes, ClrTypes, InferredDbType, TypeHandlerFactory);
         }
     }
 
@@ -99,11 +81,11 @@ namespace EnterpriseDB.EDBClient.TypeMapping
     {
         internal EDBTypeMapping(
             string pgTypeName,
-            EDBDbType? eDBDbType, DbType[] dbTypes, Type[] clrTypes, DbType? inferredDbType,
+            EDBDbType? edbDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType,
             EDBTypeHandlerFactory typeHandlerFactory)
         {
             PgTypeName = pgTypeName;
-            EDBDbType = eDBDbType;
+            EDBDbType = edbDbType;
             DbTypes = dbTypes ?? EmptyDbTypes;
             ClrTypes = clrTypes ?? EmptyClrTypes;
             InferredDbType = inferredDbType;

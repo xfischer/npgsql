@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.TypeMapping;
 
 // This file contains some pretty awful hacks to make current version of the EF Core provider
@@ -13,8 +11,7 @@ using EnterpriseDB.EDBClient.TypeMapping;
 // and so this shim is required.
 
 // ReSharper disable once CheckNamespace
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     [Obsolete("Purely for EF Core backwards compatibility")]
     class TypeHandlerRegistry
     {
@@ -34,6 +31,7 @@ namespace EnterpriseDB.EDBClient
         }
     }
 
+    // ReSharper disable once UnusedTypeParameter
     [Obsolete("Purely for EF Core backwards compatibility")]
     class TypeHandler<T> {}
 

@@ -1,26 +1,3 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,11 +7,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using JetBrains.Annotations;
-using EnterpriseDB.EDBClient;
+using EnterpriseDB.EDBClient.Util;
 
 #pragma warning disable 1591
 
+// ReSharper disable once CheckNamespace
 namespace EDBTypes
 {
     /// <summary>
@@ -61,8 +38,8 @@ namespace EDBTypes
         public bool Equals(EDBPoint other) => X == other.X && Y == other.Y;
         // ReSharper restore CompareOfFloatsByEqualityOperator
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBPoint && Equals((EDBPoint) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBPoint point && Equals(point);
 
         public static bool operator ==(EDBPoint x, EDBPoint y) => x.Equals(y);
 
@@ -126,7 +103,8 @@ namespace EDBTypes
 
         public bool Equals(EDBLine other) => A == other.A && B == other.B && C == other.C;
 
-        public override bool Equals([CanBeNull] object obj) => obj is EDBLine && Equals((EDBLine)obj);
+        public override bool Equals(object? obj)
+            => obj is EDBLine line && Equals(line);
 
         public static bool operator ==(EDBLine x, EDBLine y) => x.Equals(y);
         public static bool operator !=(EDBLine x, EDBLine y) => !(x == y);
@@ -181,8 +159,8 @@ namespace EDBTypes
 
         public bool Equals(EDBLSeg other) => Start == other.Start && End == other.End;
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBLSeg && Equals((EDBLSeg)obj);
+        public override bool Equals(object? obj)
+            => obj is EDBLSeg seg && Equals(seg);
 
         public static bool operator ==(EDBLSeg x, EDBLSeg y) => x.Equals(y);
         public static bool operator !=(EDBLSeg x, EDBLSeg y) => !(x == y);
@@ -221,8 +199,8 @@ namespace EDBTypes
 
         public bool Equals(EDBBox other) => UpperRight == other.UpperRight && LowerLeft == other.LowerLeft;
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBBox && Equals((EDBBox) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBBox box && Equals(box);
 
         public static bool operator ==(EDBBox x, EDBBox y) => x.Equals(y);
         public static bool operator !=(EDBBox x, EDBBox y) => !(x == y);
@@ -311,8 +289,8 @@ namespace EDBTypes
             return true;
         }
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBPath && Equals((EDBPath) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBPath path && Equals(path);
 
         public static bool operator ==(EDBPath x, EDBPath y) => x.Equals(y);
         public static bool operator !=(EDBPath x, EDBPath y) => !(x == y);
@@ -348,18 +326,12 @@ namespace EDBTypes
 
         public static EDBPath Parse(string s)
         {
-            bool open;
-            switch (s[0])
+            var open = s[0] switch
             {
-            case '[':
-                open = true;
-                break;
-            case '(':
-                open = false;
-                break;
-            default:
-                throw new Exception("Invalid path string: " + s);
-            }
+                '[' => true,
+                '(' => false,
+                _   => throw new Exception("Invalid path string: " + s)
+            };
             Debug.Assert(s[s.Length - 1] == (open ? ']' : ')'));
             var result = new EDBPath(open);
             var i = 1;
@@ -427,8 +399,8 @@ namespace EDBTypes
             return true;
         }
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBPolygon && Equals((EDBPolygon) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBPolygon polygon && Equals(polygon);
 
         public static bool operator ==(EDBPolygon x, EDBPolygon y) => x.Equals(y);
         public static bool operator !=(EDBPolygon x, EDBPolygon y) => !(x == y);
@@ -520,8 +492,8 @@ namespace EDBTypes
             => X == other.X && Y == other.Y && Radius == other.Radius;
         // ReSharper restore CompareOfFloatsByEqualityOperator
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBCircle && Equals((EDBCircle) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBCircle circle && Equals(circle);
 
         public static EDBCircle Parse(string s)
         {
@@ -615,10 +587,11 @@ namespace EDBTypes
 
         public static explicit operator IPAddress(EDBInet inet) => ToIPAddress(inet);
 
-        public static EDBInet ToEDBInet([CanBeNull] IPAddress ip)
-            => ReferenceEquals(ip, null) ? default(EDBInet) : new EDBInet(ip);
+        public static EDBInet ToEDBInet(IPAddress? ip)
+            => ip is null ? default : new EDBInet(ip);
+            //=> ReferenceEquals(ip, null) ? default : new EDBInet(ip);
 
-        public static implicit operator EDBInet([CanBeNull] IPAddress ip) => ToEDBInet(ip);
+        public static implicit operator EDBInet(IPAddress ip) => ToEDBInet(ip);
 
         public void Deconstruct(out IPAddress address, out int netmask)
         {
@@ -628,8 +601,8 @@ namespace EDBTypes
 
         public bool Equals(EDBInet other) => Address.Equals(other.Address) && Netmask == other.Netmask;
 
-        public override bool Equals([CanBeNull] object obj)
-            => obj is EDBInet && Equals((EDBInet) obj);
+        public override bool Equals(object? obj)
+            => obj is EDBInet inet && Equals(inet);
 
         public override int GetHashCode()
             => PGUtil.RotateShift(Address.GetHashCode(), Netmask%32);
@@ -665,7 +638,8 @@ namespace EDBTypes
         public bool Equals(EDBTid other)
             => BlockNumber == other.BlockNumber && OffsetNumber == other.OffsetNumber;
 
-        public override bool Equals([CanBeNull] object o) => o is EDBTid && Equals((EDBTid)o);
+        public override bool Equals(object? o)
+            => o is EDBTid tid && Equals(tid);
 
         public override int GetHashCode() => (int)BlockNumber ^ OffsetNumber;
         public static bool operator ==(EDBTid left, EDBTid right) => left.Equals(right);

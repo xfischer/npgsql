@@ -1,35 +1,14 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using EnterpriseDB.EDBClient.BackendMessages;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandling
 {
@@ -45,7 +24,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
     /// </typeparam>
     public abstract class EDBSimpleTypeHandler<TDefault> : EDBTypeHandler<TDefault>, IEDBSimpleTypeHandler<TDefault>
     {
-        delegate int NonGenericValidateAndGetLength(EDBTypeHandler handler, object value, ref EDBLengthCache lengthCache, EDBParameter parameter);
+        delegate int NonGenericValidateAndGetLength(EDBTypeHandler handler, object value, ref EDBLengthCache? lengthCache, EDBParameter? parameter);
 
         readonly NonGenericValidateAndGetLength _nonGenericValidateAndGetLength;
         readonly NonGenericWriteWithLength _nonGenericWriteWithLength;
@@ -56,7 +35,8 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <summary>
         /// Constructs an <see cref="EDBSimpleTypeHandler{TDefault}"/>.
         /// </summary>
-        protected EDBSimpleTypeHandler()
+        protected EDBSimpleTypeHandler(PostgresType postgresType)
+            : base(postgresType)
         {
             // Get code-generated delegates for non-generic ValidateAndGetLength/WriteWithLengthInternal
             (_nonGenericValidateAndGetLength, _nonGenericWriteWithLength) =
@@ -77,7 +57,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="len">The byte length of the value. The buffer might not contain the full length, requiring I/O to be performed.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        public abstract TDefault Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null);
+        public abstract TDefault Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Reads a value of type <typeparamref name="TDefault"/> with the given length from the provided buffer,
@@ -89,7 +69,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="async">If I/O is required to read the full length of the value, whether it should be performed synchronously or asynchronously.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        public sealed override ValueTask<TDefault> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public sealed override ValueTask<TDefault> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
             => Read<TDefault>(buf, len, async, fieldDescription);
 
         /// <summary>
@@ -101,7 +81,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="async">If I/O is required to read the full length of the value, whether it should be performed synchronously or asynchronously.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        protected internal sealed override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        protected internal sealed override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(len, async);
             return Read<TAny>(buf, len, fieldDescription);
@@ -118,7 +98,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="len">The byte length of the value. The buffer might not contain the full length, requiring I/O to be performed.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             Debug.Assert(len <= buf.ReadBytesLeft);
 
@@ -150,7 +130,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
         /// <returns>The number of bytes required to write the value.</returns>
-        public abstract int ValidateAndGetLength(TDefault value, EDBParameter parameter);
+        public abstract int ValidateAndGetLength(TDefault value, EDBParameter? parameter);
 
         /// <summary>
         /// Writes a value to the provided buffer, with the assumption that there is enough space in the buffer
@@ -162,12 +142,12 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// The <see cref="EDBParameter"/> instance where this value resides. Can be used to access additional
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
-        public abstract void Write(TDefault value, EDBWriteBuffer buf, EDBParameter parameter);
+        public abstract void Write(TDefault value, EDBWriteBuffer buf, EDBParameter? parameter);
 
         /// <summary>
         /// This method is sealed, override <see cref="ValidateAndGetLength(TDefault,EDBParameter)"/>.
         /// </summary>
-        protected internal override int ValidateAndGetLength<TAny>(TAny value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        protected internal override int ValidateAndGetLength<TAny>(TAny value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => this is IEDBSimpleTypeHandler<TAny> typedHandler
                 ? typedHandler.ValidateAndGetLength(value, parameter)
                 : throw new InvalidCastException($"Can't write CLR type {typeof(TAny)} to database type {PgDisplayName}");
@@ -175,33 +155,25 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <summary>
         /// In the vast majority of cases writing a parameter to the buffer won't need to perform I/O.
         /// </summary>
-        internal sealed override Task WriteWithLengthInternal<TAny>(TAny value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        internal sealed override Task WriteWithLengthInternal<TAny>([AllowNull] TAny value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             if (value == null || typeof(TAny) == typeof(DBNull))
             {
                 if (buf.WriteSpaceLeft < 4)
                     return WriteWithLengthLong();
                 buf.WriteInt32(-1);
-                return PGUtil.CompletedTask;
+                return Task.CompletedTask;
             }
 
             Debug.Assert(this is IEDBSimpleTypeHandler<TAny>);
             var typedHandler = (IEDBSimpleTypeHandler<TAny>)this;
 
-            var elementLen = -1;
-            if (parameter != null && parameter.Direction == System.Data.ParameterDirection.Output)//EnterpriseDB Team
-            {
-                buf.WriteInt32(-1);//EnterpriseDB Team
-            }
-            else
-            {
-                elementLen = typedHandler.ValidateAndGetLength(value, parameter);
-                if (buf.WriteSpaceLeft < 4 + elementLen)
-                    return WriteWithLengthLong();
-                buf.WriteInt32(elementLen);
-                typedHandler.Write(value, buf, parameter);
-            }
-            return PGUtil.CompletedTask;
+            var elementLen = typedHandler.ValidateAndGetLength(value, parameter);
+            if (buf.WriteSpaceLeft < 4 + elementLen)
+                return WriteWithLengthLong();
+            buf.WriteInt32(elementLen);
+            typedHandler.Write(value, buf, parameter);
+            return Task.CompletedTask;
 
             async Task WriteWithLengthLong()
             {
@@ -225,13 +197,13 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <summary>
         /// Simple type handlers override <see cref="Write(TDefault,EDBWriteBuffer,EDBParameter)"/> instead of this.
         /// </summary>
-        public sealed override Task Write(TDefault value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public sealed override Task Write(TDefault value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => throw new NotSupportedException();
 
         /// <summary>
         /// Simple type handlers override <see cref="ValidateAndGetLength(TDefault,EDBParameter)"/> instead of this.
         /// </summary>
-        public sealed override int ValidateAndGetLength(TDefault value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public sealed override int ValidateAndGetLength(TDefault value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => throw new NotSupportedException();
 
         // Object overloads for non-generic EDBParameter
@@ -240,7 +212,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// Called to validate and get the length of a value of a non-generic <see cref="EDBParameter"/>.
         /// Type handlers generally don't need to override this.
         /// </summary>
-        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value == null || value is DBNull
                 ? -1
                 : _nonGenericValidateAndGetLength(this, value, ref lengthCache, parameter);
@@ -249,9 +221,9 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// Called to write the value of a non-generic <see cref="EDBParameter"/>.
         /// Type handlers generally don't need to override this.
         /// </summary>
-        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
-            => value == null || value is DBNull  // For null just go through the default WriteWithLengthInternal
-                ? WriteWithLengthInternal<DBNull>(null, buf, lengthCache, parameter, async)
+        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
+            => value is DBNull  // For null just go through the default WriteWithLengthInternal
+                ? WriteWithLengthInternal(DBNull.Value, buf, lengthCache, parameter, async)
                 : _nonGenericWriteWithLength(this, value, buf, lengthCache, parameter, async);
 
         #endregion
@@ -273,7 +245,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
                 i.GetGenericTypeDefinition() == typeof(IEDBSimpleTypeHandler<>)
             ).Reverse().ToList();
 
-            Expression ifElseExpression = null;
+            Expression? ifElseExpression = null;
 
             var handlerParam = Expression.Parameter(typeof(EDBTypeHandler), "handler");
             var valueParam = Expression.Parameter(typeof(object), "value");
@@ -314,7 +286,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
                                     Expression.Constant($"Can't write CLR type {{0}} with handler type {handlerType.Name}"),
                                     Expression.Call(  // GetType() on the value
                                         valueParam,
-                                        typeof(object).GetMethod(nameof(string.GetType), new Type[0])
+                                        typeof(object).GetMethod(nameof(GetType), new Type[0])
                                     )
                                 }
                             )

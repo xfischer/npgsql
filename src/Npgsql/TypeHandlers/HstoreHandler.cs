@@ -1,58 +1,61 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
-    [TypeMapping("hstore", EDBDbType.Hstore, new[] { typeof(Dictionary<string, string>), typeof(IDictionary<string, string>) })]
-    class HstoreHandlerFactory : EDBTypeHandlerFactory<Dictionary<string, string>>
+    /// <summary>
+    /// A factory for type handlers for the PostgreSQL hstore extension data type, which stores sets of key/value pairs
+    /// within a single PostgreSQL value.
+    /// </summary>
+    /// <remarks>
+    /// See https://www.postgresql.org/docs/current/hstore.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
+    [TypeMapping("hstore", EDBDbType.Hstore, new[] { typeof(Dictionary<string, string?>), typeof(IDictionary<string, string?>) })]
+    public class HstoreHandlerFactory : EDBTypeHandlerFactory<Dictionary<string, string?>>
     {
-        protected override EDBTypeHandler<Dictionary<string, string>> Create(EDBConnection conn)
-            => new HstoreHandler(conn);
+        /// <inheritdoc />
+        public override EDBTypeHandler<Dictionary<string, string?>> Create(PostgresType postgresType, EDBConnection conn)
+            => new HstoreHandler(postgresType, conn);
     }
 
+    /// <summary>
+    /// A type handler for the PostgreSQL hstore extension data type, which stores sets of key/value pairs within a
+    /// single PostgreSQL value.
+    /// </summary>
+    /// <remarks>
+    /// See https://www.postgresql.org/docs/current/hstore.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
 #pragma warning disable CA1061 // Do not hide base class methods
-    class HstoreHandler : EDBTypeHandler<Dictionary<string, string>>, IEDBTypeHandler<IDictionary<string, string>>
+    public class HstoreHandler : EDBTypeHandler<Dictionary<string, string?>>, IEDBTypeHandler<IDictionary<string, string?>>
     {
         /// <summary>
         /// The text handler to which we delegate encoding/decoding of the actual strings
         /// </summary>
         readonly TextHandler _textHandler;
 
-        internal HstoreHandler(EDBConnection connection)
-            => _textHandler = new TextHandler(connection);
+        internal HstoreHandler(PostgresType postgresType, EDBConnection connection)
+            : base(postgresType) => _textHandler = new TextHandler(postgresType, connection);
 
         #region Write
 
-        public int ValidateAndGetLength(IDictionary<string, string> value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(IDictionary<string, string?> value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             if (lengthCache == null)
                 lengthCache = new EDBLengthCache(1);
@@ -71,16 +74,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                     throw new FormatException("HSTORE doesn't support null keys");
                 totalLen += _textHandler.ValidateAndGetLength(kv.Key, ref lengthCache, null);
                 if (kv.Value != null)
-                    totalLen += _textHandler.ValidateAndGetLength(kv.Value, ref lengthCache, null);
+                    totalLen += _textHandler.ValidateAndGetLength(kv.Value!, ref lengthCache, null);
             }
 
             return lengthCache.Lengths[pos] = totalLen;
         }
 
-        public override int ValidateAndGetLength(Dictionary<string, string> value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(Dictionary<string, string?> value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength(value, ref lengthCache, parameter);
 
-        public async Task Write(IDictionary<string, string> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public async Task Write(IDictionary<string, string?> value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             if (buf.WriteSpaceLeft < 4)
                 await buf.Flush(async);
@@ -95,18 +100,20 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             }
         }
 
-        public override Task Write(Dictionary<string, string> value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public override Task Write(Dictionary<string, string?> value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write(value, buf, lengthCache, parameter, async);
 
         #endregion
 
         #region Read
 
-        public override async ValueTask<Dictionary<string, string>> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        /// <inheritdoc />
+        public override async ValueTask<Dictionary<string, string?>> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var numElements = buf.ReadInt32();
-            var hstore = new Dictionary<string, string>(numElements);
+            var hstore = new Dictionary<string, string?>(numElements);
 
             for (var i = 0; i < numElements; i++)
             {
@@ -125,8 +132,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return hstore;
         }
 
-        ValueTask<IDictionary<string, string>> IEDBTypeHandler<IDictionary<string, string>>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
-            => new ValueTask<IDictionary<string, string>>(Read(buf, len, async, fieldDescription).Result);
+        ValueTask<IDictionary<string, string?>> IEDBTypeHandler<IDictionary<string, string?>>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
+            => new ValueTask<IDictionary<string, string?>>(Read(buf, len, async, fieldDescription).Result);
 
         #endregion
     }

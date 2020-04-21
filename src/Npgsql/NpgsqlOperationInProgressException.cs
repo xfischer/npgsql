@@ -1,7 +1,6 @@
 ﻿using System;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// Thrown when trying to use a connection that is already busy performing some other operation.
     /// Provides information on the already-executing operation to help with debugging.
@@ -23,6 +22,6 @@ namespace EnterpriseDB.EDBClient
         /// If the connection is busy with another command, this will contain a reference to that command.
         /// Otherwise, if the connection if busy with another type of operation (e.g. COPY), contains null.
         /// </summary>
-        public EDBCommand CommandInProgress { get; }
+        public EDBCommand? CommandInProgress { get; }
     }
 }

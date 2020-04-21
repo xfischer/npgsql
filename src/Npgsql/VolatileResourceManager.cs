@@ -1,36 +1,10 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Transactions;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     ///
     /// </summary>
@@ -40,11 +14,11 @@ namespace EnterpriseDB.EDBClient
     /// </remarks>
     class VolatileResourceManager : ISinglePhaseNotification
     {
-        [CanBeNull] EDBConnector _connector;
-        [CanBeNull] Transaction _transaction;
-        [CanBeNull] readonly string _txId;
-        [CanBeNull] EDBTransaction _localTx;
-        [CanBeNull] string _preparedTxName;
+        EDBConnector _connector;
+        Transaction _transaction;
+        readonly string _txId;
+        EDBTransaction _localTx;
+        string? _preparedTxName;
         bool IsPrepared => _preparedTxName != null;
         bool _isDisposed;
 
@@ -52,9 +26,9 @@ namespace EnterpriseDB.EDBClient
 
         const int MaximumRollbackAttempts = 20;
 
-        internal VolatileResourceManager(EDBConnection connection, [NotNull] Transaction transaction)
+        internal VolatileResourceManager(EDBConnection connection, Transaction transaction)
         {
-            _connector = connection.Connector;
+            _connector = connection.Connector!;
             _transaction = transaction;
             // _tx gets disposed by System.Transactions at some point, but we want to be able to log its local ID
             _txId = transaction.TransactionInformation.LocalIdentifier;
@@ -64,11 +38,6 @@ namespace EnterpriseDB.EDBClient
         public void SinglePhaseCommit(SinglePhaseEnlistment singlePhaseEnlistment)
         {
             CheckDisposed();
-
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_localTx != null, "No local transaction");
-            Debug.Assert(_connector != null, "No connector");
-
             Log.Debug($"Single Phase Commit (localid={_txId})", _connector.Id);
 
             try
@@ -93,10 +62,6 @@ namespace EnterpriseDB.EDBClient
         public void Prepare(PreparingEnlistment preparingEnlistment)
         {
             CheckDisposed();
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_localTx != null, "No local transaction");
-            Debug.Assert(_connector != null, "No connector");
-
             Log.Debug($"Two-phase transaction prepare (localid={_txId})", _connector.Id);
 
             // The PostgreSQL prepared transaction name is the distributed GUID + our connection's process ID, for uniqueness
@@ -129,9 +94,6 @@ namespace EnterpriseDB.EDBClient
         public void Commit(Enlistment enlistment)
         {
             CheckDisposed();
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_connector != null, "No connector");
-
             Log.Debug($"Two-phase transaction commit (localid={_txId})", _connector.Id);
 
             try
@@ -154,14 +116,12 @@ namespace EnterpriseDB.EDBClient
                     // if the user continues to use their connection after disposing the scope, and the MSDTC
                     // requests a commit at that exact time.
                     // To avoid this, we open a new connection for performing the 2nd phase.
-                    using (var conn2 = (EDBConnection)((ICloneable)_connector.Connection).Clone())
-                    {
-                        conn2.Open();
-                        var connector = conn2.Connector;
-                        Debug.Assert(connector != null);
-                        using (connector.StartUserAction())
-                            connector.ExecuteInternalCommand($"COMMIT PREPARED '{_preparedTxName}'");
-                    }
+                    using var conn2 = (EDBConnection)((ICloneable)_connector.Connection).Clone();
+                    conn2.Open();
+
+                    var connector = conn2.Connector!;
+                    using (connector.StartUserAction())
+                        connector.ExecuteInternalCommand($"COMMIT PREPARED '{_preparedTxName}'");
                 }
             }
             catch (Exception e)
@@ -178,8 +138,6 @@ namespace EnterpriseDB.EDBClient
         public void Rollback(Enlistment enlistment)
         {
             CheckDisposed();
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_connector != null, "No connector");
 
             try
             {
@@ -201,9 +159,6 @@ namespace EnterpriseDB.EDBClient
 
         public void InDoubt(Enlistment enlistment)
         {
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_connector != null, "No connector");
-
             Log.Warn($"Two-phase transaction in doubt (localid={_txId})", _connector.Id);
 
             // TODO: Is this the correct behavior?
@@ -224,9 +179,6 @@ namespace EnterpriseDB.EDBClient
 
         void RollbackLocal()
         {
-            Debug.Assert(_connector != null, "No connector");
-            Debug.Assert(_localTx != null, "No local transaction");
-
             Log.Debug($"Single-phase transaction rollback (localid={_txId})", _connector.Id);
 
             var attempt = 0;
@@ -277,25 +229,22 @@ namespace EnterpriseDB.EDBClient
                 // if the user continues to use their connection after disposing the scope, and the MSDTC
                 // requests a commit at that exact time.
                 // To avoid this, we open a new connection for performing the 2nd phase.
-                using (var conn2 = (EDBConnection)((ICloneable)_connector.Connection).Clone())
-                {
-                    conn2.Open();
-                    var connector = conn2.Connector;
-                    Debug.Assert(connector != null);
-                    using (connector.StartUserAction())
-                        connector.ExecuteInternalCommand($"ROLLBACK PREPARED '{_preparedTxName}'");
-                }
+                using var conn2 = (EDBConnection)((ICloneable)_connector.Connection).Clone();
+                conn2.Open();
+
+                var connector = conn2.Connector!;
+                using (connector.StartUserAction())
+                    connector.ExecuteInternalCommand($"ROLLBACK PREPARED '{_preparedTxName}'");
             }
         }
 
         #region Dispose/Cleanup
 
+#pragma warning disable CS8625
         void Dispose()
         {
             if (_isDisposed)
                 return;
-            Debug.Assert(_transaction != null, "No transaction");
-            Debug.Assert(_connector != null, "No connector");
 
             Log.Trace($"Cleaning up resource manager (localid={_txId}", _connector.Id);
             if (_localTx != null)
@@ -314,17 +263,18 @@ namespace EnterpriseDB.EDBClient
                 {
                     var found = PoolManager.TryGetValue(_connector.ConnectionString, out var pool);
                     Debug.Assert(found);
-                    pool.TryRemovePendingEnlistedConnector(_connector, _transaction);
+                    pool!.TryRemovePendingEnlistedConnector(_connector, _transaction);
                     pool.Release(_connector);
                 }
                 else
                     _connector.Close();
             }
 
-            _connector = null;
-            _transaction = null;
+            _connector = null!;
+            _transaction = null!;
             _isDisposed = true;
         }
+#pragma warning restore CS8625
 
         void CheckDisposed()
         {
@@ -335,26 +285,15 @@ namespace EnterpriseDB.EDBClient
         #endregion
 
         static System.Data.IsolationLevel ConvertIsolationLevel(IsolationLevel isolationLevel)
-        {
-            switch (isolationLevel)
+            => isolationLevel switch
             {
-            case IsolationLevel.Chaos:
-                return System.Data.IsolationLevel.Chaos;
-            case IsolationLevel.ReadCommitted:
-                return System.Data.IsolationLevel.ReadCommitted;
-            case IsolationLevel.ReadUncommitted:
-                return System.Data.IsolationLevel.ReadUncommitted;
-            case IsolationLevel.RepeatableRead:
-                return System.Data.IsolationLevel.RepeatableRead;
-            case IsolationLevel.Serializable:
-                return System.Data.IsolationLevel.Serializable;
-            case IsolationLevel.Snapshot:
-                return System.Data.IsolationLevel.Snapshot;
-            case IsolationLevel.Unspecified:
-            default:
-                return System.Data.IsolationLevel.Unspecified;
-            }
-        }
-
+                IsolationLevel.Chaos           => System.Data.IsolationLevel.Chaos,
+                IsolationLevel.ReadCommitted   => System.Data.IsolationLevel.ReadCommitted,
+                IsolationLevel.ReadUncommitted => System.Data.IsolationLevel.ReadUncommitted,
+                IsolationLevel.RepeatableRead  => System.Data.IsolationLevel.RepeatableRead,
+                IsolationLevel.Serializable    => System.Data.IsolationLevel.Serializable,
+                IsolationLevel.Snapshot        => System.Data.IsolationLevel.Snapshot,
+                _                              => System.Data.IsolationLevel.Unspecified
+            };
     }
 }

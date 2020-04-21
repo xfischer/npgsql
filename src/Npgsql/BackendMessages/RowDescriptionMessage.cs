@@ -1,35 +1,11 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
+using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient.BackendMessages
 {
@@ -43,9 +19,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     {
         public List<FieldDescription> Fields { get; }
         readonly Dictionary<string, int> _nameIndex;
-        [CanBeNull]
-        Dictionary<string, int> _insensitiveIndex;
-        bool _isInsensitiveIndexInitialized;
+        Dictionary<string, int>? _insensitiveIndex;
 
         internal RowDescriptionMessage()
         {
@@ -53,41 +27,53 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             _nameIndex = new Dictionary<string, int>();
         }
 
-        internal RowDescriptionMessage Load(EDBReadBuffer buf, ConnectorTypeMapper typeMapper, bool isCallableStmt)//EnterpriseDB Team
+        RowDescriptionMessage(RowDescriptionMessage source)
+        {
+            Fields = new List<FieldDescription>(source.Fields.Count);
+            foreach (var f in source.Fields)
+                Fields.Add(f.Clone());
+            _nameIndex = new Dictionary<string, int>(source._nameIndex);
+            if (source._insensitiveIndex?.Count > 0)
+                _insensitiveIndex = new Dictionary<string, int>(source._insensitiveIndex);
+        }
+
+        internal RowDescriptionMessage Load(EDBReadBuffer buf, ConnectorTypeMapper typeMapper, bool isOutDescription)
         {
             Fields.Clear();
             _nameIndex.Clear();
-            if (_isInsensitiveIndexInitialized)
-            {
-                Debug.Assert(_insensitiveIndex != null);
-                _insensitiveIndex.Clear();
-                _isInsensitiveIndexInitialized = false;
-            }
+            _insensitiveIndex?.Clear();
 
             var numFields = buf.ReadInt16();
-            if (isCallableStmt != true)//EnterpriseDB Team
+            if (isOutDescription != true)
             {
                 for (var i = 0; i != numFields; ++i)
                 {
-                    // TODO: Recycle
-                    var field = new FieldDescription();
-                    field.Populate(
-                    typeMapper,
-                    buf.ReadNullTerminatedString(), // Name
-                    buf.ReadUInt32(), // TableOID
-                    buf.ReadInt16(), // ColumnAttributeNumber
-                    buf.ReadUInt32(), // TypeOID
-                    buf.ReadInt16(), // TypeSize
-                    buf.ReadInt32(), // TypeModifier
-                    (FormatCode)buf.ReadInt16() // FormatCode
-                );
+                    FieldDescription field;
+                    if (i >= Fields.Count)
+                    {
+                        field = new FieldDescription();
+                        Fields.Add(field);
+                    }
+                    else
+                        field = Fields[i];
 
-                Fields.Add(field);
-                if (!_nameIndex.ContainsKey(field.Name))
-                    _nameIndex.Add(field.Name, i);
+                    field.Populate(
+                        typeMapper,
+                        buf.ReadNullTerminatedString(), // Name
+                        buf.ReadUInt32(), // TableOID
+                        buf.ReadInt16(), // ColumnAttributeNumber
+                        buf.ReadUInt32(), // TypeOID
+                        buf.ReadInt16(), // TypeSize
+                        buf.ReadInt32(), // TypeModifier
+                        (FormatCode)buf.ReadInt16() // FormatCode
+                    );
+
+                    if (!_nameIndex.ContainsKey(field.Name))
+                        _nameIndex.Add(field.Name, i);
+
+                }
             }
-            }
-            else//EnterpriseDB Team
+            else
             {
                 for (var i = 0; i != numFields; ++i)
                 {
@@ -111,7 +97,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                     //FormatCode = (FormatCode)buf.ReadInt16()
 
                     // If we get the exact unknown type in return, it was a literal string written in the query string
-                    field.Handler = typeMapper.GetByOID(field.TypeOID);
+                //TODO ZK:    field.Handler = typeMapper.GetByOID(field.TypeOID);
                     //  Fields.Add()
                     Fields.Add(field);
                     if (!_nameIndex.ContainsKey(field.Name))
@@ -130,10 +116,12 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
             }
 
+
             return this;
         }
 
-        public void AddReturnData(FieldDescription fd)//EnterpriseDB Team
+        /* EnterpriseDB Team */
+        public void AddReturnData(FieldDescription fd)
         {
 
             var fdData = new FieldDescription[Fields.Count + 1];
@@ -151,6 +139,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 Fields.Add(fdData[i]);
             //  Fields =(FieldDescription) fdData;
         }
+
 
         internal FieldDescription this[int index] => Fields[index];
 
@@ -172,7 +161,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             if (_nameIndex.TryGetValue(name, out fieldIndex))
                 return true;
 
-            if (!_isInsensitiveIndexInitialized)
+            if (_insensitiveIndex is null || _insensitiveIndex.Count == 0)
             {
                 if (_insensitiveIndex == null)
                     _insensitiveIndex = new Dictionary<string, int>(InsensitiveComparer.Instance);
@@ -180,15 +169,14 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 foreach (var kv in _nameIndex)
                     if (!_insensitiveIndex.ContainsKey(kv.Key))
                         _insensitiveIndex[kv.Key] = kv.Value;
-
-                _isInsensitiveIndexInitialized = true;
             }
 
-            Debug.Assert(_insensitiveIndex != null);
             return _insensitiveIndex.TryGetValue(name, out fieldIndex);
         }
 
         public BackendMessageCode Code => BackendMessageCode.RowDescription;
+
+        internal RowDescriptionMessage Clone() => new RowDescriptionMessage(this);
 
         /// <summary>
         /// Comparer that's case-insensitive and Kana width-insensitive
@@ -202,10 +190,10 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
             // We should really have CompareOptions.IgnoreKanaType here, but see
             // https://github.com/dotnet/corefx/issues/12518#issuecomment-389658716
-            public bool Equals([NotNull] string x, [NotNull] string y)
+            public bool Equals(string x, string y)
                 => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType) == 0;
 
-            public int GetHashCode([NotNull] string o)
+            public int GetHashCode(string o)
                 => CompareInfo.GetSortKey(o, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType).GetHashCode();
         }
     }
@@ -216,6 +204,23 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     /// </summary>
     public sealed class FieldDescription
     {
+#pragma warning disable CS8618  // Lazy-initialized type
+        internal FieldDescription() {}
+#pragma warning restore CS8618
+
+        internal FieldDescription(FieldDescription source)
+        {
+            _typeMapper = source._typeMapper;
+            Name = source.Name;
+            TableOID = source.TableOID;
+            ColumnAttributeNumber = source.ColumnAttributeNumber;
+            TypeOID = source.TypeOID;
+            TypeSize = source.TypeSize;
+            TypeModifier = source.TypeModifier;
+            FormatCode = source.FormatCode;
+            Handler = source.Handler;
+        }
+
         internal void Populate(
             ConnectorTypeMapper typeMapper, string name, uint tableOID, short columnAttributeNumber,
             uint oid, short typeSize, int typeModifier, FormatCode formatCode
@@ -230,14 +235,13 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             TypeModifier = typeModifier;
             FormatCode = formatCode;
 
-            RealHandler = typeMapper.GetByOID(TypeOID);
             ResolveHandler();
         }
-
-        internal void PopulateCallableStmt(//EnterpriseDB Team
-            ConnectorTypeMapper typeMapper, string name, short retIndex, uint typoid,
-             short typeSize, int typeModifier, FormatCode formatCode
-        )
+        /*EnterpriseDB Team */
+        internal void PopulateCallableStmt(
+           ConnectorTypeMapper typeMapper, string name, short retIndex, uint typoid,
+            short typeSize, int typeModifier, FormatCode formatCode
+       )
         {
 
             _typeMapper = typeMapper;
@@ -248,20 +252,44 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             TypeModifier = typeModifier;
             FormatCode = formatCode;
 
-            RealHandler = typeMapper.GetByOID(TypeOID);
-            if (RealHandler != null && RealHandler.PgDisplayName != null && RealHandler.PgDisplayName == "dbms_aq.message_properties_t")
+            ResolveHandler();
+
+            //RealHandler = typeMapper.GetByOID(TypeOID);
+            if (Handler != null && Handler.PgDisplayName != null && Handler.PgDisplayName == "dbms_aq.message_properties_t")
             {
                 _isUnsupportedField = true;
             }
-            ResolveHandler();
         }
+
+        // EnterpriseDB Team
+        ///<summary>
+        ///  callable statement store the returning index on returned parameters.
+        /// </summary>
+
+        internal short ReturningIndex { get; set; }
+
+        ///<summary>
+        /// is unsupported field 
+        /// </summary>
+        /// 
+        internal bool _isUnsupportedField { get; set; }
+
+        ///// <summary>
+        ///// The EDB type handler assigned to handle this field.
+        ///// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
+        ///// </summary>
+        //public EDBTypeHandler Handler { get; set; }//EnterpriseDB Team
+
+        ///// <summary>
+        ///// The type handler resolved for this field, regardless of whether it's binary or text.
+        ///// </summary>
+        //internal EDBTypeHandler RealHandler { get; private set; }
+
 
         /// <summary>
         /// The field name.
         /// </summary>
         internal string Name { get; set; }
-
-        internal bool _isUnsupportedField { get; set; }
 
         /// <summary>
         /// The object ID of the field's data type.
@@ -282,9 +310,6 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         /// If the field can be identified as a column of a specific table, the object ID of the table; otherwise zero.
         /// </summary>
         internal uint TableOID { get; set; }
-
-        /// /// Incase of callable statements we should store the returning index on returned parameters.
-        internal short ReturningIndex { get; set; }//EnterpriseDB Team
 
         /// <summary>
         /// If the field can be identified as a column of a specific table, the attribute number of the column; otherwise zero.
@@ -314,12 +339,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         /// The EDB type handler assigned to handle this field.
         /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
-        public EDBTypeHandler Handler { get; set; }//EnterpriseDB Team
-
-        /// <summary>
-        /// The type handler resolved for this field, regardless of whether it's binary or text.
-        /// </summary>
-        internal EDBTypeHandler RealHandler { get; private set; }
+        internal EDBTypeHandler Handler { get; private set; }
 
         internal PostgresType PostgresType
             => _typeMapper.DatabaseInfo.ByOID.TryGetValue(TypeOID, out var postgresType)
@@ -339,6 +359,8 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
         internal bool IsBinaryFormat => FormatCode == FormatCode.Binary;
         internal bool IsTextFormat => FormatCode == FormatCode.Text;
+
+        internal FieldDescription Clone() => new FieldDescription(this);
 
         /// <summary>
         /// Returns a string that represents the current object.

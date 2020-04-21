@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using EnterpriseDB.EDBClient.BackendMessages;
 using System.Runtime.Serialization;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// The exception that is thrown when server-related issues occur.
     /// </summary>

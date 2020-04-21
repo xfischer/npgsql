@@ -1,52 +1,40 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.NetworkInformation;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL macaddr and macaddr8 data types.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-net-types.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
+    [TypeMapping("macaddr8", EDBDbType.MacAddr8)]
     [TypeMapping("macaddr", EDBDbType.MacAddr, typeof(PhysicalAddress))]
-    class MacaddrHandler : EDBSimpleTypeHandler<PhysicalAddress>
+    public class MacaddrHandler : EDBSimpleTypeHandler<PhysicalAddress>
     {
+        /// <inheritdoc />
+        public MacaddrHandler(PostgresType postgresType) : base(postgresType) {}
+
         #region Read
 
-        public override PhysicalAddress Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public override PhysicalAddress Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
-            Debug.Assert(len == 6);
+            Debug.Assert(len == 6 || len == 8);
 
-            var bytes = new byte[6];
+            var bytes = new byte[len];
 
-            buf.ReadBytes(bytes, 0, 6);
+            buf.ReadBytes(bytes, 0, len);
             return new PhysicalAddress(bytes);
         }
 
@@ -54,13 +42,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(PhysicalAddress value, EDBParameter parameter)
-             => value.GetAddressBytes().Length == 6
-                 ? 6
-                 : throw new FormatException("MAC addresses must have length 6 in PostgreSQL");
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(PhysicalAddress value, EDBParameter? parameter)
+            => value.GetAddressBytes().Length;
 
-        public override void Write(PhysicalAddress value, EDBWriteBuffer buf, EDBParameter parameter)
-            => buf.WriteBytes(value.GetAddressBytes(), 0, 6);
+        /// <inheritdoc />
+        public override void Write(PhysicalAddress value, EDBWriteBuffer buf, EDBParameter? parameter)
+        {
+            var bytes = value.GetAddressBytes();
+            buf.WriteBytes(bytes, 0, bytes.Length);
+        }
 
         #endregion Write
     }

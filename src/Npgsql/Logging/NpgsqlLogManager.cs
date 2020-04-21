@@ -1,32 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2016 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
+﻿using System;
 
 namespace EnterpriseDB.EDBClient.Logging
 {
@@ -43,14 +15,14 @@ namespace EnterpriseDB.EDBClient.Logging
             get
             {
                 _providerRetrieved = true;
-                return _provider;
+                return _provider!;
             }
             set
             {
                 if (_providerRetrieved)
                     throw new InvalidOperationException("The logging provider must be set before any EDB action is taken");
 
-                _provider = value;
+                _provider = value ?? throw new ArgumentNullException(nameof(value));
             }
         }
 
@@ -60,14 +32,11 @@ namespace EnterpriseDB.EDBClient.Logging
         /// </summary>
         public static bool IsParameterLoggingEnabled { get; set; }
 
-        static IEDBLoggingProvider _provider;
+        static IEDBLoggingProvider? _provider;
         static bool _providerRetrieved;
 
         internal static EDBLogger CreateLogger(string name) => Provider.CreateLogger("EnterpriseDB.EDBClient." + name);
 
-        static EDBLogManager()
-        {
-            Provider = new NoOpLoggingProvider();
-        }
+        static EDBLogManager() => Provider = new NoOpLoggingProvider();
     }
 }

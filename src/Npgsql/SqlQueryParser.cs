@@ -34,8 +34,12 @@ namespace EnterpriseDB.EDBClient
         readonly Dictionary<string, int> _paramIndexMap = new Dictionary<string, int>();
         readonly StringBuilder _rewrittenSql = new StringBuilder();
 
-        List<EDBStatement> _statements;
-        EDBStatement _statement;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        List<EDBStatement> _statements = default;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        EDBStatement _statement = default;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         int _statementIndex;
 
         /// <summary>
@@ -57,7 +61,9 @@ namespace EnterpriseDB.EDBClient
             Debug.Assert(parameters != null);
             Debug.Assert(deriveParameters == false || parameters.Count == 0);
 
+#pragma warning disable CS8601 // Possible null reference assignment.
             _statements = statements;
+#pragma warning restore CS8601 // Possible null reference assignment.
             _statementIndex = -1;
             MoveToNextStatement();
 
@@ -175,6 +181,7 @@ namespace EnterpriseDB.EDBClient
                         parenthesisLevel++;
                         break;
                     case ')':
+
                         parenthesisLevel--;
                         break;
                     case 'e':

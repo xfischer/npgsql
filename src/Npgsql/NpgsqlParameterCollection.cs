@@ -1,35 +1,13 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// Represents a collection of parameters relevant to a <see cref="EDBCommand">EDBCommand</see>
     /// as well as their respective mappings to columns in a DataSet.
@@ -40,13 +18,11 @@ namespace EnterpriseDB.EDBClient
         readonly List<EDBParameter> _internalList = new List<EDBParameter>(5);
 
         // Dictionary lookups for GetValue to improve performance
-        [CanBeNull]
-        Dictionary<string, int> _lookup;
-        [CanBeNull]
-        Dictionary<string, int> _lookupIgnoreCase;
+        Dictionary<string, int>? _lookup;
+        Dictionary<string, int>? _lookupIgnoreCase;
 
-        // EnterpriseDB Team
-        private EDBParameter return_param = null;
+  // EnterpriseDB Team
+        private EDBParameter return_param = null!;
         private int return_index = -1;
         internal bool _hasReturnParam = false;
 
@@ -167,10 +143,8 @@ namespace EnterpriseDB.EDBClient
         /// <returns>The index of the new <see cref="EDBParameter">EDBParameter</see> object.</returns>
         public EDBParameter Add(EDBParameter value)
         {
-            if (value.ParameterName == "message_properties")
-            {
-                value.FormatCode = FormatCode.Text;
-            }
+            if (value is null)
+                throw new ArgumentNullException(nameof(value));
             if (value.Collection != null)
                 throw new InvalidOperationException("The parameter already belongs to a collection");
 
@@ -180,15 +154,12 @@ namespace EnterpriseDB.EDBClient
                 value.Collection = this;
                 InvalidateHashLookups();
             }
-            else//EnterpriseDB Team
+            else
             {
-
                 return_param = value;
                 return_index = _internalList.Count;
-                _hasReturnParam = true;
-
+               _hasReturnParam = true;
             }
-
             return value;
         }
 
@@ -196,6 +167,7 @@ namespace EnterpriseDB.EDBClient
         void ICollection<EDBParameter>.Add(EDBParameter item)
             => Add(item);
 
+#nullable disable
         /// <summary>
         /// Adds a <see cref="EDBParameter">EDBParameter</see> to the <see cref="EDBParameterCollection">EDBParameterCollection</see> given the specified parameter name and value.
         /// </summary>
@@ -260,6 +232,7 @@ namespace EnterpriseDB.EDBClient
         [PublicAPI]
         public EDBParameter AddWithValue(EDBDbType parameterType, object value)
             => Add(new EDBParameter { EDBDbType = parameterType, Value = value });
+#nullable restore
 
         /// <summary>
         /// Adds a <see cref="EDBParameter">EDBParameter</see> to the <see cref="EDBParameterCollection">EDBParameterCollection</see> given the parameter name and the data type.
@@ -309,7 +282,7 @@ namespace EnterpriseDB.EDBClient
             => IndexOf(parameterName ?? throw new ArgumentNullException(nameof(parameterName))) != -1;
 
         /// <inheritdoc />
-        public override int IndexOf([CanBeNull] string parameterName)
+        public override int IndexOf(string parameterName)
         {
             if (parameterName is null)
                 return -1;
@@ -428,8 +401,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="parameterName">The name of the <see cref="EDBParameter">EDBParameter</see> object to find.</param>
         /// <param name="parameter">A reference to the requested parameter is returned in this out param if it is found in the list.  This value is null if the parameter is not found.</param>
         /// <returns><b>true</b> if the collection contains the parameter and param will contain the parameter; otherwise, <b>false</b>.</returns>
-        [ContractAnnotation("=>true,parameter:notnull; =>false,parameter:null")]
-        public bool TryGetValue(string parameterName, [CanBeNull] out EDBParameter parameter)
+        public bool TryGetValue(string parameterName, [NotNullWhen(true)] out EDBParameter? parameter)
         {
             if (parameterName is null)
                 throw new ArgumentNullException(nameof(parameterName));
@@ -514,7 +486,7 @@ namespace EnterpriseDB.EDBClient
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
 
-            foreach (object parameter in values)
+            foreach (object? parameter in values)
                 Add(Cast(parameter) ?? throw new ArgumentException("Collection contains a null value.", nameof(values)));
         }
 
@@ -632,11 +604,11 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        static EDBParameter Cast(object value)
+        static EDBParameter Cast(object? value)
         {
             try
             {
-                return (EDBParameter)value;
+                return (EDBParameter)value!;
             }
             catch (Exception)
             {

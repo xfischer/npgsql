@@ -1,41 +1,15 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
-using static EnterpriseDB.EDBClient.Statics;
+using static EnterpriseDB.EDBClient.Util.Statics;
 
 #pragma warning disable 1591
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// Provides an API for a raw binary COPY operation, a high-performance data import/export mechanism to
     /// a PostgreSQL table. Initiated by <see cref="EDBConnection.BeginRawBinaryCopy"/>
@@ -82,7 +56,10 @@ namespace EnterpriseDB.EDBClient
             _connector = connector;
             _readBuf = connector.ReadBuffer;
             _writeBuf = connector.WriteBuffer;
-            _connector.SendQuery(copyCommand);
+
+            _connector.WriteQuery(copyCommand);
+            _connector.Flush();
+
             var msg = _connector.ReadMessage();
             switch (msg.Code)
             {
@@ -111,7 +88,17 @@ namespace EnterpriseDB.EDBClient
 
         #region Write
 
-        public override void Write(byte[] buffer, int offset, int count)
+        public override void Write(byte[] buffer, int offset, int count) => Write(buffer, offset, count, false).GetAwaiter().GetResult();
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled(cancellationToken);
+            using (NoSynchronizationContextScope.Enter())
+                return Write(buffer, offset, count, true);
+        }
+
+        async Task Write(byte[] buffer, int offset, int count, bool async)
         {
             CheckDisposed();
             if (!CanWrite)
@@ -127,7 +114,7 @@ namespace EnterpriseDB.EDBClient
 
             try {
                 // Value is too big, flush.
-                Flush();
+                await FlushAsync(async);
 
                 if (count <= _writeBuf.WriteSpaceLeft)
                 {
@@ -136,7 +123,7 @@ namespace EnterpriseDB.EDBClient
                 }
 
                 // Value is too big even after a flush - bypass the buffer and write directly.
-                _writeBuf.DirectWrite(buffer, offset, count);
+                await _writeBuf.DirectWrite(buffer, offset, count, async);
             } catch {
                 _connector.Break();
                 Cleanup();
@@ -144,17 +131,37 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        public override void Flush()
+        public override void Flush() => FlushAsync(false).GetAwaiter().GetResult();
+
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled(cancellationToken);
+            using (NoSynchronizationContextScope.Enter())
+                return FlushAsync(true);
+        }
+
+        Task FlushAsync(bool async)
         {
             CheckDisposed();
-            _writeBuf.Flush();
+            return _writeBuf.Flush(async);
         }
 
         #endregion
 
         #region Read
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count) => Read(buffer, offset, count, false).GetAwaiter().GetResult();
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<int>(cancellationToken);
+            using (NoSynchronizationContextScope.Enter())
+                return Read(buffer, offset, count, true);
+        }
+
+        async Task<int> Read(byte[] buffer, int offset, int count, bool async)
         {
             CheckDisposed();
             if (!CanRead)
@@ -168,14 +175,14 @@ namespace EnterpriseDB.EDBClient
             {
                 // We've consumed the current DataMessage (or haven't yet received the first),
                 // read the next message
-                var msg = _connector.ReadMessage();
+                var msg = await _connector.ReadMessage(async);
                 switch (msg.Code) {
                 case BackendMessageCode.CopyData:
                     _leftToReadInDataMsg = ((CopyDataMessage)msg).Length;
                     break;
                 case BackendMessageCode.CopyDone:
-                    Expect<CommandCompleteMessage>(_connector.ReadMessage(), _connector);
-                    Expect<ReadyForQueryMessage>(_connector.ReadMessage(), _connector);
+                    Expect<CommandCompleteMessage>(await _connector.ReadMessage(async), _connector);
+                    Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async), _connector);
                     _isConsumed = true;
                     return 0;
                 default:
@@ -188,7 +195,7 @@ namespace EnterpriseDB.EDBClient
             // If our buffer is empty, read in more. Otherwise return whatever is there, even if the
             // user asked for more (normal socket behavior)
             if (_readBuf.ReadBytesLeft == 0) {
-                _readBuf.ReadMore(false).GetAwaiter().GetResult();
+                await _readBuf.ReadMore(async);
             }
 
             Debug.Assert(_readBuf.ReadBytesLeft > 0);
@@ -210,7 +217,18 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Cancels and terminates an ongoing operation. Any data already written will be discarded.
         /// </summary>
-        public void Cancel()
+        public void Cancel() => Cancel(false).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Cancels and terminates an ongoing operation. Any data already written will be discarded.
+        /// </summary>
+        public Task CancelAsync()
+        {
+            using (NoSynchronizationContextScope.Enter())
+               return Cancel(true);
+        }
+
+        async Task Cancel(bool async)
         {
             CheckDisposed();
 
@@ -219,17 +237,19 @@ namespace EnterpriseDB.EDBClient
                 _isDisposed = true;
                 _writeBuf.EndCopyMode();
                 _writeBuf.Clear();
-                _connector.SendMessage(new CopyFailMessage());
+                await _connector.WriteCopyFail(async);
+                await _connector.Flush(async);
                 try
                 {
-                    var msg = _connector.ReadMessage();
+                    var msg = await _connector.ReadMessage(async);
                     // The CopyFail should immediately trigger an exception from the read above.
                     _connector.Break();
                     throw new EDBException("Expected ErrorResponse when cancelling COPY but got: " + msg.Code);
                 }
                 catch (PostgresException e)
                 {
-                    if (e.SqlState == "57014") { return; }
+                    if (e.SqlState == PostgresErrorCodes.QueryCanceled)
+                        return;
                     throw;
                 }
             }
@@ -243,7 +263,9 @@ namespace EnterpriseDB.EDBClient
 
         #region Dispose
 
-        protected override void Dispose(bool disposing)
+        protected override void Dispose(bool disposing) => DisposeAsync(disposing, false).GetAwaiter().GetResult();
+
+        async ValueTask DisposeAsync(bool disposing, bool async)
         {
             if (_isDisposed || !disposing) { return; }
 
@@ -251,11 +273,12 @@ namespace EnterpriseDB.EDBClient
             {
                 if (CanWrite)
                 {
-                    Flush();
+                    await FlushAsync(async);
                     _writeBuf.EndCopyMode();
-                    _connector.SendMessage(CopyDoneMessage.Instance);
-                    Expect<CommandCompleteMessage>(_connector.ReadMessage(), _connector);
-                    Expect<ReadyForQueryMessage>(_connector.ReadMessage(), _connector);
+                    await _connector.WriteCopyDone(async);
+                    await _connector.Flush(async);
+                    Expect<CommandCompleteMessage>(await _connector.ReadMessage(async), _connector);
+                    Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async), _connector);
                 }
                 else
                 {
@@ -263,7 +286,7 @@ namespace EnterpriseDB.EDBClient
                     {
                         if (_leftToReadInDataMsg > 0)
                         {
-                            _readBuf.Skip(_leftToReadInDataMsg);
+                            await _readBuf.Skip(_leftToReadInDataMsg, async);
                         }
                         _connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                     }
@@ -277,6 +300,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
+#pragma warning disable CS8625
         void Cleanup()
         {
             Log.Debug("COPY operation ended", _connector.Id);
@@ -286,6 +310,7 @@ namespace EnterpriseDB.EDBClient
             _writeBuf = null;
             _isDisposed = true;
         }
+#pragma warning restore CS8625
 
         void CheckDisposed()
         {
@@ -329,10 +354,13 @@ namespace EnterpriseDB.EDBClient
     /// </remarks>
     public sealed class EDBCopyTextWriter : StreamWriter, ICancelable
     {
-        internal EDBCopyTextWriter(EDBRawCopyStream underlying) : base(underlying)
+        internal EDBCopyTextWriter(EDBConnector connector, EDBRawCopyStream underlying) : base(underlying)
         {
             if (underlying.IsBinary)
+            {
+                connector.Break();
                 throw new Exception("Can't use a binary copy stream for text writing");
+            }
         }
 
         /// <summary>
@@ -341,6 +369,15 @@ namespace EnterpriseDB.EDBClient
         public void Cancel()
         {
             ((EDBRawCopyStream)BaseStream).Cancel();
+        }
+
+        /// <summary>
+        /// Cancels and terminates an ongoing import. Any data already written will be discarded.
+        /// </summary>
+        public Task CancelAsync()
+        {
+            using (NoSynchronizationContextScope.Enter())
+                return ((EDBRawCopyStream)BaseStream).CancelAsync();
         }
     }
 
@@ -352,10 +389,13 @@ namespace EnterpriseDB.EDBClient
     /// </remarks>
     public sealed class EDBCopyTextReader : StreamReader, ICancelable
     {
-        internal EDBCopyTextReader(EDBRawCopyStream underlying) : base(underlying)
+        internal EDBCopyTextReader(EDBConnector connector, EDBRawCopyStream underlying) : base(underlying)
         {
             if (underlying.IsBinary)
+            {
+                connector.Break();
                 throw new Exception("Can't use a binary copy stream for text reading");
+            }
         }
 
         /// <summary>
@@ -364,6 +404,15 @@ namespace EnterpriseDB.EDBClient
         public void Cancel()
         {
             ((EDBRawCopyStream)BaseStream).Cancel();
+        }
+
+        /// <summary>
+        /// Cancels and terminates an ongoing import. Any data already written will be discarded.
+        /// </summary>
+        public Task CancelAsync()
+        {
+            using (NoSynchronizationContextScope.Enter())
+                return ((EDBRawCopyStream)BaseStream).CancelAsync();
         }
     }
 }

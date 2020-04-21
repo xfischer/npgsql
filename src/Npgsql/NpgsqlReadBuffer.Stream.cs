@@ -1,34 +1,10 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     public sealed partial class EDBReadBuffer
     {
         internal sealed class ColumnStream : Stream
@@ -80,11 +56,11 @@ namespace EnterpriseDB.EDBClient
                 set
                 {
                     if (value < 0)
-                        throw new ArgumentOutOfRangeException("Non - negative number required.");
+                        throw new ArgumentOutOfRangeException(nameof(value), "Non - negative number required.");
                     Seek(_start + value, SeekOrigin.Begin);
                 }
             }
-
+            /*EnterpriseDB Team*/
             public override long Seek(long offset, SeekOrigin origin)
             {
                 CheckDisposed();
@@ -94,33 +70,34 @@ namespace EnterpriseDB.EDBClient
                 if (offset > int.MaxValue)
                     throw new ArgumentOutOfRangeException(nameof(offset), "Stream length must be non-negative and less than 2^31 - 1 - origin.");
 
-                const string SeekBeforeBegin = "An attempt was made to move the position before the beginning of the stream.";
+                const string seekBeforeBegin = "An attempt was made to move the position before the beginning of the stream.";
+
                 switch (origin)
                 {
                 case SeekOrigin.Begin:
-                    {
-                        var tempPosition = unchecked(_start + (int)offset);
-                        if (offset < 0 || tempPosition < _start)
-                            throw new IOException(SeekBeforeBegin);
-                        _buf.ReadPosition = _start;
-                        return tempPosition;
-                    }
+                {
+                    var tempPosition = unchecked(_start + (int)offset);
+                    if (offset < 0 || tempPosition < _start)
+                        throw new IOException(seekBeforeBegin);
+                    _buf.ReadPosition = _start;
+                    return tempPosition;
+                }
                 case SeekOrigin.Current:
-                    {
-                        var tempPosition = unchecked(_buf.ReadPosition + (int)offset);
-                        if (unchecked(_buf.ReadPosition + offset) < _start || tempPosition < _start)
-                            throw new IOException(SeekBeforeBegin);
-                        _buf.ReadPosition = tempPosition;
-                        return tempPosition;
-                    }
+                {
+                    var tempPosition = unchecked(_buf.ReadPosition + (int)offset);
+                    if (unchecked(_buf.ReadPosition + offset) < _start || tempPosition < _start)
+                        throw new IOException(seekBeforeBegin);
+                    _buf.ReadPosition = tempPosition;
+                    return tempPosition;
+                }
                 case SeekOrigin.End:
-                    {
-                        var tempPosition = unchecked(_len + (int)offset);
-                        if (unchecked(_len + offset) < _start || tempPosition < _start)
-                            throw new IOException(SeekBeforeBegin);
-                        _buf.ReadPosition = tempPosition;
-                        return tempPosition;
-                    }
+                {
+                    var tempPosition = unchecked(_len + (int)offset);
+                    if (unchecked(_len + offset) < _start || tempPosition < _start)
+                        throw new IOException(seekBeforeBegin);
+                    _buf.ReadPosition = tempPosition;
+                    return tempPosition;
+                }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(origin), "Invalid seek origin.");
                 }
@@ -154,7 +131,7 @@ namespace EnterpriseDB.EDBClient
                 if (buffer.Length - offset < count)
                     throw new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
                 if (cancellationToken.IsCancellationRequested)
-                    return new ValueTask<int>(PGUtil.CancelledTask);
+                    return new ValueTask<int>(Task.FromCanceled<int>(cancellationToken));
 
                 count = Math.Min(count, _len - _read);
 
@@ -168,10 +145,10 @@ namespace EnterpriseDB.EDBClient
                     return task;
                 }
 
-                return new ValueTask<int>(ReadLong(task, cancellationToken, async));
+                return new ValueTask<int>(ReadLong(task, async));
             }
 
-            async Task<int> ReadLong(ValueTask<int> task, CancellationToken cancellationToken, bool async)
+            async Task<int> ReadLong(ValueTask<int> task, bool async)
             {
                 var read = async
                     ? await task

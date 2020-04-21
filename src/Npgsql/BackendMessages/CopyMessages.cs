@@ -1,28 +1,7 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using EnterpriseDB.EDBClient.Util;
+//using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient.BackendMessages
 {
@@ -44,16 +23,12 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             ColumnFormatCodes.Clear();
 
             var binaryIndicator = buf.ReadByte();
-            switch (binaryIndicator) {
-            case 0:
-                IsBinary = false;
-                break;
-            case 1:
-                IsBinary = true;
-                break;
-            default:
-                throw new Exception("Invalid binary indicator in CopyInResponse message: " + binaryIndicator);
-            }
+            IsBinary = binaryIndicator switch
+            {
+                0 => false,
+                1 => true,
+                _ => throw new Exception("Invalid binary indicator in CopyInResponse message: " + binaryIndicator)
+            };
 
             NumColumns = buf.ReadInt16();
             for (var i = 0; i < NumColumns; i++)
@@ -111,21 +86,10 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         }
     }
 
-    /// <remarks>
-    /// Note: This message is both a frontend and a backend message
-    /// </remarks>
-    class CopyDoneMessage : SimpleFrontendMessage, IBackendMessage
+    class CopyDoneMessage : IBackendMessage
     {
         public BackendMessageCode Code => BackendMessageCode.CopyDone;
         internal static readonly CopyDoneMessage Instance = new CopyDoneMessage();
         CopyDoneMessage() { }
-
-        internal override int Length => 5;
-
-        internal override void WriteFully(EDBWriteBuffer buf)
-        {
-            buf.WriteByte((byte)BackendMessageCode.CopyDone);
-            buf.WriteInt32(4);
-        }
     }
 }

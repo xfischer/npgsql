@@ -1,28 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using JetBrains.Annotations;
-using EnterpriseDB.EDBClient.BackendMessages;
+﻿using EnterpriseDB.EDBClient.BackendMessages;
 
 namespace EnterpriseDB.EDBClient.TypeHandling
 {
@@ -35,13 +11,13 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <summary>
         /// Reads a value of type <typeparamref name="T"/> with the given length from the provided buffer,
         /// with the assumption that it is entirely present in the provided memory buffer and no I/O will be
-        /// required. 
+        /// required.
         /// </summary>
         /// <param name="buf">The buffer from which to read.</param>
         /// <param name="len">The byte length of the value. The buffer might not contain the full length, requiring I/O to be performed.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        T Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null);
+        T Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Responsible for validating that a value represents a value of the correct and which can be
@@ -54,7 +30,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
         /// <returns>The number of bytes required to write the value.</returns>
-        int ValidateAndGetLength(T value, [CanBeNull] EDBParameter parameter);
+        int ValidateAndGetLength(T value, EDBParameter? parameter);
 
         /// <summary>
         /// Writes a value to the provided buffer, with the assumption that there is enough space in the buffer
@@ -66,6 +42,6 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// The <see cref="EDBParameter"/> instance where this value resides. Can be used to access additional
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
-        void Write(T value, EDBWriteBuffer buf, [CanBeNull] EDBParameter parameter);
+        void Write(T value, EDBWriteBuffer buf, EDBParameter? parameter);
     }
 }

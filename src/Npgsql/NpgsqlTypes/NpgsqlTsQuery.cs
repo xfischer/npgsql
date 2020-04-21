@@ -1,30 +1,6 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using JetBrains.Annotations;
 
 #pragma warning disable CA1034
 
@@ -40,7 +16,7 @@ namespace EDBTypes
         /// <summary>
         /// Node kind
         /// </summary>
-        public NodeKind Kind { get; protected set; }
+        public NodeKind Kind { get; }
 
         /// <summary>
         /// NodeKind
@@ -72,6 +48,12 @@ namespace EDBTypes
             /// </summary>
             Phrase = 4
         }
+
+        /// <summary>
+        /// Constructs an <see cref="EDBTsQuery"/>.
+        /// </summary>
+        /// <param name="kind"></param>
+        protected EDBTsQuery(NodeKind kind) => Kind = kind;
 
         internal abstract void Write(StringBuilder sb, bool first = false);
 
@@ -184,23 +166,13 @@ namespace EDBTypes
                     var left = valStack.Pop();
 
                     var tsOp = opStack.Pop();
-                    switch (tsOp)
+                    valStack.Push((char)tsOp switch
                     {
-                    case '&':
-                        valStack.Push(new EDBTsQueryAnd(left, right));
-                        break;
-
-                    case '|':
-                        valStack.Push(new EDBTsQueryOr(left, right));
-                        break;
-
-                    case '<':
-                        valStack.Push(new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right));
-                        break;
-
-                    default:
-                        throw new FormatException("Syntax error in tsquery");
-                    }
+                        '&' => (EDBTsQuery)new EDBTsQueryAnd(left, right),
+                        '|' => new EDBTsQueryOr(left, right),
+                        '<' => new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right),
+                        _   => throw new FormatException("Syntax error in tsquery")
+                    });
                 }
                 if (opStack.Count == 0)
                     throw new FormatException("Syntax error in tsquery: closing parenthesis without an opening parenthesis");
@@ -346,26 +318,14 @@ namespace EDBTypes
                 var right = valStack.Pop();
                 var left = valStack.Pop();
 
-                EDBTsQuery query;
                 var tsOp = opStack.Pop();
-                switch (tsOp)
+                var query = (char)tsOp switch
                 {
-                case '&':
-                    query = new EDBTsQueryAnd(left, right);
-                    break;
-
-                case '|':
-                    query = new EDBTsQueryOr(left, right);
-                    break;
-
-                case '<':
-                    query = new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right);
-                    break;
-
-                default:
-                    throw new FormatException("Syntax error in tsquery");
-                }
-
+                    '&' => (EDBTsQuery)new EDBTsQueryAnd(left, right),
+                    '|' => new EDBTsQueryOr(left, right),
+                    '<' => new EDBTsQueryFollowedBy(left, tsOp.FollowedByDistance, right),
+                    _   => throw new FormatException("Syntax error in tsquery")
+                };
                 valStack.Push(query);
             }
             if (valStack.Count != 1)
@@ -453,9 +413,9 @@ namespace EDBTypes
         /// <param name="weights">Bitmask of enum Weight.</param>
         /// <param name="isPrefixSearch">Is prefix search?</param>
         public EDBTsQueryLexeme(string text, Weight weights, bool isPrefixSearch)
+            : base(NodeKind.Lexeme)
         {
-            Kind = NodeKind.Lexeme;
-            Text = text;
+            _text = text;
             Weights = weights;
             IsPrefixSearch = isPrefixSearch;
         }
@@ -516,15 +476,15 @@ namespace EDBTypes
         /// <summary>
         /// Child node
         /// </summary>
-        public EDBTsQuery Child { get; set; }
+        public EDBTsQuery? Child { get; set; }
 
         /// <summary>
         /// Creates a not operator, with a given child node.
         /// </summary>
         /// <param name="child"></param>
-        public EDBTsQueryNot([CanBeNull] EDBTsQuery child)
+        public EDBTsQueryNot(EDBTsQuery? child)
+            : base(NodeKind.Not)
         {
-            Kind = NodeKind.Not;
             Child = child;
         }
 
@@ -560,6 +520,16 @@ namespace EDBTypes
         /// Right child
         /// </summary>
         public EDBTsQuery Right { get; set; }
+
+        /// <summary>
+        /// Constructs a <see cref="EDBTsQueryBinOp"/>.
+        /// </summary>
+        protected EDBTsQueryBinOp(NodeKind kind, EDBTsQuery left, EDBTsQuery right)
+            : base(kind)
+        {
+            Left = left;
+            Right = right;
+        }
     }
 
     /// <summary>
@@ -572,12 +542,8 @@ namespace EDBTypes
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public EDBTsQueryAnd([CanBeNull] EDBTsQuery left, [CanBeNull] EDBTsQuery right)
-        {
-            Kind = NodeKind.And;
-            Left = left;
-            Right = right;
-        }
+        public EDBTsQueryAnd(EDBTsQuery left, EDBTsQuery right)
+            : base(NodeKind.And, left, right) {}
 
         internal override void Write(StringBuilder sb, bool first = false)
         {
@@ -597,15 +563,12 @@ namespace EDBTypes
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public EDBTsQueryOr([CanBeNull] EDBTsQuery left, [CanBeNull] EDBTsQuery right)
-        {
-            Kind = NodeKind.Or;
-            Left = left;
-            Right = right;
-        }
+        public EDBTsQueryOr(EDBTsQuery left, EDBTsQuery right)
+            : base(NodeKind.Or, left, right) {}
 
         internal override void Write(StringBuilder sb, bool first = false)
         {
+            // TODO: Figure out the nullability strategy here
             if (!first)
                 sb.Append("( ");
 
@@ -629,28 +592,27 @@ namespace EDBTypes
         public int Distance { get; set; }
 
         /// <summary>
-        /// Creates a "followed by" operator, specifying 2 child nodes and the 
+        /// Creates a "followed by" operator, specifying 2 child nodes and the
         /// distance between them in lexemes.
         /// </summary>
         /// <param name="left"></param>
         /// <param name="distance"></param>
         /// <param name="right"></param>
         public EDBTsQueryFollowedBy(
-            [CanBeNull] EDBTsQuery left,
+            EDBTsQuery left,
             int distance,
-            [CanBeNull] EDBTsQuery right)
+            EDBTsQuery right)
+            : base(NodeKind.Phrase, left, right)
         {
             if (distance < 0)
                 throw new ArgumentOutOfRangeException(nameof(distance));
 
-            Left = left;
             Distance = distance;
-            Right = right;
-            Kind = NodeKind.Phrase;
         }
 
         internal override void Write(StringBuilder sb, bool first = false)
         {
+            // TODO: Figure out the nullability strategy here
             if (!first)
                 sb.Append("( ");
 
@@ -676,13 +638,8 @@ namespace EDBTypes
         /// <summary>
         /// Creates a tsquery that represents an empty query. Should not be used as child node.
         /// </summary>
-        public EDBTsQueryEmpty()
-        {
-            Kind = NodeKind.Empty;
-        }
+        public EDBTsQueryEmpty() : base(NodeKind.Empty) {}
 
-        internal override void Write(StringBuilder sb, bool first = false)
-        {
-        }
+        internal override void Write(StringBuilder sb, bool first = false) {}
     }
 }

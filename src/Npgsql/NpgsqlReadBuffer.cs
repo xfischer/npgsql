@@ -1,28 +1,5 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using JetBrains.Annotations;
-using System;
+﻿using System;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -32,8 +9,7 @@ using System.Threading.Tasks;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// A buffer used by EDB to read data from the socket efficiently.
     /// Provides methods which decode different values types and tracks the current position.
@@ -42,17 +18,16 @@ namespace EnterpriseDB.EDBClient
     {
         #region Fields and Properties
 
-        public EDBConnection Connection => Connector.Connection;
+        public EDBConnection Connection => Connector.Connection!;
 
         internal readonly EDBConnector Connector;
 
-        public Stream Underlying { get; set; }//EnterpriseDB Team
+        public Stream Underlying {  get; set; }
 
         /// <summary>
         /// Wraps SocketAsyncEventArgs for better async I/O as long as we're not doing SSL.
         /// </summary>
-        [CanBeNull]
-        internal AwaitableSocket AwaitableSocket { get; set; }
+        internal AwaitableSocket? AwaitableSocket { get; set; }
 
         /// <summary>
         /// The total byte length of the buffer.
@@ -61,14 +36,20 @@ namespace EnterpriseDB.EDBClient
 
         internal Encoding TextEncoding { get; }
 
+        /// <summary>
+        /// Same as <see cref="TextEncoding"/>, except that it does not throw an exception if an invalid char is
+        /// encountered (exception fallback), but rather replaces it with a question mark character (replacement
+        /// fallback).
+        /// </summary>
+        internal Encoding RelaxedTextEncoding { get; }
+
         internal int ReadPosition { get; set; }
         internal int ReadBytesLeft => FilledBytes - ReadPosition;
 
-        internal byte[] Buffer;//EnterpriseDB Team
+        internal byte[] Buffer;
         internal int FilledBytes;
 
-        [CanBeNull]
-        ColumnStream _columnStream;
+        ColumnStream? _columnStream;
 
         /// <summary>
         /// The minimum buffer size possible.
@@ -80,7 +61,12 @@ namespace EnterpriseDB.EDBClient
 
         #region Constructors
 
-        internal EDBReadBuffer([CanBeNull] EDBConnector connector, Stream stream, int size, Encoding textEncoding)
+        internal EDBReadBuffer(
+            EDBConnector connector,
+            Stream stream,
+            int size,
+            Encoding textEncoding,
+            Encoding relaxedTextEncoding)
         {
             if (size < MinimumSize)
             {
@@ -92,6 +78,7 @@ namespace EnterpriseDB.EDBClient
             Size = size;
             Buffer = new byte[Size];
             TextEncoding = textEncoding;
+            RelaxedTextEncoding = relaxedTextEncoding;
         }
 
         #endregion
@@ -113,7 +100,7 @@ namespace EnterpriseDB.EDBClient
 
         internal Task Ensure(int count, bool async, bool dontBreakOnTimeouts)
         {
-            return count <= ReadBytesLeft ? PGUtil.CompletedTask : EnsureLong();
+            return count <= ReadBytesLeft ? Task.CompletedTask : EnsureLong();
 
             async Task EnsureLong()
             {
@@ -135,6 +122,7 @@ namespace EnterpriseDB.EDBClient
 
                 try
                 {
+                    var totalRead = 0;
                     while (count > 0)
                     {
                         var toRead = Size - FilledBytes;
@@ -157,7 +145,10 @@ namespace EnterpriseDB.EDBClient
                             throw new EndOfStreamException();
                         count -= read;
                         FilledBytes += read;
+                        totalRead += read;
                     }
+
+                    EDBEventSource.Log.BytesRead(totalRead);
                 }
                 // We have a special case when reading async notifications - a timeout may be normal
                 // shouldn't be fatal
@@ -175,7 +166,6 @@ namespace EnterpriseDB.EDBClient
                     throw new EDBException("Exception while reading from stream", e);
                 }
             }
-
         }
 
         internal Task ReadMore(bool async) => Ensure(ReadBytesLeft + 1, async);
@@ -183,7 +173,7 @@ namespace EnterpriseDB.EDBClient
         internal EDBReadBuffer AllocateOversize(int count)
         {
             Debug.Assert(count > Size);
-            var tempBuf = new EDBReadBuffer(Connector, Underlying, count, TextEncoding);
+            var tempBuf = new EDBReadBuffer(Connector, Underlying, count, TextEncoding, RelaxedTextEncoding);
             CopyTo(tempBuf);
             Clear();
             return tempBuf;
@@ -197,32 +187,6 @@ namespace EnterpriseDB.EDBClient
         {
             Debug.Assert(ReadBytesLeft >= len);
             ReadPosition += (int)len;
-        }
-
-        /// <summary>
-        /// Seeks within the current in-memory data. Does not read any data from the underlying.
-        /// </summary>
-        /// <param name="offset"></param>
-        /// <param name="origin"></param>
-        internal void Seek(int offset, SeekOrigin origin)
-        {
-            int absoluteOffset;
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    absoluteOffset = offset;
-                    break;
-                case SeekOrigin.Current:
-                    absoluteOffset = ReadPosition + offset;
-                    break;
-                case SeekOrigin.End:
-                    throw new NotImplementedException();
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(origin));
-            }
-            Debug.Assert(absoluteOffset >= 0 && absoluteOffset <= FilledBytes);
-
-            ReadPosition = absoluteOffset;
         }
 
         /// <summary>
@@ -267,7 +231,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<short>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -279,7 +243,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<ushort>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -291,7 +255,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<int>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -303,7 +267,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<uint>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -315,7 +279,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<long>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -327,7 +291,7 @@ namespace EnterpriseDB.EDBClient
         {
             var result = Read<ulong>();
             return littleEndian == BitConverter.IsLittleEndian
-                ? result : PGUtil.ReverseEndianness(result);
+                ? result : BinaryPrimitives.ReverseEndianness(result);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -353,7 +317,7 @@ namespace EnterpriseDB.EDBClient
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private T Read<T>()
+        T Read<T>()
         {
             if (Unsafe.SizeOf<T>() > ReadBytesLeft)
                 ThrowNotSpaceLeft();
@@ -383,6 +347,32 @@ namespace EnterpriseDB.EDBClient
             return result;
         }
 
+        /// <summary>
+        /// Seeks within the current in-memory data. Does not read any data from the underlying.
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <param name="origin"></param>
+        internal void Seek(int offset, SeekOrigin origin)
+        {
+            int absoluteOffset;
+            switch (origin)
+            {
+                case SeekOrigin.Begin:
+                    absoluteOffset = offset;
+                    break;
+                case SeekOrigin.Current:
+                    absoluteOffset = ReadPosition + offset;
+                    break;
+                case SeekOrigin.End:
+                    throw new NotImplementedException();
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(origin));
+            }
+            Debug.Assert(absoluteOffset >= 0 && absoluteOffset <= FilledBytes);
+
+            ReadPosition = absoluteOffset;
+        }
+
         public void ReadBytes(Span<byte> output)
         {
             Debug.Assert(output.Length <= ReadBytesLeft);
@@ -392,6 +382,18 @@ namespace EnterpriseDB.EDBClient
 
         public void ReadBytes(byte[] output, int outputOffset, int len)
             => ReadBytes(new Span<byte>(output, outputOffset, len));
+
+        public ReadOnlySpan<byte> ReadSpan(int len)
+        {
+            Debug.Assert(len <= ReadBytesLeft);
+            return new ReadOnlySpan<byte>(Buffer, ReadPosition, len);
+        }
+
+        public ReadOnlyMemory<byte> ReadMemory(int len)
+        {
+            Debug.Assert(len <= ReadBytesLeft);
+            return new ReadOnlyMemory<byte>(Buffer, ReadPosition, len);
+        }
 
         #endregion
 
@@ -447,18 +449,35 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// Seeks the first null terminator (\0) and returns the string up to it. The buffer must already
+        /// contain the entire string and its terminator. If any character could not be decoded, a question
+        /// mark character is returned instead of throwing an exception.
+        /// </summary>
+        public string ReadNullTerminatedStringRelaxed() => ReadNullTerminatedString(RelaxedTextEncoding);
+
+        /// <summary>
+        /// Seeks the first null terminator (\0) and returns the string up to it. The buffer must already
         /// contain the entire string and its terminator.
         /// </summary>
         /// <param name="encoding">Decodes the messages with this encoding.</param>
-        internal string ReadNullTerminatedString(Encoding encoding)
+        string ReadNullTerminatedString(Encoding encoding)
         {
             int i;
             for (i = ReadPosition; Buffer[i] != 0; i++)
-            {
                 Debug.Assert(i <= ReadPosition + ReadBytesLeft);
-            }
             Debug.Assert(i >= ReadPosition);
             var result = encoding.GetString(Buffer, ReadPosition, i - ReadPosition);
+            ReadPosition = i + 1;
+            return result;
+        }
+
+        public ReadOnlySpan<byte> GetNullTerminatedBytes()
+        {
+            int i;
+            for (i = ReadPosition; Buffer[i] != 0; i++)
+                Debug.Assert(i <= ReadPosition + ReadBytesLeft);
+            Debug.Assert(i >= ReadPosition);
+
+            var result = new ReadOnlySpan<byte>(Buffer, ReadPosition, i - ReadPosition);
             ReadPosition = i + 1;
             return result;
         }
