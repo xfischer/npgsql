@@ -6,13 +6,14 @@ using NUnit;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for FBs.
-	/// </summary>
+#pragma warning disable CS8604
+    /// <summary>
+    /// Summary description for FBs.
+    /// </summary>
     [TestFixture]
     public class EDBFBs : TestBase
     {
-        EDBConnection con = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
@@ -158,5 +159,5 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
     }
-
+#pragma warning restore CS8604
 }

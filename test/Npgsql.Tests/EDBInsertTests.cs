@@ -44,11 +44,11 @@ using NUnit.Framework.Constraints;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-
+#pragma warning disable CS8602
     [TestFixture]
     public class EDBInsertTests : TestBase
     {
-        private EDBConnection _conn = null;
+        private EDBConnection? _conn = null;
 
         #region Setup / Tear Down
         [SetUp]
@@ -88,7 +88,7 @@ namespace EnterpriseDB.EDBClient.Tests
             dr.Read();
 
             Double result = dr.GetDouble(2);
-
+            dr.Close();
 
             command.CommandText = "delete from tabled where field_serial > 2;";
             command.Parameters.Clear();
@@ -120,6 +120,7 @@ namespace EnterpriseDB.EDBClient.Tests
             dr.Read();
 
             Double result = dr.GetDouble(2);
+            dr.Close();
             
             command.CommandText = "delete from tabled where field_serial > 2;";
             command.Parameters.Clear();
@@ -147,7 +148,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tablea where field_text is null";
             command.Parameters.Clear();
 
-            Int64 result = (Int64)command.ExecuteScalar();
+            long result = (long)command.ExecuteScalar();
 
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
             command.ExecuteNonQuery();
@@ -176,7 +177,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tablea where field_text is null";
             command.Parameters.Clear();
 
-            Int64 result = (Int64)command.ExecuteScalar();
+            long result = (long)command.ExecuteScalar();
 
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
             command.ExecuteNonQuery();
@@ -207,7 +208,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tableb where field_timestamp is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar();
+            object result = command.ExecuteScalar();
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
             command.ExecuteNonQuery();
@@ -237,7 +238,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tableb where field_timestamp is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar();
+            object result = command.ExecuteScalar();
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
             command.ExecuteNonQuery();
@@ -269,7 +270,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tableb where field_int2 is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+            object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
             command.ExecuteNonQuery();
@@ -299,7 +300,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tableb where field_int2 is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+            object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
             command.ExecuteNonQuery();
@@ -329,7 +330,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tablea where field_int4 is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+            object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
             command.ExecuteNonQuery();
@@ -358,7 +359,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tableb where field_numeric is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+            object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
             command.ExecuteNonQuery();
@@ -386,7 +387,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "select count(*) from tablea where field_bool is null";
             command.Parameters.Clear();
 
-            Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+            object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
             command.ExecuteNonQuery();
@@ -412,10 +413,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 Assert.AreEqual(1, rowsAdded);
 
-                command.CommandText = String.Format("select count(*) from tablea where field_text = '{0}'", command.Parameters[0].Value);
+                command.CommandText = string.Format("select count(*) from tablea where field_text = '{0}'", command.Parameters[0].Value);
                 command.Parameters.Clear();
 
-                Object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+                object result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
 
                 command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
                 command.ExecuteNonQuery();
@@ -432,5 +433,5 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
     }
-
+#pragma warning restore CS8602
 }

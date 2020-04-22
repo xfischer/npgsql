@@ -35,12 +35,12 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-
+#pragma warning disable CS8602
     [TestFixture]
     public class EDBDataAdapterTests : TestBase
     {
 
-        private EDBConnection 	_conn = null;
+        private EDBConnection? 	_conn = null;
 
         [SetUp]
         protected void SetUp()
@@ -71,7 +71,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
 
-        [Test]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
         public void FB8070_1()
         {
             _conn.Open();
@@ -520,6 +520,7 @@ namespace EnterpriseDB.EDBClient.Tests
                                  ")");
         }
     }
+#pragma warning restore CS8602
 }
 
 //#endif

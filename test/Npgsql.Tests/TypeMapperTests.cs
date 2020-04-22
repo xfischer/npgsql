@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
@@ -145,7 +141,7 @@ CHECK
 
         class DummyTypeHandlerFactory : EDBTypeHandlerFactory<int>
         {
-            protected override EDBTypeHandler<int> Create(EDBConnection conn)
+            public override EDBTypeHandler<int> Create(PostgresType postgresType, EDBConnection conn)
                 => throw new Exception();
         }
 
@@ -161,6 +157,8 @@ CHECK
         {
             using (var conn = OpenLocalConnection())
             {
+                TestUtil.EnsureExtension(conn, "citext");
+
                 conn.TypeMapper.RemoveMapping("text");
                 conn.TypeMapper.AddMapping(new EDBTypeMappingBuilder
                 {
@@ -213,26 +211,27 @@ CHECK
         {
             internal int Reads, Writes;
 
-            protected override EDBTypeHandler<int> Create(EDBConnection conn)
-                => new MyInt32Handler(this);
+            public override EDBTypeHandler<int> Create(PostgresType postgresType, EDBConnection conn)
+                => new MyInt32Handler(postgresType, this);
         }
 
         class MyInt32Handler : Int32Handler
         {
             readonly MyInt32HandlerFactory _factory;
 
-            public MyInt32Handler(MyInt32HandlerFactory factory)
+            public MyInt32Handler(PostgresType postgresType, MyInt32HandlerFactory factory)
+                : base(postgresType)
             {
                 _factory = factory;
             }
 
-            public override int Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+            public override int Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             {
                 _factory.Reads++;
                 return base.Read(buf, len, fieldDescription);
             }
 
-            public override void Write(int value, EDBWriteBuffer buf, EDBParameter parameter)
+            public override void Write(int value, EDBWriteBuffer buf, EDBParameter? parameter)
             {
                 _factory.Writes++;
                 base.Write(value, buf, parameter);

@@ -1,37 +1,11 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using System.IO;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -52,16 +26,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.Ignore(message);
         }
 
-        public static void IgnoreExceptOnBuildServer(string message, params object[] args)
-            => IgnoreExceptOnBuildServer(string.Format(message, args));
-
-        public static void closeDB(EDBConnection con)
-        {
-            if (con != null)
-                con.Close();
-        }
-
-        public static void createTempTable(EDBConnection con, String table, String columns)
+        public static void createTempTable(EDBConnection con, string table, string columns)
         {
             string strCommandSql = "create temp table " + table + " (" + columns + ")";
             EDBCommand com = new EDBCommand(strCommandSql, con);
@@ -80,39 +45,18 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public static void ExecuteSqlFile(EDBConnection connection, string sqlFile)
+        public static void closeDB(EDBConnection? con)
         {
-            string sql = "";
-            if (!File.Exists(sqlFile))
-                Console.WriteLine("File Not found");
-            using (FileStream strm = File.OpenRead(sqlFile))
-            {
-                StreamReader reader = new StreamReader(strm);
-                sql = reader.ReadToEnd();
-            }
-
-            connection.Open();
-            EDBCommand cmd = new EDBCommand(sql, connection);
-            cmd.ExecuteNonQuery();
-            connection.Close();
-
+            if (con != null)
+                con.Close();
         }
 
-        public static void ExecuteSql(EDBConnection connection, string sql)
-        {
-            connection.Open();
-            EDBCommand cmd = new EDBCommand(sql, connection);
-            cmd.ExecuteNonQuery();
-            connection.Close();
-
-        }
-
-        public static void dropTable(EDBConnection con, String table)
+        public static void dropTable(EDBConnection? con, string table)
         {
 
             try
             {
-                String strCommandSql = "DROP TABLE " + table;
+                string strCommandSql = "DROP TABLE " + table;
                 /*              if (haveMinimumServerVersion(con, "7.3"))
                                 {
                                     sql += " CASCADE ";
@@ -134,7 +78,10 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public static void MinimumPgVersion(EDBConnection conn, string minVersion, string ignoreText=null)
+        public static void IgnoreExceptOnBuildServer(string message, params object[] args)
+            => IgnoreExceptOnBuildServer(string.Format(message, args));
+
+        public static void MinimumPgVersion(EDBConnection conn, string minVersion, string? ignoreText = null)
         {
             var min = new Version(minVersion);
             if (conn.PostgreSqlVersion < min)
@@ -146,16 +93,18 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public static void MaximumPgVersion(EDBConnection conn, string maxVersion, string ignoreText = null)
+        static readonly Version MinCreateExtensionVersion = new Version(9, 1);
+        public static void EnsureExtension(EDBConnection conn, string extension, string? minVersion = null)
         {
-            var max = new Version(maxVersion);
-            if (conn.PostgreSqlVersion >= max)
-            {
-                var msg = $"Postgresql backend version {conn.PostgreSqlVersion} is higher than the required {max}";
-                if (ignoreText != null)
-                    msg += ": " + ignoreText;
-                Assert.Ignore(msg);
-            }
+            if (minVersion != null)
+                MinimumPgVersion(conn, minVersion,
+                    $"The extension '{extension}' only works for PostgreSQL {minVersion} and higher.");
+
+            if (conn.PostgreSqlVersion < MinCreateExtensionVersion)
+                Assert.Ignore($"The 'CREATE EXTENSION' command only works for PostgreSQL {MinCreateExtensionVersion} and higher.");
+
+            conn.ExecuteNonQuery($"CREATE EXTENSION IF NOT EXISTS {extension}");
+            conn.ReloadTypes();
         }
 
         public static string GetUniqueIdentifier(string prefix)
@@ -185,9 +134,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
         class EnvironmentVariableResetter : IDisposable
         {
-            readonly string _name, _value;
+            readonly string _name;
+            readonly string? _value;
 
-            internal EnvironmentVariableResetter(string name, string value)
+            internal EnvironmentVariableResetter(string name, string? value)
             {
                 _name = name;
                 _value = value;
@@ -202,30 +152,28 @@ namespace EnterpriseDB.EDBClient.Tests
 
     public static class EDBConnectionExtensions
     {
-        public static int ExecuteNonQuery(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        public static int ExecuteNonQuery(this EDBConnection conn, string sql, EDBTransaction? tx = null)
         {
             var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
             using (cmd)
                 return cmd.ExecuteNonQuery();
         }
 
-        [CanBeNull]
-        public static object ExecuteScalar(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        public static object ExecuteScalar(this EDBConnection conn, string sql, EDBTransaction? tx = null)
         {
             var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
             using (cmd)
                 return cmd.ExecuteScalar();
         }
 
-        public static async Task<int> ExecuteNonQueryAsync(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        public static async Task<int> ExecuteNonQueryAsync(this EDBConnection conn, string sql, EDBTransaction? tx = null)
         {
             var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
             using (cmd)
                 return await cmd.ExecuteNonQueryAsync();
         }
 
-        [CanBeNull]
-        public static async Task<object> ExecuteScalarAsync(this EDBConnection conn, string sql, EDBTransaction tx = null)
+        public static async Task<object> ExecuteScalarAsync(this EDBConnection conn, string sql, EDBTransaction? tx = null)
         {
             var cmd = tx == null ? new EDBCommand(sql, conn) : new EDBCommand(sql, conn, tx);
             using (cmd)
@@ -275,11 +223,11 @@ namespace EnterpriseDB.EDBClient.Tests
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false)]
     public class MonoIgnore : Attribute, ITestAction
     {
-        readonly string _ignoreText;
+        readonly string? _ignoreText;
 
-        public MonoIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
+        public MonoIgnore(string? ignoreText = null) { _ignoreText = ignoreText; }
 
-        public void BeforeTest([NotNull] ITest test)
+        public void BeforeTest(ITest test)
         {
             if (Type.GetType("Mono.Runtime") != null)
             {
@@ -290,7 +238,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public void AfterTest([NotNull] ITest test) { }
+        public void AfterTest(ITest test) { }
         public ActionTargets Targets => ActionTargets.Test;
     }
 
@@ -300,11 +248,11 @@ namespace EnterpriseDB.EDBClient.Tests
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false)]
     public class LinuxIgnore : Attribute, ITestAction
     {
-        readonly string _ignoreText;
+        readonly string? _ignoreText;
 
-        public LinuxIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
+        public LinuxIgnore(string? ignoreText = null) { _ignoreText = ignoreText; }
 
-        public void BeforeTest([NotNull] ITest test)
+        public void BeforeTest(ITest test)
         {
             var osEnvVar = Environment.GetEnvironmentVariable("OS");
             if (osEnvVar == null || osEnvVar != "Windows_NT")
@@ -316,7 +264,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public void AfterTest([NotNull] ITest test) { }
+        public void AfterTest(ITest test) { }
         public ActionTargets Targets => ActionTargets.Test;
     }
 
@@ -326,11 +274,11 @@ namespace EnterpriseDB.EDBClient.Tests
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly, AllowMultiple = false)]
     public class WindowsIgnore : Attribute, ITestAction
     {
-        readonly string _ignoreText;
+        readonly string? _ignoreText;
 
-        public WindowsIgnore(string ignoreText = null) { _ignoreText = ignoreText; }
+        public WindowsIgnore(string? ignoreText = null) { _ignoreText = ignoreText; }
 
-        public void BeforeTest([NotNull] ITest test)
+        public void BeforeTest(ITest test)
         {
             var osEnvVar = Environment.GetEnvironmentVariable("OS");
             if (osEnvVar == "Windows_NT")
@@ -342,7 +290,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        public void AfterTest([NotNull] ITest test) { }
+        public void AfterTest(ITest test) { }
         public ActionTargets Targets => ActionTargets.Test;
     }
 
@@ -352,10 +300,11 @@ namespace EnterpriseDB.EDBClient.Tests
         NotPrepared
     }
 
-#if !(NET45 || NET451)
+#if !NET461
     // When using netcoreapp, we use NUnit's portable library which doesn't include TimeoutAttribute
     // (probably because it can't enforce it). So we define it here to allow us to compile, once there's
     // proper support for netcoreapp this should be removed.
+    // https://github.com/nunit/nunit/issues/1638
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Method, Inherited = false)]
     class TimeoutAttribute : Attribute
     {

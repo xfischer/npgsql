@@ -8,14 +8,15 @@ using NUnit;
 //Haroon
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for MiscTest.
-	/// </summary>
-	
-	[TestFixture]
+#pragma warning disable CS8602
+    /// <summary>
+    /// Summary description for MiscTest.
+    /// </summary>
+
+    [TestFixture]
 	public class EDBMiscTest : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
 		[SetUp]
 		public void Init()
@@ -1290,4 +1291,5 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
     }
+#pragma warning restore CS8602
 }

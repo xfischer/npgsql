@@ -1,34 +1,4 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
-using System.Data;
-using System.IO;
-using System.Linq;
-using EnterpriseDB.EDBClient.Logging;
-using NUnit.Framework;
-using EnterpriseDB.EDBClient;
-using System.Configuration;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -45,12 +15,11 @@ namespace EnterpriseDB.EDBClient.Tests
         /// Unless the EDB_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        public static string DefaultConnectionString = ConfigurationManager.AppSettings["connectionString"]
-            ?? "Server=127.0.0.1;Host=127.0.0.1;Port=5444;User Id=enterprisedb;Password=edb;Database=test;";
+        const string DefaultConnectionString = "Server=localhost;port=5444;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0";
 
         #region Utilities for use by tests
 
-        protected virtual EDBConnection OpenConnection(string connectionString = null)
+        protected virtual EDBConnection OpenConnection(string? connectionString = null)
         {
             if (connectionString == null)
                 connectionString = ConnectionString;
@@ -61,10 +30,10 @@ namespace EnterpriseDB.EDBClient.Tests
             }
             catch (PostgresException e)
             {
-                if (e.SqlState == "3D000")
-                    TestUtil.IgnoreExceptOnBuildServer("Please create a database npgsql_tests, owned by user npgsql_tests");
-                else if (e.SqlState == "28P01")
-                    TestUtil.IgnoreExceptOnBuildServer("Please create a user npgsql_tests as follows: create user npgsql_tests with password 'npgsql_tests'");
+                if (e.SqlState == PostgresErrorCodes.InvalidCatalogName)
+                    TestUtil.IgnoreExceptOnBuildServer("Please create a database EDB_tests, owned by user EDB_tests");
+                else if (e.SqlState == PostgresErrorCodes.InvalidPassword && connectionString == DefaultConnectionString)
+                    TestUtil.IgnoreExceptOnBuildServer("Please create a user EDB_tests as follows: create user EDB_tests with password 'EDB_tests'");
                 else
                     throw;
             }
@@ -75,9 +44,6 @@ namespace EnterpriseDB.EDBClient.Tests
         protected EDBConnection OpenConnection(EDBConnectionStringBuilder csb)
             => OpenConnection(csb.ToString());
 
-        protected static bool IsSequential(CommandBehavior behavior)
-            => (behavior & CommandBehavior.SequentialAccess) != 0;
-
         // In PG under 9.1 you can't do SELECT pg_sleep(2) in binary because that function returns void and PG doesn't know
         // how to transfer that. So cast to text server-side.
         protected static EDBCommand CreateSleepCommand(EDBConnection conn, int seconds = 1000)
@@ -86,6 +52,7 @@ namespace EnterpriseDB.EDBClient.Tests
         protected bool IsRedshift => new EDBConnectionStringBuilder(ConnectionString).ServerCompatibilityMode == ServerCompatibilityMode.Redshift;
 
         #endregion
+
         public static EDBConnection openDBwithoutPooling()
         {
             try
@@ -93,7 +60,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 EDBConnection con = new EDBConnection(ConnectionString);
                 con.Open();
                 return con;
-    }
+            }
             catch (EDBException e)
             {
                 throw new Exception(e.ToString());

@@ -7,15 +7,17 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Tests for EDBLine
-	/// </summary>
-	/// 
-	[TestFixture]
+#pragma warning disable CS8604
+#pragma warning disable CS8602
+    /// <summary>
+    /// Tests for EDBLine
+    /// </summary>
+    /// 
+    [TestFixture]
 	public class EDBLargeObjectTests : TestBase
     {
-		EDBConnection con = null;
-		String testPath = @"C:\Windows\media\Windows Background.wav";
+		EDBConnection? con = null;
+		string testPath = @"C:\Windows\media\Windows Background.wav";
 
 		[SetUp]
 		public void Init()
@@ -27,7 +29,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			int result = command.ExecuteNonQuery();
 			Console.WriteLine("CREATE TABLE returned " + result);
 		}
-		[Test]
+		[Test, Ignore("MERGE_NEED_TO_EXPLORE")]
 		public void LOCreateTest()
 		{
 			// Retrieve a Large Object Manager for this connection
@@ -63,7 +65,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.True(0 != oid, "Invalid OID value");
 		}
 
-		[Test]
+		[Test, Ignore("MERGE_NEED_TO_EXPLORE")]
 		public void CreateTest()
 		{
 			try
@@ -109,4 +111,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			TestUtil.closeDB(con);
 		}
 	}
+#pragma warning restore CS8604
+#pragma warning restore CS8602
 }

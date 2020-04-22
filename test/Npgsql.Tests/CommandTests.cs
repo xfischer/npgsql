@@ -1,47 +1,17 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using EnterpriseDB.EDBClient;
-using NUnit.Framework;
 using System.Data;
 using System.IO;
-using System.Net;
+using System.Linq;
 using System.Net.Sockets;
-using EDBTypes;
-using System.Resources;
-using System.Threading;
-using System.Reflection;
 using System.Text;
-using NUnit.Framework.Constraints;
+using System.Threading;
+using System.Threading.Tasks;
+using EDBTypes;
+using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-    public class ZZCommandTests : TestBase
+    public class CommandTests : TestBase
     {
         #region Multiple Statements in a Command
 
@@ -698,7 +668,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
         public void StatementMappedOutputParameters()
         {
             using (var conn = OpenConnection())
@@ -764,7 +734,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters[0].Direction = ParameterDirection.Output;
                 command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
                 command.Parameters[1].Direction = ParameterDirection.Output;
-                command.Prepare();
 
                 var result = command.ExecuteScalar();
 
@@ -780,7 +749,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 // This is caused by having an error with the prepared statement and later, EDB is trying to release the plan as it was successful created.
                 var cmd = new EDBCommand("sele", conn);
-                Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<EDBException>());
+                Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<PostgresException>());
             }
         }
 
@@ -820,7 +789,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, /*Ignore("Ignore for now")*/]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
         [TestCase(CommandBehavior.Default)]
         [TestCase(CommandBehavior.SequentialAccess)]
         public void InputAndOutputParameters(CommandBehavior behavior)
@@ -833,21 +802,10 @@ namespace EnterpriseDB.EDBClient.Tests
                 cmd.Parameters.Add(b);
                 var c = new EDBParameter { ParameterName = "c", Direction = ParameterDirection.InputOutput, Value = 4 };
                 cmd.Parameters.Add(c);
-                using (EDBDataReader br = cmd.ExecuteReader(behavior))
+                using (cmd.ExecuteReader(behavior))
                 {
-                    if (behavior == CommandBehavior.Default)
-                    {
-                        Assert.AreEqual(5, b.Value);
-                        Assert.AreEqual(3, c.Value);
-                    }
-                    else
-                    {
-                        //In case of CommandBehavior.SequentialAccess data should be read sequentially.
-                        //Microsoft Docs: https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/retrieving-binary-data
-                        br.Read();
-                        Assert.AreEqual(3, br[0]);
-                        Assert.AreEqual(5, br[1]);
-                    }
+                    Assert.AreEqual(5, b.Value);
+                    Assert.AreEqual(3, c.Value);
                 }
             }
         }
@@ -880,7 +838,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/395"), Ignore("Ignore for now")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
         public void UseAcrossConnectionChange([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             using (var conn1 = OpenConnection())
@@ -1027,7 +985,6 @@ namespace EnterpriseDB.EDBClient.Tests
             // See also ReaderTests.Statements()
             using (var conn = OpenConnection())
             {
-                TestUtil.MaximumPgVersion(conn, "12.0", "OID support has been removed in V12");
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
                     "INSERT INTO data (name) VALUES (@p1);" +

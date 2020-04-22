@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
+﻿using BenchmarkDotNet.Attributes;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks
 {
     public class CopyExport
     {
-        EDBConnection _conn;
+        EDBConnection _conn = default!;
         const int Rows = 1000;
 
         [GlobalSetup]

@@ -6,13 +6,14 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for PreparedStatements.
-	/// </summary>
-	[TestFixture] 
+#pragma warning disable CS8602
+    /// <summary>
+    /// Summary description for PreparedStatements.
+    /// </summary>
+    [TestFixture] 
 	public class EDBPreparedStatements : TestBase
     {	
-		EDBConnection conn = null;
+		EDBConnection? conn = null;
 
 		[SetUp]
 		public void Init()
@@ -300,4 +301,5 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 	}
+#pragma warning restore CS8602
 }

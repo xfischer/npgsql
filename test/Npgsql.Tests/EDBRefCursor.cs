@@ -7,14 +7,16 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for RefCursor.
-	/// </summary>
-	
-		[TestFixture]
+#pragma warning disable CS8600
+#pragma warning disable CS8602
+    /// <summary>
+    /// Summary description for RefCursor.
+    /// </summary>
+
+    [TestFixture]
         public class EDBRefCursor : TestBase
 		{
-			EDBConnection con = null;
+			EDBConnection? con = null;
             
             #region Setup / Tear Down
 			[SetUp]
@@ -408,7 +410,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("c_1", EDBTypes.EDBDbType.Refcursor,10, "c_1", ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
                     command.ExecuteNonQuery();
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -445,8 +447,8 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("cur2",EDBTypes.EDBDbType.Refcursor,10,"cur2",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 					command.Prepare();
                     command.ExecuteNonQuery();
-                    String cursorName1 = command.Parameters[0].Value.ToString();
-                    String cursorName2 = command.Parameters[1].Value.ToString();
+                    string cursorName1 = command.Parameters[0].Value.ToString();
+                    string cursorName2 = command.Parameters[1].Value.ToString();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName1+"\"";
                     command.CommandType = CommandType.Text;
@@ -502,8 +504,8 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.ExecuteNonQuery();
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName1+"\"";
                     command.CommandType = CommandType.Text;
@@ -557,9 +559,9 @@ namespace EnterpriseDB.EDBClient.Tests
                     command.ExecuteNonQuery();
 					
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
-                    String cursorName3 = command.Parameters[3].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName3 = command.Parameters[3].Value.ToString();
                 
                     command.CommandText = "FETCH ALL IN \""+cursorName1+"\"";
                     command.CommandType = CommandType.Text;
@@ -631,9 +633,9 @@ namespace EnterpriseDB.EDBClient.Tests
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
 
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
-                    String cursorName3 = command.Parameters[3].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName3 = command.Parameters[3].Value.ToString();
                 
                     command.CommandText = "FETCH ALL IN \""+cursorName1+"\"";
                     command.CommandType = CommandType.Text;
@@ -705,10 +707,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
                     command.ExecuteNonQuery();
 
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
-                    String cursorName3 = command.Parameters[3].Value.ToString();
-                    String cursorName4 = command.Parameters[5].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName3 = command.Parameters[3].Value.ToString();
+                    string cursorName4 = command.Parameters[5].Value.ToString();
 
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
@@ -798,10 +800,10 @@ namespace EnterpriseDB.EDBClient.Tests
                 
                     command.ExecuteNonQuery();
 
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
-                    String cursorName3 = command.Parameters[3].Value.ToString();
-                    String cursorName4 = command.Parameters[5].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName3 = command.Parameters[3].Value.ToString();
+                    string cursorName4 = command.Parameters[5].Value.ToString();
 
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
@@ -892,10 +894,10 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters[0].Value = 7369;
                     command.ExecuteNonQuery();
 
-                    String cursorName1 = command.Parameters[1].Value.ToString();
-                    String cursorName2 = command.Parameters[2].Value.ToString();
-                    String cursorName3 = command.Parameters[3].Value.ToString();
-                    String cursorName4 = command.Parameters[5].Value.ToString();
+                    string cursorName1 = command.Parameters[1].Value.ToString();
+                    string cursorName2 = command.Parameters[2].Value.ToString();
+                    string cursorName3 = command.Parameters[3].Value.ToString();
+                    string cursorName4 = command.Parameters[5].Value.ToString();
 
 					Assert.AreEqual("100",Convert.ToString(command.Parameters[0].Value.ToString()));
 					Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
@@ -998,7 +1000,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
 
                     command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                     command.CommandType = CommandType.Text;
@@ -1116,7 +1118,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
 					command.Prepare();
                     command.ExecuteNonQuery();
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1217,7 +1219,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 		
 					Assert.AreEqual("True",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1272,7 +1274,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 					
 					Assert.AreEqual("200",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1326,7 +1328,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
 
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
@@ -1381,7 +1383,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 					
 					Assert.AreEqual("2.9863",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1434,7 +1436,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 
 					Assert.AreEqual("263",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1488,7 +1490,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 
 					Assert.AreEqual("263000",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1542,7 +1544,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 					
 					Assert.AreEqual("263000.24598", Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1598,7 +1600,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					double start = 263001.25;
 		//			Assert.AreEqual("263001.25",Convert.ToString(command.Parameters[1].Value.ToString()));
 					Assert.AreEqual(start, command.Parameters[1].Value);
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1652,7 +1654,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 
 					Assert.AreEqual("26301",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1706,7 +1708,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1777,7 +1779,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Prepare();
 					command.ExecuteNonQuery();
 
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1824,7 +1826,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
                 
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1878,7 +1880,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("True",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1933,7 +1935,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("200",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -1988,7 +1990,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2042,7 +2044,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("2.9863",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2096,7 +2098,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 
 					Assert.AreEqual("263",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2150,7 +2152,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("263000",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2204,7 +2206,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
 					
 					Assert.AreEqual("263000.24598", Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2258,7 +2260,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("263001.3",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2312,7 +2314,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("26301",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2366,7 +2368,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.ExecuteNonQuery();
                 
 					Assert.AreEqual("Hashim",Convert.ToString(command.Parameters[1].Value.ToString()));
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2433,11 +2435,11 @@ namespace EnterpriseDB.EDBClient.Tests
 					EDBCommand command = new EDBCommand("RefCursorsOUT(:v_id)",con);
 					command.CommandType = CommandType.StoredProcedure;
 					command.Transaction = tran;
-					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,null));
+					command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor,0,"v_id", ParameterDirection.Output,false ,10,10,	System.Data.DataRowVersion.Current,"Test"));
 					command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2576,7 +2578,7 @@ namespace EnterpriseDB.EDBClient.Tests
 					command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric,10,"v_ret",ParameterDirection.ReturnValue,false,2,2,System.Data.DataRowVersion.Current,100)); 
 					command.Prepare();
 					command.ExecuteNonQuery();
-                    String cursorName = command.Parameters[0].Value.ToString();
+                    string cursorName = command.Parameters[0].Value.ToString();
                     command.CommandText = "FETCH ALL IN \""+cursorName+"\"";
                     command.CommandType = CommandType.Text;
                     EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
@@ -2662,4 +2664,6 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			}
 		}
+#pragma warning restore CS8600
+#pragma warning restore CS8602
 }

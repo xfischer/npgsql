@@ -12,12 +12,12 @@ using System.Configuration;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-
-	[TestFixture]
+#pragma warning disable CS8602
+    [TestFixture]
 	public class EDBDataReaderTests : TestBase
     {
 
-		private EDBConnection 	_conn = null;
+		private EDBConnection? 	_conn = null;
 		string connectionString = string.Empty;
 
 		[SetUp]
@@ -58,11 +58,11 @@ namespace EnterpriseDB.EDBClient.Tests
 			EDBDataReader dr = command.ExecuteReader();
 
 			dr.Read();
-			Char[] result = new Char[6];
+            char[] result = new char[6];
 
 			Int64 a = dr.GetChars(1, 0, result, 0, 6);
 
-			Assert.AreEqual("Random", new String(result));
+			Assert.AreEqual("Random", new string(result));
 
 		}
 
@@ -156,7 +156,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			dr.Read();
 
-			String result = dr.GetString(1);
+			string result = dr.GetString(1);
 
 			Assert.AreEqual("Random text", result);
 
@@ -168,7 +168,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 			 EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-			 String test = "Random text";
+			 string test = "Random text";
 			 EDBParameter param = new EDBParameter();
 			 param.ParameterName = "value";
 			 param.DbType = DbType.String;
@@ -180,7 +180,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			 dr.Read();
 
-			 String result = dr.GetString(1);
+			 string result = dr.GetString(1);
 
 			 Assert.AreEqual(test, result);
 
@@ -192,7 +192,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-			String test = "Text with ' single quote";
+			string test = "Text with ' single quote";
 			EDBParameter param = new EDBParameter();
 			param.ParameterName = "value";
 			param.DbType = DbType.String;
@@ -204,7 +204,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			dr.Read();
 
-			String result = dr.GetString(1);
+			string result = dr.GetString(1);
 
 			Assert.AreEqual(test, result);
 
@@ -221,7 +221,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			dr.Read();
 
-			String result = (String) dr["field_text"];
+			string result = (string) dr["field_text"];
 
 			Assert.AreEqual("Random text", result);
 
@@ -233,7 +233,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			_conn.Open();
 			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
 
-			String test = "Text single quote";
+			string test = "Text single quote";
 			EDBParameter param = new EDBParameter();
 			param.ParameterName = "value";
 			param.DbType = DbType.String;
@@ -419,7 +419,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 			while (dr.Read())
 				;
-			Object o;
+			object o;
 			Assert.Throws<InvalidOperationException>(() => o = dr[0]);
 
 		}
@@ -1220,4 +1220,5 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
 	}
+#pragma warning restore CS8602
 }

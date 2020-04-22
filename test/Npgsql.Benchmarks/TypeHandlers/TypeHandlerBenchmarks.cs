@@ -2,17 +2,21 @@
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers;
+using EnterpriseDB.EDBClient.TypeHandling;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.Util;
 
-namespace EnterpriseDB.EDBClient.Benchmarks
+#nullable disable
+
+namespace EnterpriseDB.EDBClient.Benchmarks.TypeHandlers
 {
-    [Config(typeof(Config))]
-    public class Numeric
+    public abstract class TypeHandlerBenchmarks<T>
     {
-        class Config : ManualConfig
+        protected class Config : ManualConfig
         {
             public Config()
             {
@@ -35,29 +39,47 @@ namespace EnterpriseDB.EDBClient.Benchmarks
             public override void Write(byte[] buffer, int offset, int count) { }
         }
 
-        readonly EndlessStream _stream = new EndlessStream();
-        readonly NumericHandler _handler = new NumericHandler();
+        readonly EndlessStream _stream;
+        readonly EDBTypeHandler _handler;
         readonly EDBReadBuffer _readBuffer;
         readonly EDBWriteBuffer _writeBuffer;
-        decimal _value;
+        T _value;
         int _elementSize;
 
-        public Numeric()
+        protected TypeHandlerBenchmarks(EDBTypeHandler handler)
         {
-            _stream = new EndlessStream(); _handler = new NumericHandler();
-            _readBuffer = new EDBReadBuffer(null, _stream, EDBReadBuffer.MinimumSize, Encoding.UTF8);
+            _stream = new EndlessStream();
+            _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            _readBuffer = new EDBReadBuffer(null, _stream, EDBReadBuffer.MinimumSize, Encoding.UTF8, PGUtil.RelaxedUTF8Encoding);
             _writeBuffer = new EDBWriteBuffer(null, _stream, EDBWriteBuffer.MinimumSize, Encoding.UTF8);
         }
 
-        public decimal Value
+        protected static PostgresType GetPostgresType(string pgType)
+        {
+            using (var conn = BenchmarkEnvironment.OpenConnection())
+            using (var cmd = new EDBCommand($"SELECT NULL::{pgType}", conn))
+            using (var reader = cmd.ExecuteReader())
+                return reader.GetPostgresType(0);
+        }
+
+        public IEnumerable<T> Values() => ValuesOverride();
+
+        protected virtual IEnumerable<T> ValuesOverride() => new[] { default(T) };
+
+        [ParamsSource(nameof(Values))]
+        public T Value
         {
             get => _value;
             set
             {
-                _value = value;
-                _elementSize = _handler.ValidateAndGetLength(value, null);
-                _handler.Write(_value, _writeBuffer, null);
+                EDBLengthCache cache = null;
 
+                _value = value;
+                _elementSize = _handler.ValidateAndGetLength(value, ref cache, null);
+
+                cache.Rewind();
+
+                _handler.WriteWithLengthInternal(_value, _writeBuffer, cache, null, false);
                 Buffer.BlockCopy(_writeBuffer.Buffer, 0, _readBuffer.Buffer, 0, _elementSize);
 
                 _readBuffer.FilledBytes = _elementSize;
@@ -65,37 +87,18 @@ namespace EnterpriseDB.EDBClient.Benchmarks
             }
         }
 
-        public static decimal[] Values => new decimal[]
-        {
-            0.0000000000000000000000000001M,
-            0.000000000000000000000001M,
-            0.00000000000000000001M,
-            0.0000000000000001M,
-            0.000000000001M,
-            0.00000001M,
-            0.0001M,
-            1M,
-            10000M,
-            100000000M,
-            1000000000000M,
-            10000000000000000M,
-            100000000000000000000M,
-            1000000000000000000000000M,
-            10000000000000000000000000000M,
-        };
-
         [Benchmark]
-        public void Read()
+        public T Read()
         {
-            _readBuffer.ReadPosition = 0;
-            _handler.Read(_readBuffer, _elementSize);
+            _readBuffer.ReadPosition = sizeof(int);
+            return _handler.Read<T>(_readBuffer, _elementSize);
         }
 
         [Benchmark]
         public void Write()
         {
             _writeBuffer.WritePosition = 0;
-            _handler.Write(_value, _writeBuffer, null);
+            _handler.WriteWithLengthInternal(_value, _writeBuffer, null, null, false);
         }
     }
 }

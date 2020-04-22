@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks.Types
 {
     public class WriteVaryingNumberOfParameters
     {
-        EDBConnection _conn;
-        EDBCommand _cmd;
+        EDBConnection _conn = default!;
+        EDBCommand _cmd = default!;
 
-        //[Params(0, 1, 10, 100)]
         [Params(10)]
         public int NumParams { get; set; }
 

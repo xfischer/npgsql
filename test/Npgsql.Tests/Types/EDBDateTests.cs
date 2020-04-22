@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
     [TestFixture]
     public class DateTest : TestBase
     {
-        EDBConnection con;
+        EDBConnection? con;
 
         [SetUp]
         public void Init()

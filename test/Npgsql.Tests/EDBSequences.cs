@@ -6,14 +6,15 @@ using NUnit;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for Sequences.
-	/// </summary>
-	/// 
-	[TestFixture]
+#pragma warning disable CS8600
+    /// <summary>
+    /// Summary description for Sequences.
+    /// </summary>
+    /// 
+    [TestFixture]
 	public class EDBSequences : TestBase
     {
-			EDBConnection con = null;
+			EDBConnection? con = null;
 
 		[SetUp]
 		public void Init()
@@ -490,4 +491,5 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
 	}
+#pragma warning restore CS8600
 }

@@ -1,27 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2015 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -36,7 +13,8 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void MinPoolSizeEqualsMaxPoolSize()
         {
-            using (var conn = new EDBConnection(new EDBConnectionStringBuilder(ConnectionString) {
+            using (var conn = new EDBConnection(new EDBConnectionStringBuilder(ConnectionString)
+            {
                 MinPoolSize = 30,
                 MaxPoolSize = 30
             }.ToString()))
@@ -70,7 +48,7 @@ namespace EnterpriseDB.EDBClient.Tests
             using (var conn = new EDBConnection(ConnectionString))
             {
                 conn.Open();
-                var backendId = conn.Connector.BackendProcessId;
+                var backendId = conn.Connector!.BackendProcessId;
                 conn.Close();
                 conn.Open();
                 Assert.That(conn.Connector.BackendProcessId, Is.EqualTo(backendId));
@@ -80,7 +58,8 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Timeout(10000)]
         public void GetConnectorFromExhaustedPool()
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 MaxPoolSize = 1,
                 Timeout = 0
             }.ToString();
@@ -121,7 +100,8 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void TimeoutGettingConnectorFromExhaustedPool()
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 MaxPoolSize = 1,
                 Timeout = 2
             }.ToString();
@@ -164,7 +144,8 @@ namespace EnterpriseDB.EDBClient.Tests
         //[Explicit("Timing-based")]
         public async Task CancelOpenAsync()
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 ApplicationName = nameof(CancelOpenAsync),
                 MaxPoolSize = 1,
             }.ToString();
@@ -209,7 +190,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 conn.Open();
                 Assert.That(conn.ExecuteScalar("SHOW search_path"), Is.Not.Contains("pg_temp"));
-                var backendId = conn.Connector.BackendProcessId;
+                var backendId = conn.Connector!.BackendProcessId;
                 conn.ExecuteNonQuery("SET search_path=pg_temp");
                 conn.Close();
 
@@ -219,8 +200,8 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        //[Test, NonParallelizable]
-        //[Explicit("Flaky, based on timing")]
+        [Test, NonParallelizable]
+        [Explicit("Flaky, based on timing")]
         public void PruneIdleConnectors()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -238,16 +219,16 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 conn1.Close();
                 conn2.Close();
+                AssertPoolState(pool!, 2, 1);
+
+                Thread.Sleep(1500);
+
+                // ConnectionIdleLifetime not yet reached.
                 AssertPoolState(pool, 2, 1);
 
                 Thread.Sleep(1500);
 
-                // Pruning attempted, but ConnectionIdleLifetime not yet reached
-                AssertPoolState(pool, 2, 1);
-
-                Thread.Sleep(1500);
-
-                // ConnectionIdleLifetime reached, but only one idle connection should be pruned (MinPoolSize=2)
+                // ConnectionIdleLifetime reached, one idle connection should be pruned (MinPoolSize=2)
                 AssertPoolState(pool, 1, 1);
             }
         }
@@ -295,6 +276,41 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
+        public void ReleaseWaiterOnConnectionFailure()
+        {
+            var connectionString = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                Port = 9999,
+                MaxPoolSize = 1
+            }.ToString();
+
+            try
+            {
+                var tasks = Enumerable.Range(0, 2).Select(i => Task.Run(async () =>
+                {
+                    using var conn = new EDBConnection(connectionString);
+                    await conn.OpenAsync();
+                })).ToArray();
+
+                try
+                {
+                    Task.WaitAll(tasks);
+                }
+                catch (AggregateException e)
+                {
+                    foreach (var inner in e.InnerExceptions)
+                        Assert.That(inner, Is.TypeOf<EDBException>());
+                    return;
+                }
+                Assert.Fail();
+            }
+            finally
+            {
+                EDBConnection.ClearPool(new EDBConnection(connectionString));
+            }
+        }
+
+        [Test]
         public void ClearPool()
         {
             EDBConnection conn;
@@ -310,7 +326,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void ClearWithBusy()
         {
-            ConnectorPool pool;
+            ConnectorPool? pool;
             using (var conn = OpenConnection())
             {
                 EDBConnection.ClearPool(conn);
@@ -325,7 +341,8 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void ClearWithNoPool()
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 ApplicationName = nameof(ClearWithNoPool)
             }.ToString();
             using (var conn = new EDBConnection(connString))
@@ -335,7 +352,8 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Description("https://github.com/EDB/EDB/commit/45e33ecef21f75f51a625c7b919a50da3ed8e920#r28239653")]
         public void PhysicalOpenFailure()
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 ApplicationName = nameof(PhysicalOpenFailure),
                 Port = 44444,
                 MaxPoolSize = 1
@@ -343,7 +361,9 @@ namespace EnterpriseDB.EDBClient.Tests
             using (var conn = new EDBConnection(connString))
             {
                 for (var i = 0; i < 1; i++)
-                    Assert.That(() => conn.Open(), Throws.Exception.TypeOf<SocketException>());
+                    Assert.That(() => conn.Open(), Throws.Exception
+                        .TypeOf<EDBException>()
+                        .With.InnerException.TypeOf<SocketException>());
                 Assert.True(PoolManager.TryGetValue(connString, out var pool));
                 AssertPoolState(pool, 0, 0);
             }
@@ -356,7 +376,8 @@ namespace EnterpriseDB.EDBClient.Tests
         //[TestCase(10, 20, 30, false)]
         public void ExercisePool(int maxPoolSize, int numTasks, int seconds, bool async)
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString) {
+            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 ApplicationName = nameof(ExercisePool),
                 MaxPoolSize = maxPoolSize
             }.ToString();
@@ -384,12 +405,15 @@ namespace EnterpriseDB.EDBClient.Tests
 
         volatile int StopFlag;
 
-        void AssertPoolState(ConnectorPool pool, int idle, int busy, int waiting=0)
+        void AssertPoolState(ConnectorPool? pool, int idle, int busy, int waiting=0)
         {
+            if (pool == null)
+                throw new ArgumentNullException(nameof(pool));
+
             var state = pool.State;
             Assert.That(state.Idle, Is.EqualTo(idle), $"Idle should be {idle} but is {state.Idle}");
-            Assert.That(state.Busy, Is.EqualTo(busy), $"Busy should be {busy} but is {state.Busy}");
-            Assert.That(state.Waiting, Is.EqualTo(waiting), $"Waiting should be {waiting} but is {state.Waiting}");
+            var stateBusy = state.Open - state.Idle;
+            Assert.That(stateBusy, Is.EqualTo(busy), $"Busy should be {busy} but is {stateBusy}");
         }
     }
 }
