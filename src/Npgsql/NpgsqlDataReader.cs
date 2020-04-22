@@ -666,7 +666,9 @@ namespace EnterpriseDB.EDBClient{
                 {
                     Array.Copy(Buffer.Buffer, tmp, Buffer.Buffer.Length);
                     Command.Parameters.Insert(Command.Parameters.ReturnIndex, Command.Parameters.ReturnParam);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     RowDescription.AddReturnData((FieldDescription)_callable_descrition[0]);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     Add(RetRowBuffer); // ZK
                 }
             }
@@ -713,7 +715,9 @@ namespace EnterpriseDB.EDBClient{
                 foreach (var p in Command.Parameters.Where(p => p.IsOutReturnDirection))
                 {
                     int idx;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     {
                         // TODO: Provider-specific check?
                         p.Value = GetValue(idx);
@@ -724,7 +728,9 @@ namespace EnterpriseDB.EDBClient{
                         pending.Enqueue(p);
                     }
                 }
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 for (var i = 0; pending.Count != 0 && i != RowDescription.NumFields; ++i)
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 {
                     if (!taken.Contains(i))
                     {
