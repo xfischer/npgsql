@@ -1,29 +1,7 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -32,8 +10,8 @@ namespace EnterpriseDB.EDBClient.LegacyPostgis
 {
     public class LegacyPostgisHandlerFactory : EDBTypeHandlerFactory<PostgisGeometry>
     {
-        protected override EDBTypeHandler<PostgisGeometry> Create(EDBConnection conn)
-            => new LegacyPostgisHandler();
+        public override EDBTypeHandler<PostgisGeometry> Create(PostgresType postgresType, EDBConnection conn)
+            => new LegacyPostgisHandler(postgresType);
     }
 
     class LegacyPostgisHandler : EDBTypeHandler<PostgisGeometry>,
@@ -42,9 +20,11 @@ namespace EnterpriseDB.EDBClient.LegacyPostgis
         IEDBTypeHandler<PostgisPolygon>, IEDBTypeHandler<PostgisMultiPolygon>,
         IEDBTypeHandler<PostgisGeometryCollection>
     {
+        public LegacyPostgisHandler(PostgresType postgresType) : base(postgresType) {}
+
         #region Read
 
-        public override async ValueTask<PostgisGeometry> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override async ValueTask<PostgisGeometry> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(5, async);
             var le = buf.ReadByte() != 0;
@@ -181,53 +161,53 @@ namespace EnterpriseDB.EDBClient.LegacyPostgis
 
         #region Read concrete types
 
-        async ValueTask<PostgisPoint> IEDBTypeHandler<PostgisPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisPoint> IEDBTypeHandler<PostgisPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisPoint)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisMultiPoint> IEDBTypeHandler<PostgisMultiPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisMultiPoint> IEDBTypeHandler<PostgisMultiPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisMultiPoint)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisLineString> IEDBTypeHandler<PostgisLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisLineString> IEDBTypeHandler<PostgisLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisLineString)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisMultiLineString> IEDBTypeHandler<PostgisMultiLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisMultiLineString> IEDBTypeHandler<PostgisMultiLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisMultiLineString)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisPolygon> IEDBTypeHandler<PostgisPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisPolygon> IEDBTypeHandler<PostgisPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisPolygon)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisMultiPolygon> IEDBTypeHandler<PostgisMultiPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisMultiPolygon> IEDBTypeHandler<PostgisMultiPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisMultiPolygon)await Read(buf, len, async, fieldDescription);
-        async ValueTask<PostgisGeometryCollection> IEDBTypeHandler<PostgisGeometryCollection>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<PostgisGeometryCollection> IEDBTypeHandler<PostgisGeometryCollection>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (PostgisGeometryCollection)await Read(buf, len, async, fieldDescription);
 
         #endregion
 
         #region Write
 
-        public override int ValidateAndGetLength(PostgisGeometry value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public override int ValidateAndGetLength(PostgisGeometry value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisPoint value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisPoint value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisMultiPoint value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisMultiPoint value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisPolygon value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisPolygon value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisMultiPolygon value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisMultiPolygon value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisLineString value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisLineString value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisMultiLineString value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisMultiLineString value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(PostgisGeometryCollection value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(PostgisGeometryCollection value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.GetLen(true);
 
-        public int ValidateAndGetLength(byte[] value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(byte[] value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.Length;
 
-        public override async Task Write(PostgisGeometry value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public override async Task Write(PostgisGeometry value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             // Common header
             if (value.SRID == 0)
@@ -371,25 +351,25 @@ namespace EnterpriseDB.EDBClient.LegacyPostgis
             }
         }
 
-        public Task Write(PostgisPoint value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisPoint value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisMultiPoint value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisMultiPoint value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisPolygon value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisPolygon value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisMultiPolygon value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisMultiPolygon value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisLineString value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisLineString value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisMultiLineString value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisMultiLineString value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
-        public Task Write(PostgisGeometryCollection value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public Task Write(PostgisGeometryCollection value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((PostgisGeometry)value, buf, lengthCache, parameter, async);
 
         #endregion Write

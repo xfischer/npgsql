@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.RawPostgis": {
+      "commandName": "Project"
+    },
+    "EnterpriseDB.EDBClient.RawPostgis": {
+      "commandName": "Project"
+    }
+  }
+}

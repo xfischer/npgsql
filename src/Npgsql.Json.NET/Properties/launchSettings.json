@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.Json.NET": {
+      "commandName": "Project"
+    },
+    "EnterpriseDB.EDBClient.Json.NET": {
+      "commandName": "Project"
+    }
+  }
+}

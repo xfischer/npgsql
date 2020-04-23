@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.LegacyPostgis": {
+      "commandName": "Project"
+    },
+    "EnterpriseDB.EDBClient.LegacyPostgis": {
+      "commandName": "Project"
+    }
+  }
+}

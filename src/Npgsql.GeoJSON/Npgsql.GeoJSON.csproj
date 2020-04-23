@@ -1,40 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <VersionPrefix>4.0.10.1</VersionPrefix>
-    <Description>GeoJSON plugin for Npgsql, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
     <Authors>Yoh Deadfall, Shay Rojansky</Authors>
-    <Copyright>Copyright 2019 © The Npgsql Development Team</Copyright>
-    <Company>Npgsql</Company>
-    <PackageTags>npgsql postgresql postgres postgis geojson spatial ado ado.net database sql</PackageTags>
-    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <!--<TargetFrameworks Condition="'$(OS)' != 'Windows_NT' OR '$(CoreOnly)' == 'True'">netstandard2.0</TargetFrameworks>-->
-    <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
-    <LangVersion>latest</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
-    <PackageIconUrl>http://www.npgsql.org/img/postgresql.gif</PackageIconUrl>
-    <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git://github.com/npgsql/npgsql</RepositoryUrl>
-    <Deterministic>true</Deterministic>
-    <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
-    <Features>IOperation</Features>
+    <Description>GeoJSON plugin for EDB, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
+    <PackageTags>EDB postgresql postgres postgis geojson spatial ado ado.net database sql</PackageTags>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <SignAssembly>false</SignAssembly>
     <AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
-    <Version>4.0.10.2</Version>
+    <RootNamespace>EnterpriseDB.EDBClient.GeoJSON</RootNamespace>
+    <RepositoryUrl />
+    <RepositoryType />
+    <PackageProjectUrl />
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net45|AnyCPU'">
-    <WarningLevel>0</WarningLevel>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="GeoJSON.Net" Version="1.1.70" />
+    <PackageReference Include="GeoJSON.Net" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../Npgsql/Npgsql.csproj" />
   </ItemGroup>
-
 </Project>

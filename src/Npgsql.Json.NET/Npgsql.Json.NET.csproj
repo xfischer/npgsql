@@ -1,40 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <VersionPrefix>4.0.6.1</VersionPrefix>
-    <Description>Json.NET plugin for Npgsql, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
     <Authors>Shay Rojansky</Authors>
-    <Copyright>Copyright 2019 © The Npgsql Development Team</Copyright>
-    <Company>Npgsql</Company>
-    <PackageTags>npgsql postgresql json postgres ado ado.net database sql</PackageTags>
-    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <!--<TargetFrameworks Condition="'$(OS)' != 'Windows_NT' OR '$(CoreOnly)' == 'True'">netstandard2.0</TargetFrameworks>-->
-    <AssemblyOriginatorKeyFile>../../Npgsql.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-    <!--<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>-->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageProjectUrl>http://www.npgsql.org</PackageProjectUrl>
-    <PackageIconUrl>http://www.npgsql.org/img/postgresql.gif</PackageIconUrl>
-    <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git://github.com/npgsql/npgsql</RepositoryUrl>
-    <Deterministic>true</Deterministic>
-    <!-- This is somehow important for Microsoft.CodeQuality.Analyzers -->
-    <Features>IOperation</Features>
+    <Description>Json.NET plugin for EDB, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
+    <PackageTags>EDB postgresql json postgres ado ado.net database sql</PackageTags>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
-    <Version>4.0.10.2</Version>
+    <RootNamespace>EnterpriseDB.EDBClient.Json.NET</RootNamespace>
+    <Company>EnterpriseDB</Company>
+    <Copyright>Copyright 2019 © The EnterpriseDB Development Team</Copyright>
+    <PackageProjectUrl />
+    <RepositoryUrl />
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-<!-- Causes issues in Appveyor and Travis
-    <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="2.6.0-beta2" PrivateAssets="All" />
--->
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\Npgsql\Npgsql.csproj" />
+    <ProjectReference Include="../Npgsql/Npgsql.csproj" />
   </ItemGroup>
-
 </Project>

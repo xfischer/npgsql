@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.NodaTime": {
+      "commandName": "Project"
+    },
+    "EnterpriseDB.EDBClient.NodaTime": {
+      "commandName": "Project"
+    }
+  }
+}
