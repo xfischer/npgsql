@@ -23,7 +23,7 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="EnterpriseDB.EDBClient">
+    <!--<Reference Include="EnterpriseDB.EDBClient">
       <HintPath>..\..\..\..\..\Merged_V4\Debug\net461\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces">
@@ -40,12 +40,12 @@
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
       <HintPath>..\..\..\..\..\Merged_V4\Debug\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
+    </Reference>-->
   </ItemGroup>
   
-  <!--
+ 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Npgsql\Npgsql.csproj" />
   </ItemGroup>
-  -->
+
 </Project>
