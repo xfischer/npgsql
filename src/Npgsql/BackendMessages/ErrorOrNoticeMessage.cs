@@ -39,6 +39,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
             while (true)
             {
+                
                 var fieldCode = (ErrorFieldTypeCode)buf.ReadByte();
                 switch (fieldCode) {
                 case ErrorFieldTypeCode.Done:
@@ -115,13 +116,13 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 }
             }
 
-            End:
+        End:
             if (severity == null)
-                throw new EDBException("Severity not received in server error message");
+                severity = "Severity not received from server";
             if (code == null)
-                throw new EDBException("Code not received in server error message");
+                code = "Error code not received from server";
             if (message == null)
-                throw new EDBException("Message not received in server error message");
+                message = "Error message not received from server";
 
             return new ErrorOrNoticeMessage(
                 severity, invariantSeverity ?? severity, code, message,

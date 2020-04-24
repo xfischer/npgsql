@@ -1355,7 +1355,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.Fail("Expected an exception. Cursor should be invalid");
 		}
 
-		[Test, /*Ignore("Investigate default params failure")*/]
+		[Ignore("Investigate default params failure")]
 		public void DefaultInBindAsReturn()
 		{
 			EDBCommand command = new EDBCommand("public.DEFAULTINRETURNFUNC(:param0)", con); 

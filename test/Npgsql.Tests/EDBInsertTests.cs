@@ -335,7 +335,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(6, result);
+            Assert.AreEqual(5, result);
 
         }
 
@@ -392,7 +392,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(6, result);
+            Assert.AreEqual(5, result);
 
         }
 

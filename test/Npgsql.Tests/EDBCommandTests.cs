@@ -113,7 +113,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Object result = command.ExecuteScalar();
 
-            Assert.AreEqual(6, result);        
+            Assert.AreEqual(5, result);        
 
         }
         
@@ -222,10 +222,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
             EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", _conn);
             
-            command.Parameters.Add(new EDBParameter("p0", (int)5));
+            command.Parameters.Add(new EDBParameter("p0", 5));
             
             Assert.AreEqual(command.Parameters[0].EDBDbType, EDBDbType.Integer);
-            Assert.AreEqual(command.Parameters[0].DbType, DbType.Int16);
+            Assert.AreEqual(command.Parameters[0].DbType, DbType.Int32);
             
             
             object result = command.ExecuteNonQuery();
@@ -813,7 +813,7 @@ namespace EnterpriseDB.EDBClient.Tests
             command.ExecuteScalar();
 
 
-            Assert.AreEqual(7, result);
+            Assert.AreEqual(6, result);
 
 
         }
@@ -825,7 +825,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
 
-            Assert.Throws<PostgresException>(() => command.Connection.Open());
+            Assert.Throws<EDBException>(() => command.Connection.Open());
 
         }
 
@@ -835,7 +835,7 @@ namespace EnterpriseDB.EDBClient.Tests
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
-            Assert.Throws<PostgresException>(() => command.Connection.Open());
+            Assert.Throws<EDBException>(() => command.Connection.Open());
 
        //     Assert("Either password must be specified or IntegratedSecurity must be on",);
 
