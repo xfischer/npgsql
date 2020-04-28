@@ -50,21 +50,21 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EntityFramework" />
+    <PackageReference Include="EntityFramework" Version="6.4.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>\\vmware-host\Shared Folders\Desktop\dotnet\net451\EnterpriseDB.EDBClient.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Memory">
-      <HintPath>\\vmware-host\Shared Folders\Downloads\Merged_V2\Debug\net461\System.Memory.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\Debug\net461\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>\\vmware-host\Shared Folders\Downloads\Merged_V2\Debug\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\Debug\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\Npgsql\bin\Debug\net461\System.Text.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions">
-      <HintPath>\\vmware-host\Shared Folders\Downloads\Merged_V2\Debug\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\Debug\net461\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
