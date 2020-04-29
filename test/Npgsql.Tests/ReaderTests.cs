@@ -156,6 +156,7 @@ namespace EnterpriseDB.EDBClient.Tests
             // See also CommandTests.Statements()
             using (var conn = OpenConnection())
             {
+                TestUtil.MaximumPgVersion(conn, "12.0", "OID support has been removed in V12");
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
                     "INSERT INTO data (name) VALUES ('a');" +
@@ -501,14 +502,16 @@ namespace EnterpriseDB.EDBClient.Tests
         public void GetProviderSpecificValues()
         {
             using (var conn = OpenConnection())
-            using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01'::DATE", conn))
+            using (var command = new EDBCommand(@"SELECT 'hello', 1, '2014-01-01'", conn))
             {
                 using (var dr = command.ExecuteReader(Behavior))
                 {
                     dr.Read();
                     var values = new object[4];
                     Assert.That(dr.GetProviderSpecificValues(values), Is.EqualTo(3));
-                    Assert.That(values, Is.EqualTo(new object?[] { "hello", 1, new EDBDate(2014, 1, 1), null }));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+                    Assert.That(values, Is.EqualTo(new object[] { "hello", 1, "2014-01-01", null }));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
                 using (var dr = command.ExecuteReader(Behavior))
                 {

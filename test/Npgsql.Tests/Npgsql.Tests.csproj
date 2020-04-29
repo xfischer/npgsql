@@ -42,8 +42,8 @@
       <HintPath>..\..\..\..\..\Merged_V4\Debug\net461\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>-->
   </ItemGroup>
+
   
- 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Npgsql\Npgsql.csproj" />
   </ItemGroup>

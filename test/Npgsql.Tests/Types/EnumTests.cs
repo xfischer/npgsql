@@ -305,7 +305,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test]
         public void Array()
         {
             using (var conn = OpenConnection())
