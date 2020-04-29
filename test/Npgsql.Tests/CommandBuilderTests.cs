@@ -44,6 +44,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(cmd.Parameters[2].ParameterName, Is.EqualTo("param3"));
                 cmd.Parameters[0].Value = 5;
                 cmd.Parameters[2].Value = 4;
+                cmd.Prepare();
                 cmd.ExecuteNonQuery();
                 Assert.That(cmd.Parameters[0].Value, Is.EqualTo(5));
                 Assert.That(cmd.Parameters[1].Value, Is.EqualTo("sometext"));
@@ -51,7 +52,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE"), Description("Tests function parameter derivation with IN-only parameters")]
+        [Test, Description("Tests function parameter derivation with IN-only parameters")]
         public void DeriveFunctionParameters_InOnly()
         {
             using (var conn = OpenConnection())
@@ -143,7 +144,8 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE"), IssueLink("https://github.com/EDB/EDB/issues/1212")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1212")]
+        [Ignore("TABLEOF will not be supported with derive param")]
         public void DeriveFunctionParameters_TableParameters()
         {
             using (var conn = OpenConnection())
@@ -345,12 +347,12 @@ INSERT INTO pg_temp.foo VALUES
 (1, 2, 'Ed'),
 (2, 1, 'Mary');
 
-CREATE FUNCTION pg_temp.getfoo(int) RETURNS SETOF foo AS $$
+CREATE FUNCTION pg_temp.getfooSetOfType(int) RETURNS SETOF foo AS $$
     SELECT * FROM pg_temp.foo WHERE pg_temp.foo.fooid = $1 ORDER BY pg_temp.foo.foosubid;
 $$ LANGUAGE SQL;
                 ");
 
-                var cmd = new EDBCommand("pg_temp.getfoo", conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new EDBCommand("pg_temp.getfooSetOfType", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(4));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
@@ -358,6 +360,7 @@ $$ LANGUAGE SQL;
                 Assert.That(cmd.Parameters[2].Direction, Is.EqualTo(ParameterDirection.Output));
                 Assert.That(cmd.Parameters[3].Direction, Is.EqualTo(ParameterDirection.Output));
                 cmd.Parameters[0].Value = 1;
+                cmd.Prepare();
                 cmd.ExecuteNonQuery();
                 Assert.That(cmd.Parameters[0].Value, Is.EqualTo(1));
             }
@@ -426,6 +429,7 @@ $$ LANGUAGE SQL;
                 Assert.That(cmd.Parameters[2].Direction, Is.EqualTo(ParameterDirection.Output));
                 Assert.That(cmd.Parameters[3].Direction, Is.EqualTo(ParameterDirection.Output));
                 cmd.Parameters[0].Value = 1;
+                cmd.Prepare();
                 cmd.ExecuteNonQuery();
                 Assert.That(cmd.Parameters[0].Value, Is.EqualTo(1));
             }

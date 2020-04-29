@@ -668,7 +668,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test]
         public void StatementMappedOutputParameters()
         {
             using (var conn = OpenConnection())
@@ -734,6 +734,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 command.Parameters[0].Direction = ParameterDirection.Output;
                 command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
                 command.Parameters[1].Direction = ParameterDirection.Output;
+                command.Prepare();
 
                 var result = command.ExecuteScalar();
 
@@ -749,7 +750,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 // This is caused by having an error with the prepared statement and later, EDB is trying to release the plan as it was successful created.
                 var cmd = new EDBCommand("sele", conn);
-                Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<PostgresException>());
+                Assert.That(() => cmd.Prepare(), Throws.Exception.TypeOf<EDBException>());
             }
         }
 
@@ -789,7 +790,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, /*Ignore("Ignore for now")*/]
         [TestCase(CommandBehavior.Default)]
         [TestCase(CommandBehavior.SequentialAccess)]
         public void InputAndOutputParameters(CommandBehavior behavior)
@@ -802,10 +803,21 @@ namespace EnterpriseDB.EDBClient.Tests
                 cmd.Parameters.Add(b);
                 var c = new EDBParameter { ParameterName = "c", Direction = ParameterDirection.InputOutput, Value = 4 };
                 cmd.Parameters.Add(c);
-                using (cmd.ExecuteReader(behavior))
+                using (EDBDataReader br = cmd.ExecuteReader(behavior))
                 {
-                    Assert.AreEqual(5, b.Value);
-                    Assert.AreEqual(3, c.Value);
+                    if (behavior == CommandBehavior.Default)
+                    {
+                        Assert.AreEqual(5, b.Value);
+                        Assert.AreEqual(3, c.Value);
+                    }
+                    else
+                    {
+                        //In case of CommandBehavior.SequentialAccess data should be read sequentially.
+                        //Microsoft Docs: https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/retrieving-binary-data
+                        br.Read();
+                        Assert.AreEqual(3, br[0]);
+                        Assert.AreEqual(5, br[1]);
+                    }
                 }
             }
         }
@@ -838,7 +850,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/395"), Ignore("Ignore for now")]
         public void UseAcrossConnectionChange([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             using (var conn1 = OpenConnection())
@@ -985,6 +997,7 @@ namespace EnterpriseDB.EDBClient.Tests
             // See also ReaderTests.Statements()
             using (var conn = OpenConnection())
             {
+                TestUtil.MaximumPgVersion(conn, "12.0", "OID support has been removed in V12");
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (name TEXT) WITH OIDS");
                 using (var cmd = new EDBCommand(
                     "INSERT INTO data (name) VALUES (@p1);" +

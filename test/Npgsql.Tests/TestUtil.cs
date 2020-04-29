@@ -93,6 +93,20 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        public static void MaximumPgVersion(EDBConnection conn, string maxVersion, string ignoreText = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        {
+            var max = new Version(maxVersion);
+            if (conn.PostgreSqlVersion >= max)
+            {
+                var msg = $"Postgresql backend version {conn.PostgreSqlVersion} is higher than the required {max}";
+                if (ignoreText != null)
+                    msg += ": " + ignoreText;
+                Assert.Ignore(msg);
+            }
+        }
+
         static readonly Version MinCreateExtensionVersion = new Version(9, 1);
         public static void EnsureExtension(EDBConnection conn, string extension, string? minVersion = null)
         {

@@ -207,8 +207,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     reader.Read();
                     Assert.That(reader.GetValue(0), Is.EqualTo(expectedRegular));
                     Assert.That(reader.GetFieldValue<DateTime[]>(0), Is.EqualTo(expectedRegular));
-                    Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(expectedPsv));
-                    Assert.That(reader.GetFieldValue<EDBDate[]>(0), Is.EqualTo(expectedPsv));
+                    //Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(expectedPsv));
+                    //Assert.That(reader.GetFieldValue<EDBDate[]>(0), Is.EqualTo(expectedPsv));
                 }
             }
         }

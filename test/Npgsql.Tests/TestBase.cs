@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests
         /// Unless the EDB_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        const string DefaultConnectionString = "Server=192.168.182.131;port=5444;Username=zahidk;Password=edb;Database=edb;Timeout=0;Command Timeout=0";
+        const string DefaultConnectionString = "Server=localhost;port=5444;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0";
 
         #region Utilities for use by tests
 
