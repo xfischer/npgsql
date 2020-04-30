@@ -10,6 +10,12 @@
     <NoWarn>NU5105</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="CommandBuilderTests.cs" />
+    <Compile Remove="CommandTests.cs" />
+    <Compile Remove="EDBArrayTest.cs" />
+    <Compile Remove="EDBMiscTest.cs" />
+    <Compile Remove="FunctionTests.cs" />
+    <Compile Remove="Types\EnumTests.cs" />
     <Compile Remove="_EDBMiscProcTest.cs" />
   </ItemGroup>
   <ItemGroup>

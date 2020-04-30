@@ -580,6 +580,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
+        [Ignore("MERGE_HANG")]
         [Test]
         public void OidVector()
         {

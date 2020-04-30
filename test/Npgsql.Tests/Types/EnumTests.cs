@@ -305,6 +305,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
+        [Ignore("MERGE_HANG")]
         [Test]
         public void Array()
         {
@@ -340,6 +341,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
+        [Ignore("MERGE_HANG")]
         [Test]
         public void ReadUnmappedEnumsAsString()
         {
