@@ -1,4 +1,6 @@
-﻿namespace Npgsql.VSIX
+﻿#nullable disable
+
+namespace Npgsql.VSIX
 {
     partial class NpgsqlConnectionUIControl
     {
@@ -169,7 +171,7 @@
             this.portNumericUpDown.Size = new System.Drawing.Size(110, 38);
             this.portNumericUpDown.TabIndex = 2;
             this.portNumericUpDown.Value = new decimal(new int[] {
-            5444,
+            5432,
             0,
             0,
             0});

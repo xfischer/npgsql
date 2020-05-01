@@ -11,7 +11,9 @@ namespace Npgsql.VSIX
 
         public override void Register(RegistrationContext context)
         {
+#nullable disable
             Key providerKey = null;
+#nullable restore
             try
             {
                 providerKey = context.CreateKey($@"DataProviders\{{{ProviderGuid}}}");
