@@ -1876,10 +1876,21 @@ namespace EnterpriseDB.EDBClient{
             object result;
             try
             {
-                result = _isSequential
-                    ? fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, false, fieldDescription).GetAwaiter().GetResult()
-                    : fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
-            }
+#nullable disable
+                if (fieldDescription._isUnsupportedField)
+                {
+                    var _textHandler = new TextHandler(fieldDescription.PostgresType, Connector.Connection);
+                    result = _textHandler.Read(Buffer, ColumnLen, false, fieldDescription);
+                }
+#nullable restore
+                else
+                {
+
+                    result = _isSequential
+                        ? fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, false, fieldDescription).GetAwaiter().GetResult()
+                        : fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
+                }
+             }
             catch (EDBSafeReadException e)
             {
                 throw e.OriginalException;

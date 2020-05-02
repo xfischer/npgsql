@@ -1042,7 +1042,7 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
                 if (CommandType == CommandType.StoredProcedure)
                 {
                     connector._isCallableStmt = true;
-                    await connector.WriteParseOut(statement.SQL, pStatement.Name! ,_parameters, statement.InputParameters, async);
+                    await connector.WriteParseOut(statement.SQL, pStatement.Name! ,_parameters, statement.InputParameters, async, connector.TypeMapper);
                 }
                 else
                 {

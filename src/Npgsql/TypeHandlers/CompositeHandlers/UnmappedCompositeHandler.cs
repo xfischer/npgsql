@@ -185,12 +185,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers
             {
                 var fieldHandler = fieldDescriptor.Handler;
                 var fieldValue = fieldDescriptor.Getter(value);
+                if (fieldValue == null)
+                {
+                    fieldValue = DBNull.Value;
+                }
 
                 if (buf.WriteSpaceLeft < 4)
                     await buf.Flush(async);
 
                 buf.WriteUInt32(fieldDescriptor.OID);
-                await fieldHandler.WriteObjectWithLength(fieldValue, buf, lengthCache, null, async);
+                await fieldHandler.WriteObjectWithLength(fieldValue, buf, lengthCache, parameter, async);
             }
         }
 

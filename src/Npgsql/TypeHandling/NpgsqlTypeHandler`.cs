@@ -183,7 +183,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// Type handlers generally don't need to override this.
         /// </summary>
         protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
-            => value is DBNull
+            => value == null || value is DBNull
                 ? WriteWithLengthInternal(DBNull.Value, buf, lengthCache, parameter, async)
                 : _nonGenericWriteWithLength(this, value, buf, lengthCache, parameter, async);
 

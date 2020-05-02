@@ -341,16 +341,23 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                 var fieldTypeOID = uint.Parse(reader.GetString("atttypid"), NumberFormatInfo.InvariantInfo);
                 if (!byOID.TryGetValue(fieldTypeOID, out var fieldType))  // See #2020
                 {
-                    Log.Warn($"Skipping composite type {currentComposite!.DisplayName} with field {fieldName} with type OID {fieldTypeOID}, which could not be resolved to a PostgreSQL type.");
-                    byOID.Remove(oid);
-                    skipCurrent = true;
-                    continue;
+                    if (fieldName == "recipient_list")//EnterpriseDB Team
+                     {
+                     //fieldType = new PostgresCompositeType("sys", "aq$_recipient_list_t", 1323);
+                     } else
+                    {
+#nullable disable
+                        Log.Warn($"Skipping composite type {currentComposite.DisplayName} with field {fieldName} with type OID {fieldTypeOID}, which could not be resolved to a PostgreSQL type.");
+                        byOID.Remove(oid);
+                        skipCurrent = true;
+                        continue;
+                    }
                 }
 
                 currentComposite!.MutableFields.Add(new PostgresCompositeType.Field(fieldName, fieldType));
             }
         }
-
+#nullable restore
         /// <summary>
         /// Loads enum labels for the enum type specified by the OID.
         /// </summary>

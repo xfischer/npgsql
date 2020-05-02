@@ -46,6 +46,7 @@ namespace EnterpriseDB.EDBClient{
 
         internal Task WriteDescribeOut(StatementOrPortal statementOrPortal, string name, bool async)
         {
+
             Debug.Assert(name.All(c => c < 128));
 
             var len = sizeof(byte) +       // Message code
@@ -204,7 +205,7 @@ namespace EnterpriseDB.EDBClient{
         /*
          * EnterpriseDB Team: ParseOut Message 
         */
-        internal async Task WriteParseOut(string sql, string statementName,EDBParameterCollection _paramerters, List<EDBParameter> inputParameters, bool async)
+        internal async Task WriteParseOut(string sql, string statementName,EDBParameterCollection _paramerters, List<EDBParameter> inputParameters, bool async, ConnectorTypeMapper mapper)
         {
             Debug.Assert(statementName.All(c => c < 128));
 
@@ -237,26 +238,34 @@ namespace EnterpriseDB.EDBClient{
             /*EDB should change to goto etc*/
             for (Int32 i = 0; i < _paramerters.Count; i++)
             {
-                //uint oid = 0;
-                //EDBTypeHandler handler;
+                // PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
 
-                //if (mapping != null)
-                //{
-                //    handler = mapping.GetByEDBDbType(_paramerters[i].EDBDbType);
-                //    if (handler != null)
-                //        oid = handler.PostgresType.OID;
-                //}
-                //if (oid != 0)
-                //{
-                //    WriteBuffer.WriteInt32((int)oid);
-                //}
-                //else
+                //name = _parameters[i].EDBDbType.ToString();
+                uint oid = 0;
+#nullable disable
+                if (mapper != null)
                 {
-                    WriteBuffer.WriteInt32((int)EDBParameter.ParamToOid(_paramerters[i].EDBDbType.ToString()));
-
+                    if (_paramerters[i].DataTypeName != null)
+                    {
+                        EDBTypeHandler handler = mapper.GetByDataTypeName(_paramerters[i].DataTypeName);
+                        if (handler != null)
+                        {
+                            oid = handler.PostgresType.OID;
+                        }
+                    }
                 }
+#nullable restore
+                if (oid != 0)
+                {
+                    WriteBuffer.WriteInt32((Int32)oid);
+                }
+                else
+                {
+                    WriteBuffer.WriteInt32((Int32)EDBParameter.ParamToOid((string)_paramerters[i].EDBDbType.ToString()));
+                }
+
             }
-            
+
             for (Int32 i = 0; i < _paramerters.Count; i++)
             {
                 // PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction)));
@@ -444,16 +453,23 @@ namespace EnterpriseDB.EDBClient{
             //foreach (EDBParameter param in _parameters)
             for(int i =0;i<_parameters.Count;i++)
             {
+                try {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-                _parameters[i].LengthCache?.Rewind();
+                    _parameters[i].LengthCache?.Rewind();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-                              //   param.LengthCache?.Rewind();
-                if (_parameters[i].Direction == System.Data.ParameterDirection.Output)
-                {
-                    WriteBuffer.WriteInt32((int)-1);
-                    continue;
+                    //   param.LengthCache?.Rewind();
+                    if (_parameters[i].Direction == System.Data.ParameterDirection.Output)
+                    {
+                        WriteBuffer.WriteInt32((int)-1);
+                        continue;
+                    }
+                    await _parameters[i].WriteWithLength(WriteBuffer, async);
+
                 }
-                await _parameters[i].WriteWithLength(WriteBuffer, async);
+                catch (Exception e)
+                {
+                    e.ToString();
+                }  
             }
 
             if (unknownResultTypeList != null)
