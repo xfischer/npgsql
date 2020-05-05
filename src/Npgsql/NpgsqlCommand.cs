@@ -925,7 +925,7 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
 
                     await connector.WriteParse(statement.SQL, statement.StatementName, statement.InputParameters, async);
                 }
-                if (CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     await connector.WriteBindOut(
                        statement.InputParameters,_parameters, string.Empty, statement.StatementName, AllResultTypesAreUnknown,
@@ -940,7 +940,7 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
                         i == 0 ? UnknownResultTypeList : null,
                         async);
                 }
-                if(CommandType == CommandType.StoredProcedure)
+                if(IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     await connector.WriteDescribe(StatementOrPortal.Portal, string.Empty, async);
                     await connector.WriteDescribeOut(StatementOrPortal.Portal, string.Empty, async);
@@ -955,7 +955,7 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
 
                 await connector.WriteExecute(0, async);
 
-                if (CommandType == CommandType.StoredProcedure)
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
                     await connector.WriteExecuteOut(0, async);
                 }
@@ -1120,6 +1120,10 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
         {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+           // Connection.Connector._isCallableStmt = false;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
             if (CommandType == CommandType.StoredProcedure) // && Connection.Connector._hasRefCursor == false
             {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -1137,6 +1141,7 @@ var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             Connection.Connector._is_Scaler_fallthrough = false;
             Connection.Connector._hasRefCursor = false;
+        //    Connection.Connector._isCallableStmt = false;
             return reader.RecordsAffected;
         }
 

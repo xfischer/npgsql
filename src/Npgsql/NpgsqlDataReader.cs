@@ -252,6 +252,7 @@ namespace EnterpriseDB.EDBClient{
                 return true;
 
             case ReaderState.InResult:
+                   
                 await ConsumeRow(async);
                 if (_behavior.HasFlag(CommandBehavior.SingleRow))
                 {
@@ -449,7 +450,7 @@ namespace EnterpriseDB.EDBClient{
                         _ => throw Connector.UnexpectedMessageReceived(msg.Code)
                     };
                 }
-                if (Connector._isCallableStmt != true)
+                if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
                 {
                     if (RowDescription == null)
                     {
@@ -478,7 +479,7 @@ namespace EnterpriseDB.EDBClient{
                     // here for the parameters, then as a regular row).
                     msg = await Connector.ReadMessage(async);
                   //  if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
-                  if(Connector._isCallableStmt != true)
+                  if(Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
                     {
                      
                         if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
@@ -494,7 +495,7 @@ namespace EnterpriseDB.EDBClient{
                            
                     }
                 }
-               else if (Command.Parameters.Count > 0 && Connector._isCallableStmt == true)  //Connector._isCallableStmt == true
+               else if (Command.Parameters.Count > 0 && Command.CommandType == CommandType.StoredProcedure)  //ZK :Connector._isCallableStmt == true
                 {
                     msg = await Connector.ReadMessage(async);
 
@@ -502,15 +503,15 @@ namespace EnterpriseDB.EDBClient{
                 }
                 else
                 {
-                    msg = await ReadMessage(async);
-                    if (msg.Code == BackendMessageCode.NoData && Connector._isCallableStmt == true && Connector._isScaler == true && Connector._hasRefCursor == false)
+                    msg = await ReadMessage(async); // ZK: Connector._isCallableStmt == true
+                    if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
                         msg = await ReadMessage(async);
-                    if (msg.Code == BackendMessageCode.RowDescription && Connector._isCallableStmt == true && Connector._isScaler == true && Connector._hasRefCursor == false)
+                    if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
                         msg = await ReadMessage(async);
 
                  //   ProcessMessage(msg);
                 }
-                if (RowDescription == null && Connector._isCallableStmt != true) //Connector._isCallableStmt != true
+                if (RowDescription == null && Command.CommandType != CommandType.StoredProcedure) //ZK :Connector._isCallableStmt != true
                 {
                     // Statement did not generate a resultset (e.g. INSERT)
                     // Read and process its completion message and move on to the next statement
@@ -724,7 +725,7 @@ namespace EnterpriseDB.EDBClient{
 
 
            
-            if (Connector._isCallableStmt != true)
+            if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt 
             {
                 var pending = new Queue<object>();
                 var taken = new List<EDBParameter>();
