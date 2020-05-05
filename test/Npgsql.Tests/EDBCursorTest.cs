@@ -51,7 +51,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			TestUtil.closeDB(con);
 		}
 
-		[Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+		[Test/*, Ignore("MERGE_NEED_TO_EXPLORE")*/]
 		public void testSelect() //Have to change the dependancy on emp table
 		{
 			EDBCommand command = new EDBCommand("CUR_TEST(:v_id)",con);

@@ -29,7 +29,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			int result = command.ExecuteNonQuery();
 			Console.WriteLine("CREATE TABLE returned " + result);
 		}
-		[Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+		[Test/*, Ignore("MERGE_NEED_TO_EXPLORE")*/]
 		public void LOCreateTest()
 		{
 			// Retrieve a Large Object Manager for this connection
@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			Assert.True(0 != oid, "Invalid OID value");
 		}
 
-		[Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+		[Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
 		public void CreateTest()
 		{
 			try

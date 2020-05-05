@@ -195,7 +195,7 @@ namespace EnterpriseDB.EDBClient.Tests
             int count = createProcCommand.ExecuteNonQuery();
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void CustomTypeArrayAsInParamTest()
         {
             con.ReloadTypes();
@@ -266,7 +266,7 @@ namespace EnterpriseDB.EDBClient.Tests
             TestUtil.closeDB(con);
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void ExecuteReaderClobTest()
         {
             var trans = con.BeginTransaction();

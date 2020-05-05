@@ -1834,7 +1834,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void TERSE_PROC_NATIVE_INPUT_TYPES()
         {
             try

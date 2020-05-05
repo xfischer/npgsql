@@ -453,7 +453,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE"), IssueLink("https://github.com/EDB/EDB/issues/657")]
+        [Test/*, Ignore("MERGE_NEED_TO_EXPLORE")*/, IssueLink("https://github.com/EDB/EDB/issues/657")]
         [Explicit]
         public void ImportByteaMassive()
         {

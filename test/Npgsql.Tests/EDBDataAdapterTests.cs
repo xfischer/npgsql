@@ -71,7 +71,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void FB8070_1()
         {
             _conn.Open();
