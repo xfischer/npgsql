@@ -1,4 +1,4 @@
-CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
 
 @SET PGBUILD=C:\\pgBuild64
 @SET SOURCE_PATH="%1"
@@ -9,7 +9,9 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\T
 @SET STAGING_DIR="%6"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
-@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%PATH%
+@SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin"
+@SET VS_2019_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools"
+@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
@@ -27,19 +29,12 @@ echo %cd%
 echo %RELEASE_CONFIGURATION%
 echo %SOURCE_PATH%
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net45
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net45 || goto :error 
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net451
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net451 || goto :error 
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net461
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
@@ -65,18 +60,12 @@ nuget restore Npgsql.Tests.csproj
 msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 cd %SOURCE_PATH%
-cd src\EntityFramework6.Npgsql
-msbuild.exe EntityFramework5.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
-cd %SOURCE_PATH%
-cd src\EntityFramework6.Npgsql
-nuget restore packages.config -PackagesDirectory packages
-
-msbuild.exe EntityFramework6.Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+cd src\EF6.PG
+nuget restore EntityFramework6.Npgsql.sln
+msbuild.exe EntityFramework6.Npgsql.sln /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform="Any CPU" /p:SourceLinkCreate=false || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
-copy bin\%RELEASE_CONFIGURATION%\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
-copy bin\%RELEASE_CONFIGURATION%\EntityFramework5*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error 
+copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net461\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON
@@ -128,7 +117,6 @@ nuget restore Npgsql.NetTopologySuite.csproj
 msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
 
 copy bin\Release\net45\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
-copy bin\Release\net45\GeoAPI.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
 copy bin\Release\net45\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
 copy bin\Release\net45\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net45 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
@@ -158,13 +146,13 @@ msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p
 copy bin\Release\net45\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net45 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
 
-mkdir %STAGING_DIR%\4.0
-mkdir %STAGING_DIR%\4.0\net40
+REM mkdir %STAGING_DIR%\4.0
+REM mkdir %STAGING_DIR%\4.0\net40
 
-cd %SOURCE_PATH%\Net40\EDBDataProvider2.0.2\src
-msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\EDBDataProvider2.0.2.dll %STAGING_DIR%\4.0\net40
-copy bin\Release\Mono.Security.dll %STAGING_DIR%\4.0\net40
+REM cd %SOURCE_PATH%\Net40\EDBDataProvider2.0.2\src
+REM msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+REM copy bin\Release\EDBDataProvider2.0.2.dll %STAGING_DIR%\4.0\net40
+REM copy bin\Release\Mono.Security.dll %STAGING_DIR%\4.0\net40
 
 :error
 echo "Failed with error %errorlevel%."

@@ -15,7 +15,7 @@ export POST_BUILD_STEPS=copy-samples createBuildArchive
 build-dotnet45:
 
 	./../nuget.exe restore ../Npgsql.sln
-	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
+	cmd /c "pkg\\installer\\build.bat $(DOTNET_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET461 $(DOTNET_STAGING_PATH)"
 
 
 copy-samples:
