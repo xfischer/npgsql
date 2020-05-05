@@ -480,12 +480,21 @@ namespace EnterpriseDB.EDBClient{
                   //  if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
                   if(Connector._isCallableStmt != true)
                     {
-                        ProcessMessage(msg);
-                        if (msg.Code == BackendMessageCode.DataRow)
-                            PopulateOutputParameters();
+                     
+                        if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
+                        {
+
+
+                            var pos = Connector.ReadBuffer.ReadPosition;
+                            ProcessMessage(msg);
+                            PopulateNonPreparedOutputParameters();
+                            Connector.ReadBuffer.ReadPosition = pos;
+                            State = ReaderState.BetweenResults;
+                        }
+                           
                     }
                 }
-               else if (Command.Parameters.Count > 0 && Connector._isCallableStmt == true) 
+               else if (Command.Parameters.Count > 0 && Connector._isCallableStmt == true)  //Connector._isCallableStmt == true
                 {
                     msg = await Connector.ReadMessage(async);
 
@@ -501,7 +510,7 @@ namespace EnterpriseDB.EDBClient{
 
                  //   ProcessMessage(msg);
                 }
-                if (RowDescription == null && Connector._isCallableStmt != true)
+                if (RowDescription == null && Connector._isCallableStmt != true) //Connector._isCallableStmt != true
                 {
                     // Statement did not generate a resultset (e.g. INSERT)
                     // Read and process its completion message and move on to the next statement
@@ -546,7 +555,44 @@ namespace EnterpriseDB.EDBClient{
             RowDescription = null;
             return false;
         }
+        void PopulateNonPreparedOutputParameters()
+        {
+            // The first row in a stored procedure command that has output parameters needs to be traversed twice -
+            // once for populating the output parameters and once for the actual result set traversal. So in this
+            // case we can't be sequential.
+            Debug.Assert(Command.Parameters.Any(p => p.IsOutputDirection));
+            Debug.Assert(StatementIndex == 0);
+            Debug.Assert(RowDescription != null);
+            Debug.Assert(State == ReaderState.BeforeResult);
 
+            // Temporarily set our state to InResult to allow us to read the values
+            State = ReaderState.InResult;
+
+            var pending = new Queue<object>();
+            var taken = new List<EDBParameter>();
+            for (var i = 0; i < FieldCount; i++)
+            {
+                if (Command.Parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
+                {
+                    p.Value = GetValue(i);
+                    taken.Add(p);
+                }
+                else
+                    pending.Enqueue(GetValue(i));
+            }
+
+            // Not sure where this odd behavior comes from: all output parameters which did not get matched by
+            // name now get populated with column values which weren't matched. Keeping this for backwards compat,
+            // opened #2252 for investigation.
+            foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection && !taken.Contains(p)))
+            {
+                if (pending.Count == 0)
+                    break;
+                p.Value = pending.Dequeue();
+            }
+
+            State = ReaderState.BeforeResult;  // Set the state back
+        }
         void PopulateOutputParameters()
         {
             // The first row in a stored procedure command that has output parameters needs to be traversed twice -
