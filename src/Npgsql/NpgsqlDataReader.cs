@@ -1862,7 +1862,7 @@ namespace EnterpriseDB.EDBClient{
             if (_isSequential) {
                 SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
                 CheckColumnStart();
-            } else if (Connector._isCallableStmt == true) 
+            } else if (Command.CommandType == CommandType.StoredProcedure) 
             {
                 SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
                 //CheckColumnStart();
