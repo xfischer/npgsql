@@ -35,6 +35,10 @@ copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Exten
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
