@@ -31,6 +31,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void CreateTriggerTest()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(con, "12.0.0");
+#nullable restore           
             string createTable = "CREATE TABLE CMP_TRIG_TBL (id number(4) primary key, description varchar2(200));";
             EDBCommand? cmd = new EDBCommand()
             {
