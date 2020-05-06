@@ -89,7 +89,7 @@ namespace Npgsql.VSIX
 
             // Add an entry for Npgsql
             factoriesTable.Rows.Add("Npgsql Data Provider", ".NET Data Provider for PostgreSQL",
-                Constants.NpgsqlInvariantName, "Npgsql.NpgsqlFactory, Npgsql");
+                Constants.NpgsqlInvariantName, "EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient");
         }
     }
 }
