@@ -118,6 +118,6 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Provider_Description" xml:space="preserve">
-    <value>Use this selection to connect to PostgreSQL using the Npgsql provider.</value>
+    <value>Use this selection to connect to EnterpriseDB PostgreSQL using the EnterpriseDB.EDBClient provider.</value>
   </data>
 </root>

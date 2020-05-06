@@ -171,7 +171,7 @@ namespace Npgsql.VSIX
             this.portNumericUpDown.Size = new System.Drawing.Size(110, 38);
             this.portNumericUpDown.TabIndex = 2;
             this.portNumericUpDown.Value = new decimal(new int[] {
-            5432,
+            5444,
             0,
             0,
             0});
