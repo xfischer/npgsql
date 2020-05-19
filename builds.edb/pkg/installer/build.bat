@@ -82,7 +82,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.GeoJSON
@@ -93,12 +92,10 @@ copy bin\Release\net461\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET
 copy bin\Release\net461\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461 || goto :error
 copy bin\Release\net461\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netcoreapp3.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.Json.NET
@@ -108,13 +105,11 @@ msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%
 copy bin\Release\net461\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461 || goto :error
 copy bin\Release\net461\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netcoreapp3.0 || goto :error
 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.LegacyPostgis
@@ -123,13 +118,11 @@ msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION%
 
 copy bin\Release\net461\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netcoreapp3.0 || goto :error
 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.NetTopologySuite
@@ -140,12 +133,10 @@ copy bin\Release\net461\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR
 copy bin\Release\net461\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461 || goto :error
 copy bin\Release\net461\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netcoreapp3.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.NodaTime
@@ -155,12 +146,10 @@ msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%
 copy bin\Release\net461\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461 || goto :error
 copy bin\Release\net461\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netcoreapp3.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netcoreapp3.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.RawPostgis
@@ -169,7 +158,6 @@ msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p
 
 copy bin\Release\net461\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
-copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netcoreapp3.0 || goto :error
 
 :error
 echo "Failed with error %errorlevel%."
