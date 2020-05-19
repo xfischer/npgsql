@@ -57,12 +57,12 @@ cd src\VSIX
 nuget restore VSIX.csproj
 msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461
 
-copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
-copy bin\%RELEASE_CONFIGURATION%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
+copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
+copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
 
 cd %SOURCE_PATH%
 cd test\Npgsql.Tests
@@ -75,7 +75,8 @@ nuget restore EntityFramework6.Npgsql.sln
 msbuild.exe EntityFramework6.Npgsql.sln /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform="Any CPU" /p:SourceLinkCreate=false || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
-copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net461\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net461
+copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net461\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net461 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON
@@ -169,14 +170,6 @@ msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p
 copy bin\Release\net461\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461 || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
 copy bin\Release\netcoreapp3.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netcoreapp3.0 || goto :error
-
-REM mkdir %STAGING_DIR%\4.0
-REM mkdir %STAGING_DIR%\4.0\net40
-
-REM cd %SOURCE_PATH%\Net40\EDBDataProvider2.0.2\src
-REM msbuild.exe EDBDataProvider.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-REM copy bin\Release\EDBDataProvider2.0.2.dll %STAGING_DIR%\4.0\net40
-REM copy bin\Release\Mono.Security.dll %STAGING_DIR%\4.0\net40
 
 :error
 echo "Failed with error %errorlevel%."
