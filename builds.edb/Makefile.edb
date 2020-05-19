@@ -5,6 +5,9 @@
 
 # Determine operating system
 OS := $(shell uname -a)
+# GIT repo path and tag
+SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
+export GIT_REPO_PATH ?="git://scm-replica"
 
 PKG_NAME:=dotnet
 COMMIT_DOT_GIT_PATH:=$(SRC_DIR)
