@@ -10,8 +10,6 @@ ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 export PRE_BUILD_STEPS=createSourceArchive 
 export BUILD_COMPONENTS=build-dotnet461 build-dotnet451
 export POST_BUILD_STEPS=copy-samples createBuildArchive
-export NET45_SRC_DIR=net451_source
-export NET45_SRC_TAG=DNET_4_0.10.2-1-GA
 
 # Build .NET 461
 build-dotnet461:
@@ -22,14 +20,14 @@ build-dotnet461:
 build-dotnet451:
 
 	# Clone edbas repo
-	cd $(DOTNET_SOURCE_PATH); \
-		rm -rf $(NET45_SRC_DIR); \
-		git clone $(GIT_REPO_PATH)/CON-DNET $(NET45_SRC_DIR); \
-		cd $(NET45_SRC_DIR); \
+	cd /c/; \
+		rm -rf $(DOTNET_451_SOURCE_PATH); \
+		git clone $(GIT_REPO_PATH)/CON-DNET $(DOTNET_451_SOURCE_PATH); \
+		cd $(DOTNET_451_SOURCE_PATH); \
 		git checkout "$(NET45_SRC_TAG)"; \
 		cd -
 
-	cmd /c "pkg\\installer\\build_legacy.bat $(DOTNET_SOURCE_PATH)\\$(NET45_SRC_DIR) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
+	cmd /c "pkg\\installer\\build_legacy.bat $(DOTNET_451_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH)"
 
 
 copy-samples:
