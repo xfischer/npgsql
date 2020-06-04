@@ -46,6 +46,7 @@ copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\System.Memory.dll %STAGING_
 cd %SOURCE_PATH%
 cd src\VSIX
 nuget restore VSIX.csproj
+msbuild /t:restore VSIX.csproj
 msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net45
