@@ -136,6 +136,10 @@ namespace  EnterpriseDB.EDBClient.FrontendMessages
             {
                 try
                 {
+                    //Console.WriteLine(buf.WriteSpaceLeft);
+                    if (buf.WriteSpaceLeft < 80)
+                        await buf.Flush(async);
+
                     param.LengthCache?.Rewind();
                     if (param.Direction == System.Data.ParameterDirection.Output)
                     {
