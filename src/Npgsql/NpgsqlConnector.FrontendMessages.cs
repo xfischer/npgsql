@@ -454,6 +454,8 @@ namespace EnterpriseDB.EDBClient{
             for(int i =0;i<_parameters.Count;i++)
             {
                 try {
+                    if (WriteBuffer.WriteSpaceLeft < 80)
+                        await Flush(async);
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
                     _parameters[i].LengthCache?.Rewind();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
