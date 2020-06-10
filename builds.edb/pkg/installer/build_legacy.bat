@@ -7,6 +7,7 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\T
 @SET TARGET_PLATFORM="%4"
 @SET FRAMEWORK_DEFINE="%5"
 @SET STAGING_DIR="%6"
+@SET DOTNET_461_SOURCE_PATH="%7"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
 @SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\MSBuild\\Current\\Bin"
@@ -60,6 +61,9 @@ cd %SOURCE_PATH%
 cd test\Npgsql.Tests
 nuget restore Npgsql.Tests.csproj
 msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+
+xcopy /s %SOURCE_PATH%\test\Npgsql.Tests\bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE% %DOTNET_461_SOURCE_PATH%\test\Npgsql.Tests\bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\
+xcopy /s %SOURCE_PATH%\test\Npgsql.Tests\bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1 %DOTNET_461_SOURCE_PATH%\test\Npgsql.Tests\bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%1\
 
 cd %SOURCE_PATH%
 cd src\EntityFramework6.Npgsql
