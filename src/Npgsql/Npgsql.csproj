@@ -9,6 +9,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
+    <Version>4.1.3.1</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
