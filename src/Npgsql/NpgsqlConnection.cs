@@ -79,7 +79,7 @@ namespace EnterpriseDB.EDBClient{
         /// <summary>
         /// The default TCP/IP port for PostgreSQL.
         /// </summary>
-        public const int DefaultPort = 5432;
+        public const int DefaultPort = 5444;
 
         /// <summary>
         /// Maximum value for connection timeout.
