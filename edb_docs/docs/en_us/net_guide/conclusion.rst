@@ -6,17 +6,17 @@
 
 EDB Postgres .NET Data Provider Guide
 
-Copyright © 2007 - 2019 EnterpriseDB Corporation. All rights reserved.
+Copyright © 2007 - 2020 EnterpriseDB Corporation. All rights reserved.
 
-EnterpriseDB® Corporation 
+EnterpriseDB® Corporation
 
 34 Crosby Drive, Suite 201, Bedford, MA 01730, USA
 
-T +1 781 357 3390 F +1 978 467 1307 E 
+T +1 781 357 3390 F +1 978 467 1307 E
 
-info@enterprisedb.com 
+info@enterprisedb.com
 
-Visit EnterpriseDB on the web at `www.enterprisedb.com <https://www.enterprisedb.com/>`_. 
+Visit EnterpriseDB on the web at `www.enterprisedb.com <https://www.enterprisedb.com/>`_.
 
 - EnterpriseDB and Postgres Enterprise Manager are registered trademarks of EnterpriseDB Corporation. EDB and EDB Postgres are trademarks of EnterpriseDB Corporation. Oracle is a registered trademark of Oracle, Inc. Other trademarks may be trademarks of their respective owners.
 
@@ -25,4 +25,3 @@ Visit EnterpriseDB on the web at `www.enterprisedb.com <https://www.enterprisedb
 - EDB reserves the right to add features to products that accept freeform SQL, WMI or other potentially dangerous inputs from authenticated, trusted users in the future, but will ensure all such features are designed and tested to ensure they provide the minimum possible risk, and where possible, require superuser or equivalent privileges.
 
 - EDB does not that warrant that we can or will anticipate all potential threats and therefore our process cannot fully guarantee that all potential vulnerabilities have been addressed or considered.
-

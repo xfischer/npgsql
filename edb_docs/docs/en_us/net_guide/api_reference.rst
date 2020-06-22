@@ -4,7 +4,7 @@
 `API Reference`:index:
 **********************
 
-For information about using the API, see the `Npgsql documentation <http://www.npgsql.org/doc/api/Npgsql.html/>`_.
+For information about using the API, see the `Npgsql documentation <http://www.npgsql.org/doc/api/Npgsql.html>`_.
 
 Usage notes:
 

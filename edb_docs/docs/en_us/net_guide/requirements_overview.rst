@@ -13,7 +13,7 @@ Supported Server Versions
 .. index:: Supported server versions
 
 The Advanced Server .NET Connector is certified with Advanced Server
-version 9.4 and above.
+version 9.5 and above.
 
 Supported Platforms
 ===================
@@ -31,10 +31,12 @@ the following Windows platforms:
 
 -  Windows Server 2012 R2
 
+-  Windows 10
+
+-  Windows 8.1
+
 32-bit Windows:
 
 -  Windows 10
 
--  Windows 8
-
--  Windows 7
+-  Windows 8.1

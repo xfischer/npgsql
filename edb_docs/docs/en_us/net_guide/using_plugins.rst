@@ -42,6 +42,17 @@ The following shared library files are required:
    | ``GeoJSON.Net.dll``
    | ``Newtonsoft.Json.dll``
 
+If you are using the GeoJSON plugin on .NET Framework 4.6.1, the data
+provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\plugins\GeoJSON\net461``
+
+The following shared library files are required:
+
+  | ``EnterpriseDB.EDBClient.GeoJSON.dll``
+  | ``GeoJSON.Net.dll``
+  | ``Newtonsoft.Json.dll``
+
 If you are using the GeoJSON plugin on .NET Standard 2.0, the data
 provider installation path is:
 
@@ -71,6 +82,16 @@ The following shared library files are required:
    | ``EnterpriseDB.EDBClient.Json.NET.dll``
    | ``Newtonsoft.Json.dll``
 
+If you are using the Json.NET plugin on .NET Framework 4.6.1, the data
+provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\plugins\Json.NET\net461``
+
+The following shared library files are required:
+
+  | ``EnterpriseDB.EDBClient.Json.NET.dll``
+  | ``Newtonsoft.Json.dll``
+
 If you are using the Json.NET plugin on .NET Standard 2.0, the data
 provider installation path is:
 
@@ -98,6 +119,15 @@ data provider installation path is:
 The following shared library files are required:
 
    ``EnterpriseDB.EDBClient.LegacyPostgis.dll``
+
+If you are using the LegacyPostGIS plugin on .Net Framework 4.6.1, the
+data provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\plugins\LegacyPostgis\net461``
+
+The following shared library files are required:
+
+  ``EnterpriseDB.EDBClient.LegacyPostgis.dll``
 
 If you are using the LegacyPostGIS plugin on .Net Standard 2.0, the data
 provider installation path is:
@@ -130,6 +160,17 @@ The following shared library files are required:
    | ``NetTopologySuite.dll``
    | ``NetTopologySuite.IO.PostGis.dll``
 
+If you are using the NetTopologySuite plugin on .Net Framework 4.6.1, the
+data provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\\ plugins\NetTopologySuite\net461``
+
+The following shared library files are required:
+
+  | ``EnterpriseDB.EDBClient.NetTopologySuite.dll``
+  | ``NetTopologySuite.dll``
+  | ``NetTopologySuite.IO.PostGis.dll``
+
 If you are using the NetTopologySuite plugin on .Net Standard 2.0, the
 data provider installation path is:
 
@@ -159,6 +200,16 @@ The following shared library files are required:
    | ``EnterpriseDB.EDBClient.NodaTime.dll``
    | ``NodaTime.dll``
 
+If you are using the NodaTime plugin on .Net Framework 4.6.1, the data
+provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\plugins\NodaTime\net461``
+
+The following shared library files are required:
+
+  | ``EnterpriseDB.EDBClient.NodaTime.dll``
+  | ``NodaTime.dll``
+
 If you are using the NodaTime plugin on .Net Standard 2.0, the data
 provider installation path is:
 
@@ -186,6 +237,15 @@ provider installation path is:
 The following shared library files are required:
 
    ``EnterpriseDB.EDBClient.RawPostgis.dll``
+
+If you are using the RawPostGIS plugin on .Net Framework 4.6.1, the data
+provider installation path is:
+
+  ``C:\Program Files\edb\dotnet\plugins\RawPostgis\net461``
+
+The following shared library files are required:
+
+  ``EnterpriseDB.EDBClient.RawPostgis.dll``
 
 If you are using the RawPostGIS type plugin on .Net Standard 2.0, the
 data provider installation path is:

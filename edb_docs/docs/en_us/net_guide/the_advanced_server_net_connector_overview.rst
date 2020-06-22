@@ -10,8 +10,13 @@ host. The .NET Connector accesses the data directly, allowing the client
 application optimal performance, a broad spectrum of functionality, and
 access to Advanced Server features.
 
-The .NET Connector supports .NET Framework versions 4.0 and 4.5.1, and
-Entity Framework 5/6, and .Net Standard 2.0.
+The .NET Connector supports following frameworks:
+
+    - ``.NET Framework versions 4.0, 4.5.1 and 4.6.1``
+    - ``.NET Standard 2.0 and 2.1``
+    - ``.NET Core 3.0``
+    - ``Entity Framework 5/6``
+    - ``EnterpriseDB VSIX``
 
 The .NET Class Hierarchy
 ========================

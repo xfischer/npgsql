@@ -21,7 +21,7 @@ the core functionality of the Npgsql open source project. The *Npgsql User's Man
 is available `online <http://www.npgsql.org/doc/index.html>`_.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    whats_new
    requirements_overview

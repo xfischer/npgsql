@@ -10,10 +10,10 @@ This chapter describes how to install and configure the Advanced Server
 Installing the .NET Connector
 =============================
 
-You can use the EnterpriseDB .NET Connector Installer (available 
+You can use the EnterpriseDB .NET Connector Installer (available
 `from the EnterpriseDB website <https://www.enterprisedb.com/advanced-downloads>`_) to add the
 .NET Connector to your system.  After downloading the installer, right-click on the installer icon, and
-select ``Run As Administrator`` from the context menu.  When prompted, 
+select ``Run As Administrator`` from the context menu.  When prompted,
 select an installation language and click ``OK`` to continue to the ``Setup`` window.
 
 .. figure:: images/dotnet_installation_wizard.png
@@ -104,15 +104,20 @@ Please see the following environment-specific sections for information about con
 -  **.NET Framework 4.5.1.** Instructions for configuring for use with
    :ref:`.NET Framework 4.5.1 <framework_setup_4_5_1>`.
 
+-  **.NET Framework 4.6.1** Instructions for configuring for use with :ref:`.NET Framework 4.6.1 <framework_setup_4_6_1>`.
+
 -  **.NET Standard 2.0.** Instructions for configuring for use with
    :ref:`.NET Standard 2.0 <standard_setup_2>`.
+
+-  **.NET Standard 2.1.** Instructions for configuring for use with :ref:`.NET Standard 2.1 <standard_setup_2.1>`.
+
+-  **.NET Core 3.0** Instructions for configuring for use with :ref:`.NET Core 3.0 <framework_setup_core3.0>`.
 
 -  **Entity Framework 5/6.** Instructions for configuring for use with
    :ref:`Entity Framework <entity_setup_5_6>`.
 
 -  **EnterpriseDB VSIX.** Instructions for configuring for use with
    :ref:`EnterpriseDB VSIX <vsix_setup>`.
-
 
 .. raw:: latex
 
@@ -154,7 +159,6 @@ To import a namespace into a C# application, write:
 
    ``using EnterpriseDB.EDBClient;``
 
-
 .. raw:: latex
 
     \newpage
@@ -176,14 +180,13 @@ installation path is:
 
    ``C:\Program Files\edb\dotnet\net40\``
 
-The following shared library files are required:
+You must add the following dependencies to your project:
 
    ``EDBDataProvider.2.0.2.dll``
 
    ``Mono.Security.dll``
 
 Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
-
 
 
 .. _framework_setup_4_5:
@@ -200,19 +203,9 @@ installation path is:
 
    ``C:\Program Files\edb\dotnet\net45\``
 
-The following shared library files are required:
+You must add the following dependencies to your project:
 
    ``EnterpriseDB.EDBClient.dll``
-
-   ``System.Threading.Tasks.Extensions.dll``
-
-   ``System.Runtime.CompilerServices.Unsafe.dll``
-
-   ``System.ValueTuple.dll``
-
-   ``System.Memory.dll``
-
-You must also add the following dependencies to your project:
 
    ``System.Threading.Tasks.Extensions.dll``
 
@@ -239,7 +232,7 @@ installation path is:
 
    ``C:\Program Files\edb\dotnet\net451\``
 
-The following shared library files are required:
+You must add the following dependencies to your project:
 
    ``EnterpriseDB.EDBClient.dll``
 
@@ -251,15 +244,41 @@ The following shared library files are required:
 
    ``System.Memory.dll``
 
-You must also add the following dependencies to your project:
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
-   ``System.Threading.Tasks.Extensions.dll``
+.. _framework_setup_4_6_1:
+
+.. raw:: latex
+
+    \newpage
+
+.NET Framework 4.6.1
+~~~~~~~~~~~~~~~~~~~~
+
+If you are using .NET Framework version 4.6.1, the data provider
+installation path is:
+
+   ``C:\Program Files\edb\dotnet\net461\``
+
+You must add the following dependencies to your project:
+
+   ``EnterpriseDB.EDBClient.dll``
+
+   ``Microsoft.Bcl.AsyncInterfaces.dll``
+
+   ``System.Memory.dll``
+
+   ``System.Numerics.Vectors.dll``
 
    ``System.Runtime.CompilerServices.Unsafe.dll``
 
-   ``System.ValueTuple.dll``
+   ``System.Runtime.dll``
 
-   ``System.Memory.dll``
+   ``System.Text.Json.dll``
+
+   ``System.Threading.Tasks.Extensions.dll``
+
+   ``System.ValueTuple.dll``
 
 Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
@@ -276,6 +295,66 @@ For .NET Standard Framework 2.0, the data provider installation path is:
 
    ``C:\Program Files\edb\dotnet\netstandard2.0\``
 
+You must add the following dependencies to your project:
+
+   ``EnterpriseDB.EDBClient.dll``
+
+   ``System.Threading.Tasks.Extensions.dll``
+
+   ``System.Runtime.CompilerServices.Unsafe.dll``
+
+   ``System.ValueTuple.dll``
+
+.. note:: If your target framework is .Net Core 2.0, then include the
+ following file in your project:
+
+   ``System.Threading.Tasks.Extensions.dll``
+
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
+
+.. _standard_setup_2.1:
+
+.. raw:: latex
+
+    \newpage
+
+.NET Standard 2.1
+~~~~~~~~~~~~~~~~~
+
+For .NET Standard Framework 2.1, the data provider installation path is:
+
+   ``C:\Program Files\edb\dotnet\netstandard2.1\``
+
+The following shared library files are required:
+
+   ``EnterpriseDB.EDBClient.dll``
+
+   ``System.Memory.dll``
+
+   ``System.Runtime.CompilerServices.Unsafe.dll``
+
+   ``System.Text.Json.dll``
+
+   ``System.Threading.Tasks.Extensions.dll``
+
+   ``System.ValueTuple.dll``
+
+Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
+
+.. _framework_setup_core3.0:
+
+.. raw:: latex
+
+    \newpage
+
+.NET Core 3.0
+~~~~~~~~~~~~~
+
+If you are using .NET Core 3.0, the data provider
+installation path is:
+
+   ``C:\Program Files\edb\dotnet\netcoreapp3.0\``
+
 The following shared library files are required:
 
    ``EnterpriseDB.EDBClient.dll``
@@ -286,16 +365,7 @@ The following shared library files are required:
 
    ``System.ValueTuple.dll``
 
-You must also add the following dependencies to your project:
-
-   ``System.Runtime.CompilerServices.Unsafe.dll``
-
-   ``System.ValueTuple.dll``
-
-.. note:: If your target framework is .Net Core 2.0, then include the
- following file in your project:
-
-   ``System.Threading.Tasks.Extensions.dll``
+   ``System.Memory.dll``
 
 Depending upon the type of application you use, you may be required to import the namespace into the source code.  See :ref:`Referencing the Library Files <referencing_the_library_files>` for this and other information about referencing library files.
 
@@ -311,7 +381,9 @@ Entity Framework 5/6
 To set up .NET Connector for usage with Entity Framework, the data
 provider installation path is:
 
-   ``C:\Program Files\edb\dotnet\EF\``
+**For net45**
+
+   ``C:\Program Files\edb\dotnet\EF\net45``
 
 The following shared library files are required:
 
@@ -319,7 +391,15 @@ The following shared library files are required:
 
    ``EntityFramework6.EnterpriseDB.EDBClient.dll``
 
-.. note:: Entity Framework can be used with the ``EnterpriseDB.EDBClient.dll`` library available in the ``net45`` and ``net451`` subdirectories.
+**For net461**
+
+  ``C:\Program Files\edb\dotnet\EF\net461``
+
+The following shared library files are required:
+
+  ``EntityFramework6.EnterpriseDB.EDBClient.dll``
+
+.. note:: Entity Framework can be used with the ``EnterpriseDB.EDBClient.dll`` library available in the ``net45``, ``net451`` and ``net461`` subdirectories.
 
 See :ref:`Referencing the Library Files <referencing_the_library_files>` for information about referencing library files.
 
@@ -331,7 +411,7 @@ Postgres to the ``app.config`` file. Add the following entries:
   <add name="EnterpriseDB.EDBClient"
     invariant="EnterpriseDB.EDBClient"
     description=".NET Data Provider for EnterpriseDB PostgreSQL”
-    type="EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient, Version=4.0.10.1, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7"
+    type="EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient, Version=4.1.3.1, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7"
     support="FF"/>
 
 In the project’s ``app.config`` file add the following entry for provider
@@ -400,12 +480,25 @@ must be utilized.
 
 EnterpriseDB VSIX files are located in the following directory:
 
-   ``C:\Program Files\edb\dotnet\vsix\``
+**For net45**
+
+   ``C:\Program Files\edb\dotnet\vsix\net45``
 
 The files available at the above location are:
 
    | ``EnterpriseDB.vsix``
    | ``SSDLToPgSQL.tt``
+   | ``System.ValueTuple.dll``
+
+**For net461**
+
+  ``C:\Program Files\edb\dotnet\vsix\net461``
+
+The files available at the above location are:
+
+  | ``EnterpriseDB.vsix``
+  | ``SSDLToPgSQL.tt``
+  | ``System.ValueTuple.dll``
 
 Installation and Configuration for Visual Studio 2015/2017/2019
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -413,9 +506,7 @@ Installation and Configuration for Visual Studio 2015/2017/2019
 Use the following steps to install and configure EnterpriseDB VSIX.
 
 **Step 1:** Install EnterpriseDB VSIX to the desired version of Visual
-Studio with the ``EnterpriseDB.vsix`` installer:
-
-  ``C:\Program Files\edb\dotnet\vsix\EnterpriseDB.vsix``
+Studio with the ``EnterpriseDB.vsix`` installer.
 
 If you already have an earlier version of the VSIX installed, we
 highly recommended that you uninstall it to avoid conflicts.
@@ -426,11 +517,13 @@ in your global assembly cache (GAC).
 **Step 2:** Relaunch Visual Studio and verify from the ``Tools > Extensions
 and Updates…`` menu that the EnterpriseDB extension is installed.
 
-**Step 3:** Use the ``gacutil`` utility at the Visual Studio Developers 
-Command Line from the following location to add the ``System.ValueTuple.dll`` 
-library to the global assembly cache (GAC):
+**Step 3:** Use the ``gacutil`` utility at the Visual Studio Developers
+Command Line to add following libraries to the global assembly cache (GAC):
 
-  ``C:\Program Files\edb\dotnet\vsix\System.ValueTuple.dll``
+| ``System.ValueTuple.dll``
+| ``System.Threading.Tasks.Extensions.dll``
+| ``System.Runtime.CompilerServices.Unsafe.dll``
+| ``System.Memory.dll``
 
 For example:
 
@@ -447,7 +540,7 @@ source is available.
 Model First and Database First Usage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Step 1:** Use the ``gacutil`` utility at the Visual Studio Developers 
+**Step 1:** Use the ``gacutil`` utility at the Visual Studio Developers
 Command Line to add the ``EntityFramework5.EnterpriseDB.EDBClient.dll`` library
 to the global assembly cache (GAC):
 
@@ -463,7 +556,7 @@ to the ``machine.config`` file. Include the following entries:
   <add name="EnterpriseDB.EDBClient"
     invariant="EnterpriseDB.EDBClient"
     description=".NET Data Provider for EnterpriseDB PostgreSQL"
-    type="EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient, Version=4.0.10.1, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7"
+    type="EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient, Version=4.1.3.1, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7"
     support="FF"/>
 
 For the attribute-value pairs, the double-quoted strings
