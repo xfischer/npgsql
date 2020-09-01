@@ -37,6 +37,7 @@ namespace EnterpriseDB.EDBClient
         List<EDBStatement> _statements;
         EDBStatement _statement;
         int _statementIndex;
+        string sqlString;
 
         /// <summary>
         /// Receives a raw SQL query as passed in by the user, and performs some processing necessary
@@ -72,9 +73,10 @@ namespace EnterpriseDB.EDBClient
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
+            sqlString = sql;
 
             string temp = sql.ToUpper();//EnterpriseDB Team
-            if (temp.StartsWith("CREATE") && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("PACKAGE ")))
+            if ((temp.StartsWith("CREATE") || temp.StartsWith("DECLARE ")) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
                 isProcedure = true;
 
             None:
@@ -102,7 +104,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (isProcedure && temp.StartsWith("END"))
                 {
-                    if (!(temp.StartsWith("END IF") || temp.StartsWith("END LOOP") || temp.StartsWith("END CASE")))
+                    if (!(temp.StartsWith("END IF") || temp.StartsWith("END_") || temp.StartsWith("END LOOP") || temp.StartsWith("END CASE")))
                         numActiveBlocks--;
                 }
 
@@ -561,9 +563,10 @@ namespace EnterpriseDB.EDBClient
                 // TODO: Handle end of line comment? Although psql doesn't seem to handle them...
 
                 currTokenBeg = currCharOfs;
+                var procedureFlag = false;
                 if (_rewrittenSql.Length > 0)
-                    MoveToNextStatement();
-                isProcedure = false;//EnterpriseDB Team
+                    procedureFlag =  MoveToNextStatement();
+                isProcedure = procedureFlag;//EnterpriseDB Team
                 goto None;
             }
             if (statements.Count > _statementIndex + 1)
@@ -577,8 +580,16 @@ namespace EnterpriseDB.EDBClient
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
         }
 
-        void MoveToNextStatement()
+        bool MoveToNextStatement()
         {
+            var isProcedure = false;
+            if (sqlString != null)
+            {
+                string temp = sqlString.ToUpper();//EnterpriseDB Team
+                if ((temp.StartsWith("CREATE") || temp.StartsWith("DECLARE ")) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
+                    isProcedure = true;
+            }
+
             _statementIndex++;
             if (_statements.Count > _statementIndex)
             {
@@ -592,6 +603,7 @@ namespace EnterpriseDB.EDBClient
             }
             _paramIndexMap.Clear();
             _rewrittenSql.Clear();
+            return isProcedure;
         }
 
         static bool IsLetter(char ch)
