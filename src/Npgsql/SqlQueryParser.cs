@@ -41,7 +41,7 @@ namespace EnterpriseDB.EDBClient
         EDBStatement _statement = default;
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         int _statementIndex;
-        string sqlString;
+        string? sqlString;
 
         /// <summary>
         /// Receives a raw SQL query as passed in by the user, and performs some processing necessary
