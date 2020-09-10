@@ -9,7 +9,7 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\T
 @SET STAGING_DIR="%6"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
-@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%PATH%
+@SET PATH=%PGBUILD%\bin;%SOURCE_PATH%;%DOTNET_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
