@@ -1,31 +1,8 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using NodaTime;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -34,11 +11,13 @@ namespace EnterpriseDB.EDBClient.NodaTime
 {
     public class TimestampHandlerFactory : EDBTypeHandlerFactory<Instant>
     {
-        // Check for the legacy floating point timestamps feature
-        protected override EDBTypeHandler<Instant> Create(EDBConnection conn)
+        public override EDBTypeHandler<Instant> Create(PostgresType postgresType, EDBConnection conn)
         {
+            if (!conn.HasIntegerDateTimes)
+                throw new NotSupportedException($"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
+
             var csb = new EDBConnectionStringBuilder(conn.ConnectionString);
-            return new TimestampHandler(conn.HasIntegerDateTimes, csb.ConvertInfinityDateTime);
+            return new TimestampHandler(postgresType, csb.ConvertInfinityDateTime);
         }
     }
 
@@ -50,69 +29,36 @@ namespace EnterpriseDB.EDBClient.NodaTime
         static readonly Duration Minus292Years = -Plus292Years;
 
         /// <summary>
-        /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
-        /// fields. EDB (currently) does not support this mode.
-        /// </summary>
-        readonly bool _integerFormat;
-
-        /// <summary>
         /// Whether to convert positive and negative infinity values to Instant.{Max,Min}Value when
         /// an Instant is requested
         /// </summary>
         readonly bool _convertInfinityDateTime;
 
-        internal TimestampHandler(bool integerFormat, bool convertInfinityDateTime)
-        {
-            _integerFormat = integerFormat;
-            _convertInfinityDateTime = convertInfinityDateTime;
-        }
+        internal TimestampHandler(PostgresType postgresType, bool convertInfinityDateTime)
+            : base(postgresType) => _convertInfinityDateTime = convertInfinityDateTime;
 
         #region Read
 
-        public override Instant Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        public override Instant Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
-            if (_integerFormat)
+            var value = buf.ReadInt64();
+            if (_convertInfinityDateTime)
             {
-                var value = buf.ReadInt64();
-                if (_convertInfinityDateTime)
-                {
-                    if (value == long.MaxValue)
-                        return Instant.MaxValue;
-                    if (value == long.MinValue)
-                        return Instant.MinValue;
-                }
-                return Decode(value);
+                if (value == long.MaxValue)
+                    return Instant.MaxValue;
+                if (value == long.MinValue)
+                    return Instant.MinValue;
             }
-            else
-            {
-                var value = buf.ReadDouble();
-                if (_convertInfinityDateTime)
-                {
-                    if (double.IsPositiveInfinity(value))
-                        return Instant.MaxValue;
-                    if (double.IsNegativeInfinity(value))
-                        return Instant.MinValue;
-                }
-                return Decode(value);
-            }
+
+            return Decode(value);
         }
 
-        LocalDateTime IEDBSimpleTypeHandler<LocalDateTime>.Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription)
+        LocalDateTime IEDBSimpleTypeHandler<LocalDateTime>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
         {
-            if (_integerFormat)
-            {
-                var value = buf.ReadInt64();
-                if (value == long.MaxValue || value == long.MinValue)
-                    throw new EDBSafeReadException(new NotSupportedException("Infinity values not supported when reading LocalDateTime, read as Instant instead"));
-                return Decode(value).InUtc().LocalDateTime;
-            }
-            else
-            {
-                var value = buf.ReadDouble();
-                if (double.IsPositiveInfinity(value) || double.IsNegativeInfinity(value))
-                    throw new EDBSafeReadException(new NotSupportedException("Infinity values not supported when reading LocalDateTime, read as Instant instead"));
-                return Decode(value).InUtc().LocalDateTime;
-            }
+            var value = buf.ReadInt64();
+            if (value == long.MaxValue || value == long.MinValue)
+                throw new EDBSafeReadException(new NotSupportedException("Infinity values not supported when reading LocalDateTime, read as Instant instead"));
+            return Decode(value).InUtc().LocalDateTime;
         }
 
         // value is the number of microseconds from 2000-01-01T00:00:00.
@@ -133,7 +79,7 @@ namespace EnterpriseDB.EDBClient.NodaTime
                 date += 730119; // 730119 = days since era (0001-01-01) for 2000-01-01
                 var microsecondOfDay = (long)((value % 86400d) * 1000000d);
 
-                return Instant0 + Duration.FromDays(date) + Duration.FromNanoseconds(microsecondOfDay*1000);
+                return Instant0 + Duration.FromDays(date) + Duration.FromNanoseconds(microsecondOfDay * 1000);
             }
             else
             {
@@ -145,9 +91,10 @@ namespace EnterpriseDB.EDBClient.NodaTime
                     ++date;
                     microsecondOfDay = 86400000000L - microsecondOfDay;
                 }
+
                 date = 730119 - date; // 730119 = days since era (0001-01-01) for 2000-01-01
 
-                return Instant0 + Duration.FromDays(date) + Duration.FromNanoseconds(microsecondOfDay*1000);
+                return Instant0 + Duration.FromDays(date) + Duration.FromNanoseconds(microsecondOfDay * 1000);
             }
         }
 
@@ -155,57 +102,34 @@ namespace EnterpriseDB.EDBClient.NodaTime
 
         #region Write
 
-        public override int ValidateAndGetLength(Instant value, EDBParameter parameter)
+        public override int ValidateAndGetLength(Instant value, EDBParameter? parameter)
             => 8;
 
-        int IEDBSimpleTypeHandler<LocalDateTime>.ValidateAndGetLength(LocalDateTime value, EDBParameter parameter)
+        int IEDBSimpleTypeHandler<LocalDateTime>.ValidateAndGetLength(LocalDateTime value, EDBParameter? parameter)
             => 8;
 
-        public override void Write(Instant value, EDBWriteBuffer buf, EDBParameter parameter)
+        public override void Write(Instant value, EDBWriteBuffer buf, EDBParameter? parameter)
         {
-            if (_integerFormat)
+            if (_convertInfinityDateTime)
             {
-                if (_convertInfinityDateTime)
+                if (value == Instant.MaxValue)
                 {
-                    if (value == Instant.MaxValue)
-                    {
-                        buf.WriteInt64(long.MaxValue);
-                        return;
-                    }
-                    if (value == Instant.MinValue)
-                    {
-                        buf.WriteInt64(long.MinValue);
-                        return;
-                    }
+                    buf.WriteInt64(long.MaxValue);
+                    return;
                 }
-                WriteInteger(value, buf);
-            }
-            else
-            {
-                if (_convertInfinityDateTime)
+
+                if (value == Instant.MinValue)
                 {
-                    if (value == Instant.MaxValue)
-                    {
-                        buf.WriteDouble(double.PositiveInfinity);
-                        return;
-                    }
-                    if (value == Instant.MinValue)
-                    {
-                        buf.WriteDouble(double.NegativeInfinity);
-                        return;
-                    }
+                    buf.WriteInt64(long.MinValue);
+                    return;
                 }
-                WriteDouble(value, buf);
             }
+
+            WriteInteger(value, buf);
         }
 
-        void IEDBSimpleTypeHandler<LocalDateTime>.Write(LocalDateTime value, EDBWriteBuffer buf, EDBParameter parameter)
-        {
-            if (_integerFormat)
-                WriteInteger(value.InUtc().ToInstant(), buf);
-            else
-                WriteDouble(value.InUtc().ToInstant(), buf);
-        }
+        void IEDBSimpleTypeHandler<LocalDateTime>.Write(LocalDateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => WriteInteger(value.InUtc().ToInstant(), buf);
 
         // We need to write the number of microseconds from 2000-01-01T00:00:00.
         internal static void WriteInteger(Instant instant, EDBWriteBuffer buf)

@@ -1,27 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
@@ -41,15 +18,12 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     {
         readonly EDBConnector _connector;
 
-        internal UnknownTypeHandler(EDBConnection connection) : base(connection)
-        {
-            _connector = connection.Connector;
-            PostgresType = UnknownBackendType.Instance;
-        }
+        internal UnknownTypeHandler(EDBConnection connection)
+            : base(UnknownBackendType.Instance, connection) => _connector = connection.Connector!;
 
         #region Read
 
-        public override ValueTask<string> Read(EDBReadBuffer buf, int byteLen, bool async, FieldDescription fieldDescription = null)
+        public override ValueTask<string> Read(EDBReadBuffer buf, int byteLen, bool async, FieldDescription? fieldDescription = null)
         {
             if (fieldDescription == null)
                 throw new Exception($"Received an unknown field but {nameof(fieldDescription)} is null (i.e. COPY mode)");
@@ -75,29 +49,31 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         // Allow writing anything that is a string or can be converted to one via the unknown type handler
 
-        protected internal override int ValidateAndGetLength<T2>(T2 value, ref EDBLengthCache lengthCache, EDBParameter parameter)
-            => ValidateObjectAndGetLength(value, ref lengthCache, parameter);
+        protected internal override int ValidateAndGetLength<T2>(T2 value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
+            => ValidateObjectAndGetLength(value!, ref lengthCache, parameter);
 
-        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        protected internal override int ValidateObjectAndGetLength(object value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             if (value is string asString)
                 return base.ValidateAndGetLength(asString, ref lengthCache, parameter);
 
-            var converted = Convert.ToString(value);
             if (parameter == null)
                 throw CreateConversionButNoParamException(value.GetType());
+
+            var converted = Convert.ToString(value)!;
             parameter.ConvertedValue = converted;
+
             return base.ValidateAndGetLength(converted, ref lengthCache, parameter);
         }
 
-        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        protected internal override Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
-            if (value == null || value is DBNull)
-                return base.WriteObjectWithLength(value, buf, lengthCache, parameter, async);
+            if (value is DBNull)
+                return base.WriteObjectWithLength(DBNull.Value, buf, lengthCache, parameter, async);
 
             var convertedValue = value is string asString
                 ? asString
-                : (string)parameter.ConvertedValue;
+                : (string)parameter!.ConvertedValue!;
 
             if (buf.WriteSpaceLeft < 4)
                 return WriteWithLengthLong();
@@ -108,7 +84,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             async Task WriteWithLengthLong()
             {
                 await buf.Flush(async);
-                buf.WriteInt32(ValidateObjectAndGetLength(value, ref lengthCache, parameter));
+                buf.WriteInt32(ValidateObjectAndGetLength(value!, ref lengthCache, parameter));
                 await base.Write(convertedValue, buf, lengthCache, parameter, async);
             }
         }

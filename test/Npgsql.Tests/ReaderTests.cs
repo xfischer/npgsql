@@ -1,40 +1,14 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NUnit.Framework;
-using NUnit.Framework.Constraints;
-using EnterpriseDB.EDBClient;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
+using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -387,7 +361,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [TestCase("bit(3)")]
         [TestCase("bit varying")]
         [TestCase("bit varying(3)")]
-        public void GetDataTypeName(string typeName, string normalizedName = null)
+        public void GetDataTypeName(string typeName, string? normalizedName = null)
         {
             if (normalizedName == null)
                 normalizedName = typeName;
@@ -512,7 +486,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     dr.Read();
                     var values = new object[4];
                     Assert.That(dr.GetValues(values), Is.EqualTo(3));
-                    Assert.That(values, Is.EqualTo(new object[] { "hello", 1, new DateTime(2014, 1, 1), null }));
+                    Assert.That(values, Is.EqualTo(new object?[] { "hello", 1, new DateTime(2014, 1, 1), null }));
                 }
                 using (var dr = command.ExecuteReader(Behavior))
                 {
@@ -535,7 +509,9 @@ namespace EnterpriseDB.EDBClient.Tests
                     dr.Read();
                     var values = new object[4];
                     Assert.That(dr.GetProviderSpecificValues(values), Is.EqualTo(3));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     Assert.That(values, Is.EqualTo(new object[] { "hello", 1, "2014-01-01", null }));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
                 using (var dr = command.ExecuteReader(Behavior))
                 {
@@ -816,7 +792,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        public void Null([Values(CommandBehavior.Default, CommandBehavior.SequentialAccess)] CommandBehavior behavior)
+        public void Null()
         {
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT @p1, @p2::TEXT", conn))
@@ -824,7 +800,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 cmd.Parameters.Add(new EDBParameter("p1", DbType.String) { Value = DBNull.Value });
                 cmd.Parameters.Add(new EDBParameter { ParameterName = "p2", Value = DBNull.Value });
 
-                using (var reader = cmd.ExecuteReader(behavior))
+                using (var reader = cmd.ExecuteReader(Behavior))
                 {
                     reader.Read();
 
@@ -1045,7 +1021,7 @@ LANGUAGE plpgsql VOLATILE";
 
         #region GetBytes / GetStream
 
-        [Test, Ignore("Dependant failure, i.e. runs individaully successfully")]
+        [Test]
         public void GetBytes()
         {
             using (var conn = OpenConnection())
@@ -1218,7 +1194,7 @@ LANGUAGE plpgsql VOLATILE";
 
         #region GetChars / GetTextReader
 
-        [Test, Ignore("Dependant failure, i.e. runs individaully successfully")]
+        [Test]
         public void GetChars()
         {
             using (var conn = OpenConnection())
@@ -1282,7 +1258,7 @@ LANGUAGE plpgsql VOLATILE";
                 const string str = "ABCDE";
                 var expected = str.ToCharArray();
                 var actual = new char[expected.Length];
-                //ExecuteNonQuery(String.Format(@"INSERT INTO data (field_text) VALUES ('{0}')", str));
+                //ExecuteNonQuery(string.Format(@"INSERT INTO data (field_text) VALUES ('{0}')", str));
 
                 var queryText = $@"SELECT '{str}', 'foo'";
                 using (var cmd = new EDBCommand(queryText, conn))
@@ -1344,12 +1320,12 @@ LANGUAGE plpgsql VOLATILE";
         }
 
         [Test]
-        public void GetCharsWhenNull([Values(CommandBehavior.Default, CommandBehavior.SequentialAccess)] CommandBehavior behavior)
+        public void GetCharsWhenNull()
         {
             var buf = new char[8];
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand("SELECT NULL::TEXT", conn))
-            using (var reader = cmd.ExecuteReader(behavior))
+            using (var reader = cmd.ExecuteReader(Behavior))
             {
                 reader.Read();
                 Assert.That(reader.IsDBNull(0), Is.True);
@@ -1455,17 +1431,18 @@ LANGUAGE plpgsql VOLATILE";
     class ExplodingTypeHandlerFactory : EDBTypeHandlerFactory<int>
     {
         readonly bool _safe;
-        internal ExplodingTypeHandlerFactory(bool safe) { _safe = safe; }
-        protected override EDBTypeHandler<int> Create(EDBConnection conn)
-            => new ExplodingTypeHandler(_safe);
+        internal ExplodingTypeHandlerFactory(bool safe) => _safe = safe;
+        public override EDBTypeHandler<int> Create(PostgresType postgresType, EDBConnection conn)
+            => new ExplodingTypeHandler(postgresType, _safe);
     }
 
     class ExplodingTypeHandler : EDBSimpleTypeHandler<int>
     {
         readonly bool _safe;
-        internal ExplodingTypeHandler(bool safe) { _safe = safe; }
+        internal ExplodingTypeHandler(PostgresType postgresType, bool safe)
+            : base(postgresType) => _safe = safe;
 
-        public override int Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription)
+        public override int Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             buf.ReadInt32();
             throw _safe
@@ -1473,8 +1450,8 @@ LANGUAGE plpgsql VOLATILE";
                 : throw new Exception("Non-safe read exception as requested");
         }
 
-        public override int ValidateAndGetLength(int value, EDBParameter parameter) { throw new NotSupportedException(); }
-        public override void Write(int value, EDBWriteBuffer buf, EDBParameter parameter) { throw new NotSupportedException(); }
+        public override int ValidateAndGetLength(int value, EDBParameter? parameter) => throw new NotSupportedException();
+        public override void Write(int value, EDBWriteBuffer buf, EDBParameter? parameter) => throw new NotSupportedException();
     }
 
     #endregion

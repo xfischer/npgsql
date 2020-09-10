@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 	[TestFixture]
 	public class EDBPathTest : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 		EDBPoint[] testPoints = { new EDBPoint(1, 2), new EDBPoint(3, 4), new EDBPoint(5, 6) };
 		EDBPoint[] testPoints2 = { new EDBPoint(7, 0.1), new EDBPoint(3, 4.4), new EDBPoint(8, -6) };
 

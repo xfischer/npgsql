@@ -4,8 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     sealed class AwaitableSocket : INotifyCompletion, IDisposable
     {
         static readonly Action Sentinel = () => { };
@@ -13,7 +12,7 @@ namespace EnterpriseDB.EDBClient
         readonly SocketAsyncEventArgs _socketAsyncEventArgs;
         readonly Socket _socket;
 
-        Action _continuation;
+        Action? _continuation;
 
         public AwaitableSocket(SocketAsyncEventArgs socketAsyncEventArgs, Socket socket)
         {

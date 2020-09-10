@@ -1,44 +1,19 @@
-﻿#region License
-
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.TypeHandlers;
+using EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeMapping
 {
     abstract class TypeMapperBase : IEDBTypeMapper
     {
-        internal Dictionary<string, EDBTypeMapping> Mappings { get; set; }
+        internal Dictionary<string, EDBTypeMapping> Mappings { get; } = new Dictionary<string, EDBTypeMapping>();
 
         public IEDBNameTranslator DefaultNameTranslator { get; }
 
-        protected TypeMapperBase([NotNull] IEDBNameTranslator defaultNameTranslator)
+        protected TypeMapperBase(IEDBNameTranslator defaultNameTranslator)
         {
             if (defaultNameTranslator == null)
                 throw new ArgumentNullException(nameof(defaultNameTranslator));
@@ -66,11 +41,9 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         #region Enum mapping
 
-        public IEDBTypeMapper MapEnum<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null)
-            where TEnum : struct
+        public IEDBTypeMapper MapEnum<TEnum>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
+            where TEnum : struct, Enum
         {
-            if (!typeof(TEnum).GetTypeInfo().IsEnum)
-                throw new ArgumentException("An enum type must be provided");
             if (pgName != null && pgName.Trim() == "")
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
@@ -87,10 +60,9 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             }.Build());
         }
 
-        public bool UnmapEnum<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct
+        public bool UnmapEnum<TEnum>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
+            where TEnum : struct, Enum
         {
-            if (!typeof(TEnum).GetTypeInfo().IsEnum)
-                throw new ArgumentException("An enum type must be provided");
             if (pgName != null && pgName.Trim() == "")
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
@@ -106,8 +78,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         #region Composite mapping
 
-        public IEDBTypeMapper MapComposite<T>(string pgName = null, IEDBNameTranslator nameTranslator = null)
-            where T : new()
+        public IEDBTypeMapper MapComposite<T>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         {
             if (pgName != null && pgName.Trim() == "")
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
@@ -125,8 +96,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             }.Build());
         }
 
-        public bool UnmapComposite<T>(string pgName = null, IEDBNameTranslator nameTranslator = null)
-            where T : new()
+        public bool UnmapComposite<T>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         {
             if (pgName != null && pgName.Trim() == "")
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));

@@ -344,7 +344,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
         public void Bug2274()
         {
             using (var conn = OpenConnection())
@@ -401,6 +401,65 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             Left,
             Right
+        }
+
+
+        [Test]
+        [IssueLink("https://github.com/EDB/EDB/issues/2178")]
+        public void Bug2178()
+        {
+            var builder = new EDBConnectionStringBuilder(ConnectionString);
+            builder.AutoPrepareMinUsages = 2;
+            builder.MaxAutoPrepare = 2;
+            using (var conn = new EDBConnection(builder.ConnectionString))
+            using (var cmd = new EDBCommand())
+            {
+                conn.Open();
+                cmd.Connection = conn;
+
+                cmd.CommandText = "SELECT 1";
+                cmd.ExecuteScalar();
+                cmd.ExecuteScalar();
+                Assert.That(cmd.IsPrepared);
+
+                // Now executing a faulty command multiple times
+                cmd.CommandText = "SELECT * FROM public.dummy_table_name";
+                for (var i = 0; i < 3; ++i)
+                {
+                    try
+                    {
+                        cmd.ExecuteScalar();
+                    }
+                    catch { }
+                }
+
+                cmd.CommandText = "SELECT 1";
+                cmd.ExecuteScalar();
+                Assert.That(cmd.IsPrepared);
+            }
+        }
+
+        [Test]
+        public void Bug2296()
+        {
+            using (var conn = OpenConnection())
+            {
+                try
+                {
+                    conn.ExecuteNonQuery("CREATE DOMAIN pg_temp.\"boolean\" AS bool");
+                    conn.ExecuteNonQuery("CREATE TEMP TABLE data (mybool \"boolean\")");
+                    conn.ExecuteNonQuery("INSERT INTO data (mybool) VALUES (TRUE)");
+
+                    conn.ReloadTypes();
+
+                    conn.ExecuteScalar("SELECT mybool FROM data");
+                }
+                finally
+                {
+                    conn.ExecuteNonQuery("DROP TABLE IF EXISTS data; DROP TYPE IF EXISTS \"boolean\"");
+                    conn.ReloadTypes();
+                }
+            }
         }
 
         #region Bug1285

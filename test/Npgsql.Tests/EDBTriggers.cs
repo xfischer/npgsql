@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests
 	[TestFixture]
 	public class EDBTriggers : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
 		[SetUp]
 		public void Init()

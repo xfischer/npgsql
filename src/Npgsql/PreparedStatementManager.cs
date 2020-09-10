@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Logging;
-using EDBTypes;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     class PreparedStatementManager
     {
         internal int MaxAutoPrepared { get; }
@@ -20,8 +13,7 @@ namespace EnterpriseDB.EDBClient
         readonly PreparedStatement[] _autoPrepared;
         int _numAutoPrepared;
 
-        [CanBeNull, ItemCanBeNull]
-        readonly PreparedStatement[] _candidates;
+        readonly PreparedStatement?[] _candidates;
 
         /// <summary>
         /// Total number of current prepared statements (whether explicit or automatic).
@@ -49,14 +41,18 @@ namespace EnterpriseDB.EDBClient
                 _autoPrepared = new PreparedStatement[MaxAutoPrepared];
                 _candidates = new PreparedStatement[CandidateCount];
             }
+            else
+            {
+                _autoPrepared = null!;
+                _candidates = null!;
+            }
         }
 
-        [CanBeNull]
-        internal PreparedStatement GetOrAddExplicit(EDBStatement statement)
+        internal PreparedStatement? GetOrAddExplicit(EDBStatement statement)
         {
             var sql = statement.SQL;
 
-            PreparedStatement statementBeingReplaced=null;
+            PreparedStatement? statementBeingReplaced = null;
             if (BySql.TryGetValue(sql, out var pStatement))
             {
                 Debug.Assert(pStatement.State != PreparedState.Unprepared);
@@ -94,11 +90,8 @@ namespace EnterpriseDB.EDBClient
             return BySql[sql] = PreparedStatement.CreateExplicit(this, sql, NextPreparedStatementName(), statement.InputParameters, statementBeingReplaced);
         }
 
-        [CanBeNull]
-        internal PreparedStatement TryGetAutoPrepared(EDBStatement statement)
+        internal PreparedStatement? TryGetAutoPrepared(EDBStatement statement)
         {
-            Debug.Assert(_candidates != null);
-
             var sql = statement.SQL;
             if (!BySql.TryGetValue(sql, out var pStatement))
             {
@@ -152,7 +145,7 @@ namespace EnterpriseDB.EDBClient
             if (++pStatement.Usages < UsagesBeforePrepare)
             {
                 // Statement still hasn't passed the usage threshold, no automatic preparation.
-                // Return null for unprepared exection.
+                // Return null for unprepared execution.
                 pStatement.LastUsed = DateTime.UtcNow;
                 return null;
             }
@@ -199,7 +192,6 @@ namespace EnterpriseDB.EDBClient
 
         void RemoveCandidate(PreparedStatement candidate)
         {
-            Debug.Assert(_candidates != null);
             var i = 0;
             for (; i < _candidates.Length; i++)
             {
@@ -209,7 +201,7 @@ namespace EnterpriseDB.EDBClient
                     return;
                 }
             }
-            //Debug.Assert(i < _candidates.Length);
+            Debug.Assert(i < _candidates.Length);
         }
 
         internal void ClearAll()

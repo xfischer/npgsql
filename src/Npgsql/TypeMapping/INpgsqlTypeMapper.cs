@@ -1,28 +1,4 @@
-﻿#region License
-
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-#endregion
-
+﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.NameTranslation;
@@ -87,7 +63,11 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
         /// </param>
         /// <typeparam name="TEnum">The .NET enum type to be mapped</typeparam>
-        IEDBTypeMapper MapEnum<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct;
+        [NotNull]
+        IEDBTypeMapper MapEnum<TEnum>(
+            string? pgName = null,
+            IEDBNameTranslator? nameTranslator = null)
+            where TEnum : struct, Enum;
 
         /// <summary>
         /// Removes an existing enum mapping.
@@ -100,7 +80,10 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
         /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
         /// </param>
-        bool UnmapEnum<TEnum>(string pgName = null, IEDBNameTranslator nameTranslator = null) where TEnum : struct;
+        bool UnmapEnum<TEnum>(
+            string? pgName = null,
+            IEDBNameTranslator? nameTranslator = null)
+            where TEnum : struct, Enum;
 
         /// <summary>
         /// Maps a CLR type to a PostgreSQL composite type.
@@ -124,8 +107,8 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// <typeparam name="T">The .NET type to be mapped</typeparam>
         [NotNull]
         IEDBTypeMapper MapComposite<T>(
-            [CanBeNull] string pgName = null,
-            [CanBeNull] IEDBNameTranslator nameTranslator = null) where T : new();
+            string? pgName = null,
+            IEDBNameTranslator? nameTranslator = null);
 
         /// <summary>
         /// Removes an existing enum mapping.
@@ -139,8 +122,8 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>
         /// </param>
         bool UnmapComposite<T>(
-            [CanBeNull] string pgName = null,
-            [CanBeNull] IEDBNameTranslator nameTranslator = null) where T : new();
+            string? pgName = null,
+            IEDBNameTranslator? nameTranslator = null);
 
         /// <summary>
         /// Resets all mapping changes performed on this type mapper and reverts it to its original, starting state.

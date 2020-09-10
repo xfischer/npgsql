@@ -1,30 +1,6 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// Provides information on a PostgreSQL notification. Notifications are sent when your connection has registered for
     /// notifications on a specific channel via the LISTEN command. NOTIFY can be used to generate such notifications,
@@ -41,18 +17,30 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The channel on which the notification was sent.
         /// </summary>
-        public string Condition { get; }
+        public string Channel { get; }
 
         /// <summary>
         /// An optional payload string that was sent with this notification.
         /// </summary>
-        public string AdditionalInformation { get; }
+        public string Payload { get; }
+
+        /// <summary>
+        /// The channel on which the notification was sent.
+        /// </summary>
+        [Obsolete("Use Channel instead")]
+        public string Condition => Channel;
+
+        /// <summary>
+        /// An optional payload string that was sent with this notification.
+        /// </summary>
+        [Obsolete("Use Payload instead")]
+        public string AdditionalInformation => Payload;
 
         internal EDBNotificationEventArgs(EDBReadBuffer buf)
         {
             PID = buf.ReadInt32();
-            Condition = buf.ReadNullTerminatedString();
-            AdditionalInformation = buf.ReadNullTerminatedString();
+            Channel = buf.ReadNullTerminatedString();
+            Payload = buf.ReadNullTerminatedString();
         }
     }
 }

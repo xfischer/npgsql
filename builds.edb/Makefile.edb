@@ -5,6 +5,9 @@
 
 # Determine operating system
 OS := $(shell uname -a)
+# GIT repo path and tag
+SHELL := env GIT_REPO_PATH=$(GIT_REPO_PATH) $(SHELL)
+export GIT_REPO_PATH ?="git://scm-replica"
 
 PKG_NAME:=dotnet
 COMMIT_DOT_GIT_PATH:=$(SRC_DIR)
@@ -12,6 +15,8 @@ COMMIT_LOG_FILE:=$(PKG_NAME)-commit.log
 
 export DOTNET_SOURCE_PATH:=C:\\\\CON-DNET
 export DOTNET_STAGING_PATH:=$(DOTNET_SOURCE_PATH)\\\\builds.edb\\\\inst
+export DOTNET_451_SOURCE_PATH:=C:\\\\CON-DNET_451
+export DOTNET_451_TAG=DNET_4_0.10.2-1-GA
 
 SHELL := env EDB_INSTALLBUILDER_BIN=$(EDB_INSTALLBUILDER_BIN) $(SHELL)
 export EDB_INSTALLBUILDER_BIN ?="/c/BitRock/bin/builder.exe"

@@ -1,27 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
 using System.Globalization;
 using NodaTime;
@@ -44,7 +21,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             new TestCaseData(new LocalDateTime(1999, 12, 31, 23, 59, 59, 999).PlusNanoseconds(456000)).SetName(nameof(Timestamp) + "Microseconds"),
         };
 
-        [Test, TestCaseSource(nameof(TimestampCases)), Ignore("Fails with community driver as well against EPAS")]
+        [Test, TestCaseSource(nameof(TimestampCases))]
         public void Timestamp(LocalDateTime localDateTime)
         {
             using (var conn = OpenConnection())
@@ -140,7 +117,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
 
         #region Timestamp with time zone
 
-        [Test, Ignore("Fails with community driver as well against EPAS")]
+        [Test]
         public void TimestampTz()
         {
             using (var conn = OpenConnection())
@@ -202,7 +179,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
 
         #region Date
 
-        [Test, Ignore("Fails with community driver as well against EPAS")]
+        [Test]
         public void Date()
         {
             using (var conn = OpenConnection())
@@ -245,7 +222,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted"), Ignore("Fails with community driver as well against EPAS")]
+        [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted")]
         public void DateConvertInfinity()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { ConvertInfinityDateTime = true };
@@ -378,7 +355,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
 
         #region Support
 
-        protected override EDBConnection OpenConnection(string connectionString = null)
+        protected override EDBConnection OpenConnection(string? connectionString = null)
         {
             var conn = new EDBConnection(connectionString ?? ConnectionString);
             conn.Open();

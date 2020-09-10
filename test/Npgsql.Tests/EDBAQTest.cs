@@ -3,7 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
-
+#nullable disable
 namespace EnterpriseDB.EDBClient.Tests
 {
     class MyXML
@@ -73,7 +73,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 queue.MessageType = EDBAQMessageType.Xml;
                 EDBTransaction txn = queue.Connection.BeginTransaction();
-                
+
                 try
                 {
                     EDBAQMessage queMsg = new EDBAQMessage();
@@ -106,55 +106,56 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 EDBTransaction txn = null;
 
-                    if (queueListen.Connection.State == System.Data.ConnectionState.Closed)
+                if (queueListen.Connection.State == System.Data.ConnectionState.Closed)
+                {
+                    queueListen.Connection.Open();
+                }
+                try
+                {
+                    string v = queueListen.Listen(null, waitTime);
+                    // If we are waiting for a message and we specify a Wait time,
+                    // then if there are no more messages, we want to just bounce out.
+                    if (waitTime > -1 && v == null)
                     {
-                        queueListen.Connection.Open();
+                        throw new InvalidOperationException("Message was expected");
                     }
+
+                    // once we're here that means a message has been detected in the queue. Let's deal with it.
+                    txn = queueListen.Connection.BeginTransaction();
+                    // dequeue the message
+                    EDBAQMessage deqMsg;
                     try
                     {
-                        string v = queueListen.Listen(null, waitTime);
-                        // If we are waiting for a message and we specify a Wait time,
-                        // then if there are no more messages, we want to just bounce out.
-                        if (waitTime > -1 && v == null)
-                        {
-                        throw new InvalidOperationException("Message was expected");
-                        }
-
-                        // once we're here that means a message has been detected in the queue. Let's deal with it.
-                        txn = queueListen.Connection.BeginTransaction();
-                        // dequeue the message
-                        EDBAQMessage deqMsg;
-                        try
-                        {
-                            deqMsg = queueListen.Dequeue();
-                        }
-                        catch (Exception ex)
-                        {
-                            txn.Rollback();
-                            throw ex;
-                        }
-                       
-                        if (deqMsg != null)
-                        {
-                            // process the message payload
-                            MyXML obj = new MyXML();
-                            queueListen.Map<MyXML>(deqMsg.Payload, obj);
-                            Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
-                            txn.Commit();
-                        }
+                        deqMsg = queueListen.Dequeue();
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        txn.Rollback();
+                        throw ex;
+                    }
+
+                    if (deqMsg != null)
+                    {
+                        // process the message payload
+                        MyXML obj = new MyXML();
+                        queueListen.Map<MyXML>(deqMsg.Payload, obj);
+                        Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
+                        txn.Commit();
+                    }
+                }
+                catch (Exception)
+                {
+                    if (txn != null)
+                    {
+                        txn.Rollback();
                         if (txn != null)
                         {
-                            txn.Rollback();
-                            if (txn != null)
-                            {
-                                txn.Dispose();
-                            }
+                            txn.Dispose();
                         }
                     }
                 }
+            }
         }
     }
 }
+#nullable restore

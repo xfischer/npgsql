@@ -1,73 +1,58 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EDBTypes;
 using System.Data;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 {
+    /// <summary>
+    /// A factory for type handlers for the PostgreSQL timestamp data type.
+    /// </summary>
+    /// <remarks>
+    /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
     [TypeMapping("timestamp", EDBDbType.Timestamp, new[] { DbType.DateTime, DbType.DateTime2 }, new[] { typeof(EDBDateTime), typeof(DateTime) }, DbType.DateTime)]
-    class TimestampHandlerFactory : EDBTypeHandlerFactory<DateTime>
+    public class TimestampHandlerFactory : EDBTypeHandlerFactory<DateTime>
     {
-        // Check for the legacy floating point timestamps feature
-        protected override EDBTypeHandler<DateTime> Create(EDBConnection conn)
-            => new TimestampHandler(conn.HasIntegerDateTimes, conn.Connector.ConvertInfinityDateTime);
+        /// <inheritdoc />
+        public override EDBTypeHandler<DateTime> Create(PostgresType postgresType, EDBConnection conn)
+            => conn.HasIntegerDateTimes  // Check for the legacy floating point timestamps feature
+                ? new TimestampHandler(postgresType, conn.Connector!.ConvertInfinityDateTime)
+                : throw new NotSupportedException($"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
     }
 
+    /// <summary>
+    /// A type handler for the PostgreSQL timestamp data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-datetime.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
-    class TimestampHandler : EDBSimpleTypeHandlerWithPsv<DateTime, EDBDateTime>
+    public class TimestampHandler : EDBSimpleTypeHandlerWithPsv<DateTime, EDBDateTime>
     {
-        internal const uint TypeOID = 1114;
-
-        /// <summary>
-        /// A deprecated compile-time option of PostgreSQL switches to a floating-point representation of some date/time
-        /// fields. Some PostgreSQL-like databases (e.g. CrateDB) use floating-point representation by default and do not
-        /// provide the option of switching to integer format.
-        /// </summary>
-        readonly bool _integerFormat;
-
         /// <summary>
         /// Whether to convert positive and negative infinity values to DateTime.{Max,Min}Value when
         /// a DateTime is requested
         /// </summary>
         protected readonly bool ConvertInfinityDateTime;
 
-        internal TimestampHandler(bool integerFormat, bool convertInfinityDateTime)
-        {
-            // Check for the legacy floating point timestamps feature, defaulting to integer timestamps
-            _integerFormat = integerFormat;
-            ConvertInfinityDateTime = convertInfinityDateTime;
-        }
+        internal TimestampHandler(PostgresType postgresType, bool convertInfinityDateTime)
+            : base(postgresType) => ConvertInfinityDateTime = convertInfinityDateTime;
 
         #region Read
 
-        public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             // TODO: Convert directly to DateTime without passing through EDBTimeStamp?
             var ts = ReadTimeStamp(buf, len, fieldDescription);
@@ -87,75 +72,45 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        protected override EDBDateTime ReadPsv(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        protected override EDBDateTime ReadPsv(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => ReadTimeStamp(buf, len, fieldDescription);
 
-#pragma warning disable CA1801 // Review unused parameters
-        protected EDBDateTime ReadTimeStamp(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
-            => _integerFormat
-                ? ReadInteger(buf)
-                : ReadDouble(buf);
-#pragma warning restore CA1801 // Review unused parameters
-
-        EDBDateTime ReadInteger(EDBReadBuffer buf)
+        /// <summary>
+        /// Reads a timestamp from the buffer as an <see cref="EDBDateTime"/>.
+        /// </summary>
+        protected EDBDateTime ReadTimeStamp(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             var value = buf.ReadInt64();
             if (value == long.MaxValue)
                 return EDBDateTime.Infinity;
             if (value == long.MinValue)
                 return EDBDateTime.NegativeInfinity;
-            if (value >= 0) {
+            if (value >= 0)
+            {
                 var date = (int)(value / 86400000000L);
                 var time = value % 86400000000L;
 
                 date += 730119; // 730119 = days since era (0001-01-01) for 2000-01-01
-                time *= 10; // To 100ns
-
-                return new EDBDateTime(new EDBDate(date), new TimeSpan(time));
-            } else {
-                value = -value;
-                var date = (int)(value / 86400000000L);
-                var time = value % 86400000000L;
-                if (time != 0) {
-                    ++date;
-                    time = 86400000000L - time;
-                }
-                date = 730119 - date; // 730119 = days since era (0001-01-01) for 2000-01-01
                 time *= 10; // To 100ns
 
                 return new EDBDateTime(new EDBDate(date), new TimeSpan(time));
             }
-        }
-
-        EDBDateTime ReadDouble(EDBReadBuffer buf)
-        {
-            var value = buf.ReadDouble();
-            if (double.IsPositiveInfinity(value))
-                return EDBDateTime.Infinity;
-            if (double.IsNegativeInfinity(value))
-                return EDBDateTime.NegativeInfinity;
-            if (value >= 0d) {
-                var date = (int)(value / 86400d);
-                var time = value % 86400d;
-
-                date += 730119; // 730119 = days since era (0001-01-01) for 2000-01-01
-                time *= TimeSpan.TicksPerSecond; // seconds to Ticks
-
-                return new EDBDateTime(new EDBDate(date), new TimeSpan((long)time));
-            } else {
+            else
+            {
                 value = -value;
-                var date = (int)(value / 86400d);
-                var time = value % 86400d;
-                if (time != 0d)
+                var date = (int)(value / 86400000000L);
+                var time = value % 86400000000L;
+                if (time != 0)
                 {
                     ++date;
-                    time = 86400d - time;
+                    time = 86400000000L - time;
                 }
 
                 date = 730119 - date; // 730119 = days since era (0001-01-01) for 2000-01-01
-                time *= TimeSpan.TicksPerSecond; // seconds to Ticks
+                time *= 10; // To 100ns
 
-                return new EDBDateTime(new EDBDate(date), new TimeSpan((long)time));
+                return new EDBDateTime(new EDBDate(date), new TimeSpan(time));
             }
         }
 
@@ -163,21 +118,14 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(DateTime value, EDBParameter parameter)
-            => 8;
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(DateTime value, EDBParameter? parameter) => 8;
 
-        public override int ValidateAndGetLength(EDBDateTime value, EDBParameter parameter)
-            => 8;
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(EDBDateTime value, EDBParameter? parameter) => 8;
 
-        public override void Write(EDBDateTime value, EDBWriteBuffer buf, EDBParameter parameter)
-        {
-            if (_integerFormat)
-                WriteInteger(value, buf);
-            else
-                WriteDouble(value, buf);
-        }
-
-        void WriteInteger(EDBDateTime value, EDBWriteBuffer buf)
+        /// <inheritdoc />
+        public override void Write(EDBDateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
         {
             if (value.IsInfinity)
             {
@@ -205,55 +153,24 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
             }
         }
 
-        void WriteDouble(EDBDateTime value, EDBWriteBuffer buf)
-        {
-            if (value.IsInfinity)
-            {
-                buf.WriteDouble(double.PositiveInfinity);
-                return;
-            }
-
-            if (value.IsNegativeInfinity)
-            {
-                buf.WriteDouble(double.NegativeInfinity);
-                return;
-            }
-
-            var dSecsTime = value.Time.TotalSeconds;
-
-            if (value >= new EDBDateTime(2000, 1, 1, 0, 0, 0))
-            {
-                var dSecsDate = (value.Date.DaysSinceEra - 730119d) * 86400d;
-                buf.WriteDouble(dSecsDate + dSecsTime);
-            }
-            else
-            {
-                var dSecsDate = (730119d - value.Date.DaysSinceEra) * 86400d;
-                buf.WriteDouble(-(dSecsDate - dSecsTime));
-            }
-        }
-
-        public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
         {
             if (ConvertInfinityDateTime)
             {
                 if (value == DateTime.MaxValue)
                 {
-                    if (_integerFormat)
-                        buf.WriteInt64(long.MaxValue);
-                    else
-                        buf.WriteDouble(double.PositiveInfinity);
+                    buf.WriteInt64(long.MaxValue);
                     return;
                 }
+
                 if (value == DateTime.MinValue)
                 {
-                    if (_integerFormat)
-                        buf.WriteInt64(long.MinValue);
-                    else
-                        buf.WriteDouble(double.NegativeInfinity);
+                    buf.WriteInt64(long.MinValue);
                     return;
                 }
             }
+
             Write(new EDBDateTime(value), buf, parameter);
         }
 

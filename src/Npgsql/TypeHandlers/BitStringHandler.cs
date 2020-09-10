@@ -1,66 +1,53 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.PostgresTypes;
-using EnterpriseDB.EDBClient.TypeHandling;
-using EnterpriseDB.EDBClient.TypeMapping;
-using EDBTypes;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
     /// <summary>
-    /// Handler for the PostgreSQL bit string type.
-    /// Note that for BIT(1), this handler will return a bool by default, to align with SQLClient
-    /// (see discussion https://github.com/EDB/EDB/pull/362#issuecomment-59622101).
+    /// A type handler for the PostgreSQL bit string data type.
     /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-bit.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-bit.html.
+    ///
+    /// Note that for BIT(1), this handler will return a bool by default, to align with SQLClient
+    /// (see discussion https://github.com/EDB/EDB/pull/362#issuecomment-59622101).
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("bit varying", EDBDbType.Varbit, new[] { typeof(BitArray), typeof(BitVector32) })]
     [TypeMapping("bit", EDBDbType.Bit)]
-    class BitStringHandler : EDBTypeHandler<BitArray>,
+    public class BitStringHandler : EDBTypeHandler<BitArray>,
         IEDBTypeHandler<BitVector32>, IEDBTypeHandler<bool>, IEDBTypeHandler<string>
     {
-        internal override Type GetFieldType(FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public BitStringHandler(PostgresType postgresType) : base(postgresType) {}
+
+        internal override Type GetFieldType(FieldDescription? fieldDescription = null)
             => fieldDescription != null && fieldDescription.TypeModifier == 1 ? typeof(bool) : typeof(BitArray);
 
-        internal override Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null)
+        internal override Type GetProviderSpecificFieldType(FieldDescription? fieldDescription = null)
             => GetFieldType(fieldDescription);
 
         // BitString requires a special array handler which returns bool or BitArray
-        public override ArrayHandler CreateArrayHandler(PostgresType backendType)
-            => new BitStringArrayHandler(this) { PostgresType = backendType };
+        /// <inheritdoc />
+        public override ArrayHandler CreateArrayHandler(PostgresArrayType backendType)
+            => new BitStringArrayHandler(backendType, this);
 
         #region Read
 
-        public override async ValueTask<BitArray> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public override async ValueTask<BitArray> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var numBits = buf.ReadInt32();
@@ -73,6 +60,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                 var iterationEndPos = bytesLeft - Math.Min(bytesLeft, buf.ReadBytesLeft) + 1;
                 for (; bytesLeft > iterationEndPos; bytesLeft--)
                 {
+                    // ReSharper disable ShiftExpressionRealShiftCountIsZero
                     var chunk = buf.ReadByte();
                     result[bitNo++] = (chunk & (1 << 7)) != 0;
                     result[bitNo++] = (chunk & (1 << 6)) != 0;
@@ -97,7 +85,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return result;
         }
 
-        async ValueTask<BitVector32> IEDBTypeHandler<BitVector32>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<BitVector32> IEDBTypeHandler<BitVector32>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
         {
             if (len > 4 + 4)
             {
@@ -115,7 +103,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                 : new BitVector32(buf.ReadInt32());
         }
 
-        async ValueTask<bool> IEDBTypeHandler<bool>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<bool> IEDBTypeHandler<bool>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
         {
             await buf.Ensure(5, async);
             var bitLen = buf.ReadInt32();
@@ -130,18 +118,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return (b & 128) != 0;
         }
 
-        ValueTask<string> IEDBTypeHandler<string>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        ValueTask<string> IEDBTypeHandler<string>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
         {
             buf.Skip(len);
             throw new EDBSafeReadException(new NotSupportedException("Only writing string to PostgreSQL bitstring is supported, no reading."));
         }
 
-        internal override async ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        internal override async ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
             => fieldDescription?.TypeModifier == 1
                 ? (object)await Read<bool>(buf, len, async, fieldDescription)
                 : await Read<BitArray>(buf, len, async, fieldDescription);
 
-        internal override object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        internal override object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => fieldDescription?.TypeModifier == 1
                 ? (object)Read<bool>(buf, len, false, fieldDescription).Result
                 : Read<BitArray>(buf, len, false, fieldDescription).Result;
@@ -150,23 +138,28 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Write
 
-        public override int ValidateAndGetLength(BitArray value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(BitArray value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => 4 + (value.Length + 7) / 8;
 
-        public int ValidateAndGetLength(BitVector32 value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(BitVector32 value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => value.Data == 0 ? 4 : 8;
 
-        public int ValidateAndGetLength(bool value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(bool value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => 5;
 
-        public int ValidateAndGetLength(string value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(string value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             if (value.Any(c => c != '0' && c != '1'))
                 throw new FormatException("Cannot interpret as ASCII BitString: " + value);
             return 4 + (value.Length + 7) / 8;
         }
 
-        public override async Task Write(BitArray value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public override async Task Write(BitArray value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             // Initial bitlength byte
             if (buf.WriteSpaceLeft < 4)
@@ -193,7 +186,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             }
         }
 
-        public async Task Write(BitVector32 value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public async Task Write(BitVector32 value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             if (buf.WriteSpaceLeft < 8)
                 await buf.Flush(async);
@@ -207,7 +201,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             }
         }
 
-        public async Task Write(bool value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public async Task Write(bool value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             if (buf.WriteSpaceLeft < 5)
                 await buf.Flush(async);
@@ -215,7 +210,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             buf.WriteByte(value ? (byte)0x80 : (byte)0);
         }
 
-        public async Task Write(string value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        /// <inheritdoc />
+        public async Task Write(string value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             // Initial bitlength byte
             if (buf.WriteSpaceLeft < 4)
@@ -270,12 +266,19 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// Differs from the standard array handlers in that it returns arrays of bool for BIT(1) and arrays
     /// of BitArray otherwise (just like the scalar BitStringHandler does).
     /// </summary>
-    class BitStringArrayHandler : ArrayHandler<BitArray>
+    /// <remarks>
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
+    public class BitStringArrayHandler : ArrayHandler<BitArray>
     {
-        public BitStringArrayHandler(BitStringHandler elementHandler)
-            : base(elementHandler) { }
+        /// <inheritdoc />
+        public BitStringArrayHandler(PostgresType postgresType, BitStringHandler elementHandler)
+            : base(postgresType, elementHandler) {}
 
-        protected internal override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        protected internal override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             if (IsArrayOf<TAny, BitArray>.Value)
                 return (TAny)(object)await ReadArray<BitArray>(buf, async);
@@ -292,10 +295,10 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return await base.Read<TAny>(buf, len, async, fieldDescription);
         }
 
-        internal override object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        internal override object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => ReadAsObject(buf, len, false, fieldDescription).Result;
 
-        internal override async ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        internal override async ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
             => fieldDescription?.TypeModifier == 1
                 ? await ReadArray<bool>(buf, async)
                 : await ReadArray<BitArray>(buf, async);

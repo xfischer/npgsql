@@ -1,39 +1,10 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-
 #define NET_2_0
 
+using EDBTypes;
+using NUnit.Framework;
 using System;
 using System.Data;
 using System.Data.Common;
-using System.IO;
-using System.Threading;
-using System.Xml;
-using EnterpriseDB.EDBClient;
-using EDBTypes;
-
-using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -92,6 +63,31 @@ namespace EnterpriseDB.EDBClient.Tests
                 p2.DataTypeName = "text";
                 Assert.That(() => cmd.ExecuteScalar(), Throws.Exception.TypeOf<InvalidCastException>());
             }
+        }
+
+        [Test]
+        public void SettingDbTypeSetsEDBDbType()
+        {
+            var p = new EDBParameter();
+            p.DbType = DbType.Binary;
+            Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea));
+        }
+
+        [Test]
+        public void SettingEDBDbTypeSetsDbType()
+        {
+            var p = new EDBParameter();
+            p.EDBDbType = EDBDbType.Bytea;
+            Assert.That(p.DbType, Is.EqualTo(DbType.Binary));
+        }
+
+        [Test]
+        public void SettingValueDoesNotChangeDbType()
+        {
+            var p = new EDBParameter { DbType = DbType.String, EDBDbType = EDBDbType.Bytea };
+            p.Value = 8;
+            Assert.That(p.DbType, Is.EqualTo(DbType.Binary));
+            Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea));
         }
 
         // Older tests
@@ -173,7 +169,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void Constructor2_Value_Null()
         {
-            var p = new EDBParameter("address", (object)null);
+            var p = new EDBParameter("address", null);
             Assert.AreEqual(DbType.Object, p.DbType, "A:DbType");
             Assert.AreEqual(ParameterDirection.Input, p.Direction, "A:Direction");
             Assert.IsFalse(p.IsNullable, "A:IsNullable");
@@ -188,7 +184,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        //.ctor (String, EDBDbType, Int32, String, ParameterDirection, bool, byte, byte, DataRowVersion, object)
+        //.ctor (string, EDBDbType, Int32, string, ParameterDirection, bool, byte, byte, DataRowVersion, object)
         public void Constructor7()
         {
             var p1 = new EDBParameter("p1Name", EDBDbType.Varchar, 20,
@@ -226,7 +222,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Char value = 'X';
 
 #if NET_2_0
-            String string_value = "X";
+            string string_value = "X";
 
             EDBParameter p = new EDBParameter ();
             p.Value = value;
@@ -290,7 +286,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Char[] value = new Char[] { 'A', 'X' };
 
 #if NET_2_0
-            String string_value = "AX";
+            string string_value = "AX";
 
             EDBParameter p = new EDBParameter ();
             p.Value = value;
@@ -602,7 +598,7 @@ namespace EnterpriseDB.EDBClient.Tests
             => Assert.That(new EDBParameter("@p", DbType.String).ParameterName, Is.EqualTo("@p"));
 
         [Test]
-        /*[Ignore("")]*/
+        [Ignore("")]
         public void SourceColumn()
         {
             var p = new EDBParameter();
@@ -612,7 +608,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             p.SourceColumn = null;
             Assert.AreEqual(string.Empty, p.ParameterName, "#B:ParameterName");
-            Assert.AreEqual(null, p.SourceColumn, "#B:SourceColumn");
+            Assert.AreEqual(string.Empty, p.SourceColumn, "#B:SourceColumn");
 
             p.SourceColumn = " ";
             Assert.AreEqual(string.Empty, p.ParameterName, "#C:ParameterName");
@@ -659,7 +655,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 // Put plenty of parameters in the collection to turn on hash lookup functionality.
                 for (var i = 0; i < 10; i++)
                 {
-                    command.Parameters.AddWithValue(string.Format("p{0:00}", i + 1), EDBDbType.Text, string.Format("String parameter value {0}", i + 1));
+                    command.Parameters.AddWithValue(string.Format("p{0:00}", i + 1), EDBDbType.Text, string.Format("string parameter value {0}", i + 1));
                 }
 
                 // Make sure both hash lookups have been generated.
@@ -743,7 +739,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual((byte)42, paramIface.Precision);
         }
 
-#if !NET45
         [Test]
         public void PrecisionViaBaseClass()
         {
@@ -754,7 +749,6 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Assert.AreEqual((byte)42, paramBase.Precision);
         }
-#endif
 
         [Test]
         public void ScaleViaInterface()
@@ -767,7 +761,6 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual((byte)42, paramIface.Scale);
         }
 
-#if !NET45
         [Test]
         public void ScaleViaBaseClass()
         {
@@ -778,6 +771,31 @@ namespace EnterpriseDB.EDBClient.Tests
 
             Assert.AreEqual((byte)42, paramBase.Scale);
         }
-#endif
+
+        [Test]
+        public void ResolveHandler_NullValue_ThrowsInvalidOperationException()
+        {
+            using var connection = OpenConnection();
+            using var command = new EDBCommand("SELECT @p", connection)
+            {
+                Parameters = { new EDBParameter("p", null) }
+            };
+
+            Assert.That(() => command.ExecuteReader(), Throws.InvalidOperationException);
+        }
+
+        [Test]
+        public void ResolveHandler_NullableValue_Succeeds()
+        {
+            using var connection = OpenConnection();
+            using var command = new EDBCommand("SELECT @p", connection)
+            {
+                Parameters = { new EDBParameter<int?>("p", null) }
+            };
+            using var reader = command.ExecuteReader();
+
+            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.GetFieldValue<int?>(0), Is.Null);
+        }
     }
 }

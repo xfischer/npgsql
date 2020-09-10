@@ -5,13 +5,14 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
-	/// </summary>
-	[TestFixture] 
+#pragma warning disable CS8602
+    /// <summary>
+    /// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
+    /// </summary>
+    [TestFixture] 
 	public class EDBConnectionTests : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
 		[SetUp]
 		public void Init()
@@ -160,4 +161,6 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
 	}
+
+#pragma warning restore CS8602
 }

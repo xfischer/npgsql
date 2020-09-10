@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// This mechanism is used to temporarily set the current synchronization context to null while
     /// executing EDB code, making all await continuations execute on the thread pool. This replaces
@@ -26,14 +25,13 @@ namespace EnterpriseDB.EDBClient
 
         internal struct Disposable : IDisposable
         {
-            readonly SynchronizationContext _synchronizationContext;
+            readonly SynchronizationContext? _synchronizationContext;
 
-            internal Disposable(SynchronizationContext synchronizationContext)
-            {
-                _synchronizationContext = synchronizationContext;
-            }
+            internal Disposable(SynchronizationContext? synchronizationContext)
+                => _synchronizationContext = synchronizationContext;
 
-            public void Dispose() => SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
+            public void Dispose()
+                => SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
         }
     }
 }

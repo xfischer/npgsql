@@ -1,40 +1,14 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
-using System.Net.Mime;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient.PostgresTypes;
-using NUnit.Framework.Constraints;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
     class CommandBuilderTests : TestBase
     {
         [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters")]
-        [Ignore("Record will not be supported with derive param")]
         public void DeriveFunctionParameters_Various()
         {
             using (var conn = OpenConnection())
@@ -191,7 +165,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(cmd.Parameters[1].Direction, Is.EqualTo(ParameterDirection.Output));
                 Assert.That(cmd.Parameters[2].Direction, Is.EqualTo(ParameterDirection.Output));
                 cmd.Parameters[0].Value = 5;
-                cmd.Prepare();
                 cmd.ExecuteNonQuery();
                 Assert.That(cmd.Parameters[1].Value, Is.EqualTo(5));
                 Assert.That(cmd.Parameters[2].Value, Is.EqualTo(6));
@@ -238,7 +211,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, Description("Tests if the right function according to search_path is used in function parameter derivation")]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE"), Description("Tests if the right function according to search_path is used in function parameter derivation")]
         public void DeriveFunctionParameters_CorrectSchemaResolution()
         {
             using (var conn = OpenConnection())
@@ -359,7 +332,6 @@ SET search_path TO schema1, schema2;
         #region Set returning functions
 
         [Test, Description("Tests parameter derivation for a function that returns SETOF sometype")]
-        [Ignore("SETOF will not be supported with derive param")]
         public void DeriveFunctionParameters_FunctionReturningSetofType()
         {
             using (var conn = OpenConnection())
@@ -375,12 +347,12 @@ INSERT INTO pg_temp.foo VALUES
 (1, 2, 'Ed'),
 (2, 1, 'Mary');
 
-CREATE FUNCTION pg_temp.getfoo(int) RETURNS SETOF foo AS $$
+CREATE FUNCTION pg_temp.getfooSetOfType(int) RETURNS SETOF foo AS $$
     SELECT * FROM pg_temp.foo WHERE pg_temp.foo.fooid = $1 ORDER BY pg_temp.foo.foosubid;
 $$ LANGUAGE SQL;
                 ");
 
-                var cmd = new EDBCommand("pg_temp.getfoo", conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new EDBCommand("pg_temp.getfooSetOfType", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(4));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
@@ -388,13 +360,13 @@ $$ LANGUAGE SQL;
                 Assert.That(cmd.Parameters[2].Direction, Is.EqualTo(ParameterDirection.Output));
                 Assert.That(cmd.Parameters[3].Direction, Is.EqualTo(ParameterDirection.Output));
                 cmd.Parameters[0].Value = 1;
+                cmd.Prepare();
                 cmd.ExecuteNonQuery();
                 Assert.That(cmd.Parameters[0].Value, Is.EqualTo(1));
             }
         }
 
-        [Test, Description("Tests parameter derivation for a function that returns TABLE")]
-        [Ignore("TABLE will not be supported with derive param")]
+        [Test, Ignore("MERGE_NEED_TO_EXPLORE"), Description("Tests parameter derivation for a function that returns TABLE")]
         public void DeriveFunctionParameters_FunctionReturningTable()
         {
             using (var conn = OpenConnection())
@@ -558,7 +530,6 @@ $$ LANGUAGE SQL;
         }
 
         [Test, Description("Tests parameter derivation a parameterized query (CommandType.Text) that is already prepared.")]
-        [Ignore("Dependant failure i.e. runs successfully")]
         public void DeriveTextCommandParameters_PreparedStatement()
         {
             const string query = "SELECT @p::integer";
@@ -568,7 +539,7 @@ $$ LANGUAGE SQL;
             {
                 cmd.Parameters.AddWithValue("@p", EDBDbType.Integer, answer);
                 cmd.Prepare();
-                Assert.That(conn.Connector.PreparedStatementManager.NumPrepared, Is.EqualTo(1));
+                Assert.That(conn.Connector!.PreparedStatementManager.NumPrepared, Is.EqualTo(1));
 
                 var ex = Assert.Throws<EDBException>(() =>
                 {
@@ -611,6 +582,43 @@ $$ LANGUAGE SQL;
             }
         }
 
+        [Test, Description("Tests parameter derivation for domain parameters in parameterized queries (CommandType.Text)")]
+        public void DeriveTextCommandParameters_Domain()
+        {
+            using (var conn = OpenConnection())
+            {
+                TestUtil.MinimumPgVersion(conn, "11.0", "Arrays of domains and domains over arrays were introduced in PostgreSQL 11");
+                conn.ExecuteNonQuery("CREATE DOMAIN pg_temp.posint AS integer CHECK (VALUE > 0);" +
+                                     "CREATE DOMAIN pg_temp.int_array  AS int[] CHECK(array_length(VALUE, 1) = 2);");
+                conn.ReloadTypes();
+
+                var cmd = new EDBCommand("SELECT :a::posint, :b::posint[], :c::int_array", conn);
+                var val = 23;
+                var arrayVal = new[] { 7, 42 };
+
+                EDBCommandBuilder.DeriveParameters(cmd);
+                Assert.That(cmd.Parameters, Has.Count.EqualTo(3));
+                Assert.That(cmd.Parameters[0].ParameterName, Is.EqualTo("a"));
+                Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+                Assert.That(cmd.Parameters[0].DataTypeName, Does.EndWith("posint"));
+                Assert.That(cmd.Parameters[1].ParameterName, Is.EqualTo("b"));
+                Assert.That(cmd.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Integer | EDBDbType.Array));
+                Assert.That(cmd.Parameters[1].DataTypeName, Does.EndWith("posint[]"));
+                Assert.That(cmd.Parameters[2].ParameterName, Is.EqualTo("c"));
+                Assert.That(cmd.Parameters[2].EDBDbType, Is.EqualTo(EDBDbType.Integer | EDBDbType.Array));
+                Assert.That(cmd.Parameters[2].DataTypeName, Does.EndWith("int_array"));
+                cmd.Parameters[0].Value = val;
+                cmd.Parameters[1].Value = arrayVal;
+                cmd.Parameters[2].Value = arrayVal;
+                using (var reader = cmd.ExecuteRecord())
+                {
+                    Assert.That(reader.GetFieldValue<int>(0), Is.EqualTo(val));
+                    Assert.That(reader.GetFieldValue<int[]>(1), Is.EqualTo(arrayVal));
+                    Assert.That(reader.GetFieldValue<int[]>(2), Is.EqualTo(arrayVal));
+                }
+            }
+        }
+
         [Test, Description("Tests parameter derivation for unmapped enum parameters in parameterized queries (CommandType.Text)")]
         public void DeriveTextCommandParameters_UnmappedEnum()
         {
@@ -627,7 +635,7 @@ $$ LANGUAGE SQL;
                 Assert.That(cmd.Parameters[0].ParameterName, Is.EqualTo("x"));
                 Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Unknown));
                 Assert.That(cmd.Parameters[0].PostgresType, Is.InstanceOf<PostgresEnumType>());
-                Assert.That(cmd.Parameters[0].PostgresType.Name, Is.EqualTo("fruit"));
+                Assert.That(cmd.Parameters[0].PostgresType!.Name, Is.EqualTo("fruit"));
                 Assert.That(cmd.Parameters[0].DataTypeName, Does.EndWith("fruit"));
                 cmd.Parameters[0].Value = val1;
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SingleResult | CommandBehavior.SingleRow))
@@ -676,8 +684,9 @@ $$ LANGUAGE SQL;
         class SomeComposite
         {
             public int X { get; set; }
+
             [PgName("some_text")]
-            public string SomeText { get; set; }
+            public string SomeText { get; set; } = "";
         }
 
         [Test]
@@ -703,7 +712,7 @@ $$ LANGUAGE SQL;
                     Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Unknown));
                     Assert.That(cmd.Parameters[0].PostgresType, Is.InstanceOf<PostgresCompositeType>());
                     Assert.That(cmd.Parameters[0].DataTypeName, Does.EndWith("deriveparameterscomposite1"));
-                    var p1Fields = ((PostgresCompositeType)cmd.Parameters[0].PostgresType).Fields;
+                    var p1Fields = ((PostgresCompositeType)cmd.Parameters[0].PostgresType!).Fields;
                     Assert.That(p1Fields[0].Name, Is.EqualTo("x"));
                     Assert.That(p1Fields[1].Name, Is.EqualTo("some_text"));
 
@@ -711,7 +720,7 @@ $$ LANGUAGE SQL;
                     Assert.That(cmd.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Unknown));
                     Assert.That(cmd.Parameters[1].PostgresType, Is.InstanceOf<PostgresArrayType>());
                     Assert.That(cmd.Parameters[1].DataTypeName, Does.EndWith("deriveparameterscomposite1[]"));
-                    var p2Element = ((PostgresArrayType)cmd.Parameters[1].PostgresType).Element;
+                    var p2Element = ((PostgresArrayType)cmd.Parameters[1].PostgresType!).Element;
                     Assert.That(p2Element, Is.InstanceOf<PostgresCompositeType>());
                     Assert.That(p2Element.Name, Is.EqualTo("deriveparameterscomposite1"));
                     var p2Fields = ((PostgresCompositeType)p2Element).Fields;
@@ -753,7 +762,7 @@ $$ LANGUAGE SQL;
                     Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Unknown));
                     Assert.That(cmd.Parameters[0].PostgresType, Is.InstanceOf<PostgresCompositeType>());
                     Assert.That(cmd.Parameters[0].DataTypeName, Does.EndWith("deriveparameterscomposite2"));
-                    var p1Fields = ((PostgresCompositeType)cmd.Parameters[0].PostgresType).Fields;
+                    var p1Fields = ((PostgresCompositeType)cmd.Parameters[0].PostgresType!).Fields;
                     Assert.That(p1Fields[0].Name, Is.EqualTo("x"));
                     Assert.That(p1Fields[1].Name, Is.EqualTo("some_text"));
 
@@ -789,7 +798,7 @@ $$ LANGUAGE SQL;
                     Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Unknown));
                     Assert.That(cmd.Parameters[0].PostgresType, Is.InstanceOf<PostgresArrayType>());
                     Assert.That(cmd.Parameters[0].DataTypeName, Does.EndWith("deriveparameterscomposite3[]"));
-                    var p1Element = ((PostgresArrayType)cmd.Parameters[0].PostgresType).Element;
+                    var p1Element = ((PostgresArrayType)cmd.Parameters[0].PostgresType!).Element;
                     Assert.That(p1Element, Is.InstanceOf<PostgresCompositeType>());
                     Assert.That(p1Element.Name, Is.EqualTo("deriveparameterscomposite3"));
                     var p1Fields = ((PostgresCompositeType)p1Element).Fields;
@@ -812,5 +821,76 @@ $$ LANGUAGE SQL;
         }
 
         #endregion
+
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1591")]
+        public void GetUpdateCommandInfersParametersWithNpgsqDbType()
+        {
+            using (var conn = OpenConnection())
+            {
+                conn.ExecuteNonQuery(@"
+                    CREATE TABLE pg_temp.test (
+                        Cod varchar(5) NOT NULL,
+                        Descr varchar(40),
+                        Data date,
+                        DataOra timestamp,
+                        Intero smallInt NOT NULL,
+                        Decimale money,
+                        Singolo float,
+                        Booleano bit,
+                        Nota varchar(255),
+                        CONSTRAINT PK_test_Cod PRIMARY KEY (Cod)
+                    );
+                    INSERT INTO test VALUES('key1', 'description', '2018-07-03', '2018-07-03 07:02:00', 123, 123.4, 1234.5, B'1', 'note');
+                ");
+
+                var daDataAdapter =
+                    new EDBDataAdapter(
+                        "SELECT Cod, Descr, Data, DataOra, Intero, Decimale, Singolo, Booleano, Nota FROM test", conn);
+                var cbCommandBuilder = new EDBCommandBuilder(daDataAdapter);
+                var dtTable = new DataTable();
+
+                daDataAdapter.InsertCommand = cbCommandBuilder.GetInsertCommand();
+                daDataAdapter.UpdateCommand = cbCommandBuilder.GetUpdateCommand();
+                daDataAdapter.DeleteCommand = cbCommandBuilder.GetDeleteCommand();
+
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[2].EDBDbType, Is.EqualTo(EDBDbType.Date));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[3].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[4].EDBDbType, Is.EqualTo(EDBDbType.Smallint));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[5].EDBDbType, Is.EqualTo(EDBDbType.Money));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[6].EDBDbType, Is.EqualTo(EDBDbType.Double));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[7].EDBDbType, Is.EqualTo(EDBDbType.Bit));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[8].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[9].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[11].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[13].EDBDbType, Is.EqualTo(EDBDbType.Date));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[15].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[16].EDBDbType, Is.EqualTo(EDBDbType.Smallint));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[18].EDBDbType, Is.EqualTo(EDBDbType.Money));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[20].EDBDbType, Is.EqualTo(EDBDbType.Double));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[22].EDBDbType, Is.EqualTo(EDBDbType.Bit));
+                Assert.That(daDataAdapter.UpdateCommand.Parameters[24].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
+
+                daDataAdapter.Fill(dtTable);
+
+                var row = dtTable.Rows[0];
+
+                Assert.That(row[0], Is.EqualTo("key1"));
+                Assert.That(row[1], Is.EqualTo("description"));
+                Assert.That(row[2], Is.EqualTo(new DateTime(2018, 7, 3)));
+                Assert.That(row[3], Is.EqualTo(new DateTime(2018, 7, 3, 7, 2, 0)));
+                Assert.That(row[4], Is.EqualTo(123));
+                Assert.That(row[5], Is.EqualTo(123.4));
+                Assert.That(row[6], Is.EqualTo(1234.5));
+                Assert.That(row[7], Is.EqualTo(true));
+                Assert.That(row[8], Is.EqualTo("note"));
+
+                dtTable.Rows[0]["Singolo"] = 1.1D;
+
+                Assert.That(daDataAdapter.Update(dtTable), Is.EqualTo(1));
+            }
+        }
     }
 }

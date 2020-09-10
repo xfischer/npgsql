@@ -2,17 +2,25 @@
 using System.Data;
 using System.Runtime.InteropServices;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL uuid data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-uuid.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-uuid.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("uuid", EDBDbType.Uuid, DbType.Guid, typeof(Guid))]
-    class UuidHandler : EDBSimpleTypeHandler<Guid>
+    public class UuidHandler : EDBSimpleTypeHandler<Guid>
     {
         // The following table shows .NET GUID vs Postgres UUID (RFC 4122) layouts.
         //
@@ -28,7 +36,11 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         // | 16   | 2     | Data3 | Native            | Big                   |
         // | 64   | 8     | Data4 | Big               | Big                   |
 
-        public override Guid Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public UuidHandler(PostgresType postgresType) : base(postgresType) {}
+
+        /// <inheritdoc />
+        public override Guid Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             var raw = new GuidRaw
             {
@@ -41,13 +53,15 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             return raw.Value;
         }
 
-        public override int ValidateAndGetLength(Guid value, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(Guid value, EDBParameter? parameter)
             => 16;
 
-        public override void Write(Guid value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public override void Write(Guid value, EDBWriteBuffer buf, EDBParameter? parameter)
         {
             var raw = new GuidRaw(value);
-            
+
             buf.WriteInt32(raw.Data1);
             buf.WriteInt16(raw.Data2);
             buf.WriteInt16(raw.Data3);

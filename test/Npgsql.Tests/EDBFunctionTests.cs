@@ -5,13 +5,15 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Testing Functions with Different combination of parameters
-	/// </summary>
-	[TestFixture]
+#pragma warning disable CS8604
+#pragma warning disable CS8602
+    /// <summary>
+    /// Testing Functions with Different combination of parameters
+    /// </summary>
+    [TestFixture]
 	public class EDBFunctionTests : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
         #region Setup / Tear Down
         [SetUp]
@@ -126,8 +128,9 @@ namespace EnterpriseDB.EDBClient.Tests
 				Assert.AreEqual(3,int.Parse(command.Parameters[2].Value.ToString()));
 				Assert.AreEqual(400,int.Parse(command.Parameters[3].Value.ToString()));
 				Assert.AreEqual("EnterpriseDB",command.Parameters[4].Value.ToString());
-			} 
-			catch(EDBException exp) 
+
+            }
+            catch (EDBException exp) 
 			{ 
 				Console.WriteLine(exp.Message); 
 			} 
@@ -638,10 +641,10 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 				command.ExecuteNonQuery();
 
-				Assert.AreEqual(10000,int.Parse(command.Parameters[0].Value.ToString()));
-				Assert.AreEqual(10000,int.Parse(command.Parameters[1].Value.ToString()));	
-				Assert.AreEqual(-2,int.Parse(command.Parameters[2].Value.ToString()));	
-				Assert.AreEqual(1234,int.Parse(command.Parameters[3].Value.ToString()));	
+				Assert.AreEqual(10000,int.Parse(s:command.Parameters[0].Value.ToString()));
+				Assert.AreEqual(10000,int.Parse(s:command.Parameters[1].Value.ToString()));	
+				Assert.AreEqual(-2,int.Parse(s:command.Parameters[2].Value.ToString()));	
+				Assert.AreEqual(1234,int.Parse(s:command.Parameters[3].Value.ToString()));	
 			}
 			catch(EDBException e)
 			{			
@@ -2488,7 +2491,7 @@ namespace EnterpriseDB.EDBClient.Tests
 				command.Prepare();
 
                 command.ExecuteNonQuery();
-                String cursorName = command.Parameters[0].Value.ToString();
+                string? cursorName = command.Parameters[0].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                 command.CommandType = CommandType.Text;
@@ -2575,7 +2578,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, /*Ignore("Investigate")*/]
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
         {
-            EDBCommand command = null;
+            EDBCommand? command = null;
             try
             {
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
@@ -2622,8 +2625,8 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
 
-                String cursorName1 = command.Parameters[1].Value.ToString();
-                String cursorName2 = command.Parameters[2].Value.ToString();
+                string? cursorName1 = command.Parameters[1].Value.ToString();
+                string? cursorName2 = command.Parameters[2].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
@@ -2721,5 +2724,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #endregion
     }
+#pragma warning restore CS8604
+#pragma warning restore CS8602
 }
 

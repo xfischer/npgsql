@@ -1,64 +1,50 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
+﻿using System.Data;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EDBTypes;
-using System.Data;
-using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL real data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-numeric.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-numeric.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("real", EDBDbType.Real, DbType.Single, typeof(float))]
-    class SingleHandler : EDBSimpleTypeHandler<float>, IEDBSimpleTypeHandler<double>
+    public class SingleHandler : EDBSimpleTypeHandler<float>, IEDBSimpleTypeHandler<double>
     {
+        /// <inheritdoc />
+        public SingleHandler(PostgresType postgresType) : base(postgresType) {}
+
         #region Read
 
-        public override float Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public override float Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => buf.ReadSingle();
 
-        double IEDBSimpleTypeHandler<double>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        double IEDBSimpleTypeHandler<double>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
             => Read(buf, len, fieldDescription);
 
         #endregion Read
 
         #region Write
 
-        public int ValidateAndGetLength(double value, EDBParameter parameter)
-            => 4;
+        /// <inheritdoc />
+        public int ValidateAndGetLength(double value, EDBParameter? parameter)         => 4;
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(float value, EDBParameter? parameter) => 4;
 
-        public override int ValidateAndGetLength(float value, EDBParameter parameter)
-            => 4;
-
-        public void Write(double value, EDBWriteBuffer buf, EDBParameter parameter)
-            => buf.WriteSingle((float)value);
-
-        public override void Write(float value, EDBWriteBuffer buf, EDBParameter parameter)
-            => buf.WriteSingle(value);
+        /// <inheritdoc />
+        public void Write(double value, EDBWriteBuffer buf, EDBParameter? parameter)         => buf.WriteSingle((float)value);
+        /// <inheritdoc />
+        public override void Write(float value, EDBWriteBuffer buf, EDBParameter? parameter) => buf.WriteSingle(value);
 
         #endregion Write
     }

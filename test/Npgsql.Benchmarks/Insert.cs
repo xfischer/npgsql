@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using BenchmarkDotNet.Attributes;
 using EDBTypes;
 
@@ -10,8 +6,8 @@ namespace EnterpriseDB.EDBClient.Benchmarks
 {
     public class Insert
     {
-        EDBConnection _conn;
-        EDBCommand _truncateCmd;
+        EDBConnection _conn = default!;
+        EDBCommand _truncateCmd = default!;
 
         [Params(1, 100, 1000, 10000)]
         public int BatchSize { get; set; }
@@ -33,11 +29,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
         }
 
         [GlobalCleanup]
-        public void GlobalCleanup()
-        {
-            _conn.Close();
-            _conn = null;
-        }
+        public void GlobalCleanup() => _conn.Close();
 
         [Benchmark(Baseline = true)]
         public void Unbatched()

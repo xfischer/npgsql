@@ -1,27 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -34,11 +11,13 @@ namespace EnterpriseDB.EDBClient.TypeMapping
     [MeansImplicitUse]
     class TypeMappingAttribute : Attribute
     {
+
+
         /// <summary>
         /// Maps an EDB type handler to a PostgreSQL type.
         /// </summary>
         /// <param name="pgName">A PostgreSQL type name as it appears in the pg_type table.</param>
-        /// <param name="eDBDbType">
+        /// <param name="edbDbType">
         /// A member of <see cref="EDBDbType"/> which represents this PostgreSQL type.
         /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.EDBDbType"/> set to
         /// this value will be sent with the type handler mapped by this attribute.
@@ -58,19 +37,19 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// When <see cref="EDBParameter.EDBDbType"/> or <see cref="EDBParameter.Value"/>
         /// set, <see cref="EDBParameter.DbType"/> will be set to this value.
         /// </param>
-        internal TypeMappingAttribute(string pgName, EDBDbType? eDBDbType, [CanBeNull] DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType? inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType? edbDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType)
         {
-            if (String.IsNullOrWhiteSpace(pgName))
+            if (string.IsNullOrWhiteSpace(pgName))
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
             PgName = pgName;
-            EDBDbType = eDBDbType;
+            EDBDbType = edbDbType;
             DbTypes = dbTypes ?? new DbType[0];
             ClrTypes = clrTypes ?? new Type[0];
             InferredDbType = inferredDbType;
         }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, [CanBeNull] Type[] clrTypes, DbType inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, Type[]? clrTypes, DbType inferredDbType)
             : this(pgName, (EDBDbType?)EDBDbType, dbTypes, clrTypes, inferredDbType)
         { }
 
@@ -97,7 +76,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             : this(pgName, EDBDbType, new[] { dbType }, clrTypes, dbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type clrType = null)
+        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type? clrType = null)
             : this(pgName, EDBDbType, new[] { dbType }, clrType == null ? null : new[] { clrType }, dbType)
         { }
 
@@ -124,6 +103,12 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             : this(pgName, null, null, null, null)
         { }
 
+        //public TypeMappingAttribute(string v, EDBDbType bit)
+        //{
+        //    this.v = v;
+        //    this.bit = bit;
+        //}
+
         internal string PgName { get; }
         internal EDBDbType? EDBDbType { get; }
         internal DbType[] DbTypes { get; }
@@ -141,12 +126,12 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             if (DbTypes.Length > 0)
             {
                 sb.Append(" DbTypes=");
-                sb.Append(String.Join(",", DbTypes.Select(t => t.ToString())));
+                sb.Append(string.Join(",", DbTypes.Select(t => t.ToString())));
             }
             if (ClrTypes.Length > 0)
             {
                 sb.Append(" ClrTypes=");
-                sb.Append(String.Join(",", ClrTypes.Select(t => t.Name)));
+                sb.Append(string.Join(",", ClrTypes.Select(t => t.Name)));
             }
             sb.AppendFormat("]");
             return sb.ToString();

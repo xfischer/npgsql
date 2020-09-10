@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29905.134
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql", "Npgsql.csproj", "{FA898527-D9FD-42FF-9D1E-59110F885977}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.Tests", "..\..\test\Npgsql.Tests\Npgsql.Tests.csproj", "{96DE0E86-ABEF-41F3-8745-4B0A2EA29511}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA898527-D9FD-42FF-9D1E-59110F885977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA898527-D9FD-42FF-9D1E-59110F885977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA898527-D9FD-42FF-9D1E-59110F885977}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA898527-D9FD-42FF-9D1E-59110F885977}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96DE0E86-ABEF-41F3-8745-4B0A2EA29511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96DE0E86-ABEF-41F3-8745-4B0A2EA29511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96DE0E86-ABEF-41F3-8745-4B0A2EA29511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96DE0E86-ABEF-41F3-8745-4B0A2EA29511}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DA1FF400-D6FD-468E-9CFB-85CCF41BBE78}
+	EndGlobalSection
+EndGlobal

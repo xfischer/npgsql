@@ -16,9 +16,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
     [TestFixture]
 	public class EDBByteaTest : TestBase
 	{
-		EDBConnection conn = null;
+		EDBConnection? conn = null;
 		//String testImagePath = @"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif";
-		String testImagePath = @"C:\Windows\media\Windows Background.wav";
+		string testImagePath = @"C:\Windows\media\Windows Background.wav";
 
 		[SetUp]
 		public void Init()
@@ -100,8 +100,10 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[TearDown] 
 		public void Dispose()
 		{
-			if ( conn.State != ConnectionState.Open)
-				conn = OpenConnection();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            if ( conn.State != ConnectionState.Open)
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                conn = OpenConnection();
 			EDBCommand com = new EDBCommand("",conn);
 			com.CommandType = CommandType.Text;
 
@@ -166,9 +168,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		{
 			try
 			{
-				FileStream fs = null;
+				FileStream? fs = null;
 				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
-				Byte[] data = new Byte[fs.Length];
+                byte[] data = new byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
 		
@@ -198,9 +200,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		{
 			try
 			{
-				FileStream fs = null;
+				FileStream? fs = null;
 				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
-				Byte[] data = new Byte[fs.Length];
+                byte[] data = new byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
 				
@@ -231,9 +233,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		{
 			try
 			{
-				FileStream fs = null;
+				FileStream? fs = null;
 				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
-				Byte[] data = new Byte[fs.Length];
+                byte[] data = new byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
 
@@ -262,9 +264,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 	
 			try
 			{
-				FileStream fs = null;
+				FileStream? fs = null;
 				fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
-				Byte[] data = new Byte[fs.Length];
+                byte[] data = new byte[fs.Length];
 				fs.Read(data, 0, data.Length);
 				fs.Close();
 						
@@ -292,7 +294,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             var hex = new StringBuilder(@"E'\\x", buf.Count * 2 + 3);
             foreach (byte b in buf)
             {
-                hex.Append(String.Format("{0:x2}", b));
+                hex.Append(string.Format("{0:x2}", b));
             }
             hex.Append("'");
             return hex.ToString();
@@ -303,25 +305,27 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		{
             // Insert Data first
 
-            FileStream fs_in = null;
+            FileStream? fs_in = null;
             fs_in = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
             byte[] data = new byte[fs_in.Length];
             fs_in.Read(data, 0, data.Length);
             fs_in.Close();
+#pragma warning disable CS8604 // Possible null reference argument.
             conn.ExecuteNonQuery($"INSERT INTO test_bytea_three_with_numeric (a) VALUES ({EncodeHex(data)})");
+#pragma warning restore CS8604 // Possible null reference argument.
 
             EDBCommand cmd = new EDBCommand("test_bytea_out(:imgout)",conn);
 			cmd.CommandType= CommandType.StoredProcedure;
 			cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
 			cmd.Prepare();
-			Byte[] ss = { 1, 2, 3 };
+            byte[] ss = { 1, 2, 3 };
 			cmd.Parameters[0].Value = ss;
 			EDBDataReader reader = cmd.ExecuteReader();
 			reader.Read();
 			Assert.True(reader.HasRows);
 			if (reader.HasRows) 
-			{ 
-				Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
+			{
+                byte[] image = new byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, int.MaxValue)))]; 
 				reader.GetBytes(0, 0, image, 0, image.Length);
 				Console.WriteLine("1");
 				FileStream fs = new 
@@ -496,8 +500,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 				EDBDataReader reader = cmd.ExecuteReader();
 				reader.Read(); 
 				if (reader.HasRows) 
-				{ 
-					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
+				{
+                    byte[] image = new byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, int.MaxValue)))]; 
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
@@ -505,9 +509,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
-					fs.Close(); 
-				
-					Byte[] image1 = new Byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, Int32.MaxValue)))]; 
+					fs.Close();
+
+                    byte[] image1 = new byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, int.MaxValue)))]; 
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
@@ -552,8 +556,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 				EDBDataReader reader = cmd.ExecuteReader();
 				reader.Read(); 
 				if (reader.HasRows) 
-				{ 
-					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
+				{
+                    byte[] image = new byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, int.MaxValue)))]; 
 					reader.GetBytes(0, 0, image, 0, image.Length); 
 
 					FileStream fs = new 
@@ -561,9 +565,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 				
 					for(int i=0;i<image.Length;i++) 
 						fs.WriteByte(image[i]); 
-					fs.Close(); 
-				
-					Byte[] image1 = new Byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, Int32.MaxValue)))]; 
+					fs.Close();
+
+                    byte[] image1 = new byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, int.MaxValue)))]; 
 					reader.GetBytes(1, 0, image1, 0, image1.Length); 
 
 					FileStream fs1 = new 
@@ -592,9 +596,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		public void CRUDTest()
 		{
 
-			Byte[] data = { 1, 23, 3 };
-			Byte[] data2 = { 1, 3, 4 };
-			Byte[] dataOut = new Byte[3];
+            byte[] data = { 1, 23, 3 };
+            byte[] data2 = { 1, 3, 4 };
+            byte[] dataOut = new byte[3];
 
 			EDBCommand command = new EDBCommand("INSERT INTO ByteaTest Values(1, :data)", conn);
 			command.Parameters.Add(new EDBParameter("data", EDBDbType.Bytea));
@@ -605,7 +609,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
 			// Retrieve
 			command = new EDBCommand("select f1 from ByteaTest;", conn);
-			dataOut = (Byte[])command.ExecuteScalar();
+			dataOut = (byte[])command.ExecuteScalar();
 
 			// Update
 			command = new EDBCommand("Update ByteaTest set f1 = :b where id = 1", conn);
@@ -616,7 +620,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.AreEqual(1, rowsAdded);
 
 			command = new EDBCommand("select f1 from ByteaTest;", conn);
-			dataOut = (Byte[])command.ExecuteScalar();
+			dataOut = (byte[])command.ExecuteScalar();
 
 			// Delete
 			command = new EDBCommand("Delete from ByteaTest where id = 1", conn);

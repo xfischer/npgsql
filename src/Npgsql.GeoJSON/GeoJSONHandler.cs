@@ -1,35 +1,13 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using GeoJSON.Net;
 using GeoJSON.Net.CoordinateReferenceSystem;
 using GeoJSON.Net.Geometry;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -53,7 +31,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
 
         static readonly ConcurrentDictionary<string, CrsMap> s_crsMaps = new ConcurrentDictionary<string, CrsMap>();
 
-        protected override EDBTypeHandler<GeoJSONObject> Create(EDBConnection conn)
+        public override EDBTypeHandler<GeoJSONObject> Create(PostgresType postgresType, EDBConnection conn)
         {
             var crsMap = (_options & (GeoJSONOptions.ShortCRS | GeoJSONOptions.LongCRS)) == GeoJSONOptions.None
                 ? default : s_crsMaps.GetOrAdd(conn.ConnectionString, _ =>
@@ -73,7 +51,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                          }
                      return builder.Build();
                  });
-            return new GeoJsonHandler(_options, crsMap);
+            return new GeoJsonHandler(postgresType, _options, crsMap);
         }
     }
 
@@ -87,10 +65,11 @@ namespace EnterpriseDB.EDBClient.GeoJSON
     {
         readonly GeoJSONOptions _options;
         readonly CrsMap _crsMap;
-        NamedCRS _lastCrs;
+        NamedCRS? _lastCrs;
         int _lastSrid;
 
-        internal GeoJsonHandler(GeoJSONOptions options, CrsMap crsMap)
+        internal GeoJsonHandler(PostgresType postgresType, GeoJSONOptions options, CrsMap crsMap)
+            : base(postgresType)
         {
             _options = options;
             _crsMap = crsMap;
@@ -136,41 +115,43 @@ namespace EnterpriseDB.EDBClient.GeoJSON
         static Exception UnknownPostGisType()
             => throw new InvalidOperationException("Invalid PostGIS type");
 
-        static Exception AllOrNoneCoordiantesMustHaveZ(EDBParameter parameter, string typeName)
-            => throw new ArgumentException($"The Z coordinate must be specified for all or none elements of {typeName} in the {parameter.ParameterName} parameter", parameter.ParameterName);
+        static Exception AllOrNoneCoordiantesMustHaveZ(EDBParameter? parameter, string typeName)
+            => parameter is null
+                ? new ArgumentException($"The Z coordinate must be specified for all or none elements of {typeName}")
+                : new ArgumentException($"The Z coordinate must be specified for all or none elements of {typeName} in the {parameter.ParameterName} parameter", parameter.ParameterName);
 
         #endregion
 
         #region Read
 
-        public override ValueTask<GeoJSONObject> Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        public override ValueTask<GeoJSONObject> Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
             => ReadGeometry(buf, async);
 
-        async ValueTask<Point> IEDBTypeHandler<Point>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<Point> IEDBTypeHandler<Point>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (Point)await ReadGeometry(buf, async);
 
-        async ValueTask<LineString> IEDBTypeHandler<LineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<LineString> IEDBTypeHandler<LineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (LineString)await ReadGeometry(buf, async);
 
-        async ValueTask<Polygon> IEDBTypeHandler<Polygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<Polygon> IEDBTypeHandler<Polygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (Polygon)await ReadGeometry(buf, async);
 
-        async ValueTask<MultiPoint> IEDBTypeHandler<MultiPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<MultiPoint> IEDBTypeHandler<MultiPoint>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (MultiPoint)await ReadGeometry(buf, async);
 
-        async ValueTask<MultiLineString> IEDBTypeHandler<MultiLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<MultiLineString> IEDBTypeHandler<MultiLineString>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (MultiLineString)await ReadGeometry(buf, async);
 
-        async ValueTask<MultiPolygon> IEDBTypeHandler<MultiPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<MultiPolygon> IEDBTypeHandler<MultiPolygon>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (MultiPolygon)await ReadGeometry(buf, async);
 
-        async ValueTask<GeometryCollection> IEDBTypeHandler<GeometryCollection>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<GeometryCollection> IEDBTypeHandler<GeometryCollection>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (GeometryCollection)await ReadGeometry(buf, async);
 
-        async ValueTask<IGeoJSONObject> IEDBTypeHandler<IGeoJSONObject>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<IGeoJSONObject> IEDBTypeHandler<IGeoJSONObject>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => await ReadGeometry(buf, async);
 
-        async ValueTask<IGeometryObject> IEDBTypeHandler<IGeometryObject>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription)
+        async ValueTask<IGeometryObject> IEDBTypeHandler<IGeometryObject>.Read(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription)
             => (IGeometryObject)await ReadGeometry(buf, async);
 
         async ValueTask<GeoJSONObject> ReadGeometry(EDBReadBuffer buf, bool async)
@@ -182,14 +163,14 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return geometry;
         }
 
-        async ValueTask<GeoJSONObject> ReadGeometryCore(EDBReadBuffer buf, bool async, BoundingBoxBuilder boundingBox)
+        async ValueTask<GeoJSONObject> ReadGeometryCore(EDBReadBuffer buf, bool async, BoundingBoxBuilder? boundingBox)
         {
             await buf.Ensure(SizeOfHeader, async);
             var littleEndian = buf.ReadByte() > 0;
             var type = (EwkbGeometryType)buf.ReadUInt32(littleEndian);
 
             GeoJSONObject geometry;
-            NamedCRS crs = null;
+            NamedCRS? crs = null;
 
             if (HasSrid(type))
             {
@@ -340,37 +321,20 @@ namespace EnterpriseDB.EDBClient.GeoJSON
 
         #region Write
 
-        public override int ValidateAndGetLength(GeoJSONObject value, ref EDBLengthCache lengthCache, EDBParameter parameter)
-        {
-            switch (value.Type)
+        public override int ValidateAndGetLength(GeoJSONObject value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
+            => value.Type switch
             {
-            case GeoJSONObjectType.Point:
-                return ValidateAndGetLength((Point)value, ref lengthCache, parameter);
+                GeoJSONObjectType.Point              => ValidateAndGetLength((Point)value, ref lengthCache, parameter),
+                GeoJSONObjectType.LineString         => ValidateAndGetLength((LineString)value, ref lengthCache, parameter),
+                GeoJSONObjectType.Polygon            => ValidateAndGetLength((Polygon)value, ref lengthCache, parameter),
+                GeoJSONObjectType.MultiPoint         => ValidateAndGetLength((MultiPoint)value, ref lengthCache, parameter),
+                GeoJSONObjectType.MultiLineString    => ValidateAndGetLength((MultiLineString)value, ref lengthCache, parameter),
+                GeoJSONObjectType.MultiPolygon       => ValidateAndGetLength((MultiPolygon)value, ref lengthCache, parameter),
+                GeoJSONObjectType.GeometryCollection => ValidateAndGetLength((GeometryCollection)value, ref lengthCache, parameter),
+                _                                    => throw UnknownPostGisType()
+            };
 
-            case GeoJSONObjectType.LineString:
-                return ValidateAndGetLength((LineString)value, ref lengthCache, parameter);
-
-            case GeoJSONObjectType.Polygon:
-                return ValidateAndGetLength((Polygon)value, ref lengthCache, parameter);
-
-            case GeoJSONObjectType.MultiPoint:
-                return ValidateAndGetLength((MultiPoint)value, ref lengthCache, parameter);
-
-            case GeoJSONObjectType.MultiLineString:
-                return ValidateAndGetLength((MultiLineString)value, ref lengthCache, parameter);
-
-            case GeoJSONObjectType.MultiPolygon:
-                return ValidateAndGetLength((MultiPolygon)value, ref lengthCache, parameter);
-
-            case GeoJSONObjectType.GeometryCollection:
-                return ValidateAndGetLength((GeometryCollection)value, ref lengthCache, parameter);
-
-            default:
-                throw UnknownPostGisType();
-            }
-        }
-
-        public int ValidateAndGetLength(Point value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(Point value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var length = SizeOfHeader + SizeOfPoint(HasZ(value.Coordinates));
             if (GetSrid(value.CRS) != 0)
@@ -379,7 +343,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        public int ValidateAndGetLength(LineString value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(LineString value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var coordinates = value.Coordinates;
             if (NotValid(coordinates, out var hasZ))
@@ -392,7 +356,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        public int ValidateAndGetLength(Polygon value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(Polygon value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var lines = value.Coordinates;
             var length = SizeOfHeaderWithLength + SizeOfLength * lines.Count;
@@ -431,7 +395,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return false;
         }
 
-        public int ValidateAndGetLength(MultiPoint value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(MultiPoint value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var length = SizeOfHeaderWithLength;
             if (GetSrid(value.CRS) != 0)
@@ -444,7 +408,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        public int ValidateAndGetLength(MultiLineString value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(MultiLineString value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var length = SizeOfHeaderWithLength;
             if (GetSrid(value.CRS) != 0)
@@ -457,7 +421,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        public int ValidateAndGetLength(MultiPolygon value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(MultiPolygon value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var length = SizeOfHeaderWithLength;
             if (GetSrid(value.CRS) != 0)
@@ -470,7 +434,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        public int ValidateAndGetLength(GeometryCollection value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        public int ValidateAndGetLength(GeometryCollection value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
         {
             var length = SizeOfHeaderWithLength;
             if (GetSrid(value.CRS) != 0)
@@ -483,43 +447,26 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             return length;
         }
 
-        int IEDBTypeHandler<IGeoJSONObject>.ValidateAndGetLength(IGeoJSONObject value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        int IEDBTypeHandler<IGeoJSONObject>.ValidateAndGetLength(IGeoJSONObject value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((GeoJSONObject)value, ref lengthCache, parameter);
 
-        int IEDBTypeHandler<IGeometryObject>.ValidateAndGetLength(IGeometryObject value, ref EDBLengthCache lengthCache, EDBParameter parameter)
+        int IEDBTypeHandler<IGeometryObject>.ValidateAndGetLength(IGeometryObject value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength((GeoJSONObject)value, ref lengthCache, parameter);
 
-        public override Task Write(GeoJSONObject value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
-        {
-            switch (value.Type)
+        public override Task Write(GeoJSONObject value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
+            => value.Type switch
             {
-            case GeoJSONObjectType.Point:
-                return Write((Point)value, buf, lengthCache, parameter, async);
+                GeoJSONObjectType.Point              => Write((Point)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.LineString         => Write((LineString)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.Polygon            => Write((Polygon)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.MultiPoint         => Write((MultiPoint)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.MultiLineString    => Write((MultiLineString)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.MultiPolygon       => Write((MultiPolygon)value, buf, lengthCache, parameter, async),
+                GeoJSONObjectType.GeometryCollection => Write((GeometryCollection)value, buf, lengthCache, parameter, async),
+                _                                    => throw UnknownPostGisType()
+            };
 
-            case GeoJSONObjectType.LineString:
-                return Write((LineString)value, buf, lengthCache, parameter, async);
-
-            case GeoJSONObjectType.Polygon:
-                return Write((Polygon)value, buf, lengthCache, parameter, async);
-
-            case GeoJSONObjectType.MultiPoint:
-                return Write((MultiPoint)value, buf, lengthCache, parameter, async);
-
-            case GeoJSONObjectType.MultiLineString:
-                return Write((MultiLineString)value, buf, lengthCache, parameter, async);
-
-            case GeoJSONObjectType.MultiPolygon:
-                return Write((MultiPolygon)value, buf, lengthCache, parameter, async);
-
-            case GeoJSONObjectType.GeometryCollection:
-                return Write((GeometryCollection)value, buf, lengthCache, parameter, async);
-
-            default:
-                throw UnknownPostGisType();
-            }
-        }
-
-        public async Task Write(Point value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(Point value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.Point;
             var size = SizeOfHeader;
@@ -542,7 +489,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             await WritePosition(value.Coordinates, buf, async);
         }
 
-        public async Task Write(LineString value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(LineString value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.LineString;
             var size = SizeOfHeader;
@@ -569,7 +516,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                 await WritePosition(coordinates[i], buf, async);
         }
 
-        public async Task Write(Polygon value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(Polygon value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.Polygon;
             var size = SizeOfHeader;
@@ -603,7 +550,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
             }
         }
 
-        public async Task Write(MultiPoint value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(MultiPoint value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.MultiPoint;
             var size = SizeOfHeader;
@@ -630,7 +577,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                 await Write(coordinates[i], buf, lengthCache, parameter, async);
         }
 
-        public async Task Write(MultiLineString value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(MultiLineString value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.MultiLineString;
             var size = SizeOfHeader;
@@ -657,7 +604,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                 await Write(coordinates[i], buf, lengthCache, parameter, async);
         }
 
-        public async Task Write(MultiPolygon value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(MultiPolygon value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.MultiPolygon;
             var size = SizeOfHeader;
@@ -683,7 +630,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                 await Write(coordinates[i], buf, lengthCache, parameter, async);
         }
 
-        public async Task Write(GeometryCollection value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        public async Task Write(GeometryCollection value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
         {
             var type = EwkbGeometryType.GeometryCollection;
             var size = SizeOfHeader;
@@ -710,10 +657,10 @@ namespace EnterpriseDB.EDBClient.GeoJSON
                 await Write((GeoJSONObject)geometries[i], buf, lengthCache, parameter, async);
         }
 
-        Task IEDBTypeHandler<IGeoJSONObject>.Write(IGeoJSONObject value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        Task IEDBTypeHandler<IGeoJSONObject>.Write(IGeoJSONObject value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((GeoJSONObject)value, buf, lengthCache, parameter, async);
 
-        Task IEDBTypeHandler<IGeometryObject>.Write(IGeometryObject value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async)
+        Task IEDBTypeHandler<IGeometryObject>.Write(IGeometryObject value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async)
             => Write((GeoJSONObject)value, buf, lengthCache, parameter, async);
 
         static async Task WritePosition(IPosition coordinate, EDBWriteBuffer buf, bool async)
@@ -731,7 +678,7 @@ namespace EnterpriseDB.EDBClient.GeoJSON
 
         #region Crs
 
-        NamedCRS GetCrs(int srid)
+        NamedCRS? GetCrs(int srid)
         {
             var crsType = CrsType;
             if (crsType == GeoJSONOptions.None)

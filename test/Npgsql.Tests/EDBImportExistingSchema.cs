@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests
 	public class EDBImportExistingSchema : TestBase
     {
 		
-		EDBConnection con=null;
+		EDBConnection? con=null;
 
 		[SetUp]
 		public void Init()

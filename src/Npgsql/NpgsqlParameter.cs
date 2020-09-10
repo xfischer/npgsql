@@ -1,40 +1,16 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using JetBrains.Annotations;
-using EnterpriseDB.EDBClient.PostgresTypes;
-using EnterpriseDB.EDBClient.TypeHandling;
-using EnterpriseDB.EDBClient.TypeMapping;
-using EDBTypes;
 using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
+using EnterpriseDB.EDBClient.Util;
+using EDBTypes;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     ///<summary>
     /// This class represents a parameter to a command that will be sent to server
     ///</summary>
@@ -47,17 +23,13 @@ namespace EnterpriseDB.EDBClient
         int _size;
 
         // ReSharper disable InconsistentNaming
-        // TODO: Switch to private protected once mono's msbuild/csc supports C# 7.2
-        internal EDBDbType? _EDBDbType;
-        internal DbType? _dbType;
-        [CanBeNull]
-        internal string _dataTypeName;
+        private protected EDBDbType? _EDBDbType;
+        private protected string? _dataTypeName;
         // ReSharper restore InconsistentNaming
-        [CanBeNull]
-        Type _specificType;
+
+        DbType? _cachedDbType;
         string _name = string.Empty;
-        [CanBeNull]
-        object _value;
+        object? _value;
 
         internal string TrimmedName { get; private set; } = string.Empty;
 
@@ -65,15 +37,13 @@ namespace EnterpriseDB.EDBClient
         /// Can be used to communicate a value from the validation phase to the writing phase.
         /// To be used by type handlers only.
         /// </summary>
-        public object ConvertedValue { get; set; }
+        public object? ConvertedValue { get; set; }
 
-        [CanBeNull]
-        internal EDBLengthCache LengthCache { get; set; }
+        internal EDBLengthCache? LengthCache { get; set; }
 
-        [CanBeNull]
-        internal EDBTypeHandler Handler { get; set; }
+        internal EDBTypeHandler? Handler { get; set; }
 
-        internal FormatCode FormatCode { get; set; }
+        internal FormatCode FormatCode { get; private set; }
 
         #endregion
 
@@ -89,6 +59,7 @@ namespace EnterpriseDB.EDBClient
             SourceVersion = DataRowVersion.Current;
         }
 
+#nullable disable
         /// <summary>
         /// Initializes a new instance of the <see cref="EDBParameter">EDBParameter</see>
         /// class with the parameter name and a value of the new <b>EDBParameter</b>.
@@ -253,7 +224,7 @@ namespace EnterpriseDB.EDBClient
             Value = value;
             DbType = parameterType;
         }
-
+#nullable restore
         #endregion
 
         #region Name
@@ -264,21 +235,18 @@ namespace EnterpriseDB.EDBClient
         /// <value>The name of the <see cref="EDBParameter">EDBParameter</see>.
         /// The default is an empty string.</value>
         [DefaultValue("")]
+#nullable disable
         public sealed override string ParameterName
+#nullable restore
         {
             get => _name;
             set
             {
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (value == null)
-                {
                     _name = TrimmedName = string.Empty;
-                }
                 else if (value.Length > 0 && (value[0] == ':' || value[0] == '@'))
-                {
-                    TrimmedName = value.Substring(1);
-                    _name = value;
-                }
+                    TrimmedName = (_name = value).Substring(1);
                 else
                     _name = TrimmedName = value;
 
@@ -292,8 +260,9 @@ namespace EnterpriseDB.EDBClient
 
         /// <inheritdoc />
         [TypeConverter(typeof(StringConverter)), Category("Data")]
-        [CanBeNull]
+#nullable disable
         public override object Value
+#nullable restore
         {
             get => _value;
             set
@@ -312,8 +281,9 @@ namespace EnterpriseDB.EDBClient
         /// The default value is null.</value>
         [Category("Data")]
         [TypeConverter(typeof(StringConverter))]
-        [CanBeNull]
+#nullable disable
         public object EDBValue
+#nullable restore
         {
             get => Value;
             set => Value = value;
@@ -333,13 +303,12 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                if (_dbType.HasValue) {
-                    return _dbType.Value;
-                }
-
-                if (_value != null) {   // Infer from value
+                if (_cachedDbType.HasValue)
+                    return _cachedDbType.Value;
+                if (_EDBDbType.HasValue)
+                    return _cachedDbType ??= GlobalTypeMapper.Instance.ToDbType(_EDBDbType.Value);
+                if (_value != null)   // Infer from value but don't cache
                     return GlobalTypeMapper.Instance.ToDbType(_value.GetType());
-                }
 
                 return DbType.Object;
             }
@@ -348,12 +317,12 @@ namespace EnterpriseDB.EDBClient
                 Handler = null;
                 if (value == DbType.Object)
                 {
-                    _dbType = null;
+                    _cachedDbType = null;
                     _EDBDbType = null;
                 }
                 else
                 {
-                    _dbType = value;
+                    _cachedDbType = value;
                     _EDBDbType = GlobalTypeMapper.Instance.ToEDBDbType(value);
                 }
             }
@@ -385,21 +354,22 @@ namespace EnterpriseDB.EDBClient
 
                 Handler = null;
                 _EDBDbType = value;
-                _dbType = GlobalTypeMapper.Instance.ToDbType(value);
+                _cachedDbType = null;
             }
         }
 
         /// <summary>
         /// Used to specify which PostgreSQL type will be sent to the database for this parameter.
         /// </summary>
-        [PublicAPI, CanBeNull]
-        public string DataTypeName
+        [PublicAPI]
+        public string? DataTypeName
         {
             get
             {
                 if (_dataTypeName != null)
                     return _dataTypeName;
-                throw new NotImplementedException("Infer from others");
+                else
+                    return null;
             }
             set
             {
@@ -479,7 +449,7 @@ namespace EnterpriseDB.EDBClient
         /// <inheritdoc />
         [DefaultValue("")]
         [Category("Data")]
-        public sealed override string SourceColumn { get; set; }
+        public sealed override string? SourceColumn { get; set; }
 
         /// <inheritdoc />
         [Category("Data"), DefaultValue(DataRowVersion.Current)]
@@ -492,8 +462,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// The collection to which this parameter belongs, if any.
         /// </summary>
-        [CanBeNull]
-        public EDBParameterCollection Collection { get; set; }
+        public EDBParameterCollection? Collection { get; set; }
 #pragma warning restore CA2227
 
         /// <summary>
@@ -502,17 +471,11 @@ namespace EnterpriseDB.EDBClient
         /// <see cref="EDBCommandBuilder.DeriveParameters"/> and can be used to
         /// acquire additional information about the parameters' data type.
         /// </summary>
-        public PostgresType PostgresType { get; internal set; }
+        public PostgresType? PostgresType { get; internal set; }
 
         #endregion Other Properties
 
         #region Internals
-
-        /// <summary>
-        /// Returns whether this parameter has had its type set explicitly via DbType or EDBDbType
-        /// (and not via type inference)
-        /// </summary>
-        internal bool IsTypeExplicitlySet => _EDBDbType.HasValue || _dbType.HasValue;
 
         internal virtual void ResolveHandler(ConnectorTypeMapper typeMapper)
         {
@@ -523,8 +486,6 @@ namespace EnterpriseDB.EDBClient
                 Handler = typeMapper.GetByEDBDbType(_EDBDbType.Value);
             else if (_dataTypeName != null)
                 Handler = typeMapper.GetByDataTypeName(_dataTypeName);
-            else if (_dbType.HasValue)
-                Handler = typeMapper.GetByDbType(_dbType.Value);
             else if (_value != null)
                 Handler = typeMapper.GetByClrType(_value.GetType());
             else
@@ -534,40 +495,35 @@ namespace EnterpriseDB.EDBClient
         internal void Bind(ConnectorTypeMapper typeMapper)
         {
             ResolveHandler(typeMapper);
-            Debug.Assert(Handler != null);
-            FormatCode = Handler.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
+            FormatCode = Handler!.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
         }
 
         internal virtual int ValidateAndGetLength()
         {
-            Debug.Assert(Handler != null);
-
             if (Direction == ParameterDirection.Input)//EnterpriseDB Team
                 if (_value == null)
-                    throw new InvalidCastException($"Parameter {ParameterName} must be set");
+                throw new InvalidCastException($"Parameter {ParameterName} must be set");
             if (_value is DBNull)
                 return 0;
 
-            if (Direction == ParameterDirection.Output && Handler.PostgresType.DisplayName.Contains("cursor"))
-            {
-                _value = null;
-            }
-
-            if (Direction == ParameterDirection.InputOutput && _value == null)//EnterpriseDB Team
-            {
-                return 0;
-            }
-
             var lengthCache = LengthCache;
-            var len = Handler.ValidateObjectAndGetLength(Value, ref lengthCache, this);
+#pragma warning disable CS8604 // Possible null reference argument.
+            var len = Handler!.ValidateObjectAndGetLength(_value, ref lengthCache, this);
+#pragma warning restore CS8604 // Possible null reference argument.
             LengthCache = lengthCache;
             return len;
         }
 
         internal virtual Task WriteWithLength(EDBWriteBuffer buf, bool async)
+            => Handler!.WriteObjectWithLength(_value!, buf, LengthCache, this, async);
+
+        /// <inheritdoc />
+        public override void ResetDbType()
         {
-            Debug.Assert(Handler != null);
-            return Handler.WriteObjectWithLength(Value, buf, LengthCache, this, async);
+            _cachedDbType = null;
+            _EDBDbType = null;
+            _dataTypeName = null;
+            Handler = null;
         }
 
         ///<summary>
@@ -592,6 +548,26 @@ namespace EnterpriseDB.EDBClient
             /// </summary>
             InputOutput = 3
         }
+
+        /// <summary>
+        /// Get EDB param direction
+        /// </summary>
+
+        public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)//EnterpriseDB Team
+        {
+            switch (direction)
+            {
+                case ParameterDirection.Input:
+                    return EDBParameterDirection.Input;
+                case ParameterDirection.Output:
+                    return EDBParameterDirection.Output;
+                case ParameterDirection.InputOutput:
+                    return EDBParameterDirection.InputOutput;
+                default:
+                    return EDBParameterDirection.Unknown;
+            }
+        }
+		
 
         /// <summary>
         /// Get param OID
@@ -734,29 +710,11 @@ namespace EnterpriseDB.EDBClient
             Unknown = 0
         }
 
-        /// <summary>
-        /// Get EDB param direction
-        /// </summary>
-
-        public static EDBParameterDirection NetParamDirectionToEDBParamDirection(ParameterDirection direction)//EnterpriseDB Team
-        {
-            switch (direction)
-            {
-                case ParameterDirection.Input:
-                    return EDBParameterDirection.Input;
-                case ParameterDirection.Output:
-                    return EDBParameterDirection.Output;
-                case ParameterDirection.InputOutput:
-                    return EDBParameterDirection.InputOutput;
-                default:
-                    return EDBParameterDirection.Unknown;
-            }
-        }
-
-        /// <summary>
+      
+		/// <summary>
         /// Get param to OID
         /// </summary>
-        public static EDBParameterOID ParamToOid(String param_name)//EnterpriseDB Team
+        public static EDBParameterOID ParamToOid(string param_name)//EnterpriseDB Team
         {
             /* EDB Team
              * Function Returns OID of datatype
@@ -853,19 +811,6 @@ namespace EnterpriseDB.EDBClient
                     return EDBParameterOID.Unknown;
             }
         }
-
-        /// <summary>
-        /// Reset DBType.
-        /// </summary>
-        public override void ResetDbType()
-        {
-            _dbType = null;
-            _EDBDbType = null;
-            _dataTypeName = null;
-            Value = Value;
-            Handler = null;
-        }
-
         internal bool IsInputDirection => Direction == ParameterDirection.InputOutput || Direction == ParameterDirection.Input;
 
         internal bool IsOutputDirection => Direction == ParameterDirection.InputOutput || Direction == ParameterDirection.Output;
@@ -892,9 +837,8 @@ namespace EnterpriseDB.EDBClient
                 _precision = _precision,
                 _scale = _scale,
                 _size = _size,
-                _dbType = _dbType,
+                _cachedDbType = _cachedDbType,
                 _EDBDbType = _EDBDbType,
-                _specificType = _specificType,
                 Direction = Direction,
                 IsNullable = IsNullable,
                 _name = _name,

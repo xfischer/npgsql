@@ -1,7 +1,8 @@
-﻿using System.Data.SqlClient;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
+using Microsoft.Data.SqlClient;
+
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -12,6 +13,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
     {
         const string SqlClientConnectionString = @"Data Source=(localdb)\mssqllocaldb";
 
+#pragma warning disable CS8618
         EDBCommand _noOpenCloseCmd;
 
         readonly string _openCloseConnString = new EDBConnectionStringBuilder(BenchmarkEnvironment.ConnectionString) { ApplicationName = nameof(OpenClose) }.ToString();
@@ -32,6 +34,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
 
         EDBConnection _nonPooledConnection;
         EDBCommand _nonPooledCmd;
+#pragma warning restore CS8618
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         [Params(0, 1, 5, 10)]

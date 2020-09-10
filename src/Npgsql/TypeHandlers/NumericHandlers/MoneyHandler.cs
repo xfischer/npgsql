@@ -1,31 +1,43 @@
 ﻿using System;
 using System.Data;
 using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL money data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-money.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-money.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("money", EDBDbType.Money, dbType: DbType.Currency)]
-    class MoneyHandler : EDBSimpleTypeHandler<decimal>
+    public class MoneyHandler : EDBSimpleTypeHandler<decimal>
     {
         const int MoneyScale = 2;
 
-        public override decimal Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
-        {
-            return new DecimalRaw(buf.ReadInt64()) { Scale = MoneyScale }.Value;
-        }
+        /// <inheritdoc />
+        public MoneyHandler(PostgresType postgresType) : base(postgresType) {}
 
-        public override int ValidateAndGetLength(decimal value, EDBParameter parameter)
+        /// <inheritdoc />
+        public override decimal Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+            => new DecimalRaw(buf.ReadInt64()) { Scale = MoneyScale }.Value;
+
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(decimal value, EDBParameter? parameter)
             => value < -92233720368547758.08M || value > 92233720368547758.07M
                 ? throw new OverflowException($"The supplied value ({value}) is outside the range for a PostgreSQL money value.")
                 : 8;
 
-        public override void Write(decimal value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public override void Write(decimal value, EDBWriteBuffer buf, EDBParameter? parameter)
         {
             var raw = new DecimalRaw(value);
 
@@ -38,7 +50,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
                 raw = new DecimalRaw(value);
             }
 
-            var result = (long)raw.Mid << 32 | (long)raw.Low;
+            var result = (long)raw.Mid << 32 | raw.Low;
             if (raw.Negative) result = -result;
             buf.WriteInt64(result);
         }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
+#pragma warning disable CS8602
     /// <summary>
     /// Tests around EC-1001
     /// </summary>
@@ -13,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests
     [TestFixture]
     public class EDB_EC_1001_Tests : TestBase
     {
-        EDBConnection con = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
@@ -30,8 +31,11 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void CreateTriggerTest()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(con, "12.0.0");
+#nullable restore           
             string createTable = "CREATE TABLE CMP_TRIG_TBL (id number(4) primary key, description varchar2(200));";
-            EDBCommand cmd = new EDBCommand()
+            EDBCommand? cmd = new EDBCommand()
             {
                 CommandText = createTable,
                 CommandType = System.Data.CommandType.Text,
@@ -91,7 +95,7 @@ namespace EnterpriseDB.EDBClient.Tests
               + "END AFTER EACH ROW;\n"
               + "\n"
               + "END CMP_TRIG;";
-            EDBCommand cmd2 = new EDBCommand()
+            EDBCommand? cmd2 = new EDBCommand()
             {
                 CommandText = createTrigger,
                 CommandType = System.Data.CommandType.Text,
@@ -118,11 +122,11 @@ namespace EnterpriseDB.EDBClient.Tests
         public class TestType
         {
 
-            public string Type1;
-            public string Type2;
+            public string? Type1;
+            public string? Type2;
         }
 
-        EDBConnection con = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
@@ -134,7 +138,7 @@ namespace EnterpriseDB.EDBClient.Tests
                                  "username VARCHAR(250),\n" +
                                  "email VARCHAR(250)\n" +
                                  ");";
-            using (EDBCommand createTableCommand = new EDBCommand("", con))
+            using (EDBCommand? createTableCommand = new EDBCommand("", con))
             {
                 createTableCommand.CommandText = tableString;
                 createTableCommand.ExecuteNonQuery();
@@ -146,7 +150,7 @@ namespace EnterpriseDB.EDBClient.Tests
                                 "TYPE1   varchar2(250),\n" +
                                 "TYPE2   varchar2(250)\n" +
                                 ");";
-            using (EDBCommand createTypeCommand = new EDBCommand("", con))
+            using (EDBCommand? createTypeCommand = new EDBCommand("", con))
             {
                 createTypeCommand.CommandText = typeString;
                 createTypeCommand.ExecuteNonQuery();
@@ -175,7 +179,7 @@ namespace EnterpriseDB.EDBClient.Tests
             TestUtil.dropTable(con, "account");
 
             //Drop type.
-            using (EDBCommand dropTypeCommand = new EDBCommand("", con))
+            using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
             {
                 dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
                 dropTypeCommand.ExecuteNonQuery();
@@ -187,14 +191,14 @@ namespace EnterpriseDB.EDBClient.Tests
         private void CreateDropProcedure(string procString)
         {
             //Create Procedure
-            EDBCommand createProcCommand = new EDBCommand("", con);
+            EDBCommand? createProcCommand = new EDBCommand("", con);
             createProcCommand.CommandType = CommandType.Text;
 
             createProcCommand.CommandText = procString;
             int count = createProcCommand.ExecuteNonQuery();
         }
 
-        [Test]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void CustomTypeArrayAsInParamTest()
         {
             con.ReloadTypes();
@@ -233,7 +237,7 @@ namespace EnterpriseDB.EDBClient.Tests
     [TestFixture]
     public class EDB_EC_1134_Tests : TestBase
     {
-        EDBConnection con = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
@@ -265,7 +269,7 @@ namespace EnterpriseDB.EDBClient.Tests
             TestUtil.closeDB(con);
         }
 
-        [Test]
+        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void ExecuteReaderClobTest()
         {
             var trans = con.BeginTransaction();
@@ -292,7 +296,7 @@ namespace EnterpriseDB.EDBClient.Tests
     [TestFixture]
     public class EDB_EC_1084_Tests : TestBase
     {
-        EDBConnection con = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
@@ -386,7 +390,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 try
-                {
+                {                    
                     command.Prepare();
                     command.ExecuteNonQuery();
 
@@ -399,6 +403,9 @@ namespace EnterpriseDB.EDBClient.Tests
                     exceptionMessage = e.Message;
                 }
             }
+
+            if (con != null && con.Connector == null)
+                con = OpenConnection();
 
             if (pkgNameDelete != null)
             {
@@ -740,7 +747,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
             string pkgNameCall = "supresseserrors";
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             DoSupressTest(null, pkgBody, pkgNameCall, null, true, "P0002: query returned no rows");
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
     }
+#pragma warning restore CS8602
 }

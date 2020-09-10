@@ -1,32 +1,9 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandlers;
@@ -42,9 +19,14 @@ namespace EnterpriseDB.EDBClient.TypeHandling
     public abstract class EDBTypeHandler
     {
         /// <summary>
-        /// The PostgreSQL type handled by this type handler. Injected by <see cref="EDBTypeHandlerFactory"/>.
+        /// The PostgreSQL type handled by this type handler.
         /// </summary>
-        internal PostgresType PostgresType { get; set; }
+        internal PostgresType PostgresType { get; }
+
+        /// <summary>
+        /// Constructs a <see cref="EDBTypeHandler"/>.
+        /// </summary>
+        protected EDBTypeHandler(PostgresType postgresType) => PostgresType = postgresType;
 
         #region Read
 
@@ -57,7 +39,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="async">If I/O is required to read the full length of the value, whether it should be performed synchronously or asynchronously.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        protected internal abstract ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
+        protected internal abstract ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Reads a value of type <typeparamref name="TAny"/> with the given length from the provided buffer,
@@ -68,47 +50,50 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="len">The byte length of the value. The buffer might not contain the full length, requiring I/O to be performed.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        internal abstract TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null);
+        internal abstract TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Reads a column as the type handler's default read type, assuming that it is already entirely
-        /// in memory (i.e. no I/O is necessary). Called by <see cref="EDBDefaultDataReader"/>, which
+        /// in memory (i.e. no I/O is necessary). Called by <see cref="EDBDataReader"/> in non-sequential mode, which
         /// buffers entire rows in memory.
         /// </summary>
-        internal abstract object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null);
+        internal abstract object ReadAsObject(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Reads a column as the type handler's default read type. If it is not already entirely in
         /// memory, sync or async I/O will be performed as specified by <paramref name="async"/>.
         /// </summary>
-        internal abstract ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null);
+        internal abstract ValueTask<object> ReadAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null);
 
         /// <summary>
         /// Reads a column as the type handler's provider-specific type, assuming that it is already entirely
-        /// in memory (i.e. no I/O is necessary). Called by <see cref="EDBDefaultDataReader"/>, which
+        /// in memory (i.e. no I/O is necessary). Called by <see cref="EDBDataReader"/> in non-sequential mode, which
         /// buffers entire rows in memory.
         /// </summary>
-        internal virtual object ReadPsvAsObject(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        internal virtual object ReadPsvAsObject(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => ReadAsObject(buf, len, fieldDescription);
 
         /// <summary>
         /// Reads a column as the type handler's provider-specific type. If it is not already entirely in
         /// memory, sync or async I/O will be performed as specified by <paramref name="async"/>.
         /// </summary>
-        internal virtual ValueTask<object> ReadPsvAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription fieldDescription = null)
+        internal virtual ValueTask<object> ReadPsvAsObject(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
             => ReadAsObject(buf, len, async, fieldDescription);
 
+// The following function is used by array and range to read their elements, including their length - which means null
+// handling. Only arrays can actually get nulls here (in ranges infinite bounds are indicated via header flags).
+// We can't mix generics and nullability, hence the warning suppression - but we have an effort to support
+// nullable arrays which may take care of this.
         /// <summary>
         /// Reads a value from the buffer, assuming our read position is at the value's preceding length.
         /// If the length is -1 (null), this method will return the default value.
         /// </summary>
-        [ItemCanBeNull]
-        internal async ValueTask<TAny> ReadWithLength<TAny>(EDBReadBuffer buf, bool async, FieldDescription fieldDescription = null)
+        internal async ValueTask<TAny> ReadWithLength<TAny>(EDBReadBuffer buf, bool async, FieldDescription? fieldDescription = null)
         {
             await buf.Ensure(4, async);
             var len = buf.ReadInt32();
             if (len == -1)
-                return default(TAny);
+                return default!;
             return await Read<TAny>(buf, len, async, fieldDescription);
         }
 
@@ -119,12 +104,12 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <summary>
         /// Called to validate and get the length of a value of a generic <see cref="EDBParameter{T}"/>.
         /// </summary>
-        protected internal abstract int ValidateAndGetLength<TAny>([CanBeNull] TAny value, ref EDBLengthCache lengthCache, EDBParameter parameter);
+        protected internal abstract int ValidateAndGetLength<TAny>(TAny value, ref EDBLengthCache? lengthCache, EDBParameter? parameter);
 
         /// <summary>
         /// Called to write the value of a generic <see cref="EDBParameter{T}"/>.
         /// </summary>
-        internal abstract Task WriteWithLengthInternal<TAny>([CanBeNull] TAny value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async);
+        internal abstract Task WriteWithLengthInternal<TAny>([AllowNull] TAny value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async);
 
         /// <summary>
         /// Responsible for validating that a value represents a value of the correct and which can be
@@ -141,7 +126,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
         /// <returns>The number of bytes required to write the value.</returns>
-        protected internal abstract int ValidateObjectAndGetLength([CanBeNull] object value, ref EDBLengthCache lengthCache, EDBParameter parameter);
+        protected internal abstract int ValidateObjectAndGetLength(object value, ref EDBLengthCache? lengthCache, EDBParameter? parameter);
 
         /// <summary>
         /// Writes a value to the provided buffer, using either sync or async I/O.
@@ -154,26 +139,26 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// information relevant to the write process (e.g. <see cref="EDBParameter.Size"/>).
         /// </param>
         /// <param name="async">If I/O is required to read the full length of the value, whether it should be performed synchronously or asynchronously.</param>
-        protected internal abstract Task WriteObjectWithLength([CanBeNull] object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async);
+        protected internal abstract Task WriteObjectWithLength(object value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async);
 
         #endregion Write
 
         #region Misc
 
-        internal abstract Type GetFieldType(FieldDescription fieldDescription = null);
-        internal abstract Type GetProviderSpecificFieldType(FieldDescription fieldDescription = null);
+        internal abstract Type GetFieldType(FieldDescription? fieldDescription = null);
+        internal abstract Type GetProviderSpecificFieldType(FieldDescription? fieldDescription = null);
 
         internal virtual bool PreferTextWrite => false;
 
         /// <summary>
         /// Creates a type handler for arrays of this handler's type.
         /// </summary>
-        public abstract ArrayHandler CreateArrayHandler(PostgresType arrayBackendType);
+        public abstract ArrayHandler CreateArrayHandler(PostgresArrayType arrayBackendType);
 
         /// <summary>
         /// Creates a type handler for ranges of this handler's type.
         /// </summary>
-        public abstract RangeHandler CreateRangeHandler(PostgresType rangeBackendType);
+        public abstract RangeHandler CreateRangeHandler(PostgresRangeType rangeBackendType);
 
         /// <summary>
         /// Used to create an exception when the provided type can be converted and written, but an
@@ -189,7 +174,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
 
         #region Code generation for non-generic writing
 
-        internal delegate Task NonGenericWriteWithLength(EDBTypeHandler handler, object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async);
+        internal delegate Task NonGenericWriteWithLength(EDBTypeHandler handler, object value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async);
 
         internal static NonGenericWriteWithLength GenerateNonGenericWriteMethod(Type handlerType, Type interfaceType)
         {
@@ -198,7 +183,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
                 i.GetGenericTypeDefinition() == interfaceType
             ).Reverse().ToList();
 
-            Expression ifElseExpression = null;
+            Expression? ifElseExpression = null;
 
             // EDBTypeHandler handler, object value, EDBWriteBuffer buf, EDBLengthCache lengthCache, EDBParameter parameter, bool async
             var handlerParam = Expression.Parameter(typeof(EDBTypeHandler), "handler");

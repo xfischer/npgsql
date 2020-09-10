@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.NetTopologySuite": {
+      "commandName": "Project"
+    },
+    "EnterpriseDB.EDBClient.NetTopologySuite": {
+      "commandName": "Project"
+    }
+  }
+}

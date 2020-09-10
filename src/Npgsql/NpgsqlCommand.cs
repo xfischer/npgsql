@@ -1,26 +1,3 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -36,11 +13,12 @@ using System.Globalization;
 using System.Net.Sockets;
 using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EnterpriseDB.EDBClient.FrontendMessages;
 using EnterpriseDB.EDBClient.Logging;
+using EnterpriseDB.EDBClient.TypeMapping;
+using EnterpriseDB.EDBClient.Util;
+using static EnterpriseDB.EDBClient.Util.Statics;
 using EDBTypes;
-using static EnterpriseDB.EDBClient.Statics;
-using System.Text.RegularExpressions;//EnterpriseDB Team
+using System.Text.RegularExpressions;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -54,19 +32,16 @@ namespace EnterpriseDB.EDBClient
     {
         #region Fields
 
-        [CanBeNull]
-        EDBConnection _connection;
+        EDBConnection? _connection;
 
         /// <summary>
         /// If this command is (explicitly) prepared, references the connector on which the preparation happened.
         /// Used to detect when the connector was changed (i.e. connection open/close), meaning that the command
         /// is no longer prepared.
         /// </summary>
-        [CanBeNull]
-        EDBConnector _connectorPreparedOn;
+        EDBConnector? _connectorPreparedOn;
 
-        EDBTransaction _transaction;
-        string _commandText;
+        string? _commandText;
         int? _timeout;
         readonly EDBParameterCollection _parameters;
 
@@ -82,6 +57,8 @@ namespace EnterpriseDB.EDBClient
 
         bool IsExplicitlyPrepared => _connectorPreparedOn != null;
 
+        static readonly List<EDBParameter> EmptyParameters = new List<EDBParameter>();
+
         static readonly SingleThreadSynchronizationContext SingleThreadSynchronizationContext = new SingleThreadSynchronizationContext("EDBRemainingAsyncSendWorker");
 
         static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBCommand));
@@ -95,6 +72,8 @@ namespace EnterpriseDB.EDBClient
         #endregion
 
         #region Constructors
+
+#nullable disable
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EDBCommand">EDBCommand</see> class.
@@ -122,13 +101,13 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="EDBConnection">EDBConnection</see> that represents the connection to a PostgreSQL server.</param>
         /// <param name="transaction">The <see cref="EDBTransaction">EDBTransaction</see> in which the <see cref="EDBCommand">EDBCommand</see> executes.</param>
-        public EDBCommand(string cmdText, [CanBeNull] EDBConnection connection, [CanBeNull] EDBTransaction transaction)
+        public EDBCommand(string cmdText, EDBConnection connection, EDBTransaction transaction)
         {
             GC.SuppressFinalize(this);
             _statements = new List<EDBStatement>(1);
             _parameters = new EDBParameterCollection();
             _commandText = cmdText;
-            Connection = connection;
+            _connection = connection;
             Transaction = transaction;
             CommandType = CommandType.Text;
         }
@@ -151,11 +130,16 @@ namespace EnterpriseDB.EDBClient
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
 
-                _commandText = value;
+                _commandText = State == CommandState.Idle
+                    ? value
+                    : throw new InvalidOperationException("An open data reader exists for this command.");
+
                 ResetExplicitPreparation();
                 // TODO: Technically should do this also if the parameter list (or type) changes
             }
         }
+
+#nullable restore
 
         /// <summary>
         /// Gets or sets the wait time before terminating the attempt  to execute a command and generating an error.
@@ -187,10 +171,10 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// DB connection.
         /// </summary>
-        protected override DbConnection DbConnection
+        protected override DbConnection? DbConnection
         {
-            get => Connection;
-            set => Connection = (EDBConnection)value;
+            get => _connection;
+            set => _connection = (EDBConnection?)value;
         }
 
         /// <summary>
@@ -200,28 +184,18 @@ namespace EnterpriseDB.EDBClient
         /// <value>The connection to a data source. The default value is a null reference.</value>
         [DefaultValue(null)]
         [Category("Behavior")]
-        [CanBeNull]
-        public new EDBConnection Connection
+        public new EDBConnection? Connection
         {
             get => _connection;
             set
             {
                 if (_connection == value)
-                {
                     return;
-                }
 
-                //if (this._transaction != null && this._transaction.Connection == null)
-                //  this._transaction = null;
+                _connection = State == CommandState.Idle
+                    ? value
+                    : throw new InvalidOperationException("An open data reader exists for this command.");
 
-                // All this checking needs revising. It should be simpler.
-                // This this.Connector != null check was added to remove the nullreferenceexception in case
-                // of the previous connection has been closed which makes Connector null and so the last check would fail.
-                // See bug 1000581 for more details.
-                if (_transaction != null && _connection != null && _connection.Connector != null && _connection.Connector.InTransaction)
-                    throw new InvalidOperationException("The Connection property can't be changed with an uncommited transaction.");
-
-                _connection = value;
                 Transaction = null;
             }
         }
@@ -239,7 +213,7 @@ namespace EnterpriseDB.EDBClient
         [Category("Behavior"), DefaultValue(UpdateRowSource.Both)]
         public override UpdateRowSource UpdatedRowSource
         {
-            get { return _updateRowSource; }
+            get => _updateRowSource;
             set
             {
                 switch (value)
@@ -261,7 +235,7 @@ namespace EnterpriseDB.EDBClient
         /// Returns whether this query will execute as a prepared (compiled) query.
         /// </summary>
         public bool IsPrepared =>
-            _connectorPreparedOn == Connection?.Connector &&
+            _connectorPreparedOn == _connection?.Connector &&
             _statements.Any() && _statements.All(s => s.PreparedStatement?.IsPrepared == true);
 
         #endregion Public properties
@@ -298,7 +272,7 @@ namespace EnterpriseDB.EDBClient
         /// The array size must correspond exactly to the number of result columns the query returns, or an
         /// error will be raised.
         /// </remarks>
-        public bool[] UnknownResultTypeList
+        public bool[]? UnknownResultTypeList
         {
             get => _unknownResultTypeList;
             set
@@ -309,7 +283,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        bool[] _unknownResultTypeList;
+        bool[]? _unknownResultTypeList;
 
         #endregion
 
@@ -321,7 +295,7 @@ namespace EnterpriseDB.EDBClient
         /// Only primitive numerical types and DateTimeOffset are supported.
         /// Set the whole array or just a value to null to use default type.
         /// </summary>
-        public Type[] ObjectResultTypes { get; set; }//EnterpriseDB Team
+        internal Type[]? ObjectResultTypes { get; set; }
 
         #endregion
 
@@ -407,10 +381,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         internal void DeriveParameters()
         {
-            if (Statements.Where(s => s?.PreparedStatement.IsExplicit == true).Any())
+            if (Statements.Any(s => s.PreparedStatement?.IsExplicit == true))
                 throw new EDBException("Deriving parameters isn't supported for commands that are already prepared.");
 
-            // Here we unprepare statements that possibly are autoprepared
+            // Here we unprepare statements that possibly are auto-prepared
             Unprepare();
 
             Parameters.Clear();
@@ -423,110 +397,69 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         void DeriveParametersForFunction()
         {
-            using (var c = new EDBCommand(DeriveParametersForFunctionQuery, Connection))
+            using var c = new EDBCommand(DeriveParametersForFunctionQuery, _connection);
+            c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
+            c.Parameters[0].Value = CommandText;
+
+            string[]? names = null;
+            uint[]? types = null;
+            char[]? modes = null;
+
+            using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
             {
-                c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
-                c.Parameters[0].Value = CommandText;
-
-                string[] names = null;
-                uint[] types = null;
-                char[] modes = null;
-                var hasParams = false;//EnterpriseDB Team
-                string paramNames = null;//EnterpriseDB Team
-
-                using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
+                if (rdr.Read())
                 {
-                    if (rdr.Read())
+                    if (!rdr.IsDBNull(0))
+                        names = rdr.GetValue(0) as string[];
+                    if (!rdr.IsDBNull(2))
+                        types = rdr.GetValue(2) as uint[];
+                    if (!rdr.IsDBNull(3))
+                        modes = rdr.GetValue(3) as char[];
+                    if (types == null)
                     {
-                        if (!rdr.IsDBNull(0))
-                            names = rdr.GetValue(0) as string[];
-                        if (!rdr.IsDBNull(2))
-                            types = rdr.GetValue(2) as uint[];
-                        if (!rdr.IsDBNull(3))
-                            modes = rdr.GetValue(3) as char[];
-                        if (types == null)
-                        {
-                            if (rdr.IsDBNull(1) || rdr.GetFieldValue<uint[]>(1).Length == 0)
-                                return;  // Parameterless function
-                            types = rdr.GetFieldValue<uint[]>(1);
-                        }
+                        if (rdr.IsDBNull(1) || rdr.GetFieldValue<uint[]>(1).Length == 0)
+                            return;  // Parameter-less function
+                        types = rdr.GetFieldValue<uint[]>(1);
                     }
-                    else
-                        throw new InvalidOperationException($"{CommandText} does not exist in pg_proc");
+                }
+                else
+                    throw new InvalidOperationException($"{CommandText} does not exist in pg_proc");
+            }
+
+            var typeMapper = c._connection!.Connector!.TypeMapper;
+
+            for (var i = 0; i < types.Length; i++)
+            {
+                var param = new EDBParameter();
+
+                var (EDBDbType, postgresType) = typeMapper.GetTypeInfoByOid(types[i]);
+
+                param.DataTypeName = postgresType.DisplayName;
+                param.PostgresType = postgresType;
+                if (EDBDbType.HasValue)
+                    param.EDBDbType = EDBDbType.Value;
+
+                if (names != null && i < names.Length)
+                    param.ParameterName = names[i];
+                else
+                    param.ParameterName = "parameter" + (i + 1);
+
+                if (modes == null) // All params are IN, or server < 8.1.0 (and only IN is supported)
+                    param.Direction = ParameterDirection.Input;
+                else
+                {
+                    param.Direction = modes[i] switch
+                    {
+                        'i' => ParameterDirection.Input,
+                        'o' => ParameterDirection.Output,
+                        't' => ParameterDirection.Output,
+                        'b' => ParameterDirection.InputOutput,
+                        'v' => throw new NotSupportedException("Cannot derive function parameter of type VARIADIC"),
+                        _ => throw new ArgumentOutOfRangeException("Unknown code in proargmodes while deriving: " + modes[i])
+                    };
                 }
 
-                for (var i = 0; i < types.Length; i++)
-                {
-                    var param = new EDBParameter();
-                    hasParams = true;//EnterpriseDB Team
-
-                    (var EDBDbType, var postgresType) =
-                        c.Connection.Connector.TypeMapper.GetTypeInfoByOid(types[i]);
-
-                    param.DataTypeName = postgresType.DisplayName;
-                    param.PostgresType = postgresType;
-                    if (EDBDbType.HasValue)
-                        param.EDBDbType = EDBDbType.Value;
-
-                    if (names != null && i < names.Length)
-                        if (names[i].Equals(""))
-                        {
-                            param.ParameterName = "parameter" + (i + 1);
-                        }
-                        else
-                        {
-                            param.ParameterName = names[i];
-                        }
-
-                    else
-                        param.ParameterName = "parameter" + (i + 1);
-
-                    if (modes == null) // All params are IN, or server < 8.1.0 (and only IN is supported)
-                        param.Direction = ParameterDirection.Input;
-                    else
-                    {
-                        switch (modes[i])
-                        {
-                            case 'i':
-                                param.Direction = ParameterDirection.Input;
-                                break;
-                            case 'o':
-                            case 't':
-                                param.Direction = ParameterDirection.Output;
-                                break;
-                            case 'b':
-                                param.Direction = ParameterDirection.InputOutput;
-                                break;
-                            case 'v':
-                                throw new NotImplementedException("Cannot derive function parameter of type VARIADIC");
-                            default:
-                                throw new ArgumentOutOfRangeException("proargmode", modes[i],
-                                    "Unknown code in proargmodes while deriving: " + modes[i]);
-                        }
-                    }
-                    paramNames = paramNames + ":" + param.ParameterName + ", ";//EnterpriseDB Team
-                    if (postgresType is PostgresTypes.PostgresDomainType)
-                    {
-                        var obj = postgresType as PostgresTypes.PostgresDomainType;
-                        param.PostgresType = obj.BaseType;
-                        param.DataTypeName = obj.BaseType.DisplayName;
-                    }
-                    if(postgresType is PostgresTypes.PostgresCompositeType)
-                    {
-                        var obj = postgresType as PostgresTypes.PostgresCompositeType;
-                        param.FormatCode = FormatCode.Text;
-
-                    }
-                    Parameters.Add(param);
-                }
-                if (hasParams && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
-                {
-                    if (paramNames.Trim().EndsWith(","))
-                    {
-                        paramNames = paramNames.Substring(0, paramNames.LastIndexOf(","));
-                    }
-                    CommandText = CommandText + "(" + paramNames + ")";
-                }
+                Parameters.Add(param);
             }
         }
 
@@ -538,7 +471,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 Log.Debug($"Deriving Parameters for query: {CommandText}", connector.Id);
                 ProcessRawQuery(true);
 
-                var sendTask = SendDeriveParameters(false);
+                var sendTask = SendDeriveParameters(connector, false);
 
                 foreach (var statement in _statements)
                 {
@@ -559,15 +492,15 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             var param = statement.InputParameters[i];
                             var paramOid = paramTypeOIDs[i];
 
-                            (var eDBDbType, var postgresType) = connector.TypeMapper.GetTypeInfoByOid(paramOid);
+                            var (edbDbType, postgresType) = connector.TypeMapper.GetTypeInfoByOid(paramOid);
 
-                            if (param.EDBDbType != EDBDbType.Unknown && param.EDBDbType != eDBDbType)
+                            if (param.EDBDbType != EDBDbType.Unknown && param.EDBDbType != edbDbType)
                                 throw new EDBException("The backend parser inferred different types for parameters with the same name. Please try explicit casting within your SQL statement or batch or use different placeholder names.");
 
                             param.DataTypeName = postgresType.DisplayName;
                             param.PostgresType = postgresType;
-                            if (eDBDbType.HasValue)
-                                param.EDBDbType = eDBDbType.Value;
+                            if (edbDbType.HasValue)
+                                param.EDBDbType = edbDbType.Value;
                         }
                         catch
                         {
@@ -607,20 +540,24 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// Creates a server-side prepared statement on the PostgreSQL server.
         /// This will make repeated future executions of this command much faster.
         /// </summary>
-        public Task PrepareAsync() => PrepareAsync(CancellationToken.None);
+        /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
+#if !NET461 && !NETSTANDARD2_0
+        public override Task PrepareAsync(CancellationToken cancellationToken = default)
+#else
+        public Task PrepareAsync(CancellationToken cancellationToken = default)
+#endif
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled(cancellationToken);
+            using (NoSynchronizationContextScope.Enter())
+                return Prepare(true);
+        }
 
         /// <summary>
         /// Creates a server-side prepared statement on the PostgreSQL server.
         /// This will make repeated future executions of this command much faster.
         /// </summary>
-#pragma warning disable CA1801 // Review unused parameters
-        public Task PrepareAsync(CancellationToken cancellationToken)
-#pragma warning restore CA1801 // Review unused parameters
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-                return Prepare(true);
-        }
+        public Task PrepareAsync() => PrepareAsync(CancellationToken.None);
 
         Task Prepare(bool async)
         {
@@ -656,51 +593,54 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
             _connectorPreparedOn = connector;
 
-            // It's possible the command was already prepared, or that presistent prepared statements were found for
+            // It's possible the command was already prepared, or that persistent prepared statements were found for
             // all statements. Nothing to do here, move along.
             return needToPrepare
                 ? PrepareLong()
-                : PGUtil.CompletedTask;
+                : Task.CompletedTask;
 
             async Task PrepareLong()
             {
                 using (connector.StartUserAction())
                 {
-                    var sendTask = SendPrepare(async);
+                    var sendTask = SendPrepare(connector, async);
 
                     // Loop over statements, skipping those that are already prepared (because they were persisted)
                     var isFirst = true;
-                    foreach (var statement in _statements.Where(s =>
-                        s.PreparedStatement?.State == PreparedState.BeingPrepared))
+                    foreach (var statement in _statements)
                     {
-                        var pStatement = statement.PreparedStatement;
-                        Debug.Assert(pStatement != null);
-                        Debug.Assert(pStatement.Description == null);
-                        if (pStatement.StatementBeingReplaced != null)
+                        if (statement.PreparedStatement?.State == PreparedState.BeingPrepared)
                         {
-                            Expect<CloseCompletedMessage>(await connector.ReadMessage(async), connector);
-                            pStatement.StatementBeingReplaced.CompleteUnprepare();
-                            pStatement.StatementBeingReplaced = null;
-                        }
+                            var pStatement = statement.PreparedStatement;
+                            if (pStatement.StatementBeingReplaced != null)
+                            {
+                                Expect<CloseCompletedMessage>(await connector.ReadMessage(async), connector);
+                                pStatement.StatementBeingReplaced.CompleteUnprepare();
+                                pStatement.StatementBeingReplaced = null;
+                            }
 
-                        Expect<ParseCompleteMessage>(await connector.ReadMessage(async), connector);
-                        Expect<ParameterDescriptionMessage>(await connector.ReadMessage(async), connector);
-                        var msg = await connector.ReadMessage(async);
-                        switch (msg.Code)
-                        {
-                        case BackendMessageCode.RowDescription:
-                            var description = (RowDescriptionMessage)msg;
-                            FixupRowDescription(description, isFirst);
-                            statement.Description = description;
-                            break;
-                        case BackendMessageCode.NoData:
-                            statement.Description = null;
-                            break;
-                        default:
-                            throw connector.UnexpectedMessageReceived(msg.Code);
+                            Expect<ParseCompleteMessage>(await connector.ReadMessage(async), connector);
+                            Expect<ParameterDescriptionMessage>(await connector.ReadMessage(async), connector);
+                            var msg = await connector.ReadMessage(async);
+                            switch (msg.Code)
+                            {
+                            case BackendMessageCode.RowDescription:
+                                // Clone the RowDescription for use with the prepared statement (the one we have is reused
+                                // by the connection)
+                                var description = ((RowDescriptionMessage)msg).Clone();
+                                FixupRowDescription(description, isFirst);
+                                statement.Description = description;
+                                break;
+                            case BackendMessageCode.NoData:
+                                statement.Description = null;
+                                break;
+                            default:
+                                throw connector.UnexpectedMessageReceived(msg.Code);
+                            }
+
+                            pStatement.CompletePrepare();
+                            isFirst = false;
                         }
-                        pStatement.CompletePrepare();
-                        isFirst = false;
                     }
 
                     Expect<ReadyForQueryMessage>(await connector.ReadMessage(async), connector);
@@ -727,14 +667,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             Log.Debug("Closing command's prepared statements", connector.Id);
             using (connector.StartUserAction())
             {
-                var sendTask = SendClose(false);
-                foreach (var statement in _statements.Where(s => s.PreparedStatement?.State == PreparedState.BeingUnprepared))
-                {
-                    Expect<CloseCompletedMessage>(connector.ReadMessage(), connector);
-                    Debug.Assert(statement.PreparedStatement != null);
-                    statement.PreparedStatement.CompleteUnprepare();
-                    statement.PreparedStatement = null;
-                }
+                var sendTask = SendClose(connector, false);
+                foreach (var statement in _statements)
+                    if (statement.PreparedStatement?.State == PreparedState.BeingUnprepared)
+                    {
+                        Expect<CloseCompletedMessage>(connector.ReadMessage(), connector);
+                        statement.PreparedStatement.CompleteUnprepare();
+                        statement.PreparedStatement = null;
+                    }
                 Expect<ReadyForQueryMessage>(connector.ReadMessage(), connector);
                 sendTask.GetAwaiter().GetResult();
             }
@@ -745,25 +685,33 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         #region Query analysis
 
         /* EnterpriseDB Team */
+#pragma warning disable IDE0049 // Simplify Names
         private static String ReplaceParameterValue(String result, String parameterName, String paramVal)
+#pragma warning restore IDE0049 // Simplify Names
+#nullable enable
         {
-            String quote_pattern = @"['][^']*[']";
-            string parameterMarker = string.Empty;
+            var quote_pattern = @"['][^']*[']";
+            var parameterMarker = string.Empty;
             // search parameter marker since it is not part of the name
-            String pattern = "[- |\n\r\t,)(;=+/<>][:|@]" + parameterMarker + parameterName + "([- |\n\r\t,)(;=+/<>]|$)";
-            Int32 start, end;
-            String withoutquote = result;
+            var pattern = "[- |\n\r\t,)(;=+/<>][:|@]" + parameterMarker + parameterName + "([- |\n\r\t,)(;=+/<>]|$)";
+            int start, end;
+            var withoutquote = result;
             Boolean found = false;
             // First of all
             // Suppress quoted string from query (because we ave to ignore them)
             MatchCollection results = Regex.Matches(result, quote_pattern);
-            foreach (Match match in results)
-            {
-                start = match.Index;
-                end = match.Index + match.Length;
-                String spaces = new String(' ', match.Length - 2);
-                withoutquote = withoutquote.Substring(0, start + 1) + spaces + withoutquote.Substring(end - 1);
-            }
+            //TODO:ZK
+          //  foreach (Match match in results)
+           //foreach (object o in results)
+           // {
+
+           //     Match match = (Match)o;
+
+           //     start = match!.Index;
+           //     end = match!.Index + match!.Length;
+           //     var spaces = new string(' ', match!.Length - 2);
+           //     withoutquote = withoutquote.Substring(0, start + 1) + spaces + withoutquote.Substring(end - 1);
+           // }
             do
             {
                 // Now we look for the searched parameters on the "withoutquote" string
@@ -802,10 +750,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             EDBStatement statement;
             switch (CommandType) {
             case CommandType.Text:
-                Debug.Assert(_connection?.Connector != null);
-                var connector = _connection.Connector;
-                connector.SqlParser.ParseRawQuery(CommandText, connector.UseConformantStrings, _parameters, _statements, deriveParameters);
-                if (_statements.Count > 1 && _parameters.HasOutputParameters)
+                    var connector = _connection?.Connector;
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                    _connection!.Connector!.SqlParser.ParseRawQuery(CommandText, connector.UseConformantStrings, _parameters, _statements, deriveParameters);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                    if (_statements.Count > 1 && _parameters.HasOutputParameters)
                     throw new NotSupportedException("Commands with multiple queries cannot have out parameters");
                 break;
 
@@ -823,7 +773,43 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 break;
 
             case CommandType.StoredProcedure:
-                    var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
+               /* var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
+                var numInput = inputList.Count;
+                var sb = new StringBuilder();
+                sb.Append("SELECT * FROM ");
+                sb.Append(CommandText);
+                sb.Append('(');
+                var hasWrittenFirst = false;
+                for (var i = 1; i <= numInput; i++) {
+                    var param = inputList[i - 1];
+                    if (param.TrimmedName == "")
+                    {
+                        if (hasWrittenFirst)
+                            sb.Append(',');
+                        sb.Append('$');
+                        sb.Append(i);
+                        hasWrittenFirst = true;
+                    }
+                }
+                for (var i = 1; i <= numInput; i++)
+                {
+                    var param = inputList[i - 1];
+                    if (param.TrimmedName != "")
+                    {
+                        if (hasWrittenFirst)
+                            sb.Append(',');
+                        sb.Append('"');
+                        sb.Append(param.TrimmedName.Replace("\"", "\"\""));
+                        sb.Append("\" := ");
+                        sb.Append('$');
+                        sb.Append(i);
+                        hasWrittenFirst = true;
+                    }
+                }
+                sb.Append(')');
+				*/
+
+var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
                     var numInput = _parameters.Count(p => p.IsInputDirection);//EnterpriseDB Team
                     var sb = new StringBuilder();
                     string parameterName;
@@ -858,79 +844,19 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     parseCommand = "CALL " + parseCommand; // This syntax i s only available in 7.3+ as well SupportsPrepare.
                     sb.Append(parseCommand);
-
-                    if (_statements.Count == 0)
-                        statement = new EDBStatement();
-                    else
-                    {
-                        statement = _statements[0];
-                        statement.Reset();
-                        _statements.Clear();
-                    }
-
-                    statement.SQL = sb.ToString();
-                    statement.InputParameters.AddRange(inputList);
-                    _statements.Add(statement);
-
-
-
-
-
-
-
-
-
-
-
-
-                    ////   var inputList = _parameters.Where(p => p.IsInputDirection).ToList();
-                    ////   var numInput = inputList.Count;
-                    ////   var sb = new StringBuilder();
-                    ////   string cmdstr;
-                    ////   cmdstr = CommandText;
-
-                    //////   sb.Replace()
-
-                    ////   sb.Append("CALL ");
-                    ////   sb.Append(CommandText);
-
-                    ////   sb.Append('(');
-                    ////   bool hasWrittenFirst = false;
-                    ////   for (var i = 1; i <= numInput; i++)
-                    ////   {
-                    ////       var param = inputList[i - 1];
-                    ////       if (param.AutoAssignedName || param.CleanName == "")
-                    ////       {
-                    ////           if (hasWrittenFirst)
-                    ////           {
-                    ////               sb.Append(',');
-                    ////           }
-                    ////           sb.Append('$');
-                    ////           sb.Append(i);
-                    ////           hasWrittenFirst = true;
-                    ////       }
-                    ////   }
-                    ////   for (var i = 1; i <= numInput; i++)
-                    ////   {
-                    ////       var param = inputList[i - 1];
-                    ////       if (!param.AutoAssignedName && param.CleanName != "")
-                    ////       {
-                    ////           if (hasWrittenFirst)
-                    ////           {
-                    ////               sb.Append(',');
-                    ////           }
-                    ////           sb.Append('"');
-                    ////           sb.Append(param.CleanName.Replace("\"", "\"\""));
-                    ////           sb.Append("\" := ");
-                    ////           sb.Append('$');
-                    ////           sb.Append(i);
-                    ////           hasWrittenFirst = true;
-                    ////       }
-                    ////   }
-                    ////   sb.Append(')');
-                    ////   _statements.Add(new EDBStatement(sb.ToString(), inputList));
-                    break;
-                default:
+                if (_statements.Count == 0)
+                    statement = new EDBStatement();
+                else
+                {
+                    statement = _statements[0];
+                    statement.Reset();
+                    _statements.Clear();
+                }
+                statement.SQL = sb.ToString();
+                statement.InputParameters.AddRange(inputList);
+                _statements.Add(statement);
+                break;
+            default:
                 throw new InvalidOperationException($"Internal EDB bug: unexpected value {CommandType} of enum {nameof(CommandType)}. Please file a bug.");
             }
 
@@ -943,11 +869,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         #region Execute
 
-        void ValidateParameters()
+        void ValidateParameters(ConnectorTypeMapper typeMapper)
         {
             for (var i = 0; i < Parameters.Count; i++)
             {
-                var p = Parameters[i];
+                   var p = Parameters[i];
                 if (CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
                 {
                     if (p.Direction == ParameterDirection.Output && p.EDBDbType == EDBTypes.EDBDbType.Varchar)
@@ -955,7 +881,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 }
                 else if (!p.IsInputDirection)
                     continue;
-                p.Bind(Connection.Connector.TypeMapper);
+                p.Bind(typeMapper);
                 p.LengthCache?.Clear();
                 p.ValidateAndGetLength();
             }
@@ -969,8 +895,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         void BeginSend()
         {
-            Debug.Assert(Connection?.Connector != null);
-            Connection.Connector.WriteBuffer.CurrentCommand = this;
+            _connection!.Connector!.WriteBuffer.CurrentCommand = this;
             FlushOccurred = false;
         }
 
@@ -981,13 +906,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 SynchronizationContext.SetSynchronizationContext(null);
         }
 
-        async Task SendExecute(bool async)
+        async Task SendExecute(EDBConnector connector, bool async)
         {
             BeginSend();
-            var connector = Connection.Connector;
-            Debug.Assert(connector != null);
 
-            var buf = connector.WriteBuffer;
             for (var i = 0; i < _statements.Count; i++)
             {
                 async = ForceAsyncIfNecessary(async, i);
@@ -997,83 +919,62 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
+                    // We may have a prepared statement that replaces an existing statement - close the latter first.
                     if (pStatement?.StatementBeingReplaced != null)
-                    {
-                        // We have a prepared statement that replaces an existing statement - close the latter first.
-                        await connector.CloseMessage
-                            .Populate(StatementOrPortal.Statement, pStatement.StatementBeingReplaced.Name)
-                            .Write(buf, async);
-                    }
+                        await connector.WriteClose(StatementOrPortal.Statement, pStatement.StatementBeingReplaced.Name!, async);
 
-                    await connector.ParseMessage
-                        .Populate(statement.SQL, statement.StatementName, statement.InputParameters, connector.TypeMapper)
-                        .Write(buf, async);
+                    await connector.WriteParse(statement.SQL, statement.StatementName, statement.InputParameters, async);
                 }
-
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
-                    var bind = connector.BindOutMessage;
-                    //  bind.Populate(statement.InputParameters, "", statement.StatementName);
-                    bind.Populate(statement.InputParameters, _parameters, "", statement.StatementName);
+                    await connector.WriteBindOut(
+                       statement.InputParameters,_parameters, string.Empty, statement.StatementName, AllResultTypesAreUnknown,
+                       i == 0 ? UnknownResultTypeList : null,
+                       async);
 
-                    if (AllResultTypesAreUnknown)
-                        bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
-                    else if (i == 0 && UnknownResultTypeList != null)
-                        bind.UnknownResultTypeList = UnknownResultTypeList;
-                    await connector.BindOutMessage.Write(buf, async);
                 }
                 else
                 {
+                    await connector.WriteBind(
+                        statement.InputParameters, string.Empty, statement.StatementName, AllResultTypesAreUnknown,
+                        i == 0 ? UnknownResultTypeList : null,
+                        async);
+                }
+                if(IsPrepared && CommandType == CommandType.StoredProcedure)
+                {
+                    await connector.WriteDescribe(StatementOrPortal.Portal, string.Empty, async);
+                    await connector.WriteDescribeOut(StatementOrPortal.Portal, string.Empty, async);
 
-                    var bind = connector.BindMessage;
-                    bind.Populate(statement.InputParameters, "", statement.StatementName);
-                    if (AllResultTypesAreUnknown)
-                        bind.AllResultTypesAreUnknown = AllResultTypesAreUnknown;
-                    else if (i == 0 && UnknownResultTypeList != null)
-                        bind.UnknownResultTypeList = UnknownResultTypeList;
-                    await connector.BindMessage.Write(buf, async);
-                }//EnterpriseDB Team
-
-
+                }
                 if (pStatement == null || pStatement.State == PreparedState.ToBePrepared)
                 {
-                    await connector.DescribeMessage
-                        .Populate(StatementOrPortal.Portal)
-                        .Write(buf, async);
+                    await connector.WriteDescribe(StatementOrPortal.Portal, string.Empty, async);
                     if (statement.PreparedStatement != null)
                         statement.PreparedStatement.State = PreparedState.BeingPrepared;
                 }
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
-                {
-                    await connector.DescribeMessage
-                        .Populate(StatementOrPortal.Portal)
-                        .Write(buf, async);
 
-                    await connector.DescribeOutMessage
-                       .Populate(StatementOrPortal.Portal)
-                       .Write(buf, async);
+                await connector.WriteExecute(0, async);
 
-                }
-                await ExecuteMessage.DefaultExecute.Write(buf, async);
-                if (IsPrepared && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+                if (IsPrepared && CommandType == CommandType.StoredProcedure)
                 {
-                    await ExecuteOutMessage.DefaultExecute.Write(buf, async);
+                    await connector.WriteExecuteOut(0, async);
                 }
+
+                    if (pStatement != null)
+                    pStatement.LastUsed = DateTime.UtcNow;
             }
-            await SyncMessage.Instance.Write(buf, async);
-            await buf.Flush(async);
+
+            await connector.WriteSync(async);
+            await connector.Flush(async);
+
             CleanupSend();
         }
 
-        async Task SendExecuteSchemaOnly(bool async)
+        async Task SendExecuteSchemaOnly(EDBConnector connector, bool async)
         {
             BeginSend();
-            var connector = Connection.Connector;
-            Debug.Assert(connector != null);
 
             var wroteSomething = false;
-
-            var buf = connector.WriteBuffer;
             for (var i = 0; i < _statements.Count; i++)
             {
                 async = ForceAsyncIfNecessary(async, i);
@@ -1084,53 +985,44 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     continue;   // Prepared, we already have the RowDescription
                 Debug.Assert(statement.PreparedStatement == null);
 
-                await connector.ParseMessage
-                    .Populate(statement.SQL, "", statement.InputParameters, connector.TypeMapper)
-                    .Write(buf, async);
-
-                await connector.DescribeMessage
-                    .Populate(StatementOrPortal.Statement, statement.StatementName)
-                    .Write(buf, async);
+                await connector.WriteParse(statement.SQL, string.Empty, statement.InputParameters, async);
+                await connector.WriteDescribe(StatementOrPortal.Statement, statement.StatementName, async);
                 wroteSomething = true;
             }
 
             if (wroteSomething)
             {
-                await SyncMessage.Instance.Write(buf, async);
-                await buf.Flush(async);
+                await connector.WriteSync(async);
+                await connector.Flush(async);
             }
+
             CleanupSend();
         }
 
-        async Task SendDeriveParameters(bool async)
+        async Task SendDeriveParameters(EDBConnector connector, bool async)
         {
             BeginSend();
-            var connector = Connection.Connector;
-            Debug.Assert(connector != null);
-            var buf = connector.WriteBuffer;
+
             for (var i = 0; i < _statements.Count; i++)
             {
                 async = ForceAsyncIfNecessary(async, i);
 
-                await connector.ParseMessage
-                    .Populate(_statements[i].SQL, string.Empty)
-                    .Write(buf, async);
+                var statement = _statements[i];
 
-                await connector.DescribeMessage
-                    .Populate(StatementOrPortal.Statement, string.Empty)
-                    .Write(buf, async);
+                await connector.WriteParse(statement.SQL, string.Empty, EmptyParameters, async);
+                await connector.WriteDescribe(StatementOrPortal.Statement, string.Empty, async);
             }
-            await SyncMessage.Instance.Write(buf, async);
-            await buf.Flush(async);
+
+            await connector.WriteSync(async);
+            await connector.Flush(async);
+
             CleanupSend();
         }
 
-        async Task SendPrepare(bool async)
+        async Task SendPrepare(EDBConnector connector, bool async)
         {
             BeginSend();
-            var connector = Connection.Connector;
-            Debug.Assert(connector != null);
-            var buf = connector.WriteBuffer;
+
             for (var i = 0; i < _statements.Count; i++)
             {
                 async = ForceAsyncIfNecessary(async, i);
@@ -1143,38 +1035,27 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 if (pStatement?.State != PreparedState.ToBePrepared)
                     continue;
 
-                var statementToClose = pStatement?.StatementBeingReplaced;
+                // We may have a prepared statement that replaces an existing statement - close the latter first.
+                var statementToClose = pStatement.StatementBeingReplaced;
                 if (statementToClose != null)
-                {
-                    // We have a prepared statement that replaces an existing statement - close the latter first.
-                    await connector.CloseMessage
-                        .Populate(StatementOrPortal.Statement, statementToClose.Name)
-                        .Write(buf, async);
-                }
-
-                if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
+                    await connector.WriteClose(StatementOrPortal.Statement, statementToClose.Name!, async);
+                if (CommandType == CommandType.StoredProcedure)
                 {
                     connector._isCallableStmt = true;
-                    await connector.ParseOutMessage
-                  .Populate(statement.SQL, pStatement.Name, _parameters, statement.InputParameters, connector.TypeMapper)
-                  .Write(buf, async);
-
+                    await connector.WriteParseOut(statement.SQL, pStatement.Name! ,_parameters, statement.InputParameters, async, connector.TypeMapper);
                 }
                 else
                 {
-                    await connector.ParseMessage
-                    .Populate(statement.SQL, pStatement.Name, statement.InputParameters, connector.TypeMapper)
-                    .Write(buf, async);
-                }//EnterpriseDB Team
-
-                await connector.DescribeMessage
-                    .Populate(StatementOrPortal.Statement, pStatement.Name)
-                    .Write(buf, async);
+                    await connector.WriteParse(statement.SQL, pStatement.Name!, statement.InputParameters, async);
+                }
+                await connector.WriteDescribe(StatementOrPortal.Statement, pStatement.Name!, async);
 
                 pStatement.State = PreparedState.BeingPrepared;
             }
-            await SyncMessage.Instance.Write(buf, async);
-            await buf.Flush(async);
+
+            await connector.WriteSync(async);
+            await connector.Flush(async);
+
             CleanupSend();
         }
 
@@ -1187,16 +1068,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 async = true;
                 SynchronizationContext.SetSynchronizationContext(SingleThreadSynchronizationContext);
             }
+
             return async;
         }
 
-        async Task SendClose(bool async)
+        async Task SendClose(EDBConnector connector, bool async)
         {
             BeginSend();
-            var connector = Connection.Connector;
-            Debug.Assert(connector != null);
 
-            var buf = connector.WriteBuffer;
             foreach (var statement in _statements.Where(s => s.IsPrepared))
             {
                 if (FlushOccurred)
@@ -1205,14 +1084,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     SynchronizationContext.SetSynchronizationContext(SingleThreadSynchronizationContext);
                 }
 
-                await connector.CloseMessage
-                    .Populate(StatementOrPortal.Statement, statement.StatementName)
-                    .Write(buf, async);
-                Debug.Assert(statement.PreparedStatement != null);
-                statement.PreparedStatement.State = PreparedState.BeingUnprepared;
+                await connector.WriteClose(StatementOrPortal.Statement, statement.StatementName, async);
+                statement.PreparedStatement!.State = PreparedState.BeingUnprepared;
             }
-            await SyncMessage.Instance.Write(buf, async);
-            await buf.Flush(async);
+
+            await connector.WriteSync(async);
+            await connector.Flush(async);
+
             CleanupSend();
         }
 
@@ -1233,7 +1111,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// <returns>A task representing the asynchronous operation, with the number of rows affected if known; -1 otherwise.</returns>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<int>(cancellationToken);
             using (NoSynchronizationContextScope.Enter())
                 return ExecuteNonQuery(true, cancellationToken);
         }
@@ -1241,31 +1120,36 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
         {
-         //   if (Connection.Connector._isCallableStmt == true)
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+           // Connection.Connector._isCallableStmt = false;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
             if (CommandType == CommandType.StoredProcedure) // && Connection.Connector._hasRefCursor == false
-            { 
+            {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 Connection.Connector._isScaler = true; //ZKK
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 Connection.Connector._is_Scaler_fallthrough = true;
             }
-            using (var reader = await ExecuteDbDataReader(CommandBehavior.Default, async, cancellationToken))
-            {
-                 if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
-               // if (Connection.Connector._isCallableStmt != true) //EDB Team
-                    while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) { }
-                reader.Close();
-                Connection.Connector._isScaler = false; //ZKK
-                Connection.Connector._is_Scaler_fallthrough = false;
-                Connection.Connector._hasRefCursor = false;
-                return reader.RecordsAffected;
-               
-            }
-            
+            using var reader = await ExecuteReaderAsync(CommandBehavior.Default, async, cancellationToken);
+            if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
+                while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) ;
 
+            reader.Close();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            Connection.Connector._isScaler = false; //ZKK
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            Connection.Connector._is_Scaler_fallthrough = false;
+            Connection.Connector._hasRefCursor = false;
+        //    Connection.Connector._isCallableStmt = false;
+            return reader.RecordsAffected;
         }
 
         #endregion Execute Non Query
 
         #region Execute Scalar
+
+#nullable disable
 
         /// <summary>
         /// Executes the query, and returns the first column of the first row
@@ -1273,7 +1157,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// </summary>
         /// <returns>The first column of the first row in the result set,
         /// or a null reference if the result set is empty.</returns>
-        [CanBeNull]
         public override object ExecuteScalar() => ExecuteScalar(false, CancellationToken.None).GetAwaiter().GetResult();
 
         /// <summary>
@@ -1282,23 +1165,25 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, with the first column of the
         /// first row in the result set, or a null reference if the result set is empty.</returns>
-        [ItemCanBeNull]
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<object>(cancellationToken);
             using (NoSynchronizationContextScope.Enter())
                 return ExecuteScalar(true, cancellationToken).AsTask();
         }
 
+#nullable restore
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [ItemCanBeNull]
-        async ValueTask<object> ExecuteScalar(bool async, CancellationToken cancellationToken)
+        async ValueTask<object?> ExecuteScalar(bool async, CancellationToken cancellationToken)
         {
             var behavior = CommandBehavior.SingleRow;
             if (!Parameters.HasOutputParameters)
                 behavior |= CommandBehavior.SequentialAccess;
-            using (var reader = await ExecuteDbDataReader(behavior, async, cancellationToken))
-                return reader.Read() && reader.FieldCount != 0 ? reader.GetValue(0) : null;
+
+            using var reader = await ExecuteReaderAsync(behavior, async, cancellationToken);
+            return reader.Read() && reader.FieldCount != 0 ? reader.GetValue(0) : null;
         }
 
         #endregion Execute Scalar
@@ -1306,75 +1191,113 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         #region Execute Reader
 
         /// <summary>
-        /// Executes the CommandText against the Connection, and returns an DbDataReader.
+        /// Executes the command text against the connection.
         /// </summary>
-        /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a EDB-specific
-        /// DataReader.
-        /// </remarks>
-        /// <returns>A DbDataReader object.</returns>
-        public new EDBDataReader ExecuteReader() => (EDBDataReader) base.ExecuteReader();
-
-        /// <summary>
-        /// Executes the CommandText against the Connection, and returns an DbDataReader using one
-        /// of the CommandBehavior values.
-        /// </summary>
-        /// <remarks>
-        /// Unlike the ADO.NET method which it replaces, this method returns a EDB-specific
-        /// DataReader.
-        /// </remarks>
-        /// <returns>A DbDataReader object.</returns>
-        public new EDBDataReader ExecuteReader(CommandBehavior behavior) => (EDBDataReader) base.ExecuteReader(behavior);
+        /// <returns>A task representing the operation.</returns>
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+            => ExecuteReader(behavior);
 
         /// <summary>
         /// Executes the command text against the connection.
         /// </summary>
         /// <param name="behavior">An instance of <see cref="CommandBehavior"/>.</param>
-        /// <param name="cancellationToken">A task representing the operation.</param>
-        /// <returns></returns>
-        protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            using (NoSynchronizationContextScope.Enter())
-                return ExecuteDbDataReader(behavior, true, cancellationToken).AsTask();
-        }
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => await ExecuteReaderAsync(behavior, cancellationToken);
 
         /// <summary>
-        /// Executes the command text against the connection.
+        /// Executes the <see cref="CommandText"/> against the <see cref="Connection"/>
+        /// and returns a <see cref="EDBDataReader"/>.
         /// </summary>
-        [NotNull]
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteDbDataReader(behavior, false, CancellationToken.None).GetAwaiter().GetResult();
+        /// <param name="behavior">One of the enumeration values that specified the command behavior.</param>
+        /// <returns>A task representing the operation.</returns>
+        public new EDBDataReader ExecuteReader(CommandBehavior behavior = CommandBehavior.Default)
+            => ExecuteReaderAsync(behavior, async: false, CancellationToken.None).GetAwaiter().GetResult();
 
-        async ValueTask<DbDataReader> ExecuteDbDataReader(CommandBehavior behavior, bool async, CancellationToken cancellationToken)
+        /// <summary>
+        /// An asynchronous version of <see cref="ExecuteReader"/>, which executes
+        /// the <see cref="CommandText"/> against the <see cref="Connection"/>
+        /// and returns a <see cref="EDBDataReader"/>.
+        /// </summary>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public new Task<EDBDataReader> ExecuteReaderAsync(CancellationToken cancellationToken = default)
+            => ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+        /// <summary>
+        /// An asynchronous version of <see cref="ExecuteReader(CommandBehavior)"/>,
+        /// which executes the <see cref="CommandText"/> against the <see cref="Connection"/>
+        /// and returns a <see cref="EDBDataReader"/>.
+        /// </summary>
+        /// <param name="behavior">One of the enumeration values that specified the command behavior.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public new Task<EDBDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<EDBDataReader>(cancellationToken);
+
+            using (NoSynchronizationContextScope.Enter())
+                return ExecuteReaderAsync(behavior, async: true, cancellationToken).AsTask();
+        }
+
+        async ValueTask<EDBDataReader> ExecuteReaderAsync(CommandBehavior behavior, bool async, CancellationToken cancellationToken)
         {
             var connector = CheckReadyAndGetConnector();
             connector.StartUserAction(this);
             try
             {
-                using (cancellationToken.Register(cmd => ((EDBCommand)cmd).Cancel(), this))
+                using (cancellationToken.Register(cmd => ((EDBCommand)cmd!).Cancel(), this))
                 {
-                    ValidateParameters();
-                    if(connector._is_Scaler_fallthrough == false)
-                    connector._isScaler = false;
-                    if (IsExplicitlyPrepared)
+                    ValidateParameters(connector.TypeMapper);
+
+                    switch (IsExplicitlyPrepared)
                     {
+                    case true:
                         Debug.Assert(_connectorPreparedOn != null);
-                        if (_connectorPreparedOn != Connection.Connector)
+                        if (_connectorPreparedOn != connector)
                         {
                             // The command was prepared, but since then the connector has changed. Detach all prepared statements.
                             foreach (var s in _statements)
                                 s.PreparedStatement = null;
                             ResetExplicitPreparation();
-                            ProcessRawQuery();
+                            goto case false;
                         }
-                    }
-                    else
+                        EDBEventSource.Log.CommandStartPrepared();
+                        break;
+
+                    case false:
                         ProcessRawQuery();
+
+                        if (connector.Settings.MaxAutoPrepare > 0)
+                        {
+                            var numPrepared = 0;
+                            foreach (var statement in _statements)
+                            {
+                                // If this statement isn't prepared, see if it gets implicitly prepared.
+                                // Note that this may return null (not enough usages for automatic preparation).
+                                if (!statement.IsPrepared)
+                                    statement.PreparedStatement = connector.PreparedStatementManager.TryGetAutoPrepared(statement);
+                                if (statement.PreparedStatement != null)
+                                    numPrepared++;
+                            }
+
+                            if (numPrepared > 0)
+                            {
+                                _connectorPreparedOn = connector;
+                                if (numPrepared == _statements.Count)
+                                    EDBEventSource.Log.CommandStartPrepared();
+                            }
+                        }
+                        break;
+                    }
 
                     State = CommandState.InProgress;
 
                     if (Log.IsEnabled(EDBLogLevel.Debug))
-                        LogCommand();
+                        LogCommand(connector.Id);
+                    EDBEventSource.Log.CommandStart(CommandText);
                     Task sendTask;
 
                     // If a cancellation is in progress, wait for it to "complete" before proceeding (#615)
@@ -1382,39 +1305,19 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     connector.UserTimeout = CommandTimeout * 1000;
 
-                    if ((behavior & CommandBehavior.SchemaOnly) == 0)
-                    {
-                        if (connector.Settings.MaxAutoPrepare > 0)
-                        {
-                            foreach (var statement in _statements)
-                            {
-                                // If this statement isn't prepared, see if it gets implicitly prepared.
-                                // Note that this may return null (not enough usages for automatic preparation).
-                                if (!statement.IsPrepared)
-                                    statement.PreparedStatement =
-                                        connector.PreparedStatementManager.TryGetAutoPrepared(statement);
-                                if (statement.PreparedStatement != null)
-                                    statement.PreparedStatement.LastUsed = DateTime.UtcNow;
-                            }
-                            _connectorPreparedOn = connector;
-                        }
-
-                        // We do not wait for the entire send to complete before proceeding to reading -
-                        // the sending continues in parallel with the user's reading. Waiting for the
-                        // entire send to complete would trigger a deadlock for multistatement commands,
-                        // where PostgreSQL sends large results for the first statement, while we're sending large
-                        // parameter data for the second. See #641.
-                        // Instead, all sends for non-first statements and for non-first buffers are performed
-                        // asynchronously (even if the user requested sync), in a special synchronization context
-                        // to prevents a dependency on the thread pool (which would also trigger deadlocks).
-                        // The WriteBuffer notifies this command when the first buffer flush occurs, so that the
-                        // send functions can switch to the special async mode when needed.
-                        sendTask = SendExecute(async);
-                    }
-                    else
-                    {
-                        sendTask = SendExecuteSchemaOnly(async);
-                    }
+                    // We do not wait for the entire send to complete before proceeding to reading -
+                    // the sending continues in parallel with the user's reading. Waiting for the
+                    // entire send to complete would trigger a deadlock for multi-statement commands,
+                    // where PostgreSQL sends large results for the first statement, while we're sending large
+                    // parameter data for the second. See #641.
+                    // Instead, all sends for non-first statements and for non-first buffers are performed
+                    // asynchronously (even if the user requested sync), in a special synchronization context
+                    // to prevents a dependency on the thread pool (which would also trigger deadlocks).
+                    // The WriteBuffer notifies this command when the first buffer flush occurs, so that the
+                    // send functions can switch to the special async mode when needed.
+                    sendTask = (behavior & CommandBehavior.SchemaOnly) == 0
+                        ? SendExecute(connector, async)
+                        : SendExecuteSchemaOnly(connector, async);
 
                     // The following is a hack. It raises an exception if one was thrown in the first phases
                     // of the send (i.e. in parts of the send that executed synchronously). Exceptions may
@@ -1422,21 +1325,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     if (sendTask.IsFaulted)
                         sendTask.GetAwaiter().GetResult();
 
-                    //var reader = new EDBDataReader(this, behavior, _statements, sendTask);
-                    var reader = (behavior & CommandBehavior.SequentialAccess) == 0
-                        ? (EDBDataReader)connector.DefaultDataReader
-                        : connector.SequentialDataReader;
+                    var reader = connector.DataReader;
                     reader.Init(this, behavior, _statements, sendTask);
                     connector.CurrentReader = reader;
                     if (async)
-                    {
                         await reader.NextResultAsync(cancellationToken);
-                        if (connector._is_Scaler_fallthrough == true)
-                        {
-                            connector._isScaler = false;
-                            connector._is_Scaler_fallthrough = false;
-                        }
-                    }
                     else
                         reader.NextResult();
                     return reader;
@@ -1445,14 +1338,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             catch
             {
                 State = CommandState.Idle;
-                Connection.Connector?.EndUserAction();
-                connector.CurrentReader = null;//EnterpriseDB Team
-                if (connector._is_Scaler_fallthrough == true)
-                {
-                    connector._isScaler = false;
-                    connector._is_Scaler_fallthrough = false;
-                    connector._hasRefCursor = false;
-                }
+                _connection!.Connector?.EndUserAction();
 
                 // Close connection if requested even when there is an error.
                 if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
@@ -1468,30 +1354,17 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// <summary>
         /// DB transaction.
         /// </summary>
-        protected override DbTransaction DbTransaction
+        protected override DbTransaction? DbTransaction
         {
             get => Transaction;
-            set => Transaction = (EDBTransaction) value;
+            set => Transaction = (EDBTransaction?)value;
         }
-
         /// <summary>
-        /// Gets or sets the <see cref="EDBTransaction">EDBTransaction</see>
-        /// within which the <see cref="EDBCommand">EDBCommand</see> executes.
+        /// This property is ignored by EnterpriseDB.EDBClient. PostgreSQL only supports a single transaction at a given time on
+        /// a given connection, and all commands implicitly run inside the current transaction started via
+        /// <see cref="EDBConnection.BeginTransaction()"/>
         /// </summary>
-        /// <value>The <see cref="EDBTransaction">EDBTransaction</see>.
-        /// The default value is a null reference.</value>
-        public new EDBTransaction Transaction
-        {
-            get
-            {
-                if (_transaction != null && _transaction.Connection == null)
-                {
-                    _transaction = null;
-                }
-                return _transaction;
-            }
-            set => _transaction = value;
-        }
+        public new EDBTransaction? Transaction { get; set; }
 
         #endregion Transactions
 
@@ -1503,7 +1376,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// <remarks>As per the specs, no exception will be thrown by this method in case of failure</remarks>
         public override void Cancel()
         {
-            var connector = Connection?.Connector;
+            var connector = _connection?.Connector;
             if (connector == null)
                 return;
 
@@ -1525,7 +1398,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (State == CommandState.Disposed)
                 return;
             Transaction = null;
-            Connection = null;
+            _connection = null;
             State = CommandState.Disposed;
             base.Dispose(disposing);
         }
@@ -1549,7 +1422,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 rowDescription[i].FormatCode = (UnknownResultTypeList == null || !isFirst ? AllResultTypesAreUnknown : UnknownResultTypeList[i]) ? FormatCode.Text : FormatCode.Binary;
         }
 
-        void LogCommand()
+        void LogCommand(int connectorId)
         {
             var sb = new StringBuilder();
             sb.AppendLine("Executing statement(s):");
@@ -1565,7 +1438,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 }
             }
 
-            Log.Debug(sb.ToString(), Connection.Connector.Id);
+            Log.Debug(sb.ToString(), connectorId);
         }
 
         /// <summary>
@@ -1578,10 +1451,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         /// Create a new command based on this one.
         /// </summary>
         /// <returns>A new EDBCommand object.</returns>
-        [PublicAPI]
         public EDBCommand Clone()
         {
-            var clone = new EDBCommand(CommandText, Connection, Transaction)
+            var clone = new EDBCommand(CommandText, _connection, Transaction)
             {
                 CommandTimeout = CommandTimeout, CommandType = CommandType, DesignTimeVisible = DesignTimeVisible, _allResultTypesAreUnknown = _allResultTypesAreUnknown, _unknownResultTypeList = _unknownResultTypeList, ObjectResultTypes = ObjectResultTypes
             };
@@ -1594,9 +1466,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         {
             if (State == CommandState.Disposed)
                 throw new ObjectDisposedException(GetType().FullName);
-            if (Connection == null)
+            if (_connection == null)
                 throw new InvalidOperationException("Connection property has not been initialized.");
-            return Connection.CheckReadyAndGetConnector();
+            return _connection.CheckReadyAndGetConnector();
         }
 
         #endregion

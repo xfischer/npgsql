@@ -1,27 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using EnterpriseDB.EDBClient.PostgresTypes;
@@ -385,9 +362,11 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.Ignore("Unique not supported in reader schema on Redshift");
             using (var conn = OpenConnection())
             {
-                conn.ExecuteNonQuery("CREATE TEMP TABLE data (id INT PRIMARY KEY, non_id INT, uniq INT UNIQUE)");
+                conn.ExecuteNonQuery("CREATE TEMP TABLE data (id INT PRIMARY KEY, non_id INT, uniq INT UNIQUE, non_id_second INT, non_id_third INT)");
 
-                using (var cmd = new EDBCommand("SELECT id,non_id,uniq,8 FROM data", conn))
+                conn.ExecuteNonQuery("CREATE UNIQUE INDEX idx_two_cols_unique ON data (non_id_second, non_id_third)");
+
+                using (var cmd = new EDBCommand("SELECT id,non_id,uniq,8,non_id_second,non_id_third FROM data", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo))
                 {
                     var columns = reader.GetColumnSchema();
@@ -395,6 +374,8 @@ namespace EnterpriseDB.EDBClient.Tests
                     Assert.That(columns[1].IsUnique, Is.False);
                     Assert.That(columns[2].IsUnique, Is.True);
                     Assert.That(columns[3].IsUnique, Is.Null);
+                    Assert.That(columns[4].IsUnique, Is.False);
+                    Assert.That(columns[5].IsUnique, Is.False);
                 }
             }
         }
@@ -549,26 +530,26 @@ namespace EnterpriseDB.EDBClient.Tests
         [TestCase("integer")]
         [TestCase("real")]
         [TestCase("integer[]")]
-        //[TestCase("character varying(10)", 10)]
-        //[TestCase("character varying")]
-        //[TestCase("character varying(10)[]", 10)]
+        [TestCase("character varying(10)", 10)]
+        [TestCase("character varying")]
+        [TestCase("character varying(10)[]", 10)]
         [TestCase("character(10)", 10)]
         [TestCase("character", 1)]
-        //[TestCase("numeric(1000, 2)", null, 1000, 2)]
+        [TestCase("numeric(1000, 2)", null, 1000, 2)]
         [TestCase("numeric(1000)", null, 1000, null)]
         [TestCase("numeric")]
         [TestCase("timestamp")]
-        //[TestCase("timestamp(2)", null, 2)]
-        //[TestCase("timestamp(2) with time zone", null, 2)]
+        [TestCase("timestamp(2)", null, 2)]
+        [TestCase("timestamp(2) with time zone", null, 2)]
         [TestCase("time")]
-        //[TestCase("time(2)", null, 2)]
-        //[TestCase("time(2) with time zone", null, 2)]
+        [TestCase("time(2)", null, 2)]
+        [TestCase("time(2) with time zone", null, 2)]
         [TestCase("interval")]
         [TestCase("interval(2)", null, 2)]
         [TestCase("bit", 1)]
         [TestCase("bit(3)", 3)]
-        //[TestCase("bit varying")]
-        //[TestCase("bit varying(3)", 3)]
+        [TestCase("bit varying")]
+        [TestCase("bit varying(3)", 3)]
         public void DataTypeName(string typeName, int? size = null, int? precision = null, int? scale = null)
         {
             var openingParen = typeName.IndexOf('(');
@@ -679,9 +660,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using (var conn = OpenConnection())
             {
-                TestUtil.MinimumPgVersion(conn, "9.1.0", "HSTORE data type not yet introduced");
-                conn.ExecuteNonQuery(@"CREATE EXTENSION IF NOT EXISTS hstore");
-                conn.ReloadTypes();
+                TestUtil.EnsureExtension(conn, "hstore", "9.1");
 
                 using (var cmd = new EDBCommand("SELECT NULL::HSTORE", conn))
                 using (var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly))

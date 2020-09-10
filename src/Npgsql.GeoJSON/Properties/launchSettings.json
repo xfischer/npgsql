@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Npgsql.GeoJSON": {
+      "commandName": "Project"
+    },
+    "EnnterpriseDB.EDBClient.GeoJSON": {
+      "commandName": "Project"
+    }
+  }
+}

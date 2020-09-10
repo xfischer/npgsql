@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 	[TestFixture]
 	public class EDBCircleTest : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 		
 		[SetUp]
 		public void Init()

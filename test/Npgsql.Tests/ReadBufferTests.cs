@@ -1,32 +1,6 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using EnterpriseDB.EDBClient;
+using EnterpriseDB.EDBClient.Util;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
@@ -81,16 +55,18 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(ReadBuffer.ReadByte(), Is.EqualTo(8));
         }
 
+#pragma warning disable CS8625
         [SetUp]
         public void SetUp()
         {
             Underlying = new MemoryStream();
-            ReadBuffer = new EDBReadBuffer(null, Underlying, EDBReadBuffer.DefaultSize, PGUtil.UTF8Encoding);
+            ReadBuffer = new EDBReadBuffer(null, Underlying, EDBReadBuffer.DefaultSize, PGUtil.UTF8Encoding, PGUtil.RelaxedUTF8Encoding);
         }
+#pragma warning restore CS8625
 
         // ReSharper disable once InconsistentNaming
-        EDBReadBuffer ReadBuffer;
+        EDBReadBuffer ReadBuffer = default!;
         // ReSharper disable once InconsistentNaming
-        MemoryStream Underlying;
+        MemoryStream Underlying = default!;
     }
 }

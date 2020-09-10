@@ -1,7 +1,7 @@
-﻿using EDBTypes;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.Data;
+using EDBTypes;
+using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types
 {

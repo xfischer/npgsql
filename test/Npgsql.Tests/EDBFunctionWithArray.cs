@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests
     [TestFixture]
 	public class EDBFunctionWithArray : TestBase
 	{
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
         #region Setup / Tear Down
         [SetUp]
@@ -186,7 +186,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void FuncReturningArrayVarchar()
 		{
 
-            String[] a = { "100", "200", "300", "400" };
+            string[] a = { "100", "200", "300", "400" };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest1 (c1 VARCHAR, c2 INT); ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest1 VALUES ('Ahmar',100);INSERT INTO tblTest1 VALUES ('Nauman',200);", con);
@@ -212,7 +212,7 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 Object rst = command.Parameters[5].Value;
 
-                Assert.AreEqual(a, (String[])rst);
+                Assert.AreEqual(a, (string[])rst);
             }
             finally
             {
@@ -226,7 +226,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void FuncReturningArrayNumeric()
 		{
 
-            Decimal[] a = { 132.654M, 897.2563M };
+            decimal[] a = { 132.654M, 897.2563M };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest (f1 Numeric[10],f2 numeric[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');", con);
@@ -249,7 +249,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Console.WriteLine(rst);
 			
-			Assert.AreEqual(a,(Decimal[])rst);	
+			Assert.AreEqual(a,(decimal[])rst);	
 			command=new EDBCommand("drop table tblTest;",con);
 
 			command.ExecuteNonQuery();
@@ -259,7 +259,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		[Test, Ignore("Fix Array test")]
 		public void FuncReturningArrayInteger()
 		{
-            Int32[] a = {132,897};
+            int[] a = {132,897};
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest2 (f1 integer[10],f2 integer[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest2 VALUES ('{120,1234,2,3123,42342,5355,652,7,8,94}','{132,897}');", con);
@@ -280,7 +280,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Console.WriteLine(rst);
 			
-			Assert.AreEqual(a , (Int32[])rst);	
+			Assert.AreEqual(a , (int[])rst);	
 			command=new EDBCommand("drop table tblTest2;",con);
 
 			command.ExecuteNonQuery();
@@ -291,7 +291,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void FuncReturningArrayFloat()
 		{
 
-            Double[] a = { 132.654, 897.2563 };
+            double[] a = { 132.654, 897.2563 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest3 (d1 float[10],f2 float[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest3 VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');", con);
@@ -311,7 +311,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Console.WriteLine(rst);
 			
-			Assert.AreEqual(a,(Double[])rst);	
+			Assert.AreEqual(a,(double[])rst);	
 			command=new EDBCommand("drop table tblTest3;",con);
 
 			command.ExecuteNonQuery();
@@ -322,7 +322,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void FuncReturningArrayDoublePrecision()
 		{
 
-            Double[] a = { 555.43534543233, 344654.345344398 };
+            double[] a = { 555.43534543233, 344654.345344398 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest4 (d1 double precision[],f2 double precision[]);", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest4 VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');", con);
@@ -342,7 +342,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 			Console.WriteLine(rst);
 			
-			Assert.AreEqual(a,(Double[])rst);	
+			Assert.AreEqual(a,(double[])rst);	
 			command=new EDBCommand("drop table tblTest4;",con);
 			
 			command.ExecuteNonQuery();
@@ -352,7 +352,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		public void FuncReturningArrayBigInt()
 		{
 
-            Int64[] a = { 55543534543233, 34465434534439785 };
+            long[] a = { 55543534543233, 34465434534439785 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest5 (d1 bigint[],f2 bigint[]);", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest5 VALUES ('{122323423453,23032131231322,1233422323324}','{55543534543233,34465434534439785}');", con);
@@ -373,7 +373,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Console.WriteLine(rst);
 			Reader.Close();
 			
-			Assert.AreEqual(a,(Int64)rst);	
+			Assert.AreEqual(a,(long)rst);	
 
 			command=new EDBCommand("drop table tblTest5;",con);
 			command.ExecuteNonQuery();

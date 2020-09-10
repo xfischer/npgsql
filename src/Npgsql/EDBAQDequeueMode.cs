@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+#nullable disable
 namespace EnterpriseDB.EDBClient
 {
     /// <summary>
@@ -58,3 +58,4 @@ namespace EnterpriseDB.EDBClient
         public static readonly int REMOVE_NODATA = 3;
     }
 }
+#nullable restore

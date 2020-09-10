@@ -1,21 +1,21 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using EDBTypes;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
 
 namespace EnterpriseDB.EDBClient.Benchmarks
 {
     [Config(typeof(ReadArrayConfig))]
     public class ReadArray
     {
-        EDBConnection _conn;
-        EDBCommand _cmd;
-        EDBDataReader _reader;
+        EDBConnection _conn = default!;
+        EDBCommand _cmd = default!;
+        EDBDataReader _reader = default!;
 
         [GlobalSetup(Target = nameof(ReadIntArray) + "," + nameof(ReadListOfInt))]
         public void GlobalSetupForInt()
@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
 
         [Benchmark]
         public void ReadEDBInetArray() // PSV for IPAddress
-            => ReadArrayImpl<EDBInet>();
+            => ReadArrayImpl<ValueTuple<IPAddress, int>>();
 
         [Benchmark]
         public void ReadListOfInt()
@@ -84,7 +84,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
 
         [Benchmark]
         public void ReadListOfEDBInet() // PSV for IPAddress
-            => ReadListImpl<EDBInet>();
+            => ReadListImpl<ValueTuple<IPAddress, int>>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReadArrayImpl<T>()
@@ -96,11 +96,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
 
         class ReadArrayConfig : ManualConfig
         {
-            public ReadArrayConfig()
-            {
-                Add(StatisticColumn.OperationsPerSecond);
-                Add(MemoryDiagnoser.Default);
-            }
+            public ReadArrayConfig() => Add(StatisticColumn.OperationsPerSecond);
         }
     }
 }

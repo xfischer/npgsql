@@ -1,46 +1,21 @@
-#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
 using System.Data;
 using System.Data.Common;
 using JetBrains.Annotations;
 
-namespace EnterpriseDB.EDBClient
-{
+namespace EnterpriseDB.EDBClient{
     /// <summary>
     /// Represents the method that handles the <see cref="EDBDataAdapter.RowUpdated">RowUpdated</see> events.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A <see cref="EDBRowUpdatedEventArgs">EDBRowUpdatedEventArgs</see> that contains the event data.</param>
-    public delegate void EDBRowUpdatedEventHandler(Object sender, EDBRowUpdatedEventArgs e);
+    public delegate void EDBRowUpdatedEventHandler(object sender, EDBRowUpdatedEventArgs e);
 
     /// <summary>
     /// Represents the method that handles the <see cref="EDBDataAdapter.RowUpdating">RowUpdating</see> events.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A <see cref="EDBRowUpdatingEventArgs">EDBRowUpdatingEventArgs</see> that contains the event data.</param>
-    public delegate void EDBRowUpdatingEventHandler(Object sender, EDBRowUpdatingEventArgs e);
+    public delegate void EDBRowUpdatingEventHandler(object sender, EDBRowUpdatingEventArgs e);
 
     /// <summary>
     /// This class represents an adapter from many commands: select, update, insert and delete to fill <see cref="System.Data.DataSet">Datasets.</see>
@@ -52,12 +27,12 @@ namespace EnterpriseDB.EDBClient
         /// Row updated event.
         /// </summary>
         [PublicAPI]
-        public event EDBRowUpdatedEventHandler RowUpdated;
+        public event EDBRowUpdatedEventHandler? RowUpdated;
 
         /// <summary>
         /// Row updating event.
         /// </summary>
-        public event EDBRowUpdatingEventHandler RowUpdating;
+        public event EDBRowUpdatingEventHandler? RowUpdating;
 
         /// <summary>
         /// Default constructor.
@@ -69,9 +44,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="selectCommand"></param>
         public EDBDataAdapter(EDBCommand selectCommand)
-        {
-            SelectCommand = selectCommand;
-        }
+            => SelectCommand = selectCommand;
 
         /// <summary>
         /// Constructor.
@@ -92,42 +65,40 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Create row updated event.
         /// </summary>
-        protected override RowUpdatedEventArgs CreateRowUpdatedEvent([NotNull] DataRow dataRow, [NotNull] IDbCommand command,
+        protected override RowUpdatedEventArgs CreateRowUpdatedEvent(DataRow dataRow, IDbCommand command,
                                                                      System.Data.StatementType statementType,
-                                                                     [NotNull] DataTableMapping tableMapping)
-        {
-            return new EDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
-        }
+                                                                     DataTableMapping tableMapping)
+            => new EDBRowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
 
         /// <summary>
         /// Create row updating event.
         /// </summary>
-        protected override RowUpdatingEventArgs CreateRowUpdatingEvent([NotNull] DataRow dataRow, [NotNull] IDbCommand command,
+        protected override RowUpdatingEventArgs CreateRowUpdatingEvent(DataRow dataRow, IDbCommand command,
                                                                        System.Data.StatementType statementType,
-                                                                       [NotNull] DataTableMapping tableMapping)
-        {
-            return new EDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
-        }
+                                                                       DataTableMapping tableMapping)
+            => new EDBRowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
 
         /// <summary>
         /// Raise the RowUpdated event.
         /// </summary>
         /// <param name="value"></param>
-        protected override void OnRowUpdated([NotNull] RowUpdatedEventArgs value)
+        protected override void OnRowUpdated(RowUpdatedEventArgs value)
         {
             //base.OnRowUpdated(value);
-            if (RowUpdated != null && value is EDBRowUpdatedEventArgs)
-                RowUpdated(this, (EDBRowUpdatedEventArgs)value);
+            if (value is EDBRowUpdatedEventArgs args)
+                RowUpdated?.Invoke(this, args);
+            //if (RowUpdated != null && value is EDBRowUpdatedEventArgs args)
+            //    RowUpdated(this, args);
         }
 
         /// <summary>
         /// Raise the RowUpdating event.
         /// </summary>
         /// <param name="value"></param>
-        protected override void OnRowUpdating([NotNull] RowUpdatingEventArgs value)
+        protected override void OnRowUpdating(RowUpdatingEventArgs value)
         {
-            if (RowUpdating != null && value is EDBRowUpdatingEventArgs)
-                RowUpdating(this, (EDBRowUpdatingEventArgs) value);
+            if (value is EDBRowUpdatingEventArgs args)
+                RowUpdating?.Invoke(this, args);
         }
 
         /// <summary>
@@ -135,8 +106,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand DeleteCommand
         {
-            get { return (EDBCommand)base.DeleteCommand; }
-            set { base.DeleteCommand = value; }
+            get => (EDBCommand)base.DeleteCommand;
+            set => base.DeleteCommand = value;
         }
 
         /// <summary>
@@ -144,8 +115,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand SelectCommand
         {
-            get { return (EDBCommand)base.SelectCommand; }
-            set { base.SelectCommand = value; }
+            get => (EDBCommand)base.SelectCommand;
+            set => base.SelectCommand = value;
         }
 
         /// <summary>
@@ -153,8 +124,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand UpdateCommand
         {
-            get { return (EDBCommand)base.UpdateCommand; }
-            set { base.UpdateCommand = value; }
+            get => (EDBCommand)base.UpdateCommand;
+            set => base.UpdateCommand = value;
         }
 
         /// <summary>
@@ -162,8 +133,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public new EDBCommand InsertCommand
         {
-            get { return (EDBCommand)base.InsertCommand; }
-            set { base.InsertCommand = value; }
+            get => (EDBCommand)base.InsertCommand;
+            set => base.InsertCommand = value;
         }
     }
 

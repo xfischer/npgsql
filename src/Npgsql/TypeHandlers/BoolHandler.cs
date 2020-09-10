@@ -1,49 +1,38 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System.Data;
 using EnterpriseDB.EDBClient.BackendMessages;
-using EDBTypes;
-using System.Data;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL bool data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-boolean.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-boolean.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("boolean", EDBDbType.Boolean, DbType.Boolean, typeof(bool))]
-    class BoolHandler : EDBSimpleTypeHandler<bool>
+    public class BoolHandler : EDBSimpleTypeHandler<bool>
     {
-        public override bool Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public BoolHandler(PostgresType postgresType) : base(postgresType) {}
+
+        /// <inheritdoc />
+        public override bool Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => buf.ReadByte() != 0;
 
-        public override int ValidateAndGetLength(bool value, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(bool value, EDBParameter? parameter)
             => 1;
 
-        public override void Write(bool value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public override void Write(bool value, EDBWriteBuffer buf, EDBParameter? parameter)
             => buf.WriteByte(value ? (byte)1 : (byte)0);
     }
 }

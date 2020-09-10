@@ -7,14 +7,15 @@ using System.Configuration;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// Summary description for BaseDataSourceTest.
-	/// </summary>
-	[TestFixture, /*Ignore("Fix open without pooling ")*/]
+#pragma warning disable CS8604
+    /// <summary>
+    /// Summary description for BaseDataSourceTest.
+    /// </summary>
+    [TestFixture, /*Ignore("Fix open without pooling ")*/]
 	public class EDBBaseDataSourceTest : TestBase
     {
-		EDBConnection con = null;
-        String conString = ConnectionString;
+		EDBConnection? con = null;
+        string conString = ConnectionString;
         [SetUp]
 		public void Init()
 		{
@@ -72,7 +73,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 				if(Reader.Read())
 				{
-					int count=int.Parse( Reader.GetValue(0).ToString());
+                    int count = int.Parse(Reader.GetValue(0) != null ? Reader.GetValue(0).ToString() : "") ;
 					//Console.WriteLine(count.ToString());
 					if(Reader.Read())
 					{
@@ -140,5 +141,7 @@ namespace EnterpriseDB.EDBClient.Tests
 			}
 		}
 	}
+
+#pragma warning restore CS8604
 }
 

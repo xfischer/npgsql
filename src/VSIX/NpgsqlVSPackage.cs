@@ -42,7 +42,8 @@ namespace Npgsql.VSIX
     [ProvideBindingPath]  // Necessary for loading Npgsql via DbProviderFactories.GetProvider()
     [NpgsqlProviderRegistration]
     [Guid(PackageGuidString)]
-    [ProvideAutoLoad(UIContextGuids80.DataSourceWindowAutoVisible), ProvideAutoLoad(UIContextGuids80.DataSourceWindowSupported)]
+    [ProvideAutoLoad(UIContextGuids80.DataSourceWindowAutoVisible, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(UIContextGuids80.DataSourceWindowSupported, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     public sealed class NpgsqlVSPackage : AsyncPackage
     {
@@ -87,7 +88,7 @@ namespace Npgsql.VSIX
             }
 
             // Add an entry for Npgsql
-            factoriesTable.Rows.Add("Npgsql Data Provider", ".NET Data Provider for EnterpriseDB PostgreSQL",
+            factoriesTable.Rows.Add("Npgsql Data Provider", ".NET Data Provider for PostgreSQL",
                 Constants.NpgsqlInvariantName, "EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient");
         }
     }

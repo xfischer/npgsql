@@ -34,8 +34,12 @@ namespace EnterpriseDB.EDBClient
         readonly Dictionary<string, int> _paramIndexMap = new Dictionary<string, int>();
         readonly StringBuilder _rewrittenSql = new StringBuilder();
 
-        List<EDBStatement> _statements;
-        EDBStatement _statement;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        List<EDBStatement> _statements = default;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        EDBStatement _statement = default;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         int _statementIndex;
         string sqlString;
 
@@ -56,14 +60,20 @@ namespace EnterpriseDB.EDBClient
             Debug.Assert(sql != null);
             Debug.Assert(statements != null);
             Debug.Assert(parameters != null);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             Debug.Assert(deriveParameters == false || parameters.Count == 0);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
+#pragma warning disable CS8601 // Possible null reference assignment.
             _statements = statements;
+#pragma warning restore CS8601 // Possible null reference assignment.
             _statementIndex = -1;
             MoveToNextStatement();
 
             var currCharOfs = 0;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             var end = sql.Length;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             var ch = '\0';
             var isProcedure = false;//EnterpriseDB Team
             var numActiveBlocks = 0;//EnterpriseDB Team
@@ -177,6 +187,7 @@ namespace EnterpriseDB.EDBClient
                         parenthesisLevel++;
                         break;
                     case ')':
+
                         parenthesisLevel--;
                         break;
                     case 'e':
@@ -240,7 +251,9 @@ namespace EnterpriseDB.EDBClient
                     if (!_paramIndexMap.TryGetValue(paramName, out var index))
                     {
                         // Parameter hasn't been seen before in this query
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                         if (!parameters.TryGetValue(paramName, out var parameter))
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                         {
                             if (deriveParameters)
                             {
@@ -569,14 +582,18 @@ namespace EnterpriseDB.EDBClient
                 isProcedure = procedureFlag;//EnterpriseDB Team
                 goto None;
             }
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             if (statements.Count > _statementIndex + 1)
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
             return;
 
         Finish:
             _rewrittenSql.Append(sql.Substring(currTokenBeg, end - currTokenBeg));
             _statement.SQL = _rewrittenSql.ToString();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             if (statements.Count > _statementIndex + 1)
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
         }
 

@@ -1,28 +1,4 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EDB Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EDB DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EDB DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EDB DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EDB DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System.Net;
-using JetBrains.Annotations;
+﻿using System.Net;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
@@ -33,31 +9,46 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeHandlers.NetworkHandlers
 {
+    /// <summary>
+    /// A type handler for the PostgreSQL cidr data type.
+    /// </summary>
     /// <remarks>
-    /// http://www.postgresql.org/docs/current/static/datatype-net-types.html
+    /// See http://www.postgresql.org/docs/current/static/datatype-net-types.html.
+    ///
+    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("cidr", EDBDbType.Cidr)]
-    class CidrHandler : EDBSimpleTypeHandler<(IPAddress Address, int Subnet)>, IEDBSimpleTypeHandler<EDBInet>
+    public class CidrHandler : EDBSimpleTypeHandler<(IPAddress Address, int Subnet)>, IEDBSimpleTypeHandler<EDBInet>
     {
-        public override (IPAddress Address, int Subnet) Read(EDBReadBuffer buf, int len, FieldDescription fieldDescription = null)
+        /// <inheritdoc />
+        public CidrHandler(PostgresType postgresType) : base(postgresType) {}
+
+        /// <inheritdoc />
+        public override (IPAddress Address, int Subnet) Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => InetHandler.DoRead(buf, len, fieldDescription, true);
 
-        EDBInet IEDBSimpleTypeHandler<EDBInet>.Read(EDBReadBuffer buf, int len, [CanBeNull] FieldDescription fieldDescription)
+        EDBInet IEDBSimpleTypeHandler<EDBInet>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
         {
             var (address, subnet) = Read(buf, len, fieldDescription);
             return new EDBInet(address, subnet);
         }
 
-        public override int ValidateAndGetLength((IPAddress Address, int Subnet) value, EDBParameter parameter)
+        /// <inheritdoc />
+        public override int ValidateAndGetLength((IPAddress Address, int Subnet) value, EDBParameter? parameter)
             => InetHandler.GetLength(value.Address);
 
-        public int ValidateAndGetLength(EDBInet value, EDBParameter parameter)
+        /// <inheritdoc />
+        public int ValidateAndGetLength(EDBInet value, EDBParameter? parameter)
             => InetHandler.GetLength(value.Address);
 
-        public override void Write((IPAddress Address, int Subnet) value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public override void Write((IPAddress Address, int Subnet) value, EDBWriteBuffer buf, EDBParameter? parameter)
             => InetHandler.DoWrite(value.Address, value.Subnet, buf, true);
 
-        public void Write(EDBInet value, EDBWriteBuffer buf, EDBParameter parameter)
+        /// <inheritdoc />
+        public void Write(EDBInet value, EDBWriteBuffer buf, EDBParameter? parameter)
             => InetHandler.DoWrite(value.Address, value.Netmask, buf, true);
     }
 }

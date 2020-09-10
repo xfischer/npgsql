@@ -6,13 +6,14 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-	/// <summary>
-	/// This Class contains functions for unit testing of .Net Driver.
-	/// </summary>
-	[TestFixture] 
+#pragma warning disable CS8602
+    /// <summary>
+    /// This Class contains functions for unit testing of .Net Driver.
+    /// </summary>
+    [TestFixture] 
 	public class EDBDBFeaturesTest : TestBase
     {
-		EDBConnection con = null;       
+		EDBConnection? con = null;       
  
 		[SetUp]
 		public void Init()
@@ -35,7 +36,7 @@ namespace EnterpriseDB.EDBClient.Tests
             //command.Prepare();
             //command.Parameters[0].Value = null;
             //command.ExecuteNonQuery();
-            //String cursorName = command.Parameters[0].Value.ToString();
+            //string cursorName = command.Parameters[0].Value.ToString();
 
             //command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             //command.CommandType = CommandType.Text;
@@ -128,7 +129,7 @@ namespace EnterpriseDB.EDBClient.Tests
             cmd.ExecuteNonQuery(); 
         } 
 
-		[Test]
+		[Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
 		public void TestDefaultwithOneParameter()
 		{
 			con.Open();
@@ -198,4 +199,5 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
 	}
+#pragma warning restore CS8602
 }

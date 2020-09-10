@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
+﻿using BenchmarkDotNet.Attributes;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Benchmarks
 {
     public class CopyImport
     {
-        EDBConnection _conn;
-        EDBCommand _truncateCmd;
+        EDBConnection _conn = default!;
+        EDBCommand _truncateCmd = default!;
         const int Rows = 1000;
 
         [GlobalSetup]

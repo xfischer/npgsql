@@ -33,11 +33,12 @@ using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-
+#pragma warning disable CS8600
+#pragma warning disable CS8602
     [TestFixture]
     public class EDBQuotsTests : TestBase
     {
-        private EDBConnection _conn = null;
+        private EDBConnection? _conn = null;
 
         #region Setup / Tear Down
         [SetUp]
@@ -174,7 +175,7 @@ namespace EnterpriseDB.EDBClient.Tests
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
             com.ExecuteNonQuery();
-            EDBDataReader Reader = null;
+            EDBDataReader? Reader = null;
             com.CommandText = "select id from Quote where b= :No";
 
 
@@ -205,7 +206,7 @@ namespace EnterpriseDB.EDBClient.Tests
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
             com.ExecuteNonQuery();
-            EDBDataReader Reader = null;
+            EDBDataReader? Reader = null;
             com.CommandText = "select id from Quote where b= :No";
             try
             {
@@ -245,7 +246,7 @@ namespace EnterpriseDB.EDBClient.Tests
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
             com.ExecuteNonQuery();
-            EDBDataReader Reader = null;
+            EDBDataReader? Reader = null;
             com.CommandText = "select id from Quote where b= :No";
             try
             {
@@ -284,7 +285,7 @@ namespace EnterpriseDB.EDBClient.Tests
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
             com.ExecuteNonQuery();
-            EDBDataReader Reader = null;
+            EDBDataReader? Reader = null;
             com.CommandText = "select id from Quote where b= :No";
             try
             {
@@ -644,5 +645,6 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
     }
-
+#pragma warning restore CS8600
+#pragma warning restore CS8602
 }

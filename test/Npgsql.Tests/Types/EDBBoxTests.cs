@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 	[TestFixture]
 	public class EDBBoxTest : TestBase
     {
-		EDBConnection con = null;
+		EDBConnection? con = null;
 
 		[SetUp]
 		public void Init()
