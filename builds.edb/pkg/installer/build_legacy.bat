@@ -12,7 +12,7 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\T
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
 @SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\MSBuild\\Current\\Bin"
 @SET VS_2017_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools"
-@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%MSBUILD_PATH%;%VS_2017_PATH%;%PATH%
+@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%SOURCE_PATH%;%MSBUILD_PATH%;%VS_2017_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%

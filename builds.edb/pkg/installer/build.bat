@@ -9,13 +9,10 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\T
 @SET STAGING_DIR="%6"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
-<<<<<<< HEAD
 @SET PATH=%PGBUILD%\bin;%SOURCE_PATH%;%DOTNET_PATH%;%PATH%
-=======
 @SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin"
 @SET VS_2019_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools"
-@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
->>>>>>> 6ba4dcf31aecdd1adcd53597073f836665affb1a
+@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%SOURCE_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
