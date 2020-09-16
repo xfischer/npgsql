@@ -24,7 +24,7 @@ build-dotnet451:
 		rm -rf $(DOTNET_451_SOURCE_PATH); \
 		git clone $(GIT_REPO_PATH)/CON-DNET $(DOTNET_451_SOURCE_PATH); \
 		cd $(DOTNET_451_SOURCE_PATH); \
-		git checkout "$(NET45_SRC_TAG)"; \
+		git checkout "$(DOTNET_451_TAG)"; \
 		cd -
 
 	cmd /c "pkg\\installer\\build_legacy.bat $(DOTNET_451_SOURCE_PATH) $(NET45_FRAMEWORK) Release AnyCPU NET45 $(DOTNET_STAGING_PATH) $(DOTNET_SOURCE_PATH)"
