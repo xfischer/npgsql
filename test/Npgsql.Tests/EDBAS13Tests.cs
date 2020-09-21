@@ -31,6 +31,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Ignore("EC-1339")]
         public void CompatibleSYSDATE_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropProc("DROP FUNCTION rm44158_fun;");
             DropTable("DROP TABLE rm44158_tab;");
 
@@ -89,6 +92,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void Explicit_INDEX__PRIMARY_KEY_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE rm43851_products1;");
             DropTable("DROP TABLE rm43851_products2;");
 
@@ -149,6 +155,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Ignore("EC-1338")]
         public void UTL_HTTPExceptionHandling_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             string proc1 = "CREATE OR REPLACE PROCEDURE utl_proc1() IS"
                         + " req   UTL_HTTP.REQ;"
                         + " resp UTL_HTTP.RESP;"
@@ -218,6 +227,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void AlterDirectoryOwner_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropDirectory("DROP DIRECTORY dir_Test;");
             DropUser("DROP USER u1 CASCADE;");
 
@@ -234,6 +246,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Ignore("Requires directories for tablespace, Works fine when run against server on Linux, Problem on Windows.")]
         public void PartitionSubPartitionNumberTable_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE tbl01 CASCADSE;");
             DropTable("DROP TABLE tbl02 CASCADSE;");
             DropTable("DROP TABLE tbl03 CASCADSE;");
@@ -365,6 +380,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void Parallel_NoParallel_Create_Table_Index_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE rm43833 CASCADE;");
             DropTable("DROP TABLE rm43833_t1 CASCADE;");
             //--Create table should accept the PARALLEL clause with some degree and set the
@@ -405,6 +423,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void DefaultBehaviour_dbms_output_compatible_Redwood_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropProc("DROP PROCEDURE dbms_output_proc;");
             string createProc = "CREATE OR REPLACE PROCEDURE dbms_output_proc() IS"
             + " BEGIN"
@@ -424,6 +445,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void Stats_Mode_Function_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE smt1 CASCADE;");
             CreateTable("create table smt1(a int, b int, c varchar2(10));");
             InsertIntoTable("insert into smt1 values(1, 10, 'str1');");
@@ -463,6 +487,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void DBMS_SQL_Func_Proc_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropProc("DROP PROCEDURE dbmssql_proc1;");
             DropProc("DROP PROCEDURE dbmssql_proc2;");
 
@@ -524,6 +551,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Ignore("EC-1337")]
         public void Function_to_timestamp_tz_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropView("DROP VIEW tstz_vw;");
             string createView = "CREATE VIEW tstz_vw as SELECT"
             + " TO_TIMESTAMP_TZ('12-jan-2010', 'dd-month-yyyy') tz1, "
@@ -548,6 +578,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void FuncProcInsidePkgBody_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropPackageBody("DROP PACKAGE BODY test_func_spec_pkg");
             DropPackage("DROP PACKAGE test_func_spec_pkg");
             string pkg = "create or replace package test_func_spec_pkg as"
@@ -583,6 +616,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void FMFormatIn_to_number_Function_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE fm_tab CASCADE");
             string createTable = "create table fm_tab(c1 varchar2(50));";
             CreateTable(createTable);
@@ -603,6 +639,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Ignore("EC-1336")]
         public void AutomaticListPartitionaing_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             string dropTable = "drop table alp_tab";
             DropTable(dropTable);
 
@@ -621,6 +660,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void AutomaticListPartitionaing_Workaround_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             string dropTable = "drop table alp_tab";
             DropTable(dropTable);
 
@@ -639,6 +681,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void AggregateFuncMedian_IndexNumber_Test()
         {
+#nullable disable
+            TestUtil.MinimumPgVersion(conn, "13.0.0");
+#nullable restore 
             DropTable("DROP TABLE median_test CASCADE");
             //-- Additional smallint, int, bigint, and numeric variants in aggregate function MEDIAN.
             string createTable = "create table median_test(c1 smallint, c2 integer, c3 bigint, c4 decimal, c5 numeric, c6 real, c7 double precision, c8 NUMERIC(3, 2),c9 NUMERIC(3),c10 float, c11 float(2),c12 float8, c13 money,c14 interval, c15 long, c16 smallserial,c17 serial, c18 bigserial);";
