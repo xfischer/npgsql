@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using EnterpriseDB.EDBClient.BackendMessages;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Internally represents a statement has been prepared, is in the process of being prepared, or is a
     /// candidate for preparation (i.e. awaiting further usages).
     /// </summary>
+    [DebuggerDisplay("{Name} ({State}): {Sql}")]
     class PreparedStatement
     {
         readonly PreparedStatementManager _manager;
@@ -110,7 +112,8 @@ namespace EnterpriseDB.EDBClient{
         internal void CompleteUnprepare()
         {
             _manager.BySql.Remove(Sql);
-            _manager.NumPrepared--;
+            if (IsPrepared || State == PreparedState.BeingUnprepared)
+                _manager.NumPrepared--;
             State = PreparedState.Unprepared;
         }
 
@@ -130,16 +133,7 @@ namespace EnterpriseDB.EDBClient{
         NotPrepared,
 
         /// <summary>
-        /// The statement has been selected for preparation, but the preparation hasn't started yet.
-        /// This is a temporary state that only occurs during preparation, and indicates that no
-        /// no protocol message (Parse) has been sent yet.
-        /// </summary>
-        ToBePrepared,
-
-        /// <summary>
-        /// The statement is in the process of being prepared. This is a temporary state that only occurs during
-        /// preparation, and indicates that a Parse protocol message for the statement has already been written
-        /// to the write buffer.
+        /// The statement is in the process of being prepared.
         /// </summary>
         BeingPrepared,
 

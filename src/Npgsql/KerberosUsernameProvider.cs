@@ -4,7 +4,8 @@ using System.IO;
 using System.Linq;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Launches MIT Kerberos klist and parses out the default principal from it.
     /// Caches the result.

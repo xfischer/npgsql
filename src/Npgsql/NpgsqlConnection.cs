@@ -20,7 +20,8 @@ using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
 using IsolationLevel = System.Data.IsolationLevel;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// This class represents a connection to a PostgreSQL server.
     /// </summary>
@@ -108,7 +109,7 @@ namespace EnterpriseDB.EDBClient{
         /// Initializes a new instance of <see cref="EDBConnection"/> with the given connection string.
         /// </summary>
         /// <param name="connectionString">The connection used to open the PostgreSQL database.</param>
-        public EDBConnection(string connectionString) : this()
+        public EDBConnection(string? connectionString) : this()
             => ConnectionString = connectionString;
 
         /// <summary>
@@ -424,15 +425,15 @@ namespace EnterpriseDB.EDBClient{
 
                 return Connector.State switch
                 {
-                    ConnectorState.Closed     => ConnectionState.Closed,
+                    ConnectorState.Closed => ConnectionState.Closed,
                     ConnectorState.Connecting => ConnectionState.Connecting,
-                    ConnectorState.Ready      => ConnectionState.Open,
-                    ConnectorState.Executing  => ConnectionState.Open | ConnectionState.Executing,
-                    ConnectorState.Copy       => ConnectionState.Open | ConnectionState.Fetching,
-                    ConnectorState.Fetching   => ConnectionState.Open | ConnectionState.Fetching,
-                    ConnectorState.Waiting    => ConnectionState.Open | ConnectionState.Fetching,
-                    ConnectorState.Broken     => ConnectionState.Broken,
-                    _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.")
+                    ConnectorState.Ready => ConnectionState.Open,
+                    ConnectorState.Executing => ConnectionState.Open | ConnectionState.Executing,
+                    ConnectorState.Copy => ConnectionState.Open | ConnectionState.Fetching,
+                    ConnectorState.Fetching => ConnectionState.Open | ConnectionState.Fetching,
+                    ConnectorState.Waiting => ConnectionState.Open | ConnectionState.Fetching,
+                    ConnectorState.Broken => ConnectionState.Broken,
+                    _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {Connector.State} of enum {nameof(ConnectorState)}. Please file a bug.")
                 };
             }
         }
@@ -494,10 +495,7 @@ namespace EnterpriseDB.EDBClient{
         /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
         /// There's no support for nested transactions.
         /// </remarks>
-        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
-        {
-            return BeginTransaction(isolationLevel);
-        }
+        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => BeginTransaction(isolationLevel);
 
         /// <summary>
         /// Begins a database transaction.
@@ -533,10 +531,47 @@ namespace EnterpriseDB.EDBClient{
                 if (connector.InTransaction)
                     throw new InvalidOperationException("A transaction is already in progress; nested/concurrent transactions aren't supported.");
 
-                connector.Transaction.Init(level);
-                return connector.Transaction;
+                return new EDBTransaction(this, level);
             }
         }
+
+#if !NET461 && !NETSTANDARD2_0
+        /// <summary>
+        /// Asynchronously begins a database transaction.
+        /// </summary>
+        /// <param name="cancellationToken">An optional token to cancel the asynchronous operation. The default value is None.</param>
+        /// <returns>A task whose Result property is an object representing the new transaction.</returns>
+        /// <remarks>
+        /// Currently there's no support for nested transactions. Transactions created by this method will have Read Committed isolation level.
+        /// </remarks>
+        public new ValueTask<EDBTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+            => BeginTransactionAsync(IsolationLevel.Unspecified, cancellationToken);
+
+        /// <summary>
+        /// Asynchronously begins a database transaction.
+        /// </summary>
+        /// <param name="level">The <see cref="System.Data.IsolationLevel">isolation level</see> under which the transaction should run.</param>
+        /// <param name="cancellationToken">An optional token to cancel the asynchronous operation. The default value is None.</param>
+        /// <returns>A task whose Result property is an object representing the new transaction.</returns>
+        /// <remarks>
+        /// Currently the IsolationLevel ReadCommitted and Serializable are supported by the PostgreSQL backend.
+        /// There's no support for nested transactions.
+        /// </remarks>
+        public new ValueTask<EDBTransaction> BeginTransactionAsync(IsolationLevel level, CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+		        return new ValueTask<EDBTransaction>(Task.FromCanceled<EDBTransaction>(cancellationToken));
+
+            try
+            {
+                return new ValueTask<EDBTransaction>(BeginTransaction(level));
+            }
+            catch (Exception exception)
+            {
+                return new ValueTask<EDBTransaction>(Task.FromException<EDBTransaction>(exception));
+            }
+        }
+#endif
 
         /// <summary>
         /// Enlist transaction.
@@ -604,60 +639,56 @@ namespace EnterpriseDB.EDBClient{
 
         internal Task Close(bool wasBroken, bool async)
         {
-            if (Connector == null)
+            // Even though EDBConnection isn't thread safe we'll make sure this part is.
+            // Because we really don't want double returns to the pool.
+            var connector = Interlocked.Exchange(ref Connector, null);
+            if (connector == null)
                 return Task.CompletedTask;
-            var connectorId = Connector.Id;
-            Log.Trace("Closing connection...", connectorId);
+
             _wasBroken = wasBroken;
 
-            if (Connector.HasOngoingOperation)
-                return CloseOngoingOperationAndFinish();
+            Log.Trace("Closing connection...", connector.Id);
 
-            FinishClose();
+            if (connector.HasOngoingOperation)
+                return CloseOngoingOperationAndFinish(this, connector, async);
+
+            FinishClose(this, connector);
             return Task.CompletedTask;
 
-            async Task CloseOngoingOperationAndFinish()
+            static async Task CloseOngoingOperationAndFinish(EDBConnection connection, EDBConnector connector, bool async)
             {
-                await Connector!.CloseOngoingOperations(async);
+                // This method could re-enter connection.Close() due to an underlying connection failure.
+                await connector.CloseOngoingOperations(async);
 
-                // The connector has closed us during CloseOngoingOperations due to an underlying failure.
-                if (Connector == null)
-                    return;
-
-                FinishClose();
+                FinishClose(connection, connector);
             }
 
-            void FinishClose()
+            static void FinishClose(EDBConnection connection, EDBConnector connector)
             {
-                var connector = Connector!;
-                if (Settings.Pooling)
+                // A System.Transactions transaction is still in progress, we need to wait for it to complete.
+                if (connection.EnlistedTransaction != null)
                 {
-                    if (EnlistedTransaction == null)
-                        _pool!.Release(connector);
-                    else
-                    {
-                        // A System.Transactions transaction is still in progress, we need to wait for it to complete.
-                        // Close the connection and disconnect it from the resource manager but leave the connector
-                        // in a enlisted pending list in the pool.
-                        _pool!.AddPendingEnlistedConnector(connector, EnlistedTransaction);
-                        connector.Connection = null;
-                        EnlistedTransaction = null;
-                    }
-                }
-                else // Non-pooled connection
-                {
-                    if (EnlistedTransaction == null)
-                        connector.Close();
+                    // Close the connection and disconnect it from the resource manager but leave the connector
+                    // in a enlisted pending list in the pool.
+                    if (connection.Settings.Pooling)
+                        connection._pool!.AddPendingEnlistedConnector(connector, connection.EnlistedTransaction);
+
                     // If a non-pooled connection is being closed but is enlisted in an ongoing
                     // TransactionScope, simply detach the connector from the connection and leave
                     // it open. It will be closed when the TransactionScope is disposed.
                     connector.Connection = null;
-                    EnlistedTransaction = null;
+                    connection.EnlistedTransaction = null;
+                }
+                else
+                {
+                    if (connection.Settings.Pooling)
+                        connection._pool!.Release(connector);
+                    else
+                        connector.Close();
                 }
 
-                Log.Debug("Connection closed", connectorId);
-                Connector = null;
-                OnStateChange(OpenToClosedEventArgs);
+                Log.Debug("Connection closed", connector.Id);
+                connection.OnStateChange(OpenToClosedEventArgs);
             }
         }
 
@@ -675,18 +706,20 @@ namespace EnterpriseDB.EDBClient{
             _disposed = true;
         }
 
-#if !NET461 && !NETSTANDARD2_0
         /// <summary>
         /// Releases all resources used by the <see cref="EDBConnection">EDBConnection</see>.
         /// </summary>
-        public override async ValueTask DisposeAsync()
+#if !NET461 && !NETSTANDARD2_0
+        public async override ValueTask DisposeAsync()
+#else
+        public async ValueTask DisposeAsync()
+#endif
         {
             if (_disposed)
                 return;
             await CloseAsync();
             _disposed = true;
         }
-#endif
 
         #endregion
 
@@ -748,7 +781,7 @@ namespace EnterpriseDB.EDBClient{
         /// <summary>
         /// Returns whether SSL is being used for the connection.
         /// </summary>
-        internal bool IsSecure =>  CheckConnectionOpen().IsSecure;
+        internal bool IsSecure => CheckConnectionOpen().IsSecure;
 
         /// <summary>
         /// Selects the local Secure Sockets Layer (SSL) certificate used for authentication.
@@ -1195,9 +1228,17 @@ namespace EnterpriseDB.EDBClient{
         /// arrives, and exits immediately. The asynchronous message is delivered via the normal events
         /// (<see cref="Notification"/>, <see cref="Notice"/>).
         /// </summary>
+        [PublicAPI]
+        public Task WaitAsync() => WaitAsync(CancellationToken.None);
+
+        /// <summary>
+        /// Waits asynchronously until an asynchronous PostgreSQL messages (e.g. a notification)
+        /// arrives, and exits immediately. The asynchronous message is delivered via the normal events
+        /// (<see cref="Notification"/>, <see cref="Notice"/>).
+        /// </summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
         [PublicAPI]
-        public Task WaitAsync(CancellationToken cancellationToken = default)
+        public Task WaitAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled(cancellationToken);
@@ -1286,7 +1327,8 @@ namespace EnterpriseDB.EDBClient{
         object ICloneable.Clone()
         {
             CheckDisposed();
-            var conn = new EDBConnection(_connectionString) {
+            var conn = new EDBConnection(_connectionString)
+            {
                 ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
                 UserCertificateValidationCallback = UserCertificateValidationCallback,
                 ProvidePasswordCallback = ProvidePasswordCallback,
@@ -1308,7 +1350,10 @@ namespace EnterpriseDB.EDBClient{
             var csb = new EDBConnectionStringBuilder(connectionString);
             if (csb.Password == null && Password != null)
                 csb.Password = Password;
-            return new EDBConnection(csb.ToString()) {
+            if (csb.PersistSecurityInfo && !Settings.PersistSecurityInfo)
+                csb.PersistSecurityInfo = false;
+            return new EDBConnection(csb.ToString())
+            {
                 ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
                 UserCertificateValidationCallback = UserCertificateValidationCallback,
                 ProvidePasswordCallback = ProvidePasswordCallback,
@@ -1344,12 +1389,16 @@ namespace EnterpriseDB.EDBClient{
         protected override DbProviderFactory DbProviderFactory => EDBFactory.Instance;
 
         /// <summary>
-        /// Clear connection pool.
+        /// Clears the connection pool. All idle physical connections in the pool of the given connection are
+        /// immediately closed, and any busy connections which were opened before <see cref="ClearPool"/> was called
+        /// will be closed when returned to the pool.
         /// </summary>
         public static void ClearPool(EDBConnection connection) => PoolManager.Clear(connection._connectionString);
 
         /// <summary>
-        /// Clear all connection pools.
+        /// Clear all connection pools. All idle physical connections in all pools are immediately closed, and any busy
+        /// connections which were opened before <see cref="ClearAllPools"/> was called will be closed when returned
+        /// to their pool.
         /// </summary>
         public static void ClearAllPools() => PoolManager.ClearAll();
 

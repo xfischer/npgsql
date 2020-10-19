@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
@@ -8,16 +7,17 @@ using EnterpriseDB.EDBClient.BackendMessages;
 
 #pragma warning disable CA1032
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// The exception that is thrown when the PostgreSQL backend reports errors (e.g. query
     /// SQL issues, constraint violations).
     /// </summary>
     /// <remarks>
     /// This exception only corresponds to a PostgreSQL-delivered error.
-    /// Other errors (e.g. network issues) will be raised via <see cref="EDBException"/>,
-    /// and purely EDB-related issues which aren't related to the server will be raised
-    /// via the standard CLR exceptions (e.g. ArgumentException).
+    /// Other errors (e.g. network issues) will be raised via <see cref="EDBException" />,
+    /// and purely EnterpriseDB.EDBClient-related issues which aren't related to the server will be raised
+    /// via the standard CLR exceptions (e.g. <see cref="ArgumentException" />).
     ///
     /// See http://www.postgresql.org/docs/current/static/errcodes-appendix.html,
     /// http://www.postgresql.org/docs/current/static/protocol-error-fields.html
@@ -25,43 +25,86 @@ namespace EnterpriseDB.EDBClient{
     [Serializable]
     public sealed class PostgresException : EDBException
     {
-        bool _dataInitialized;
+        /// <summary>
+        /// Creates a new instance.
+        /// </summary>
+        /// <remarks>
+        /// Exists for backwards compat with 4.0, has been removed for 5.0.
+        /// </remarks>
+        [Obsolete]
+        public PostgresException() : this(string.Empty, string.Empty, string.Empty, string.Empty) {}
 
         /// <summary>
         /// Creates a new instance.
         /// </summary>
         public PostgresException(string messageText, string severity, string invariantSeverity, string sqlState)
+            : this(messageText, severity, invariantSeverity, sqlState, detail: null) {}
+
+        /// <summary>
+        /// Creates a new instance.
+        /// </summary>
+        public PostgresException(
+            string messageText, string severity, string invariantSeverity, string sqlState,
+            string? detail = null, string? hint = null, int position = 0, int internalPosition = 0,
+            string? internalQuery = null, string? where = null, string? schemaName = null, string? tableName = null,
+            string? columnName = null, string? dataTypeName = null, string? constraintName = null, string? file = null,
+            string? line = null, string? routine = null)
         {
             MessageText = messageText;
             Severity = severity;
             InvariantSeverity = invariantSeverity;
             SqlState = sqlState;
+
+            Detail = detail;
+            Hint = hint;
+            Position = position;
+            InternalPosition = internalPosition;
+            InternalQuery = internalQuery;
+            Where = where;
+            SchemaName = schemaName;
+            TableName = tableName;
+            ColumnName = columnName;
+            DataTypeName = dataTypeName;
+            ConstraintName = constraintName;
+            File = file;
+            Line = line;
+            Routine = routine;
+
+            AddData(nameof(Severity), Severity);
+            AddData(nameof(InvariantSeverity), InvariantSeverity);
+            AddData(nameof(SqlState), SqlState);
+            AddData(nameof(MessageText), MessageText);
+            AddData(nameof(Detail), Detail);
+            AddData(nameof(Hint), Hint);
+            AddData(nameof(Position), Position);
+            AddData(nameof(InternalPosition), InternalPosition);
+            AddData(nameof(InternalQuery), InternalQuery);
+            AddData(nameof(Where), Where);
+            AddData(nameof(SchemaName), SchemaName);
+            AddData(nameof(TableName), TableName);
+            AddData(nameof(ColumnName), ColumnName);
+            AddData(nameof(DataTypeName), DataTypeName);
+            AddData(nameof(ConstraintName), ConstraintName);
+            AddData(nameof(File), File);
+            AddData(nameof(Line), Line);
+            AddData(nameof(Routine), Routine);
+
+            void AddData<T>(string key, T value)
+            {
+                if (!EqualityComparer<T>.Default.Equals(value, default!))
+                    Data.Add(key, value);
+            }
         }
 
         PostgresException(ErrorOrNoticeMessage msg)
-        {
-            Severity = msg.Severity;
-            InvariantSeverity = msg.InvariantSeverity;
-            SqlState = msg.Code;
-            MessageText = msg.Message;
-            Detail = msg.Detail;
-            Hint = msg.Hint;
-            Position = msg.Position;
-            InternalPosition = msg.InternalPosition;
-            InternalQuery = msg.InternalQuery;
-            Where = msg.Where;
-            SchemaName = msg.SchemaName;
-            TableName = msg.TableName;
-            ColumnName = msg.ColumnName;
-            DataTypeName = msg.DataTypeName;
-            ConstraintName = msg.ConstraintName;
-            File = msg.File;
-            Line = msg.Line;
-            Routine = msg.Routine;
-        }
+            : this(
+                msg.Message, msg.Severity, msg.InvariantSeverity, msg.SqlState,
+                msg.Detail, msg.Hint, msg.Position, msg.InternalPosition, msg.InternalQuery,
+                msg.Where, msg.SchemaName, msg.TableName, msg.ColumnName, msg.DataTypeName,
+                msg.ConstraintName, msg.File, msg.Line, msg.Routine) {}
 
-        internal static PostgresException Load(EDBReadBuffer buf)
-            => new PostgresException(ErrorOrNoticeMessage.Load(buf));
+        internal static PostgresException Load(EDBReadBuffer buf, bool includeDetail)
+            => new PostgresException(ErrorOrNoticeMessage.Load(buf, includeDetail));
 
         internal PostgresException(SerializationInfo info, StreamingContext context)
             : base(info, context)
@@ -155,7 +198,7 @@ namespace EnterpriseDB.EDBClient{
         public override string Message => SqlState + ": " + MessageText;
 
         /// <summary>
-        /// Specifies whether the exception is considered transient, that is, whether retrying to operation could
+        /// Specifies whether the exception is considered transient, that is, whether retrying the operation could
         /// succeed (e.g. a network error). Check <see cref="SqlState"/>.
         /// </summary>
         public override bool IsTransient
@@ -193,47 +236,6 @@ namespace EnterpriseDB.EDBClient{
         /// Returns the statement which triggered this exception.
         /// </summary>
         public EDBStatement? Statement { get; internal set; }
-
-        /// <summary>
-        /// Gets a collection of key/value pairs that provide additional PostgreSQL fields about the exception.
-        /// </summary>
-        public override IDictionary Data
-        {
-            get
-            {
-                var data = base.Data;
-                if (_dataInitialized)
-                    return data;
-
-                AddData(nameof(Severity), Severity);
-                AddData(nameof(InvariantSeverity), InvariantSeverity);
-                AddData(nameof(SqlState), SqlState);
-                AddData(nameof(MessageText), MessageText);
-                AddData(nameof(Detail), Detail);
-                AddData(nameof(Hint), Hint);
-                AddData(nameof(Position), Position);
-                AddData(nameof(InternalPosition), InternalPosition);
-                AddData(nameof(InternalQuery), InternalQuery);
-                AddData(nameof(Where), Where);
-                AddData(nameof(SchemaName), SchemaName);
-                AddData(nameof(TableName), TableName);
-                AddData(nameof(ColumnName), ColumnName);
-                AddData(nameof(DataTypeName), DataTypeName);
-                AddData(nameof(ConstraintName), ConstraintName);
-                AddData(nameof(File), File);
-                AddData(nameof(Line), Line);
-                AddData(nameof(Routine), Routine);
-
-                _dataInitialized = true;
-                return data;
-
-                void AddData<T>(string key, T value)
-                {
-                    if (!EqualityComparer<T>.Default.Equals(value, default!))
-                        data.Add(key, value);
-                }
-            }
-        }
 
         #region Message Fields
 

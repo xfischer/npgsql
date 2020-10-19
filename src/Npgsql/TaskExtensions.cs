@@ -3,7 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     static class TaskExtensions
     {
         /// <summary>

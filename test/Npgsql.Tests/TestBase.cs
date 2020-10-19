@@ -19,11 +19,17 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region Utilities for use by tests
 
-        protected virtual EDBConnection OpenConnection(string? connectionString = null)
+        protected virtual EDBConnection CreateConnection(string? connectionString = null)
         {
             if (connectionString == null)
                 connectionString = ConnectionString;
             var conn = new EDBConnection(connectionString);
+            return conn;
+        }
+
+        protected virtual EDBConnection OpenConnection(string? connectionString = null)
+        {
+            var conn = CreateConnection(connectionString);
             try
             {
                 conn.Open();
@@ -52,7 +58,6 @@ namespace EnterpriseDB.EDBClient.Tests
         protected bool IsRedshift => new EDBConnectionStringBuilder(ConnectionString).ServerCompatibilityMode == ServerCompatibilityMode.Redshift;
 
         #endregion
-
         public static EDBConnection openDBwithoutPooling()
         {
             try

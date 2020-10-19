@@ -4,7 +4,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     public sealed partial class EDBReadBuffer
     {
         internal sealed class ColumnStream : Stream
@@ -60,7 +61,7 @@ namespace EnterpriseDB.EDBClient{
                     Seek(_start + value, SeekOrigin.Begin);
                 }
             }
-            /*EnterpriseDB Team*/
+
             public override long Seek(long offset, SeekOrigin origin)
             {
                 CheckDisposed();

@@ -10,7 +10,8 @@ using EnterpriseDB.EDBClient.TypeMapping;
 using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     ///<summary>
     /// This class represents a parameter to a command that will be sent to server
     ///</summary>
@@ -86,7 +87,7 @@ namespace EnterpriseDB.EDBClient{
         /// class with the parameter name and the data type.
         /// </summary>
         /// <param name="parameterName">The name of the parameter to map.</param>
-        /// <param name="parameterType">One of the <see cref="System.Data.DbType">DbType</see> values.</param>
+        /// <param name="parameterType">One of the <see cref="EDBTypes.EDBDbType">EDBDbType</see> values.</param>
         public EDBParameter(string parameterName, EDBDbType parameterType)
             : this(parameterName, parameterType, 0, string.Empty)
         {
@@ -502,15 +503,14 @@ namespace EnterpriseDB.EDBClient{
         {
             if (Direction == ParameterDirection.Input)//EnterpriseDB Team
                 if (_value == null)
-                throw new InvalidCastException($"Parameter {ParameterName} must be set");
+                    throw new InvalidCastException($"Parameter {ParameterName} must be set");
             if (_value is DBNull)
                 return 0;
 
             var lengthCache = LengthCache;
 #pragma warning disable CS8604 // Possible null reference argument.
             var len = Handler!.ValidateObjectAndGetLength(_value, ref lengthCache, this);
-#pragma warning restore CS8604 // Possible null reference argument.
-            LengthCache = lengthCache;
+#pragma warning restore CS8604 // Possible null reference argument.LengthCache = lengthCache;
             return len;
         }
 
@@ -567,7 +567,7 @@ namespace EnterpriseDB.EDBClient{
                     return EDBParameterDirection.Unknown;
             }
         }
-		
+
 
         /// <summary>
         /// Get param OID
@@ -710,8 +710,8 @@ namespace EnterpriseDB.EDBClient{
             Unknown = 0
         }
 
-      
-		/// <summary>
+
+        /// <summary>
         /// Get param to OID
         /// </summary>
         public static EDBParameterOID ParamToOid(string param_name)//EnterpriseDB Team
@@ -814,6 +814,7 @@ namespace EnterpriseDB.EDBClient{
         internal bool IsInputDirection => Direction == ParameterDirection.InputOutput || Direction == ParameterDirection.Input;
 
         internal bool IsOutputDirection => Direction == ParameterDirection.InputOutput || Direction == ParameterDirection.Output;
+
         /* EnterpriseDB Team */
         internal bool IsOutReturnDirection
         {

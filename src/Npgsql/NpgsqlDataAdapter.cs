@@ -2,7 +2,8 @@ using System.Data;
 using System.Data.Common;
 using JetBrains.Annotations;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Represents the method that handles the <see cref="EDBDataAdapter.RowUpdated">RowUpdated</see> events.
     /// </summary>

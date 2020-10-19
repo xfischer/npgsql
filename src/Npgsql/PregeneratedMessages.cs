@@ -3,7 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     static class PregeneratedMessages
     {
         static PregeneratedMessages()

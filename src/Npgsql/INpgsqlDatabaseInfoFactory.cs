@@ -1,10 +1,11 @@
 ﻿using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// A factory which get generate instances of <see cref="EDBDatabaseInfo"/>, which describe a database
-    /// and the types it contains. When first connecting to a database, EDB will attempt to load information
+    /// and the types it contains. When first connecting to a database, EnterpriseDB.EDBClient will attempt to load information
     /// about it via this factory.
     /// </summary>
     public interface IEDBDatabaseInfoFactory

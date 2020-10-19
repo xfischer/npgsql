@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-boolean.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>

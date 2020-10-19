@@ -1,4 +1,5 @@
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Base class for all classes which represent a message sent by the PostgreSQL backend.
     /// </summary>
@@ -10,47 +11,47 @@ namespace EnterpriseDB.EDBClient{
     enum BackendMessageCode : byte
     {
         AuthenticationRequest = (byte)'R',
-        BackendKeyData        = (byte)'K',
-        BindComplete          = (byte)'2',
-        CloseComplete         = (byte)'3',
-        CompletedResponse     = (byte)'C',
-        CopyData              = (byte)'d',
-        CopyDone              = (byte)'c',
-        CopyBothResponse      = (byte)'W',
-        CopyInResponse        = (byte)'G',
-        CopyOutResponse       = (byte)'H',
-        DataRow               = (byte)'D',
-        EmptyQueryResponse    = (byte)'I',
-        ErrorResponse         = (byte)'E',
-        FunctionCall          = (byte)'F',
-        FunctionCallResponse  = (byte)'V',
-        NoData                = (byte)'n',
-        NoticeResponse        = (byte)'N',
-        NotificationResponse  = (byte)'A',
-        ParameterDescription  = (byte)'t',
-        ParameterStatus       = (byte)'S',
-        ParseComplete         = (byte)'1',
-        PasswordPacket        = (byte)' ',
-        PortalSuspended       = (byte)'s',
-        ReadyForQuery         = (byte)'Z',
-        RowDescription        = (byte)'T',
+        BackendKeyData = (byte)'K',
+        BindComplete = (byte)'2',
+        CloseComplete = (byte)'3',
+        CompletedResponse = (byte)'C',
+        CopyData = (byte)'d',
+        CopyDone = (byte)'c',
+        CopyBothResponse = (byte)'W',
+        CopyInResponse = (byte)'G',
+        CopyOutResponse = (byte)'H',
+        DataRow = (byte)'D',
+        EmptyQueryResponse = (byte)'I',
+        ErrorResponse = (byte)'E',
+        FunctionCall = (byte)'F',
+        FunctionCallResponse = (byte)'V',
+        NoData = (byte)'n',
+        NoticeResponse = (byte)'N',
+        NotificationResponse = (byte)'A',
+        ParameterDescription = (byte)'t',
+        ParameterStatus = (byte)'S',
+        ParseComplete = (byte)'1',
+        PasswordPacket = (byte)' ',
+        PortalSuspended = (byte)'s',
+        ReadyForQuery = (byte)'Z',
+        RowDescription = (byte)'T',
         OutDescription = (byte)'u', //EnterpriseDB Team Describe Out from server
         ParamData = (byte)'v'  //EnterpriseDB Team Parameter Out data
     }
 
     static class FrontendMessageCode
     {
-        internal const byte Describe =  (byte)'D';
-        internal const byte Sync =      (byte)'S';
-        internal const byte Execute =   (byte)'E';
-        internal const byte Parse =     (byte)'P';
-        internal const byte Bind =      (byte)'B';
-        internal const byte Close =     (byte)'C';
-        internal const byte Query =     (byte)'Q';
-        internal const byte CopyDone =  (byte)'c';
-        internal const byte CopyFail =  (byte)'f';
+        internal const byte Describe = (byte)'D';
+        internal const byte Sync = (byte)'S';
+        internal const byte Execute = (byte)'E';
+        internal const byte Parse = (byte)'P';
+        internal const byte Bind = (byte)'B';
+        internal const byte Close = (byte)'C';
+        internal const byte Query = (byte)'Q';
+        internal const byte CopyDone = (byte)'c';
+        internal const byte CopyFail = (byte)'f';
         internal const byte Terminate = (byte)'X';
-        internal const byte Password =  (byte)'p';
+        internal const byte Password = (byte)'p';
         /*EnterpriseDB Team*/
         internal const byte ParseOut = (byte)'O';
         internal const byte DescribeOut = (byte)'u';

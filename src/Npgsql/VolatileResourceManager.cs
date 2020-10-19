@@ -4,7 +4,8 @@ using System.Threading;
 using System.Transactions;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     ///
     /// </summary>

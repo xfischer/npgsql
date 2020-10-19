@@ -3,7 +3,8 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Large object manager. This class can be used to store very large files in a PostgreSQL database.
     /// </summary>

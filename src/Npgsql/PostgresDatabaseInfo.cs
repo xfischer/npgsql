@@ -12,7 +12,8 @@ using EnterpriseDB.EDBClient.Util;
 // ReSharper disable StringLiteralTypo
 // ReSharper disable CommentTypo
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// The default implementation of <see cref="IEDBDatabaseInfoFactory"/>, for standard PostgreSQL databases..
     /// </summary>
@@ -207,7 +208,7 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                 var ns = reader.GetString("nspname");
                 var internalName = reader.GetString("typname");
                 var oid = uint.Parse(reader.GetString("oid"), NumberFormatInfo.InvariantInfo);
-                
+
                 Debug.Assert(oid != 0);
 
                 var typeChar = reader.GetChar("typtype");
@@ -224,8 +225,8 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                         Debug.Assert(elementOID > 0);
                         if (!byOID.TryGetValue(elementOID, out var elementPostgresType))
                         {
-                                Log.Trace($"Array type '{internalName}' refers to unknown element with OID {elementOID}, skipping", conn.ProcessID);
-                                continue;
+                            Log.Trace($"Array type '{internalName}' refers to unknown element with OID {elementOID}, skipping", conn.ProcessID);
+                            continue;
                         }
 
                         var arrayType = new PostgresArrayType(ns, internalName, oid, elementPostgresType);
@@ -346,9 +347,10 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};" : "")}
                 if (!byOID.TryGetValue(fieldTypeOID, out var fieldType))  // See #2020
                 {
                     if (fieldName == "recipient_list")//EnterpriseDB Team
-                     {
-                     //fieldType = new PostgresCompositeType("sys", "aq$_recipient_list_t", 1323);
-                     } else
+                    {
+                        //fieldType = new PostgresCompositeType("sys", "aq$_recipient_list_t", 1323);
+                    }
+                    else
                     {
 #nullable disable
                         Log.Warn($"Skipping composite type {currentComposite.DisplayName} with field {fieldName} with type OID {fieldTypeOID}, which could not be resolved to a PostgreSQL type.");

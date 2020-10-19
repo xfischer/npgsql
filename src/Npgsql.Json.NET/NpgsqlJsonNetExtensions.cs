@@ -5,9 +5,10 @@ using EDBTypes;
 using Newtonsoft.Json;
 
 // ReSharper disable once CheckNamespace
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// Extension allowing adding the Json.NET plugin to an EDB type mapper.
+    /// Extension allowing adding the Json.NET plugin to an EnterpriseDB.EDBClient type mapper.
     /// </summary>
     public static class EDBJsonNetExtensions
     {

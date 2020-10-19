@@ -1,6 +1,7 @@
 using System;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides information on a PostgreSQL notification. Notifications are sent when your connection has registered for
     /// notifications on a specific channel via the LISTEN command. NOTIFY can be used to generate such notifications,

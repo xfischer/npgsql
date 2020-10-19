@@ -34,7 +34,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
 
         /// <summary>
         /// Writes a value to the provided buffer, with the assumption that there is enough space in the buffer
-        /// (no I/O will occur). The EDB core will have taken care of that.
+        /// (no I/O will occur). The EnterpriseDB.EDBClient core will have taken care of that.
         /// </summary>
         /// <param name="value">The value to write.</param>
         /// <param name="buf">The buffer to which to write.</param>

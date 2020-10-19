@@ -16,8 +16,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/datatype-json.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
-    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("jsonb", EDBDbType.Jsonb, typeof(JsonDocument))]
@@ -43,8 +43,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/datatype-json.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
-    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
     [TypeMapping("json", EDBDbType.Json)]
@@ -70,8 +70,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/datatype-json.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
-    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
     public class JsonHandler : EDBTypeHandler<string>, ITextReaderHandler
@@ -245,16 +245,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
             try
             {
-                // Unless we're in SequentialAccess mode, the entire value is already buffered in memory -
-                // deserialize it directly from bytes. Otherwise deserialize to string first - we can optimize this
-                // later.
-                if (buf.ReadBytesLeft >= byteLen)
-                {
-                    return typeof(T) == typeof(JsonDocument)
-                        ? (T)(object)JsonDocument.Parse(buf.ReadMemory(byteLen))
-                        : JsonSerializer.Deserialize<T>(buf.ReadSpan(byteLen), _serializerOptions);
-                }
-
+                // See #2818 for possibly returning a JsonDocument directly over our internal buffer, rather
+                // than deserializing to string.
                 var s = await _textHandler.Read(buf, byteLen, async, fieldDescription);
                 return typeof(T) == typeof(JsonDocument)
                     ? (T)(object)JsonDocument.Parse(s)

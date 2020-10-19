@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Thrown when trying to use a connection that is already busy performing some other operation.
     /// Provides information on the already-executing operation to help with debugging.

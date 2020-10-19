@@ -3,7 +3,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     public sealed partial class EDBWriteBuffer
     {
         sealed class ParameterStream : Stream

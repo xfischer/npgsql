@@ -6,7 +6,8 @@ using System.Diagnostics;
 using System.Reflection;
 #endif
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     static class Counters
     {
         /// <summary>
@@ -69,7 +70,7 @@ namespace EnterpriseDB.EDBClient{
                     {
                         enabled = PerformanceCounterCategory.Exists(Counter.DiagnosticsCounterCategory);
                         if (!enabled)
-                            Log.Warn($"{nameof(EDBConnectionStringBuilder.UsePerfCounters)} was specified but the Performance Counter category wasn't found. You probably need to install the EDB MSI.");
+                            Log.Warn($"{nameof(EDBConnectionStringBuilder.UsePerfCounters)} was specified but the Performance Counter category wasn't found. You probably need to install the EnterpriseDB.EDBClient MSI.");
                         var perfCtrSwitch = new TraceSwitch("ConnectionPoolPerformanceCounterDetail",
                             "level of detail to track with connection pool performance counters");
                         expensiveEnabled = enabled && perfCtrSwitch.Level == TraceLevel.Verbose;
@@ -113,7 +114,7 @@ namespace EnterpriseDB.EDBClient{
     sealed class Counter : IDisposable
     {
 #if NET461
-        internal const string DiagnosticsCounterCategory = ".NET Data Provider for PostgreSQL (EDB)";
+        internal const string DiagnosticsCounterCategory = ".NET Data Provider for PostgreSQL (EnterpriseDB.EDBClient)";
 
         internal PerformanceCounter? DiagnosticsCounter { get; private set; }
 #endif

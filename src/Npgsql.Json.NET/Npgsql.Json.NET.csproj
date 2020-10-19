@@ -1,21 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>Shay Rojansky</Authors>
-    <Description>Json.NET plugin for EDB, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
-    <PackageTags>EDB postgresql json postgres ado ado.net database sql</PackageTags>
+    <Description>Json.NET plugin for EnterpriseDB.EDBClient, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
+    <PackageTags>EnterpriseDB.EDBClient postgresql json postgres ado ado.net database sql</PackageTags>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
-    <RootNamespace>EnterpriseDB.EDBClient.Json.NET</RootNamespace>
-    <Company>EnterpriseDB</Company>
-    <Copyright>Copyright 2019 © The EnterpriseDB Development Team</Copyright>
-    <PackageProjectUrl />
-    <RepositoryUrl />
-    <Version>4.1.3.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Npgsql/Npgsql.csproj" />
+    <ProjectReference Include="..\Npgsql\Npgsql.csproj" />
   </ItemGroup>
 </Project>

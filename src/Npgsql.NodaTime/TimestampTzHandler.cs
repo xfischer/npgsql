@@ -4,6 +4,7 @@ using NodaTime.TimeZones;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
+using BclTimestampTzHandler = EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers.TimestampTzHandler;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -13,26 +14,47 @@ namespace EnterpriseDB.EDBClient.NodaTime
     {
         // Check for the legacy floating point timestamps feature
         public override EDBTypeHandler<Instant> Create(PostgresType postgresType, EDBConnection conn)
-            => conn.HasIntegerDateTimes
-                ? new TimestampTzHandler(postgresType)
-                : throw new NotSupportedException($"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
+        {
+            var csb = new EDBConnectionStringBuilder(conn.ConnectionString);
+            return conn.HasIntegerDateTimes
+                ? new TimestampTzHandler(postgresType, csb.ConvertInfinityDateTime)
+                : throw new NotSupportedException(
+                    $"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
+        }
     }
 
-    class TimestampTzHandler : EDBSimpleTypeHandler<Instant>, IEDBSimpleTypeHandler<ZonedDateTime>,
-                               IEDBSimpleTypeHandler<OffsetDateTime>
+    sealed class TimestampTzHandler : EDBSimpleTypeHandler<Instant>, IEDBSimpleTypeHandler<ZonedDateTime>,
+                              IEDBSimpleTypeHandler<OffsetDateTime>, IEDBSimpleTypeHandler<DateTimeOffset>
     {
         readonly IDateTimeZoneProvider _dateTimeZoneProvider;
+        readonly BclTimestampTzHandler _bclHandler;
 
-        public TimestampTzHandler(PostgresType postgresType)
-            : base(postgresType) => _dateTimeZoneProvider = DateTimeZoneProviders.Tzdb;
+        /// <summary>
+        /// Whether to convert positive and negative infinity values to Instant.{Max,Min}Value when
+        /// an Instant is requested
+        /// </summary>
+        readonly bool _convertInfinityDateTime;
+
+        public TimestampTzHandler(PostgresType postgresType, bool convertInfinityDateTime)
+            : base(postgresType)
+        {
+            _dateTimeZoneProvider = DateTimeZoneProviders.Tzdb;
+            _convertInfinityDateTime = convertInfinityDateTime;
+            _bclHandler = new BclTimestampTzHandler(postgresType, convertInfinityDateTime);
+        }
 
         #region Read
 
         public override Instant Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             var value = buf.ReadInt64();
-            if (value == long.MaxValue || value == long.MinValue)
-                throw new EDBSafeReadException(new NotSupportedException("Infinity values not supported for timestamp with time zone"));
+            if (_convertInfinityDateTime)
+            {
+                if (value == long.MaxValue)
+                    return Instant.MaxValue;
+                if (value == long.MinValue)
+                    return Instant.MinValue;
+            }
             return TimestampHandler.Decode(value);
         }
 
@@ -78,7 +100,23 @@ namespace EnterpriseDB.EDBClient.NodaTime
             => 8;
 
         public override void Write(Instant value, EDBWriteBuffer buf, EDBParameter? parameter)
-            => TimestampHandler.WriteInteger(value, buf);
+        {
+            if (_convertInfinityDateTime)
+            {
+                if (value == Instant.MaxValue)
+                {
+                    buf.WriteInt64(long.MaxValue);
+                    return;
+                }
+
+                if (value == Instant.MinValue)
+                {
+                    buf.WriteInt64(long.MinValue);
+                    return;
+                }
+            }
+            TimestampHandler.WriteInteger(value, buf);
+        }
 
         void IEDBSimpleTypeHandler<ZonedDateTime>.Write(ZonedDateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
             => Write(value.ToInstant(), buf, parameter);
@@ -87,5 +125,14 @@ namespace EnterpriseDB.EDBClient.NodaTime
             => Write(value.ToInstant(), buf, parameter);
 
         #endregion Write
+
+        DateTimeOffset IEDBSimpleTypeHandler<DateTimeOffset>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+            => _bclHandler.Read<DateTimeOffset>(buf, len, fieldDescription);
+
+        int IEDBSimpleTypeHandler<DateTimeOffset>.ValidateAndGetLength(DateTimeOffset value, EDBParameter? parameter)
+            => _bclHandler.ValidateAndGetLength(value, parameter);
+
+        void IEDBSimpleTypeHandler<DateTimeOffset>.Write(DateTimeOffset value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => _bclHandler.Write(value, buf, parameter);
     }
 }

@@ -8,9 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// A buffer used by EDB to write data to the socket efficiently.
+    /// A buffer used by EnterpriseDB.EDBClient to write data to the socket efficiently.
     /// Provides methods which encode different values types and tracks the current position.
     /// </summary>
     public sealed partial class EDBWriteBuffer
@@ -20,11 +21,6 @@ namespace EnterpriseDB.EDBClient{
         internal readonly EDBConnector Connector;
 
         internal Stream Underlying { private get; set; }
-
-        /// <summary>
-        /// Wraps SocketAsyncEventArgs for better async I/O as long as we're not doing SSL.
-        /// </summary>
-        internal AwaitableSocket? AwaitableSocket { get; set; }
 
         /// <summary>
         /// The total byte length of the buffer.
@@ -89,16 +85,8 @@ namespace EnterpriseDB.EDBClient{
             try
             {
                 if (async)
-                {
-                    if (AwaitableSocket == null)  // SSL
-                        await Underlying.WriteAsync(Buffer, 0, WritePosition);
-                    else  // Non-SSL async I/O, optimized
-                    {
-                        AwaitableSocket.SetBuffer(Buffer, 0, WritePosition);
-                        await AwaitableSocket.SendAsync();
-                    }
-                }
-                else  // Sync I/O
+                    await Underlying.WriteAsync(Buffer, 0, WritePosition);
+                else
                     Underlying.Write(Buffer, 0, WritePosition);
             }
             catch (Exception e)
@@ -460,7 +448,7 @@ namespace EnterpriseDB.EDBClient{
         internal void WriteStringChunked(char[] chars, int charIndex, int charCount,
                                          bool flush, out int charsUsed, out bool completed)
         {
-            if (WriteSpaceLeft == 0)
+            if (WriteSpaceLeft < _textEncoder.GetByteCount(chars, charIndex, 1, flush: false))
             {
                 charsUsed = 0;
                 completed = false;
@@ -475,18 +463,18 @@ namespace EnterpriseDB.EDBClient{
         internal unsafe void WriteStringChunked(string s, int charIndex, int charCount,
                                                 bool flush, out int charsUsed, out bool completed)
         {
-            if (WriteSpaceLeft == 0)
-            {
-                charsUsed = 0;
-                completed = false;
-                return;
-            }
-
             int bytesUsed;
 
             fixed (char* sPtr = s)
             fixed (byte* bufPtr = Buffer)
             {
+                if (WriteSpaceLeft < _textEncoder.GetByteCount(sPtr + charIndex, 1, flush: false))
+                {
+                    charsUsed = 0;
+                    completed = false;
+                    return;
+                }
+
                 _textEncoder.Convert(sPtr + charIndex, charCount, bufPtr + WritePosition, WriteSpaceLeft,
                                      flush, out charsUsed, out bytesUsed, out completed);
             }

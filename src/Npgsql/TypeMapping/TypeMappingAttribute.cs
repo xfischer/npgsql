@@ -11,13 +11,11 @@ namespace EnterpriseDB.EDBClient.TypeMapping
     [MeansImplicitUse]
     class TypeMappingAttribute : Attribute
     {
-
-
         /// <summary>
-        /// Maps an EDB type handler to a PostgreSQL type.
+        /// Maps an EnterpriseDB.EDBClient type handler to a PostgreSQL type.
         /// </summary>
         /// <param name="pgName">A PostgreSQL type name as it appears in the pg_type table.</param>
-        /// <param name="edbDbType">
+        /// <param name="eDBDbType">
         /// A member of <see cref="EDBDbType"/> which represents this PostgreSQL type.
         /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.EDBDbType"/> set to
         /// this value will be sent with the type handler mapped by this attribute.
@@ -37,13 +35,13 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// When <see cref="EDBParameter.EDBDbType"/> or <see cref="EDBParameter.Value"/>
         /// set, <see cref="EDBParameter.DbType"/> will be set to this value.
         /// </param>
-        internal TypeMappingAttribute(string pgName, EDBDbType? edbDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType? eDBDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType)
         {
             if (string.IsNullOrWhiteSpace(pgName))
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
             PgName = pgName;
-            EDBDbType = edbDbType;
+            EDBDbType = eDBDbType;
             DbTypes = dbTypes ?? new DbType[0];
             ClrTypes = clrTypes ?? new Type[0];
             InferredDbType = inferredDbType;
@@ -102,12 +100,6 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         internal TypeMappingAttribute(string pgName)
             : this(pgName, null, null, null, null)
         { }
-
-        //public TypeMappingAttribute(string v, EDBDbType bit)
-        //{
-        //    this.v = v;
-        //    this.bit = bit;
-        //}
 
         internal string PgName { get; }
         internal EDBDbType? EDBDbType { get; }

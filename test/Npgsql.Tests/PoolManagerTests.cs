@@ -40,14 +40,14 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void ClearAll()
         {
-            using (OpenConnection()) {}
+            using (OpenConnection()) { }
             // Now have one connection in the pool
             Assert.That(PoolManager.TryGetValue(ConnectionString, out var pool), Is.True);
-            Assert.That(pool!.State.Idle, Is.EqualTo(1));
+            Assert.That(pool!.Statistics.Idle, Is.EqualTo(1));
 
             EDBConnection.ClearAllPools();
-            Assert.That(pool.State.Idle, Is.Zero);
-            Assert.That(pool.State.Open, Is.Zero);
+            Assert.That(pool.Statistics.Idle, Is.Zero);
+            Assert.That(pool.Statistics.Open, Is.Zero);
         }
 
         [Test]
@@ -61,11 +61,11 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 EDBConnection.ClearAllPools();
                 Assert.That(PoolManager.TryGetValue(ConnectionString, out pool), Is.True);
-                Assert.That(pool!.State.Idle, Is.Zero);
-                Assert.That(pool.State.Open, Is.EqualTo(1));
+                Assert.That(pool!.Statistics.Idle, Is.Zero);
+                Assert.That(pool.Statistics.Open, Is.EqualTo(1));
             }
-            Assert.That(pool.State.Idle, Is.Zero);
-            Assert.That(pool.State.Open, Is.Zero);
+            Assert.That(pool.Statistics.Idle, Is.Zero);
+            Assert.That(pool.Statistics.Open, Is.Zero);
         }
 
         [SetUp]

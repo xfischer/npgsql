@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-numeric.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -56,17 +56,27 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
         /// <inheritdoc />
         public override int ValidateAndGetLength(long value, EDBParameter? parameter) => 8;
         /// <inheritdoc />
-        public int ValidateAndGetLength(short value, EDBParameter? parameter)         => 8;
-        /// <inheritdoc />
         public int ValidateAndGetLength(int value, EDBParameter? parameter)           => 8;
         /// <inheritdoc />
-        public int ValidateAndGetLength(float value, EDBParameter? parameter)         => 8;
-        /// <inheritdoc />
-        public int ValidateAndGetLength(double value, EDBParameter? parameter)        => 8;
-        /// <inheritdoc />
-        public int ValidateAndGetLength(decimal value, EDBParameter? parameter)       => 8;
+        public int ValidateAndGetLength(short value, EDBParameter? parameter)         => 8;
         /// <inheritdoc />
         public int ValidateAndGetLength(byte value, EDBParameter? parameter)          => 8;
+        /// <inheritdoc />
+        public int ValidateAndGetLength(decimal value, EDBParameter? parameter)       => 8;
+
+        /// <inheritdoc />
+        public int ValidateAndGetLength(float value, EDBParameter? parameter)
+        {
+            _ = checked((long)value);
+            return 8;
+        }
+
+        /// <inheritdoc />
+        public int ValidateAndGetLength(double value, EDBParameter? parameter)
+        {
+            _ = checked((long)value);
+            return 8;
+        }
 
         /// <inheritdoc />
         public override void Write(long value, EDBWriteBuffer buf, EDBParameter? parameter) => buf.WriteInt64(value);
@@ -77,9 +87,9 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
         /// <inheritdoc />
         public void Write(byte value, EDBWriteBuffer buf, EDBParameter? parameter)          => buf.WriteInt64(value);
         /// <inheritdoc />
-        public void Write(float value, EDBWriteBuffer buf, EDBParameter? parameter)         => buf.WriteInt64(checked((long)value));
+        public void Write(float value, EDBWriteBuffer buf, EDBParameter? parameter)         => buf.WriteInt64((long)value);
         /// <inheritdoc />
-        public void Write(double value, EDBWriteBuffer buf, EDBParameter? parameter)        => buf.WriteInt64(checked((long)value));
+        public void Write(double value, EDBWriteBuffer buf, EDBParameter? parameter)        => buf.WriteInt64((long)value);
         /// <inheritdoc />
         public void Write(decimal value, EDBWriteBuffer buf, EDBParameter? parameter)       => buf.WriteInt64((long)value);
 

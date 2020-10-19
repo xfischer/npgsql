@@ -20,7 +20,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-textsearch.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -77,7 +77,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
                             EDBTsQuery.NodeKind.And    => (EDBTsQuery)new EDBTsQueryAnd(null, null),
                             EDBTsQuery.NodeKind.Or     => new EDBTsQueryOr(null, null),
                             EDBTsQuery.NodeKind.Phrase => new EDBTsQueryFollowedBy(null, buf.ReadInt16(), null),
-                            _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {operKind} of enum {nameof(EDBTsQuery.NodeKind)}. Please file a bug.")
+                            _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {operKind} of enum {nameof(EDBTsQuery.NodeKind)}. Please file a bug.")
                         };
 
                         InsertInTree(node, nodes, ref value);
@@ -98,7 +98,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.FullTextSearchHandlers
             }
 
             if (nodes.Count != 0)
-                throw new InvalidOperationException("Internal EDB bug, please report.");
+                throw new InvalidOperationException("Internal EnterpriseDB.EDBClient bug, please report.");
 
             return value!;
 

@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
     /// <summary>
     /// Base class for all simple type handlers, which read and write short, non-arbitrary lengthed
     /// values to PostgreSQL. Provides a simpler API to implement when compared to <see cref="EDBTypeHandler"/> -
-    /// EDB takes care of all I/O before calling into this type, so no I/O needs to be performed by it.
+    /// EnterpriseDB.EDBClient takes care of all I/O before calling into this type, so no I/O needs to be performed by it.
     /// </summary>
     /// <typeparam name="TDefault">
     /// The default CLR type that this handler will read and write. For example, calling <see cref="DbDataReader.GetValue"/>
@@ -98,7 +98,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// <param name="len">The byte length of the value. The buffer might not contain the full length, requiring I/O to be performed.</param>
         /// <param name="fieldDescription">Additional PostgreSQL information about the type, such as the length in varchar(30).</param>
         /// <returns>The fully-read value.</returns>
-        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+        public override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             Debug.Assert(len <= buf.ReadBytesLeft);
 
@@ -134,7 +134,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
 
         /// <summary>
         /// Writes a value to the provided buffer, with the assumption that there is enough space in the buffer
-        /// (no I/O will occur). The EDB core will have taken care of that.
+        /// (no I/O will occur). The EnterpriseDB.EDBClient core will have taken care of that.
         /// </summary>
         /// <param name="value">The value to write.</param>
         /// <param name="buf">The buffer to which to write.</param>

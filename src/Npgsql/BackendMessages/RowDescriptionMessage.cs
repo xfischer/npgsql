@@ -97,7 +97,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                     //FormatCode = (FormatCode)buf.ReadInt16()
 
                     // If we get the exact unknown type in return, it was a literal string written in the query string
-                //TODO ZK:    field.Handler = typeMapper.GetByOID(field.TypeOID);
+                    //TODO ZK:    field.Handler = typeMapper.GetByOID(field.TypeOID);
                     //  Fields.Add()
                     Fields.Add(field);
                     if (!_nameIndex.ContainsKey(field.Name))
@@ -139,8 +139,6 @@ namespace EnterpriseDB.EDBClient.BackendMessages
                 Fields.Add(fdData[i]);
             //  Fields =(FieldDescription) fdData;
         }
-
-
         internal FieldDescription this[int index] => Fields[index];
 
         internal int NumFields => Fields.Count;
@@ -186,11 +184,11 @@ namespace EnterpriseDB.EDBClient.BackendMessages
             public static readonly InsensitiveComparer Instance = new InsensitiveComparer();
             static readonly CompareInfo CompareInfo = CultureInfo.InvariantCulture.CompareInfo;
 
-            InsensitiveComparer() {}
+            InsensitiveComparer() { }
 
             // We should really have CompareOptions.IgnoreKanaType here, but see
             // https://github.com/dotnet/corefx/issues/12518#issuecomment-389658716
-            public bool Equals(string x, string y)
+            public bool Equals(string? x, string? y)
                 => CompareInfo.Compare(x, y, CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType) == 0;
 
             public int GetHashCode(string o)
@@ -204,8 +202,14 @@ namespace EnterpriseDB.EDBClient.BackendMessages
     /// </summary>
     public sealed class FieldDescription
     {
+        /// <summary>
+        /// Creates a new instance.
+        /// </summary>
+        /// <remarks>
+        /// Exists for backwards compat with 4.0, has been removed for 5.0.
+        /// </remarks>
 #pragma warning disable CS8618  // Lazy-initialized type
-        internal FieldDescription() {}
+        public FieldDescription() { }
 #pragma warning restore CS8618
 
         internal FieldDescription(FieldDescription source)
@@ -237,6 +241,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
 
             ResolveHandler();
         }
+
         /*EnterpriseDB Team */
         internal void PopulateCallableStmt(
            ConnectorTypeMapper typeMapper, string name, short retIndex, uint typoid,
@@ -284,7 +289,6 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         ///// The type handler resolved for this field, regardless of whether it's binary or text.
         ///// </summary>
         //internal EDBTypeHandler RealHandler { get; private set; }
-
 
         /// <summary>
         /// The field name.
@@ -336,7 +340,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages
         internal string TypeDisplayName => PostgresType.GetDisplayNameWithFacets(TypeModifier);
 
         /// <summary>
-        /// The EDB type handler assigned to handle this field.
+        /// The EnterpriseDB.EDBClient type handler assigned to handle this field.
         /// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
         /// </summary>
         internal EDBTypeHandler Handler { get; private set; }

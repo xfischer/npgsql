@@ -10,7 +10,8 @@ using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides an API for a binary COPY TO operation, a high-performance data export mechanism from
     /// a PostgreSQL table. Initiated by <see cref="EDBConnection.BeginBinaryExport"/>
@@ -261,7 +262,7 @@ namespace EnterpriseDB.EDBClient{
 #pragma warning disable CS8653 // A default expression introduces a null value when 'T' is a non-nullable reference type.
                     // When T is a Nullable<T>, we support returning null
                     if (NullableHandler<T>.Exists)
-                        return default;
+                        return default!;
 #pragma warning restore CS8653
                     throw new InvalidCastException("Column is null");
                 }

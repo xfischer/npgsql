@@ -4,7 +4,7 @@ using System.Text;
 namespace EnterpriseDB.EDBClient.Logging
 {
     /// <summary>
-    /// An logging provider that outputs EDB logging messages to standard error.
+    /// An logging provider that outputs EnterpriseDB.EDBClient logging messages to standard error.
     /// </summary>
     public class ConsoleLoggingProvider : IEDBLoggingProvider
     {

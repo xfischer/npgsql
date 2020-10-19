@@ -2,11 +2,12 @@
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using EDBTypes;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.Util;
+using EDBTypes;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     class PostgresMinimalDatabaseInfoFactory : IEDBDatabaseInfoFactory
     {
         public Task<EDBDatabaseInfo?> Load(EDBConnection conn, EDBTimeout timeout, bool async)

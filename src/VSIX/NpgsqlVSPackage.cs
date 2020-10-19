@@ -1,5 +1,5 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="NpgsqlVSPackage.cs" company="Company">
+// <copyright file="EDBVSPackage.cs" company="Company">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
-namespace Npgsql.VSIX
+namespace EnterpriseDB.EDBClient.VSIX
 {
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
@@ -38,17 +38,17 @@ namespace Npgsql.VSIX
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideService(typeof(NpgsqlProviderObjectFactory), IsAsyncQueryable = true, ServiceName = "PostgreSQL Provider Object Factory")]
-    [ProvideBindingPath]  // Necessary for loading Npgsql via DbProviderFactories.GetProvider()
-    [NpgsqlProviderRegistration]
+    [ProvideService(typeof(EDBProviderObjectFactory), IsAsyncQueryable = true, ServiceName = "PostgreSQL Provider Object Factory")]
+    [ProvideBindingPath]  // Necessary for loading EnterpriseDB.EDBClient via DbProviderFactories.GetProvider()
+    [EDBProviderRegistration]
     [Guid(PackageGuidString)]
     [ProvideAutoLoad(UIContextGuids80.DataSourceWindowAutoVisible, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids80.DataSourceWindowSupported, PackageAutoLoadFlags.BackgroundLoad)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-    public sealed class NpgsqlVSPackage : AsyncPackage
+    public sealed class EDBVSPackage : AsyncPackage
     {
         /// <summary>
-        /// NpgsqlVSPackage GUID string.
+        /// EDBVSPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "ef991dc4-3119-4ed6-bdb3-c160ca562560";
 
@@ -58,17 +58,17 @@ namespace Npgsql.VSIX
         /// </summary>
         protected override Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
-            AddService(typeof(NpgsqlProviderObjectFactory), CreateService, true);
-            SetupNpgsqlProviderFactory();
+            AddService(typeof(EDBProviderObjectFactory), CreateServiceAsync, true);
+            SetupEDBProviderFactory();
             return base.InitializeAsync(cancellationToken, progress);
         }
 
-        Task<object> CreateService(IAsyncServiceContainer container, CancellationToken cancellationtoken, Type servicetype)
-            => servicetype == typeof(NpgsqlProviderObjectFactory)
-                ? Task.FromResult<object>(new NpgsqlProviderObjectFactory())
+        Task<object> CreateServiceAsync(IAsyncServiceContainer container, CancellationToken cancellationtoken, Type servicetype)
+            => servicetype == typeof(EDBProviderObjectFactory)
+                ? Task.FromResult<object>(new EDBProviderObjectFactory())
                 : throw new ArgumentException($"Can't create service of type '{servicetype.Name}'");
 
-        void SetupNpgsqlProviderFactory()
+        void SetupEDBProviderFactory()
         {
             if (!(ConfigurationManager.GetSection("system.data") is DataSet systemData))
                 throw new Exception("No system.data section found in configuration manager!");
@@ -79,17 +79,17 @@ namespace Npgsql.VSIX
             else
             {
                 factoriesTable = systemData.Tables[systemData.Tables.IndexOf("DbProviderFactories")];
-                if (factoriesTable.Rows.Find(Constants.NpgsqlInvariantName) != null)
+                if (factoriesTable.Rows.Find(Constants.EDBInvariantName) != null)
                 {
-                    // There's already an entry for Npgsql in the machines.config.
-                    // This should mean there's also a GAC-installed Npgsql - we don't need to do anything.
+                    // There's already an entry for EnterpriseDB.EDBClient in the machines.config.
+                    // This should mean there's also a GAC-installed EnterpriseDB.EDBClient - we don't need to do anything.
                     return;
                 }
             }
 
-            // Add an entry for Npgsql
-            factoriesTable.Rows.Add("Npgsql Data Provider", ".NET Data Provider for PostgreSQL",
-                Constants.NpgsqlInvariantName, "EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient");
+            // Add an entry for EnterpriseDB.EDBClient
+            factoriesTable.Rows.Add("EnterpriseDB.EDBClient Data Provider", ".NET Data Provider for PostgreSQL",
+                Constants.EDBInvariantName, "EnterpriseDB.EDBClient.EDBFactory, EnterpriseDB.EDBClient");
         }
     }
 }

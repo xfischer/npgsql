@@ -150,7 +150,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
             AssertNumberOfRows(1);
             Assert.True(PoolManager.TryGetValue(connString, out var pool));
-            Assert.That(pool!.State.Idle, Is.EqualTo(1));
+            Assert.That(pool!.Statistics.Idle, Is.EqualTo(1));
 
             using (var conn = new EDBConnection(connString))
                 EDBConnection.ClearPool(conn);
@@ -270,7 +270,7 @@ namespace EnterpriseDB.EDBClient.Tests
             AssertNumberOfRows(0);
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1579")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1579")]
         public void SchemaConnectionShouldntEnlist()
         {
             using (var tran = new TransactionScope())
@@ -287,7 +287,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1737")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1737")]
         public void Bug1737()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)

@@ -27,9 +27,6 @@ namespace EnterpriseDB.EDBClient.Schema
         #region Columns queries
 
         static string GenerateColumnsQuery(Version pgVersion, string columnFieldFilter) =>
-            pgVersion < new Version(8, 2)
-                ? GenerateOldColumnsQuery(columnFieldFilter)
-                :
 $@"SELECT
      typ.oid AS typoid, nspname, relname, attname, attrelid, attnum, attnotnull,
      {(pgVersion >= new Version(10, 0) ? "attidentity != ''" : "FALSE")} AS isidentity,
@@ -96,6 +93,9 @@ ORDER BY attnum";
 
         internal ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
         {
+            // This is mainly for Amazon Redshift
+            var oldQueryMode = _connection.PostgreSqlVersion < new Version(8, 2);
+
             var fields = _rowDescription.Fields;
             var result = new List<EDBDbColumn?>(fields.Count);
             for (var i = 0; i < fields.Count; i++)
@@ -113,24 +113,30 @@ ORDER BY attnum";
 
             if (_fetchAdditionalInfo && columnFieldFilter != "")
             {
-                var query = GenerateColumnsQuery(_connection.PostgreSqlVersion, columnFieldFilter);
+                var query = oldQueryMode
+                    ? GenerateOldColumnsQuery(columnFieldFilter)
+                    : GenerateColumnsQuery(_connection.PostgreSqlVersion, columnFieldFilter);
 
-                using (new TransactionScope(TransactionScopeOption.Suppress))
-                using (var connection = (EDBConnection)((ICloneable)_connection).Clone())
+                using var scope = new TransactionScope(TransactionScopeOption.Suppress);
+                using var connection = (EDBConnection)((ICloneable)_connection).Clone();
+                connection.Open();
+
+                using var cmd = new EDBCommand(query, connection);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    connection.Open();
-
-                    using var cmd = new EDBCommand(query, connection);
-                    using var reader = cmd.ExecuteReader();
-                    for (; reader.Read(); populatedColumns++)
+                    var column = LoadColumnDefinition(reader, _connection.Connector!.TypeMapper.DatabaseInfo, oldQueryMode);
+                    for (var ordinal = 0; ordinal < fields.Count; ordinal++)
                     {
-                        var column = LoadColumnDefinition(reader, _connection.Connector!.TypeMapper.DatabaseInfo);
-                        var ordinal = fields.FindIndex(f => f.TableOID == column.TableOID && f.ColumnAttributeNumber - 1 == column.ColumnAttributeNumber);
-                        Debug.Assert(ordinal >= 0);
-
-                        // The column's ordinal is with respect to the resultset, not its table
-                        column.ColumnOrdinal = ordinal;
-                        result[ordinal] = column;
+                        var field = fields[ordinal];
+                        if (field.TableOID == column.TableOID &&
+                            field.ColumnAttributeNumber == column.ColumnAttributeNumber + 1)
+                        {
+                            populatedColumns++;
+                            // The column's ordinal is with respect to the resultset, not its table
+                            column.ColumnOrdinal = ordinal;
+                            result[ordinal] = column;
+                        }
                     }
                 }
             }
@@ -139,10 +145,10 @@ ORDER BY attnum";
             // Fill in whatever info we have from the RowDescription itself
             for (var i = 0; i < fields.Count; i++)
             {
-                EDBDbColumn column;
+                var column = result[i];
                 var field = fields[i];
 
-                if (result[i] == null)
+                if (column == null)
                 {
                     column = SetUpNonColumnField(field);
                     column.ColumnOrdinal = i;
@@ -150,7 +156,10 @@ ORDER BY attnum";
                     populatedColumns++;
                 }
 
-                result[i]!.ColumnName = result[i]!.BaseColumnName = field.Name.StartsWith("?column?") ? null : field.Name;
+                var fieldName = field.Name.StartsWith("?column?") ? null : field.Name;
+
+                column.BaseColumnName ??= fieldName;
+                column.ColumnName = fieldName;
             }
 
             if (populatedColumns != fields.Count)
@@ -159,7 +168,7 @@ ORDER BY attnum";
             return result.AsReadOnly()!;
         }
 
-        EDBDbColumn LoadColumnDefinition(EDBDataReader reader, EDBDatabaseInfo databaseInfo)
+        EDBDbColumn LoadColumnDefinition(EDBDataReader reader, EDBDatabaseInfo databaseInfo, bool oldQueryMode)
         {
             // Note: we don't set ColumnName and BaseColumnName. These should always contain the
             // column alias rather than the table column name (i.e. in case of "SELECT foo AS foo_alias").
@@ -171,6 +180,7 @@ ORDER BY attnum";
                 BaseSchemaName = reader.GetString(reader.GetOrdinal("nspname")),
                 BaseServerName = _connection.Host!,
                 BaseTableName = reader.GetString(reader.GetOrdinal("relname")),
+                BaseColumnName = reader.GetString(reader.GetOrdinal("attname")),
                 ColumnOrdinal = reader.GetInt32(reader.GetOrdinal("attnum")) - 1,
                 ColumnAttributeNumber = (short)(reader.GetInt16(reader.GetOrdinal("attnum")) - 1),
                 IsKey = reader.GetBoolean(reader.GetOrdinal("isprimarykey")),
@@ -187,7 +197,8 @@ ORDER BY attnum";
             var defaultValueOrdinal = reader.GetOrdinal("default");
             column.DefaultValue = reader.IsDBNull(defaultValueOrdinal) ? null : reader.GetString(defaultValueOrdinal);
 
-            column.IsAutoIncrement = reader.GetBoolean(reader.GetOrdinal("isidentity")) ||
+            column.IsAutoIncrement =
+                !oldQueryMode && reader.GetBoolean(reader.GetOrdinal("isidentity")) ||
                 column.DefaultValue != null && column.DefaultValue.StartsWith("nextval(");
 
             ColumnPostConfig(column, reader.GetInt32(reader.GetOrdinal("typmod")));
@@ -222,15 +233,7 @@ ORDER BY attnum";
         {
             var typeMapper = _connection.Connector!.TypeMapper;
 
-            if (typeMapper.Mappings.TryGetValue(column.PostgresType.Name, out var mapping))
-                column.EDBDbType = mapping.EDBDbType;
-            else if (
-                column.PostgresType.Name.Contains(".") &&
-                typeMapper.Mappings.TryGetValue(column.PostgresType.Name.Split('.')[1], out mapping)
-            ) {
-                column.EDBDbType = mapping.EDBDbType;
-            }
-
+            column.EDBDbType = typeMapper.GetTypeInfoByOid(column.TypeOID).EDBDbType;
             column.DataType = typeMapper.TryGetByOID(column.TypeOID, out var handler)
                 ? handler.GetFieldType()
                 : null;

@@ -37,7 +37,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                 throw new EDBSafeReadException(new NotSupportedException(
                     _connector.TypeMapper.DatabaseInfo.ByOID.TryGetValue(fieldDescription.TypeOID, out var pgType)
                         ? $"The field '{fieldDescription.Name}' has type '{pgType.DisplayName}', which is currently unknown to EnterpriseDB.EDBClient. You can retrieve it as a string by marking it as unknown, please see the FAQ."
-                        : $"The field '{fieldDescription.Name}' has a type currently unknown to EDB (OID {fieldDescription.TypeOID}). You can retrieve it as a string by marking it as unknown, please see the FAQ."
+                        : $"The field '{fieldDescription.Name}' has a type currently unknown to EnterpriseDB.EDBClient (OID {fieldDescription.TypeOID}). You can retrieve it as a string by marking it as unknown, please see the FAQ."
                 ));
             }
             return base.Read(buf, byteLen, async, fieldDescription);

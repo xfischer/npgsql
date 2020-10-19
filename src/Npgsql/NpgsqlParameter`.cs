@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// A generic version of <see cref="EDBParameter"/> which provides more type safety and
     /// avoids boxing of value types. Use <see cref="TypedValue"/> instead of <see cref="EDBParameter.Value"/>.
@@ -49,10 +50,10 @@ namespace EnterpriseDB.EDBClient{
         /// <summary>
         /// Initializes a new instance of <see cref="EDBParameter{T}" /> with a parameter name and type.
         /// </summary>
-        public EDBParameter(string parameterName, EDBDbType edbDbType)
+        public EDBParameter(string parameterName, EDBDbType eDBDbType)
         {
             ParameterName = parameterName;
-            EDBDbType = edbDbType;
+            EDBDbType = eDBDbType;
         }
 
         /// <summary>

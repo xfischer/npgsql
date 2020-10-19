@@ -1,18 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors>EnterpriseDB Team</Authors>
-    <Description>PostGIS plugin for EDB, allowing mapping of PostGIS types to the legacy types (e.g. PostgisPoint).</Description>
-    <PackageTags>EnterpriseDB postgis spatial geometry geography ado ado.net database sql</PackageTags>
+    <Authors>Shay Rojansky</Authors>
+    <Description>PostGIS plugin for EnterpriseDB.EDBClient, allowing mapping of PostGIS types to the legacy types (e.g. PostgisPoint).</Description>
+    <PackageTags>EnterpriseDB.EDBClient postgresql postgres postgis spatial geometry geography ado ado.net database sql</PackageTags>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <AssemblyName>EnterpriseDB.EDBClient.LegacyPostgis</AssemblyName>
-    <RootNamespace>EnterpriseDB.EDBClient.LegacyPostgis</RootNamespace>
-    <Company>EnterpriseDB</Company>
-    <Copyright>Copyright 2020 © The EnterpriseDB Development Team</Copyright>
-    <PackageProjectUrl />
-    <RepositoryUrl />
-    <Version>4.1.3.1</Version>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Npgsql/Npgsql.csproj" />
+    <ProjectReference Include="..\Npgsql\Npgsql.csproj" />
   </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@
 namespace EnterpriseDB.EDBClient.Logging
 {
     /// <summary>
-    /// Manages logging for EDB, used to set the logging provider.
+    /// Manages logging for EnterpriseDB.EDBClient, used to set the logging provider.
     /// </summary>
     public static class EDBLogManager
     {
@@ -20,7 +20,7 @@ namespace EnterpriseDB.EDBClient.Logging
             set
             {
                 if (_providerRetrieved)
-                    throw new InvalidOperationException("The logging provider must be set before any EDB action is taken");
+                    throw new InvalidOperationException("The logging provider must be set before any EnterpriseDB.EDBClient action is taken");
 
                 _provider = value ?? throw new ArgumentNullException(nameof(value));
             }

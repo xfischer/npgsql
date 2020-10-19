@@ -3,12 +3,13 @@ using System.Threading;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     sealed class EDBEventSource : EventSource
     {
         public static readonly EDBEventSource Log = new EDBEventSource();
 
-        const string EventSourceName = "EDB";
+        const string EventSourceName = "EnterpriseDB.EDBClient";
 
         internal const int CommandStartId = 3;
         internal const int CommandStopId = 4;
@@ -37,7 +38,7 @@ namespace EnterpriseDB.EDBClient{
 
         int _pools;
 
-        internal EDBEventSource() : base(EventSourceName) {}
+        internal EDBEventSource() : base(EventSourceName) { }
 
         // NOTE
         // - The 'Start' and 'Stop' suffixes on the following event names have special meaning in EventSource. They
@@ -54,7 +55,7 @@ namespace EnterpriseDB.EDBClient{
         {
             Interlocked.Increment(ref _totalCommands);
             Interlocked.Increment(ref _currentCommands);
-            WriteEvent(CommandStartId, sql);
+            EDBSqlEventSource.CommandStart(sql);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -62,7 +63,7 @@ namespace EnterpriseDB.EDBClient{
         public void CommandStop()
         {
             Interlocked.Decrement(ref _currentCommands);
-            WriteEvent(CommandStopId);
+            EDBSqlEventSource.CommandStop();
         }
 
         internal void CommandStartPrepared() => Interlocked.Increment(ref _totalPreparedCommands);
@@ -82,7 +83,7 @@ namespace EnterpriseDB.EDBClient{
                 var pool = kv.Pool;
                 if (pool == null)
                     return sum;
-                sum += pool.State.Idle;
+                sum += pool.Statistics.Idle;
             }
             return sum;
         }
@@ -97,7 +98,7 @@ namespace EnterpriseDB.EDBClient{
                 var pool = kv.Pool;
                 if (pool == null)
                     return sum;
-                var (_, _, busy) = pool.State;
+                var (_, _, busy, _) = pool.Statistics;
                 sum += busy;
             }
             return sum;
@@ -146,12 +147,10 @@ namespace EnterpriseDB.EDBClient{
                     DisplayName = "Failed Commands"
                 };
 
-//                _preparedCommandsRatioCounter = new PollingCounter("prepared-commands-ratio", this, () => (double)_totalPreparedCommands / (double)_totalCommands)
-                _preparedCommandsRatioCounter = new PollingCounter("prepared-commands-ratio", this, () =>
-                {
-                    Console.WriteLine($"{(double)_totalPreparedCommands} / {(double)_totalCommands}");
-                    return (double)_totalPreparedCommands / (double)_totalCommands;
-                })
+                _preparedCommandsRatioCounter = new PollingCounter(
+                    "prepared-commands-ratio",
+                    this,
+                    () => (double)_totalPreparedCommands / (double)_totalCommands)
                 {
                     DisplayName = "Prepared Commands Ratio",
                     DisplayUnits = "%"

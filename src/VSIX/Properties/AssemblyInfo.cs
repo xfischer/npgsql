@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.Shell;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("NpgsqlVSIX")]
+[assembly: AssemblyTitle("EDBVSIX")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 
@@ -15,8 +15,8 @@ using Microsoft.VisualStudio.Shell;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-// The following is necessary to make Visual Studio load our new version of Npgsql.
-// Specifically, the EF6 provider usuall depends on some old Npgsql, and trying to generate an EDM
+// The following is necessary to make Visual Studio load our new version of EnterpriseDB.EDBClient.
+// Specifically, the EF6 provider usuall depends on some old EnterpriseDB.EDBClient, and trying to generate an EDM
 // model from an existing database will fail because of this. The following line redirects the EF6
-// to use our own Npgsql instead.
-[assembly: ProvideBindingRedirection(AssemblyName = "EnterpriseDB.EDBClient", NewVersion = "4.1.3.1", OldVersionLowerBound = "0.0.0.0", OldVersionUpperBound = "4.1.3.1")]
+// to use our own EnterpriseDB.EDBClient instead.
+[assembly: ProvideBindingRedirection(AssemblyName = "EnterpriseDB.EDBClient", NewVersion = "4.1.5.0", OldVersionLowerBound = "0.0.0.0", OldVersionUpperBound = "4.1.5.0")]

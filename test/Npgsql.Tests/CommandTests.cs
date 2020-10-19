@@ -11,7 +11,7 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
-    public class CommandTests : TestBase
+    public class ZZCommandTests : TestBase
     {
         #region Multiple Statements in a Command
 

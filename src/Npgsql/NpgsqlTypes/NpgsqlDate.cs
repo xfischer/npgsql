@@ -205,7 +205,7 @@ namespace EDBTypes
                 InternalType.Finite           => true,
                 InternalType.Infinity         => false,
                 InternalType.NegativeInfinity => false,
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.")
+                _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.")
             };
 
         #endregion
@@ -247,7 +247,7 @@ namespace EDBTypes
             InternalType.Infinity         => Infinity,
             InternalType.NegativeInfinity => NegativeInfinity,
             InternalType.Finite           => new EDBDate(_daysSinceEra + days),
-            _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.")
+            _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.")
         };
 
         [PublicAPI]
@@ -261,7 +261,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             var newYear = Year + years;
@@ -287,7 +287,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             var newYear = Year;
@@ -320,7 +320,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             return AddMonths(interval.Months).AddDays(interval.Days);
@@ -337,7 +337,7 @@ namespace EDBTypes
             case InternalType.Finite:
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
 
             return AddMonths(interval.Months).AddDays(interval.Days + carriedOverflow);
@@ -421,7 +421,7 @@ namespace EDBTypes
                 try { return new DateTime(date._daysSinceEra * EDBTimeSpan.TicksPerDay); }
                 catch { throw new InvalidCastException(); }
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {date._type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {date._type} of enum {nameof(EDBDate)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 

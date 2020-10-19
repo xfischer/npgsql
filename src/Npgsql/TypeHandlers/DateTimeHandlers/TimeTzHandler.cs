@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -33,7 +33,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -41,7 +41,10 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     {
         // Binary Format: int64 expressing microseconds, int32 expressing timezone in seconds, negative
 
-        internal TimeTzHandler(PostgresType postgresType) : base(postgresType) {}
+        /// <summary>
+        /// Constructs an <see cref="TimeTzHandler"/>.
+        /// </summary>
+        public TimeTzHandler(PostgresType postgresType) : base(postgresType) {}
 
         #region Read
 
@@ -94,7 +97,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                 buf.WriteInt32(-(int)(TimeZoneInfo.Local.BaseUtcOffset.Ticks / TimeSpan.TicksPerSecond));
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {value.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {value.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
             }
         }
 

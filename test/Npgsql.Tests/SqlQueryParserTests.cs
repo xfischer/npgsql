@@ -12,7 +12,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             _params.AddWithValue(":p1", "foo");
             _params.AddWithValue(":p2", "bar");
-            _parser.ParseRawQuery("SELECT :p1, :p2", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT :p1, :p2", _params, _queries);
             Assert.That(_queries.Single().InputParameters, Is.EqualTo(_params));
         }
 
@@ -20,12 +20,12 @@ namespace EnterpriseDB.EDBClient.Tests
         public void ParamNameWithDot()
         {
             _params.AddWithValue(":a.parameter", "foo");
-            _parser.ParseRawQuery("INSERT INTO data (field_char5) VALUES (:a.parameter)", true, _params, _queries);
+            _parser.ParseRawQuery("INSERT INTO data (field_char5) VALUES (:a.parameter)", _params, _queries);
             Assert.That(_queries.Single().InputParameters.Single(), Is.SameAs(_params.Single()));
         }
 
         [Test, Description("Checks several scenarios in which the SQL is supposed to pass untouched")]
-        [TestCase(@"SELECT to_tsvector('fat cats ate rats') @@ to_tsquery('cat & rat')", TestName="AtAt")]
+        [TestCase(@"SELECT to_tsvector('fat cats ate rats') @@ to_tsquery('cat & rat')", TestName = "AtAt")]
         [TestCase(@"SELECT 'cat'::tsquery @> 'cat & rat'::tsquery", TestName = "AtGt")]
         [TestCase(@"SELECT 'cat'::tsquery <@ 'cat & rat'::tsquery", TestName = "AtLt")]
         [TestCase(@"SELECT 'b''la'", TestName = "DoubleTicks")]
@@ -38,7 +38,7 @@ namespace EnterpriseDB.EDBClient.Tests
         public void Untouched(string sql)
         {
             _params.AddWithValue(":param", "foo");
-            _parser.ParseRawQuery(sql, true, _params, _queries);
+            _parser.ParseRawQuery(sql, _params, _queries);
             Assert.That(_queries.Single().SQL, Is.EqualTo(sql));
             Assert.That(_queries.Single().InputParameters, Is.Empty);
         }
@@ -47,19 +47,19 @@ namespace EnterpriseDB.EDBClient.Tests
         [TestCase(@"SELECT 1<:param", TestName = "LessThan")]
         [TestCase(@"SELECT 1>:param", TestName = "GreaterThan")]
         [TestCase(@"SELECT 1<>:param", TestName = "NotEqual")]
-        [TestCase("SELECT--comment\r:param", TestName="LineComment")]
+        [TestCase("SELECT--comment\r:param", TestName = "LineComment")]
         public void ParamGetsBound(string sql)
         {
             _params.AddWithValue(":param", "foo");
-            _parser.ParseRawQuery(sql, true, _params, _queries);
+            _parser.ParseRawQuery(sql, _params, _queries);
             Assert.That(_queries.Single().InputParameters.Single(), Is.SameAs(_params.Single()));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1177")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1177")]
         public void ParamGetsBoundNonAscii()
         {
             _params.AddWithValue("漢字", "foo");
-            _parser.ParseRawQuery("SELECT @漢字", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT @漢字", _params, _queries);
             Assert.That(_queries.Single().InputParameters.Single(), Is.SameAs(_params.Single()));
         }
 
@@ -72,15 +72,15 @@ namespace EnterpriseDB.EDBClient.Tests
         public void ParamDoesntGetBound(string sql)
         {
             _params.AddWithValue(":param", "foo");
-            _parser.ParseRawQuery(sql, true, _params, _queries);
+            _parser.ParseRawQuery(sql, _params, _queries);
             Assert.That(_queries.Single().InputParameters, Is.Empty);
         }
 
         [Test]
-        public void NonConformantStrings()
+        public void NonConformingStrings()
         {
-            var parser = new SqlQueryParser();
-            parser.ParseRawQuery(@"SELECT 'abc\':str''a:str'", false, _params, _queries);
+            var parser = new SqlQueryParser() { StandardConformingStrings = false };
+            parser.ParseRawQuery(@"SELECT 'abc\':str''a:str'", _params, _queries);
             Assert.That(_queries.Single().SQL, Is.EqualTo(@"SELECT 'abc\':str''a:str'"));
             Assert.That(_queries.Single().InputParameters, Is.Empty);
         }
@@ -95,7 +95,7 @@ namespace EnterpriseDB.EDBClient.Tests
             var p3 = new EDBParameter("p3", DbType.String);
             _params.Add(p3);
 
-            _parser.ParseRawQuery("SELECT @p3, @p1; SELECT @p2, @p3", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT @p3, @p1; SELECT @p2, @p3", _params, _queries);
 
             Assert.That(_queries, Has.Count.EqualTo(2));
             Assert.That(_queries[0].InputParameters[0], Is.SameAs(p3));
@@ -109,13 +109,13 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             var p = new EDBParameter("p", DbType.String) { Direction = ParameterDirection.Output };
             _params.Add(p);
-            Assert.That(() => _parser.ParseRawQuery("SELECT @p", true, _params, _queries), Throws.Exception);
+            Assert.That(() => _parser.ParseRawQuery("SELECT @p", _params, _queries), Throws.Exception);
         }
 
         [Test]
         public void MissingParamIsIgnored()
         {
-            _parser.ParseRawQuery("SELECT @p; SELECT 1", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT @p; SELECT 1", _params, _queries);
             Assert.That(_queries[0].SQL, Is.EqualTo("SELECT @p"));
             Assert.That(_queries[1].SQL, Is.EqualTo("SELECT 1"));
             Assert.That(_queries[0].InputParameters, Is.Empty);
@@ -125,44 +125,44 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public void ConsecutiveSemicolons()
         {
-            _parser.ParseRawQuery(";;SELECT 1", true, _params, _queries);
+            _parser.ParseRawQuery(";;SELECT 1", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(1));
         }
 
         [Test]
         public void TrailingSemicolon()
         {
-            _parser.ParseRawQuery("SELECT 1;", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT 1;", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(1));
         }
 
         [Test]
         public void Empty()
         {
-            _parser.ParseRawQuery("", true, _params, _queries);
+            _parser.ParseRawQuery("", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(1));
         }
 
         [Test]
         public void SemicolonInParentheses()
         {
-            _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1; SELECT 1)", true, _params, _queries);
+            _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1; SELECT 1)", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(1));
         }
 
         [Test]
         public void SemicolonAfterParentheses()
         {
-            _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1); SELECT 1", true, _params, _queries);
+            _parser.ParseRawQuery("CREATE OR REPLACE RULE test AS ON UPDATE TO test DO (SELECT 1); SELECT 1", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(2));
         }
 
         [Test]
         public void ReduceNumberOfStatements()
         {
-            _parser.ParseRawQuery("SELECT 1; SELECT 2", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT 1; SELECT 2", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(2));
-            _parser.ParseRawQuery("SELECT 1", true, _params, _queries);
+            _parser.ParseRawQuery("SELECT 1", _params, _queries);
             Assert.That(_queries, Has.Count.EqualTo(1));
         }
 

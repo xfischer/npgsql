@@ -3,6 +3,8 @@ using NodaTime;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
+using EDBTypes;
+using BclIntervalHandler = EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers.IntervalHandler;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -17,9 +19,12 @@ namespace EnterpriseDB.EDBClient.NodaTime
                 : throw new NotSupportedException($"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
     }
 
-    class IntervalHandler : EDBSimpleTypeHandler<Period>
+    sealed class IntervalHandler : EDBSimpleTypeHandler<Period>, IEDBSimpleTypeHandler<EDBTimeSpan>, IEDBSimpleTypeHandler<TimeSpan>
     {
-        public IntervalHandler(PostgresType postgresType) : base(postgresType) {}
+        readonly BclIntervalHandler _bclHandler;
+
+        internal IntervalHandler(PostgresType postgresType) : base(postgresType)
+            => _bclHandler = new BclIntervalHandler(postgresType);
 
         public override Period Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
@@ -54,5 +59,23 @@ namespace EnterpriseDB.EDBClient.NodaTime
             buf.WriteInt32(value.Weeks * 7 + value.Days); // days
             buf.WriteInt32(value.Years * 12 + value.Months); // months
         }
+
+        EDBTimeSpan IEDBSimpleTypeHandler<EDBTimeSpan>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+            => _bclHandler.Read<EDBTimeSpan>(buf, len, fieldDescription);
+
+        int IEDBSimpleTypeHandler<EDBTimeSpan>.ValidateAndGetLength(EDBTimeSpan value, EDBParameter? parameter)
+            => _bclHandler.ValidateAndGetLength(value, parameter);
+
+        void IEDBSimpleTypeHandler<EDBTimeSpan>.Write(EDBTimeSpan value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => _bclHandler.Write(value, buf, parameter);
+
+        TimeSpan IEDBSimpleTypeHandler<TimeSpan>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+            => _bclHandler.Read<TimeSpan>(buf, len, fieldDescription);
+
+        int IEDBSimpleTypeHandler<TimeSpan>.ValidateAndGetLength(TimeSpan value, EDBParameter? parameter)
+            => ((IEDBSimpleTypeHandler<TimeSpan>)_bclHandler).ValidateAndGetLength(value, parameter);
+
+        void IEDBSimpleTypeHandler<TimeSpan>.Write(TimeSpan value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => ((IEDBSimpleTypeHandler<TimeSpan>)_bclHandler).Write(value, buf, parameter);
     }
 }

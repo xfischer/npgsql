@@ -8,10 +8,11 @@ using EnterpriseDB.EDBClient.Util;
 using EnterpriseDB.EDBClient.TypeMapping;
 // ReSharper disable VariableHidesOuterVariable
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     partial class EDBConnector
     {
-     //  ConnectorTypeMapper mapping;
+        //  ConnectorTypeMapper mapping;
         internal Task WriteDescribe(StatementOrPortal statementOrPortal, string name, bool async)
         {
             Debug.Assert(name.All(c => c < 128));
@@ -36,7 +37,6 @@ namespace EnterpriseDB.EDBClient{
 
             void Write(int len, StatementOrPortal statementOrPortal, string name)
             {
-
                 WriteBuffer.WriteByte(FrontendMessageCode.Describe);
                 WriteBuffer.WriteInt32(len - 1);
                 WriteBuffer.WriteByte((byte)statementOrPortal);
@@ -69,15 +69,14 @@ namespace EnterpriseDB.EDBClient{
 
             void Write(int len, StatementOrPortal statementOrPortal, string name)
             {
-                
+
                 WriteBuffer.WriteByte(FrontendMessageCode.DescribeOut);
                 WriteBuffer.WriteInt32(len - 1);
                 WriteBuffer.WriteByte((byte)statementOrPortal);
                 WriteBuffer.WriteNullTerminatedString(name);
-               
+
             }
         }
-
 
         internal Task WriteSync(bool async)
         {
@@ -142,7 +141,7 @@ namespace EnterpriseDB.EDBClient{
             const int len = sizeof(byte) +       // Message code
                             sizeof(int) +       // Length
                             sizeof(byte)        // Null-terminated portal name (always empty for now)
-                            ;         
+                            ;
 
             if (WriteBuffer.WriteSpaceLeft < len)
                 return FlushAndWrite(maxRows, async);
@@ -162,7 +161,7 @@ namespace EnterpriseDB.EDBClient{
                 WriteBuffer.WriteByte(FrontendMessageCode.ExecuteOut);
                 WriteBuffer.WriteInt32(len - 1);
                 WriteBuffer.WriteByte(0);   // Portal is always empty for now
-               // WriteBuffer.WriteInt32(maxRows);
+                                            // WriteBuffer.WriteInt32(maxRows);
             }
         }
 
@@ -180,7 +179,7 @@ namespace EnterpriseDB.EDBClient{
                 statementName.Length        +         // Statement name
                 sizeof(byte)                +         // Null terminator for the statement name
                 queryByteLen + sizeof(byte) +         // SQL query length plus null terminator
-                sizeof(short)               +         // Number of parameters
+                sizeof(ushort)              +         // Number of parameters
                 inputParameters.Count * sizeof(int);  // Parameter OIDs
 
             WriteBuffer.WriteByte(FrontendMessageCode.Parse);
@@ -192,7 +191,7 @@ namespace EnterpriseDB.EDBClient{
             if (WriteBuffer.WriteSpaceLeft < 1 + 2)
                 await Flush(async);
             WriteBuffer.WriteByte(0); // Null terminator for the query
-            WriteBuffer.WriteInt16((short)inputParameters.Count);
+            WriteBuffer.WriteUInt16((ushort)inputParameters.Count);
 
             foreach (var p in inputParameters)
             {
@@ -202,10 +201,11 @@ namespace EnterpriseDB.EDBClient{
                 WriteBuffer.WriteInt32((int)p.Handler!.PostgresType.OID);
             }
         }
+
         /*
          * EnterpriseDB Team: ParseOut Message 
         */
-        internal async Task WriteParseOut(string sql, string statementName,EDBParameterCollection _paramerters, List<EDBParameter> inputParameters, bool async, ConnectorTypeMapper mapper)
+        internal async Task WriteParseOut(string sql, string statementName, EDBParameterCollection _paramerters, List<EDBParameter> inputParameters, bool async, ConnectorTypeMapper mapper)
         {
             Debug.Assert(statementName.All(c => c < 128));
 
@@ -221,7 +221,7 @@ namespace EnterpriseDB.EDBClient{
                 queryByteLen + sizeof(byte) +         // SQL query length plus null terminator
                 sizeof(short) +         // Number of parameters
                 _paramerters.Count * sizeof(int) + //  Parameter OIDs
-                _paramerters.Count * 2 ;  //
+                _paramerters.Count * 2;  //
 
 
             WriteBuffer.WriteByte(FrontendMessageCode.ParseOut);
@@ -273,7 +273,6 @@ namespace EnterpriseDB.EDBClient{
             }
         }
 
-
         internal async Task WriteBind(
             List<EDBParameter> inputParameters,
             string portal,
@@ -290,7 +289,7 @@ namespace EnterpriseDB.EDBClient{
                 sizeof(int)                     +     // Message length
                 sizeof(byte)                    +     // Portal is always empty (only a null terminator)
                 statement.Length + sizeof(byte) +     // Statement name plus null terminator
-                sizeof(short);                        // Number of parameter format codes that follow
+                sizeof(ushort);                       // Number of parameter format codes that follow
 
             if (WriteBuffer.WriteSpaceLeft < headerLength)
             {
@@ -345,7 +344,7 @@ namespace EnterpriseDB.EDBClient{
             if (WriteBuffer.WriteSpaceLeft < 2)
                 await Flush(async);
 
-            WriteBuffer.WriteInt16(inputParameters.Count);
+            WriteBuffer.WriteUInt16((ushort)inputParameters.Count);
 
             foreach (var param in inputParameters)
             {
@@ -438,11 +437,11 @@ namespace EnterpriseDB.EDBClient{
             {
 
                 //foreach (EDBParameter p in _parameters)
-                for(int i= 0; i<_parameters.Count; i++)
+                for (int i = 0; i < _parameters.Count; i++)
                 {
                     WriteBuffer.WriteInt16((short)_parameters[i].FormatCode);
                 }
-            
+
             }
 
             if (WriteBuffer.WriteSpaceLeft < 2)
@@ -451,9 +450,10 @@ namespace EnterpriseDB.EDBClient{
             WriteBuffer.WriteInt16(_parameters.Count);
 
             //foreach (EDBParameter param in _parameters)
-            for(int i =0;i<_parameters.Count;i++)
+            for (int i = 0; i < _parameters.Count; i++)
             {
-                try {
+                try
+                {
                     if (WriteBuffer.WriteSpaceLeft < 80)
                         await Flush(async);
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -471,7 +471,7 @@ namespace EnterpriseDB.EDBClient{
                 catch (Exception e)
                 {
                     e.ToString();
-                }  
+                }
             }
 
             if (unknownResultTypeList != null)
@@ -490,8 +490,6 @@ namespace EnterpriseDB.EDBClient{
                 WriteBuffer.WriteInt16(allResultTypesAreUnknown ? 0 : 1);
             }
         }
-
-
 
         internal Task WriteClose(StatementOrPortal type, string name, bool async)
         {

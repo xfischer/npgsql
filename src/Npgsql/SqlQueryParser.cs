@@ -1,31 +1,11 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
+
+#if NET461 || NETSTANDARD2_0
+using EnterpriseDB.EDBClient.Util;
+#endif
 
 namespace EnterpriseDB.EDBClient
 {
@@ -33,67 +13,55 @@ namespace EnterpriseDB.EDBClient
     {
         readonly Dictionary<string, int> _paramIndexMap = new Dictionary<string, int>();
         readonly StringBuilder _rewrittenSql = new StringBuilder();
+        internal bool StandardConformingStrings { get; set; } = true;
 
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        List<EDBStatement> _statements = default;
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        EDBStatement _statement = default;
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        List<EDBStatement> _statements = default!;
+        EDBStatement _statement = default!;
         int _statementIndex;
         string? sqlString;
 
         /// <summary>
         /// Receives a raw SQL query as passed in by the user, and performs some processing necessary
         /// before sending to the backend.
-        /// This includes doing parameter placebolder processing (@p => $1), and splitting the query
+        /// This includes doing parameter placeholder processing (@p => $1), and splitting the query
         /// up by semicolons if needed (SELECT 1; SELECT 2)
         /// </summary>
         /// <param name="sql">Raw user-provided query.</param>
-        /// <param name="standardConformantStrings">Whether the PostgreSQL session is configured to use standard conformant strings.</param>
         /// <param name="parameters">The parameters configured on the <see cref="EDBCommand"/> of this query
         /// or an empty <see cref="EDBParameterCollection"/> if deriveParameters is set to true.</param>
         /// <param name="statements">An empty list to be populated with the statements parsed by this method</param>
         /// <param name="deriveParameters">A bool indicating whether parameters contains a list of preconfigured parameters or an empty list to be filled with derived parameters.</param>
-        internal void ParseRawQuery(string sql, bool standardConformantStrings, EDBParameterCollection parameters, List<EDBStatement> statements, bool deriveParameters = false)
-        {
-            Debug.Assert(sql != null);
-            Debug.Assert(statements != null);
-            Debug.Assert(parameters != null);
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            Debug.Assert(deriveParameters == false || parameters.Count == 0);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+        internal void ParseRawQuery(string sql, EDBParameterCollection parameters, List<EDBStatement> statements, bool deriveParameters = false)
+            => ParseRawQuery(sql.AsSpan(), parameters, statements, deriveParameters);
 
-#pragma warning disable CS8601 // Possible null reference assignment.
+        void ParseRawQuery(ReadOnlySpan<char> sql, EDBParameterCollection parameters, List<EDBStatement> statements, bool deriveParameters)
+        {
+            Debug.Assert(deriveParameters == false || parameters.Count == 0);
+
             _statements = statements;
-#pragma warning restore CS8601 // Possible null reference assignment.
             _statementIndex = -1;
             MoveToNextStatement();
 
             var currCharOfs = 0;
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            var end = sql.Length;
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-            var ch = '\0';
             var isProcedure = false;//EnterpriseDB Team
             var numActiveBlocks = 0;//EnterpriseDB Team
             var variableDeclare = 0;//EnterpriseDB Team
+            var end = sql.Length;
+            var ch = '\0';
             int dollarTagStart;
             int dollarTagEnd;
             var currTokenBeg = 0;
             var blockCommentLevel = 0;
             var parenthesisLevel = 0;
-            sqlString = sql;
+            sqlString = sql.ToString();
 
-            string temp = sql.ToUpper();//EnterpriseDB Team
+            var temp = sql.ToString().ToUpper();//EnterpriseDB Team
             if ((temp.StartsWith("CREATE") || temp.StartsWith("DECLARE ")) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
                 isProcedure = true;
 
             None:
             if (currCharOfs >= end)
-            {
                 goto Finish;
-            }
             var lastChar = ch;
             ch = sql[currCharOfs++];
         NoneContinue:
@@ -102,7 +70,7 @@ namespace EnterpriseDB.EDBClient
                 //EnterpriseDB Team
                 if (isProcedure)
                 {
-                    temp = sql.Substring(currCharOfs - 1).ToUpper();
+                    temp = sql.ToString().Substring(currCharOfs - 1).ToUpper();
                 }
 
                 if (isProcedure && temp.StartsWith("BEGIN"))
@@ -120,7 +88,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (isProcedure && temp.StartsWith("IS") || temp.StartsWith("AS") || temp.StartsWith("TRIGGER"))
                 {
-                    char next = ' ';
+                    var next = ' ';
                     if (temp.StartsWith("TRIGGER") && temp.Length > 7)
                     {
 
@@ -141,7 +109,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (isProcedure && temp.StartsWith("DECLARE"))
                 {
-                    char next = ' ';
+                    var next = ' ';
                     if (temp.Length > 7)
                     {
                         next = temp[7];
@@ -158,7 +126,7 @@ namespace EnterpriseDB.EDBClient
                     case '-':
                         goto LineCommentBegin;
                     case '\'':
-                        if (standardConformantStrings)
+                        if (StandardConformingStrings)
                             goto Quoted;
                         else
                             goto Escaped;
@@ -187,7 +155,6 @@ namespace EnterpriseDB.EDBClient
                         parenthesisLevel++;
                         break;
                     case ')':
-
                         parenthesisLevel--;
                         break;
                     case 'e':
@@ -212,9 +179,7 @@ namespace EnterpriseDB.EDBClient
                 }
 
                 if (currCharOfs >= end)
-                {
                     goto Finish;
-                }
             }
 
         ParamStart:
@@ -225,17 +190,12 @@ namespace EnterpriseDB.EDBClient
                 if (IsParamNameChar(ch))
                 {
                     if (currCharOfs - 1 > currTokenBeg)
-                    {
-                        _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - 1 - currTokenBeg));
-                    }
+                        _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - 1 - currTokenBeg));
                     currTokenBeg = currCharOfs++ - 1;
                     goto Param;
                 }
-                else
-                {
-                    currCharOfs++;
-                    goto NoneContinue;
-                }
+                currCharOfs++;
+                goto NoneContinue;
             }
             goto Finish;
 
@@ -246,14 +206,12 @@ namespace EnterpriseDB.EDBClient
                 lastChar = ch;
                 if (currCharOfs >= end || !IsParamNameChar(ch = sql[currCharOfs]))
                 {
-                    var paramName = sql.Substring(currTokenBeg + 1, currCharOfs - (currTokenBeg + 1));
+                    var paramName = sql.Slice(currTokenBeg + 1, currCharOfs - (currTokenBeg + 1)).ToString();
 
                     if (!_paramIndexMap.TryGetValue(paramName, out var index))
                     {
                         // Parameter hasn't been seen before in this query
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
                         if (!parameters.TryGetValue(paramName, out var parameter))
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                         {
                             if (deriveParameters)
                             {
@@ -264,7 +222,7 @@ namespace EnterpriseDB.EDBClient
                             {
                                 // Parameter placeholder does not match a parameter on this command.
                                 // Leave the text as it was in the SQL, it may not be a an actual placeholder
-                                _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg));
+                                _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg));
                                 currTokenBeg = currCharOfs;
                                 if (currCharOfs >= end)
                                     goto Finish;
@@ -285,17 +243,13 @@ namespace EnterpriseDB.EDBClient
                     currTokenBeg = currCharOfs;
 
                     if (currCharOfs >= end)
-                    {
                         goto Finish;
-                    }
 
                     currCharOfs++;
                     goto NoneContinue;
                 }
-                else
-                {
-                    currCharOfs++;
-                }
+
+                currCharOfs++;
             }
 
         Quoted:
@@ -326,9 +280,7 @@ namespace EnterpriseDB.EDBClient
                 lastChar = ch;
                 ch = sql[currCharOfs++];
                 if (ch == '\'')
-                {
                     goto Escaped;
-                }
                 goto NoneContinue;
             }
             goto Finish;
@@ -337,17 +289,17 @@ namespace EnterpriseDB.EDBClient
             while (currCharOfs < end)
             {
                 ch = sql[currCharOfs++];
-                if (ch == '\'')
+                switch (ch)
                 {
-                    goto MaybeConcatenatedEscaped;
-                }
-                if (ch == '\\')
-                {
-                    if (currCharOfs >= end)
+                    case '\'':
+                        goto MaybeConcatenatedEscaped;
+                    case '\\':
                     {
-                        goto Finish;
+                        if (currCharOfs >= end)
+                            goto Finish;
+                        currCharOfs++;
+                        break;
                     }
-                    currCharOfs++;
                 }
             }
             goto Finish;
@@ -356,14 +308,18 @@ namespace EnterpriseDB.EDBClient
             while (currCharOfs < end)
             {
                 ch = sql[currCharOfs++];
-                if (ch == '\r' || ch == '\n')
+                switch (ch)
                 {
-                    goto MaybeConcatenatedEscaped2;
-                }
-                if (ch != ' ' && ch != '\t' && ch != '\f')
-                {
-                    lastChar = '\0';
-                    goto NoneContinue;
+                    case '\r':
+                    case '\n':
+                        goto MaybeConcatenatedEscaped2;
+                    case ' ':
+                    case '\t':
+                    case '\f':
+                        continue;
+                    default:
+                        lastChar = '\0';
+                        goto NoneContinue;
                 }
             }
             goto Finish;
@@ -372,29 +328,29 @@ namespace EnterpriseDB.EDBClient
             while (currCharOfs < end)
             {
                 ch = sql[currCharOfs++];
-                if (ch == '\'')
+                switch (ch)
                 {
-                    goto Escaped;
-                }
-                if (ch == '-')
-                {
-                    if (currCharOfs >= end)
+                    case '\'':
+                        goto Escaped;
+                    case '-':
                     {
-                        goto Finish;
+                        if (currCharOfs >= end)
+                            goto Finish;
+                        ch = sql[currCharOfs++];
+                        if (ch == '-')
+                            goto MaybeConcatenatedEscapeAfterComment;
+                        lastChar = '\0';
+                        goto NoneContinue;
                     }
-                    ch = sql[currCharOfs++];
-                    if (ch == '-')
-                    {
-                        goto MaybeConcatenatedEscapeAfterComment;
-                    }
-                    lastChar = '\0';
-                    goto NoneContinue;
-
-                }
-                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f')
-                {
-                    lastChar = '\0';
-                    goto NoneContinue;
+                    case ' ':
+                    case '\t':
+                    case '\n':
+                    case '\r':
+                    case '\f':
+                        continue;
+                    default:
+                        lastChar = '\0';
+                        goto NoneContinue;
                 }
             }
             goto Finish;
@@ -404,9 +360,7 @@ namespace EnterpriseDB.EDBClient
             {
                 ch = sql[currCharOfs++];
                 if (ch == '\r' || ch == '\n')
-                {
                     goto MaybeConcatenatedEscaped2;
-                }
             }
             goto Finish;
 
@@ -444,34 +398,29 @@ namespace EnterpriseDB.EDBClient
                     goto DollarQuoted;
                 }
                 if (!IsDollarTagIdentifier(ch))
-                {
                     goto NoneContinue;
-                }
             }
             goto Finish;
 
         DollarQuoted:
+            var tag = sql.Slice(dollarTagStart - 1, dollarTagEnd - dollarTagStart + 2);
+            var pos = sql.Slice(dollarTagEnd + 1).IndexOf(tag);
+            if (pos == -1)
             {
-                var tag = sql.Substring(dollarTagStart - 1, dollarTagEnd - dollarTagStart + 2);
-                var pos = sql.IndexOf(tag, dollarTagEnd + 1); // Not linear time complexity, but that's probably not a problem, since PostgreSQL backend's isn't either
-                if (pos == -1)
-                {
-                    currCharOfs = end;
-                    goto Finish;
-                }
-                currCharOfs = pos + dollarTagEnd - dollarTagStart + 2;
-                ch = '\0';
-                goto None;
+                currCharOfs = end;
+                goto Finish;
             }
+            pos += dollarTagEnd + 1; // If the substring is found adjust the position to be relative to the entire span
+            currCharOfs = pos + dollarTagEnd - dollarTagStart + 2;
+            ch = '\0';
+            goto None;
 
         LineCommentBegin:
             if (currCharOfs < end)
             {
                 ch = sql[currCharOfs++];
                 if (ch == '-')
-                {
                     goto LineComment;
-                }
                 lastChar = '\0';
                 goto NoneContinue;
             }
@@ -482,9 +431,7 @@ namespace EnterpriseDB.EDBClient
             {
                 ch = sql[currCharOfs++];
                 if (ch == '\r' || ch == '\n')
-                {
                     goto None;
-                }
             }
             goto Finish;
 
@@ -500,9 +447,7 @@ namespace EnterpriseDB.EDBClient
                 if (ch != '/')
                 {
                     if (blockCommentLevel > 0)
-                    {
                         goto BlockComment;
-                    }
                     lastChar = '\0';
                     goto NoneContinue;
                 }
@@ -513,13 +458,12 @@ namespace EnterpriseDB.EDBClient
             while (currCharOfs < end)
             {
                 ch = sql[currCharOfs++];
-                if (ch == '*')
+                switch (ch)
                 {
-                    goto BlockCommentEnd;
-                }
-                if (ch == '/')
-                {
-                    goto BlockCommentBegin;
+                    case '*':
+                        goto BlockCommentEnd;
+                    case '/':
+                        goto BlockCommentBegin;
                 }
             }
             goto Finish;
@@ -531,15 +475,11 @@ namespace EnterpriseDB.EDBClient
                 if (ch == '/')
                 {
                     if (--blockCommentLevel > 0)
-                    {
                         goto BlockComment;
-                    }
                     goto None;
                 }
                 if (ch != '*')
-                {
                     goto BlockComment;
-                }
             }
             goto Finish;
 
@@ -563,7 +503,7 @@ namespace EnterpriseDB.EDBClient
                    }
                }
           */
-            _rewrittenSql.Append(sql.Substring(currTokenBeg, currCharOfs - currTokenBeg - 1));
+            _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg - 1));
             _statement.SQL = _rewrittenSql.ToString();
             while (currCharOfs < end)
             {
@@ -578,22 +518,18 @@ namespace EnterpriseDB.EDBClient
                 currTokenBeg = currCharOfs;
                 var procedureFlag = false;
                 if (_rewrittenSql.Length > 0)
-                    procedureFlag =  MoveToNextStatement();
+                    procedureFlag = MoveToNextStatement();
                 isProcedure = procedureFlag;//EnterpriseDB Team
                 goto None;
             }
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             if (statements.Count > _statementIndex + 1)
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
             return;
 
         Finish:
-            _rewrittenSql.Append(sql.Substring(currTokenBeg, end - currTokenBeg));
+            _rewrittenSql.Append(sql.Slice(currTokenBeg, end - currTokenBeg));
             _statement.SQL = _rewrittenSql.ToString();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             if (statements.Count > _statementIndex + 1)
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));
         }
 
@@ -602,11 +538,10 @@ namespace EnterpriseDB.EDBClient
             var isProcedure = false;
             if (sqlString != null)
             {
-                string temp = sqlString.ToUpper();//EnterpriseDB Team
+                var temp = sqlString.ToUpper();//EnterpriseDB Team
                 if ((temp.StartsWith("CREATE") || temp.StartsWith("DECLARE ")) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
                     isProcedure = true;
             }
-
             _statementIndex++;
             if (_statements.Count > _statementIndex)
             {

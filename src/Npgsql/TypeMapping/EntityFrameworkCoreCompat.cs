@@ -4,14 +4,15 @@ using System.Linq;
 using EnterpriseDB.EDBClient.TypeMapping;
 
 // This file contains some pretty awful hacks to make current version of the EF Core provider
-// compatible with the new type mapping/handling system introduced in EDB 4.0.
-// The EF Core provider dynamically loads its type mappings from EDB, which allows it to
+// compatible with the new type mapping/handling system introduced in EnterpriseDB.EDBClient 4.0.
+// The EF Core provider dynamically loads its type mappings from EnterpriseDB.EDBClient, which allows it to
 // automatically support any type supported by EnterpriseDB.EDBClient. Unfortunately, the current loading
 // system is very tightly coupled to pre-3.2 type mapping types (e.g. TypeHandlerRegistry),
 // and so this shim is required.
 
 // ReSharper disable once CheckNamespace
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     [Obsolete("Purely for EF Core backwards compatibility")]
     class TypeHandlerRegistry
     {

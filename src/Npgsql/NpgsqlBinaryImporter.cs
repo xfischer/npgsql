@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +8,8 @@ using EnterpriseDB.EDBClient.Logging;
 using EDBTypes;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides an API for a binary COPY FROM operation, a high-performance data import mechanism to
     /// a PostgreSQL table. Initiated by <see cref="EDBConnection.BeginBinaryImport"/>
@@ -113,7 +114,7 @@ namespace EnterpriseDB.EDBClient{
             CheckReady();
 
             if (_column != -1 && _column != NumColumns)
-                throw new InvalidOperationException("Row has already been started and must be finished");
+                ThrowHelper.ThrowInvalidOperationException_BinaryImportParametersMismatch(NumColumns, _column);
 
             if (_buf.WriteSpaceLeft < 2)
                 await _buf.Flush(async);
@@ -153,6 +154,8 @@ namespace EnterpriseDB.EDBClient{
 
         Task Write<T>([AllowNull] T value, bool async)
         {
+            CheckColumnIndex();
+
             var p = _params[_column];
             if (p == null)
             {
@@ -201,6 +204,8 @@ namespace EnterpriseDB.EDBClient{
 
         Task Write<T>([AllowNull] T value, EDBDbType EDBDbType, bool async)
         {
+            CheckColumnIndex();
+
             var p = _params[_column];
             if (p == null)
             {
@@ -249,6 +254,8 @@ namespace EnterpriseDB.EDBClient{
 
         Task Write<T>([AllowNull] T value, string dataTypeName, bool async)
         {
+            CheckColumnIndex();
+
             var p = _params[_column];
             if (p == null)
             {
@@ -357,6 +364,12 @@ namespace EnterpriseDB.EDBClient{
                 await Write(value, async);
         }
 
+        void CheckColumnIndex()
+        {
+            if (_column >= NumColumns)
+                ThrowHelper.ThrowInvalidOperationException_BinaryImportParametersMismatch(NumColumns, _column + 1);
+        }
+
         #endregion
 
         #region Commit / Cancel / Close / Dispose
@@ -364,7 +377,7 @@ namespace EnterpriseDB.EDBClient{
         /// <summary>
         /// Completes the import operation. The writer is unusable after this operation.
         /// </summary>
-        public ulong Complete() => Complete(false).GetAwaiter().GetResult();
+        public void Complete() => Complete(false).GetAwaiter().GetResult();
 
         /// <summary>
         /// Completes the import operation. The writer is unusable after this operation.

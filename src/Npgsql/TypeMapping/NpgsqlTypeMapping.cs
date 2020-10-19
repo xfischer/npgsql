@@ -25,21 +25,21 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// <summary>
         /// The <see cref="EDBDbType"/> that corresponds to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.EDBDbType"/> property
-        /// to this value will make EDB write its value to PostgreSQL with this mapping.
+        /// to this value will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public EDBDbType? EDBDbType { get; set; }
 
         /// <summary>
         /// A set of <see cref="DbType"/>s that correspond to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.DbType"/> property
-        /// to one of these values will make EDB write its value to PostgreSQL with this mapping.
+        /// to one of these values will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public DbType[]? DbTypes { get; set; }
 
         /// <summary>
         /// A set of CLR types that correspond to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.Value"/> property
-        /// to one of these types will make EDB write its value to PostgreSQL with this mapping.
+        /// to one of these types will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public Type[]? ClrTypes { get; set; }
 
@@ -81,11 +81,11 @@ namespace EnterpriseDB.EDBClient.TypeMapping
     {
         internal EDBTypeMapping(
             string pgTypeName,
-            EDBDbType? edbDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType,
+            EDBDbType? eDBDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType,
             EDBTypeHandlerFactory typeHandlerFactory)
         {
             PgTypeName = pgTypeName;
-            EDBDbType = edbDbType;
+            EDBDbType = eDBDbType;
             DbTypes = dbTypes ?? EmptyDbTypes;
             ClrTypes = clrTypes ?? EmptyClrTypes;
             InferredDbType = inferredDbType;
@@ -105,21 +105,21 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// <summary>
         /// The <see cref="EDBDbType"/> that corresponds to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.EDBDbType"/> property
-        /// to this value will make EDB write its value to PostgreSQL with this mapping.
+        /// to this value will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public EDBDbType? EDBDbType { get; }
 
         /// <summary>
         /// A set of <see cref="DbType"/>s that correspond to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.DbType"/> property
-        /// to one of these values will make EDB write its value to PostgreSQL with this mapping.
+        /// to one of these values will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public DbType[] DbTypes { get; }
 
         /// <summary>
         /// A set of CLR types that correspond to this type. Setting an
         /// <see cref="EDBParameter"/>'s <see cref="EDBParameter.Value"/> property
-        /// to one of these types will make EDB write its value to PostgreSQL with this mapping.
+        /// to one of these types will make EnterpriseDB.EDBClient write its value to PostgreSQL with this mapping.
         /// </summary>
         public Type[] ClrTypes { get; }
 

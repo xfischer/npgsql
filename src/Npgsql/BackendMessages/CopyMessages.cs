@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using EnterpriseDB.EDBClient.Util;
-//using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient.BackendMessages
 {

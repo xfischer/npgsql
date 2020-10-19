@@ -8,9 +8,10 @@ using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 // ReSharper disable once CheckNamespace
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// Extension allowing adding the NetTopologySuite plugin to an EDB type mapper.
+    /// Extension allowing adding the NetTopologySuite plugin to an EnterpriseDB.EDBClient type mapper.
     /// </summary>
     public static class EDBNetTopologySuiteExtensions
     {

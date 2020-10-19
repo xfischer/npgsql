@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/rangetypes.html
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -34,7 +34,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/rangetypes.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -59,7 +59,8 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Read
 
-        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+        /// <inheritdoc />
+        public override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => Read<TAny>(buf, len, false, fieldDescription).Result;
 
         /// <inheritdoc />
@@ -123,10 +124,18 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             if (!value.IsEmpty)
             {
                 if (!value.LowerBoundInfinite)
-                    totalLen += 4 + _elementHandler.ValidateAndGetLength(value.LowerBound, ref lengthCache, null);
+                {
+                    totalLen += 4;
+                    if (!(value.LowerBound is null) && typeof(TElement) != typeof(DBNull))
+                        totalLen += _elementHandler.ValidateAndGetLength(value.LowerBound, ref lengthCache, null);
+                }
 
                 if (!value.UpperBoundInfinite)
-                    totalLen += 4 + _elementHandler.ValidateAndGetLength(value.UpperBound, ref lengthCache, null);
+                {
+                    totalLen += 4;
+                    if (!(value.UpperBound is null) && typeof(TElement) != typeof(DBNull))
+                        totalLen += _elementHandler.ValidateAndGetLength(value.UpperBound, ref lengthCache, null);
+                }
             }
 
             // If we're traversing an already-populated length cache, rewind to first element slot so that

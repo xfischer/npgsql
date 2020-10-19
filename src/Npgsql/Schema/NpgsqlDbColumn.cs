@@ -152,7 +152,7 @@ namespace EnterpriseDB.EDBClient.Schema
 #nullable restore
         #endregion Standard fields
 
-        #region EDB-specific fields
+        #region EnterpriseDB.EDBClient-specific fields
 
         [PublicAPI]
         public PostgresType PostgresType { get; internal set; }
@@ -179,6 +179,6 @@ namespace EnterpriseDB.EDBClient.Schema
                 _                             => base[propertyName]
             };
 
-        #endregion EDB-specific fields
+        #endregion EnterpriseDB.EDBClient-specific fields
     }
 }

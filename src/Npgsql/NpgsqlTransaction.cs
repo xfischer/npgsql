@@ -6,7 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Represents a transaction to be made in a PostgreSQL database. This class cannot be inherited.
     /// </summary>
@@ -18,31 +19,25 @@ namespace EnterpriseDB.EDBClient{
         /// Specifies the <see cref="EDBConnection"/> object associated with the transaction.
         /// </summary>
         /// <value>The <see cref="EDBConnection"/> object associated with the transaction.</value>
-        public new EDBConnection? Connection
-        {
-            get
-            {
-                CheckReady();
-                return _connector.Connection;
-            }
-        }
+        public new EDBConnection Connection { get; internal set; }
 
         // Note that with ambient transactions, it's possible for a transaction to be pending after its connection
         // is already closed. So we capture the connector and perform everything directly on it.
-        readonly EDBConnector _connector;
+        EDBConnector _connector;
+
+        /// <summary>
+        /// Specifies the completion state of the transaction.
+        /// </summary>
+        /// <value>The completion state of the transaction.</value>
+        public bool IsCompleted => _connector == null;
 
         /// <summary>
         /// Specifies the <see cref="EDBConnection"/> object associated with the transaction.
         /// </summary>
         /// <value>The <see cref="EDBConnection"/> object associated with the transaction.</value>
-        protected override DbConnection? DbConnection => Connection;
+        protected override DbConnection DbConnection => Connection;
 
-        /// <summary>
-        /// If true, the transaction has been committed/rolled back, but not disposed.
-        /// </summary>
-        internal bool IsCompleted => _connector.TransactionStatus == TransactionStatus.Idle;
-
-        internal bool IsDisposed;
+        bool _isDisposed;
 
         /// <summary>
         /// Specifies the <see cref="System.Data.IsolationLevel">IsolationLevel</see> for this transaction.
@@ -57,7 +52,7 @@ namespace EnterpriseDB.EDBClient{
                 return _isolationLevel;
             }
         }
-        IsolationLevel _isolationLevel;
+        readonly IsolationLevel _isolationLevel;
 
         static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBTransaction));
 
@@ -65,46 +60,46 @@ namespace EnterpriseDB.EDBClient{
 
         #endregion
 
-        #region Initialization
+        #region Constructors
 
-        internal EDBTransaction(EDBConnector connector)
-            => _connector = connector;
-
-        internal void Init(IsolationLevel isolationLevel = DefaultIsolationLevel)
+        internal EDBTransaction(EDBConnection conn, IsolationLevel isolationLevel = DefaultIsolationLevel)
         {
             Debug.Assert(isolationLevel != IsolationLevel.Chaos);
+
+            Connection = conn;
+            _connector = Connection.CheckReadyAndGetConnector();
 
             if (!_connector.DatabaseInfo.SupportsTransactions)
                 return;
 
             Log.Debug($"Beginning transaction with isolation level {isolationLevel}", _connector.Id);
-            switch (isolationLevel)
-            {
-            case IsolationLevel.RepeatableRead:
-            case IsolationLevel.Snapshot:
-                _connector.PrependInternalMessage(PregeneratedMessages.BeginTransRepeatableRead, 2);
-                break;
-            case IsolationLevel.Serializable:
-                _connector.PrependInternalMessage(PregeneratedMessages.BeginTransSerializable, 2);
-                break;
-            case IsolationLevel.ReadUncommitted:
-                // PG doesn't really support ReadUncommitted, it's the same as ReadCommitted. But we still
-                // send as if.
-                _connector.PrependInternalMessage(PregeneratedMessages.BeginTransReadUncommitted, 2);
-                break;
-            case IsolationLevel.ReadCommitted:
-                _connector.PrependInternalMessage(PregeneratedMessages.BeginTransReadCommitted, 2);
-                break;
-            case IsolationLevel.Unspecified:
-                isolationLevel = DefaultIsolationLevel;
-                goto case DefaultIsolationLevel;
-            default:
-                throw new NotSupportedException("Isolation level not supported: " + isolationLevel);
+            _connector.Transaction = this;
+            _connector.TransactionStatus = TransactionStatus.Pending;
+
+            switch (isolationLevel) {
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Snapshot:
+                    _connector.PrependInternalMessage(PregeneratedMessages.BeginTransRepeatableRead, 2);
+                    break;
+                case IsolationLevel.Serializable:
+                    _connector.PrependInternalMessage(PregeneratedMessages.BeginTransSerializable, 2);
+                    break;
+                case IsolationLevel.ReadUncommitted:
+                    // PG doesn't really support ReadUncommitted, it's the same as ReadCommitted. But we still
+                    // send as if.
+                    _connector.PrependInternalMessage(PregeneratedMessages.BeginTransReadUncommitted, 2);
+                    break;
+                case IsolationLevel.ReadCommitted:
+                    _connector.PrependInternalMessage(PregeneratedMessages.BeginTransReadCommitted, 2);
+                    break;
+                case IsolationLevel.Unspecified:
+                    isolationLevel = DefaultIsolationLevel;
+                    goto case DefaultIsolationLevel;
+                default:
+                    throw new NotSupportedException("Isolation level not supported: " + isolationLevel);
             }
 
-            _connector.TransactionStatus = TransactionStatus.Pending;
             _isolationLevel = isolationLevel;
-            IsDisposed = false;
         }
 
         #endregion
@@ -127,6 +122,7 @@ namespace EnterpriseDB.EDBClient{
             {
                 Log.Debug("Committing transaction", _connector.Id);
                 await _connector.ExecuteInternalCommand(PregeneratedMessages.CommitTransaction, async);
+                Clear();
             }
         }
 
@@ -161,12 +157,13 @@ namespace EnterpriseDB.EDBClient{
         /// </summary>
         public override void Rollback() => Rollback(false).GetAwaiter().GetResult();
 
-        Task Rollback(bool async)
+        async Task Rollback(bool async)
         {
             CheckReady();
-            return _connector.DatabaseInfo.SupportsTransactions
-                ? _connector.Rollback(async)
-                : Task.CompletedTask;
+            if (!_connector.DatabaseInfo.SupportsTransactions)
+                return;
+            await _connector.Rollback(async);
+            Clear();
         }
 
         /// <summary>
@@ -318,7 +315,7 @@ namespace EnterpriseDB.EDBClient{
         /// </summary>
         protected override void Dispose(bool disposing)
         {
-            if (IsDisposed)
+            if (_isDisposed)
                 return;
 
             if (disposing && !IsCompleted)
@@ -327,36 +324,48 @@ namespace EnterpriseDB.EDBClient{
                 Rollback();
             }
 
-            IsDisposed = true;
+            Clear();
+
+            base.Dispose(disposing);
+            _isDisposed = true;
         }
 
-#if !NET461 && !NETSTANDARD2_0
         /// <summary>
         /// Disposes the transaction, rolling it back if it is still pending.
         /// </summary>
-        public override async ValueTask DisposeAsync()
-        {
-            if (IsDisposed)
-                return;
-
-            if (!IsCompleted)
-            {
-                using (NoSynchronizationContextScope.Enter())
-                {
-                    await _connector.CloseOngoingOperations(async: true);
-                    await Rollback(async: true);
-                }
-            }
-
-            IsDisposed = true;
-        }
+#if !NET461 && !NETSTANDARD2_0
+        public override ValueTask DisposeAsync()
+#else
+        public ValueTask DisposeAsync()
 #endif
+        {
+            if (!_isDisposed)
+            {
+                if (!IsCompleted)
+                {
+                    using (NoSynchronizationContextScope.Enter())
+                        return DisposeAsyncInternal();
+                }
 
-        /// <summary>
-        /// Disposes the transaction, without rolling back. Used only in special circumstances, e.g. when
-        /// the connection is broken.
-        /// </summary>
-        internal void DisposeImmediately() => IsDisposed = true;
+                _isDisposed = true;
+            }
+            return default;
+
+            async ValueTask DisposeAsyncInternal()
+            {
+                await _connector.CloseOngoingOperations(async: true);
+                await Rollback(async: true);
+                _isDisposed = true;
+            }
+        }
+
+#pragma warning disable CS8625
+        internal void Clear()
+        {
+            _connector = null;
+            Connection = null;
+        }
+#pragma warning restore CS8625
 
         #endregion
 
@@ -364,10 +373,20 @@ namespace EnterpriseDB.EDBClient{
 
         void CheckReady()
         {
-            if (IsDisposed)
-                throw new ObjectDisposedException(typeof(EDBTransaction).Name);
+            CheckDisposed();
+            CheckCompleted();
+        }
+
+        void CheckCompleted()
+        {
             if (IsCompleted)
                 throw new InvalidOperationException("This EDBTransaction has completed; it is no longer usable.");
+        }
+
+        void CheckDisposed()
+        {
+            if (_isDisposed)
+                throw new ObjectDisposedException(typeof(EDBTransaction).Name);
         }
 
         #endregion

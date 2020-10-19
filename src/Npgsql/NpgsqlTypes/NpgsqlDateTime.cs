@@ -103,7 +103,7 @@ namespace EDBTypes
                 InternalType.FiniteLocal       => true,
                 InternalType.Infinity          => false,
                 InternalType.NegativeInfinity  => false,
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.")
+                _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.")
             };
 
         public DateTimeKind Kind
@@ -114,7 +114,7 @@ namespace EDBTypes
                 InternalType.FiniteUnspecified => DateTimeKind.Unspecified,
                 InternalType.Infinity          => DateTimeKind.Unspecified,
                 InternalType.NegativeInfinity  => DateTimeKind.Unspecified,
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(DateTimeKind)}. Please file a bug.")
+                _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(DateTimeKind)}. Please file a bug.")
             };
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToUniversalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/EDB/EDB/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToUniversalTime()
@@ -160,7 +160,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
@@ -170,7 +170,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToLocalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/EDB/EDB/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToLocalTime()
@@ -191,7 +191,7 @@ namespace EDBTypes
             case InternalType.NegativeInfinity:
                 return this;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {_type} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.");
             }
         }
 
@@ -308,14 +308,14 @@ namespace EDBTypes
         #region Arithmetic
 
         /// <summary>
-        /// Returns a new <see cref="EDBDateTime"/> that adds the value of the specified TimeSpan to the value of this instance.
+        /// Returns a new <see cref="EDBDateTime"/> that adds the value of the specified <see cref="EDBTimeSpan"/> to the value of this instance.
         /// </summary>
-        /// <param name="value">A positive or negative time interval.</param>
+        /// <param name="value">An EDBTimeSpan interval.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the time interval represented by value.</returns>
-        public EDBDateTime Add(EDBTimeSpan value) { return AddTicks(value.Ticks); }
+        public EDBDateTime Add(EDBTimeSpan value) { return AddTicks(value.UnjustifyInterval().TotalTicks); }
 
         /// <summary>
-        /// Returns a new <see cref="EDBDateTime"/> that adds the value of the specified <see cref="EDBTimeSpan"/> to the value of this instance.
+        /// Returns a new <see cref="EDBDateTime"/> that adds the value of the specified TimeSpan to the value of this instance.
         /// </summary>
         /// <param name="value">A positive or negative time interval.</param>
         /// <returns>An object whose value is the sum of the date and time represented by this instance and the time interval represented by value.</returns>
@@ -463,7 +463,7 @@ namespace EDBTypes
                 DateTimeKind.Unspecified => InternalType.FiniteUnspecified,
                 DateTimeKind.Utc         => InternalType.FiniteUtc,
                 DateTimeKind.Local       => InternalType.FiniteLocal,
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {kind} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.")
+                _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {kind} of enum {nameof(EDBDateTime)}.{nameof(InternalType)}. Please file a bug.")
             };
 
         enum InternalType

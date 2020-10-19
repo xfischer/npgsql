@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/arrays.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -46,7 +46,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/arrays.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -68,14 +68,15 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
 
         #region Read
 
-        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
-            => Read<TAny>(buf, len, false, fieldDescription).Result;
+        /// <inheritdoc />
+        public override TRequestedArray Read<TRequestedArray>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+            => Read<TRequestedArray>(buf, len, false, fieldDescription).Result;
 
         /// <inheritdoc />
         protected internal override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             if (IsArrayOf<TAny, TElement>.Value)
-                return (TAny)(object)await ReadArray<TElement>(buf, async);
+                return (TAny)(object)await ReadArray<TElement>(buf, async, typeof(TAny).GetArrayRank());
 
             if (typeof(TAny) == typeof(List<TElement>))
                 return (TAny)(object)await ReadList<TElement>(buf, async);
@@ -96,7 +97,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         /// <summary>
         /// Reads an array of element type <typeparamref name="TAnyElement"/> from the given buffer <paramref name="buf"/>.
         /// </summary>
-        protected async ValueTask<Array> ReadArray<TAnyElement>(EDBReadBuffer buf, bool async)
+        protected async ValueTask<Array> ReadArray<TAnyElement>(EDBReadBuffer buf, bool async, int expectedDimensions = 0)
         {
             await buf.Ensure(12, async);
             var dimensions = buf.ReadInt32();
@@ -113,7 +114,12 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             }
 
             if (dimensions == 0)
-                return new TAnyElement[0];   // TODO: static instance
+                return expectedDimensions > 1
+                    ? Array.CreateInstance(typeof(TAnyElement), new int[expectedDimensions])
+                    : Array.Empty<TAnyElement>();
+
+            if (expectedDimensions > 0 && dimensions != expectedDimensions)
+                throw new InvalidOperationException($"Cannot read an array with {expectedDimensions} dimension(s) from an array with {dimensions} dimension(s)");
 
             var result = Array.CreateInstance(typeof(TAnyElement), dimLengths);
 
@@ -156,14 +162,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         {
             await buf.Ensure(12, async);
             var dimensions = buf.ReadInt32();
+            var containsNulls = buf.ReadInt32() == 1;
+            buf.ReadUInt32(); // Element OID. Ignored.
 
             if (dimensions == 0)
                 return new List<TAnyElement>();
             if (dimensions > 1)
                 throw new NotSupportedException($"Can't read multidimensional array as List<{typeof(TAnyElement).Name}>");
-
-            buf.ReadInt32();  // Has nulls. Not populated by PG?
-            buf.ReadUInt32(); // Element OID. Ignored.
 
             await buf.Ensure(8, async);
             var length = buf.ReadInt32();
@@ -226,15 +231,19 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             EDBLengthCache? elemLengthCache = lengthCache;
 
             foreach (var element in value)
-                if (element != null && typeof(TElement) != typeof(DBNull))
-                    try
-                    {
-                        len += _elementHandler.ValidateAndGetLength(element, ref elemLengthCache, null);
-                    }
-                    catch (Exception e)
-                    {
-                        throw MixedTypesOrJaggedArrayException(e);
-                    }
+            {
+                if (element is null || typeof(TElement) == typeof(DBNull))
+                    continue;
+
+                try
+                {
+                    len += _elementHandler.ValidateAndGetLength(element, ref elemLengthCache, null);
+                }
+                catch (Exception e)
+                {
+                    throw MixedTypesOrJaggedArrayException(e);
+                }
+            }
 
             lengthCache.Lengths[pos] = len;
             return len;
@@ -391,7 +400,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         protected internal override async ValueTask<TAny> Read<TAny>(EDBReadBuffer buf, int len, bool async, FieldDescription? fieldDescription = null)
         {
             if (IsArrayOf<TAny, TElementPsv>.Value)
-                return (TAny)(object)await ReadArray<TElementPsv>(buf, async);
+                return (TAny)(object)await ReadArray<TElementPsv>(buf, async, typeof(TAny).GetArrayRank());
 
             if (typeof(TAny) == typeof(List<TElementPsv>))
                 return (TAny)(object)await ReadList<TElementPsv>(buf, async);

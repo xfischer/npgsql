@@ -20,10 +20,11 @@ using EnterpriseDB.EDBClient.TypeMapping;
 using EnterpriseDB.EDBClient.Util;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Represents a connection to a PostgreSQL backend. Unlike EDBConnection objects, which are
-    /// exposed to users, connectors are internal to EDB and are recycled by the connection pool.
+    /// exposed to users, connectors are internal to EnterpriseDB.EDBClient and are recycled by the connection pool.
     /// </summary>
     sealed partial class EDBConnector : IDisposable
     {
@@ -101,11 +102,21 @@ namespace EnterpriseDB.EDBClient{
         internal TransactionStatus TransactionStatus { get; set; }
 
         /// <summary>
-        /// A transaction object for this connector. Since only one transaction can be in progress at any given time,
-        /// this instance is recycled. To check whether a transaction is currently in progress on this connector,
-        /// see <see cref="TransactionStatus"/>.
+        /// The transaction currently in progress, if any.
         /// </summary>
-        internal EDBTransaction Transaction { get; }
+        /// <remarks>
+        /// <para>
+        /// Note that this doesn't mean a transaction request has actually been sent to the backend - for
+        /// efficiency we defer sending the request to the first query after BeginTransaction is called.
+        /// See <see cref="TransactionStatus"/> for the actual transaction status.
+        /// </para>
+        /// <para>
+        /// Also, the user can initiate a transaction in SQL (i.e. BEGIN), in which case there will be no
+        /// EDBTransaction instance. As a result, never check <see cref="Transaction"/> to know whether
+        /// a transaction is in progress, check <see cref="TransactionStatus"/> instead.
+        /// </para>
+        /// </remarks>
+        internal EDBTransaction? Transaction { get; set; }
 
         /// <summary>
         /// The EDBConnection that (currently) owns this connector. Null if the connector isn't
@@ -213,8 +224,7 @@ namespace EnterpriseDB.EDBClient{
 
         int _resetWithoutDeallocateResponseCount;
 
-
-public bool _isScaler = false;
+        public bool _isScaler = false;
         public bool _is_Scaler_fallthrough = false;
         public bool _hasRefCursor = false;
         public bool _hasReturnParams = false;
@@ -229,7 +239,7 @@ public bool _isScaler = false;
         readonly ParameterDescriptionMessage _parameterDescriptionMessage = new ParameterDescriptionMessage();
         readonly DataRowMessage              _dataRowMessage              = new DataRowMessage();
         readonly RowDescriptionMessage       _rowDescriptionMessage       = new RowDescriptionMessage();
-        readonly DataRowMessage              _outParamDataRowMessage      = new DataRowMessage();
+        readonly DataRowMessage _outParamDataRowMessage = new DataRowMessage();
 
         // Since COPY is rarely used, allocate these lazily
         CopyInResponseMessage?  _copyInResponseMessage;
@@ -273,8 +283,6 @@ public bool _isScaler = false;
             ConnectionString = connectionString;
             PostgresParameters = new Dictionary<string, string>();
             SqlParser = new SqlQueryParser();
-            Transaction = new EDBTransaction(this);
-
             CancelLock = new object();
 
             _isKeepAliveEnabled = Settings.KeepAlive > 0;
@@ -590,12 +598,6 @@ public bool _isScaler = false;
                     }
                 }
 
-                if (!IsSecure)
-                {
-                    WriteBuffer.AwaitableSocket = new AwaitableSocket(new SocketAsyncEventArgs(), _socket);
-                    ReadBuffer.AwaitableSocket = new AwaitableSocket(new SocketAsyncEventArgs(), _socket);
-                }
-
                 Log.Trace($"Socket connected to {Host}:{Port}");
             }
             catch
@@ -778,7 +780,7 @@ public bool _isScaler = false;
             {
                 if (!PGUtil.IsWindows)
                     throw new PlatformNotSupportedException(
-                        "EDB management of TCP keepalive is supported only on Windows. " +
+                        "EnterpriseDB.EDBClient management of TCP keepalive is supported only on Windows. " +
                         "TCP keepalives can still be used on other systems but are enabled via the TcpKeepAlive option or configured globally for the machine, see the relevant docs.");
 
                 var time = Settings.TcpKeepAliveTime;
@@ -881,6 +883,7 @@ public bool _isScaler = false;
                         throw;
                     }
                 }
+
                 // if(_isCallableStmt != true) //TODO ZK: CheckMe
                 PostgresException? error = null;
 
@@ -911,6 +914,7 @@ public bool _isScaler = false;
                             {
                                 if (_origReadBuffer == null)
                                     _origReadBuffer = ReadBuffer;
+
                                 ReadBuffer = ReadBuffer.AllocateOversize(len);
                             }
 
@@ -926,7 +930,7 @@ public bool _isScaler = false;
 
                             // An ErrorResponse is (almost) always followed by a ReadyForQuery. Save the error
                             // and throw it as an exception when the ReadyForQuery is received (next).
-                            error = PostgresException.Load(ReadBuffer);
+                            error = PostgresException.Load(ReadBuffer, Settings.IncludeErrorDetails);
 
                             if (State == ConnectorState.Connecting)
                             {
@@ -989,11 +993,11 @@ public bool _isScaler = false;
             switch (code)
             {
                 case BackendMessageCode.RowDescription:
-                    return _rowDescriptionMessage.Load(buf, TypeMapper,false);
+                    return _rowDescriptionMessage.Load(buf, TypeMapper, false);
                 /* EnterpriseDB Team */
                 case BackendMessageCode.OutDescription:
                     var rowOutDescriptionMessage = new RowDescriptionMessage();
-                    return rowOutDescriptionMessage.Load(buf, TypeMapper,true);
+                    return rowOutDescriptionMessage.Load(buf, TypeMapper, true);
                 case BackendMessageCode.DataRow:
                     try
                     {
@@ -1008,10 +1012,9 @@ public bool _isScaler = false;
                 case BackendMessageCode.ParamData:
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-                    CurrentReader.ProcessEDBDataRowMessage(buf,false);
+                    CurrentReader.ProcessEDBDataRowMessage(buf, false);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                     return _outParamDataRowMessage.Load(len);
-
                 case BackendMessageCode.CompletedResponse:
                     return _commandCompleteMessage.Load(buf, len);
                 case BackendMessageCode.ReadyForQuery:
@@ -1040,7 +1043,7 @@ public bool _isScaler = false;
                     ReadParameterStatus(buf.GetNullTerminatedBytes(), buf.GetNullTerminatedBytes());
                     return null;
                 case BackendMessageCode.NoticeResponse:
-                    var notice = PostgresNotice.Load(buf);
+                    var notice = PostgresNotice.Load(buf, Settings.IncludeErrorDetails);
                     Log.Debug($"Received notice: {notice.MessageText}", Id);
                     Connection?.OnNotice(notice);
                     return null;
@@ -1086,7 +1089,7 @@ public bool _isScaler = false;
                     throw new EDBException("Unexpected backend message: " + code);
 
                 default:
-                    throw new InvalidOperationException($"Internal EDB bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {code} of enum {nameof(BackendMessageCode)}. Please file a bug.");
             }
         }
 
@@ -1108,6 +1111,7 @@ public bool _isScaler = false;
                     return msg;
             }
         }
+
         /* EnterpriseDB Team */
         /// <summary>
         /// Reads backend messages and discards them, stopping only after a message of the given types has
@@ -1129,7 +1133,6 @@ public bool _isScaler = false;
             }
         }
 
-
         #endregion Backend message processing
 
         #region Transactions
@@ -1148,7 +1151,7 @@ public bool _isScaler = false;
                 TransactionStatus.Pending                  => true,
                 TransactionStatus.InTransactionBlock       => true,
                 TransactionStatus.InFailedTransactionBlock => true,
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.")
+                _ => throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.")
             };
 
         /// <summary>
@@ -1156,22 +1159,32 @@ public bool _isScaler = false;
         /// </summary>
         void ProcessNewTransactionStatus(TransactionStatus newStatus)
         {
-            if (newStatus == TransactionStatus)
-                return;
+            if (newStatus == TransactionStatus) { return; }
 
-            TransactionStatus = newStatus switch
-            {
-                TransactionStatus.Idle                     => newStatus,
-                TransactionStatus.InTransactionBlock       => newStatus,
-                TransactionStatus.InFailedTransactionBlock => newStatus,
-                TransactionStatus.Pending                  => throw new Exception("Invalid TransactionStatus (should be frontend-only)"),
-                _ => throw new InvalidOperationException($"Internal EDB bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.")
-            };
+            switch (newStatus) {
+            case TransactionStatus.Idle:
+                ClearTransaction();
+                break;
+            case TransactionStatus.InTransactionBlock:
+            case TransactionStatus.InFailedTransactionBlock:
+                break;
+            case TransactionStatus.Pending:
+                throw new Exception("Invalid TransactionStatus (should be frontend-only)");
+            default:
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {newStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+            }
+            TransactionStatus = newStatus;
         }
 
         void ClearTransaction()
         {
-            Transaction.DisposeImmediately();
+            if (TransactionStatus == TransactionStatus.Idle) { return; }
+            // We may not have an EDBTransaction for the transaction (i.e. user executed BEGIN)
+            if (Transaction != null)
+            {
+                Transaction.Clear();
+                Transaction = null;
+            }
             TransactionStatus = TransactionStatus.Idle;
         }
 
@@ -1415,9 +1428,8 @@ public bool _isScaler = false;
 
             _stream = null;
             _baseStream = null;
-            ReadBuffer?.AwaitableSocket?.Dispose();
+            _origReadBuffer = null;
             ReadBuffer = null;
-            WriteBuffer?.AwaitableSocket?.Dispose();
             WriteBuffer = null;
             Connection = null;
             PostgresParameters.Clear();
@@ -1499,7 +1511,7 @@ public bool _isScaler = false;
             case ConnectorState.Waiting:
                 throw new InvalidOperationException("Reset() called on connector with state " + State);
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {State} of enum {nameof(ConnectorState)}. Please file a bug.");
             }
 
             // Our buffer may contain unsent prepended messages (such as BeginTransaction), clear it out completely
@@ -1526,10 +1538,9 @@ public bool _isScaler = false;
             case TransactionStatus.InTransactionBlock:
             case TransactionStatus.InFailedTransactionBlock:
                 Rollback(false);
-                ClearTransaction();
                 break;
             default:
-                throw new InvalidOperationException($"Internal EDB bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
+                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
             }
 
             if (!Settings.NoResetOnClose && DatabaseInfo.SupportsDiscard)
@@ -1576,6 +1587,13 @@ public bool _isScaler = false;
 
             lock (this)
             {
+                if (State == ConnectorState.Broken)
+                {
+                    // Most of the time it's due to keepalive failing
+                    throw new EDBException("The connection was broken due to a keepalive failure, " +
+                                              "check the logs for the original exception");
+                }
+
                 if (!_userLock!.Wait(0))
                 {
                     var currentCommand = _currentCommand;
@@ -1726,8 +1744,8 @@ public bool _isScaler = false;
 
         public bool Wait(int timeout)
         {
-            if ((timeout == 0 || timeout == -1) && IsSecure)
-                throw new NotSupportedException("Wait() with timeout isn't supported when SSL is used, see https://github.com/EDB/EDB/issues/1501");
+            if ((timeout != 0 && timeout != -1) && IsSecure)
+                throw new NotSupportedException("Wait() with timeout isn't supported when SSL is used, see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1501");
 
             using (StartUserAction(ConnectorState.Waiting))
             {
@@ -1931,7 +1949,7 @@ public bool _isScaler = false;
 
         #region Supported features and PostgreSQL settings
 
-        internal bool UseConformantStrings { get; private set; }
+        internal bool UseConformingStrings { get; private set; }
 
         /// <summary>
         /// The connection's timezone as reported by PostgreSQL, in the IANA/Olson database format.
@@ -2002,7 +2020,8 @@ public bool _isScaler = false;
             switch (name)
             {
             case "standard_conforming_strings":
-                UseConformantStrings = (value == "on");
+                UseConformingStrings = value == "on";
+                SqlParser.StandardConformingStrings = UseConformingStrings;
                 return;
 
             case "TimeZone":

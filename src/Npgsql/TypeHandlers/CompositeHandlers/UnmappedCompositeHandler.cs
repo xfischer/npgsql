@@ -154,7 +154,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers
             {
                 totalLen += 4 + 4;  // type oid + field length
                 var fieldValue = f.Getter(value);
-                if (fieldValue == null)
+                if (fieldValue == null || fieldValue == DBNull.Value)
                     continue;
                 totalLen += f.Handler.ValidateObjectAndGetLength(fieldValue, ref lengthCache, null);
             }
@@ -185,6 +185,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers
             {
                 var fieldHandler = fieldDescriptor.Handler;
                 var fieldValue = fieldDescriptor.Getter(value);
+
                 if (fieldValue == null)
                 {
                     fieldValue = DBNull.Value;

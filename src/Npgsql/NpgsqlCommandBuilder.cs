@@ -4,7 +4,8 @@ using System.Data.Common;
 using System.Globalization;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     ///<summary>
     /// This class is responsible to create database commands for automatic insert, update and delete operations.
     ///</summary>
@@ -90,7 +91,7 @@ namespace EnterpriseDB.EDBClient{
         ///<summary>
         ///
         /// This method is responsible to derive the command parameter list with values obtained from function definition.
-        /// It clears the Parameters collection of command. Also, if there is any parameter type which is not supported by EDB, an InvalidOperationException will be thrown.
+        /// It clears the Parameters collection of command. Also, if there is any parameter type which is not supported by EnterpriseDB.EDBClient, an InvalidOperationException will be thrown.
         /// Parameters name will be parameter1, parameter2, ... for CommandType.StoredProcedure and named after the placeholder for CommandType.Text
         ///</summary>
         /// <param name="command">EDBCommand whose function parameters will be obtained.</param>

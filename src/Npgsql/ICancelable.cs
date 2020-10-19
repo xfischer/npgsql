@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     interface ICancelable : IDisposable
     {
         void Cancel();

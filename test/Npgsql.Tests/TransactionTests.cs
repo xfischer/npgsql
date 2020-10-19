@@ -19,9 +19,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 conn.ExecuteNonQuery("INSERT INTO data (name) VALUES ('X')", tx: tx);
                 tx.Commit();
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(1));
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<InvalidOperationException>());
-                tx.Dispose();
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
             }
         }
 
@@ -35,9 +32,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 conn.ExecuteNonQuery("INSERT INTO data (name) VALUES ('X')", tx: tx);
                 await tx.CommitAsync();
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(1));
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<InvalidOperationException>());
-                tx.Dispose();
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
             }
         }
 
@@ -56,9 +50,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 tx.Rollback();
                 Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<InvalidOperationException>());
-                tx.Dispose();
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
             }
         }
 
@@ -77,9 +68,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 await tx.RollbackAsync();
                 Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<InvalidOperationException>());
-                tx.Dispose();
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
             }
         }
 
@@ -92,6 +80,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 var tx = conn.BeginTransaction();
                 conn.ExecuteNonQuery("INSERT INTO data (name) VALUES ('X')", tx: tx);
                 tx.Dispose();
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(0));
             }
         }
@@ -111,8 +100,8 @@ namespace EnterpriseDB.EDBClient.Tests
                     tx = conn2.BeginTransaction();
                     conn2.ExecuteNonQuery($"INSERT INTO {tableName} (name) VALUES ('X')", tx);
                 }
+                Assert.That(tx.IsCompleted);
                 Assert.That(conn1.ExecuteScalar($"SELECT COUNT(*) FROM {tableName}"), Is.EqualTo(0));
-                Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
                 conn1.ExecuteNonQuery($"DROP TABLE {tableName}");
             }
         }
@@ -147,12 +136,12 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Tests that the isolation levels are properly supported")]
-        [TestCase(IsolationLevel.ReadCommitted,   "read committed")]
+        [TestCase(IsolationLevel.ReadCommitted, "read committed")]
         [TestCase(IsolationLevel.ReadUncommitted, "read uncommitted")]
-        [TestCase(IsolationLevel.RepeatableRead,  "repeatable read")]
-        [TestCase(IsolationLevel.Serializable,    "serializable")]
-        [TestCase(IsolationLevel.Snapshot,        "repeatable read")]
-        [TestCase(IsolationLevel.Unspecified,     "read committed")]
+        [TestCase(IsolationLevel.RepeatableRead, "repeatable read")]
+        [TestCase(IsolationLevel.Serializable, "serializable")]
+        [TestCase(IsolationLevel.Snapshot, "repeatable read")]
+        [TestCase(IsolationLevel.Unspecified, "read committed")]
         public void IsolationLevels(IsolationLevel level, string expectedName)
         {
             using (var conn = OpenConnection())
@@ -182,7 +171,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure the creating a transaction via DbConnection sets the proper isolation level")]
-        [IssueLink("https://github.com/EDB/EDB/issues/559")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/559")]
         public void DbConnectionDefaultIsolation()
         {
             using (var conn = OpenConnection())
@@ -254,8 +243,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("If a custom command timeout is set, a failed transaction could not be rollbacked to a previous savepoint")]
-        [IssueLink("https://github.com/EDB/EDB/issues/363")]
-        [IssueLink("https://github.com/EDB/EDB/issues/184")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/363")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/184")]
         public void FailedTransactionCantRollbackToSavepointWithCustomTimeout()
         {
             using (var conn = OpenConnection())
@@ -280,7 +269,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Closes a (pooled) connection with a failed transaction and a custom timeout")]
-        [IssueLink("https://github.com/EDB/EDB/issues/719")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/719")]
         public void FailedTransactionOnCloseWithCustom()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -305,7 +294,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/555")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/555")]
         public void TransactionOnRecycledConnection()
         {
             // Use application name to make sure we have our very own private connection pool
@@ -384,7 +373,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedCommit()
         {
             using (var conn = OpenConnection())
@@ -400,7 +389,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedRollback()
         {
             using (var conn = OpenConnection())
@@ -417,7 +406,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
         [Test, Description("Check IsCompleted before, during, and after a failed then rolled back transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/985")]
         public void IsCompletedRollbackFailed()
         {
             using (var conn = OpenConnection())
@@ -489,7 +478,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             public override bool SupportsTransactions => false;
 
-            internal NoTransactionDatabaseInfo(EDBConnection conn) : base(conn) {}
+            internal NoTransactionDatabaseInfo(EDBConnection conn) : base(conn) { }
         }
 
         // Older tests
@@ -500,16 +489,21 @@ namespace EnterpriseDB.EDBClient.Tests
             var csb = new EDBConnectionStringBuilder(ConnectionString);
             csb.CommandTimeout = 100000;
 
-            using (var connTimeoutChanged = new EDBConnection(csb.ToString())) {
+            using (var connTimeoutChanged = new EDBConnection(csb.ToString()))
+            {
                 connTimeoutChanged.Open();
-                using (var t = connTimeoutChanged.BeginTransaction()) {
-                    try {
+                using (var t = connTimeoutChanged.BeginTransaction())
+                {
+                    try
+                    {
                         var command = new EDBCommand("select count(*) from dta", connTimeoutChanged);
                         command.Transaction = t;
                         var result = command.ExecuteScalar();
 
 
-                    } catch (Exception) {
+                    }
+                    catch (Exception)
+                    {
 
                         t.Rollback();
                     }

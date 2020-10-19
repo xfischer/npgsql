@@ -116,7 +116,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         internal EDBDbType ToEDBDbType(DbType dbType)
         {
             if (!_dbTypeToEDBDbType.TryGetValue(dbType, out var EDBDbType))
-                throw new NotSupportedException($"The parameter type DbType.{dbType} isn't supported by PostgreSQL or EDB");
+                throw new NotSupportedException($"The parameter type DbType.{dbType} isn't supported by PostgreSQL or EnterpriseDB.EDBClient");
             return EDBDbType;
         }
 

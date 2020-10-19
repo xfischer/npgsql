@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -33,13 +33,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-datetime.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
     public class IntervalHandler : EDBSimpleTypeHandlerWithPsv<TimeSpan, EDBTimeSpan>
     {
-        internal IntervalHandler(PostgresType postgresType) : base(postgresType) {}
+        /// <summary>
+        /// Constructs an <see cref="IntervalHandler"/>
+        /// </summary>
+        public IntervalHandler(PostgresType postgresType) : base(postgresType) {}
 
         /// <inheritdoc />
         public override TimeSpan Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)

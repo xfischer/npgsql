@@ -9,7 +9,8 @@ using static EnterpriseDB.EDBClient.Util.Statics;
 
 #pragma warning disable 1591
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides an API for a raw binary COPY operation, a high-performance data import/export mechanism to
     /// a PostgreSQL table. Initiated by <see cref="EDBConnection.BeginRawBinaryCopy"/>
@@ -173,9 +174,19 @@ namespace EnterpriseDB.EDBClient{
 
             if (_leftToReadInDataMsg == 0)
             {
-                // We've consumed the current DataMessage (or haven't yet received the first),
-                // read the next message
-                var msg = await _connector.ReadMessage(async);
+                IBackendMessage msg;
+                try
+                {
+                    // We've consumed the current DataMessage (or haven't yet received the first),
+                    // read the next message
+                    msg = await _connector.ReadMessage(async);
+                }
+                catch
+                {
+                    Cleanup();
+                    throw;
+                }
+
                 switch (msg.Code) {
                 case BackendMessageCode.CopyData:
                     _leftToReadInDataMsg = ((CopyDataMessage)msg).Length;

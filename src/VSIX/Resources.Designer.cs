@@ -61,7 +61,7 @@ namespace Npgsql.VSIX {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use this selection to connect to PostgreSQL using the Npgsql provider..
+        ///   Looks up a localized string similar to Use this selection to connect to PostgreSQL using the EnterpriseDB.EDBClient provider..
         /// </summary>
         internal static string Provider_Description {
             get {

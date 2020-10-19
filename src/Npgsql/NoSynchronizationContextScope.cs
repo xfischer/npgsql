@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Threading;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// This mechanism is used to temporarily set the current synchronization context to null while
-    /// executing EDB code, making all await continuations execute on the thread pool. This replaces
+    /// executing EnterpriseDB.EDBClient code, making all await continuations execute on the thread pool. This replaces
     /// the need to place ConfigureAwait(false) everywhere, and should be used in all surface async methods,
     /// without exception.
     ///
     /// Warning: do not use this directly in async methods, use it in sync wrappers of async methods
-    /// (see https://github.com/EDB/EDB/issues/1593)
+    /// (see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1593)
     /// </summary>
     /// <remarks>
     /// http://stackoverflow.com/a/28307965/640325

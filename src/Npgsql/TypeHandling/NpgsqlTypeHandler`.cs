@@ -87,7 +87,8 @@ namespace EnterpriseDB.EDBClient.TypeHandling
             return asTypedHandler.Read(buf, len, async, fieldDescription);
         }
 
-        internal override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+        /// <inheritdoc />
+        public override TAny Read<TAny>(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
             => Read<TAny>(buf, len, false, fieldDescription).Result;
 
         // Since TAny isn't constrained to class? or struct (C# doesn't have a non-nullable constraint that doesn't limit us to either struct or class),
@@ -117,9 +118,13 @@ namespace EnterpriseDB.EDBClient.TypeHandling
         /// Checks that the current handler supports that type and throws an exception otherwise.
         /// </summary>
         protected internal override int ValidateAndGetLength<TAny>(TAny value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
-            => this is IEDBTypeHandler<TAny> typedHandler
-                ? typedHandler.ValidateAndGetLength(value, ref lengthCache, parameter)
-                : throw new InvalidCastException($"Can't write CLR type {typeof(TAny)} to database type {PgDisplayName}");
+        {
+            var typedHandler = this as IEDBTypeHandler<TAny>;
+            if (typedHandler is null)
+                ThrowHelper.ThrowInvalidCastException_NotSupportedType(this, parameter, typeof(TAny));
+
+            return typedHandler.ValidateAndGetLength(value, ref lengthCache, parameter);
+        }
 
         /// <summary>
         /// In the vast majority of cases writing a parameter to the buffer won't need to perform I/O.

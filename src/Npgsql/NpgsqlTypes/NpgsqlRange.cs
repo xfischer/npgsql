@@ -25,7 +25,7 @@ namespace EDBTypes
         // > a bitwise and operation, which would also be fast under .NET Core 2.0 and .NET Framework.
         //
         // See:
-        //   - https://github.com/EDB/EDB/pull/1939#pullrequestreview-121308396
+        //   - https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/1939#pullrequestreview-121308396
         //   - https://blogs.msdn.microsoft.com/dotnet/2018/04/18/performance-improvements-in-net-core-2-1
         // -----------------------------------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ namespace EDBTypes
         /// </summary>
         /// <param name="lowerBound">The lower bound of the range.</param>
         /// <param name="upperBound">The upper bound of the range.</param>
-        public EDBRange(T lowerBound, T upperBound)
+        public EDBRange([AllowNull] T lowerBound, [AllowNull] T upperBound)
             : this(lowerBound, true, false, upperBound, true, false) { }
 
         /// <summary>
@@ -149,7 +149,9 @@ namespace EDBTypes
         /// <param name="lowerBoundIsInclusive">True if the lower bound is is part of the range (i.e. inclusive); otherwise, false.</param>
         /// <param name="upperBound">The upper bound of the range.</param>
         /// <param name="upperBoundIsInclusive">True if the upper bound is part of the range (i.e. inclusive); otherwise, false.</param>
-        public EDBRange(T lowerBound, bool lowerBoundIsInclusive, T upperBound, bool upperBoundIsInclusive)
+        public EDBRange(
+            [AllowNull] T lowerBound, bool lowerBoundIsInclusive,
+            [AllowNull] T upperBound, bool upperBoundIsInclusive)
             : this(lowerBound, lowerBoundIsInclusive, false, upperBound, upperBoundIsInclusive, false) { }
 
         /// <summary>
@@ -161,8 +163,9 @@ namespace EDBTypes
         /// <param name="upperBound">The upper bound of the range.</param>
         /// <param name="upperBoundIsInclusive">True if the upper bound is part of the range (i.e. inclusive); otherwise, false.</param>
         /// <param name="upperBoundInfinite">True if the upper bound is indefinite (i.e. infinite or unbounded); otherwise, false.</param>
-        public EDBRange(T lowerBound, bool lowerBoundIsInclusive, bool lowerBoundInfinite,
-                           T upperBound, bool upperBoundIsInclusive, bool upperBoundInfinite)
+        public EDBRange(
+            [AllowNull] T lowerBound, bool lowerBoundIsInclusive, bool lowerBoundInfinite,
+            [AllowNull] T upperBound, bool upperBoundIsInclusive, bool upperBoundInfinite)
             : this(
                 lowerBound,
                 upperBound,
@@ -181,7 +184,7 @@ namespace EDBTypes
         internal EDBRange([AllowNull] T lowerBound, [AllowNull] T upperBound, RangeFlags flags) : this()
         {
             // TODO: We need to check if the bounds are implicitly empty. E.g. '(1,1)' or '(0,0]'.
-            // See: https://github.com/EDB/EDB/issues/1943.
+            // See: https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1943.
 
             LowerBound = (flags & RangeFlags.LowerBoundInfinite) != 0 ? default : lowerBound;
             UpperBound = (flags & RangeFlags.UpperBoundInfinite) != 0 ? default : upperBound;
@@ -204,7 +207,7 @@ namespace EDBTypes
         /// <returns>
         /// True if the range is implicitly empty; otherwise, false.
         /// </returns>
-        static bool IsEmptyRange(T lowerBound, T upperBound, RangeFlags flags)
+        static bool IsEmptyRange([AllowNull] T lowerBound, [AllowNull] T upperBound, RangeFlags flags)
         {
             // ---------------------------------------------------------------------------------
             // We only want to check for those conditions that are unambiguously erroneous:
@@ -214,8 +217,8 @@ namespace EDBTypes
             //   4. The bounds must be considered equal.
             //
             // See:
-            //  - https://github.com/EDB/EDB/pull/1939
-            //  - https://github.com/EDB/EDB/issues/1943
+            //  - https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/1939
+            //  - https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1943
             // ---------------------------------------------------------------------------------
 
             if ((flags & RangeFlags.Empty) == RangeFlags.Empty)
@@ -227,15 +230,16 @@ namespace EDBTypes
             if ((flags & RangeFlags.Inclusive) == RangeFlags.Inclusive)
                 return false;
 
+            if (lowerBound is null || upperBound is null)
+                return false;
+
             if (!HasEquatableBounds)
                 return lowerBound?.Equals(upperBound) ?? false;
 
-            var lower = (IEquatable<T>?)lowerBound;
-            var upper = (IEquatable<T>?)upperBound;
+            var lower = (IEquatable<T>)lowerBound;
+            var upper = (IEquatable<T>)upperBound;
 
-            return lower != null && !lower.Equals(default!) &&
-                   upper != null && !upper.Equals(default!) &&
-                   lower.Equals(upperBound);
+            return !lower.Equals(default!) && !upper.Equals(default!) && lower.Equals(upperBound);
         }
 
         /// <summary>
@@ -303,13 +307,22 @@ namespace EDBTypes
                 return false;
 
             if (HasEquatableBounds)
-                return
-                    (LowerBound == null ? other.LowerBound == null : ((IEquatable<T>)LowerBound).Equals(other.LowerBound)) &&
-                    (UpperBound == null ? other.UpperBound == null : ((IEquatable<T>)UpperBound).Equals(other.UpperBound));
+            {
+                var lowerEqual = LowerBound is null
+                    ? other.LowerBound is null
+                    : !(other.LowerBound is null) && ((IEquatable<T>)LowerBound).Equals(other.LowerBound);
+
+                if (!lowerEqual)
+                    return false;
+
+                return UpperBound is null
+                    ? other.UpperBound is null
+                    : !(other.UpperBound is null) && ((IEquatable<T>)UpperBound).Equals(other.UpperBound);
+            }
 
             return
-                (LowerBound?.Equals(other.LowerBound) ?? other.LowerBound == null) &&
-                (UpperBound?.Equals(other.UpperBound) ?? other.UpperBound == null);
+                (LowerBound?.Equals(other.LowerBound) ?? other.LowerBound is null) &&
+                (UpperBound?.Equals(other.UpperBound) ?? other.UpperBound is null);
         }
 
         /// <inheritdoc />

@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
     /// <remarks>
     /// See http://www.postgresql.org/docs/current/static/datatype-numeric.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -48,13 +48,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             var sign = buf.ReadUInt16();
 
             if (sign == SignNan)
-                throw new EDBSafeReadException(new InvalidCastException("Numeric NaN not supported by System.Decimal"));
+                ThrowSafeReadException(new InvalidCastException("Numeric NaN not supported by System.Decimal"), len -6);
             if (sign == SignNegative)
                 DecimalRaw.Negate(ref result);
 
             var scale = buf.ReadInt16();
             if (scale > MaxDecimalScale)
-                throw new EDBSafeReadException(new OverflowException("Numeric value does not fit in a System.Decimal"));
+                ThrowSafeReadException(new OverflowException("Numeric value does not fit in a System.Decimal"), len - 8);
 
             result.Scale = scale;
 
@@ -102,6 +102,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.NumericHandlers
             }
 
             return result.Value;
+
+            void ThrowSafeReadException(Exception originalException, int remainingInColumn)
+            {
+                if (remainingInColumn > 0)
+                    buf.Skip(remainingInColumn);
+                throw new EDBSafeReadException(originalException);
+            }
         }
 
         byte IEDBSimpleTypeHandler<byte>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)

@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// A buffer used by EDB to read data from the socket efficiently.
+    /// A buffer used by EnterpriseDB.EDBClient to read data from the socket efficiently.
     /// Provides methods which decode different values types and tracks the current position.
     /// </summary>
     public sealed partial class EDBReadBuffer
@@ -22,12 +23,7 @@ namespace EnterpriseDB.EDBClient{
 
         internal readonly EDBConnector Connector;
 
-        public Stream Underlying {  get; set; }
-
-        /// <summary>
-        /// Wraps SocketAsyncEventArgs for better async I/O as long as we're not doing SSL.
-        /// </summary>
-        internal AwaitableSocket? AwaitableSocket { get; set; }
+        public Stream Underlying { get; set; }
 
         /// <summary>
         /// The total byte length of the buffer.
@@ -126,20 +122,9 @@ namespace EnterpriseDB.EDBClient{
                     while (count > 0)
                     {
                         var toRead = Size - FilledBytes;
-
-                        int read;
-                        if (async)
-                        {
-                            if (AwaitableSocket == null)  // SSL
-                                read = await Underlying.ReadAsync(Buffer, FilledBytes, toRead);
-                            else  // Non-SSL async I/O, optimized
-                            {
-                                AwaitableSocket.SetBuffer(Buffer, FilledBytes, toRead);
-                                await AwaitableSocket.ReceiveAsync();
-                                read = AwaitableSocket.BytesTransferred;
-                            }
-                        } else  // Sync I/O
-                            read = Underlying.Read(Buffer, FilledBytes, toRead);
+                        var read = async
+                            ? await Underlying.ReadAsync(Buffer, FilledBytes, toRead)
+                            : Underlying.Read(Buffer, FilledBytes, toRead);
 
                         if (read == 0)
                             throw new EndOfStreamException();
@@ -405,7 +390,7 @@ namespace EnterpriseDB.EDBClient{
             if (readFromBuffer > 0)
             {
                 System.Buffer.BlockCopy(Buffer, ReadPosition, output, outputOffset, readFromBuffer);
-                ReadPosition += len;
+                ReadPosition += readFromBuffer;
                 return new ValueTask<int>(readFromBuffer);
             }
 
@@ -413,7 +398,7 @@ namespace EnterpriseDB.EDBClient{
 
             async Task<int> ReadBytesLong()
             {
-                Debug.Assert(ReadPosition == 0);
+                Debug.Assert(ReadBytesLeft == 0);
                 Clear();
                 try
                 {

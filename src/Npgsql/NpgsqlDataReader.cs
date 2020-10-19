@@ -23,7 +23,8 @@ using EDBTypes;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
 #pragma warning disable CA2222 // Do not decrease inherited member visibility
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Reads a forward-only stream of rows from a data source.
     /// </summary>
@@ -37,15 +38,14 @@ namespace EnterpriseDB.EDBClient{
         internal EDBCommand Command { get; private set; } = default!;
         internal EDBConnector Connector { get; }
         EDBConnection _connection = default!;
-         
+
         /* Enterprisedb Team */
         internal IBackendMessage pendingmsg;
         internal bool _isReturnRow = true;
         internal bool isOutParamReceived;
         internal int _InternalreadPosition;
         internal int _InternalActaullReadPosition;
-        RowDescriptionMessage _callable_descrition; 
-
+        RowDescriptionMessage _callable_descrition;
 
         /// <summary>
         /// The behavior of the command with which this reader was executed.
@@ -57,6 +57,7 @@ namespace EnterpriseDB.EDBClient{
         internal ReaderState State;
 
         internal EDBReadBuffer Buffer = default!;
+
         internal EDBReadBuffer RetRowBuffer;//Enterprisedb Team
 
         /// <summary>
@@ -81,8 +82,6 @@ namespace EnterpriseDB.EDBClient{
         internal List<(int Offset, int Length)> _columns = new List<(int Offset, int Length)>();
 
         internal List<(int Offset, int Length)> _retColumns = new List<(int Offset, int Length)>(); //EnterpriseDB Team
-
-
         /// <summary>
         /// The index of the column that we're on, i.e. that has already been parsed, is
         /// is memory and can be retrieved. Initialized to -1, which means we're on the column
@@ -126,7 +125,6 @@ namespace EnterpriseDB.EDBClient{
         bool _isSchemaOnly;
         bool _isSequential;
 
-
         /// <summary>
         /// A stream that has been opened on a column.
         /// </summary>
@@ -142,6 +140,7 @@ namespace EnterpriseDB.EDBClient{
 #pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
         internal EDBDataReader(EDBConnector connector)
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
+
         {
             Connector = connector;
         }
@@ -206,8 +205,8 @@ namespace EnterpriseDB.EDBClient{
 
             if (_behavior.HasFlag(CommandBehavior.SingleRow))
                 return null;
-         //   if (Command.CommandType == CommandType.StoredProcedure && Connector._hasRefCursor != true) /*EnterpriseDB Team CheckMe? */
-           //     State = ReaderState.BeforeResult;
+            //   if (Command.CommandType == CommandType.StoredProcedure && Connector._hasRefCursor != true) /*EnterpriseDB Team CheckMe? */
+            //     State = ReaderState.BeforeResult;
             switch (State)
             {
             case ReaderState.BeforeResult:
@@ -252,7 +251,6 @@ namespace EnterpriseDB.EDBClient{
                 return true;
 
             case ReaderState.InResult:
-                   
                 await ConsumeRow(async);
                 if (_behavior.HasFlag(CommandBehavior.SingleRow))
                 {
@@ -334,18 +332,8 @@ namespace EnterpriseDB.EDBClient{
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<bool>(cancellationToken);
-            try
-            {
-                using (NoSynchronizationContextScope.Enter())
-                    return _isSchemaOnly ? NextResultSchemaOnly(true) : NextResult(true);
-            }
-            catch (PostgresException e)
-            {
-                State = ReaderState.Consumed;
-                if (StatementIndex >= 0 && StatementIndex < _statements.Count)
-                    e.Statement = _statements[StatementIndex];
-                throw;
-            }
+            using (NoSynchronizationContextScope.Enter())
+                return _isSchemaOnly ? NextResultSchemaOnly(true) : NextResult(true);
         }
 
         /// <summary>
@@ -359,175 +347,180 @@ namespace EnterpriseDB.EDBClient{
             IBackendMessage msg;
             Debug.Assert(!_isSchemaOnly);
 
-            // If we're in the middle of a resultset, consume it
-            switch (State)
+            try
             {
-            case ReaderState.BeforeResult:
-            case ReaderState.InResult:
-                await ConsumeRow(async);
-                while (true)
+                // If we're in the middle of a resultset, consume it
+                switch (State)
                 {
-                    var completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
-                    switch (completedMsg.Code)
+                case ReaderState.BeforeResult:
+                case ReaderState.InResult:
+                    await ConsumeRow(async);
+                    while (true)
                     {
-                    case BackendMessageCode.CompletedResponse:
-                    case BackendMessageCode.EmptyQueryResponse:
-                        ProcessMessage(completedMsg);
+                        var completedMsg = await Connector.ReadMessage(async, DataRowLoadingMode.Skip);
+                        switch (completedMsg.Code)
+                        {
+                        case BackendMessageCode.CompletedResponse:
+                        case BackendMessageCode.EmptyQueryResponse:
+                            ProcessMessage(completedMsg);
+                            break;
+                        default:
+                            continue;
+                        }
+
                         break;
-                    default:
-                        continue;
                     }
 
                     break;
+
+                case ReaderState.BetweenResults:
+                    break;
+
+                case ReaderState.Consumed:
+                case ReaderState.Closed:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException();
                 }
 
-                break;
+                Debug.Assert(State == ReaderState.BetweenResults);
+                _hasRows = false;
 
-            case ReaderState.BetweenResults:
-                break;
-
-            case ReaderState.Consumed:
-            case ReaderState.Closed:
-                return false;
-            default:
-                throw new ArgumentOutOfRangeException();
-            }
-
-            Debug.Assert(State == ReaderState.BetweenResults);
-            _hasRows = false;
-
-            if (_behavior.HasFlag(CommandBehavior.SingleResult) && StatementIndex == 0 && !isConsuming)
-            {
-                await Consume(async);
-                return false;
-            }
-
-            // We are now at the end of the previous result set. Read up to the next result set, if any.
-            // Non-prepared statements receive ParseComplete, BindComplete, DescriptionRow/NoData,
-            // prepared statements receive only BindComplete
-            for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
-            {
-                var statement = _statements[StatementIndex];
-                if (statement.IsPrepared)
+                if (_behavior.HasFlag(CommandBehavior.SingleResult) && StatementIndex == 0 && !isConsuming)
                 {
-                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
-                    RowDescription = statement.Description;
+                    await Consume(async);
+                    return false;
                 }
-                else  // Non-prepared flow
+
+                // We are now at the end of the previous result set. Read up to the next result set, if any.
+                // Non-prepared statements receive ParseComplete, BindComplete, DescriptionRow/NoData,
+                // prepared statements receive only BindComplete
+                for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
                 {
-                    var pStatement = statement.PreparedStatement;
-                    if (pStatement != null)
+                    var statement = _statements[StatementIndex];
+
+                    if (statement.IsPrepared)
                     {
-                        Debug.Assert(!pStatement.IsPrepared);
-                        Debug.Assert(pStatement.Description == null);
-                        if (pStatement.StatementBeingReplaced != null)
+                        Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                        RowDescription = statement.Description;
+                    }
+                    else // Non-prepared/preparing flow
+                    {
+                        var pStatement = statement.PreparedStatement;
+                        if (pStatement != null)
                         {
-                            Expect<CloseCompletedMessage>(await Connector.ReadMessage(async), Connector);
-                            pStatement.StatementBeingReplaced.CompleteUnprepare();
-                            pStatement.StatementBeingReplaced = null;
+                            Debug.Assert(!pStatement.IsPrepared);
+                            Debug.Assert(pStatement.Description == null);
+                            if (pStatement.StatementBeingReplaced != null)
+                            {
+                                Expect<CloseCompletedMessage>(await Connector.ReadMessage(async), Connector);
+                                pStatement.StatementBeingReplaced.CompleteUnprepare();
+                                pStatement.StatementBeingReplaced = null;
+                            }
+                        }
+
+                        Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                        Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                        msg = await Connector.ReadMessage(async);
+
+                        RowDescription = statement.Description = msg.Code switch
+                        {
+                            BackendMessageCode.NoData => null,
+
+                            // RowDescription messages are cached on the connector, but if we're auto-preparing, we need to
+                            // clone our own copy which will last beyond the lifetime of this invocation.
+                            BackendMessageCode.RowDescription => pStatement == null
+                                ? (RowDescriptionMessage)msg
+                                : ((RowDescriptionMessage)msg).Clone(),
+
+                            _ => throw Connector.UnexpectedMessageReceived(msg.Code)
+                        };
+
+                        if (statement.IsPreparing)
+                        {
+                            statement.IsPreparing = false;
+                            pStatement!.CompletePrepare();
+                        }
+                    }
+                    if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
+                    {
+                        if (RowDescription == null)
+                        {
+                            // Statement did not generate a resultset (e.g. INSERT)
+                            // Read and process its completion message and move on to the next statement
+
+                            msg = await ReadMessage(async);
+                            switch (msg.Code)
+                            {
+                                case BackendMessageCode.CompletedResponse:
+                                case BackendMessageCode.EmptyQueryResponse:
+                                    break;
+                                default:
+                                    throw Connector.UnexpectedMessageReceived(msg.Code);
+                            }
+
+                            ProcessMessage(msg);
+                            continue;
                         }
                     }
 
-                    try
+                    // if (StatementIndex == 0 && Command.Parameters.HasOutputParameters)
+                    if (StatementIndex == 0 && RowDescription != null && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//ZK: Changed EnterpriseDB Team
                     {
-                        Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
-                    }
-                    catch
-                    {
-                        // An exception occurred. Check if any statements we being prepared and revert our bookkeeping.
-                        pStatement?.CompleteUnprepare();
-                        throw;
-                    }
+                        // If output parameters are present and this is the first row of the first resultset,
+                        // we must always read it in non-sequential mode because it will be traversed twice (once
+                        // here for the parameters, then as a regular row).
+                        msg = await Connector.ReadMessage(async);
+                        //  if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
+                        if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
+                        {
 
-                    pStatement?.CompletePrepare();
+                            if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
+                            {
 
-                    Expect<BindCompleteMessage>(await Connector.ReadMessage(async), Connector);
-                    msg = await Connector.ReadMessage(async);
-                    RowDescription = statement.Description = msg.Code switch
+
+                                var pos = Connector.ReadBuffer.ReadPosition;
+                                ProcessMessage(msg);
+                                PopulateNonPreparedOutputParameters();
+                                Connector.ReadBuffer.ReadPosition = pos;
+                                State = ReaderState.BetweenResults;
+                            }
+
+                        }
+                    }
+                    else if (Command.Parameters.Count > 0 && Command.CommandType == CommandType.StoredProcedure)  //ZK :Connector._isCallableStmt == true
                     {
-                        BackendMessageCode.NoData         => null,
-                        BackendMessageCode.RowDescription => (RowDescriptionMessage)msg,  // We have a resultset
-                        _ => throw Connector.UnexpectedMessageReceived(msg.Code)
-                    };
-                }
-                if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
-                {
-                    if (RowDescription == null)
+                        msg = await Connector.ReadMessage(async);
+
+
+                    }
+                    else
+                    {
+                        msg = await ReadMessage(async); // ZK: Connector._isCallableStmt == true
+                        if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
+                            msg = await ReadMessage(async);
+                        if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
+                            msg = await ReadMessage(async);
+
+                        //   ProcessMessage(msg);
+                    }
+                    if (RowDescription == null && Command.CommandType != CommandType.StoredProcedure) //ZK :Connector._isCallableStmt != true
                     {
                         // Statement did not generate a resultset (e.g. INSERT)
                         // Read and process its completion message and move on to the next statement
 
-                        msg = await ReadMessage(async);
                         switch (msg.Code)
                         {
                             case BackendMessageCode.CompletedResponse:
                             case BackendMessageCode.EmptyQueryResponse:
+                            case BackendMessageCode.RowDescription:
                                 break;
+                            case BackendMessageCode.NoData:
+                                return true;
                             default:
                                 throw Connector.UnexpectedMessageReceived(msg.Code);
                         }
-                        ProcessMessage(msg);
-                        continue;
-
                     }
-                }
-                // if (StatementIndex == 0 && Command.Parameters.HasOutputParameters)
-                if (StatementIndex == 0 && RowDescription != null && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam))//ZK: Changed EnterpriseDB Team
-                {
-                    // If output parameters are present and this is the first row of the first resultset,
-                    // we must always read it in non-sequential mode because it will be traversed twice (once
-                    // here for the parameters, then as a regular row).
-                    msg = await Connector.ReadMessage(async);
-                  //  if (msg is DataRowMessage row && Behavior != CommandBehavior.SequentialAccess)
-                  if(Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
-                    {
-                     
-                        if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
-                        {
-
-
-                            var pos = Connector.ReadBuffer.ReadPosition;
-                            ProcessMessage(msg);
-                            PopulateNonPreparedOutputParameters();
-                            Connector.ReadBuffer.ReadPosition = pos;
-                            State = ReaderState.BetweenResults;
-                        }
-                           
-                    }
-                }
-               else if (Command.Parameters.Count > 0 && Command.CommandType == CommandType.StoredProcedure)  //ZK :Connector._isCallableStmt == true
-                {
-                    msg = await Connector.ReadMessage(async);
-
-
-                }
-                else
-                {
-                    msg = await ReadMessage(async); // ZK: Connector._isCallableStmt == true
-                    if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
-                        msg = await ReadMessage(async);
-                    if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
-                        msg = await ReadMessage(async);
-
-                 //   ProcessMessage(msg);
-                }
-                if (RowDescription == null && Command.CommandType != CommandType.StoredProcedure) //ZK :Connector._isCallableStmt != true
-                {
-                    // Statement did not generate a resultset (e.g. INSERT)
-                    // Read and process its completion message and move on to the next statement
-
-                    switch (msg.Code)
-                    {
-                        case BackendMessageCode.CompletedResponse:
-                        case BackendMessageCode.EmptyQueryResponse:
-                        case BackendMessageCode.RowDescription:
-                            break;
-                        case BackendMessageCode.NoData:
-                            return true;
-                        default:
-                            throw Connector.UnexpectedMessageReceived(msg.Code);
-                    }
-                }
                     switch (msg.Code)
                     {//
                         case BackendMessageCode.NoData:
@@ -549,13 +542,41 @@ namespace EnterpriseDB.EDBClient{
 
                     ProcessMessage(msg);
                     return true;
-            }
+                }
 
-            // There are no more queries, we're done. Read to the RFQ.
-            ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
-            RowDescription = null;
-            return false;
+                // There are no more queries, we're done. Read to the RFQ.
+                ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
+                RowDescription = null;
+                return false;
+            }
+            catch (Exception e)
+            {
+                State = ReaderState.Consumed;
+
+                // Reference the triggering statement from the exception (for batching)
+                if (e is PostgresException postgresException &&
+                    StatementIndex >= 0 && StatementIndex < _statements.Count)
+                {
+                    postgresException.Statement = _statements[StatementIndex];
+                }
+
+                // An error means all subsequent statements were skipped by PostgreSQL.
+                // If any of them were being prepared, we need to update our bookkeeping to put
+                // them back in unprepared state.
+                for (; StatementIndex < _statements.Count; StatementIndex++)
+                {
+                    var statement = _statements[StatementIndex];
+                    if (statement.IsPreparing)
+                    {
+                        statement.IsPreparing = false;
+                        statement.PreparedStatement!.CompleteUnprepare();
+                    }
+                }
+
+                throw;
+            }
         }
+
         void PopulateNonPreparedOutputParameters()
         {
             // The first row in a stored procedure command that has output parameters needs to be traversed twice -
@@ -565,6 +586,8 @@ namespace EnterpriseDB.EDBClient{
             Debug.Assert(StatementIndex == 0);
             Debug.Assert(RowDescription != null);
             Debug.Assert(State == ReaderState.BeforeResult);
+
+            var currentPosition = Buffer.ReadPosition;
 
             // Temporarily set our state to InResult to allow us to read the values
             State = ReaderState.InResult;
@@ -592,8 +615,14 @@ namespace EnterpriseDB.EDBClient{
                 p.Value = pending.Dequeue();
             }
 
-            State = ReaderState.BeforeResult;  // Set the state back
+            State = ReaderState.BeforeResult; // Set the state back
+            Buffer.ReadPosition = currentPosition; // Restore position
+
+            _column = -1;
+            ColumnLen = -1;
+            PosInColumn = 0;
         }
+
         void PopulateOutputParameters()
         {
             // The first row in a stored procedure command that has output parameters needs to be traversed twice -
@@ -668,7 +697,7 @@ namespace EnterpriseDB.EDBClient{
                                 continue;
                             }
                             return;
-                    //TODO ZK:    case BackendMessageCode.OutDescription:
+                        //TODO ZK:    case BackendMessageCode.OutDescription:
                         case BackendMessageCode.RowDescription:
                             if (Command.Parameters.Any(p => p.IsOutputDirection))
                             {
@@ -724,7 +753,7 @@ namespace EnterpriseDB.EDBClient{
 
 
 
-           
+
             if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt 
             {
                 var pending = new Queue<object>();
@@ -804,7 +833,7 @@ namespace EnterpriseDB.EDBClient{
 
 
             }
-           
+
         }
         /* EnterpriseDB Team */
         internal void Add(EDBReadBuffer retRowBuf)
@@ -812,7 +841,7 @@ namespace EnterpriseDB.EDBClient{
         {
             _InternalActaullReadPosition = Buffer.ReadPosition;
             //   ReadBuffer buf_new = new ReadBuffer(Buffer.Connector, Buffer.Connector.Connection. + 100, Buffer.TextEncoding);
-            var rd = new EDBReadBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding,Buffer.RelaxedTextEncoding);
+            var rd = new EDBReadBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding, Buffer.RelaxedTextEncoding);
             var wt = new EDBWriteBuffer(Buffer.Connector, Buffer.Underlying, 4096, Buffer.TextEncoding);
 
             var buf_new_length = Buffer.Size;// retRow.Buffer.Size - sizeof(Int16);
@@ -931,47 +960,77 @@ namespace EnterpriseDB.EDBClient{
         {
             Debug.Assert(_isSchemaOnly);
 
-            for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
+            try
             {
-                var statement = _statements[StatementIndex];
-                if (statement.IsPrepared)
+                switch (State)
                 {
-                    // Row descriptions have already been populated in the statement objects at the
-                    // Prepare phase
-                    RowDescription = _statements[StatementIndex].Description;
+                case ReaderState.BeforeResult:
+                case ReaderState.InResult:
+                case ReaderState.BetweenResults:
+                    break;
+                case ReaderState.Consumed:
+                case ReaderState.Closed:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException();
                 }
-                else
+
+                for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
                 {
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
-                    Expect<ParameterDescriptionMessage>(await Connector.ReadMessage(async), Connector);
-                    var msg = await Connector.ReadMessage(async);
-                    switch (msg.Code)
+                    var statement = _statements[StatementIndex];
+                    if (statement.IsPrepared)
                     {
-                    case BackendMessageCode.NoData:
-                        RowDescription = _statements[StatementIndex].Description = null;
-                        break;
-                    case BackendMessageCode.RowDescription:
-                        // We have a resultset
-                        RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
-                        Command.FixupRowDescription(RowDescription, StatementIndex == 0);
-                        break;
-                    default:
-                        throw Connector.UnexpectedMessageReceived(msg.Code);
+                        // Row descriptions have already been populated in the statement objects at the
+                        // Prepare phase
+                        RowDescription = _statements[StatementIndex].Description;
                     }
+                    else
+                    {
+                        Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                        Expect<ParameterDescriptionMessage>(await Connector.ReadMessage(async), Connector);
+                        var msg = await Connector.ReadMessage(async);
+                        switch (msg.Code)
+                        {
+                        case BackendMessageCode.NoData:
+                            RowDescription = _statements[StatementIndex].Description = null;
+                            break;
+                        case BackendMessageCode.RowDescription:
+                            // We have a resultset
+                            RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
+                            Command.FixupRowDescription(RowDescription, StatementIndex == 0);
+                            break;
+                        default:
+                            throw Connector.UnexpectedMessageReceived(msg.Code);
+                        }
+                    }
+
+                    // Found a resultset
+                    if (RowDescription != null)
+                        return true;
                 }
 
-                // Found a resultset
-                if (RowDescription != null)
-                    return true;
-            }
+                // There are no more queries, we're done. Read to the RFQ.
+                if (!_statements.All(s => s.IsPrepared))
+                {
+                    ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
+                    RowDescription = null;
+                }
 
-            // There are no more queries, we're done. Read to the RFQ.
-            if (!_statements.All(s => s.IsPrepared))
-            {
-                ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector));
-                RowDescription = null;
+                return false;
             }
-            return false;
+            catch (Exception e)
+            {
+                State = ReaderState.Consumed;
+
+                // Reference the triggering statement from the exception (for batching)
+                if (e is PostgresException postgresException &&
+                    StatementIndex >= 0 && StatementIndex < _statements.Count)
+                {
+                    postgresException.Statement = _statements[StatementIndex];
+                }
+
+                throw;
+            }
         }
 
         #endregion
@@ -1017,7 +1076,7 @@ namespace EnterpriseDB.EDBClient{
             }
         }
 
-       internal void ProcessDataRowMessage(DataRowMessage msg)
+        internal void ProcessDataRowMessage(DataRowMessage msg)
         {
             Connector.State = ConnectorState.Fetching;
 
@@ -1066,7 +1125,7 @@ namespace EnterpriseDB.EDBClient{
 
         internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow)
         {
-            if (Command.CommandType == CommandType.StoredProcedure && Command.IsPrepared)
+            if (Command.CommandType == CommandType.StoredProcedure)
             {
                 if (isReturnRow)
                 {
@@ -1105,7 +1164,7 @@ namespace EnterpriseDB.EDBClient{
                         _columns.Add((pos, len));
                     if (len != -1)
                     {
-                       
+
                         buf.Seek(len, SeekOrigin.Current);
                     }
                 }
@@ -1113,11 +1172,6 @@ namespace EnterpriseDB.EDBClient{
             }
 
         }
-
-
-
-
-
 
         #endregion
 
@@ -1258,16 +1312,18 @@ namespace EnterpriseDB.EDBClient{
         /// </summary>
         protected override void Dispose(bool disposing) => Close();
 
-#if !NET461 && !NETSTANDARD2_0
         /// <summary>
         /// Releases the resources used by the <see cref="EDBDataReader">EDBDataReader</see>.
         /// </summary>
+#if !NET461 && !NETSTANDARD2_0
         public override ValueTask DisposeAsync()
+#else
+        public ValueTask DisposeAsync()
+#endif
         {
             using (NoSynchronizationContextScope.Enter())
                 return new ValueTask(Close(connectionClosing: false, async: true));
         }
-#endif
 
         /// <summary>
         /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
@@ -1455,7 +1511,7 @@ namespace EnterpriseDB.EDBClient{
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDate"/>,
-        /// EDB's provider-specific type for dates.
+        /// EnterpriseDB.EDBClient's provider-specific type for dates.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's date type represents dates from 4713 BC to 5874897 AD, while .NET's DateTime
@@ -1483,7 +1539,7 @@ namespace EnterpriseDB.EDBClient{
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBTimeSpan"/>,
-        /// EDB's provider-specific type for time spans.
+        /// EnterpriseDB.EDBClient's provider-specific type for time spans.
         /// </summary>
         /// <remarks>
         /// PostgreSQL's interval type has has a resolution of 1 microsecond and ranges from
@@ -1500,7 +1556,7 @@ namespace EnterpriseDB.EDBClient{
 
         /// <summary>
         /// Gets the value of the specified column as an <see cref="EDBDateTime"/>,
-        /// EDB's provider-specific type for date/time timestamps. Note that this type covers
+        /// EnterpriseDB.EDBClient's provider-specific type for date/time timestamps. Note that this type covers
         /// both PostgreSQL's "timestamp with time zone" and "timestamp without time zone" types,
         /// which differ only in how they are converted upon input/output.
         /// </summary>
@@ -1537,14 +1593,15 @@ namespace EnterpriseDB.EDBClient{
             if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
                 throw new IndexOutOfRangeException($"length must be between {0} and {buffer.Length - bufferOffset}");
 
-            var fieldDescription = CheckRowAndGetField(ordinal);
-            var handler = fieldDescription.Handler;
+            var field = CheckRowAndGetField(ordinal);
+            var handler = field.Handler;
             if (!(handler is ByteaHandler))
-                throw new InvalidCastException("GetBytes() not supported for type " + fieldDescription.Name);
+                throw new InvalidCastException("GetBytes() not supported for type " + field.Name);
 
             SeekToColumn(ordinal, false).GetAwaiter().GetResult();
             if (ColumnLen == -1)
-                throw new InvalidCastException("Column is null");
+                ThrowHelper.ThrowInvalidCastException_NoValue(field);
+
             if (buffer == null)
                 return ColumnLen;
 
@@ -1579,9 +1636,17 @@ namespace EnterpriseDB.EDBClient{
         /// Retrieves data as a <see cref="Stream"/>.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The returned object.</returns>
+        public Task<Stream> GetStreamAsync(int ordinal)
+            => GetStreamAsync(ordinal, CancellationToken.None);
+
+        /// <summary>
+        /// Retrieves data as a <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
         /// <returns>The returned object.</returns>
-        public Task<Stream> GetStreamAsync(int ordinal, CancellationToken cancellationToken = default)
+        public Task<Stream> GetStreamAsync(int ordinal, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<Stream>(cancellationToken);
@@ -1591,14 +1656,13 @@ namespace EnterpriseDB.EDBClient{
 
         ValueTask<Stream> GetStream(int ordinal, bool async)
         {
-            var fieldDescription = CheckRowAndGetField(ordinal);
-            if (!(fieldDescription.Handler is ByteaHandler))
-                throw new InvalidCastException($"GetStream() not supported for type {fieldDescription.Handler.PgDisplayName}");
-
-            return GetStreamInternal(ordinal, async);
+            var field = CheckRowAndGetField(ordinal);
+            return field.Handler is ByteaHandler
+                ? GetStreamInternal(field, ordinal, async)
+                : throw new InvalidCastException($"The GetStream method is not supported for type {field.Handler.PgDisplayName}");
         }
 
-        ValueTask<Stream> GetStreamInternal(int ordinal, bool async)
+        ValueTask<Stream> GetStreamInternal(FieldDescription field, int ordinal, bool async)
         {
             if (_columnStream != null && !_columnStream.IsDisposed)
                 throw new InvalidOperationException("A stream is already open for this reader");
@@ -1608,7 +1672,8 @@ namespace EnterpriseDB.EDBClient{
                 return new ValueTask<Stream>(GetStreamLong(t));
 
             if (ColumnLen == -1)
-                throw new InvalidCastException("Column is null");
+                ThrowHelper.ThrowInvalidCastException_NoValue(field);
+
             PosInColumn += ColumnLen;
             return new ValueTask<Stream>(_columnStream = (EDBReadBuffer.ColumnStream)Buffer.GetStream(ColumnLen, !_isSequential));
 
@@ -1616,7 +1681,8 @@ namespace EnterpriseDB.EDBClient{
             {
                 await seekTask;
                 if (ColumnLen == -1)
-                    throw new InvalidCastException("Column is null");
+                    ThrowHelper.ThrowInvalidCastException_NoValue(field);
+
                 PosInColumn += ColumnLen;
                 return _columnStream = (EDBReadBuffer.ColumnStream)Buffer.GetStream(ColumnLen, !_isSequential);
             }
@@ -1644,14 +1710,15 @@ namespace EnterpriseDB.EDBClient{
             if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
                 throw new IndexOutOfRangeException($"length must be between {0} and {buffer.Length - bufferOffset}");
 
-            var fieldDescription = CheckRowAndGetField(ordinal);
-            var handler = fieldDescription.Handler as TextHandler;
+            var field = CheckRowAndGetField(ordinal);
+            var handler = field.Handler as TextHandler;
             if (handler == null)
-                throw new InvalidCastException("GetChars() not supported for type " + fieldDescription.Name);
+                throw new InvalidCastException("The GetChars method is not supported for type " + field.Name);
 
             SeekToColumn(ordinal, false).GetAwaiter().GetResult();
             if (ColumnLen == -1)
-                throw new InvalidCastException("Column is null");
+                ThrowHelper.ThrowInvalidCastException_NoValue(field);
+
             if (PosInColumn == 0)
                 _charPos = 0;
 
@@ -1750,9 +1817,17 @@ namespace EnterpriseDB.EDBClient{
         /// Retrieves data as a <see cref="TextReader"/>.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <returns>The returned object.</returns>
+        public Task<TextReader> GetTextReaderAsync(int ordinal)
+            => GetTextReaderAsync(ordinal, CancellationToken.None);
+
+        /// <summary>
+        /// Retrieves data as a <see cref="TextReader"/>.
+        /// </summary>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
         /// <returns>The returned object.</returns>
-        public Task<TextReader> GetTextReaderAsync(int ordinal, CancellationToken cancellationToken = default)
+        public Task<TextReader> GetTextReaderAsync(int ordinal, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<TextReader>(cancellationToken);
@@ -1762,15 +1837,13 @@ namespace EnterpriseDB.EDBClient{
 
         async ValueTask<TextReader> GetTextReader(int ordinal, bool async)
         {
-            var fieldDescription = CheckRowAndGetField(ordinal);
-            if (!(fieldDescription.Handler is ITextReaderHandler handler))
-                throw new InvalidCastException($"GetTextReader() not supported for type {fieldDescription.Handler.PgDisplayName}");
+            var field = CheckRowAndGetField(ordinal);
+            if (field.Handler is ITextReaderHandler handler)
+                return handler.GetTextReader(async
+                    ? await GetStreamInternal(field, ordinal, async)
+                    : GetStreamInternal(field, ordinal, async).Result);
 
-            var stream = async
-                ? await GetStreamInternal(ordinal, async)
-                : GetStreamInternal(ordinal, async).Result;
-
-            return handler.GetTextReader(stream);
+            throw new InvalidCastException($"The GetTextReader method is not supported for type {field.Handler.PgDisplayName}");
         }
 
         #endregion
@@ -1810,7 +1883,7 @@ namespace EnterpriseDB.EDBClient{
 
             // In non-sequential, we know that the column is already buffered - no I/O will take place
 
-            var fieldDescription = CheckRowAndGetField(ordinal);
+            var field = CheckRowAndGetField(ordinal);
             SeekToColumnNonSequential(ordinal);
 
             if (ColumnLen == -1)
@@ -1818,18 +1891,20 @@ namespace EnterpriseDB.EDBClient{
                 // When T is a Nullable<T> (and only in that case), we support returning null
                 if (NullableHandler<T>.Exists)
                     return default!;
+
                 if (typeof(T) == typeof(object))
                     return (T)(object)DBNull.Value;
-                throw new InvalidCastException("Column is null");
+
+                ThrowHelper.ThrowInvalidCastException_NoValue(field);
             }
 
             try
             {
                 return NullableHandler<T>.Exists
-                    ? NullableHandler<T>.Read(fieldDescription.Handler, Buffer, ColumnLen, fieldDescription)
+                    ? NullableHandler<T>.Read(field.Handler, Buffer, ColumnLen, field)
                     : typeof(T) == typeof(object)
-                        ? (T)fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription)
-                        : fieldDescription.Handler.Read<T>(Buffer, ColumnLen, fieldDescription);
+                        ? (T)field.Handler.ReadAsObject(Buffer, ColumnLen, field)
+                        : field.Handler.Read<T>(Buffer, ColumnLen, field);
             }
             catch (EDBSafeReadException e)
             {
@@ -1849,7 +1924,7 @@ namespace EnterpriseDB.EDBClient{
 
         async ValueTask<T> GetFieldValueSequential<T>(int column, bool async)
         {
-            var fieldDescription = CheckRowAndGetField(column);
+            var field = CheckRowAndGetField(column);
             await SeekToColumnSequential(column, async);
             CheckColumnStart();
 
@@ -1858,24 +1933,26 @@ namespace EnterpriseDB.EDBClient{
                 // When T is a Nullable<T> (and only in that case), we support returning null
                 if (NullableHandler<T>.Exists)
                     return default!;
+
                 if (typeof(T) == typeof(object))
                     return (T)(object)DBNull.Value;
-                throw new InvalidCastException("Column is null");
+
+                ThrowHelper.ThrowInvalidCastException_NoValue(field);
             }
 
             try
             {
                 return NullableHandler<T>.Exists
                     ? ColumnLen <= Buffer.ReadBytesLeft
-                        ? NullableHandler<T>.Read(fieldDescription.Handler, Buffer, ColumnLen, fieldDescription)
-                        : await NullableHandler<T>.ReadAsync(fieldDescription.Handler, Buffer, ColumnLen, async, fieldDescription)
+                        ? NullableHandler<T>.Read(field.Handler, Buffer, ColumnLen, field)
+                        : await NullableHandler<T>.ReadAsync(field.Handler, Buffer, ColumnLen, async, field)
                     : typeof(T) == typeof(object)
                         ? ColumnLen <= Buffer.ReadBytesLeft
-                            ? (T)fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription)
-                            : (T)await fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, async, fieldDescription)
+                            ? (T)field.Handler.ReadAsObject(Buffer, ColumnLen, field)
+                            : (T)await field.Handler.ReadAsObject(Buffer, ColumnLen, async, field)
                         : ColumnLen <= Buffer.ReadBytesLeft
-                            ? fieldDescription.Handler.Read<T>(Buffer, ColumnLen, fieldDescription)
-                            : await fieldDescription.Handler.Read<T>(Buffer, ColumnLen, async, fieldDescription);
+                            ? field.Handler.Read<T>(Buffer, ColumnLen, field)
+                            : await field.Handler.Read<T>(Buffer, ColumnLen, async, field);
             }
             catch (EDBSafeReadException e)
             {
@@ -1906,10 +1983,12 @@ namespace EnterpriseDB.EDBClient{
         {
             var fieldDescription = CheckRowAndGetField(ordinal);
 
-            if (_isSequential) {
+            if (_isSequential)
+            {
                 SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
                 CheckColumnStart();
-            } else if (Command.CommandType == CommandType.StoredProcedure) 
+            }
+            else if (Command.CommandType == CommandType.StoredProcedure)
             {
                 SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
                 //CheckColumnStart();
@@ -1937,7 +2016,7 @@ namespace EnterpriseDB.EDBClient{
                         ? fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, false, fieldDescription).GetAwaiter().GetResult()
                         : fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
                 }
-             }
+            }
             catch (EDBSafeReadException e)
             {
                 throw e.OriginalException;
@@ -1965,19 +2044,18 @@ namespace EnterpriseDB.EDBClient{
             return result;
         }
 
-
         /// <summary>
         /// Gets the value of the specified column as an instance of <see cref="object"/>.
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
-        public  object GetEDBValue(int ordinal)
+        public object GetEDBValue(int ordinal)
         {
             var fieldDescription = CheckRowAndGetField(ordinal);
 
             if (Command.CommandType == CommandType.StoredProcedure)
                 SeekToColumnStart(ordinal, false).GetAwaiter().GetResult();
-           
+
             if (ColumnLen == -1)
                 return DBNull.Value;
 
@@ -2126,15 +2204,19 @@ namespace EnterpriseDB.EDBClient{
         /// <param name="ordinal">The zero-based column to be retrieved.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns><b>true</b> if the specified column value is equivalent to <see cref="DBNull"/> otherwise <b>false</b>.</returns>
-        public override async Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
+        public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             CheckRowAndGetField(ordinal);
 
             if (!_isSequential)
-                return IsDBNull(ordinal);
+                return IsDBNull(ordinal) ? PGUtil.TrueTask : PGUtil.FalseTask;
 
             using (NoSynchronizationContextScope.Enter())
+                return IsDBNullAsyncInternal();
+
+            // ReSharper disable once InconsistentNaming
+            async Task<bool> IsDBNullAsyncInternal()
             {
                 await SeekToColumn(ordinal, true);
                 return ColumnLen == -1;
@@ -2329,12 +2411,6 @@ namespace EnterpriseDB.EDBClient{
         #endregion Schema metadata table
 
         #region Seeking
-
-
-        /*EnterpriseDB Team*/
-
-
-
 
         Task SeekToColumn(int column, bool async)
         {

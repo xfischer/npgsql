@@ -90,7 +90,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         internal EDBTypeHandler GetByDbType(DbType dbType)
             => _byDbType.TryGetValue(dbType, out var handler)
                 ? handler
-                : throw new NotSupportedException("This DbType is not supported in EDB: " + dbType);
+                : throw new NotSupportedException("This DbType is not supported in EnterpriseDB.EDBClient: " + dbType);
 
         internal EDBTypeHandler GetByDataTypeName(string typeName)
             => _byTypeName.TryGetValue(typeName, out var handler)
@@ -111,18 +111,18 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             {
                 if (_arrayHandlerByClrType.TryGetValue(arrayElementType, out var elementHandler))
                     return elementHandler;
-                throw new NotSupportedException($"The CLR array type {type} isn't supported by EDB or your PostgreSQL. " +
+                throw new NotSupportedException($"The CLR array type {type} isn't supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
                                                 "If you wish to map it to an  PostgreSQL composite type array you need to register it before usage, please refer to the documentation.");
             }
 
             // Nothing worked
             if (type.GetTypeInfo().IsEnum)
-                throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with EDB before usage, please refer to the documentation.");
+                throw new NotSupportedException($"The CLR enum type {type.Name} must be registered with EnterpriseDB.EDBClient before usage, please refer to the documentation.");
 
             if (typeof(IEnumerable).IsAssignableFrom(type))
-                throw new NotSupportedException("EDB 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
+                throw new NotSupportedException("EnterpriseDB.EDBClient 3.x removed support for writing a parameter with an IEnumerable value, use .ToList()/.ToArray() instead");
 
-            throw new NotSupportedException($"The CLR type {type} isn't natively supported by EDB or your PostgreSQL. " +
+            throw new NotSupportedException($"The CLR type {type} isn't natively supported by EnterpriseDB.EDBClient or your PostgreSQL. " +
                                             $"To use it with a PostgreSQL composite you need to specify {nameof(EDBParameter.DataTypeName)} or to map it, please refer to the documentation.");
         }
 
@@ -151,7 +151,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             CheckReady();
 
             base.AddMapping(mapping);
-            BindType(mapping, _connector, true);
+            BindType(mapping, _connector, externalCall: true);
             ChangeCounter = -1;
             return this;
         }
@@ -227,7 +227,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         void BindTypes()
         {
             foreach (var mapping in Mappings.Values)
-                BindType(mapping, _connector, false);
+                BindType(mapping, _connector, externalCall: false);
 
             // Enums
             var enumFactory = new UnmappedEnumTypeHandlerFactory(DefaultNameTranslator);
@@ -409,28 +409,28 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
             // Try to find the postgresType in the mappings
             if (TryGetMapping(postgresType, out var EDBTypeMapping))
-                return (EDBTypeMapping.EDBDbType, postgresType);
+                return (EDBTypeMapping!.EDBDbType, postgresType);
 
             // Try to find the elements' postgresType in the mappings
             if (postgresType is PostgresArrayType arrayType &&
                 TryGetMapping(arrayType.Element, out var elementEDBTypeMapping))
-                return (elementEDBTypeMapping.EDBDbType | EDBDbType.Array, postgresType);
+                return (elementEDBTypeMapping!.EDBDbType | EDBDbType.Array, postgresType);
 
             // Try to find the elements' postgresType of the base type in the mappings
             // this happens with domains over arrays
             if (postgresType is PostgresDomainType domainType && domainType.BaseType is PostgresArrayType baseType &&
                 TryGetMapping(baseType.Element, out var baseTypeElementEDBTypeMapping))
-                return (baseTypeElementEDBTypeMapping.EDBDbType | EDBDbType.Array, postgresType);
+                return (baseTypeElementEDBTypeMapping!.EDBDbType | EDBDbType.Array, postgresType);
 
             // It might be an unmapped enum/composite type, or some other unmapped type
             return (null, postgresType);
         }
 
-        bool TryGetMapping(PostgresType pgType, [MaybeNullWhen(false)] out EDBTypeMapping? mapping)
-            => Mappings.TryGetValue(pgType.Name, out mapping) ||
-               Mappings.TryGetValue(pgType.FullName, out mapping) ||
+        bool TryGetMapping(PostgresType pgType, [NotNullWhen(false)] out EDBTypeMapping? mapping)
+            => Mappings.TryGetValue(pgType.Name, out mapping!) ||
+               Mappings.TryGetValue(pgType.FullName, out mapping!) ||
                pgType is PostgresDomainType domain && (
-                   Mappings.TryGetValue(domain.BaseType.Name, out mapping) ||
-                   Mappings.TryGetValue(domain.BaseType.FullName, out mapping));
+                   Mappings.TryGetValue(domain.BaseType.Name, out mapping!) ||
+                   Mappings.TryGetValue(domain.BaseType.FullName, out mapping!));
     }
 }

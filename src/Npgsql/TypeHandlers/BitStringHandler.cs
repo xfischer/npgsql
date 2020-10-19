@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
@@ -19,9 +20,9 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// See http://www.postgresql.org/docs/current/static/datatype-bit.html.
     ///
     /// Note that for BIT(1), this handler will return a bool by default, to align with SQLClient
-    /// (see discussion https://github.com/EDB/EDB/pull/362#issuecomment-59622101).
+    /// (see discussion https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/pull/362#issuecomment-59622101).
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -53,11 +54,16 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             var numBits = buf.ReadInt32();
             var result = new BitArray(numBits);
             var bytesLeft = len - 4;  // Remove leading number of bits
-            var bitNo = 0;
+            if (bytesLeft == 0)
+                return result;
 
-            do
+            var bitNo = 0;
+            while (true)
             {
-                var iterationEndPos = bytesLeft - Math.Min(bytesLeft, buf.ReadBytesLeft) + 1;
+                var iterationEndPos = bytesLeft > buf.ReadBytesLeft
+                    ? bytesLeft - buf.ReadBytesLeft
+                    : 1;
+
                 for (; bytesLeft > iterationEndPos; bytesLeft--)
                 {
                     // ReSharper disable ShiftExpressionRealShiftCountIsZero
@@ -71,7 +77,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
                     result[bitNo++] = (chunk & (1 << 1)) != 0;
                     result[bitNo++] = (chunk & (1 << 0)) != 0;
                 }
-            } while (bytesLeft > 1);
+
+                if (bytesLeft == 1)
+                    break;
+
+                Debug.Assert(buf.ReadBytesLeft == 0);
+                await buf.Ensure(Math.Min(bytesLeft, buf.Size), async);
+            }
 
             if (bitNo < result.Length)
             {
@@ -267,7 +279,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// of BitArray otherwise (just like the scalar BitStringHandler does).
     /// </summary>
     /// <remarks>
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>

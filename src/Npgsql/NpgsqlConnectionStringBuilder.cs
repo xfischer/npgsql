@@ -8,7 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides a simple way to create and manage the contents of connection strings used by
     /// the <see cref="EDBConnection"/> class.
@@ -58,7 +59,7 @@ namespace EnterpriseDB.EDBClient{
         /// <summary>
         /// Initializes a new instance of the EDBConnectionStringBuilder class and sets its <see cref="DbConnectionStringBuilder.ConnectionString"/>.
         /// </summary>
-        public EDBConnectionStringBuilder(string connectionString)
+        public EDBConnectionStringBuilder(string? connectionString)
         {
             Init();
             ConnectionString = connectionString;
@@ -93,7 +94,7 @@ namespace EnterpriseDB.EDBClient{
                 let displayName = p.GetCustomAttribute<DisplayNameAttribute>()!.DisplayName.ToUpperInvariant()
                 let propertyName = p.Name.ToUpperInvariant()
                 from k in new[] { displayName }
-                  .Concat(propertyName != displayName ? new[] { propertyName } : EmptyStringArray )
+                  .Concat(propertyName != displayName ? new[] { propertyName } : EmptyStringArray)
                   .Concat(p.GetCustomAttribute<EDBConnectionStringPropertyAttribute>()!.Synonyms
                     .Select(a => a.ToUpperInvariant())
                   )
@@ -201,7 +202,8 @@ namespace EnterpriseDB.EDBClient{
         public override void Clear()
         {
             Debug.Assert(Keys != null);
-            foreach (var k in Keys.ToArray()) {
+            foreach (var k in Keys.ToArray())
+            {
                 Remove(k);
             }
         }
@@ -581,9 +583,9 @@ namespace EnterpriseDB.EDBClient{
             set
             {
                 // No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
-                // see https://github.com/EDB/EDB/issues/133
+                // see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/133
                 if (value && Type.GetType("Mono.Runtime") != null)
-                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/EDB/EDB/issues/133)");
+                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/133)");
                 _integratedSecurity = value;
                 SetValue(nameof(IntegratedSecurity), value);
             }
@@ -644,6 +646,46 @@ namespace EnterpriseDB.EDBClient{
             }
         }
         bool _persistSecurityInfo;
+
+        /// <summary>
+        /// When enabled, parameter values are logged when commands are executed. Defaults to false.
+        /// </summary>
+        [Category("Security")]
+        [Description("When enabled, parameter values are logged when commands are executed. Defaults to false.")]
+        [DisplayName("Log Parameters")]
+        [EDBConnectionStringProperty]
+        public bool LogParameters
+        {
+            get => _logParameters;
+            set
+            {
+                _logParameters = value;
+                SetValue(nameof(LogParameters), value);
+            }
+        }
+        bool _logParameters;
+
+        internal const string IncludeExceptionDetailDisplayName = "Include Error Detail";
+
+        /// <summary>
+        /// When enabled, PostgreSQL error details are included on <see cref="PostgresException.Detail" /> and
+        /// <see cref="PostgresNotice.Detail" />. These can contain sensitive data.
+        /// </summary>
+        [Category("Security")]
+        [Description("When enabled, PostgreSQL error and notice details are included on PostgresException.Detail and PostgresNotice.Detail. These can contain sensitive data.")]
+        [DisplayName(IncludeExceptionDetailDisplayName)]
+        [EDBConnectionStringProperty]
+        public bool IncludeErrorDetails
+        {
+            get => _includeErrorDetails;
+            set
+            {
+                _includeErrorDetails = value;
+                SetValue(nameof(IncludeErrorDetails), value);
+            }
+        }
+        bool _includeErrorDetails;
+
 
         #endregion
 
@@ -857,7 +899,7 @@ namespace EnterpriseDB.EDBClient{
 
         /// <summary>
         /// The database admin to specify when creating and dropping a database in Entity Framework. This is needed because
-        /// EDB needs to connect to a database in order to send the create/drop database command.
+        /// EnterpriseDB.EDBClient needs to connect to a database in order to send the create/drop database command.
         /// If not specified, defaults to "template1". Check EDBServices.UsingPostgresDBConnection for more information.
         /// </summary>
         [Category("Entity Framework")]
@@ -880,11 +922,11 @@ namespace EnterpriseDB.EDBClient{
         #region Properties - Advanced
 
         /// <summary>
-        /// The number of seconds of connection inactivity before EDB sends a keepalive query.
+        /// The number of seconds of connection inactivity before EnterpriseDB.EDBClient sends a keepalive query.
         /// Set to 0 (the default) to disable.
         /// </summary>
         [Category("Advanced")]
-        [Description("The number of seconds of connection inactivity before EDB sends a keepalive query.")]
+        [Description("The number of seconds of connection inactivity before EnterpriseDB.EDBClient sends a keepalive query.")]
         [DisplayName("Keepalive")]
         [EDBConnectionStringProperty]
         public int KeepAlive
@@ -966,10 +1008,10 @@ namespace EnterpriseDB.EDBClient{
         int _tcpKeepAliveInterval;
 
         /// <summary>
-        /// Determines the size of the internal buffer EDB uses when reading. Increasing may improve performance if transferring large values from the database.
+        /// Determines the size of the internal buffer EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.
         /// </summary>
         [Category("Advanced")]
-        [Description("Determines the size of the internal buffer EDB uses when reading. Increasing may improve performance if transferring large values from the database.")]
+        [Description("Determines the size of the internal buffer EnterpriseDB.EDBClient uses when reading. Increasing may improve performance if transferring large values from the database.")]
         [DisplayName("Read Buffer Size")]
         [EDBConnectionStringProperty]
         [DefaultValue(EDBReadBuffer.DefaultSize)]
@@ -985,10 +1027,10 @@ namespace EnterpriseDB.EDBClient{
         int _readBufferSize;
 
         /// <summary>
-        /// Determines the size of the internal buffer EDB uses when writing. Increasing may improve performance if transferring large values to the database.
+        /// Determines the size of the internal buffer EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.
         /// </summary>
         [Category("Advanced")]
-        [Description("Determines the size of the internal buffer EDB uses when writing. Increasing may improve performance if transferring large values to the database.")]
+        [Description("Determines the size of the internal buffer EnterpriseDB.EDBClient uses when writing. Increasing may improve performance if transferring large values to the database.")]
         [DisplayName("Write Buffer Size")]
         [EDBConnectionStringProperty]
         [DefaultValue(EDBWriteBuffer.DefaultSize)]

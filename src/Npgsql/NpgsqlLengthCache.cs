@@ -2,7 +2,8 @@
 using System.Diagnostics;
 using EnterpriseDB.EDBClient.TypeHandling;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// An array of cached lengths for the parameters sending process.
     ///
@@ -46,7 +47,7 @@ namespace EnterpriseDB.EDBClient{
 
         internal int GetLast()
         {
-            Debug.Assert(IsPopulated);
+            //Debug.Assert(IsPopulated);
             return Lengths[Position-1];
         }
 

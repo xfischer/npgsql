@@ -105,7 +105,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 var dataSourceInfo = conn.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
                 var row = dataSourceInfo.Rows.Cast<DataRow>().Single();
 
-                Assert.That(row["DataSourceProductName"], Is.EqualTo("EDB"));
+                Assert.That(row["DataSourceProductName"], Is.EqualTo("EnterpriseDB.EDBClient"));
 
                 var pgVersion = conn.PostgreSqlVersion;
                 Assert.That(row["DataSourceProductVersion"], Is.EqualTo(pgVersion.ToString()));

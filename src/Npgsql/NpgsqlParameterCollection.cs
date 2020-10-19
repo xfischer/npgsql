@@ -7,7 +7,8 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Represents a collection of parameters relevant to a <see cref="EDBCommand">EDBCommand</see>
     /// as well as their respective mappings to columns in a DataSet.
@@ -21,7 +22,7 @@ namespace EnterpriseDB.EDBClient{
         Dictionary<string, int>? _lookup;
         Dictionary<string, int>? _lookupIgnoreCase;
 
-  // EnterpriseDB Team
+        // EnterpriseDB Team
         private EDBParameter return_param = null!;
         private int return_index = -1;
         internal bool _hasReturnParam = false;
@@ -158,7 +159,7 @@ namespace EnterpriseDB.EDBClient{
             {
                 return_param = value;
                 return_index = _internalList.Count;
-               _hasReturnParam = true;
+                _hasReturnParam = true;
             }
             return value;
         }
@@ -486,7 +487,7 @@ namespace EnterpriseDB.EDBClient{
             if (values is null)
                 throw new ArgumentNullException(nameof(values));
 
-            foreach (object? parameter in values)
+            foreach (var parameter in values)
                 Add(Cast(parameter) ?? throw new ArgumentException("Collection contains a null value.", nameof(values)));
         }
 

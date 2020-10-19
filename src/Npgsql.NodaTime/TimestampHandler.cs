@@ -4,6 +4,7 @@ using NodaTime;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.TypeHandling;
+using BclTimestampHandler = EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers.TimestampHandler;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -21,7 +22,7 @@ namespace EnterpriseDB.EDBClient.NodaTime
         }
     }
 
-    class TimestampHandler : EDBSimpleTypeHandler<Instant>, IEDBSimpleTypeHandler<LocalDateTime>
+    sealed class TimestampHandler : EDBSimpleTypeHandler<Instant>, IEDBSimpleTypeHandler<LocalDateTime>, IEDBSimpleTypeHandler<DateTime>
     {
         static readonly Instant Instant0 = Instant.FromUtc(1, 1, 1, 0, 0, 0);
         static readonly Instant Instant2000 = Instant.FromUtc(2000, 1, 1, 0, 0, 0);
@@ -33,9 +34,14 @@ namespace EnterpriseDB.EDBClient.NodaTime
         /// an Instant is requested
         /// </summary>
         readonly bool _convertInfinityDateTime;
+        readonly BclTimestampHandler _bclHandler;
 
         internal TimestampHandler(PostgresType postgresType, bool convertInfinityDateTime)
-            : base(postgresType) => _convertInfinityDateTime = convertInfinityDateTime;
+            : base(postgresType)
+        {
+            _convertInfinityDateTime = convertInfinityDateTime;
+            _bclHandler = new BclTimestampHandler(postgresType, convertInfinityDateTime);
+        }
 
         #region Read
 
@@ -167,5 +173,14 @@ namespace EnterpriseDB.EDBClient.NodaTime
         }
 
         #endregion Write
+
+        DateTime IEDBSimpleTypeHandler<DateTime>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+           => _bclHandler.Read(buf, len, fieldDescription);
+
+        int IEDBSimpleTypeHandler<DateTime>.ValidateAndGetLength(DateTime value, EDBParameter? parameter)
+            => ((IEDBSimpleTypeHandler<DateTime>)_bclHandler).ValidateAndGetLength(value, parameter);
+
+        void IEDBSimpleTypeHandler<DateTime>.Write(DateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => ((IEDBSimpleTypeHandler<DateTime>)_bclHandler).Write(value, buf, parameter);
     }
 }

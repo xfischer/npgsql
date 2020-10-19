@@ -1,9 +1,8 @@
-﻿using EnterpriseDB.EDBClient;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-//sing EDB;
+using EnterpriseDB.EDBClient;
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes

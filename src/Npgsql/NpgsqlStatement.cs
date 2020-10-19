@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using EnterpriseDB.EDBClient.BackendMessages;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Represents a single SQL statement within EnterpriseDB.EDBClient.
     ///
     /// Instances aren't constructed directly; users should construct an <see cref="EDBCommand"/>
     /// object and populate its <see cref="EDBCommand.CommandText"/> property as in standard ADO.NET.
-    /// EDB will analyze that property and constructed instances of <see cref="EDBStatement"/>
+    /// EnterpriseDB.EDBClient will analyze that property and constructed instances of <see cref="EDBStatement"/>
     /// internally.
     ///
     /// Users can retrieve instances from <see cref="EDBDataReader.Statements"/>
@@ -32,7 +33,7 @@ namespace EnterpriseDB.EDBClient{
         /// See the command tag in the CommandComplete message,
         /// http://www.postgresql.org/docs/current/static/protocol-message-formats.html
         /// </remarks>
-        public ulong Rows { get; internal set; }
+        public uint Rows { get; internal set; }
 
         /// <summary>
         /// For an INSERT, the object ID of the inserted row if <see cref="Rows"/> is 1 and
@@ -76,6 +77,8 @@ namespace EnterpriseDB.EDBClient{
 
         PreparedStatement? _preparedStatement;
 
+        internal bool IsPreparing;
+
         /// <summary>
         /// Holds the server-side (prepared) statement name. Empty string for non-prepared statements.
         /// </summary>
@@ -100,7 +103,8 @@ namespace EnterpriseDB.EDBClient{
         internal void ApplyCommandComplete(CommandCompleteMessage msg)
         {
             StatementType = msg.StatementType;
-            Rows = msg.Rows;
+            // Downcast to uint for backwards compat with 4.0
+            Rows = (uint)msg.Rows;
             OID = msg.OID;
         }
 

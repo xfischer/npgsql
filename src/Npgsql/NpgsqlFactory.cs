@@ -3,15 +3,14 @@ using System.Data.Common;
 using System.Reflection;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// A factory to create instances of various EDB objects.
+    /// A factory to create instances of various EnterpriseDB.EDBClient objects.
     /// </summary>
     [Serializable]
     public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     {
-        static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(EDBFactory));
-
         /// <summary>
         /// Gets an instance of the <see cref="EDBFactory"/>.
         /// This can be used to retrieve strongly typed data objects.
@@ -75,7 +74,7 @@ namespace EnterpriseDB.EDBClient{
             if (serviceType == null)
                 throw new ArgumentNullException(nameof(serviceType));
 
-            // In legacy Entity Framework, this is the entry point for obtaining EDB's
+            // In legacy Entity Framework, this is the entry point for obtaining EnterpriseDB.EDBClient's
             // implementation of DbProviderServices. We use reflection for all types to
             // avoid any dependencies on EF stuff in this project. EF6 (and of course EF Core) do not use this method.
 
@@ -86,21 +85,20 @@ namespace EnterpriseDB.EDBClient{
             if (_legacyEntityFrameworkServices != null)
                 return _legacyEntityFrameworkServices;
 
-            // First time, attempt to find the EntityFramework5.EDB assembly and load the type via reflection
+            // First time, attempt to find the EntityFramework5.EnterpriseDB.EDBClient assembly and load the type via reflection
             var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
-            assemblyName.Name = "EntityFramework5.EDB";
+            assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
             Assembly EDBEfAssembly;
             try {
                 EDBEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
-            } catch (Exception e) {
-                Log.Debug("A service request was made for System.Data.Common.DbProviderServices, but the EntityFramework5.EDB assemby could not be loaded.", e);
+            } catch {
                 return null;
             }
 
             Type? EDBServicesType;
             if ((EDBServicesType = EDBEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null ||
                 EDBServicesType.GetProperty("Instance") == null)
-                throw new Exception("EntityFramework5.EDB assembly does not seem to contain the correct type!");
+                throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type!");
 
             return _legacyEntityFrameworkServices = EDBServicesType
                 .GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)!

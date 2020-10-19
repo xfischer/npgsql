@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.Util;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Base class for implementations which provide information about PostgreSQL and PostgreSQL-like databases
     /// (e.g. type definitions, capabilities...).

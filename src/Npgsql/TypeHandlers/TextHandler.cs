@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/datatype-character.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -47,7 +47,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/datatype-character.html.
     ///
-    /// The type handler API allows customizing EDB's behavior in powerful ways. However, although it is public, it
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
     /// Use it at your own risk.
     /// </remarks>
@@ -55,7 +55,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         IEDBTypeHandler<char>, IEDBTypeHandler<byte[]>, ITextReaderHandler
     {
         // Text types are handled a bit more efficiently when sent as text than as binary
-        // see https://github.com/EDB/EDB/issues/1210#issuecomment-235641670
+        // see https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1210#issuecomment-235641670
         internal override bool PreferTextWrite => true;
 
         readonly Encoding _encoding;

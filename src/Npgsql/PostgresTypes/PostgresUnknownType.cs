@@ -1,7 +1,7 @@
 ﻿namespace EnterpriseDB.EDBClient.PostgresTypes
 {
     /// <summary>
-    /// Represents a PostgreSQL data type that isn't known to EDB and cannot be handled.
+    /// Represents a PostgreSQL data type that isn't known to EnterpriseDB.EDBClient and cannot be handled.
     /// </summary>
     public class UnknownBackendType : PostgresType
     {

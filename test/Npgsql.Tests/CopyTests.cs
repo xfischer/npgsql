@@ -142,7 +142,7 @@ namespace EnterpriseDB.EDBClient.Tests
             using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
-                var garbage = new byte[] {1, 2, 3, 4};
+                var garbage = new byte[] { 1, 2, 3, 4 };
                 using (var s = conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY"))
                 {
                     s.Write(garbage, 0, garbage.Length);
@@ -194,7 +194,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongTableDefinitionRawBinaryCopy()
         {
             using (var conn = OpenConnection())
@@ -209,7 +209,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongFormatRawBinaryCopy()
         {
             using (var conn = OpenConnection())
@@ -253,8 +253,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     writer.Write(longString, "text");
                     writer.WriteNull();
 
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(3));
+                    writer.Complete();
                 }
 
                 Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
@@ -301,21 +300,20 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/657")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
         public void ImportBytea()
         {
             using (var conn = OpenConnection())
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field BYTEA)");
 
-                var data = new byte[] {1, 5, 8};
+                var data = new byte[] { 1, 5, 8 };
 
                 using (var writer = conn.BeginBinaryImport("COPY data (field) FROM STDIN BINARY"))
                 {
                     writer.StartRow();
                     writer.Write(data, EDBDbType.Bytea);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
 
                 Assert.That(conn.ExecuteScalar("SELECT field FROM data"), Is.EqualTo(data));
@@ -329,20 +327,19 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field TEXT[])");
 
-                var data = new[] {"foo", "a", "bar"};
+                var data = new[] { "foo", "a", "bar" };
                 using (var writer = conn.BeginBinaryImport("COPY data (field) FROM STDIN BINARY"))
                 {
                     writer.StartRow();
                     writer.Write(data, EDBDbType.Array | EDBDbType.Text);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
 
                 Assert.That(conn.ExecuteScalar("SELECT field FROM data"), Is.EqualTo(data));
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/816")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/816")]
         public void ImportStringWithBufferLength()
         {
             using (var conn = OpenConnection())
@@ -354,14 +351,13 @@ namespace EnterpriseDB.EDBClient.Tests
                 {
                     writer.StartRow();
                     writer.Write(data, EDBDbType.Text);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
                 Assert.That(conn.ExecuteScalar("SELECT field FROM data"), Is.EqualTo(data));
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/662")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/662")]
         public void ImportDirectBuffer()
         {
             using (var conn = OpenConnection())
@@ -381,7 +377,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongTableDefinitionBinaryImport()
         {
             using (var conn = OpenConnection())
@@ -393,7 +389,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongFormatBinaryImport()
         {
             using (var conn = OpenConnection())
@@ -404,7 +400,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongTableDefinitionBinaryExport()
         {
             using (var conn = OpenConnection())
@@ -416,7 +412,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongFormatBinaryExport()
         {
             using (var conn = OpenConnection())
@@ -427,7 +423,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/661")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/661")]
         [Ignore("Unreliable")]
         public void UnexpectedExceptionBinaryImport()
         {
@@ -453,7 +449,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test/*, Ignore("MERGE_NEED_TO_EXPLORE")*/, IssueLink("https://github.com/EDB/EDB/issues/657")]
+        [Test, Ignore(""),IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
         [Explicit]
         public void ImportByteaMassive()
         {
@@ -462,13 +458,13 @@ namespace EnterpriseDB.EDBClient.Tests
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field BYTEA)");
 
                 const int iterations = 10000;
-                var data = new byte[1024*1024];
+                var data = new byte[1024 * 1024];
 
                 using (var writer = conn.BeginBinaryImport("COPY data (field) FROM STDIN BINARY"))
                 {
                     for (var i = 0; i < iterations; i++)
                     {
-                        if (i%100 == 0)
+                        if (i % 100 == 0)
                             Console.WriteLine("Iteration " + i);
                         writer.StartRow();
                         writer.Write(data, EDBDbType.Bytea);
@@ -506,7 +502,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1134")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1134")]
         public void ReadBitString()
         {
             using (var conn = OpenConnection())
@@ -540,8 +536,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 {
                     writer.StartRow();
                     writer.Write(expected);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
 
                 using (var reader = conn.BeginBinaryExport("COPY data (arr) TO STDIN BINARY"))
@@ -569,8 +564,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 {
                     writer.StartRow();
                     writer.Write(expected);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
 
                 using (var reader = conn.BeginBinaryExport("COPY data (mymood) TO STDIN BINARY"))
@@ -605,7 +599,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.Throws<InvalidCastException>(() => exporter.Read<int>());
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1440")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/1440")]
         public void ErrorDuringImport()
         {
             using (var conn = OpenConnection())
@@ -635,8 +629,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     {
                         writer.StartRow();
                         writer.Write(8);
-                        var rowsWritten = writer.Complete();
-                        Assert.That(rowsWritten, Is.EqualTo(1));
+                        writer.Complete();
                         writer.StartRow();
                         Assert.Fail("StartRow should have thrown");
                     }
@@ -696,6 +689,35 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2347")]
+        public void Write_ColumnOutOfBounds_ThrowsInvalidOperationException()
+        {
+            using var conn = OpenConnection();
+            conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 INTEGER)");
+
+            using var writer = conn.BeginBinaryImport("COPY data (field_text, field_int2) FROM STDIN BINARY");
+            StateAssertions(conn);
+
+            writer.StartRow();
+            writer.Write("Hello");
+            writer.Write(8, EDBDbType.Smallint);
+
+            Assert.Throws<InvalidOperationException>(() => writer.Write("I should not be here"));
+
+            writer.StartRow();
+            writer.Write("Hello");
+            writer.Write(8, EDBDbType.Smallint);
+
+            Assert.Throws<InvalidOperationException>(() => writer.Write("I should not be here", EDBDbType.Text));
+
+            writer.StartRow();
+            writer.Write("Hello");
+            writer.Write(8, EDBDbType.Smallint);
+
+            Assert.Throws<InvalidOperationException>(() => writer.Write("I should not be here", "text"));
+            Assert.Throws<InvalidOperationException>(() => writer.WriteRow("Hello", 8, "I should not be here"));
+        }
+
         #endregion
 
         #region Text
@@ -718,7 +740,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 conn.ExecuteNonQuery("TRUNCATE data");
 
                 // Long (multi-buffer) write
-                var iterations = EDBWriteBuffer.MinimumSize/line.Length + 100;
+                var iterations = EDBWriteBuffer.MinimumSize / line.Length + 100;
                 writer = conn.BeginTextImport("COPY data (field_text, field_int4) FROM STDIN");
                 for (var i = 0; i < iterations; i++)
                     writer.Write(line);
@@ -790,7 +812,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongTableDefinitionTextImport()
         {
             using (var conn = OpenConnection())
@@ -801,7 +823,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongFormatTextImport()
         {
             using (var conn = OpenConnection())
@@ -812,7 +834,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongTableDefinitionTextExport()
         {
             using (var conn = OpenConnection())
@@ -823,7 +845,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/2330")]
         public void WrongFormatTextExport()
         {
             using (var conn = OpenConnection())
@@ -858,42 +880,48 @@ namespace EnterpriseDB.EDBClient.Tests
                 );
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/621")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/621")]
         public void CloseDuringCopy()
         {
             // TODO: Check no broken connections were returned to the pool
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginBinaryImport("COPY data (field_text, field_int4) FROM STDIN BINARY");
             }
 
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginBinaryExport("COPY data (field_text, field_int2) TO STDIN BINARY");
             }
 
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) FROM STDIN BINARY");
             }
 
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginRawBinaryCopy("COPY data (field_text, field_int4) TO STDIN BINARY");
             }
 
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginTextImport("COPY data (field_text, field_int4) FROM STDIN");
             }
 
-            using (var conn = OpenConnection()) {
+            using (var conn = OpenConnection())
+            {
                 conn.ExecuteNonQuery("CREATE TEMP TABLE data (field_text TEXT, field_int2 SMALLINT, field_int4 INTEGER)");
                 conn.BeginTextExport("COPY data (field_text, field_int4) TO STDIN");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/994")]
+        [Test, IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/994")]
         public void NonAsciiColumnName()
         {
             using (var conn = OpenConnection())
@@ -917,8 +945,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     writer.Write((string?)null, EDBDbType.Uuid);
                     writer.Write(DBNull.Value);
                     writer.Write((string?)null);
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(1));
+                    writer.Complete();
                 }
                 using (var cmd = new EDBCommand("SELECT foo1,foo2,foo3,foo4 FROM data", conn))
                 using (var reader = cmd.ExecuteReader())
@@ -945,8 +972,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     writer.StartRow();
                     writer.Write(3, EDBDbType.Integer);
                     writer.Write((object)new List<int> { 4, 5, 6 });
-                    var rowsWritten = writer.Complete();
-                    Assert.That(rowsWritten, Is.EqualTo(2));
+                    writer.Complete();
                 }
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM data"), Is.EqualTo(2));
             }

@@ -11,7 +11,8 @@ using System.Transactions;
 using EnterpriseDB.EDBClient.Logging;
 using EnterpriseDB.EDBClient.Util;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Connection pool for PostgreSQL physical connections. Attempts to allocate connections over MaxPoolSize will
     /// block until someone releases. Implementation is completely lock-free to avoid contention, and ensure FIFO
@@ -73,16 +74,19 @@ namespace EnterpriseDB.EDBClient{
                 idle = copy.Idle;
                 busy = copy.Open - copy.Idle;
             }
-
-            public override string ToString()
-            {
-                var (open, idle, busy) = this;
-                return $"[{open} total, {idle} idle, {busy} busy]";
-            }
         }
 
         // Mutable struct, do not make this readonly.
-        internal PoolState State;
+        PoolState State;
+
+        internal (int Open, int Idle, int Busy, int Waiters) Statistics
+        {
+            get
+            {
+                var (open, idle, busy) = State;
+                return (open, idle, busy, _waiting.Count);
+            }
+        }
 
         /// <summary>
         /// Incremented every time this pool is cleared via <see cref="EDBConnection.ClearPool"/> or
@@ -97,9 +101,9 @@ namespace EnterpriseDB.EDBClient{
         readonly TimeSpan _pruningSamplingInterval;
         readonly int _pruningSampleSize;
         readonly int[] _pruningSamples;
-        int _pruningSampleIndex;
-        int _pruningMedianIndex;
+        readonly int _pruningMedianIndex;
         volatile bool _pruningTimerEnabled;
+        int _pruningSampleIndex;
 
         /// <summary>
         /// Maximum number of possible connections in any pool.
@@ -118,28 +122,31 @@ namespace EnterpriseDB.EDBClient{
             if (settings.MaxPoolSize < settings.MinPoolSize)
                 throw new ArgumentException($"Connection can't have MaxPoolSize {settings.MaxPoolSize} under MinPoolSize {settings.MinPoolSize}");
 
-            Settings = settings;
+            if (settings.ConnectionPruningInterval == 0)
+                throw new ArgumentException("ConnectionPruningInterval can't be 0.");
+            var connectionIdleLifetime = TimeSpan.FromSeconds(settings.ConnectionIdleLifetime);
+            var pruningSamplingInterval = TimeSpan.FromSeconds(settings.ConnectionPruningInterval);
+            if (connectionIdleLifetime < pruningSamplingInterval)
+                throw new ArgumentException($"Connection can't have ConnectionIdleLifetime {connectionIdleLifetime} under ConnectionPruningInterval {_pruningSamplingInterval}");
+
+            _pruningTimer = new Timer(PruningTimerCallback, this, Timeout.Infinite, Timeout.Infinite);
+            _pruningSampleSize = DivideRoundingUp(settings.ConnectionIdleLifetime, settings.ConnectionPruningInterval);
+            _pruningMedianIndex = DivideRoundingUp(_pruningSampleSize, 2) - 1; // - 1 to go from length to index
+            _pruningSamplingInterval = pruningSamplingInterval;
+            _pruningSamples = new int[_pruningSampleSize];
+            _pruningTimerEnabled = false;
 
             _max = settings.MaxPoolSize;
             _min = settings.MinPoolSize;
+            _idle = new EDBConnector[_max];
+            _open = new EDBConnector[_max];
+            _waiting = new ConcurrentQueue<(TaskCompletionSource<EDBConnector?> TaskCompletionSource, bool IsAsync)>();
 
             UserFacingConnectionString = settings.PersistSecurityInfo
                 ? connString
                 : settings.ToStringWithoutPassword();
 
-            var connectionIdleLifetime = TimeSpan.FromSeconds(Settings.ConnectionIdleLifetime);
-            _pruningSamplingInterval = TimeSpan.FromSeconds(Settings.ConnectionPruningInterval);
-            if (connectionIdleLifetime < _pruningSamplingInterval)
-                throw new ArgumentException($"Connection can't have ConnectionIdleLifetime {connectionIdleLifetime} under ConnectionPruningInterval {_pruningSamplingInterval}");
-
-            _pruningMedianIndex = Divide(_pruningSampleSize, 2);
-            _pruningTimer = new Timer(PruningTimerCallback, this, Timeout.Infinite, Timeout.Infinite);
-            _pruningSampleSize = Divide(Settings.ConnectionIdleLifetime, Settings.ConnectionPruningInterval);
-            _pruningSamples = new int[_pruningSampleSize];
-            _pruningTimerEnabled = false;
-            _idle = new EDBConnector[_max];
-            _open = new EDBConnector[_max];
-            _waiting = new ConcurrentQueue<(TaskCompletionSource<EDBConnector?> TaskCompletionSource, bool IsAsync)>();
+            Settings = settings;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -227,7 +234,6 @@ namespace EnterpriseDB.EDBClient{
                     }
                     // Restart the outer loop if we're at max opens.
                     if (prevOpenCount == _max) continue;
-                    openCount = prevOpenCount + 1;
 
                     try
                     {
@@ -256,8 +262,8 @@ namespace EnterpriseDB.EDBClient{
                     }
                     Debug.Assert(connector.PoolIndex != int.MaxValue);
 
-                    // Only when we are the ones that incremented openCount past _min Change the timer.
-                    if (openCount == _min)
+                    // Only start pruning if it was this thread that incremented open count past _min.
+                    if (prevOpenCount == _min)
                         EnablePruning();
                     Counters.NumberOfPooledConnections.Increment();
                     Counters.NumberOfActiveConnections.Increment();
@@ -515,11 +521,13 @@ namespace EnterpriseDB.EDBClient{
                     return;
 
                 var sampleIndex = pool._pruningSampleIndex;
-                if (sampleIndex < pool._pruningSampleSize)
+                samples[sampleIndex] = pool.State.Idle;
+
+                if (sampleIndex != pool._pruningSampleSize - 1)
                 {
-                    samples[sampleIndex] = pool.State.Idle;
                     pool._pruningSampleIndex = sampleIndex + 1;
                     pool._pruningTimer.Change(pool._pruningSamplingInterval, Timeout.InfiniteTimeSpan);
+
                     return;
                 }
 
@@ -603,7 +611,7 @@ namespace EnterpriseDB.EDBClient{
 
         #region Misc
 
-        static int Divide(int value, int divisor) => 1 + (value - 1) / divisor;
+        static int DivideRoundingUp(int value, int divisor) => 1 + (value - 1) / divisor;
 
         [Conditional("DEBUG")]
         void CheckInvariants(PoolState state)
@@ -620,7 +628,11 @@ namespace EnterpriseDB.EDBClient{
 
         public void Dispose() => _pruningTimer?.Dispose();
 
-        public override string ToString() => State.ToString();
+        public override string ToString()
+        {
+            var (open, idle, busy, waiters) = Statistics;
+            return $"[{open} total, {idle} idle, {busy} busy, {waiters} waiters]";
+        }
 
         #endregion Misc
     }

@@ -11,7 +11,8 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Util;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     partial class EDBConnector
     {
         async Task Authenticate(string username, EDBTimeout timeout, bool async)

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using EnterpriseDB.EDBClient.Logging;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     class PreparedStatementManager
     {
         internal int MaxAutoPrepared { get; }
@@ -77,8 +78,6 @@ namespace EnterpriseDB.EDBClient{
                     // The statement has already been autoprepared. We need to "promote" it to explicit.
                     statementBeingReplaced = pStatement;
                     break;
-                case PreparedState.BeingPrepared:
-                    throw new InvalidOperationException($"Found autoprepare statement in state {nameof(PreparedState.BeingPrepared)}");
                 case PreparedState.Unprepared:
                     throw new InvalidOperationException($"Found unprepared statement in {nameof(PreparedStatementManager)}");
                 default:
@@ -132,7 +131,7 @@ namespace EnterpriseDB.EDBClient{
             switch (pStatement.State)
             {
                 case PreparedState.Prepared:
-                case PreparedState.ToBePrepared:
+                case PreparedState.BeingPrepared:
                 // The statement has already been prepared (explicitly or automatically), or has been selected
                 // for preparation (earlier identical statement in the same command).
                 // We just need to check that the parameter types correspond, since prepared statements are
@@ -152,9 +151,6 @@ namespace EnterpriseDB.EDBClient{
 
             // Bingo, we've just passed the usage threshold, statement should get prepared
             Log.Trace($"Automatically preparing statement: {sql}", _connector.Id);
-            pStatement.State = PreparedState.ToBePrepared;
-
-            RemoveCandidate(pStatement);
 
             if (_numAutoPrepared < MaxAutoPrepared)
             {
@@ -176,11 +172,24 @@ namespace EnterpriseDB.EDBClient{
                         oldestTimestamp = _autoPrepared[i].LastUsed;
                     }
                 }
+
+                if (oldestIndex == -1)
+                {
+                    // We're here if we couldn't find a prepared statement to replace, because all of them are already
+                    // being prepared in this batch.
+                    return null;
+                }
+
                 var lru = _autoPrepared[oldestIndex];
                 pStatement.Name = lru.Name;
                 pStatement.StatementBeingReplaced = lru;
                 _autoPrepared[oldestIndex] = pStatement;
             }
+
+            RemoveCandidate(pStatement);
+
+            // Make sure this statement is replaced by a later statement in the same batch.
+            pStatement.LastUsed = DateTime.MaxValue;
 
             // Note that the parameter types are only set at the moment of preparation - in the candidate phase
             // there's no differentiation between overloaded statements, which are a pretty rare case, saving

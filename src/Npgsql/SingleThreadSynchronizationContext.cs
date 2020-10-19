@@ -2,7 +2,8 @@
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     sealed class SingleThreadSynchronizationContext : SynchronizationContext, IDisposable
     {
         readonly BlockingCollection<CallbackAndState> _tasks = new BlockingCollection<CallbackAndState>();

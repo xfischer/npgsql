@@ -2,7 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
     /// Provides lookup for a pool based on a connection string.
     /// </summary>

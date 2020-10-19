@@ -1,13 +1,15 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using NodaTime;
 using EnterpriseDB.EDBClient.NodaTime;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
 // ReSharper disable once CheckNamespace
-namespace EnterpriseDB.EDBClient{
+namespace EnterpriseDB.EDBClient
+{
     /// <summary>
-    /// Extension adding the NodaTime plugin to an EDB type mapper.
+    /// Extension adding the NodaTime plugin to an EnterpriseDB.EDBClient type mapper.
     /// </summary>
     public static class EDBNodaTimeExtensions
     {
@@ -22,7 +24,7 @@ namespace EnterpriseDB.EDBClient{
                     PgTypeName = "timestamp",
                     EDBDbType = EDBDbType.Timestamp,
                     DbTypes = new[] { DbType.DateTime, DbType.DateTime2 },
-                    ClrTypes = new[] { typeof(Instant), typeof(LocalDateTime) },
+                    ClrTypes = new[] { typeof(Instant), typeof(LocalDateTime), typeof(DateTime) },
                     InferredDbType = DbType.DateTime,
                     TypeHandlerFactory = new TimestampHandlerFactory()
                 }.Build())
@@ -30,7 +32,7 @@ namespace EnterpriseDB.EDBClient{
                 {
                     PgTypeName = "timestamp with time zone",
                     EDBDbType = EDBDbType.TimestampTz,
-                    ClrTypes = new[] { typeof(ZonedDateTime), typeof(OffsetDateTime) },
+                    ClrTypes = new[] { typeof(ZonedDateTime), typeof(OffsetDateTime), typeof(DateTimeOffset) },
                     TypeHandlerFactory = new TimestampTzHandlerFactory()
                 }.Build())
                 .AddMapping(new EDBTypeMappingBuilder
@@ -38,7 +40,7 @@ namespace EnterpriseDB.EDBClient{
                     PgTypeName = "date",
                     EDBDbType = EDBDbType.Date,
                     DbTypes = new[] { DbType.Date },
-                    ClrTypes = new[] { typeof(LocalDate) },
+                    ClrTypes = new[] { typeof(LocalDate),  typeof(EDBDate) },
                     TypeHandlerFactory = new DateHandlerFactory()
                 }.Build())
                 .AddMapping(new EDBTypeMappingBuilder
@@ -60,7 +62,7 @@ namespace EnterpriseDB.EDBClient{
                 {
                     PgTypeName = "interval",
                     EDBDbType = EDBDbType.Interval,
-                    ClrTypes = new[] { typeof(Period) },
+                    ClrTypes = new[] { typeof(Period), typeof(TimeSpan), typeof(EDBTimeSpan) },
                     TypeHandlerFactory = new IntervalHandlerFactory()
                 }.Build());
     }
