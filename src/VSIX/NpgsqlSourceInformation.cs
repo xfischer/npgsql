@@ -6,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Data.Framework.AdoDotNet;
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
-    public class EDBSourceInformation : AdoDotNetSourceInformation
+    public class NpgsqlSourceInformation : AdoDotNetSourceInformation
     {
-        public EDBSourceInformation()
+        public NpgsqlSourceInformation()
         {
             AddProperty(CatalogSupported, false);
             AddProperty(CatalogSupportedInDml, false);

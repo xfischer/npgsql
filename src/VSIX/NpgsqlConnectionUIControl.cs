@@ -2,11 +2,11 @@
 using System.Diagnostics;
 using Microsoft.VisualStudio.Data.Framework;
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
-    public partial class EDBConnectionUIControl : DataConnectionUIControl
+    public partial class NpgsqlConnectionUIControl : DataConnectionUIControl
     {
-        public EDBConnectionUIControl()
+        public NpgsqlConnectionUIControl()
         {
             InitializeComponent();
         }

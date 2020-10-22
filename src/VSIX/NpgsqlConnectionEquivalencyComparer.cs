@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
-    class EDBConnectionEquivalencyComparer : DataConnectionEquivalencyComparer
+    class NpgsqlConnectionEquivalencyComparer : DataConnectionEquivalencyComparer
     {
         protected override bool AreEquivalent(IVsDataConnectionProperties connectionProperties1, IVsDataConnectionProperties connectionProperties2)
             => connectionProperties1["Host"].ToString() == connectionProperties2["Host"].ToString()

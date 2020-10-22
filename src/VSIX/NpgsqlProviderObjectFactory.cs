@@ -7,10 +7,10 @@ using System.Runtime.InteropServices;
 
 #nullable disable
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
     [Guid(Guid)]
-    class EDBProviderObjectFactory : DataProviderObjectFactory
+    class NpgsqlProviderObjectFactory : DataProviderObjectFactory
     {
         internal const string Guid = "555cd66B-3393-4bab-84d9-3f2caa639699";
 
@@ -19,17 +19,17 @@ namespace EnterpriseDB.EDBClient.VSIX
             if (objType == typeof(IVsDataConnectionSupport))
                 return new AdoDotNetConnectionSupport();
             if (objType == typeof(IVsDataConnectionProperties) || objType == typeof(IVsDataConnectionUIProperties))
-                return new EDBConnectionProperties();
+                return new NpgsqlConnectionProperties();
             if (objType == typeof(IVsDataConnectionUIControl))
-                return new EDBConnectionUIControl();
+                return new NpgsqlConnectionUIControl();
             if (objType == typeof(IVsDataSourceInformation))
-                return new EDBSourceInformation();
+                return new NpgsqlSourceInformation();
             if (objType == typeof(IVsDataObjectSupport))
-                return new DataObjectSupport($"{GetType().Namespace}.EDBDataObjectSupport", Assembly.GetExecutingAssembly());
+                return new DataObjectSupport($"{GetType().Namespace}.NpgsqlDataObjectSupport", Assembly.GetExecutingAssembly());
             if (objType == typeof(IVsDataViewSupport))
-                return new DataViewSupport($"{GetType().Namespace}.EDBDataViewSupport", Assembly.GetExecutingAssembly());
+                return new DataViewSupport($"{GetType().Namespace}.NpgsqlDataViewSupport", Assembly.GetExecutingAssembly());
             if (objType == typeof(IVsDataConnectionEquivalencyComparer))
-                return new EDBConnectionEquivalencyComparer();
+                return new NpgsqlConnectionEquivalencyComparer();
             return null;
         }
     }

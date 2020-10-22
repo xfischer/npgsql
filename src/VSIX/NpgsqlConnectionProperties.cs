@@ -4,10 +4,11 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.Data.Framework.AdoDotNet;
+using EnterpriseDB.EDBClient;
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
-    public class EDBConnectionProperties : AdoDotNetConnectionProperties
+    public class NpgsqlConnectionProperties : AdoDotNetConnectionProperties
     {
         static readonly Dictionary<string, string[]> Synonyms;
 
@@ -21,7 +22,7 @@ namespace EnterpriseDB.EDBClient.VSIX
 
         public override string[] GetSynonyms(string key) => Synonyms[key];
 
-        static EDBConnectionProperties()
+        static NpgsqlConnectionProperties()
         {
             Synonyms = typeof(EDBConnectionStringBuilder)
                 .GetProperties()

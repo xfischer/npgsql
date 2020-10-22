@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient.VSIX
+namespace Npgsql.VSIX
 {
     static class Constants
     {
-        internal const string EDBInvariantName = "EnterpriseDB.EDBClient";
+        internal const string NpgsqlInvariantName = "EnterpriseDB.EDBClient";
     }
 }
