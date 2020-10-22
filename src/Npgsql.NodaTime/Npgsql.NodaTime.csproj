@@ -4,6 +4,8 @@
     <Description>NodaTime plugin for EnterpriseDB.EDBClient, allowing mapping of PostgreSQL date/time types to NodaTime types.</Description>
     <PackageTags>EnterpriseDB.EDBClient postgresql postgres nodatime date time ado ado.net database sql</PackageTags>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.NodaTime</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NodaTime" />

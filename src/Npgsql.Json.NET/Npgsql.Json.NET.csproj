@@ -4,6 +4,8 @@
     <Description>Json.NET plugin for EnterpriseDB.EDBClient, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
     <PackageTags>EnterpriseDB.EDBClient postgresql json postgres ado ado.net database sql</PackageTags>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.Json.NET</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />

@@ -4,6 +4,8 @@
     <Description>PostGIS plugin for EnterpriseDB.EDBClient, allowing mapping of PostGIS types to the legacy types (e.g. PostgisPoint).</Description>
     <PackageTags>EnterpriseDB.EDBClient postgresql postgres postgis spatial geometry geography ado ado.net database sql</PackageTags>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <AssemblyName>EnterpriseDB.EDBClient.LegacyPostgis</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.LegacyPostgis</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Npgsql\Npgsql.csproj" />
