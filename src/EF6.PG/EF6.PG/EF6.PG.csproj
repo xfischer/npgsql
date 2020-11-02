@@ -23,6 +23,7 @@
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/npgsql/EntityFramework6.EnterpriseDB.EDBClient</RepositoryUrl>
     <Deterministic>true</Deterministic>
+    <Version>4.1.5.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources/*" />
