@@ -1,6 +1,6 @@
 CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
 
-@SET PGBUILD=C:\\pgBuild64
+REM @SET PGBUILD=C:\\pgBuild64
 @SET SOURCE_PATH="%1"
 @SET TARGET_FRAMEWORK="%2"
 @SET RELEASE_CONFIGURATION="%3"
@@ -9,10 +9,10 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\T
 @SET STAGING_DIR="%6"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
-@SET PATH=%PGBUILD%\bin;%SOURCE_PATH%;%DOTNET_PATH%;%PATH%
+REM @SET PATH=%PGBUILD%\bin;%SOURCE_PATH%;%DOTNET_PATH%;%PATH%
 @SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin"
 @SET VS_2019_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools"
-@SET PATH=%PGBUILD%\bin;%DOTNET_PATH%;%SOURCE_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
+@SET PATH=%DOTNET_PATH%;%SOURCE_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
