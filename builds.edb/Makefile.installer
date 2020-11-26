@@ -22,7 +22,7 @@ build-dotnet451:
 	# Clone edbas repo
 	cd /c/; \
 		rm -rf $(DOTNET_451_SOURCE_PATH); \
-		git clone $(GIT_REPO_PATH)/CON-DNET $(DOTNET_451_SOURCE_PATH); \
+		git clone $(GIT_REPO_PATH)/edb-dotnet $(DOTNET_451_SOURCE_PATH); \
 		cd $(DOTNET_451_SOURCE_PATH); \
 		git checkout "$(DOTNET_451_TAG)"; \
 		cd -
