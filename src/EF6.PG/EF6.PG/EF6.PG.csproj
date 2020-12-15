@@ -1,13 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>EnterpriseDB PostgreSQL provider for Entity Framework 6</Description>
     <Authors>Shay Rojansky;Emil Lenngren;Francisco Figueiredo Jr.;Kenji Uno</Authors>
     <Copyright>Copyright 2020 © The EnterpriseDB.EDBClient Development Team</Copyright>
     <Company>EnterpriseDB.EDBClient</Company>
     <PackageTags>npgsql postgresql postgres data database entity framework ef orm</PackageTags>
-    <VersionPrefix>4.1.5.1</VersionPrefix>
+    <VersionPrefix>4.1.6.1</VersionPrefix>
     <LangVersion>latest</LangVersion>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>net461;net472;net48;</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>CS1591</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -40,7 +40,7 @@
     
     <None Include="postgresql.png" Pack="true" PackagePath="" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net461' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net461'  ">
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -49,22 +49,56 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
   </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.0" />
+    <Reference Include="EnterpriseDB.EDBClient">
+      <HintPath>..\..\Npgsql\bin\Debug\net461\EnterpriseDB.EDBClient.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="EntityFramework" Version="6.4.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
-  <ItemGroup>
-  <Reference Include="EnterpriseDB.EDBClient">
-	<HintPath>..\..\Npgsql\bin\$(Configuration)\net461\EnterpriseDB.EDBClient.dll</HintPath>
-  </Reference>
-  <Reference Include="System.Runtime.CompilerServices.Unsafe">
-    <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-  </Reference>
-  <Reference Include="System.Text.Json">
-    <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Text.Json.dll</HintPath>
-  </Reference>
-  <Reference Include="System.Threading.Tasks.Extensions">
-    <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-  </Reference>
+   
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+     <Reference Include="EnterpriseDB.EDBClient">
+      <HintPath>..\..\Npgsql\bin\Debug\net472\EnterpriseDB.EDBClient.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net472\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net472\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net472\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+     <Reference Include="EnterpriseDB.EDBClient">
+      <HintPath>..\..\Npgsql\bin\Debug\net48\EnterpriseDB.EDBClient.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net48\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net48\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net48\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+ 
 </Project>
