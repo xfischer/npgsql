@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>Yoh Deadfall, Shay Rojansky</Authors>
     <Description>NetTopologySuite plugin for EnterpriseDB.EDBClient, allowing mapping of PostGIS geometry types to NetTopologySuite types.</Description>
     <PackageTags>EnterpriseDB.EDBClient postgresql postgres postgis nts ado ado.net database sql</PackageTags>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net48;net472;net461;netstandard2.0</TargetFrameworks>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
     <AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.NetTopologySuite</RootNamespace>
