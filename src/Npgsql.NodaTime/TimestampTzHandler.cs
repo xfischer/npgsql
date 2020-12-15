@@ -24,7 +24,8 @@ namespace EnterpriseDB.EDBClient.NodaTime
     }
 
     sealed class TimestampTzHandler : EDBSimpleTypeHandler<Instant>, IEDBSimpleTypeHandler<ZonedDateTime>,
-                              IEDBSimpleTypeHandler<OffsetDateTime>, IEDBSimpleTypeHandler<DateTimeOffset>
+                              IEDBSimpleTypeHandler<OffsetDateTime>, IEDBSimpleTypeHandler<DateTimeOffset>,
+                                IEDBSimpleTypeHandler<DateTime>
     {
         readonly IDateTimeZoneProvider _dateTimeZoneProvider;
         readonly BclTimestampTzHandler _bclHandler;
@@ -133,6 +134,15 @@ namespace EnterpriseDB.EDBClient.NodaTime
             => _bclHandler.ValidateAndGetLength(value, parameter);
 
         void IEDBSimpleTypeHandler<DateTimeOffset>.Write(DateTimeOffset value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => _bclHandler.Write(value, buf, parameter);
+
+        DateTime IEDBSimpleTypeHandler<DateTime>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+            => _bclHandler.Read<DateTime>(buf, len, fieldDescription);
+
+        int IEDBSimpleTypeHandler<DateTime>.ValidateAndGetLength(DateTime value, EDBParameter? parameter)
+            => _bclHandler.ValidateAndGetLength(value, parameter);
+
+        void IEDBSimpleTypeHandler<DateTime>.Write(DateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
             => _bclHandler.Write(value, buf, parameter);
     }
 }

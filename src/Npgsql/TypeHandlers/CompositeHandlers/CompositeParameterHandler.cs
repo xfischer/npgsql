@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.TypeHandling;
 
@@ -7,14 +8,14 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers
     abstract class CompositeParameterHandler
     {
         public EDBTypeHandler Handler { get; }
-        public ParameterInfo ParameterInfo { get; }
-        public int Position { get; }
+        public Type ParameterType { get; }
+        public int ParameterPosition { get; }
 
         public CompositeParameterHandler(EDBTypeHandler handler, ParameterInfo parameterInfo)
         {
             Handler = handler;
-            ParameterInfo = parameterInfo;
-            Position = parameterInfo.Position;
+            ParameterType = parameterInfo.ParameterType;
+            ParameterPosition = parameterInfo.Position;
         }
 
         public async ValueTask<T> Read<T>(EDBReadBuffer buffer, bool async)

@@ -14,6 +14,7 @@
     <Compile Remove="_EDBMiscProcTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NLog" />
     <PackageReference Include="Microsoft.CSharp" />

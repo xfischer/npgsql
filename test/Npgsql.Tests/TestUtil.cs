@@ -314,7 +314,7 @@ namespace EnterpriseDB.EDBClient.Tests
         NotPrepared
     }
 
-#if !NET461
+#if !NET461 && !NET472 && !NET48
     // When using netcoreapp, we use NUnit's portable library which doesn't include TimeoutAttribute
     // (probably because it can't enforce it). So we define it here to allow us to compile, once there's
     // proper support for netcoreapp this should be removed.

@@ -487,7 +487,7 @@ namespace EnterpriseDB.EDBClient
             if (username?.Length > 0)
                 return username;
 
-#if NET461
+#if NET461 || NET472 || NET48
             if (PGUtil.IsWindows && Type.GetType("Mono.Runtime") == null)
             {
                 username = WindowsUsernameProvider.GetUsername(Settings.IncludeRealm);
@@ -1401,7 +1401,7 @@ namespace EnterpriseDB.EDBClient
             Log.Trace("Cleaning up connector", Id);
             try
             {
-                _stream.Dispose();
+                _stream?.Dispose();
             }
             catch
             {

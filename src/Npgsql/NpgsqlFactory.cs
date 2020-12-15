@@ -49,7 +49,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public override DbDataAdapter CreateDataAdapter() => new EDBDataAdapter();
 
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         /// <summary>
         /// Specifies whether the specific <see cref="DbProviderFactory"/> supports the <see cref="DbDataAdapter"/> class.
         /// </summary>

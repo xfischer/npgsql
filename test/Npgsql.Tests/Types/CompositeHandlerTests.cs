@@ -100,7 +100,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        public class TypeWithTwoPropertiesInverted : IComposite, IInitializable
+        public class TypeWithTwoPropertiesReversed : IComposite, IInitializable
         {
             public int IntValue { get; set; }
             public string? StringValue { get; set; }
@@ -113,6 +113,29 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 IntValue = TheAnswer;
                 StringValue = HelloSlonik;
             }
+        }
+        public class TypeWithTwoParameters : IComposite
+        {
+            public string GetAttributes() => "int_value integer, string_value text";
+            public string GetValues() => $"{IntValue}, '{StringValue}'";
+
+            public TypeWithTwoParameters(int intValue, string stringValue) =>
+                (IntValue, StringValue) = (intValue, stringValue);
+
+            public int IntValue { get; }
+            public string? StringValue { get; }
+        }
+
+        public class TypeWithTwoParametersReversed : IComposite
+        {
+            public string GetAttributes() => "int_value integer, string_value text";
+            public string GetValues() => $"{IntValue}, '{StringValue}'";
+
+            public TypeWithTwoParametersReversed(string stringValue, int intValue) =>
+                (StringValue, IntValue) = (stringValue, intValue);
+
+            public int IntValue { get; }
+            public string? StringValue { get; }
         }
 
         public abstract class SimpleComposite : IComposite

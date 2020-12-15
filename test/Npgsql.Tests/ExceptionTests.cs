@@ -39,6 +39,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(ex.InvariantSeverity, Is.EqualTo("ERROR"));
                 Assert.That(ex.SqlState, Is.EqualTo("12345"));
                 Assert.That(ex.Position, Is.EqualTo(0));
+                Assert.That(ex.Message, Is.EqualTo("12345: testexception"));
 
                 var data = ex.Data;
                 Assert.That(data[nameof(PostgresException.Severity)], Is.EqualTo("ERROR"));
@@ -183,6 +184,22 @@ namespace EnterpriseDB.EDBClient.Tests
                 info.AddValue(nameof(PostgresException.Routine), null);
 
                 return new PostgresException(info, default);
+            }
+        }
+
+        [Test]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3204")]
+        public void JsonNetExceptionMessage()
+        {
+            // The exception must be thrown and caught to reproduce the problem
+            try
+            {
+                throw new PostgresException("the message", "low", "low2", "XX123");
+            }
+            catch (Exception ex)
+            {
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(ex);
+                Assert.That(json, Contains.Substring(",\"Message\":\"XX123: the message\","));
             }
         }
 

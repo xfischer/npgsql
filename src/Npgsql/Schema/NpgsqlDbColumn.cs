@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
-#if !NET461
+#if !NET461 && !NET472 && !NET48
 using System.Data.Common;
 #endif
 

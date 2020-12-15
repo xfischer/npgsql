@@ -1,7 +1,7 @@
 ﻿using System;
 using EnterpriseDB.EDBClient.Logging;
 
-#if NET461
+#if NET461 || NET472 || NET48
 using System.Diagnostics;
 using System.Reflection;
 #endif
@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient
 
                 if (usePerfCounters)
                 {
-#if NET461
+#if NET461 || NET472 || NET48
                     try
                     {
                         enabled = PerformanceCounterCategory.Exists(Counter.DiagnosticsCounterCategory);
@@ -113,7 +113,7 @@ namespace EnterpriseDB.EDBClient
     /// </summary>
     sealed class Counter : IDisposable
     {
-#if NET461
+#if NET461 || NET472 || NET48
         internal const string DiagnosticsCounterCategory = ".NET Data Provider for PostgreSQL (EnterpriseDB.EDBClient)";
 
         internal PerformanceCounter? DiagnosticsCounter { get; private set; }
@@ -125,7 +125,7 @@ namespace EnterpriseDB.EDBClient
 
         internal void Initialize(bool enabled)
         {
-#if NET461
+#if NET461 || NET472 || NET48
             if (!enabled)
                 return;
 
@@ -147,28 +147,28 @@ namespace EnterpriseDB.EDBClient
 
         internal void Increment()
         {
-#if NET461
+#if NET461 || NET472 || NET48
             DiagnosticsCounter?.Increment();
 #endif
         }
 
         internal void Decrement()
         {
-#if NET461
+#if NET461 || NET472 || NET48
             DiagnosticsCounter?.Decrement();
 #endif
         }
 
         public void Dispose()
         {
-#if NET461
+#if NET461 || NET472 || NET48
             var diagnosticsCounter = DiagnosticsCounter;
             DiagnosticsCounter = null;
             diagnosticsCounter?.RemoveInstance();
 #endif
         }
 
-#if NET461
+#if NET461 || NET472 || NET48
         void OnProcessExit(object sender, EventArgs e) => Dispose();
         void OnDomainUnload(object sender, EventArgs e) => Dispose();
         void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

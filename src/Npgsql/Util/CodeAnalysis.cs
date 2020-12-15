@@ -1,4 +1,4 @@
-﻿#if NET461 || NETSTANDARD2_0
+﻿#if NET461 || NET472 || NET48 || NETSTANDARD2_0
 #pragma warning disable 1591
 // ReSharper disable once CheckNamespace
 namespace System.Diagnostics.CodeAnalysis

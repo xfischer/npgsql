@@ -535,7 +535,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         /// <summary>
         /// Asynchronously begins a database transaction.
         /// </summary>
@@ -627,7 +627,7 @@ namespace EnterpriseDB.EDBClient
         /// Releases the connection. If the connection is pooled, it will be returned to the pull and made available for re-use.
         /// If it is non-pooled, the physical connection will be closed.
         /// </summary>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override Task CloseAsync()
 #else
         public Task CloseAsync()
@@ -668,15 +668,15 @@ namespace EnterpriseDB.EDBClient
                 // A System.Transactions transaction is still in progress, we need to wait for it to complete.
                 if (connection.EnlistedTransaction != null)
                 {
+                    // If a non-pooled connection is being closed but is enlisted in an ongoing
+                    // TransactionScope, simply detach the connector from the connection and leave
+                    // it open. It will be closed when the TransactionScope is disposed.
+                    connector.Connection = null;
                     // Close the connection and disconnect it from the resource manager but leave the connector
                     // in a enlisted pending list in the pool.
                     if (connection.Settings.Pooling)
                         connection._pool!.AddPendingEnlistedConnector(connector, connection.EnlistedTransaction);
 
-                    // If a non-pooled connection is being closed but is enlisted in an ongoing
-                    // TransactionScope, simply detach the connector from the connection and leave
-                    // it open. It will be closed when the TransactionScope is disposed.
-                    connector.Connection = null;
                     connection.EnlistedTransaction = null;
                 }
                 else
@@ -709,7 +709,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Releases all resources used by the <see cref="EDBConnection">EDBConnection</see>.
         /// </summary>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public async override ValueTask DisposeAsync()
 #else
         public async ValueTask DisposeAsync()

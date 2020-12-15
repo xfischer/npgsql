@@ -1,4 +1,4 @@
-﻿#if NET461
+﻿#if NET461 || NET472 || NET48
 
 using System;
 

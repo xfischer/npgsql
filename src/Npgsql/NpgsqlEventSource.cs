@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient
         internal const int CommandStartId = 3;
         internal const int CommandStopId = 4;
 
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         IncrementingPollingCounter? _bytesWrittenPerSecondCounter;
         IncrementingPollingCounter? _bytesReadPerSecondCounter;
 
@@ -72,7 +72,7 @@ namespace EnterpriseDB.EDBClient
 
         internal void PoolCreated() => Interlocked.Increment(ref _pools);
 
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         static int GetIdleConnections()
         {
             // Note: there's no attempt here to be coherent in terms of race conditions, especially not with regards
@@ -114,35 +114,35 @@ namespace EnterpriseDB.EDBClient
                 // overhead by at all times even when counters aren't enabled.
                 // On disable, PollingCounters will stop polling for values so it should be fine to leave them around.
 
-                _bytesWrittenPerSecondCounter = new IncrementingPollingCounter("bytes-written-per-second", this, () => _bytesWritten)
+                _bytesWrittenPerSecondCounter = new IncrementingPollingCounter("bytes-written-per-second", this, () => Volatile.Read(ref _bytesWritten))
                 {
                     DisplayName = "Bytes Written",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
 
-                _bytesReadPerSecondCounter = new IncrementingPollingCounter("bytes-read-per-second", this, () => _bytesRead)
+                _bytesReadPerSecondCounter = new IncrementingPollingCounter("bytes-read-per-second", this, () => Volatile.Read(ref _bytesRead))
                 {
                     DisplayName = "Bytes Read",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
 
-                _commandsPerSecondCounter = new IncrementingPollingCounter("commands-per-second", this, () => _totalCommands)
+                _commandsPerSecondCounter = new IncrementingPollingCounter("commands-per-second", this, () => Volatile.Read(ref _totalCommands))
                 {
                     DisplayName = "Command Rate",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
 
-                _totalCommandsCounter = new PollingCounter("total-commands", this, () => _totalCommands)
+                _totalCommandsCounter = new PollingCounter("total-commands", this, () => Volatile.Read(ref _totalCommands))
                 {
                     DisplayName = "Total Commands",
                 };
 
-                _currentCommandsCounter = new PollingCounter("current-commands", this, () => _currentCommands)
+                _currentCommandsCounter = new PollingCounter("current-commands", this, () => Volatile.Read(ref _currentCommands))
                 {
                     DisplayName = "Current Commands"
                 };
 
-                _failedCommandsCounter = new PollingCounter("failed-commands", this, () => _failedCommands)
+                _failedCommandsCounter = new PollingCounter("failed-commands", this, () => Volatile.Read(ref _failedCommands))
                 {
                     DisplayName = "Failed Commands"
                 };
@@ -150,7 +150,7 @@ namespace EnterpriseDB.EDBClient
                 _preparedCommandsRatioCounter = new PollingCounter(
                     "prepared-commands-ratio",
                     this,
-                    () => (double)_totalPreparedCommands / (double)_totalCommands)
+                    () => (double)Volatile.Read(ref _totalPreparedCommands) / Volatile.Read(ref _totalCommands))
                 {
                     DisplayName = "Prepared Commands Ratio",
                     DisplayUnits = "%"

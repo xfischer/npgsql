@@ -3,7 +3,7 @@ using System.Linq;
 using EnterpriseDB.EDBClient.Tests;
 using NUnit.Framework;
 
-#if NET461
+#if NET461 || NET472 || NET48
 // ReSharper disable once CheckNamespace
 [SetUpFixture]
 public class DebugAssertSetupFixture

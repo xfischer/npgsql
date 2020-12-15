@@ -44,7 +44,7 @@ namespace EnterpriseDB.EDBClient
         internal CultureSetter(CultureInfo newCulture)
         {
             _oldCulture = CultureInfo.CurrentCulture;
-#if NET461
+#if NET461 || NET472 || NET48
             Thread.CurrentThread.CurrentCulture = newCulture;
 #else
             CultureInfo.CurrentCulture = newCulture;
@@ -53,7 +53,7 @@ namespace EnterpriseDB.EDBClient
 
         public void Dispose()
         {
-#if NET461
+#if NET461 || NET472 || NET48
             Thread.CurrentThread.CurrentCulture = _oldCulture;
 #else
             CultureInfo.CurrentCulture = _oldCulture;

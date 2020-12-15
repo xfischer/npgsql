@@ -77,7 +77,7 @@ namespace EnterpriseDB.EDBClient.Util
         internal static StringComparer InvariantCaseIgnoringStringComparer => StringComparer.InvariantCultureIgnoreCase;
 
         internal static bool IsWindows =>
-#if NET461
+#if NET461 || NET472 || NET48
             Environment.OSVersion.Platform == PlatformID.Win32NT;
 #else
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);

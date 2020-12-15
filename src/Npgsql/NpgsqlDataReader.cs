@@ -31,7 +31,7 @@ namespace EnterpriseDB.EDBClient
 #pragma warning disable CA1010
     public sealed class EDBDataReader : DbDataReader
 #pragma warning restore CA1010
-#if !NET461
+#if !NET461 && !NET472 && !NET48
         , IDbColumnSchemaGenerator
 #endif
     {
@@ -1315,7 +1315,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Releases the resources used by the <see cref="EDBDataReader">EDBDataReader</see>.
         /// </summary>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override ValueTask DisposeAsync()
 #else
         public ValueTask DisposeAsync()
@@ -1333,7 +1333,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
         /// </summary>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override Task CloseAsync()
 #else
         public Task CloseAsync()
@@ -2324,7 +2324,7 @@ namespace EnterpriseDB.EDBClient
                 : new DbColumnSchemaGenerator(_connection, RowDescription, _behavior.HasFlag(CommandBehavior.KeyInfo))
                     .GetColumnSchema();
 
-#if !NET461
+#if !NET461 && !NET472 && !NET48
         ReadOnlyCollection<DbColumn> IDbColumnSchemaGenerator.GetColumnSchema()
             => new ReadOnlyCollection<DbColumn>(GetColumnSchema().Cast<DbColumn>().ToList());
 #endif

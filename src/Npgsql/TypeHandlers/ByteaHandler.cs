@@ -26,13 +26,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         new[] {
             typeof(byte[]),
             typeof(ArraySegment<byte>),
-#if !NETSTANDARD2_0 && !NET461
+#if !NETSTANDARD2_0 && !NET461 && !NET472 && !NET48
             typeof(ReadOnlyMemory<byte>),
             typeof(Memory<byte>)
 #endif
         })]
     public class ByteaHandler : EDBTypeHandler<byte[]>, IEDBTypeHandler<ArraySegment<byte>>
-#if !NETSTANDARD2_0 && !NET461
+#if !NETSTANDARD2_0 && !NET461 && !NET472 && !NET48
         , IEDBTypeHandler<ReadOnlyMemory<byte>>, IEDBTypeHandler<Memory<byte>>
 #endif
     {
@@ -100,7 +100,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
             await buf.DirectWrite(value, offset, count, async);
         }
 
-#if !NETSTANDARD2_0 && !NET461
+#if !NETSTANDARD2_0 && !NET461 && !NET472 && !NET48
         /// <inheritdoc />
         public int ValidateAndGetLength(Memory<byte> value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
             => ValidateAndGetLength(value.Length, parameter);

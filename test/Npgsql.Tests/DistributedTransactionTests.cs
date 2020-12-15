@@ -7,7 +7,7 @@ using System.Transactions;
 using NUnit.Framework;
 
 // TransactionScope exists in netstandard20, but distributed transactions do not
-#if NET461
+#if NET461 || NET472 || NET48
 
 namespace EnterpriseDB.EDBClient.Tests
 {

@@ -1169,7 +1169,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-#if NET461
+#if NET461 || NET472 || NET48
         [Test, IssueLink("https://github.com/EDB/EDB/issues/392")]
         public void NonUTF8Encoding()
         {

@@ -5,13 +5,13 @@
     <PackageTags>EnterpriseDB.EDBClient postgresql postgres ado ado.net database sql</PackageTags>
     <!-- At this point we target netcoreapp3.0 to avoid taking a dependency on System.Text.Json, which is
          necessary for all other TFMs. -->
-    <TargetFrameworks>net461;netstandard2.0;netstandard2.1;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>net461;net472;net48;netstandard2.0;netstandard2.1;netcoreapp3.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient</RootNamespace>
-    <Version>4.1.5.1</Version>
+    <Version>4.1.6.1</Version>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU' OR '$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU' OR '$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net48|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <NoWarn>NU5105;CS8606</NoWarn>
@@ -20,17 +20,19 @@
   <ItemGroup>
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48'">
     <Reference Include="System.Transactions" Pack="false" />
     <Reference Include="System.DirectoryServices" Pack="false" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'netstandard2.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1' ">
     <PackageReference Include="System.Text.Json" Version="4.6.0" />
   </ItemGroup>
 </Project>

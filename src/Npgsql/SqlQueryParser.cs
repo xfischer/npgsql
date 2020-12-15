@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-#if NET461 || NETSTANDARD2_0
+#if NET461 || NET472 || NET48 || NETSTANDARD2_0
 using EnterpriseDB.EDBClient.Util;
 #endif
 
@@ -190,7 +190,13 @@ namespace EnterpriseDB.EDBClient
                 if (IsParamNameChar(ch))
                 {
                     if (currCharOfs - 1 > currTokenBeg)
+#if !NET472 && !NET48
                         _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - 1 - currTokenBeg));
+#endif
+
+#if NET472 || NET48
+                        _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - 1 - currTokenBeg).ToString());
+#endif
                     currTokenBeg = currCharOfs++ - 1;
                     goto Param;
                 }
@@ -222,7 +228,12 @@ namespace EnterpriseDB.EDBClient
                             {
                                 // Parameter placeholder does not match a parameter on this command.
                                 // Leave the text as it was in the SQL, it may not be a an actual placeholder
+#if !NET472 && !NET48
                                 _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg));
+#endif
+#if NET472 || NET48
+                                _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg).ToString());
+#endif
                                 currTokenBeg = currCharOfs;
                                 if (currCharOfs >= end)
                                     goto Finish;
@@ -503,7 +514,12 @@ namespace EnterpriseDB.EDBClient
                    }
                }
           */
+#if !NET472 && !NET48
             _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg - 1));
+#endif
+#if NET472 || NET48
+             _rewrittenSql.Append(sql.Slice(currTokenBeg, currCharOfs - currTokenBeg - 1).ToString());
+#endif
             _statement.SQL = _rewrittenSql.ToString();
             while (currCharOfs < end)
             {
@@ -527,7 +543,12 @@ namespace EnterpriseDB.EDBClient
             return;
 
         Finish:
+#if !NET472 && !NET48
             _rewrittenSql.Append(sql.Slice(currTokenBeg, end - currTokenBeg));
+#endif
+#if NET472 || NET48
+            _rewrittenSql.Append(sql.Slice(currTokenBeg, end - currTokenBeg).ToString());
+#endif
             _statement.SQL = _rewrittenSql.ToString();
             if (statements.Count > _statementIndex + 1)
                 statements.RemoveRange(_statementIndex + 1, statements.Count - (_statementIndex + 1));

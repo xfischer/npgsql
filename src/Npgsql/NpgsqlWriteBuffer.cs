@@ -164,7 +164,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-#if !NETSTANDARD2_0 && !NET461
+#if !NETSTANDARD2_0 && !NET461 && !NET472 && !NET48
         internal async Task DirectWrite(ReadOnlyMemory<byte> memory, bool async)
         {
             await Flush(async);

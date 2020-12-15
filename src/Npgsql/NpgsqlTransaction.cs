@@ -130,7 +130,7 @@ namespace EnterpriseDB.EDBClient
         /// Commits the database transaction.
         /// </summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override Task CommitAsync(CancellationToken cancellationToken = default)
 #else
         public Task CommitAsync(CancellationToken cancellationToken = default)
@@ -170,7 +170,7 @@ namespace EnterpriseDB.EDBClient
         /// Rolls back a transaction from a pending state.
         /// </summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.</param>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override Task RollbackAsync(CancellationToken cancellationToken = default)
 #else
         public Task RollbackAsync(CancellationToken cancellationToken = default)
@@ -333,7 +333,7 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Disposes the transaction, rolling it back if it is still pending.
         /// </summary>
-#if !NET461 && !NETSTANDARD2_0
+#if !NET461 && !NET472 && !NET48 && !NETSTANDARD2_0
         public override ValueTask DisposeAsync()
 #else
         public ValueTask DisposeAsync()
