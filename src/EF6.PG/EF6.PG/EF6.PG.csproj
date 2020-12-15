@@ -54,7 +54,7 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.0" />
     <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\..\Npgsql\bin\Debug\net461\EnterpriseDB.EDBClient.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>..\..\Npgsql\bin\$(Configuration)\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
@@ -73,7 +73,7 @@
    
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
      <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\..\Npgsql\bin\Debug\net472\EnterpriseDB.EDBClient.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net472\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>..\..\Npgsql\bin\$(Configuration)\net472\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
@@ -88,7 +88,7 @@
   
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
      <Reference Include="EnterpriseDB.EDBClient">
-      <HintPath>..\..\Npgsql\bin\Debug\net48\EnterpriseDB.EDBClient.dll</HintPath>
+      <HintPath>..\..\Npgsql\bin\$(Configuration)\net48\EnterpriseDB.EDBClient.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>..\..\Npgsql\bin\$(Configuration)\net48\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
