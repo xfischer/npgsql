@@ -1,5 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
+    <TargetFrameworks>net461;net472;net48;netcoreapp3.0</TargetFrameworks>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
@@ -10,13 +11,13 @@
     <PackageReference Include="NUnit3TestAdapter" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/EDB/EnterpriseDB.EDBClient.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.Json.NET/EnterpriseDB.EDBClient.Json.NET.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.NodaTime/EnterpriseDB.EDBClient.NodaTime.csproj" />
-    <ProjectReference Include="../EnterpriseDB.EDBClient.Tests/EnterpriseDB.EDBClient.Tests.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.LegacyPostgis/EnterpriseDB.EDBClient.LegacyPostgis.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.RawPostgis/EnterpriseDB.EDBClient.RawPostgis.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.NetTopologySuite/EnterpriseDB.EDBClient.NetTopologySuite.csproj" />
-    <ProjectReference Include="../../src/EnterpriseDB.EDBClient.GeoJSON/EnterpriseDB.EDBClient.GeoJSON.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.GeoJSON\Npgsql.GeoJSON.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.Json.NET\Npgsql.Json.NET.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.LegacyPostgis\Npgsql.LegacyPostgis.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql.RawPostgis\Npgsql.RawPostgis.csproj" />
+    <ProjectReference Include="..\..\src\Npgsql\Npgsql.csproj" />
+    <ProjectReference Include="..\Npgsql.Tests\Npgsql.Tests.csproj" />
   </ItemGroup>
 </Project>
