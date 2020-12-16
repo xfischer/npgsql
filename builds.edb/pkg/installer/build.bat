@@ -85,35 +85,15 @@ copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGI
 cd %SOURCE_PATH%
 cd src\VSIX
 
-nuget restore VSIX461.csproj
-msbuild.exe VSIX461.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
+nuget restore VSIX.csproj
+msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
 
-copy bin\%RELEASE_CONFIGURATION%\net461\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net461\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net461 || goto :error
-
-nuget restore VSIX472.csproj
-msbuild.exe VSIX472.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net472
-
-copy bin\%RELEASE_CONFIGURATION%\net472\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net472 || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net472 || goto :error
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net472 || goto :error
-
-nuget restore VSIX48.csproj
-msbuild.exe VSIX48.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net48
-
-copy bin\%RELEASE_CONFIGURATION%\net48\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net48 || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net48 || goto :error
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix\net48 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy bin\%RELEASE_CONFIGURATION%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
 
 cd %SOURCE_PATH%
 cd test\Npgsql.Tests
