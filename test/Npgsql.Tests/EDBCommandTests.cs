@@ -825,7 +825,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
 
-            Assert.Throws<EDBException>(() => command.Connection.Open());
+            Assert.Throws<PostgresException>(() => command.Connection.Open());
 
         }
 
@@ -835,7 +835,7 @@ namespace EnterpriseDB.EDBClient.Tests
             EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
             EDBCommand command = new EDBCommand("select * from tablea", conn);
-            Assert.Throws<EDBException>(() => command.Connection.Open());
+            Assert.Throws<PostgresException>(() => command.Connection.Open());
 
        //     Assert("Either password must be specified or IntegratedSecurity must be on",);
 
