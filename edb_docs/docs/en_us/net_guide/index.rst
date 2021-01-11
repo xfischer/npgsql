@@ -2,12 +2,12 @@
 EDB Postgres™ Advanced Server .NET Connector Guide
 **************************************************
 
-The EDB Postgres™ Advanced Server .NET Connector distributed with EDB
+The EDB .NET Connector distributed with EDB
 Postgres™ Advanced Server (Advanced Server) provides connectivity
 between a .NET client application and an Advanced Server database
 server. This guide provides installation instructions, usage
 instructions, and examples that demonstrate the functionality of the
-Advanced Server .NET Connector:
+EDB .NET Connector:
 
 -  How to connect to an instance of Advanced Server.
 
@@ -16,7 +16,7 @@ Advanced Server .NET Connector:
 -  How to update information stored on an Advanced Server database.
 
 This document assumes that you have a solid working knowledge of both C#
-and .NET. The Advanced Server .NET Connector functionality is built on
+and .NET. The EDB .NET Connector functionality is built on
 the core functionality of the Npgsql open source project. The *Npgsql User's Manual*
 is available `online <http://www.npgsql.org/doc/index.html>`_.
 
@@ -27,7 +27,6 @@ is available `online <http://www.npgsql.org/doc/index.html>`_.
    requirements_overview
    the_advanced_server_net_connector_overview
    installing_and_configuring_the_net_connector
-   security_and_encryption
    using_the_net_connector
    opening_a_database_connection
    retrieving_database_records
@@ -38,5 +37,8 @@ is available `online <http://www.npgsql.org/doc/index.html>`_.
    using_advanced_queueing
    using_a_ref_cursor_in_a_net_application
    using_plugins
+   using_object_types
+   security_and_encryption
+   advanced_server_net_connector_logging
    api_reference
    conclusion

@@ -4,23 +4,19 @@
 `Requirements Overview`:index:
 ******************************
 
-The following section details the supported platforms for the Advanced
-Server .NET Connector.
+The following section details the supported platforms for the EDB .NET Connector.
 
-Supported Server Versions
-=========================
+Supported Server Versions and Platforms
+=======================================
 
 .. index:: Supported server versions
 
-The Advanced Server .NET Connector is certified with Advanced Server
+The EDB .NET Connector is certified with Advanced Server
 version 9.5 and above.
-
-Supported Platforms
-===================
 
 .. index:: Supported platforms
 
-The Advanced Server .NET Connector graphical installers are supported on
+The EDB .NET Connector graphical installers are supported on
 the following Windows platforms:
 
 64-bit Windows:

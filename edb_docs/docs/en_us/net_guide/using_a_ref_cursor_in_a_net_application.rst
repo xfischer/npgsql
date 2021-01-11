@@ -67,10 +67,9 @@ names from the ``emp`` table:
           static void Main(string[] args)
           {
               string strConnectionString =
-              ConfigurationSettings.AppSettings["DB_CONN_STRING"];
+              ConfigurationManager.AppSettings["DB_CONN_STRING"];
               EDBConnection conn = new EDBConnection(strConnectionString);
               conn.Open();
-              EDBTransaction tran = conn.BeginTransaction();
               try
               {
                   EDBTransaction tran = conn.BeginTransaction();

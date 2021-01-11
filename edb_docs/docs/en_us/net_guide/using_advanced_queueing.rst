@@ -26,6 +26,8 @@ message.
 Enqueueing or Dequeueing a Message
 ==================================
 
+For more information about using Advanced Servers Advanced Queueing functionality, see the `Database Compatibility for Oracle Developers Built-in Package Guide <https://www.enterprisedb.com/edb-docs/p/edb-postgres-advanced-server>`_.
+
 .. index:: enqueue message
 .. index:: dequeue message
 
@@ -101,7 +103,9 @@ To enqueue a message on your .NET application, you must:
 
 4. Call the ``queue.Enqueue`` method.
 
-The following code listing demonstrates using the ``Queue.enqueue`` method:
+The following code listing demonstrates using the ``queue.Enqueue`` method:
+
+.. note:: The following code creates the message and serializes it. This is just an example code and is not going to compile if copied as it is. It is the responsibility of the user to serialize the message as XML.
 
 .. code-block:: Text
 
@@ -222,6 +226,8 @@ To dequeue a message on your .NET application, you must:
 2. Pass the name of the queue and create the instance of the ``EDBAQQueue``.
 
 3. Call the ``queue.Dequeue`` method.
+
+.. note:: The following code creates the message and serializes it. This is just an example code and is not going to compile if copied as it is. It is the responsibility of the user to serialize the message as XML.
 
 .. code-block:: Text
 
@@ -550,7 +556,7 @@ On_Commit The enqueue/dequeue is part of the current transaction.
 
   -  To review the default options for the above parameters, click `here <https://www.enterprisedb.com/docs/en/11.0/EPAS_BIP_Guide_v11/Database_Compatibility_for_Oracle_Developers_Built-in_Package_Guide.1.14.html#pID0E01HG0HA/>`_.
 
-  -  EDBAQ functionality uses user-defined types for calling
+  -  EDB Advanced Queueing functionality uses user-defined types for calling
      enqueue/dequeue operations. ``Server Compatibility Mode=NoTypeLoading``
-     cannot be used with EDBAQ because ``NoTypeLoading`` will not load any
+     cannot be used with Advanced Queueing because ``NoTypeLoading`` will not load any
      user-defined types.

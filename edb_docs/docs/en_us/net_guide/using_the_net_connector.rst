@@ -5,7 +5,7 @@
 *********************************
 
 The sections that follow provide examples that demonstrate using the EDB
-object classes that are provided by the Advanced Server .NET Connector
+object classes that are provided by the EDB .NET Connector
 that allow a .NET application to connect to and interact with an
 Advanced Server database.
 

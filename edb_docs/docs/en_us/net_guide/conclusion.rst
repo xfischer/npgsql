@@ -4,7 +4,7 @@
 `Conclusion`:index:
 *******************
 
-EDB Postgres .NET Data Provider Guide
+EDB .NET Connector Guide
 
 Copyright © 2007 - 2020 EnterpriseDB Corporation. All rights reserved.
 

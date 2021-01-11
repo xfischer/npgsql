@@ -95,7 +95,7 @@ The following example executes the stored procedure:
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 
@@ -172,7 +172,7 @@ SPL code at the command line:
     CLOSE testcur;
   END;
 
-When Advanced Server has validated the stored procedure it will echo
+When Advanced Server has validated the stored procedure it wEDBTypes.EDBDbType.Floatill echo
 ``CREATE PROCEDURE``.
 
 **Passing Input Values to a Stored Procedure**
@@ -198,7 +198,7 @@ parameterized stored procedure from a C#.
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 
@@ -227,11 +227,11 @@ parameterized stored procedure from a C#.
   		cmdStoredProc.Parameters[1].Value = empJob;
 
   		cmdStoredProc.Parameters.Add(new EDBParameter
-  		("Salary", EDBTypes.EDBDbType.Float));
+  		("Salary", EDBTypes.EDBDbType.Real));
   		cmdStoredProc.Parameters[2].Value = salary;
 
   		cmdStoredProc.Parameters.Add(new EDBParameter
-  		("Commission", EDBTypes.EDBDbType.Float));
+  		("Commission", EDBTypes.EDBDbType.Real));
   		cmdStoredProc.Parameters[3].Value = commission;
 
   		cmdStoredProc.Parameters.Add(new EDBParameter
@@ -388,7 +388,7 @@ to retrieve a result set:
   private void Page_Load(object sender, System.EventArgs e)
   {
   	string strConnectionString =
-          ConfigurationSettings.AppSettings["DB_CONN_STRING"];
+          ConfigurationManager.AppSettings["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 
   	try
@@ -421,15 +421,11 @@ to retrieve a result set:
 
   	  int fc = result.FieldCount;
 
-  	  while(result.Read())
-  	  {
-  		for(int i = 0;i < fc; i++)
-  		{
-  		  Response.Write("RESULT["+i+"]="+ Convert.ToString
-  			(command.Parameters[i].Value));
-  			Response.Write("<br>");
-  		}
-  	  }
+      for (int i = 0; i < 3; i++)
+      {
+          Console.WriteLine("RESULT[" + i + "]=" + Convert.ToString(command.Parameters[i].Value));
+          Console.WriteLine("\n");
+      }
 
   	}
 
@@ -459,7 +455,7 @@ to retrieve a result set:
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 

@@ -1,10 +1,10 @@
 .. _the_advanced_server_net_connector_overview:
 
-******************************************************
-`The Advanced Server .NET Connector - Overview`:index:
-******************************************************
+******************************************
+`The EDB .NET Connector - Overview`:index:
+******************************************
 
-The Advanced Server .NET Connector is a .NET data provider that allows a
+The EDB .NET Connector is a .NET data provider that allows a
 client application to connect to a database stored on an Advanced Server
 host. The .NET Connector accesses the data directly, allowing the client
 application optimal performance, a broad spectrum of functionality, and
@@ -12,11 +12,15 @@ access to Advanced Server features.
 
 The .NET Connector supports following frameworks:
 
-    - ``.NET Framework versions 4.0, 4.5.1 and 4.6.1``
+    - ``.NET Framework versions 4.6.1, 4.7.2 and 4.8``
     - ``.NET Standard 2.0 and 2.1``
     - ``.NET Core 3.0``
-    - ``Entity Framework 5/6``
-    - ``EnterpriseDB VSIX``
+    - ``Entity Framework 6``
+    - ``EDB VSIX``
+
+.. raw:: latex
+
+    \newpage
 
 The .NET Class Hierarchy
 ========================

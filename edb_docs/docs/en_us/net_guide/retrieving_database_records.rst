@@ -57,7 +57,7 @@ returns ``true`` if a record exists, or ``false`` to indicate that the
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 
@@ -121,7 +121,7 @@ the specified query.
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
   	try

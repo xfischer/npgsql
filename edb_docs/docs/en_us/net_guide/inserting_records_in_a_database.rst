@@ -27,7 +27,7 @@ The example adds a new employee to the ``emp`` table:
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-  	string strConnectionString = ConfigurationSettings.AppSettings
+  	string strConnectionString = ConfigurationManager.AppSettings
   	["DB_CONN_STRING"];
   	EDBConnection conn = new EDBConnection(strConnectionString);
 

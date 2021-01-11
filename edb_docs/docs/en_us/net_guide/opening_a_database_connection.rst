@@ -24,6 +24,10 @@ an instance of Advanced Server. You must:
 
 .. _connection_string_parameters:
 
+.. raw:: latex
+
+    \newpage
+
 Connection String Parameters
 ============================
 
@@ -177,7 +181,7 @@ connection parameters).
 
   private void Page_Load(object sender, System.EventArgs e)
   {
-    string strConnectionString = ConfigurationSettings.AppSettings
+    string strConnectionString = ConfigurationManager.AppSettings
       ["DB_CONN_STRING"];
 
     EDBConnection conn = new EDBConnection(strConnectionString);
@@ -254,7 +258,7 @@ file:
 
   	  static void Main(string[] args)
   	  {
-           string strConnectionString = ConfigurationSettings.AppSettings
+           string strConnectionString = ConfigurationManager.AppSettings
   	      ["DB_CONN_STRING"];
 
   	     EDBConnection conn = new EDBConnection(strConnectionString);
@@ -281,7 +285,7 @@ file:
 Save the file as ``EDBConnection-Sample.cs`` and compile it with the
 following command:
 
-``csc /r:EDBDataProvider.dll /out:Console.exe EDBConnection-Sample.cs``
+``csc /r:EnterpriseDB.EDBClient.dll /out:Console.exe EDBConnection-Sample.cs``
 
 Compiling the sample should generate a ``Console.exe`` file; you can execute
 the sample code by entering ``Console.exe``. When executed, the console
@@ -356,7 +360,7 @@ Note that you must change the database connection string to point to the
 database that you want to connect to before compiling the file with the
 following command:
 
-``csc /r:EDBDataProvider.dll /out:WinForm.exe WinForm-Example.cs``
+``csc /r:EnterpriseDB.EDBClient.dll /out:WinForm.exe WinForm-Example.cs``
 
 This command should generate a ``WinForm.exe`` file within the same folder
 that the executable was compiled under. Invoking the executable will
