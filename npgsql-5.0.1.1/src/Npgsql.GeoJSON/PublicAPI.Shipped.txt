@@ -1,0 +1,11 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONHandlerFactory
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONHandlerFactory.GeoJSONHandlerFactory(EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions options = EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.None) -> void
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.BoundingBox = 1 -> EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.LongCRS = 4 -> EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.None = 0 -> EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.ShortCRS = 2 -> EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions
+EnterpriseDB.EDBClient.EDBGeoJSONExtensions
+override EnterpriseDB.EDBClient.GeoJSON.GeoJSONHandlerFactory.Create(EnterpriseDB.EDBClient.PostgresTypes.PostgresType! postgresType, EnterpriseDB.EDBClient.EDBConnection! conn) -> EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<GeoJSON.Net.GeoJSONObject!>!
+static EnterpriseDB.EDBClient.EDBGeoJSONExtensions.UseGeoJson(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions options = EnterpriseDB.EDBClient.GeoJSON.GeoJSONOptions.None, bool geographyAsDefault = false) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

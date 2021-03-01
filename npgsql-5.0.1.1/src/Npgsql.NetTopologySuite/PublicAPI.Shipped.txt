@@ -1,0 +1,5 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.NetTopologySuite.NetTopologySuiteHandlerFactory
+EnterpriseDB.EDBClient.EDBNetTopologySuiteExtensions
+override EnterpriseDB.EDBClient.NetTopologySuite.NetTopologySuiteHandlerFactory.Create(EnterpriseDB.EDBClient.PostgresTypes.PostgresType! postgresType, EnterpriseDB.EDBClient.EDBConnection! conn) -> EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<NetTopologySuite.Geometries.Geometry!>!
+static EnterpriseDB.EDBClient.EDBNetTopologySuiteExtensions.UseNetTopologySuite(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, NetTopologySuite.Geometries.CoordinateSequenceFactory? coordinateSequenceFactory = null, NetTopologySuite.Geometries.PrecisionModel? precisionModel = null, NetTopologySuite.Geometries.Ordinates handleOrdinates = NetTopologySuite.Geometries.Ordinates.None, bool geographyAsDefault = false) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

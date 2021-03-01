@@ -1,0 +1,61 @@
+﻿using System;
+using System.Data;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.TypeHandling;
+using EnterpriseDB.EDBClient.TypeMapping;
+using EDBTypes;
+
+namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
+{
+    /// <summary>
+    /// A factory for type handlers for the PostgreSQL time data type.
+    /// </summary>
+    /// <remarks>
+    /// See https://www.postgresql.org/docs/current/static/datatype-datetime.html.
+    ///
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
+    [TypeMapping("time without time zone", EDBDbType.Time, new[] { DbType.Time })]
+    public class TimeHandlerFactory : EDBTypeHandlerFactory<TimeSpan>
+    {
+        /// <inheritdoc />
+        public override EDBTypeHandler<TimeSpan> Create(PostgresType postgresType, EDBConnection conn)
+            => conn.HasIntegerDateTimes  // Check for the legacy floating point timestamps feature
+                ? new TimeHandler(postgresType)
+                : throw new NotSupportedException($"The deprecated floating-point date/time format is not supported by {nameof(EnterpriseDB.EDBClient)}.");
+    }
+
+    /// <summary>
+    /// A type handler for the PostgreSQL time data type.
+    /// </summary>
+    /// <remarks>
+    /// See https://www.postgresql.org/docs/current/static/datatype-datetime.html.
+    ///
+    /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
+    /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
+    /// Use it at your own risk.
+    /// </remarks>
+    public class TimeHandler : EDBSimpleTypeHandler<TimeSpan>
+    {
+        /// <summary>
+        /// Constructs a <see cref="TimeHandler"/>.
+        /// </summary>
+        public TimeHandler(PostgresType postgresType) : base(postgresType) {}
+
+        // PostgreSQL time resolution == 1 microsecond == 10 ticks
+        /// <inheritdoc />
+        public override TimeSpan Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
+            => new TimeSpan(buf.ReadInt64() * 10);
+
+        /// <inheritdoc />
+        public override int ValidateAndGetLength(TimeSpan value, EDBParameter? parameter)
+            => 8;
+
+        /// <inheritdoc />
+        public override void Write(TimeSpan value, EDBWriteBuffer buf, EDBParameter? parameter)
+            => buf.WriteInt64(value.Ticks / 10);
+    }
+}
