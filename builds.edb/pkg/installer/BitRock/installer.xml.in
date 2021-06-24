@@ -825,10 +825,12 @@ EOF
 	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net461"/>
 	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net472"/>
 	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net48"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\netstandard2.0"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\netstandard2.1"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\netcoreapp3.0"/>
+		<distributionDirectory origin="DOTNET_STAGING_PATH\NET50_FRAMEWORK\net5.0"/>
+	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET50_FRAMEWORK\netstandard2.0"/>
+	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET50_FRAMEWORK\netstandard2.1"/>
+	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET50_FRAMEWORK\netcoreapp3.1"/>
             <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\plugins"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET50_FRAMEWORK\plugins"/>
             <!--<distributionDirectory origin="DOTNET_STAGING_PATH\4.0\net40"/>-->
             <distributionDirectory origin="DOTNET_STAGING_PATH\samples"/>
           </distributionFileList>
