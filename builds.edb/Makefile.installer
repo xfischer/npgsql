@@ -8,8 +8,13 @@ export PKG_STAGING_PATH :=$(PWD)/inst
 ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 
 export PRE_BUILD_STEPS=createSourceArchive 
-export BUILD_COMPONENTS=build-dotnet461
+export BUILD_COMPONENTS=build-dotnet50 build-dotnet461
 export POST_BUILD_STEPS=copy-samples createBuildArchive
+
+# Build .NET5
+build-dotnet50:
+
+	cmd /c "pkg\\installer\\build-dotnet5.bat $(DOTNET_SOURCE_PATH) $(NET50_FRAMEWORK) Release AnyCPU NET5.0 $(DOTNET_STAGING_PATH)"
 
 # Build .NET 461
 build-dotnet461:

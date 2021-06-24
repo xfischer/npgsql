@@ -59,28 +59,28 @@ copy bin\%RELEASE_CONFIGURATION%\net48\Microsoft.Bcl.AsyncInterfaces.dll %STAGIN
 copy bin\%RELEASE_CONFIGURATION%\net48\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
 copy bin\%RELEASE_CONFIGURATION%\net48\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
-copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
+REM copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1
-copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1
+REM copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0
-copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0
+REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error 
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
 
 cd %SOURCE_PATH%
 cd src\VSIX
@@ -120,7 +120,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.GeoJSON
@@ -139,13 +139,13 @@ copy bin\Release\net48\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_
 copy bin\Release\net48\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48 || goto :error
 copy bin\Release\net48\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48 || goto :error
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.Json.NET
@@ -161,14 +161,14 @@ copy bin\Release\net472\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plu
 copy bin\Release\net48\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48 || goto :error
 copy bin\Release\net48\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48 || goto :error
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.LegacyPostgis
@@ -179,14 +179,14 @@ copy bin\Release\net461\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%
 copy bin\Release\net472\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net472 || goto :error
 copy bin\Release\net48\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net48 || goto :error
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.NetTopologySuite
@@ -205,13 +205,13 @@ copy bin\Release\net48\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%
 copy bin\Release\net48\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48 || goto :error
 copy bin\Release\net48\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48 || goto :error
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.NodaTime
@@ -227,13 +227,13 @@ copy bin\Release\net472\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\No
 copy bin\Release\net48\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48 || goto :error
 copy bin\Release\net48\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48 || goto :error
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0
 
 cd %SOURCE_PATH%
 cd src\Npgsql.RawPostgis
@@ -245,7 +245,7 @@ copy bin\Release\net472\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TAR
 copy bin\Release\net48\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net48 || goto :error
 
 
-copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
+REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
 
 :error
 echo "Failed with error %errorlevel%."
