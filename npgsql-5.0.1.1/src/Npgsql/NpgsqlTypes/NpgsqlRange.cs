@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
+
+#pragma warning disable CS8600
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes

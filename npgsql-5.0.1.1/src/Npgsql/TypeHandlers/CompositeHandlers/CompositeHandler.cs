@@ -12,6 +12,8 @@ using EnterpriseDB.EDBClient.TypeHandling;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
 
+#pragma warning disable CS8618
+
 namespace EnterpriseDB.EDBClient.TypeHandlers.CompositeHandlers
 {
     class CompositeHandler<T> : EDBTypeHandler<T>, ICompositeHandler

@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
+
+#pragma warning disable CS8618
 
 // ReSharper disable StaticMemberInGenericType
 namespace EnterpriseDB.EDBClient.TypeHandling
