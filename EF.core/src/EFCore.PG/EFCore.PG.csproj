@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Npgsql\Npgsql.csproj" />
+    <ProjectReference Include="..\..\..\npgsql-5.0.1.1\src\Npgsql\Npgsql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
