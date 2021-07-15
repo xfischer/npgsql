@@ -199,7 +199,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2766")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2766")]
         [Timeout(3000)]
         public async Task SequentialReadOfOversizedBitArray()
         {

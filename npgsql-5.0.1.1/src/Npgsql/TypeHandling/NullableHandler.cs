@@ -1,11 +1,9 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
-
-#pragma warning disable CS8618
 
 // ReSharper disable StaticMemberInGenericType
 namespace EnterpriseDB.EDBClient.TypeHandling
@@ -19,13 +17,14 @@ namespace EnterpriseDB.EDBClient.TypeHandling
     static class NullableHandler<T>
     {
         public static readonly Type? UnderlyingType;
-        [NotNull] public static readonly ReadDelegate<T>? Read;
-        [NotNull] public static readonly ReadAsyncDelegate<T>? ReadAsync;
-        [NotNull] public static readonly ValidateAndGetLengthDelegate<T>? ValidateAndGetLength;
-        [NotNull] public static readonly WriteAsyncDelegate<T>? WriteAsync;
+        public static readonly ReadDelegate<T> Read = null!;
+        public static readonly ReadAsyncDelegate<T> ReadAsync = null!;
+        public static readonly ValidateAndGetLengthDelegate<T> ValidateAndGetLength = null!;
+        public static readonly WriteAsyncDelegate<T> WriteAsync = null!;
 
         public static bool Exists => UnderlyingType != null;
 
+#nullable disable
         static NullableHandler()
         {
             UnderlyingType = Nullable.GetUnderlyingType(typeof(T));
@@ -38,6 +37,7 @@ namespace EnterpriseDB.EDBClient.TypeHandling
             ValidateAndGetLength = NullableHandler.CreateDelegate<ValidateAndGetLengthDelegate<T>>(UnderlyingType, NullableHandler.ValidateMethod);
             WriteAsync = NullableHandler.CreateDelegate<WriteAsyncDelegate<T>>(UnderlyingType, NullableHandler.WriteAsyncMethod);
         }
+#nullable restore
     }
 
     static class NullableHandler

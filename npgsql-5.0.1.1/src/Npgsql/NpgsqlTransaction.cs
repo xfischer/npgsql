@@ -155,12 +155,15 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public override void Rollback() => Rollback(false).GetAwaiter().GetResult();
 
-        Task Rollback(bool async, CancellationToken cancellationToken = default)
+        async Task Rollback(bool async, CancellationToken cancellationToken = default)
         {
             CheckReady();
-            return _connector.DatabaseInfo.SupportsTransactions
-                ? _connector.Rollback(async, cancellationToken)
-                : Task.CompletedTask;
+
+            if (!_connector.DatabaseInfo.SupportsTransactions)
+                return;
+
+            using (_connector.StartUserAction(cancellationToken))
+                await _connector.Rollback(async, cancellationToken);
         }
 
         /// <summary>
@@ -357,9 +360,16 @@ namespace EnterpriseDB.EDBClient
             {
                 if (!IsCompleted)
                 {
-                    // We're disposing, so no cancellation token
-                    _connector.CloseOngoingOperations(async: false).GetAwaiter().GetResult();
-                    Rollback();
+                    try
+                    {
+                        _connector.CloseOngoingOperations(async: false).GetAwaiter().GetResult();
+                        Rollback();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.Assert(_connector.IsBroken);
+                        Log.Error("Exception while disposing a transaction", ex, _connector.Id);
+                    }
                 }
 
                 IsDisposed = true;
@@ -392,8 +402,17 @@ namespace EnterpriseDB.EDBClient
             async ValueTask DisposeAsyncInternal()
             {
                 // We're disposing, so no cancellation token
-                await _connector.CloseOngoingOperations(async: true);
-                await Rollback(async: true);
+                try
+                {
+                    await _connector.CloseOngoingOperations(async: true);
+                    await Rollback(async: true);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Assert(_connector.IsBroken);
+                    Log.Error("Exception while disposing a transaction", ex, _connector.Id);
+                }
+                
                 IsDisposed = true;
                 _connector?.Connection?.EndBindingScope(ConnectorBindingScope.Transaction);
             }
@@ -448,7 +467,7 @@ namespace EnterpriseDB.EDBClient
         internal void UnbindIfNecessary()
         {
             // We're closing the connection, but transaction is not yet disposed
-            // We have to unbind the transaction from the connector, otherwise there could be a concurency issues
+            // We have to unbind the transaction from the connector, otherwise there could be a concurrency issues
             // See #3306
             if (!IsDisposed)
             {

@@ -99,13 +99,13 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         [TestCase(EDBDbType.Oid, TestName="OID")]
         [TestCase(EDBDbType.Xid, TestName="XID")]
         [TestCase(EDBDbType.Cid, TestName="CID")]
-        public async Task UInt32(EDBDbType EDBDbType)
+        public async Task UInt32(EDBDbType npgsqlDbType)
         {
             var expected = 8u;
             using (var conn = await OpenConnectionAsync())
             using (var cmd = new EDBCommand("SELECT @p", conn))
             {
-                cmd.Parameters.Add(new EDBParameter("p", EDBDbType) { Value = expected });
+                cmd.Parameters.Add(new EDBParameter("p", npgsqlDbType) { Value = expected });
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     reader.Read();

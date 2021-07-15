@@ -269,7 +269,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1831")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1831")]
         public async Task NoSystemTables()
         {
             using (var conn = OpenConnection())
@@ -449,6 +449,12 @@ CREATE UNIQUE INDEX idx_unique ON data (f1, f2);
 
                 Assert.That(columns[0]["column_name"], Is.EqualTo("f1"));
                 Assert.That(columns[1]["column_name"], Is.EqualTo("f2"));
+
+                string[] indexColumnRestrictions3 = { (string) database! , "public", "data", "idx_unique", "f1" };
+                var dataTable3 = await GetSchema(conn, "INDEXCOLUMNS", indexColumnRestrictions3);
+                var columns3 = dataTable3.Rows.Cast<DataRow>().ToList();
+                Assert.That(columns3.Count, Is.EqualTo(1));
+                Assert.That(columns3.Single()["column_name"], Is.EqualTo("f1"));
             }
             finally
             {
@@ -456,7 +462,7 @@ CREATE UNIQUE INDEX idx_unique ON data (f1, f2);
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1886")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1886")]
         public async Task ColumnSchemaDataTypes()
         {
             using var conn = OpenConnection();
@@ -519,7 +525,7 @@ CREATE TABLE types_table
 ");
                 var database = conn.ExecuteScalar("SELECT current_database()");
 
-                string[] restrictions = { "EDB_tests", "public", "types_table", null! };
+                string[] restrictions = { "npgsql_tests", "public", "types_table", null! };
                 var columnsSchema = await GetSchema(conn, "Columns", restrictions);
                 var columns = columnsSchema.Rows.Cast<DataRow>().ToList();
 

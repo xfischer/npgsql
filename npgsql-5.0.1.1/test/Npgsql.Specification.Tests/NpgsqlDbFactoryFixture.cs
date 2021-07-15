@@ -9,9 +9,9 @@ namespace EnterpriseDB.EDBClient.Specification.Tests
         public DbProviderFactory Factory => EDBFactory.Instance;
 
         const string DefaultConnectionString =
-            "Server=localhost;Username=EDB_tests;Password=EDB_tests;Database=EDB_tests;Timeout=0;Command Timeout=0";
+            "Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0";
 
         public string ConnectionString =>
-            Environment.GetEnvironmentVariable("EDB_TEST_DB") ?? DefaultConnectionString;
+            Environment.GetEnvironmentVariable("NPGSQL_TEST_DB") ?? DefaultConnectionString;
     }
 }

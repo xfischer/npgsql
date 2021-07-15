@@ -113,6 +113,10 @@ namespace EnterpriseDB.EDBClient
             }
             try
             {
+                EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
+                EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
+                this.Connection.ReloadTypes();
+
                 EDBCommand command = new EDBCommand("DBMS_AQ.ENQUEUE(:queue_name, :enqueue_options, :message_properties, :payload, :MsgId)", this.Connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.AllResultTypesAreUnknown = true;
@@ -144,8 +148,9 @@ namespace EnterpriseDB.EDBClient
                 command.Prepare();
                 var reader = command.ExecuteNonQuery();
                 msg.MessageId = (byte[])command.Parameters[4].Value;
-            } catch (Exception)
+            } catch (Exception e)
             {
+                Console.WriteLine(e);
                 throw;
             }
          }

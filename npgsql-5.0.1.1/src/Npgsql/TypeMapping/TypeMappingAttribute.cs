@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// Maps an EnterpriseDB.EDBClient type handler to a PostgreSQL type.
         /// </summary>
         /// <param name="pgName">A PostgreSQL type name as it appears in the pg_type table.</param>
-        /// <param name="eDBDbType">
+        /// <param name="npgsqlDbType">
         /// A member of <see cref="EDBDbType"/> which represents this PostgreSQL type.
         /// An <see cref="EDBParameter"/> with <see cref="EDBParameter.EDBDbType"/> set to
         /// this value will be sent with the type handler mapped by this attribute.
@@ -35,63 +35,63 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         /// When <see cref="EDBParameter.EDBDbType"/> or <see cref="EDBParameter.Value"/>
         /// set, <see cref="EDBParameter.DbType"/> will be set to this value.
         /// </param>
-        internal TypeMappingAttribute(string pgName, EDBDbType? eDBDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType? npgsqlDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType)
         {
             if (string.IsNullOrWhiteSpace(pgName))
                 throw new ArgumentException("pgName can't be empty", nameof(pgName));
 
             PgName = pgName;
-            EDBDbType = eDBDbType;
+            EDBDbType = npgsqlDbType;
             DbTypes = dbTypes ?? new DbType[0];
             ClrTypes = clrTypes ?? new Type[0];
             InferredDbType = inferredDbType;
         }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, Type[]? clrTypes, DbType inferredDbType)
-            : this(pgName, (EDBDbType?)EDBDbType, dbTypes, clrTypes, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes, Type[]? clrTypes, DbType inferredDbType)
+            : this(pgName, (EDBDbType?)npgsqlDbType, dbTypes, clrTypes, inferredDbType)
         { }
 
-        //internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes=null, Type type=null)
-        //    : this(pgName, EDBDbType, dbTypes, type == null ? null : new[] { type }) {}
+        //internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes=null, Type type=null)
+        //    : this(pgName, npgsqlDbType, dbTypes, type == null ? null : new[] { type }) {}
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType)
-            : this(pgName, EDBDbType, new DbType[0], new Type[0], null)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType)
+            : this(pgName, npgsqlDbType, new DbType[0], new Type[0], null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType inferredDbType)
-            : this(pgName, EDBDbType, new DbType[0], new Type[0], inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType inferredDbType)
+            : this(pgName, npgsqlDbType, new DbType[0], new Type[0], inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes, Type clrType, DbType inferredDbType)
-            : this(pgName, EDBDbType, dbTypes, new[] { clrType }, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes, Type clrType, DbType inferredDbType)
+            : this(pgName, npgsqlDbType, dbTypes, new[] { clrType }, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType[] dbTypes)
-            : this(pgName, EDBDbType, dbTypes, new Type[0], null)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType[] dbTypes)
+            : this(pgName, npgsqlDbType, dbTypes, new Type[0], null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type[] clrTypes)
-            : this(pgName, EDBDbType, new[] { dbType }, clrTypes, dbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType dbType, Type[] clrTypes)
+            : this(pgName, npgsqlDbType, new[] { dbType }, clrTypes, dbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, DbType dbType, Type? clrType = null)
-            : this(pgName, EDBDbType, new[] { dbType }, clrType == null ? null : new[] { clrType }, dbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, DbType dbType, Type? clrType = null)
+            : this(pgName, npgsqlDbType, new[] { dbType }, clrType == null ? null : new[] { clrType }, dbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type[] clrTypes, DbType inferredDbType)
-            : this(pgName, EDBDbType, new DbType[0], clrTypes, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type[] clrTypes, DbType inferredDbType)
+            : this(pgName, npgsqlDbType, new DbType[0], clrTypes, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type[] clrTypes)
-            : this(pgName, EDBDbType, new DbType[0], clrTypes, null)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type[] clrTypes)
+            : this(pgName, npgsqlDbType, new DbType[0], clrTypes, null)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type clrType, DbType inferredDbType)
-            : this(pgName, EDBDbType, new DbType[0], new[] { clrType }, inferredDbType)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type clrType, DbType inferredDbType)
+            : this(pgName, npgsqlDbType, new DbType[0], new[] { clrType }, inferredDbType)
         { }
 
-        internal TypeMappingAttribute(string pgName, EDBDbType EDBDbType, Type clrType)
-            : this(pgName, EDBDbType, new DbType[0], new[] { clrType }, null)
+        internal TypeMappingAttribute(string pgName, EDBDbType npgsqlDbType, Type clrType)
+            : this(pgName, npgsqlDbType, new DbType[0], new[] { clrType }, null)
         { }
 
         /// <summary>

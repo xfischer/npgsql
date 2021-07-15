@@ -21,21 +21,21 @@ namespace EnterpriseDB.EDBClient
     {
         #region Fields and Properties
 
-        byte _precision;
-        byte _scale;
-        int _size;
+        private protected byte _precision;
+        private protected byte _scale;
+        private protected int _size;
 
         // ReSharper disable InconsistentNaming
-        private protected EDBDbType? _EDBDbType;
+        private protected EDBDbType? _npgsqlDbType;
         private protected string? _dataTypeName;
         // ReSharper restore InconsistentNaming
 
-        DbType? _cachedDbType;
-        string _name = string.Empty;
-        object? _value;
-        string _sourceColumn;
+        private protected  DbType? _cachedDbType;
+        private protected  string _name = string.Empty;
+        private protected  object? _value;
+        private protected  string _sourceColumn;
 
-        internal string TrimmedName { get; private set; } = string.Empty;
+        internal string TrimmedName { get; private protected set; } = string.Empty;
 
         /// <summary>
         /// Can be used to communicate a value from the validation phase to the writing phase.
@@ -304,8 +304,8 @@ namespace EnterpriseDB.EDBClient
             {
                 if (_cachedDbType.HasValue)
                     return _cachedDbType.Value;
-                if (_EDBDbType.HasValue)
-                    return _cachedDbType ??= GlobalTypeMapper.Instance.ToDbType(_EDBDbType.Value);
+                if (_npgsqlDbType.HasValue)
+                    return _cachedDbType ??= GlobalTypeMapper.Instance.ToDbType(_npgsqlDbType.Value);
                 if (_value != null)   // Infer from value but don't cache
                     return GlobalTypeMapper.Instance.ToDbType(_value.GetType());
 
@@ -317,12 +317,12 @@ namespace EnterpriseDB.EDBClient
                 if (value == DbType.Object)
                 {
                     _cachedDbType = null;
-                    _EDBDbType = null;
+                    _npgsqlDbType = null;
                 }
                 else
                 {
                     _cachedDbType = value;
-                    _EDBDbType = GlobalTypeMapper.Instance.ToEDBDbType(value);
+                    _npgsqlDbType = GlobalTypeMapper.Instance.ToEDBDbType(value);
                 }
             }
         }
@@ -338,8 +338,8 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                if (_EDBDbType.HasValue)
-                    return _EDBDbType.Value;
+                if (_npgsqlDbType.HasValue)
+                    return _npgsqlDbType.Value;
                 if (_value != null)   // Infer from value
                     return GlobalTypeMapper.Instance.ToEDBDbType(_value.GetType());
                 return EDBDbType.Unknown;
@@ -352,7 +352,7 @@ namespace EnterpriseDB.EDBClient
                     throw new ArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Range, Binary-Or with the element type (e.g. Range of integer is EDBDbType.Range | EDBDbType.Integer)");
 
                 Handler = null;
-                _EDBDbType = value;
+                _npgsqlDbType = value;
                 _cachedDbType = null;
             }
         }
@@ -484,8 +484,8 @@ namespace EnterpriseDB.EDBClient
             if (Handler != null)
                 return;
 
-            if (_EDBDbType.HasValue)
-                Handler = typeMapper.GetByEDBDbType(_EDBDbType.Value);
+            if (_npgsqlDbType.HasValue)
+                Handler = typeMapper.GetByEDBDbType(_npgsqlDbType.Value);
             else if (_dataTypeName != null)
                 Handler = typeMapper.GetByDataTypeName(_dataTypeName);
             else if (_value != null)
@@ -513,7 +513,6 @@ namespace EnterpriseDB.EDBClient
             var len = Handler!.ValidateObjectAndGetLength(_value, ref lengthCache, this);
             LengthCache = lengthCache;
 #pragma warning restore CS8604 // Possible null reference argument.
-
             return len;
         }
 
@@ -524,7 +523,7 @@ namespace EnterpriseDB.EDBClient
         public override void ResetDbType()
         {
             _cachedDbType = null;
-            _EDBDbType = null;
+            _npgsqlDbType = null;
             _dataTypeName = null;
             Handler = null;
         }
@@ -833,17 +832,19 @@ namespace EnterpriseDB.EDBClient
         /// is a copy of the current instance.
         /// </summary>
         /// <returns>A new <see cref="EDBParameter">EDBParameter</see> that is a copy of this instance.</returns>
-        public EDBParameter Clone()
-        {
+        public EDBParameter Clone() => CloneCore();
+
+        private protected virtual EDBParameter CloneCore() =>
             // use fields instead of properties
             // to avoid auto-initializing something like type_info
-            var clone = new EDBParameter
+            new EDBParameter
             {
                 _precision = _precision,
                 _scale = _scale,
                 _size = _size,
                 _cachedDbType = _cachedDbType,
-                _EDBDbType = _EDBDbType,
+                _npgsqlDbType = _npgsqlDbType,
+                _dataTypeName = _dataTypeName,
                 Direction = Direction,
                 IsNullable = IsNullable,
                 _name = _name,
@@ -853,8 +854,6 @@ namespace EnterpriseDB.EDBClient
                 _value = _value,
                 SourceColumnNullMapping = SourceColumnNullMapping,
             };
-            return clone;
-        }
 
         object ICloneable.Clone() => Clone();
 

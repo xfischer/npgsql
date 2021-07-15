@@ -1,7 +1,8 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -544,8 +545,8 @@ namespace EnterpriseDB.EDBClient
             if (forceReload || !EDBDatabaseInfo.Cache.TryGetValue(key, out var database))
             {
                 var hasSemaphore = async
-                    ? await DatabaseInfoSemaphore.WaitAsync(timeout.TimeLeft, cancellationToken)
-                    : DatabaseInfoSemaphore.Wait(timeout.TimeLeft, cancellationToken);
+                    ? await DatabaseInfoSemaphore.WaitAsync(timeout.CheckAndGetTimeLeft(), cancellationToken)
+                    : DatabaseInfoSemaphore.Wait(timeout.CheckAndGetTimeLeft(), cancellationToken);
 
                 // We've timed out - calling Check, to throw the correct exception
                 if (!hasSemaphore)
@@ -617,7 +618,7 @@ namespace EnterpriseDB.EDBClient
             if (username?.Length > 0)
                 return username;
 
-            if (!PGUtil.IsWindows)
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 username = KerberosUsernameProvider.GetUsername(Settings.IncludeRealm);
                 if (username?.Length > 0)
@@ -706,12 +707,17 @@ namespace EnterpriseDB.EDBClient
                         {
                             var sslStream = new SslStream(_stream, leaveInnerStreamOpen: false, certificateValidationCallback);
 
+                            var sslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
+#if NETCOREAPP3_1_OR_GREATER
+                            sslProtocols |= SslProtocols.Tls13;
+#endif
+
                             if (async)
                                 await sslStream.AuthenticateAsClientAsync(Host, clientCertificates,
-                                    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, Settings.CheckCertificateRevocation);
+                                    sslProtocols, Settings.CheckCertificateRevocation);
                             else
                                 sslStream.AuthenticateAsClient(Host, clientCertificates,
-                                    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, Settings.CheckCertificateRevocation);
+                                    sslProtocols, Settings.CheckCertificateRevocation);
 
                             _stream = sslStream;
                         }
@@ -759,12 +765,7 @@ namespace EnterpriseDB.EDBClient
             // Give each endpoint an equal share of the remaining time
             var perEndpointTimeout = -1;  // Default to infinity
             if (timeout.IsSet)
-            {
-                var timeoutTicks = timeout.TimeLeft.Ticks;
-                if (timeoutTicks <= 0)
-                    throw new TimeoutException();
-                perEndpointTimeout = (int)(timeoutTicks / endpoints.Length / 10);
-            }
+                perEndpointTimeout = (int)(timeout.CheckAndGetTimeLeft().Ticks / endpoints.Length / 10);
 
             for (var i = 0; i < endpoints.Length; i++)
             {
@@ -833,10 +834,7 @@ namespace EnterpriseDB.EDBClient
             var perIpTimeout = timeout;
             if (timeout.IsSet)
             {
-                var timeoutTicks = timeout.TimeLeft.Ticks;
-                if (timeoutTicks <= 0)
-                    throw new TimeoutException();
-                perIpTimespan = new TimeSpan(timeoutTicks / endpoints.Length);
+                perIpTimespan = new TimeSpan(timeout.CheckAndGetTimeLeft().Ticks / endpoints.Length);
                 perIpTimeout = new EDBTimeout(perIpTimespan);
             }
 
@@ -844,7 +842,11 @@ namespace EnterpriseDB.EDBClient
             {
                 var endpoint = endpoints[i];
                 Log.Trace($"Attempting to connect to {endpoint}");
-                var protocolType = endpoint.AddressFamily == AddressFamily.InterNetwork ? ProtocolType.Tcp : ProtocolType.IP;
+                var protocolType =
+                    endpoint.AddressFamily == AddressFamily.InterNetwork ||
+                    endpoint.AddressFamily == AddressFamily.InterNetworkV6
+                    ? ProtocolType.Tcp
+                    : ProtocolType.IP;
                 var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, protocolType);
                 CancellationTokenSource? combinedCts = null;
                 try
@@ -862,7 +864,7 @@ namespace EnterpriseDB.EDBClient
                     if (perIpTimeout.IsSet)
                     {
                         combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        combinedCts.CancelAfter((int)perIpTimeout.TimeLeft.TotalMilliseconds);
+                        combinedCts.CancelAfter((int)perIpTimeout.CheckAndGetTimeLeft().TotalMilliseconds);
                         finalCt = combinedCts.Token;
                     }
 
@@ -1011,7 +1013,7 @@ namespace EnterpriseDB.EDBClient
                         // have executed yet, and the flush may still be in progress. We know all I/O has already
                         // been sent - because the reader has already consumed the entire resultset. So we wait until
                         // the connector's write lock has been released (long waiting will never occur here).
-                        SpinWait.SpinUntil(() => MultiplexAsyncWritingLock == 0);
+                        SpinWait.SpinUntil(() => MultiplexAsyncWritingLock == 0 || IsBroken);
 
                         _pool!.Return(this);
                     }
@@ -1262,8 +1264,8 @@ namespace EnterpriseDB.EDBClient
         {
             switch (code)
             {
-                case BackendMessageCode.RowDescription:
-                    return _rowDescriptionMessage.Load(buf, TypeMapper, false);
+            case BackendMessageCode.RowDescription:
+                return _rowDescriptionMessage.Load(buf, TypeMapper, false);
             /* EnterpriseDB Team */
             case BackendMessageCode.OutDescription:
                 var rowOutDescriptionMessage = new RowDescriptionMessage();
@@ -1285,8 +1287,8 @@ namespace EnterpriseDB.EDBClient
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 return _outParamDataRowMessage.Load(len);
             case BackendMessageCode.CommandComplete:
-                    return _commandCompleteMessage.Load(buf, len);
-                case BackendMessageCode.ReadyForQuery:
+                return _commandCompleteMessage.Load(buf, len);
+            case BackendMessageCode.ReadyForQuery:
                     var rfq = _readyForQueryMessage.Load(buf);
                     if (!isPrependedMessage) {
                         // Transaction status on prepended messages shouldn't be processed, because there may be prepended messages
@@ -1384,6 +1386,9 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
+        #endregion Backend message processing
+
+        #region Transactions
         /* EnterpriseDB Team */
         /// <summary>
         /// Reads backend messages and discards them, stopping only after a message of the given types has
@@ -1405,15 +1410,10 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        #endregion Backend message processing
-
-        #region Transactions
-
-        internal async Task Rollback(bool async, CancellationToken cancellationToken = default)
+        internal Task Rollback(bool async, CancellationToken cancellationToken = default)
         {
             Log.Debug("Rolling back transaction", Id);
-            using (StartUserAction(cancellationToken))
-                await ExecuteInternalCommand(PregeneratedMessages.RollbackTransaction, async, cancellationToken);
+            return ExecuteInternalCommand(PregeneratedMessages.RollbackTransaction, async, cancellationToken);
         }
 
         internal bool InTransaction
@@ -1508,27 +1508,44 @@ namespace EnterpriseDB.EDBClient
 
         internal void PerformUserCancellation()
         {
-            _userCancellationRequested = true;
+            var connection = Connection;
+            if (connection is null || connection.ConnectorBindingScope == ConnectorBindingScope.Reader)
+                return;
 
-            if (AttemptPostgresCancellation && SupportsPostgresCancellation)
+            lock (CancelLock)
             {
-                var cancellationTimeout = Settings.CancellationTimeout;
-                if (PerformPostgresCancellation() && cancellationTimeout >= 0)
+                _userCancellationRequested = true;
+
+                if (AttemptPostgresCancellation && SupportsPostgresCancellation)
                 {
-                    if (cancellationTimeout > 0)
+                    var cancellationTimeout = Settings.CancellationTimeout;
+                    if (PerformPostgresCancellation() && cancellationTimeout >= 0)
                     {
-                        UserTimeout = cancellationTimeout;
-                        ReadBuffer.Timeout = TimeSpan.FromMilliseconds(cancellationTimeout);
-                        ReadBuffer.Cts.CancelAfter(cancellationTimeout);
+                        if (cancellationTimeout > 0)
+                        {
+                            lock (this)
+                            {
+                                if (!IsConnected)
+                                    return;
+                                UserTimeout = cancellationTimeout;
+                                ReadBuffer.Timeout = TimeSpan.FromMilliseconds(cancellationTimeout);
+                                ReadBuffer.Cts.CancelAfter(cancellationTimeout);
+                            }
+                        }
+
+                        return;
                     }
-                        
-                    return;
+                }
+
+                lock (this)
+                {
+                    if (!IsConnected)
+                        return;
+                    UserTimeout = -1;
+                    ReadBuffer.Timeout = _cancelImmediatelyTimeout;
+                    ReadBuffer.Cts.Cancel();
                 }
             }
-
-            UserTimeout = -1;
-            ReadBuffer.Timeout = _cancelImmediatelyTimeout;
-            ReadBuffer.Cts.Cancel();
         }
 
         /// <summary>
@@ -1656,7 +1673,7 @@ namespace EnterpriseDB.EDBClient
         /// Closes ongoing operations, i.e. an open reader exists or a COPY operation still in progress, as
         /// part of a connection close.
         /// </summary>
-        internal async Task CloseOngoingOperations(bool async, CancellationToken cancellationToken = default)
+        internal async Task CloseOngoingOperations(bool async)
         {
             var reader = CurrentReader;
             var copyOperation = CurrentCopyOperation;
@@ -1707,6 +1724,10 @@ namespace EnterpriseDB.EDBClient
                 {
                     try
                     {
+                        // At this point, there could be some prepended commands (like DISCARD ALL)
+                        // which make no sense to send on connection close
+                        // see https://github.com/npgsql/npgsql/issues/3592
+                        WriteBuffer.Clear();
                         WriteTerminate();
                         Flush();
                     }
@@ -1758,9 +1779,28 @@ namespace EnterpriseDB.EDBClient
                     // Note that we may be reading and writing from the same connector concurrently, so safely set
                     // the original reason for the break before actually closing the socket etc.
                     Interlocked.CompareExchange(ref _breakReason, reason, null);
-
                     State = ConnectorState.Broken;
+
+                    var connection = Connection;
+
                     Cleanup();
+
+                    if (connection is not null)
+                    {
+                        var closeLockTaken = connection.TakeCloseLock();
+                        Debug.Assert(closeLockTaken);
+                        if (Settings.ReplicationMode == ReplicationMode.Off)
+                        {
+                            Connection = null;
+                            if (connection.ConnectorBindingScope != ConnectorBindingScope.None && _pool != null)
+                                _pool.Return(this);
+                            connection.EnlistedTransaction = null;
+                            connection.Connector = null;
+                            connection.ConnectorBindingScope = ConnectorBindingScope.None;
+                        }
+                        connection.FullState = ConnectionState.Broken;
+                        connection.ReleaseCloseLock();
+                    }
                 }
 
                 return reason;
@@ -1807,7 +1847,8 @@ namespace EnterpriseDB.EDBClient
                 try
                 {
                     // Will never complete asynchronously (stream is already closed)
-                    CurrentReader.Close();
+                    var readerCloseTask = CurrentReader.CloseAsync();
+                    Debug.Assert(readerCloseTask.IsCompleted);
                 }
                 catch
                 {
@@ -1816,7 +1857,22 @@ namespace EnterpriseDB.EDBClient
                 CurrentReader = null;
             }
 
+            if (CurrentCopyOperation != null)
+            {
+                try
+                {
+                    // Will never complete asynchronously (stream is already closed)
+                    CurrentCopyOperation.Dispose();
+                }
+                catch
+                {
+                    // ignored
+                }
+                CurrentCopyOperation = null;
+            }
+
             ClearTransaction();
+
 #pragma warning disable CS8625
 
             _stream = null;
@@ -1838,6 +1894,7 @@ namespace EnterpriseDB.EDBClient
                 _keepAliveTimer!.Change(Timeout.Infinite, Timeout.Infinite);
                 _keepAliveTimer.Dispose();
             }
+
 #pragma warning restore CS8625
         }
 
@@ -1882,74 +1939,85 @@ namespace EnterpriseDB.EDBClient
         /// (e.g. prepared statements), resetting parameters to their defaults, and resetting client-side
         /// state
         /// </summary>
-        internal async Task Reset(bool async, CancellationToken cancellationToken = default)
+        internal async Task Reset(bool async)
         {
-            Debug.Assert(IsReady);
+            bool endBindingScope;
 
-            // Our buffer may contain unsent prepended messages (such as BeginTransaction), clear it out completely
-            WriteBuffer.Clear();
-            PendingPrependedResponses = 0;
-
-            // We may have allocated an oversize read buffer, switch back to the original one
-            // TODO: Replace this with array pooling, #2326
-            if (_origReadBuffer != null)
+            // We start user action in case a keeplive happens concurrently, or a concurrent user command (bug)
+            using (StartUserAction(attemptPgCancellation: false))
             {
-                ReadBuffer.Dispose();
-                ReadBuffer = _origReadBuffer;
-                _origReadBuffer = null;
-            }
+                // Our buffer may contain unsent prepended messages, so clear it out.
+                // In practice, this is (currently) only done when beginning a transaction or a transaction savepoint.
+                WriteBuffer.Clear();
+                PendingPrependedResponses = 0;
 
-            Transaction?.UnbindIfNecessary();
+                ResetReadBuffer();
 
-            var endBindingScope = false;
+                Transaction?.UnbindIfNecessary();
 
-            // Must rollback transaction before sending DISCARD ALL
-            switch (TransactionStatus)
-            {
-            case TransactionStatus.Idle:
-                // There is an undisposed transaction on multiplexing connection
-                endBindingScope = Connection?.ConnectorBindingScope == ConnectorBindingScope.Transaction;
-                break;
-            case TransactionStatus.Pending:
-                // BeginTransaction() was called, but was left in the write buffer and not yet sent to server.
-                // Just clear the transaction state.
-                ProcessNewTransactionStatus(TransactionStatus.Idle);
-                ClearTransaction();
-                endBindingScope = true;
-                break;
-            case TransactionStatus.InTransactionBlock:
-            case TransactionStatus.InFailedTransactionBlock:
-                await Rollback(async, cancellationToken);
-                ClearTransaction();
-                endBindingScope = true;
-                break;
-            default:
-                throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
-            }
-
-            if (_sendResetOnClose)
-            {
-                if (PreparedStatementManager.NumPrepared > 0)
+                // Must rollback transaction before sending DISCARD ALL
+                switch (TransactionStatus)
                 {
-                    // We have prepared statements, so we can't reset the connection state with DISCARD ALL
-                    // Note: the send buffer has been cleared above, and we assume all this will fit in it.
-                    PrependInternalMessage(_resetWithoutDeallocateMessage!, _resetWithoutDeallocateResponseCount);
+                case TransactionStatus.Idle:
+                    // There is an undisposed transaction on multiplexing connection
+                    endBindingScope = Connection?.ConnectorBindingScope == ConnectorBindingScope.Transaction;
+                    break;
+                case TransactionStatus.Pending:
+                    // BeginTransaction() was called, but was left in the write buffer and not yet sent to server.
+                    // Just clear the transaction state.
+                    ProcessNewTransactionStatus(TransactionStatus.Idle);
+                    ClearTransaction();
+                    endBindingScope = true;
+                    break;
+                case TransactionStatus.InTransactionBlock:
+                case TransactionStatus.InFailedTransactionBlock:
+                    await Rollback(async);
+                    ClearTransaction();
+                    endBindingScope = true;
+                    break;
+                default:
+                    throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {TransactionStatus} of enum {nameof(TransactionStatus)}. Please file a bug.");
                 }
-                else
+
+                if (_sendResetOnClose)
                 {
-                    // There are no prepared statements.
-                    // We simply send DISCARD ALL which is more efficient than sending the above messages separately
-                    PrependInternalMessage(PregeneratedMessages.DiscardAll, 2);
+                    if (PreparedStatementManager.NumPrepared > 0)
+                    {
+                        // We have prepared statements, so we can't reset the connection state with DISCARD ALL
+                        // Note: the send buffer has been cleared above, and we assume all this will fit in it.
+                        PrependInternalMessage(_resetWithoutDeallocateMessage!, _resetWithoutDeallocateResponseCount);
+                    }
+                    else
+                    {
+                        // There are no prepared statements.
+                        // We simply send DISCARD ALL which is more efficient than sending the above messages separately
+                        PrependInternalMessage(PregeneratedMessages.DiscardAll, 2);
+                    }
                 }
+
+                DataReader.UnbindIfNecessary();
             }
 
-            DataReader.UnbindIfNecessary();
-            
             if (endBindingScope)
             {
                 // Connection is null if a connection enlisted in a TransactionScope was closed before the
                 // TransactionScope completed - the connector is still enlisted, but has no connection.
                 Connection?.EndBindingScope(ConnectorBindingScope.Transaction);
+            }
+        }
+
+        /// <summary>
+        /// The connector may have allocated an oversize read buffer, to hold big rows in non-sequential reading.
+        /// This switches us back to the original one and returns the buffer to <see cref="ArrayPool{T}" />.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ResetReadBuffer()
+        {
+            if (_origReadBuffer != null)
+            {
+                ReadBuffer.Dispose();
+                ReadBuffer = _origReadBuffer;
+                _origReadBuffer = null;
             }
         }
 
@@ -2009,6 +2077,13 @@ namespace EnterpriseDB.EDBClient
 
             lock (this)
             {
+                if (!IsConnected)
+                {
+                    throw IsBroken
+                        ? new EDBException("The connection was previously broken because of the following exception", _breakReason)
+                        : new EDBException("The connection is closed");
+                }  
+
                 if (!_userLock!.Wait(0))
                 {
                     var currentCommand = _currentCommand;
@@ -2138,17 +2213,18 @@ namespace EnterpriseDB.EDBClient
                 if (!IsReady)
                     return;
 
-                Log.Trace("Performed keepalive", Id);
-                WritePregenerated(PregeneratedMessages.KeepAlive);
+                Log.Trace("Performing keepalive", Id);
+                WriteSync(async: false);
                 Flush();
                 SkipUntil(BackendMessageCode.ReadyForQuery);
+                Log.Trace("Performed keepalive", Id);
             }
             catch (Exception e)
             {
                 Log.Error("Keepalive failure", e, Id);
                 try
                 {
-                    Break(e);
+                    Break(new EDBException("Exception while sending a keepalive", e));
                 }
                 catch (Exception e2)
                 {
@@ -2198,7 +2274,7 @@ namespace EnterpriseDB.EDBClient
 
                 // Time for a keepalive
                 var keepaliveTime = Stopwatch.StartNew();
-                await WritePregenerated(PregeneratedMessages.KeepAlive, async, cancellationToken);
+                await WriteSync(async, cancellationToken);
                 await Flush(async, cancellationToken);
 
                 var receivedNotification = false;
@@ -2225,25 +2301,9 @@ namespace EnterpriseDB.EDBClient
                         continue;
                     }
 
-                    if (msg.Code != expectedMessageCode)
+                    if (msg.Code != BackendMessageCode.ReadyForQuery)
                         throw new EDBException($"Received unexpected message of type {msg.Code} while expecting {expectedMessageCode} as part of keepalive");
 
-                    switch (msg.Code)
-                    {
-                    case BackendMessageCode.RowDescription:
-                        expectedMessageCode = BackendMessageCode.DataRow;
-                        continue;
-                    case BackendMessageCode.DataRow:
-                        // DataRow is usually consumed by a reader, here we have to skip it manually.
-                        await ReadBuffer.Skip(((DataRowMessage)msg).Length, async);
-                        expectedMessageCode = BackendMessageCode.CommandComplete;
-                        continue;
-                    case BackendMessageCode.CommandComplete:
-                        expectedMessageCode = BackendMessageCode.ReadyForQuery;
-                        continue;
-                    case BackendMessageCode.ReadyForQuery:
-                        break;
-                    }
                     Log.Trace("Performed keepalive", Id);
 
                     if (receivedNotification)
@@ -2306,16 +2366,21 @@ namespace EnterpriseDB.EDBClient
             byte[] rawName;
             byte[] rawValue;
 
-            foreach (var current in _rawParameters)
-                if (incomingName.SequenceEqual(current.Name))
+            for (var i = 0; i < _rawParameters.Count; i++)
+            {
+                (var currentName, var currentValue) = _rawParameters[i];
+                if (incomingName.SequenceEqual(currentName))
                 {
-                    if (incomingValue.SequenceEqual(current.Value))
+                    if (incomingValue.SequenceEqual(currentValue))
                         return;
 
-                    rawName = current.Name;
+                    rawName = currentName;
                     rawValue = incomingValue.ToArray();
+                    _rawParameters[i] = (rawName, rawValue);
+
                     goto ProcessParameter;
                 }
+            }
 
             rawName = incomingName.ToArray();
             rawValue = incomingValue.ToArray();

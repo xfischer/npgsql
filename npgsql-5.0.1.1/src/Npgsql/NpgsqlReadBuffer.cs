@@ -473,7 +473,6 @@ namespace EnterpriseDB.EDBClient
 
             ReadPosition = absoluteOffset;
         }
-
         public void ReadBytes(Span<byte> output)
         {
             Debug.Assert(output.Length <= ReadBytesLeft);
@@ -513,7 +512,7 @@ namespace EnterpriseDB.EDBClient
             if (output.Length == 0)
                 return 0;
 
-            Debug.Assert(ReadPosition == 0);
+            Debug.Assert(ReadBytesLeft == 0);
             Clear();
             try
             {

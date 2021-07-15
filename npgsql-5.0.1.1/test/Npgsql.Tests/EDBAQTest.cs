@@ -76,6 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 try
                 {
+                    EDBConnection.GlobalTypeMapper.MapComposite<MyXML>("myxml");
                     EDBAQMessage queMsg = new EDBAQMessage();
                     queMsg.Payload = new MyXML { value = "(<Message><MessageText>Mahesh</MessageText></Message>)" };
                     queue.EnqueueOptions.Visibility = EDBAQVisibility.ON_COMMIT;

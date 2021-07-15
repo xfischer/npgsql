@@ -127,7 +127,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/488")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/488")]
         public async Task NullCharacter()
         {
             using (var conn = await OpenConnectionAsync())
@@ -224,7 +224,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test, Description("Checks support for the citext contrib type")]
-        [IssueLink("https://github.com/EDB/EDB/issues/695")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/695")]
         public async Task Citext()
         {
             using (var conn = await OpenConnectionAsync())

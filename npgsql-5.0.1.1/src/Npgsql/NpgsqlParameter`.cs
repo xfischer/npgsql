@@ -49,10 +49,10 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Initializes a new instance of <see cref="EDBParameter{T}" /> with a parameter name and type.
         /// </summary>
-        public EDBParameter(string parameterName, EDBDbType eDBDbType)
+        public EDBParameter(string parameterName, EDBDbType npgsqlDbType)
         {
             ParameterName = parameterName;
-            EDBDbType = eDBDbType;
+            EDBDbType = npgsqlDbType;
         }
 
         /// <summary>
@@ -72,8 +72,8 @@ namespace EnterpriseDB.EDBClient
                 return;
 
             // TODO: Better exceptions in case of cast failure etc.
-            if (_EDBDbType.HasValue)
-                Handler = typeMapper.GetByEDBDbType(_EDBDbType.Value);
+            if (_npgsqlDbType.HasValue)
+                Handler = typeMapper.GetByEDBDbType(_npgsqlDbType.Value);
             else if (_dataTypeName != null)
                 Handler = typeMapper.GetByDataTypeName(_dataTypeName);
             else
@@ -97,5 +97,26 @@ namespace EnterpriseDB.EDBClient
 
         internal override Task WriteWithLength(EDBWriteBuffer buf, bool async, CancellationToken cancellationToken = default)
             => Handler!.WriteWithLengthInternal(TypedValue, buf, LengthCache, this, async, cancellationToken);
+
+        private protected override EDBParameter CloneCore() =>
+            // use fields instead of properties
+            // to avoid auto-initializing something like type_info
+            new EDBParameter<T>
+            {
+                _precision = _precision,
+                _scale = _scale,
+                _size = _size,
+                _cachedDbType = _cachedDbType,
+                _npgsqlDbType = _npgsqlDbType,
+                _dataTypeName = _dataTypeName,
+                Direction = Direction,
+                IsNullable = IsNullable,
+                _name = _name,
+                TrimmedName = TrimmedName,
+                SourceColumn = SourceColumn,
+                SourceVersion = SourceVersion,
+                TypedValue = TypedValue,
+                SourceColumnNullMapping = SourceColumnNullMapping,
+            };
     }
 }

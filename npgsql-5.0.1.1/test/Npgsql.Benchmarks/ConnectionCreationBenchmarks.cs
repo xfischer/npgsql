@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Benchmarks
         const string SqlClientConnectionString = @"Data Source=(localdb)\mssqllocaldb";
 
         [Benchmark]
-        public EDBConnection EDBClient() => new EDBConnection(EDBConnectionString);
+        public EDBConnection EDB() => new EDBConnection(EDBConnectionString);
 
         [Benchmark]
         public SqlConnection SqlClient() => new SqlConnection(SqlClientConnectionString);

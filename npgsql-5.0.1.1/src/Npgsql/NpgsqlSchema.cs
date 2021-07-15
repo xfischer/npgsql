@@ -29,7 +29,7 @@ namespace EnterpriseDB.EDBClient
                 "DATASOURCEINFORMATION" => Task.FromResult(GetDataSourceInformation(conn)),
                 "DATATYPES"             => Task.FromResult(GetDataTypes(conn)),
                 "RESERVEDWORDS"         => Task.FromResult(GetReservedWords()),
-                // custom collections for EDB
+                // custom collections for npgsql
                 "DATABASES"             => GetDatabases(conn, restrictions, async, cancellationToken),
                 "SCHEMATA"              => GetSchemata(conn, restrictions, async, cancellationToken),
                 "TABLES"                => GetTables(conn, restrictions, async, cancellationToken),
@@ -361,7 +361,7 @@ WHERE
     a.attnum = ANY(ix.indkey) AND
     t.relkind = 'r'");
 
-            using var command = BuildCommand(conn, getIndexColumns, restrictions, false, "current_database()", "n.nspname", "t.relname", "i.relname", "a.attname");
+            using var command = BuildCommand(conn, getIndexColumns, restrictions, false, "current_database()", "t_ns.nspname", "t.relname", "ix_cls.relname", "a.attname");
             using var adapter = new EDBDataAdapter(command);
             await adapter.Fill(indexColumns, async, cancellationToken);
 

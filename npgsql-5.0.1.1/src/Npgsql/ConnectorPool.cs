@@ -146,7 +146,7 @@ namespace EnterpriseDB.EDBClient
                 _bootstrapSemaphore = new SemaphoreSlim(1);
 
                 // Translate microseconds to ticks for cancellation token
-                _writeCoalescingDelayTicks = Settings.WriteCoalescingDelayUs * 100;
+                _writeCoalescingDelayTicks = Settings.WriteCoalescingDelayUs * 10;
                 _writeCoalescingBufferThresholdBytes = Settings.WriteCoalescingBufferThresholdBytes;
 
                 var multiplexCommandChannel = Channel.CreateBounded<EDBCommand>(
@@ -190,7 +190,7 @@ namespace EnterpriseDB.EDBClient
                 // served), which is crucial to us.
                 using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 var finalToken = linkedSource.Token;
-                linkedSource.CancelAfter(timeout.TimeLeft);
+                linkedSource.CancelAfter(timeout.CheckAndGetTimeLeft());
 
                 while (true)
                 {
@@ -223,7 +223,8 @@ namespace EnterpriseDB.EDBClient
                         Debug.Assert(finalToken.IsCancellationRequested);
                         throw new EDBException(
                             $"The connection pool has been exhausted, either raise MaxPoolSize (currently {_max}) " +
-                            $"or Timeout (currently {Settings.Timeout} seconds)");
+                            $"or Timeout (currently {Settings.Timeout} seconds)",
+                            new TimeoutException());
                     }
                     catch (ChannelClosedException)
                     {
@@ -342,6 +343,7 @@ namespace EnterpriseDB.EDBClient
 
                     // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
                     // to wake it up, so it will try opening (and probably throw immediately)
+                    // Statement order is important since we have synchronous completions on the channel.
                     IdleConnectorWriter.TryWrite(null);
 
                     throw;
@@ -398,10 +400,6 @@ namespace EnterpriseDB.EDBClient
                 Log.Warn("Exception while closing connector", e, connector.Id);
             }
 
-            // If a connector has been closed for any reason, we write a null to the idle connector channel to wake up
-            // a waiter, who will open a new physical connection
-            IdleConnectorWriter.TryWrite(null);
-
             var i = 0;
             for (; i < _max; i++)
                 if (Interlocked.CompareExchange(ref _connectors[i], null, connector) == connector)
@@ -413,6 +411,12 @@ namespace EnterpriseDB.EDBClient
 
             var numConnectors = Interlocked.Decrement(ref _numConnectors);
             Debug.Assert(numConnectors >= 0);
+
+            // If a connector has been closed for any reason, we write a null to the idle connector channel to wake up
+            // a waiter, who will open a new physical connection
+            // Statement order is important since we have synchronous completions on the channel.
+            IdleConnectorWriter.TryWrite(null);
+
             // Only turn off the timer one time, when it was this Close that brought Open back to _min.
             if (numConnectors == _min)
                 DisablePruning();

@@ -158,7 +158,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1718")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1718")]
         [Timeout(12000)]
         public void Bug1718()
         {
@@ -187,8 +187,8 @@ namespace EnterpriseDB.EDBClient.Tests
             {
                 SslMode = SslMode.Require,
                 TrustServerCertificate = true,
-                Username = "EDB_tests_scram",
-                Password = "EDB_tests_scram",
+                Username = "npgsql_tests_scram",
+                Password = "npgsql_tests_scram",
             };
 
             try

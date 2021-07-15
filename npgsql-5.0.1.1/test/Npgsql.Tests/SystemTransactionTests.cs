@@ -94,10 +94,16 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Single connection enlisting implicitly, rollback")]
-        public void RollbackImplicitEnlist()
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2408")]
+        public void RollbackImplicitEnlist([Values(true, false)] bool pooling)
         {
+            var connectionString = new EDBConnectionStringBuilder(ConnectionStringEnlistOn)
+            {
+                Pooling = pooling
+            }.ToString();
+
             using (new TransactionScope())
-            using (var conn = OpenConnection(ConnectionStringEnlistOn))
+            using (var conn = OpenConnection(connectionString))
             {
                 Assert.That(conn.ExecuteNonQuery(@"INSERT INTO data (name) VALUES ('test')"), Is.EqualTo(1), "Unexpected insert rowcount");
                 AssertNoDistributedIdentifier();
@@ -270,7 +276,7 @@ namespace EnterpriseDB.EDBClient.Tests
             AssertNumberOfRows(0);
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1579")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1579")]
         public void SchemaConnectionShouldntEnlist()
         {
             using (var tran = new TransactionScope())
@@ -287,7 +293,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1737")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1737")]
         public void Bug1737()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)

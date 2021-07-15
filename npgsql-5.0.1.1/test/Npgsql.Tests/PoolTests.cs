@@ -102,22 +102,28 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        public void TimeoutGettingConnectorFromExhaustedPool()
+        public async Task TimeoutGettingConnectorFromExhaustedPool([Values(true, false)] bool async)
         {
-            var connString = new EDBConnectionStringBuilder(ConnectionString)
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
             {
-                ApplicationName = nameof(TimeoutGettingConnectorFromExhaustedPool),
                 MaxPoolSize = 1,
                 Timeout = 2
-            }.ToString();
+            };
 
+            using var _ = CreateTempPool(csb, out var connString);
             using (var conn1 = CreateConnection(connString))
             {
-                conn1.Open();
-                // Pool is exhausted
-                using (var conn2 = CreateConnection(connString))
-                    Assert.That(() => conn2.Open(), Throws.Exception.TypeOf<EDBException>());
+                await conn1.OpenAsync();
+                // Pool is now exhausted
+
+                await using var conn2 = CreateConnection(connString);
+                var e = async
+                    ? Assert.ThrowsAsync<EDBException>(async () => await conn2.OpenAsync())!
+                    : Assert.Throws<EDBException>(() => conn2.Open())!;
+
+                Assert.That(e.InnerException, Is.TypeOf<TimeoutException>());
             }
+
             // conn1 should now be back in the pool as idle
             using (var conn3 = CreateConnection(connString))
                 conn3.Open();
@@ -412,7 +418,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 EDBConnection.ClearPool(conn);
         }
 
-        [Test, Description("https://github.com/EDB/EDB/commit/45e33ecef21f75f51a625c7b919a50da3ed8e920#r28239653")]
+        [Test, Description("https://github.com/npgsql/npgsql/commit/45e33ecef21f75f51a625c7b919a50da3ed8e920#r28239653")]
         public void PhysicalOpenFailure()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)

@@ -55,7 +55,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(_queries.Single().InputParameters.Single(), Is.SameAs(_params.Single()));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1177")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1177")]
         public void ParamGetsBoundNonAscii()
         {
             _params.AddWithValue("漢字", "foo");

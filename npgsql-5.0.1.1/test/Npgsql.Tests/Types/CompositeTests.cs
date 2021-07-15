@@ -35,7 +35,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
         #endregion
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1779")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1779")]
         public void CompositePostgresType()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -386,7 +386,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/859")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/859")]
         public void NameTranslation()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -420,7 +420,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             public int SomeClrName { get; set; }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/856")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/856")]
         public void Domain()
         {
             var setupSql = @"SET search_path=pg_temp;
@@ -476,7 +476,7 @@ CREATE TYPE address AS
 
         #region Table as Composite
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/990")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/990")]
         public void TableAsCompositeNotSupportedByDefault()
         {
             using (var conn = OpenConnection())
@@ -487,7 +487,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/990")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/990")]
         public void TableAsComposite()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -508,7 +508,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1267")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1267")]
         public void TableAsCompositeWithDeleteColumns()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -531,7 +531,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2668")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2668")]
         public void TableCompositesNotLoadedIfNotRequested()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -551,7 +551,7 @@ CREATE TYPE address AS
 
         #endregion Table as Composite
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1125")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1125")]
         public void NullablePropertyInClassComposite()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -582,7 +582,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1125")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1125")]
         public void NullablePropertyInStructComposite()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -623,7 +623,7 @@ CREATE TYPE address AS
             public int? Foo { get; set; }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1168")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1168")]
         public void WithSchema()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -659,7 +659,7 @@ CREATE TYPE address AS
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1168")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1168")]
         public void InDifferentSchemas()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -713,7 +713,7 @@ CREATE TYPE address AS
         class Composite2 { public int Bar { get; set; } }
         class Composite3 { public int Bar { get; set; } }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1612")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1612")]
         public void LocalMappingDontLeak()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)

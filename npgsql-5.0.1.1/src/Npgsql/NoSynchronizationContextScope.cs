@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient
     /// without exception.
     ///
     /// Warning: do not use this directly in async methods, use it in sync wrappers of async methods
-    /// (see https://github.com/EDB/EDB/issues/1593)
+    /// (see https://github.com/npgsql/npgsql/issues/1593)
     /// </summary>
     /// <remarks>
     /// https://stackoverflow.com/a/28307965/640325

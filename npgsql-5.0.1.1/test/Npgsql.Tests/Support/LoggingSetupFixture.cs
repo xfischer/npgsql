@@ -15,11 +15,11 @@ public class LoggingSetupFixture
     [OneTimeSetUp]
     public void Setup()
     {
-        var logLevelText = Environment.GetEnvironmentVariable("EDB_TEST_LOGGING");
+        var logLevelText = Environment.GetEnvironmentVariable("NPGSQL_TEST_LOGGING");
         if (logLevelText == null)
             return;
         if (!Enum.TryParse(logLevelText, true, out EDBLogLevel logLevel))
-            throw new ArgumentOutOfRangeException($"Invalid loglevel in EDB_TEST_LOGGING: {logLevelText}");
+            throw new ArgumentOutOfRangeException($"Invalid loglevel in NPGSQL_TEST_LOGGING: {logLevelText}");
 
         var config = new LoggingConfiguration();
         var consoleTarget = new ColoredConsoleTarget

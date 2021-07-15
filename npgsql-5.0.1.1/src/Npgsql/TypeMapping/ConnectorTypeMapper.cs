@@ -79,10 +79,10 @@ namespace EnterpriseDB.EDBClient.TypeMapping
         internal bool TryGetByOID(uint oid, [NotNullWhen(true)] out EDBTypeHandler? handler)
             => _byOID.TryGetValue(oid, out handler);
 
-        internal EDBTypeHandler GetByEDBDbType(EDBDbType EDBDbType)
-            => _byEDBDbType.TryGetValue(EDBDbType, out var handler)
+        internal EDBTypeHandler GetByEDBDbType(EDBDbType npgsqlDbType)
+            => _byEDBDbType.TryGetValue(npgsqlDbType, out var handler)
                 ? handler
-                : throw new EDBException($"The EDBDbType '{EDBDbType}' isn't present in your database. " +
+                : throw new EDBException($"The EDBDbType '{npgsqlDbType}' isn't present in your database. " +
                                              "You may need to install an extension or upgrade to a newer version.");
 
 
@@ -311,18 +311,18 @@ namespace EnterpriseDB.EDBClient.TypeMapping
                 }
         }
 
-        void BindType(EDBTypeHandler handler, PostgresType pgType, EDBDbType? EDBDbType = null, DbType[]? dbTypes = null, Type[]? clrTypes = null)
+        void BindType(EDBTypeHandler handler, PostgresType pgType, EDBDbType? npgsqlDbType = null, DbType[]? dbTypes = null, Type[]? clrTypes = null)
         {
             _byOID[pgType.OID] = handler;
             _byTypeName[pgType.FullName] = handler;
             _byTypeName[pgType.Name] = handler;
 
-            if (EDBDbType.HasValue)
+            if (npgsqlDbType.HasValue)
             {
-                var value = EDBDbType.Value;
+                var value = npgsqlDbType.Value;
                 if (_byEDBDbType.ContainsKey(value))
-                    throw new InvalidOperationException($"Two type handlers registered on same EDBDbType '{EDBDbType}': {_byEDBDbType[value].GetType().Name} and {handler.GetType().Name}");
-                _byEDBDbType[EDBDbType.Value] = handler;
+                    throw new InvalidOperationException($"Two type handlers registered on same EDBDbType '{npgsqlDbType}': {_byEDBDbType[value].GetType().Name} and {handler.GetType().Name}");
+                _byEDBDbType[npgsqlDbType.Value] = handler;
             }
 
             if (dbTypes != null)
@@ -346,10 +346,10 @@ namespace EnterpriseDB.EDBClient.TypeMapping
             }
 
             if (pgType.Array != null)
-                BindArrayType(handler, pgType.Array, EDBDbType, clrTypes);
+                BindArrayType(handler, pgType.Array, npgsqlDbType, clrTypes);
 
             if (pgType.Range != null)
-                BindRangeType(handler, pgType.Range, EDBDbType, clrTypes);
+                BindRangeType(handler, pgType.Range, npgsqlDbType, clrTypes);
         }
 
         void BindArrayType(EDBTypeHandler elementHandler, PostgresArrayType pgArrayType, EDBDbType? elementEDBDbType, Type[]? elementClrTypes)
@@ -398,14 +398,14 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         #endregion Binding
 
-        internal (EDBDbType? EDBDbType, PostgresType postgresType) GetTypeInfoByOid(uint oid)
+        internal (EDBDbType? npgsqlDbType, PostgresType postgresType) GetTypeInfoByOid(uint oid)
         {
             if (!DatabaseInfo.ByOID.TryGetValue(oid, out var postgresType))
                 throw new InvalidOperationException($"Couldn't find PostgreSQL type with OID {oid}");
 
             // Try to find the postgresType in the mappings
-            if (TryGetMapping(postgresType, out var EDBTypeMapping))
-                return (EDBTypeMapping.EDBDbType, postgresType);
+            if (TryGetMapping(postgresType, out var npgsqlTypeMapping))
+                return (npgsqlTypeMapping.EDBDbType, postgresType);
 
             // Try to find the elements' postgresType in the mappings
             if (postgresType is PostgresArrayType arrayType &&

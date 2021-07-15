@@ -26,10 +26,10 @@ namespace EnterpriseDB.EDBClient.PluginTests
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand(@"SELECT @p1, @p2", conn))
             {
-                cmd.Parameters.Add(new EDBParameter("p1", _EDBDbType) { Value = expected });
+                cmd.Parameters.Add(new EDBParameter("p1", _npgsqlDbType) { Value = expected });
                 cmd.Parameters.Add(new EDBParameter<Foo>
                 {
-                    ParameterName = "p2", EDBDbType = _EDBDbType, TypedValue = expected
+                    ParameterName = "p2", EDBDbType = _npgsqlDbType, TypedValue = expected
                 });
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -56,20 +56,20 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3085")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3085")]
         public void RoundtripStringTypes()
         {
             var expected = "{\"p\":1}";
             // If we serialize to JSONB, Postgres will not store the Json.NET formatting, and will add a space after ':'
-            var expectedString = _EDBDbType.Equals(EDBDbType.Jsonb) ? "{\"p\": 1}"
+            var expectedString = _npgsqlDbType.Equals(EDBDbType.Jsonb) ? "{\"p\": 1}"
                                     : "{\"p\":1}";
 
             using var conn = OpenConnection();
             using var cmd = new EDBCommand(@"SELECT @p1, @p2, @p3", conn);
 
-            cmd.Parameters.Add(new EDBParameter<string>("p1", _EDBDbType) { Value = expected });
-            cmd.Parameters.Add(new EDBParameter<char[]>("p2", _EDBDbType) { Value = expected.ToCharArray() });
-            cmd.Parameters.Add(new EDBParameter<byte[]>("p3", _EDBDbType) { Value = Encoding.ASCII.GetBytes(expected) });
+            cmd.Parameters.Add(new EDBParameter<string>("p1", _npgsqlDbType) { Value = expected });
+            cmd.Parameters.Add(new EDBParameter<char[]>("p2", _npgsqlDbType) { Value = expected.ToCharArray() });
+            cmd.Parameters.Add(new EDBParameter<byte[]>("p3", _npgsqlDbType) { Value = Encoding.ASCII.GetBytes(expected) });
 
             using var reader = cmd.ExecuteReader();
             reader.Read();
@@ -83,13 +83,13 @@ namespace EnterpriseDB.EDBClient.PluginTests
         {
             var expected = "{\"p\":1}";
             // If we serialize to JSONB, Postgres will not store the Json.NET formatting, and will add a space after ':'
-            var expectedString = _EDBDbType.Equals(EDBDbType.Jsonb) ? "{\"p\": 1}"
+            var expectedString = _npgsqlDbType.Equals(EDBDbType.Jsonb) ? "{\"p\": 1}"
                                     : "{\"p\":1}";
 
             using var conn = OpenConnection();
             using var cmd = new EDBCommand(@"SELECT @p1", conn);
 
-            cmd.Parameters.Add(new EDBParameter<ArraySegment<char>>("p1", _EDBDbType) { Value = new ArraySegment<char>(expected.ToCharArray()) });
+            cmd.Parameters.Add(new EDBParameter<ArraySegment<char>>("p1", _npgsqlDbType) { Value = new ArraySegment<char>(expected.ToCharArray()) });
 
             using var reader = cmd.ExecuteReader();
             reader.Read();
@@ -116,7 +116,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand(@"SELECT @p", conn))
             {
-                cmd.Parameters.Add(new EDBParameter("p", _EDBDbType) { Value = expected });
+                cmd.Parameters.Add(new EDBParameter("p", _npgsqlDbType) { Value = expected });
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
@@ -134,7 +134,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             using (var conn = OpenConnection())
             using (var cmd = new EDBCommand(@"SELECT @p", conn))
             {
-                cmd.Parameters.Add(new EDBParameter("p", _EDBDbType) { Value = expected });
+                cmd.Parameters.Add(new EDBParameter("p", _npgsqlDbType) { Value = expected });
                 using (var reader = cmd.ExecuteReader())
                 {
                     reader.Read();
@@ -163,7 +163,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, Ignore("https://github.com/EDB/EDB/issues/2568")]
+        [Test, Ignore("https://github.com/npgsql/npgsql/issues/2568")]
         public void ClrTypeMappingTwoTypes()
         {
             var value1 = new Foo { Bar = 8 };
@@ -260,6 +260,25 @@ namespace EnterpriseDB.EDBClient.PluginTests
         [Test]
         public void RoundtripJsonCustomSerializerSettings() => RoundtripCustomSerializerSettings(asJsonb : false);
 
+        [Test]
+        public void Bug3464()
+        {
+            var expected = new Bug3464Class { SomeString = new string('5', 8174) };
+            using var conn = base.OpenConnection();
+            using var cmd = new EDBCommand(@"SELECT @p1, @p2", conn);
+
+            conn.TypeMapper.UseJsonNet(new[] { typeof(Bug3464Class) });
+            cmd.Parameters.AddWithValue("p1", expected).EDBDbType = _npgsqlDbType;
+            cmd.Parameters.AddWithValue("p2", expected).EDBDbType = _npgsqlDbType;
+
+            using var reader = cmd.ExecuteReader();
+        }
+
+        public class Bug3464Class
+        {
+            public string? SomeString { get; set; }
+        }
+
         protected override EDBConnection OpenConnection(string? connectionString = null)
         {
             var conn = base.OpenConnection(connectionString);
@@ -267,13 +286,13 @@ namespace EnterpriseDB.EDBClient.PluginTests
             return conn;
         }
 
-        readonly EDBDbType _EDBDbType;
+        readonly EDBDbType _npgsqlDbType;
         readonly string _pgTypeName;
 
-        public JsonNetTests(EDBDbType EDBDbType)
+        public JsonNetTests(EDBDbType npgsqlDbType)
         {
-            _EDBDbType = EDBDbType;
-            _pgTypeName = EDBDbType.ToString().ToLower();
+            _npgsqlDbType = npgsqlDbType;
+            _pgTypeName = npgsqlDbType.ToString().ToLower();
         }
     }
 }

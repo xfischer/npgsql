@@ -381,7 +381,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.AreEqual(dateForTestMonths.AddMonths(-13), new EDBDate(2008, 2, 29));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3019")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3019")]
         public void EDBDateTimeMath()
         {
             // Note* EDBTimespan treats 1 month as 30 days
@@ -395,7 +395,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Is.EqualTo(new EDBDateTime(2020, 1, 1, 0, 0, 1)));
             Assert.That(new EDBDateTime(2020, 1, 1, 0, 0, 0).Subtract(new EDBTimeSpan(1, 1, 0)),
                 Is.EqualTo(new EDBDateTime(2019, 12, 1, 0, 0, 0)));
-            // Add 1 month = 2020-03-01 then add 30 days (1 month in EDBTimespan = 30 days) = 2020-03-31
+            // Add 1 month = 2020-03-01 then add 30 days (1 month in npgsqlTimespan = 30 days) = 2020-03-31
             Assert.That(new EDBDateTime(2020, 2, 1, 0, 0, 0).AddMonths(1).Add(new EDBTimeSpan(1, 0, 0)),
                 Is.EqualTo(new EDBDateTime(2020, 3, 31, 0, 0, 0)));
         }
@@ -493,7 +493,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 #pragma warning disable 618
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/750")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/750")]
         public void EDBInet()
         {
             var v = new EDBInet(IPAddress.Parse("2001:1db8:85a3:1142:1000:8a2e:1370:7334"), 32);

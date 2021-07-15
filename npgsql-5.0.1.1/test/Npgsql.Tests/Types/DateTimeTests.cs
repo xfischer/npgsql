@@ -23,12 +23,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             using (var conn = await OpenConnectionAsync())
             {
                 var dateTime = new DateTime(2002, 3, 4, 0, 0, 0, 0, DateTimeKind.Unspecified);
-                var EDBDate = new EDBDate(dateTime);
+                var npgsqlDate = new EDBDate(dateTime);
 
                 using (var cmd = new EDBCommand("SELECT @p1, @p2", conn))
                 {
-                    var p1 = new EDBParameter("p1", EDBDbType.Date) {Value = EDBDate};
-                    var p2 = new EDBParameter {ParameterName = "p2", Value = EDBDate};
+                    var p1 = new EDBParameter("p1", EDBDbType.Date) {Value = npgsqlDate};
+                    var p2 = new EDBParameter {ParameterName = "p2", Value = npgsqlDate};
                     Assert.That(p2.EDBDbType, Is.EqualTo(EDBDbType.Date));
                     Assert.That(p2.DbType, Is.EqualTo(DbType.Date));
                     cmd.Parameters.Add(p1);
@@ -47,10 +47,10 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                             Assert.That(reader.GetValue(i), Is.EqualTo(dateTime));
 
                             // Provider-specific type (EDBDate)
-                            Assert.That(reader.GetDate(i), Is.EqualTo(EDBDate));
+                            Assert.That(reader.GetDate(i), Is.EqualTo(npgsqlDate));
                             Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBDate)));
-                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(EDBDate));
-                            Assert.That(reader.GetFieldValue<EDBDate>(i), Is.EqualTo(EDBDate));
+                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(npgsqlDate));
+                            Assert.That(reader.GetFieldValue<EDBDate>(i), Is.EqualTo(npgsqlDate));
                         }
                     }
                 }
@@ -207,14 +207,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         {
             using (var conn = await OpenConnectionAsync())
             {
-                var EDBDateTime = new EDBDateTime(dateTime.Ticks);
+                var npgsqlDateTime = new EDBDateTime(dateTime.Ticks);
 
                 using (var cmd = new EDBCommand("SELECT @p1, @p2, @p3, @p4, @p5, @p6", conn))
                 {
                     var p1 = new EDBParameter("p1", EDBDbType.Timestamp);
                     var p2 = new EDBParameter("p2", DbType.DateTime);
                     var p3 = new EDBParameter("p3", DbType.DateTime2);
-                    var p4 = new EDBParameter { ParameterName = "p4", Value = EDBDateTime };
+                    var p4 = new EDBParameter { ParameterName = "p4", Value = npgsqlDateTime };
                     var p5 = new EDBParameter { ParameterName = "p5", Value = dateTime };
                     var p6 = new EDBParameter<DateTime> { ParameterName = "p6", TypedValue = dateTime };
                     Assert.That(p4.EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
@@ -227,7 +227,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     cmd.Parameters.Add(p4);
                     cmd.Parameters.Add(p5);
                     cmd.Parameters.Add(p6);
-                    p1.Value = p2.Value = p3.Value = EDBDateTime;
+                    p1.Value = p2.Value = p3.Value = npgsqlDateTime;
                     using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         reader.Read();
@@ -243,10 +243,10 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                             Assert.That(reader.GetValue(i), Is.EqualTo(dateTime));
 
                             // Provider-specific type (EDBTimeStamp)
-                            Assert.That(reader.GetTimeStamp(i), Is.EqualTo(EDBDateTime));
+                            Assert.That(reader.GetTimeStamp(i), Is.EqualTo(npgsqlDateTime));
                             Assert.That(reader.GetProviderSpecificFieldType(i), Is.EqualTo(typeof(EDBDateTime)));
-                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(EDBDateTime));
-                            Assert.That(reader.GetFieldValue<EDBDateTime>(i), Is.EqualTo(EDBDateTime));
+                            Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(npgsqlDateTime));
+                            Assert.That(reader.GetFieldValue<EDBDateTime>(i), Is.EqualTo(npgsqlDateTime));
 
                             // DateTimeOffset
                             Assert.That(() => reader.GetFieldValue<DateTimeOffset>(i), Throws.Exception.TypeOf<InvalidCastException>());
@@ -365,6 +365,44 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 Assert.AreEqual(nDateTimeUtc, new EDBDateTime(nDateTimeLocal.Ticks, DateTimeKind.Unspecified).ToUniversalTime());
                 Assert.AreEqual(nDateTimeLocal, nDateTimeUnspecified.ToLocalTime());
             }
+        }
+
+        static readonly TestCaseData[] TimeStampTzSpecialCases = {
+            new TestCaseData(EDBDateTime.Infinity).SetName(nameof(TimeStampTzSpecialCases) + "Infinity"),
+            new TestCaseData(EDBDateTime.NegativeInfinity).SetName(nameof(TimeStampTzSpecialCases) + "NegativeInfinity"),
+            new TestCaseData(new EDBDateTime(-5, 3, 3, 1, 0, 0, DateTimeKind.Local)).SetName(nameof(TimeStampTzSpecialCases) + "BC"),
+        };
+
+        [Test, TestCaseSource(nameof(TimeStampTzSpecialCases))]
+        public async Task TimeStampTzSpecial(EDBDateTime value)
+        {
+            using var conn = await OpenConnectionAsync();
+            using var cmd = new EDBCommand("SELECT @p", conn);
+            cmd.Parameters.Add(new EDBParameter { ParameterName = "p", Value = value, EDBDbType = EDBDbType.TimestampTz });
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                reader.Read();
+                Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(value));
+                Assert.That(() => reader.GetDateTime(0), Throws.Exception.TypeOf<InvalidCastException>());
+            }
+            Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
+        }
+
+        [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted")]
+        public async Task TimeStampTzConvertInfinity()
+        {
+            using var conn = new EDBConnection(ConnectionString + ";ConvertInfinityDateTime=true");
+            conn.Open();
+
+            using var cmd = new EDBCommand("SELECT @p1, @p2", conn);
+            cmd.Parameters.AddWithValue("p1", EDBDbType.TimestampTz, DateTime.MaxValue);
+            cmd.Parameters.AddWithValue("p2", EDBDbType.TimestampTz, DateTime.MinValue);
+            using var reader = await cmd.ExecuteReaderAsync();
+            reader.Read();
+            Assert.That(reader.GetFieldValue<EDBDateTime>(0), Is.EqualTo(EDBDateTime.Infinity));
+            Assert.That(reader.GetFieldValue<EDBDateTime>(1), Is.EqualTo(EDBDateTime.NegativeInfinity));
+            Assert.That(reader.GetDateTime(0), Is.EqualTo(DateTime.MaxValue));
+            Assert.That(reader.GetDateTime(1), Is.EqualTo(DateTime.MinValue));
         }
 
         #endregion

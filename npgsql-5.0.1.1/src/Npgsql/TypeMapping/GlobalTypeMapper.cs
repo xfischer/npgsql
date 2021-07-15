@@ -51,7 +51,7 @@ namespace EnterpriseDB.EDBClient.TypeMapping
                         _dbTypeToEDBDbType[dbType] = mapping.EDBDbType.Value;
 
                     if (mapping.InferredDbType.HasValue)
-                        _EDBDbTypeToDbType[mapping.EDBDbType.Value] = mapping.InferredDbType.Value;
+                        _npgsqlDbTypeToDbType[mapping.EDBDbType.Value] = mapping.InferredDbType.Value;
 
                     foreach (var clrType in mapping.ClrTypes)
                         _typeToEDBDbType[clrType] = mapping.EDBDbType.Value;
@@ -105,19 +105,19 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         #region EDBDbType/DbType inference for EDBParameter
 
-        readonly Dictionary<EDBDbType, DbType> _EDBDbTypeToDbType = new Dictionary<EDBDbType, DbType>();
+        readonly Dictionary<EDBDbType, DbType> _npgsqlDbTypeToDbType = new Dictionary<EDBDbType, DbType>();
         readonly Dictionary<DbType, EDBDbType> _dbTypeToEDBDbType = new Dictionary<DbType, EDBDbType>();
         readonly Dictionary<Type, EDBDbType> _typeToEDBDbType = new Dictionary<Type, EDBDbType>();
         readonly Dictionary<Type, DbType> _typeToDbType = new Dictionary<Type, DbType>();
 
-        internal DbType ToDbType(EDBDbType EDBDbType)
-            => _EDBDbTypeToDbType.TryGetValue(EDBDbType, out var dbType) ? dbType : DbType.Object;
+        internal DbType ToDbType(EDBDbType npgsqlDbType)
+            => _npgsqlDbTypeToDbType.TryGetValue(npgsqlDbType, out var dbType) ? dbType : DbType.Object;
 
         internal EDBDbType ToEDBDbType(DbType dbType)
         {
-            if (!_dbTypeToEDBDbType.TryGetValue(dbType, out var EDBDbType))
+            if (!_dbTypeToEDBDbType.TryGetValue(dbType, out var npgsqlDbType))
                 throw new NotSupportedException($"The parameter type DbType.{dbType} isn't supported by PostgreSQL or EnterpriseDB.EDBClient");
-            return EDBDbType;
+            return npgsqlDbType;
         }
 
         internal DbType ToDbType(Type type)
@@ -125,8 +125,8 @@ namespace EnterpriseDB.EDBClient.TypeMapping
 
         internal EDBDbType ToEDBDbType(Type type)
         {
-            if (_typeToEDBDbType.TryGetValue(type, out var EDBDbType))
-                return EDBDbType;
+            if (_typeToEDBDbType.TryGetValue(type, out var npgsqlDbType))
+                return npgsqlDbType;
 
             if (type.IsArray)
             {

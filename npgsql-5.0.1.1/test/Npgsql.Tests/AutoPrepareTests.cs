@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EDBTypes;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests
@@ -311,7 +312,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
                 // SQL overloading is a pretty rare/exotic scenario. Handling it properly would involve keying
                 // prepared statements not just by SQL but also by the parameter types, which would pointlessly
-                // increase allocations. Instead, the second execution simply reuns unprepared
+                // increase allocations. Instead, the second execution simply runs unprepared.
                 Assert.That(conn.ExecuteScalar("SELECT COUNT(*) FROM pg_prepared_statements"), Is.EqualTo(1));
                 conn.UnprepareAll();
             }
@@ -353,7 +354,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2644")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2644")]
         public void RowDescriptionProperlyCloned()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -374,7 +375,7 @@ namespace EnterpriseDB.EDBClient.Tests
             conn.UnprepareAll();
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3106")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
         public async Task DontAutoPrepareMoreThanMaxStatementsInBatch()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString)
@@ -393,7 +394,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3106")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
         public async Task DontAutoPrepareMoreThanMaxStatementsInBatchRandom()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString)
@@ -438,7 +439,7 @@ SELECT COUNT(*) FROM pg_prepared_statements
     WHERE statement NOT LIKE '%pg_prepared_statements%'
     AND statement NOT LIKE '%pg_type%'";
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2665")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2665")]
         public void AutoPreparedCommandFailure()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -466,6 +467,39 @@ SELECT COUNT(*) FROM pg_prepared_statements
             }
 
             conn.UnprepareAll();
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3002")]
+        public void ReplaceWithBadSql()
+        {
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                MaxAutoPrepare = 2,
+                AutoPrepareMinUsages = 1
+            };
+
+            using var conn = OpenConnection(csb);
+            conn.UnprepareAll();
+
+            conn.ExecuteNonQuery("SELECT 1");
+            conn.ExecuteNonQuery("SELECT 2");
+
+            // Attempt to replace SELECT 1, but fail because of bad SQL.
+            // Because of the issue, PreparedStatementManager.NumPrepared is reduced from 2 to 1
+            Assert.That(() => conn.ExecuteNonQuery("SELECTBAD"), Throws.Exception.TypeOf<PostgresException>()
+                .With.Property(nameof(PostgresException.SqlState)).EqualTo("42601"));
+            // Prevent SELECT 2 from being the LRU
+            conn.ExecuteNonQuery("SELECT 2");
+            // And attempt to replace again, reducing PreparedStatementManager.NumPrepared to 0
+            Assert.That(() => conn.ExecuteNonQuery("SELECTBAD"), Throws.Exception.TypeOf<PostgresException>()
+                .With.Property(nameof(PostgresException.SqlState)).EqualTo("42601"));
+
+            // Since PreparedStatementManager.NumPrepared is 0, EnterpriseDB.EDBClient will now send DISCARD ALL, but our internal state thinks
+            // SELECT 2 is still prepared.
+            conn.Close();
+            conn.Open();
+
+            Assert.That(conn.ExecuteScalar("SELECT 2"), Is.EqualTo(2));
         }
 
         void DumpPreparedStatements(EDBConnection conn)

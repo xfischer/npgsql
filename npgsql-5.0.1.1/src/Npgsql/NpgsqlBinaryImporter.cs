@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -132,20 +133,11 @@ namespace EnterpriseDB.EDBClient
             if (_column != -1 && _column != NumColumns)
                 ThrowHelper.ThrowInvalidOperationException_BinaryImportParametersMismatch(NumColumns, _column);
 
-            try
-            {
-                if (_buf.WriteSpaceLeft < 2)
-                    await _buf.Flush(async, cancellationToken);
-                _buf.WriteInt16(NumColumns);
+            if (_buf.WriteSpaceLeft < 2)
+                await _buf.Flush(async, cancellationToken);
+            _buf.WriteInt16(NumColumns);
 
-                _column = 0;
-            }
-            catch
-            {
-                // An exception here will have already broken the connection etc.
-                Cleanup();
-                throw;
-            }
+            _column = 0;
         }
 
         /// <summary>
@@ -194,40 +186,40 @@ namespace EnterpriseDB.EDBClient
         }
 
         /// <summary>
-        /// Writes a single column in the current row as type <paramref name="EDBDbType"/>.
+        /// Writes a single column in the current row as type <paramref name="npgsqlDbType"/>.
         /// </summary>
         /// <param name="value">The value to be written</param>
-        /// <param name="EDBDbType">
+        /// <param name="npgsqlDbType">
         /// In some cases <typeparamref name="T"/> isn't enough to infer the data type to be written to
         /// the database. This parameter and be used to unambiguously specify the type. An example is
         /// the JSONB type, for which <typeparamref name="T"/> will be a simple string but for which
-        /// <paramref name="EDBDbType"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
+        /// <paramref name="npgsqlDbType"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
         /// </param>
         /// <typeparam name="T">The .NET type of the column to be written.</typeparam>
-        public void Write<T>([AllowNull] T value, EDBDbType EDBDbType) =>
-            Write(value, EDBDbType, false).GetAwaiter().GetResult();
+        public void Write<T>([AllowNull] T value, EDBDbType npgsqlDbType) =>
+            Write(value, npgsqlDbType, false).GetAwaiter().GetResult();
 
         /// <summary>
-        /// Writes a single column in the current row as type <paramref name="EDBDbType"/>.
+        /// Writes a single column in the current row as type <paramref name="npgsqlDbType"/>.
         /// </summary>
         /// <param name="value">The value to be written</param>
-        /// <param name="EDBDbType">
+        /// <param name="npgsqlDbType">
         /// In some cases <typeparamref name="T"/> isn't enough to infer the data type to be written to
         /// the database. This parameter and be used to unambiguously specify the type. An example is
         /// the JSONB type, for which <typeparamref name="T"/> will be a simple string but for which
-        /// <paramref name="EDBDbType"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
+        /// <paramref name="npgsqlDbType"/> must be specified as <see cref="EDBDbType.Jsonb"/>.
         /// </param>
         /// <param name="cancellationToken"></param>
         /// <typeparam name="T">The .NET type of the column to be written.</typeparam>
-        public Task WriteAsync<T>([AllowNull] T value, EDBDbType EDBDbType, CancellationToken cancellationToken = default)
+        public Task WriteAsync<T>([AllowNull] T value, EDBDbType npgsqlDbType, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled(cancellationToken);
             using (NoSynchronizationContextScope.Enter())
-                return Write(value, EDBDbType, true, cancellationToken);
+                return Write(value, npgsqlDbType, true, cancellationToken);
         }
 
-        Task Write<T>([AllowNull] T value, EDBDbType EDBDbType, bool async, CancellationToken cancellationToken = default)
+        Task Write<T>([AllowNull] T value, EDBDbType npgsqlDbType, bool async, CancellationToken cancellationToken = default)
         {
             CheckColumnIndex();
 
@@ -238,11 +230,11 @@ namespace EnterpriseDB.EDBClient
                 _params[_column] = p = typeof(T) == typeof(object)
                     ? new EDBParameter()
                     : new EDBParameter<T>();
-                p.EDBDbType = EDBDbType;
+                p.EDBDbType = npgsqlDbType;
             }
 
-            if (EDBDbType != p.EDBDbType)
-                throw new InvalidOperationException($"Can't change {nameof(p.EDBDbType)} from {p.EDBDbType} to {EDBDbType}");
+            if (npgsqlDbType != p.EDBDbType)
+                throw new InvalidOperationException($"Can't change {nameof(p.EDBDbType)} from {p.EDBDbType} to {npgsqlDbType}");
 
             return Write(value, p, async, cancellationToken);
         }
@@ -309,34 +301,26 @@ namespace EnterpriseDB.EDBClient
                 return;
             }
 
-            try
+            if (typeof(T) == typeof(object))
             {
-                if (typeof(T) == typeof(object))
-                {
-                    param.Value = value;
-                }
-                else
-                {
-                    if (!(param is EDBParameter<T> typedParam))
-                    {
-                        _params[_column] = typedParam = new EDBParameter<T>();
-                        typedParam.EDBDbType = param.EDBDbType;
-                    }
-                    typedParam.TypedValue = value;
-                }
-                param.ResolveHandler(_connector.TypeMapper);
-                param.ValidateAndGetLength();
-                param.LengthCache?.Rewind();
-                await param.WriteWithLength(_buf, async, cancellationToken);
-                param.LengthCache?.Clear();
-                _column++;
+                param.Value = value;
             }
-            catch
+            else
             {
-                // An exception here will have already broken the connection etc.
-                Cleanup();
-                throw;
+                if (param is not EDBParameter<T> typedParam)
+                {
+                    _params[_column] = typedParam = new EDBParameter<T>();
+                    typedParam.EDBDbType = param.EDBDbType;
+                    param = typedParam;
+                }
+                typedParam.TypedValue = value;
             }
+            param.ResolveHandler(_connector.TypeMapper);
+            param.ValidateAndGetLength();
+            param.LengthCache?.Rewind();
+            await param.WriteWithLength(_buf, async, cancellationToken);
+            param.LengthCache?.Clear();
+            _column++;
         }
 
         /// <summary>
@@ -361,20 +345,11 @@ namespace EnterpriseDB.EDBClient
             if (_column == -1)
                 throw new InvalidOperationException("A row hasn't been started");
 
-            try
-            {
-                if (_buf.WriteSpaceLeft < 4)
-                    await _buf.Flush(async, cancellationToken);
+            if (_buf.WriteSpaceLeft < 4)
+                await _buf.Flush(async, cancellationToken);
 
-                _buf.WriteInt32(-1);
-                _column++;
-            }
-            catch
-            {
-                // An exception here will have already broken the connection etc.
-                Cleanup();
-                throw;
-            }
+            _buf.WriteInt32(-1);
+            _column++;
         }
 
         /// <summary>
@@ -459,7 +434,6 @@ namespace EnterpriseDB.EDBClient
             }
             catch
             {
-                // An exception here will have already broken the connection etc.
                 Cleanup();
                 throw;
             }
@@ -545,6 +519,8 @@ namespace EnterpriseDB.EDBClient
 #pragma warning disable CS8625
         void Cleanup()
         {
+            if (_state == ImporterState.Disposed)
+                return;
             var connector = _connector;
             Log.Debug("COPY operation ended", connector?.Id ?? -1);
 

@@ -49,6 +49,8 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         CommandBehavior _behavior;
 
+        internal EDBReadBuffer? RetRowBuffer;//Enterprisedb Team
+
         /// <summary>
         /// In multiplexing, this is <see langword="null" /> as the sending is managed in the write multiplexing loop,
         /// and does not need to be awaited by the reader.
@@ -58,8 +60,6 @@ namespace EnterpriseDB.EDBClient
         internal ReaderState State = ReaderState.Disposed;
 
         internal EDBReadBuffer Buffer = default!;
-
-        internal EDBReadBuffer? RetRowBuffer;//Enterprisedb Team
 
         /// <summary>
         /// Holds the list of statements being executed by this reader.
@@ -1121,6 +1121,7 @@ namespace EnterpriseDB.EDBClient
                 throw Connector.UnexpectedMessageReceived(BackendMessageCode.DataRow);
             }
         }
+
         internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow)
         {
             if (Command.CommandType == CommandType.StoredProcedure)
@@ -1170,7 +1171,6 @@ namespace EnterpriseDB.EDBClient
             }
 
         }
-
         #endregion
 
         void Cancel() => Connector.PerformPostgresCancellation();
@@ -1318,10 +1318,8 @@ namespace EnterpriseDB.EDBClient
             catch (Exception e)
             {
                 Log.Error("Exception caught while disposing a reader", e, Connector.Id);
-            }
-            finally
-            {
-                State = ReaderState.Disposed;
+                if (e is not PostgresException)
+                    State = ReaderState.Disposed;
             }
         }
 
@@ -1347,10 +1345,8 @@ namespace EnterpriseDB.EDBClient
                 catch (Exception e)
                 {
                     Log.Error("Exception caught while disposing a reader", e, Connector.Id);
-                }
-                finally
-                {
-                    State = ReaderState.Disposed;
+                    if (e is not PostgresException)
+                        State = ReaderState.Disposed;
                 }
             }
         }
@@ -1373,7 +1369,14 @@ namespace EnterpriseDB.EDBClient
         internal async Task Close(bool connectionClosing, bool async, bool isDisposing)
         {
             if (State == ReaderState.Closed || State == ReaderState.Disposed)
+            {
+                if (isDisposing)
+                    State = ReaderState.Disposed;
                 return;
+            }
+
+            // Whenever a connector is broken, it also closes the current reader.
+            Connector.CurrentReader = null;
 
             switch (Connector.State)
             {
@@ -1382,7 +1385,30 @@ namespace EnterpriseDB.EDBClient
             case ConnectorState.Executing:
             case ConnectorState.Connecting:
                 if (State != ReaderState.Consumed)
-                    await Consume(async);
+                {
+                    try
+                    {
+                        await Consume(async);
+                    }
+                    catch (Exception ex) when (
+                        ex is OperationCanceledException ||
+                        ex is EDBException && ex.InnerException is TimeoutException)
+                    {
+                        // Timeout/cancellation - completely normal, consume has basically completed.
+                    }
+                    catch (PostgresException)
+                    {
+                        // In the case of a PostgresException, the connection is fine and consume has basically completed.
+                        // Defer throwing the exception until Cleanup is complete.
+                        await Cleanup(async, connectionClosing, isDisposing);
+                        throw;
+                    }
+                    catch
+                    {
+                        Debug.Assert(Connector.IsBroken);
+                        throw;
+                    }
+                }
                 break;
             case ConnectorState.Closed:
             case ConnectorState.Broken:
@@ -1444,6 +1470,8 @@ namespace EnterpriseDB.EDBClient
                 // We may unbind the current reader, which also sets the connector to null
                 var connector = Connector;
                 UnbindIfNecessary();
+
+                connector.ResetReadBuffer();
 
                 // TODO: Refactor... Use proper scope
                 _connection.Connector = null;
@@ -2076,7 +2104,8 @@ namespace EnterpriseDB.EDBClient
 
                     var _textHandler = new TextHandler(fieldDescription.PostgresType, Connector.Connection);
                     result = _textHandler.Read(Buffer, ColumnLen, false, fieldDescription);
-                } else
+                }
+                else
                 {
                     result = _isSequential
                     ? fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, false, fieldDescription).GetAwaiter().GetResult()
@@ -2119,6 +2148,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="ordinal">The zero-based column ordinal.</param>
         /// <returns>The value of the specified column.</returns>
+        /// 
         public object GetEDBValue(int ordinal)
         {
             var fieldDescription = CheckRowAndGetField(ordinal);

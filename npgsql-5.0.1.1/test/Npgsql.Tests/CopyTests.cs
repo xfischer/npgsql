@@ -45,7 +45,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 }
 
                 writer.Complete();
-            });
+            })!;
             Assert.That(e.InnerException, Is.TypeOf<TimeoutException>());
         }
 
@@ -212,7 +212,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongTableDefinitionRawBinaryCopy()
         {
             using (var conn = await OpenConnectionAsync())
@@ -227,7 +227,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongFormatRawBinaryCopy()
         {
             if (IsMultiplexing)
@@ -323,7 +323,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/657")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/657")]
         public async Task ImportBytea()
         {
             using (var conn = await OpenConnectionAsync())
@@ -364,7 +364,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/816")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/816")]
         public async Task ImportStringWithBufferLength()
         {
             using (var conn = await OpenConnectionAsync())
@@ -383,7 +383,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/662")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/662")]
         public async Task ImportDirectBuffer()
         {
             using (var conn = await OpenConnectionAsync())
@@ -403,7 +403,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongTableDefinitionBinaryImport()
         {
             using (var conn = await OpenConnectionAsync())
@@ -415,7 +415,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongFormatBinaryImport()
         {
             if (IsMultiplexing)
@@ -428,7 +428,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongTableDefinitionBinaryExport()
         {
             using (var conn = await OpenConnectionAsync())
@@ -440,7 +440,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongFormatBinaryExport()
         {
             if (IsMultiplexing)
@@ -453,7 +453,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/661")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/661")]
         [Ignore("Unreliable")]
         public async Task UnexpectedExceptionBinaryImport()
         {
@@ -482,7 +482,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/657")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/657")]
         [Explicit]
         public async Task ImportByteaMassive()
         {
@@ -535,7 +535,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1134")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1134")]
         public async Task ReadBitString()
         {
             using (var conn = await OpenConnectionAsync())
@@ -638,7 +638,7 @@ INSERT INTO {table} (bits, bitarray) VALUES (B'101', ARRAY[B'101', B'111'])");
             Assert.Throws<InvalidCastException>(() => exporter.Read<int>());
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1440")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1440")]
         public async Task ErrorDuringImport()
         {
             using (var conn = await OpenConnectionAsync())
@@ -732,7 +732,7 @@ INSERT INTO {table} (bits, bitarray) VALUES (B'101', ARRAY[B'101', B'111'])");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2347")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2347")]
         public async Task Write_ColumnOutOfBounds_ThrowsInvalidOperationException()
         {
             using var conn = await OpenConnectionAsync();
@@ -889,7 +889,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongTableDefinitionTextImport()
         {
             if (IsMultiplexing)
@@ -902,7 +902,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongFormatTextImport()
         {
             if (IsMultiplexing)
@@ -915,7 +915,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongTableDefinitionTextExport()
         {
             if (IsMultiplexing)
@@ -928,7 +928,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2330")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
         public async Task WrongFormatTextExport()
         {
             if (IsMultiplexing)
@@ -978,7 +978,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
                 );
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/621")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/621")]
         public async Task CloseDuringCopy()
         {
             // TODO: Check no broken connections were returned to the pool
@@ -1013,7 +1013,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/994")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/994")]
         public async Task NonAsciiColumnName()
         {
             using (var conn = await OpenConnectionAsync())

@@ -196,7 +196,7 @@ namespace EnterpriseDB.EDBClient
             {
                 // If the pool we created was the one that ended up being stored we need to increment the appropriate counter.
                 // Avoids a race condition where multiple threads will create a pool but only one will be stored.
-                EDBEventSource.Log.PoolCreated();
+                EDBEventSource.Log.PoolCreated(newPool);
             }
 
             _pool = PoolManager.GetOrAdd(_connectionString, _pool);
@@ -207,8 +207,8 @@ namespace EnterpriseDB.EDBClient
             CheckClosed();
             Debug.Assert(Connector == null);
 
-            Log.Trace("Opening connection...");
             FullState = ConnectionState.Connecting;
+            Log.Trace("Opening connection...");
 
             if (Settings.Multiplexing)
             {
@@ -228,7 +228,9 @@ namespace EnterpriseDB.EDBClient
                 if (!_pool.IsBootstrapped)
                     return BootstrapMultiplexing(cancellationToken);
 
-                CompleteOpen();
+                Log.Debug("Connection opened (multipelxing)");
+                FullState = ConnectionState.Open;
+
                 return Task.CompletedTask;
             }
 
@@ -242,6 +244,8 @@ namespace EnterpriseDB.EDBClient
                 try
                 {
                     var timeout = new EDBTimeout(TimeSpan.FromSeconds(ConnectionTimeout));
+
+                    var enlistToTransaction = Settings.Enlist ? Transaction.Current : null;
 
                     if (_pool == null) // Un-pooled connection (or user forgot to set connection string)
                     {
@@ -258,24 +262,15 @@ namespace EnterpriseDB.EDBClient
                     {
                         _userFacingConnectionString = _pool.UserFacingConnectionString;
 
-                        if (Settings.Enlist && Transaction.Current is Transaction transaction)
+                        // First, check to see if we there's an ambient transaction, and we have a connection enlisted
+                        // to this transaction which has been closed. If so, return that as an optimization rather than
+                        // opening a new one and triggering escalation to a distributed transaction.
+                        // Otherwise just get a new connector and enlist below.
+                        if (enlistToTransaction is not null && _pool.TryRentEnlistedPending(enlistToTransaction, out connector))
                         {
-                            // First, check to see if we there's an ambient transaction, and we have a connection enlisted
-                            // to this transaction which has been closed. If so, return that as an optimization rather than
-                            // opening a new one and triggering escalation to a distributed transaction.
-                            // Otherwise just get a new connector and enlist.
-                            if (_pool.TryRentEnlistedPending(transaction, out connector))
-                            {
-                                connector.Connection = this;
-                                EnlistedTransaction = transaction;
-                            }
-                            else
-                            {
-                                connector = await _pool.Rent(this, timeout, async, cancellationToken2);
-                                ConnectorBindingScope = ConnectorBindingScope.Connection;
-                                Connector = connector;
-                                EnlistTransaction(Transaction.Current);
-                            }
+                            connector.Connection = this;
+                            EnlistedTransaction = enlistToTransaction;
+                            enlistToTransaction = null;
                         }
                         else
                             connector = await _pool.Rent(this, timeout, async, cancellationToken2);
@@ -287,6 +282,9 @@ namespace EnterpriseDB.EDBClient
                     ConnectorBindingScope = ConnectorBindingScope.Connection;
                     Connector = connector;
 
+                    if (enlistToTransaction is not null)
+                        EnlistTransaction(enlistToTransaction);
+
                     // Since this connector was last used, PostgreSQL types (e.g. enums) may have been added
                     // (and ReloadTypes() called), or global mappings may have changed by the user.
                     // Bring this up to date if needed.
@@ -295,7 +293,8 @@ namespace EnterpriseDB.EDBClient
                     if (connector.TypeMapper.ChangeCounter != TypeMapping.GlobalTypeMapper.Instance.ChangeCounter)
                         await connector.LoadDatabaseInfo(false, timeout, async, cancellationToken);
 
-                    CompleteOpen();
+                    Log.Debug("Connection opened");
+                    FullState = ConnectionState.Open;
                 }
                 catch
                 {
@@ -321,20 +320,14 @@ namespace EnterpriseDB.EDBClient
                 {
                     var timeout = new EDBTimeout(TimeSpan.FromSeconds(ConnectionTimeout));
                     await _pool!.BootstrapMultiplexing(this, timeout, async, cancellationToken2);
-                    CompleteOpen();
+                    Log.Debug("Connection opened (multipelxing)");
+                    FullState = ConnectionState.Open;
                 }
                 catch
                 {
                     FullState = ConnectionState.Closed;
                     throw;
                 }
-            }
-
-            void CompleteOpen()
-            {
-                Log.Debug("Connection opened (multiplexing)");
-                FullState = ConnectionState.Open;
-                OnStateChange(ClosedToOpenEventArgs);
             }
         }
 
@@ -471,7 +464,20 @@ namespace EnterpriseDB.EDBClient
                         },
                     _ => _fullState
                 };
-            internal set => _fullState = value;
+            internal set
+            {
+                var originalOpen = _fullState.HasFlag(ConnectionState.Open);
+
+                _fullState = value;
+
+                var currentOpen = _fullState.HasFlag(ConnectionState.Open);
+                if (currentOpen != originalOpen)
+                {
+                    OnStateChange(currentOpen
+                        ? ClosedToOpenEventArgs
+                        : OpenToClosedEventArgs);
+                }
+            }
         }
 
         /// <summary>
@@ -483,11 +489,13 @@ namespace EnterpriseDB.EDBClient
         {
             get
             {
-                var s = FullState;
-                if ((s & ConnectionState.Open) != 0)
-                    return ConnectionState.Open;
-                if ((s & ConnectionState.Connecting) != 0)
+                var fullState = FullState;
+                if (fullState.HasFlag(ConnectionState.Connecting))
                     return ConnectionState.Connecting;
+
+                if (fullState.HasFlag(ConnectionState.Open))
+                    return ConnectionState.Open;
+
                 return ConnectionState.Closed;
             }
         }
@@ -670,7 +678,7 @@ namespace EnterpriseDB.EDBClient
         /// Releases the connection. If the connection is pooled, it will be returned to the pool and made available for re-use.
         /// If it is non-pooled, the physical connection will be closed.
         /// </summary>
-        public override void Close() => Close(async: false);
+        public override void Close() => Close(async: false).GetAwaiter().GetResult();
 
         /// <summary>
         /// Releases the connection. If the connection is pooled, it will be returned to the pool and made available for re-use.
@@ -686,11 +694,15 @@ namespace EnterpriseDB.EDBClient
                 return Close(async: true);
         }
 
-        internal Task Close(bool async, CancellationToken cancellationToken = default)
+        internal bool TakeCloseLock() => Interlocked.Exchange(ref _closing, 1) == 0;
+
+        internal void ReleaseCloseLock() => Volatile.Write(ref _closing, 0);
+
+        internal Task Close(bool async)
         {
             // Even though EDBConnection isn't thread safe we'll make sure this part is.
             // Because we really don't want double returns to the pool.
-            if (Interlocked.Exchange(ref _closing, 1) == 1)
+            if (!TakeCloseLock())
                 return Task.CompletedTask;
 
             switch (FullState)
@@ -698,16 +710,18 @@ namespace EnterpriseDB.EDBClient
             case ConnectionState.Open:
             case ConnectionState.Open | ConnectionState.Executing:
             case ConnectionState.Open | ConnectionState.Fetching:
-            case ConnectionState.Broken:
                 break;
+            case ConnectionState.Broken:
+                FullState = ConnectionState.Closed;
+                goto case ConnectionState.Closed;
             case ConnectionState.Closed:
-                Volatile.Write(ref _closing, 0);
+                ReleaseCloseLock();
                 return Task.CompletedTask;
             case ConnectionState.Connecting:
-                Volatile.Write(ref _closing, 0);
+                ReleaseCloseLock();
                 throw new InvalidOperationException("Can't close, connection is in state " + FullState);
             default:
-                Volatile.Write(ref _closing, 0);
+                ReleaseCloseLock();
                 throw new ArgumentOutOfRangeException("Unknown connection state: " + FullState);
             }
 
@@ -718,18 +732,20 @@ namespace EnterpriseDB.EDBClient
                 // TODO: Consider falling through to the regular reset logic. This adds some unneeded conditions
                 // and assignment but actual perf impact should be negligible (measure).
                 Debug.Assert(Connector == null);
+                ReleaseCloseLock();
+
                 FullState = ConnectionState.Closed;
                 Log.Debug("Connection closed (multiplexing)");
-                OnStateChange(OpenToClosedEventArgs);
-                Volatile.Write(ref _closing, 0);
+
                 return Task.CompletedTask;
             }
 
-            return CloseAsync(cancellationToken);
+            return CloseAsync();
 
-            async Task CloseAsync(CancellationToken cancellationToken)
+            async Task CloseAsync()
             {
                 Debug.Assert(Connector != null);
+                Debug.Assert(ConnectorBindingScope != ConnectorBindingScope.None);
                 var connector = Connector;
                 Log.Trace("Closing connection...", connector.Id);
 
@@ -738,25 +754,24 @@ namespace EnterpriseDB.EDBClient
                 if (connector.CurrentReader != null || connector.CurrentCopyOperation != null)
                 {
                     // This method could re-enter connection.Close() due to an underlying connection failure.
-                    await connector.CloseOngoingOperations(async, cancellationToken);
+                    await connector.CloseOngoingOperations(async);
+
+                    if (ConnectorBindingScope == ConnectorBindingScope.None)
+                    {
+                        Debug.Assert(Settings.Multiplexing);
+                        Debug.Assert(Connector is null);
+
+                        FullState = ConnectionState.Closed;
+                        Log.Debug("Connection closed (multiplexing, after closing reader)", connector.Id);
+                        return;
+                    }
                 }
 
                 Debug.Assert(connector.IsReady || connector.IsBroken);
                 Debug.Assert(connector.CurrentReader == null);
                 Debug.Assert(connector.CurrentCopyOperation == null);
 
-                if (connector.IsBroken)
-                {
-                    connector.Connection = null;
-
-                    if (_pool == null)
-                        connector.Close();
-                    else
-                        _pool.Return(connector);
-
-                    EnlistedTransaction = null;
-                }
-                else if (EnlistedTransaction != null)
+                if (EnlistedTransaction != null)
                 {
                     // A System.Transactions transaction is still in progress
 
@@ -776,12 +791,16 @@ namespace EnterpriseDB.EDBClient
                 else
                 {
                     if (_pool == null)
+                    {
+                        // We're already doing the same in the EDBConnector.Reset for pooled connections
+                        connector.Transaction?.UnbindIfNecessary();
                         connector.Close();
+                    }
                     else
                     {
                         // Clear the buffer, roll back any pending transaction and prepend a reset message if needed
                         // Also returns the connector to the pool, if there is an open transaction and multiplexing is on
-                        await connector.Reset(async, cancellationToken);
+                        await connector.Reset(async);
 
                         if (Settings.Multiplexing)
                         {
@@ -802,7 +821,6 @@ namespace EnterpriseDB.EDBClient
                 ConnectorBindingScope = ConnectorBindingScope.None;
                 FullState = ConnectionState.Closed;
                 Log.Debug("Connection closed", connector.Id);
-                OnStateChange(OpenToClosedEventArgs);
             }
         }
 
@@ -1487,11 +1505,6 @@ namespace EnterpriseDB.EDBClient
         #region Connector binding
 
         /// <summary>
-        /// Returns whether the connection is currently bound to a connector.
-        /// </summary>
-        internal bool IsBound => ConnectorBindingScope != ConnectorBindingScope.None;
-
-        /// <summary>
         /// Checks whether the connection is currently bound to a connector, and if so, returns it via
         /// <paramref name="connector"/>.
         /// </summary>
@@ -1567,7 +1580,8 @@ namespace EnterpriseDB.EDBClient
         /// </remarks>
         internal void EndBindingScope(ConnectorBindingScope scope)
         {
-            Debug.Assert(ConnectorBindingScope != ConnectorBindingScope.None, $"Ending binding scope {scope} but connection's scope is null");
+            Debug.Assert(ConnectorBindingScope != ConnectorBindingScope.None || FullState == ConnectionState.Broken,
+                $"Ending binding scope {scope} but connection's scope is null");
 
             if (scope != ConnectorBindingScope)
                 return;

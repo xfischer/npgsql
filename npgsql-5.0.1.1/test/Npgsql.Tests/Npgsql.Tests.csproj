@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <AssemblyName>EnterpriseDB.EDBClient.Tests</AssemblyName>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NUnit" />
     <PackageReference Include="NLog" />

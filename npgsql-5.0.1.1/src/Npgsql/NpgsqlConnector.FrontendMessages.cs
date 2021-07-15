@@ -300,7 +300,6 @@ namespace EnterpriseDB.EDBClient
                 WriteBuffer.WriteInt16(allResultTypesAreUnknown ? 0 : 1);
             }
         }
-
         internal Task WriteSync(bool async, CancellationToken cancellationToken = default)
         {
             const int len = sizeof(byte) +  // Message code

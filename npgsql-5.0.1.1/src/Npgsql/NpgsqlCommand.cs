@@ -297,20 +297,20 @@ namespace EnterpriseDB.EDBClient
 
         #region State management
 
-        int _state;
+        volatile int _state;
 
         /// <summary>
         /// The current state of the command
         /// </summary>
         internal CommandState State
         {
-            private get { return (CommandState)_state; }
+            get => (CommandState)_state;
             set
             {
                 var newState = (int)value;
                 if (newState == _state)
                     return;
-                Interlocked.Exchange(ref _state, newState);
+                _state = newState;
             }
         }
 
@@ -411,6 +411,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             string[]? names = null;
             uint[]? types = null;
             char[]? modes = null;
+            bool hasParams = false;//EnterpriseDB Team
+            string? paramNames = null;//EnterpriseDB Team
 
             using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
             {
@@ -438,13 +440,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             for (var i = 0; i < types.Length; i++)
             {
                 var param = new EDBParameter();
+                hasParams = true;//EnterpriseDB Team
 
-                var (EDBDbType, postgresType) = typeMapper.GetTypeInfoByOid(types[i]);
+                var (npgsqlDbType, postgresType) = typeMapper.GetTypeInfoByOid(types[i]);
 
                 param.DataTypeName = postgresType.DisplayName;
                 param.PostgresType = postgresType;
-                if (EDBDbType.HasValue)
-                    param.EDBDbType = EDBDbType.Value;
+                if (npgsqlDbType.HasValue)
+                    param.EDBDbType = npgsqlDbType.Value;
 
                 if (names != null && i < names.Length)
                     param.ParameterName = names[i];
@@ -466,8 +469,19 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     };
                 }
 
+                paramNames = paramNames + ":" + param.ParameterName + ", ";//EnterpriseDB Team
                 Parameters.Add(param);
             }
+#nullable disable
+            if (hasParams && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+            {
+                if (paramNames.Trim().EndsWith(","))
+                {
+                    paramNames = paramNames.Substring(0, paramNames.LastIndexOf(","));
+                }
+                CommandText = CommandText + "(" + paramNames + ")";
+            }
+#nullable restore
         }
 
         void DeriveParametersForQuery(EDBConnector connector)
@@ -492,7 +506,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     {
                         connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                         Parameters.Clear();
-                        throw new EDBException("There was a mismatch in the number of derived parameters between the EnterpriseDB.EDBClient SQL parser and the PostgreSQL parser. Please report this as bug to the EnterpriseDB.EDBClient developers (https://github.com/EDB/EDB/issues).");
+                        throw new EDBException("There was a mismatch in the number of derived parameters between the EnterpriseDB.EDBClient SQL parser and the PostgreSQL parser. Please report this as bug to the EnterpriseDB.EDBClient developers (https://github.com/npgsql/npgsql/issues).");
                     }
 
                     for (var i = 0; i < paramTypeOIDs.Count; i++)
@@ -502,15 +516,15 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             var param = statement.InputParameters[i];
                             var paramOid = paramTypeOIDs[i];
 
-                            var (eDBDbType, postgresType) = connector.TypeMapper.GetTypeInfoByOid(paramOid);
+                            var (npgsqlDbType, postgresType) = connector.TypeMapper.GetTypeInfoByOid(paramOid);
 
-                            if (param.EDBDbType != EDBDbType.Unknown && param.EDBDbType != eDBDbType)
+                            if (param.EDBDbType != EDBDbType.Unknown && param.EDBDbType != npgsqlDbType)
                                 throw new EDBException("The backend parser inferred different types for parameters with the same name. Please try explicit casting within your SQL statement or batch or use different placeholder names.");
 
                             param.DataTypeName = postgresType.DisplayName;
                             param.PostgresType = postgresType;
-                            if (eDBDbType.HasValue)
-                                param.EDBDbType = eDBDbType.Value;
+                            if (npgsqlDbType.HasValue)
+                                param.EDBDbType = npgsqlDbType.Value;
                         }
                         catch
                         {
@@ -579,6 +593,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 connector._hasParams = true;
             if (Parameters.Count == 0 && Parameters._hasReturnParam)
                 connector._hasReturnParams = true;
+
             ProcessRawQuery(connector.UseConformingStrings, deriveParameters: false);
             Log.Debug($"Preparing: {CommandText}", connector.Id);
 
@@ -606,24 +621,24 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
             static async Task PrepareLong(EDBCommand command, bool async, EDBConnector connector, CancellationToken cancellationToken)
             {
-                using (connector.StartUserAction(cancellationToken))
+                try
                 {
-                    var sendTask = command.SendPrepare(connector, async, cancellationToken);
-                    if (sendTask.IsFaulted)
-                        sendTask.GetAwaiter().GetResult();
-
-                    // Loop over statements, skipping those that are already prepared (because they were persisted)
-                    var isFirst = true;
-                    for (var i = 0; i < command._statements.Count; i++)
+                    using (connector.StartUserAction(cancellationToken))
                     {
-                        var statement = command._statements[i];
-                        if (!statement.IsPreparing)
-                            continue;
+                        var sendTask = command.SendPrepare(connector, async, cancellationToken);
+                        if (sendTask.IsFaulted)
+                            sendTask.GetAwaiter().GetResult();
 
-                        var pStatement = statement.PreparedStatement!;
-
-                        try
+                        // Loop over statements, skipping those that are already prepared (because they were persisted)
+                        var isFirst = true;
+                        for (var i = 0; i < command._statements.Count; i++)
                         {
+                            var statement = command._statements[i];
+                            if (!statement.IsPreparing)
+                                continue;
+
+                            var pStatement = statement.PreparedStatement!;
+
                             if (pStatement.StatementBeingReplaced != null)
                             {
                                 Expect<CloseCompletedMessage>(await connector.ReadMessage(async), connector);
@@ -654,30 +669,28 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             pStatement.CompletePrepare();
                             isFirst = false;
                         }
-                        catch
-                        {
-                            // The statement wasn't prepared successfully, update the bookkeeping for it and
-                            // all following statements
-                            for (; i < command._statements.Count; i++)
-                            {
-                                statement = command._statements[i];
-                                if (statement.IsPreparing)
-                                {
-                                    statement.IsPreparing = false;
-                                    statement.PreparedStatement!.CompleteUnprepare();
-                                }
-                            }
 
-                            throw;
+                        Expect<ReadyForQueryMessage>(await connector.ReadMessage(async), connector);
+
+                        if (async)
+                            await sendTask;
+                        else
+                            sendTask.GetAwaiter().GetResult();
+                    }
+                }
+                catch
+                {
+                    // The statements weren't prepared successfully, update the bookkeeping for them
+                    foreach (var statement in command._statements)
+                    {
+                        if (statement.IsPreparing)
+                        {
+                            statement.IsPreparing = false;
+                            statement.PreparedStatement!.CompleteUnprepare();
                         }
                     }
 
-                    Expect<ReadyForQueryMessage>(await connector.ReadMessage(async), connector);
-
-                    if (async)
-                        await sendTask;
-                    else
-                        sendTask.GetAwaiter().GetResult();
+                    throw;
                 }
             }
         }
@@ -798,6 +811,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
             return result;
         }
+
         internal void ProcessRawQuery(bool standardConformingStrings, bool deriveParameters)
         {
             if (string.IsNullOrEmpty(CommandText))
@@ -995,14 +1009,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                i == 0 ? UnknownResultTypeList : null,
                                async);
 
-                        } else
+                        }
+                        else
                         {
                             await connector.WriteBind(
                             statement.InputParameters, string.Empty, statement.StatementName, AllResultTypesAreUnknown,
                             i == 0 ? UnknownResultTypeList : null,
                             async, cancellationToken);
                         }
-                        
 
                         await connector.WriteDescribe(StatementOrPortal.Portal, string.Empty, async, cancellationToken);
                     }
@@ -1197,17 +1211,32 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 Connection.Connector._isScaler = true; //ZKK
                 Connection.Connector._is_Scaler_fallthrough = true;
             }
-            using var reader = await ExecuteReader(CommandBehavior.Default, async, cancellationToken);
-            if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
-                while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) ;
+            var reader = await ExecuteReader(CommandBehavior.Default, async, cancellationToken);
+            try
+            {
+                if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
+                    while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) ;
 
-            reader.Close();
-            Connection.Connector._isScaler = false; //ZKK
-            Connection.Connector._is_Scaler_fallthrough = false;
-            Connection.Connector._hasRefCursor = false;
-            //    Connection.Connector._isCallableStmt = false;
+                reader.Close();
+                if (Connection.Connector != null)
+                {
+                    Connection.Connector._isScaler = false; //ZKK
+                    Connection.Connector._is_Scaler_fallthrough = false;
+                    Connection.Connector._hasRefCursor = false;
+                    //    Connection.Connector._isCallableStmt = false;
+                }
+
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-            return reader.RecordsAffected;
+
+                return reader.RecordsAffected;
+            }
+            finally
+            {
+                if (async)
+                    await reader.DisposeAsync();
+                else
+                    reader.Dispose();
+            }
         }
 
         #endregion Execute Non Query
@@ -1241,8 +1270,19 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (!Parameters.HasOutputParameters)
                 behavior |= CommandBehavior.SequentialAccess;
 
-            using var reader = await ExecuteReader(behavior, async, cancellationToken);
-            return reader.Read() && reader.FieldCount != 0 ? reader.GetValue(0) : null;
+            var reader = await ExecuteReader(behavior, async, cancellationToken);
+            try
+            {
+                var read = async ? await reader.ReadAsync(cancellationToken) : reader.Read();
+                return read && reader.FieldCount != 0 ? reader.GetValue(0) : null;
+            }
+            finally
+            {
+                if (async)
+                    await reader.DisposeAsync();
+                else
+                    reader.Dispose();
+            }
         }
 
         #endregion Execute Scalar
@@ -1512,13 +1552,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (State != CommandState.InProgress)
                 return;
 
-            var connection = Connection;
-            if (connection is null)
+            var connector = Connection?.Connector;
+            if (connector is null)
                 return;
-            if (!connection.IsBound)
-                throw new NotSupportedException("Cancellation not supported with multiplexing");
 
-            connection.Connector?.PerformUserCancellation();
+            connector.PerformUserCancellation();
         }
 
         #endregion Cancel

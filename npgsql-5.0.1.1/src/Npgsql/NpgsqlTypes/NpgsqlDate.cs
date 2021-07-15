@@ -383,8 +383,8 @@ namespace EDBTypes
         public int CompareTo(object? o)
             => o == null
                 ? 1
-                : o is EDBDate EDBDate
-                    ? CompareTo(EDBDate)
+                : o is EDBDate npgsqlDate
+                    ? CompareTo(npgsqlDate)
                     : throw new ArgumentException();
 
         public override int GetHashCode() => _daysSinceEra;

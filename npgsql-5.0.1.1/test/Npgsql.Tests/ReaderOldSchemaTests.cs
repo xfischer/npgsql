@@ -137,7 +137,7 @@ CREATE OR REPLACE VIEW {view} (id, int2) AS SELECT id, int2 + int2 AS int2 FROM 
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1027")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1027")]
         public async Task WithoutResult()
         {
             using var conn = await OpenConnectionAsync();

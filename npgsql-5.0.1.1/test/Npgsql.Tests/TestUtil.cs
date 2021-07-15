@@ -14,17 +14,17 @@ namespace EnterpriseDB.EDBClient.Tests
     public static class TestUtil
     {
         /// <summary>
-        /// Unless the EDB_TEST_DB environment variable is defined, this is used as the connection string for the
+        /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        public const string DefaultConnectionString = "Server=192.168.145.145;Port=5444;Username=enterprisedb;Password=adminedb;Database=edb;Timeout=0;Command Timeout=0";
+        public const string DefaultConnectionString = "Server=192.168.145.3;port=5444;Username=enterprisedb;Password=adminedb;Database=edb;Timeout=0;Command Timeout=0";
 
         /// <summary>
         /// The connection string that will be used when opening the connection to the tests database.
         /// May be overridden in fixtures, e.g. to set special connection parameters
         /// </summary>
         public static string ConnectionString { get; }
-            = Environment.GetEnvironmentVariable("EDB_TEST_DB") ?? DefaultConnectionString;
+            = Environment.GetEnvironmentVariable("NPGSQL_TEST_DB") ?? DefaultConnectionString;
 
         public static bool IsOnBuildServer =>
             Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != null ||
@@ -43,6 +43,57 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.Ignore(message);
         }
 
+        public static void createTempTable(EDBConnection con, string table, string columns)
+        {
+            string strCommandSql = "create temp table " + table + " (" + columns + ")";
+            EDBCommand com = new EDBCommand(strCommandSql, con);
+            com.CommandType = CommandType.Text;
+            try
+            {
+                // Drop the table
+                dropTable(con, table);
+
+                // Now create the table
+                com.ExecuteNonQuery();
+            }
+            catch (EDBException e)
+            {
+                throw new Exception(e.ToString());
+            }
+        }
+
+        public static void closeDB(EDBConnection? con)
+        {
+            if (con != null)
+                con.Close();
+        }
+
+        public static void dropTable(EDBConnection? con, string table)
+        {
+
+            try
+            {
+                string strCommandSql = "DROP TABLE " + table;
+                /*              if (haveMinimumServerVersion(con, "7.3"))
+                                {
+                                    sql += " CASCADE ";
+                                }*/
+                EDBCommand com = new EDBCommand(strCommandSql, con);
+                com.CommandType = CommandType.Text;
+                com.ExecuteNonQuery();
+            }
+            catch (EDBException)
+            {
+                // Since every create table issues a drop table
+                // it's easy to get a table doesn't exist error.
+                // we want to ignore these, but if we're in a
+                // transaction then we've got trouble
+                /*				if (!con.getAutoCommit())
+                                throw ex;
+
+                */
+            }
+        }
         public static void IgnoreExceptOnBuildServer(string message, params object[] args)
             => IgnoreExceptOnBuildServer(string.Format(message, args));
 
@@ -98,51 +149,6 @@ namespace EnterpriseDB.EDBClient.Tests
             conn.ReloadTypes();
         }
 
-        public static void createTempTable(EDBConnection con, string table, string columns)
-        {
-            string strCommandSql = "create temp table " + table + " (" + columns + ")";
-            EDBCommand com = new EDBCommand(strCommandSql, con);
-            com.CommandType = CommandType.Text;
-            try
-            {
-                // Drop the table
-                dropTable(con, table);
-
-                // Now create the table
-                com.ExecuteNonQuery();
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
-        }
-
-        public static void dropTable(EDBConnection? con, string table)
-        {
-
-            try
-            {
-                string strCommandSql = "DROP TABLE " + table;
-                /*              if (haveMinimumServerVersion(con, "7.3"))
-                                {
-                                    sql += " CASCADE ";
-                                }*/
-                EDBCommand com = new EDBCommand(strCommandSql, con);
-                com.CommandType = CommandType.Text;
-                com.ExecuteNonQuery();
-            }
-            catch (EDBException)
-            {
-                // Since every create table issues a drop table
-                // it's easy to get a table doesn't exist error.
-                // we want to ignore these, but if we're in a
-                // transaction then we've got trouble
-                /*				if (!con.getAutoCommit())
-                                throw ex;
-
-                */
-            }
-        }
         public static async Task EnsurePostgis(EDBConnection conn)
         {
             try
@@ -190,12 +196,6 @@ namespace EnterpriseDB.EDBClient.Tests
                     (t, name) => (IAsyncDisposable)new DatabaseObjectDropper(conn, (string)name!, "SCHEMA"),
                     schemaName,
                     TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-
-        public static void closeDB(EDBConnection? con)
-        {
-            if (con != null)
-                con.Close();
         }
 
         /// <summary>
@@ -411,6 +411,15 @@ namespace EnterpriseDB.EDBClient.Tests
     {
         public static bool IsSequential(this CommandBehavior behavior)
             => (behavior & CommandBehavior.SequentialAccess) != 0;
+    }
+
+    public static class EDBCommandExtensions
+    {
+        public static void WaitUntilCommandIsInProgress(this EDBCommand command)
+        {
+            while (command.State != CommandState.InProgress)
+                Thread.Sleep(50);
+        }
     }
 
     /// <summary>

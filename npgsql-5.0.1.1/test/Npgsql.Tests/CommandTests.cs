@@ -1,11 +1,11 @@
 using System;
+using System.Buffers.Binary;
 using System.Data;
-using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Tests.Support;
 using EDBTypes;
 using NUnit.Framework;
@@ -112,7 +112,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure a later command can depend on an earlier one")]
-        [IssueLink("https://github.com/EDB/EDB/issues/641")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/641")]
         public async Task MultipleStatementsWithDependencies()
         {
             using (var conn = await OpenConnectionAsync())
@@ -125,7 +125,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Forces async write mode when the first statement in a multi-statement command is big")]
-        [IssueLink("https://github.com/EDB/EDB/issues/641")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/641")]
         public async Task MultipleStatementsLargeFirstCommand()
         {
             using (var conn = await OpenConnectionAsync())
@@ -150,7 +150,7 @@ namespace EnterpriseDB.EDBClient.Tests
         #region Timeout
 
         [Test, Description("Checks that CommandTimeout gets enforced as a socket timeout")]
-        [IssueLink("https://github.com/EDB/EDB/issues/327")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/327")]
         [Timeout(10000)]
         public async Task Timeout()
         {
@@ -169,7 +169,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Times out an async operation, testing that cancellation occurs successfully")]
-        [IssueLink("https://github.com/EDB/EDB/issues/607")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/607")]
         [Timeout(10000)]
         public async Task TimeoutAsyncSoft()
         {
@@ -186,7 +186,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Times out an async operation, with unsuccessful cancellation (socket break)")]
-        [IssueLink("https://github.com/EDB/EDB/issues/607")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/607")]
         [Timeout(10000)]
         public async Task TimeoutAsyncHard()
         {
@@ -231,7 +231,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
         public async Task TimeoutSwitchConnection()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -274,18 +274,15 @@ namespace EnterpriseDB.EDBClient.Tests
             using var conn = await OpenConnectionAsync();
             using var cmd = CreateSleepCommand(conn, 5);
 
-            var cancelTask = Task.Run(() =>
-            {
-                Thread.Sleep(300);
-                cmd.Cancel();
-            });
-            Assert.That(() => cmd.ExecuteNonQuery(), Throws
+            var queryTask = Task.Run(() => cmd.ExecuteNonQuery());
+            // We have to be sure the command's state is InProgress, otherwise the cancellation request will never be sent
+            cmd.WaitUntilCommandIsInProgress();
+            cmd.Cancel();
+            Assert.That(async () => await queryTask, Throws
                 .TypeOf<OperationCanceledException>()
                 .With.InnerException.TypeOf<PostgresException>()
                 .With.InnerException.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled)
             );
-
-            await cancelTask;
         }
 
         [Test]
@@ -322,7 +319,7 @@ namespace EnterpriseDB.EDBClient.Tests
             var t = cmd.ExecuteNonQueryAsync(cancellationSource.Token);
             cancellationSource.Cancel();
 
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t)!;
             Assert.That(exception.InnerException,
                 Is.TypeOf<PostgresException>().With.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled));
             Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
@@ -349,13 +346,70 @@ namespace EnterpriseDB.EDBClient.Tests
             var t = cmd.ExecuteScalarAsync(cancellationSource.Token);
             cancellationSource.Cancel();
 
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t)!;
             Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
             Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
 
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
             Assert.That((await postmasterMock.WaitForCancellationRequest()).ProcessId,
                 Is.EqualTo(processId));
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3466")]
+        [Timeout(6000)]
+        public async Task Bug3466([Values(false, true)] bool isBroken)
+        {
+            if (IsMultiplexing)
+                return; // Multiplexing, cancellation
+
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                Pooling = false,
+            };
+            await using var postmasterMock = PgPostmasterMock.Start(csb.ToString(), completeCancellationImmediately: false);
+            using var _ = CreateTempPool(postmasterMock.ConnectionString, out var connectionString);
+            await using var conn = await OpenConnectionAsync(connectionString);
+            var serverMock = await postmasterMock.WaitForServerConnection();
+
+            var processId = conn.ProcessID;
+
+            using var cancellationSource = new CancellationTokenSource();
+            using var cmd = new EDBCommand("SELECT 1", conn)
+            {
+                CommandTimeout = 3
+            };
+            var t = Task.Run(() => cmd.ExecuteScalar());
+            // We have to be sure the command's state is InProgress, otherwise the cancellation request will never be sent
+            cmd.WaitUntilCommandIsInProgress();
+            // Perform cancellation, which will block on the server side
+            var cancelTask = Task.Run(() => cmd.Cancel());
+            // Note what we have to wait for the cancellation request, otherwise the connection might be closed concurrently
+            // and the cancellation request is never send
+            var cancellationRequest = await postmasterMock.WaitForCancellationRequest();
+
+            if (isBroken)
+            {
+                Assert.ThrowsAsync<OperationCanceledException>(async () => await t);
+                Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
+            }
+            else
+            {
+                await serverMock
+                    .WriteParseComplete()
+                    .WriteBindComplete()
+                    .WriteRowDescription(new FieldDescription(PostgresTypeOIDs.Int4))
+                    .WriteDataRow(BitConverter.GetBytes(BinaryPrimitives.ReverseEndianness(1)))
+                    .WriteCommandComplete()
+                    .WriteReadyForQuery()
+                    .FlushAsync();
+                Assert.DoesNotThrowAsync(async () => await t);
+                Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
+                await conn.CloseAsync();
+            }
+
+            // Release the cancellation at the server side, and make sure it completes without an exception
+            cancellationRequest.Complete();
+            Assert.DoesNotThrowAsync(async () => await cancelTask);
         }
 
         [Test, Description("Check that cancel only affects the command on which its was invoked")]
@@ -438,7 +492,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region CommandBehavior.CloseConnection
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/693")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/693")]
         public async Task CloseConnection()
         {
             using (var conn = await OpenConnectionAsync())
@@ -450,7 +504,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1194")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1194")]
         public async Task CloseConnectionWithOpenReaderWithCloseConnection()
         {
             using (var conn = await OpenConnectionAsync())
@@ -871,7 +925,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/503")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/503")]
         public async Task InvalidUTF8()
         {
             const string badString = "SELECT 'abc\uD801\uD802d'";
@@ -881,7 +935,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
         public async Task UseAcrossConnectionChange([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -902,7 +956,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
         }
 
         [Test, Description("CreateCommand before connection open")]
-        [IssueLink("https://github.com/EDB/EDB/issues/565")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/565")]
         public async Task CreateCommandBeforeConnectionOpen()
         {
             using (var conn = new EDBConnection(ConnectionString)) {
@@ -928,8 +982,8 @@ LANGUAGE 'plpgsql' VOLATILE;";
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/831")]
-        [IssueLink("https://github.com/EDB/EDB/issues/2795")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/831")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2795")]
         [Timeout(10000)]
         public async Task ManyParameters([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
@@ -958,9 +1012,9 @@ LANGUAGE 'plpgsql' VOLATILE;";
         }
 
         [Test, Description("Bypasses PostgreSQL's uint16 limitation on the number of parameters")]
-        [IssueLink("https://github.com/EDB/EDB/issues/831")]
-        [IssueLink("https://github.com/EDB/EDB/issues/858")]
-        [IssueLink("https://github.com/EDB/EDB/issues/2703")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/831")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/858")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2703")]
         public async Task TooManyParameters([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
             if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -995,7 +1049,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
         }
 
         [Test, Description("An individual statement cannot have more than 65535 parameters, but a command can (across multiple statements).")]
-        [IssueLink("https://github.com/EDB/EDB/issues/1199")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/1199")]
         public async Task ManyParametersAcrossStatements()
         {
             // Create a command with 1000 statements which have 70 params each
@@ -1079,7 +1133,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
             Assert.That(cmd.Statements[1].OID, Is.EqualTo(0));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1429")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1429")]
         public async Task SameCommandDifferentParamValues()
         {
             using (var conn = await OpenConnectionAsync())
@@ -1093,7 +1147,7 @@ LANGUAGE 'plpgsql' VOLATILE;";
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1429")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1429")]
         public async Task SameCommandDifferentParamInstances()
         {
             using (var conn = await OpenConnectionAsync())
@@ -1106,6 +1160,39 @@ LANGUAGE 'plpgsql' VOLATILE;";
                 cmd.Parameters.AddWithValue("p", 9);
                 Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(9));
             }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3509"), Timeout(5000)]
+        public async Task Bug3509()
+        {
+            if (IsMultiplexing)
+                return;
+
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                KeepAlive = 1,
+            };
+            await using var postmasterMock = PgPostmasterMock.Start(csb.ToString());
+            using var _ = CreateTempPool(postmasterMock.ConnectionString, out var connectionString);
+            await using var conn = await OpenConnectionAsync(connectionString);
+            var serverMock = await postmasterMock.WaitForServerConnection();
+            // Wait for a keepalive to arrive at the server, reply with an error
+            await serverMock.WaitForData();
+            var queryTask = Task.Run(async () => await conn.ExecuteNonQueryAsync("SELECT 1"));
+            // TODO: kind of flaky - think of the way to rewrite
+            // giving a queryTask some time to get stuck on a lock
+            await Task.Delay(100);
+            await serverMock
+                .WriteErrorResponse("42")
+                .WriteReadyForQuery()
+                .FlushAsync();
+
+            await serverMock
+                .WriteScalarResponseAndFlush(1);
+
+            var ex = Assert.ThrowsAsync<EDBException>(async () => await queryTask)!;
+            Assert.That(ex.InnerException, Is.TypeOf<EDBException>()
+                .With.InnerException.TypeOf<PostgresException>());
         }
 
         public CommandTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}

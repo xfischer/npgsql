@@ -225,7 +225,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Makes sure the creating a transaction via DbConnection sets the proper isolation level")]
-        [IssueLink("https://github.com/EDB/EDB/issues/559")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/559")]
         public async Task DbConnectionDefaultIsolation()
         {
             await using var conn = await OpenConnectionAsync();
@@ -297,8 +297,8 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("If a custom command timeout is set, a failed transaction could not be rollbacked to a previous savepoint")]
-        [IssueLink("https://github.com/EDB/EDB/issues/363")]
-        [IssueLink("https://github.com/EDB/EDB/issues/184")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/363")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/184")]
         public async Task FailedTransactionCantRollbackToSavepointWithCustomTimeout()
         {
             await using var conn = await OpenConnectionAsync();
@@ -320,7 +320,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Closes a (pooled) connection with a failed transaction and a custom timeout")]
-        [IssueLink("https://github.com/EDB/EDB/issues/719")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/719")]
         public async Task FailedTransactionOnCloseWithCustomTimeout()
         {
             var connString = new EDBConnectionStringBuilder(ConnectionString)
@@ -345,7 +345,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/555")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/555")]
         public async Task TransactionOnRecycledConnection()
         {
             if (IsMultiplexing)
@@ -450,7 +450,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public async Task IsCompletedCommit()
         {
             await using var conn = await OpenConnectionAsync();
@@ -464,7 +464,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public async Task IsCompletedRollback()
         {
             await using var conn = await OpenConnectionAsync();
@@ -478,7 +478,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test, Description("Check IsCompleted before, during, and after a failed then rolled back transaction")]
-        [IssueLink("https://github.com/EDB/EDB/issues/985")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
         public async Task IsCompletedRollbackFailed()
         {
             await using var conn = await OpenConnectionAsync();
@@ -542,7 +542,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/3248")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3248")]
         // More at #3254
         public async Task Bug3248DisposeTransactionRollback()
         {
@@ -562,7 +562,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/3248")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3248")]
         // More at #3254
         public async Task Bug3248DisposeConnectionRollback()
         {
@@ -581,7 +581,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/3306")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3306")]
         [TestCase(true)]
         [TestCase(false)]
         public async Task Bug3306(bool inTransactionBlock)
@@ -604,13 +604,36 @@ namespace EnterpriseDB.EDBClient.Tests
             await conn.DisposeAsync();
         }
 
-        [Test, IssueLink("https://github.com/EDB/efcore.pg/issues/1593")]
+        [Test, IssueLink("https://github.com/npgsql/efcore.pg/issues/1593")]
         public async Task AccessConnectionOnCompletedTransaction()
         {
             using var conn = await OpenConnectionAsync();
             using var tx = await conn.BeginTransactionAsync();
             tx.Commit();
             Assert.That(tx.Connection, Is.SameAs(conn));
+        }
+
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3686")]
+        public async Task Bug3686()
+        {
+            if (IsMultiplexing)
+                return;
+
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                Pooling = false
+            };
+
+            await using var conn = await OpenConnectionAsync(csb);
+            await using var tx = await conn.BeginTransactionAsync();
+            await conn.ExecuteNonQueryAsync("SELECT 1", tx);
+            await tx.CommitAsync();
+            await conn.CloseAsync();
+            Assert.DoesNotThrow(() =>
+            {
+                _ = tx.Connection;
+            });
         }
 
         class NoTransactionDatabaseInfoFactory : IEDBDatabaseInfoFactory

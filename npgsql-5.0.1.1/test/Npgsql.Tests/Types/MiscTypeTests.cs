@@ -191,8 +191,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test, Description("PostgreSQL records should be returned as arrays of objects")]
-        [IssueLink("https://github.com/EDB/EDB/issues/724")]
-        [IssueLink("https://github.com/EDB/EDB/issues/1980")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/724")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/1980")]
         public async Task Record()
         {
             var recordLiteral = "(1,'foo'::text)::record";
@@ -222,7 +222,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test, Description("Makes sure that setting DbType.Object makes EnterpriseDB.EDBClient infer the type")]
-        [IssueLink("https://github.com/EDB/EDB/issues/694")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/694")]
         public async Task DbTypeCausesInference()
         {
             using (var conn = await OpenConnectionAsync())
@@ -301,7 +301,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/711")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/711")]
         public async Task KnownTypeAsUnknown()
         {
             using (var conn = await OpenConnectionAsync())
@@ -366,14 +366,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1138")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1138")]
         public async Task Void()
         {
             using (var conn = await OpenConnectionAsync())
                 Assert.That(await conn.ExecuteScalarAsync("SELECT pg_sleep(0)"), Is.SameAs(DBNull.Value));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1364")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1364")]
         public async Task UnsupportedDbType()
         {
             using (var conn = await OpenConnectionAsync())

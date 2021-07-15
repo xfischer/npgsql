@@ -24,27 +24,34 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             using var conn = new EDBConnection(ConnectionString);
 
-            bool eventOpen = false, eventClosed = false;
+            var eventOpen = false;
+            var eventClosed = false;
+
             conn.StateChange += (s, e) =>
             {
-                if (e.OriginalState == ConnectionState.Closed && e.CurrentState == ConnectionState.Open)
+                if (e.OriginalState == ConnectionState.Closed &&
+                    e.CurrentState == ConnectionState.Open)
                     eventOpen = true;
-                if (e.OriginalState == ConnectionState.Open && e.CurrentState == ConnectionState.Closed)
+
+                if (e.OriginalState == ConnectionState.Open &&
+                    e.CurrentState == ConnectionState.Closed)
                     eventClosed = true;
             };
 
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Closed));
 
-            conn.Open();
+            await conn.OpenAsync();
+
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Open));
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
             Assert.That(eventOpen, Is.True);
 
-            using (var cmd = new EDBCommand("SELECT 1", conn))
-            using (var reader = await cmd.ExecuteReaderAsync())
+            await using (var cmd = new EDBCommand("SELECT 1", conn))
+            await using (var reader = await cmd.ExecuteReaderAsync())
             {
-                reader.Read();
+                await reader.ReadAsync();
+
                 Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open | ConnectionState.Fetching));
                 Assert.That(conn.State, Is.EqualTo(ConnectionState.Open));
             }
@@ -52,10 +59,72 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Open));
 
-            conn.Close();
+            await conn.CloseAsync();
+
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Closed));
             Assert.That(eventClosed, Is.True);
+        }
+
+        [Test, Description("Makes sure the connection goes through the proper state lifecycle")]
+        public async Task BrokenLifecycle([Values] bool openFromClose)
+        {
+            if (IsMultiplexing)
+                return;
+
+            using var _ = CreateTempPool(ConnectionString, out var connString);
+            await using var conn = new EDBConnection(connString);
+
+            var eventOpen = false;
+            var eventClosed = false;
+
+            conn.StateChange += (s, e) =>
+            {
+                if (e.OriginalState == ConnectionState.Closed &&
+                    e.CurrentState == ConnectionState.Open)
+                    eventOpen = true;
+
+                if (e.OriginalState == ConnectionState.Open &&
+                    e.CurrentState == ConnectionState.Closed)
+                    eventClosed = true;
+            };
+
+            Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
+            Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Closed));
+
+            await conn.OpenAsync();
+            await using var transaction = await conn.BeginTransactionAsync();
+
+            Assert.That(conn.State, Is.EqualTo(ConnectionState.Open));
+            Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
+            Assert.That(eventOpen, Is.True);
+
+            var sleep = conn.ExecuteNonQueryAsync("SELECT pg_sleep(5)");
+
+            await using (var killingConn = await OpenConnectionAsync())
+                killingConn.ExecuteNonQuery($"SELECT pg_terminate_backend({conn.ProcessID})");
+
+            Assert.ThrowsAsync<PostgresException>(() => sleep);
+
+            Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
+            Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
+            Assert.That(eventClosed, Is.True);
+            Assert.That(conn.Connector is null);
+            Assert.AreEqual(0, conn.Pool!.Statistics.Total);
+
+            if (openFromClose)
+            {
+                await conn.CloseAsync();
+
+                Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
+                Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Closed));
+                Assert.That(eventClosed, Is.True);
+            }
+
+            Assert.DoesNotThrowAsync(conn.OpenAsync);
+            Assert.AreEqual(1, await conn.ExecuteScalarAsync("SELECT 1"));
+            Assert.AreEqual(1, conn.Pool.Statistics.Total);
+            Assert.DoesNotThrowAsync(conn.CloseAsync);
         }
 
         [Test]
@@ -288,7 +357,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, Description("Tests that mandatory connection string parameters are indeed mandatory")]
         public void MandatoryConnectionStringParams()
         {
-            Assert.That(() => new EDBConnection("User ID=EDB_tests;Password=EDB_tests;Database=EDB_tests").Open(), Throws.Exception.TypeOf<ArgumentException>());
+            Assert.That(() => new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests").Open(), Throws.Exception.TypeOf<ArgumentException>());
         }
 
         [Test, Description("Reuses the same connection instance for a failed connection, then a successful one")]
@@ -332,60 +401,52 @@ namespace EnterpriseDB.EDBClient.Tests
 
         [Test]
         [Timeout(10000)]
-        public void  ConnectTimeout()
+        public void OpenTimeoutUnknownIp([Values(true, false)] bool async)
         {
-            var unknownIp = Environment.GetEnvironmentVariable("EDB_UNKNOWN_IP");
-            if (unknownIp == null)
-                return; // https://github.com/nunit/nunit/issues/3282
-            //Assert.Ignore("EDB_UNKNOWN_IP isn't defined and is required for connection timeout tests");
+            var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
+            if (unknownIp is null)
+            {
+                Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection timeout tests");
+                return;
+            }
 
-            var csb = new EDBConnectionStringBuilder(ConnectionString) {
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
                 Host = unknownIp,
-                Pooling = false,
                 Timeout = 2
             };
-            using (var conn = new EDBConnection(csb.ToString()))
-            {
-                var sw = Stopwatch.StartNew();
-                Assert.That(() => conn.Open(), Throws.Exception.TypeOf<TimeoutException>());
-                Assert.That(sw.Elapsed.TotalMilliseconds, Is.GreaterThanOrEqualTo((csb.Timeout * 1000) - 100),
-                    $"Timeout was supposed to happen after {csb.Timeout} seconds, but fired after {sw.Elapsed.TotalSeconds}");
-                Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
-            }
-        }
+            using var _ = CreateTempPool(csb, out var connString);
+            using var conn = new EDBConnection(connString);
 
-        [Test]
-        [Timeout(10000)]
-        public void ConnectTimeoutAsync()
-        {
-            var unknownIp = Environment.GetEnvironmentVariable("EDB_UNKNOWN_IP");
-            if (unknownIp == null)
-                return; // https://github.com/nunit/nunit/issues/3282
-            // Assert.Ignore("EDB_UNKNOWN_IP isn't defined and is required for connection timeout tests");
-
-            var connString = new EDBConnectionStringBuilder(ConnectionString)
-            {
-                Host = unknownIp,
-                Pooling = false,
-                Timeout = 2
-            }.ToString();
-            using (var conn = new EDBConnection(connString))
+            var sw = Stopwatch.StartNew();
+            if (async)
             {
                 Assert.That(async () => await conn.OpenAsync(), Throws.Exception
                     .TypeOf<EDBException>()
                     .With.InnerException.TypeOf<TimeoutException>());
-                Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
             }
+            else
+            {
+                Assert.That(() => conn.Open(), Throws.Exception
+                    .TypeOf<EDBException>()
+                    .With.InnerException.TypeOf<TimeoutException>());
+            }
+
+            Assert.That(sw.Elapsed.TotalMilliseconds, Is.GreaterThanOrEqualTo((csb.Timeout * 1000) - 100),
+                $"Timeout was supposed to happen after {csb.Timeout} seconds, but fired after {sw.Elapsed.TotalSeconds}");
+            Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
         }
 
         [Test]
         [Timeout(10000)]
         public void ConnectTimeoutCancel()
         {
-            var unknownIp = Environment.GetEnvironmentVariable("EDB_UNKNOWN_IP");
-            if (unknownIp == null)
-                return; // https://github.com/nunit/nunit/issues/3282
-            //Assert.Ignore("EDB_UNKNOWN_IP isn't defined and is required for connection cancellation tests");
+            var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
+            if (unknownIp is null)
+            {
+                Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection cancellation tests");
+                return;
+            }
 
             var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
@@ -405,14 +466,14 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region Client Encoding
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1065")]
         public async Task ClientEncodingIsUTF8ByDefault()
         {
             using (var conn = await OpenConnectionAsync())
                 Assert.That(await conn.ExecuteScalarAsync("SHOW client_encoding"), Is.EqualTo("UTF8"));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1065")]
         [NonParallelizable]
         public async Task ClientEncodingEnvVar()
         {
@@ -429,7 +490,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(await conn.ExecuteScalarAsync("SHOW client_encoding"), Is.EqualTo("SQL_ASCII"));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1065")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1065")]
         public async Task ClientEncodingConnectionParam()
         {
             using (var conn = await OpenConnectionAsync())
@@ -443,7 +504,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #region Timezone
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1634")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1634")]
         [NonParallelizable]
         public async Task TimezoneEnvVar()
         {
@@ -463,7 +524,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(await conn2.ExecuteScalarAsync("SHOW TIMEZONE"), Is.EqualTo(newTimezone));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1634")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1634")]
         public async Task TimezoneConnectionParam()
         {
             string newTimezone;
@@ -527,7 +588,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/903")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/903")]
         public void DataSource()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -547,7 +608,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2763")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2763")]
         public void DataSourceDefault()
         {
             using (var conn = new EDBConnection())
@@ -579,7 +640,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(() => conn.Open(), Throws.Exception.TypeOf<InvalidOperationException>());
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/703")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/703")]
         public async Task NoDatabaseDefaultsToUsername()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
@@ -662,7 +723,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1331")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1331")]
         public void ChangeDatabaseConnectionNotOpen()
         {
             using (var conn = new EDBConnection(ConnectionString))
@@ -841,7 +902,7 @@ namespace EnterpriseDB.EDBClient.Tests
 #endif
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/pull/164")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/pull/164")]
         public void voidConnectionStateWhenDisposed()
         {
             var c = new EDBConnection();
@@ -920,7 +981,7 @@ LANGUAGE 'plpgsql'");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/783")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/783")]
         public void PersistSecurityInfoIsOn([Values(true, false)] bool pooling)
         {
             if (IsMultiplexing && !pooling)
@@ -941,7 +1002,7 @@ LANGUAGE 'plpgsql'");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/783")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/783")]
         public void NoPasswordWithoutPersistSecurityInfo([Values(true, false)] bool pooling)
         {
             if (IsMultiplexing && !pooling)
@@ -961,7 +1022,7 @@ LANGUAGE 'plpgsql'");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2725")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2725")]
         public void CloneWithAndPersistSecurityInfo()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString)
@@ -988,8 +1049,8 @@ LANGUAGE 'plpgsql'");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/743")]
-        [IssueLink("https://github.com/EDB/EDB/issues/783")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/743")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/783")]
         public void Clone()
         {
             using (CreateTempPool(ConnectionString, out var connectionString))
@@ -1014,7 +1075,7 @@ LANGUAGE 'plpgsql'");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/824")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/824")]
         public async Task ReloadTypes()
         {
             if (IsMultiplexing)
@@ -1051,7 +1112,7 @@ LANGUAGE 'plpgsql'");
                 Assert.That(conn1.Connector!.DatabaseInfo, Is.SameAs(conn2.Connector!.DatabaseInfo));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/736")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/736")]
         public async Task ManyOpenClose()
         {
             // The connector's _sentRfqPrependedMessages is a byte, too many open/closes made it overflow
@@ -1073,7 +1134,7 @@ LANGUAGE 'plpgsql'");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/736")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/736")]
         public async Task ManyOpenCloseWithTransaction()
         {
             // The connector's _sentRfqPrependedMessages is a byte, too many open/closes made it overflow
@@ -1087,8 +1148,8 @@ LANGUAGE 'plpgsql'");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/927")]
-        [IssueLink("https://github.com/EDB/EDB/issues/736")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/927")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/736")]
         [Ignore("Fails when running the entire test suite but not on its own...")]
         public async Task RollbackOnClose()
         {
@@ -1115,7 +1176,7 @@ LANGUAGE 'plpgsql'");
         }
 
         [Test, Description("Tests an exception happening when sending the Terminate message while closing a ready connector")]
-        [IssueLink("https://github.com/EDB/EDB/issues/777")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/777")]
         [Ignore("Flaky")]
         public async Task ExceptionDuringClose()
         {
@@ -1131,7 +1192,7 @@ LANGUAGE 'plpgsql'");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1180")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1180")]
         public void PoolByPassword()
         {
             using var _ = CreateTempPool(ConnectionString, out var connectionString);
@@ -1166,7 +1227,7 @@ LANGUAGE 'plpgsql'");
             Assert.That(await conn.ExecuteScalarAsync("SELECT INET '192.168.1.1'"), Is.EqualTo(IPAddress.Parse("192.168.1.1")));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1158")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1158")]
         public async Task TableNamedRecord()
         {
             if (IsMultiplexing)
@@ -1192,7 +1253,7 @@ CREATE TABLE record ()");
 
 // TODO: Port this test to .NET Core somehow
 #if NET461
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/392")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
         public async Task NonUTF8Encoding()
         {
             using (var adminConn = await OpenConnectionAsync())
@@ -1306,6 +1367,29 @@ CREATE TABLE record ()");
                 Thread.Sleep(Timeout.Infinite);
         }
 
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3511")]
+        public async Task Keepalive_with_failed_transaction()
+        {
+            if (IsMultiplexing)
+                return;
+
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                KeepAlive = 1
+            };
+            using var conn = await OpenConnectionAsync(csb);
+            using var tx = await conn.BeginTransactionAsync();
+
+            Assert.Throws<PostgresException>(() => conn.ExecuteScalar("SELECT non_existent_table"));
+            // Connection is now in a failed transaction state. Wait a bit to allow for the keepalive to execute.
+            Thread.Sleep(3000);
+
+            await tx.RollbackAsync();
+
+            // Confirm that the connection is still open and usable
+            Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
+        }
+
         [Test]
         public async Task ChangeParameter()
         {
@@ -1314,10 +1398,13 @@ CREATE TABLE record ()");
 
             using (var conn = await OpenConnectionAsync())
             {
+            	var defaultApplicationName = conn.PostgresParameters["application_name"];
                 await conn.ExecuteNonQueryAsync("SET application_name = 'some_test_value'");
                 Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo("some_test_value"));
                 await conn.ExecuteNonQueryAsync("SET application_name = 'some_test_value2'");
                 Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo("some_test_value2"));
+                await conn.ExecuteNonQueryAsync($"SET application_name = '{defaultApplicationName}'");
+            	Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo(defaultApplicationName));
             }
         }
 
@@ -1357,7 +1444,7 @@ CREATE TABLE record ()");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3030")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3030")]
         [TestCase(true, TestName = "NoResetOnClose")]
         [TestCase(false, TestName = "NoNoResetOnClose")]
         public async Task NoResetOnClose(bool noResetOnClose)
@@ -1381,30 +1468,99 @@ CREATE TABLE record ()");
         }
 
         [Test]
-        [NonParallelizable]
-        public async Task UsePgPassFile()
+        public async Task Use_pgpass_from_connection_string()
         {
             using var resetPassword = SetEnvironmentVariable("PGPASSWORD", null);
             var builder = new EDBConnectionStringBuilder(ConnectionString);
 
             var password = builder.Password;
-            var passFile = Path.GetTempFileName();
+            builder.Password = null;
 
-            builder.Password = password;
+            var passFile = Path.GetTempFileName();
+            File.WriteAllText(passFile, $"*:*:*:{builder.Username}:{password}");
             builder.Passfile = passFile;
 
-            using var deletePassFile = Defer(() => File.Delete(passFile));
-
-            File.WriteAllText(passFile, $"*:*:*:{builder.Username}:{password}");
-
-            using var passFileVariable = SetEnvironmentVariable("PGPASSFILE", passFile);
-            using var pool = CreateTempPool(builder.ConnectionString, out var connectionString);
-            using var conn = await OpenConnectionAsync(connectionString);
+            try
+            {
+                using var pool = CreateTempPool(builder.ConnectionString, out var connectionString);
+                using var conn = await OpenConnectionAsync(connectionString);
+            }
+            finally
+            {
+                File.Delete(passFile);
+            }
         }
 
         [Test]
         [NonParallelizable]
-        public void PasswordSourcePrecendence()
+        public async Task Use_pgpass_from_environment_variable()
+        {
+            using var resetPassword = SetEnvironmentVariable("PGPASSWORD", null);
+            var builder = new EDBConnectionStringBuilder(ConnectionString);
+
+            var password = builder.Password;
+            builder.Password = null;
+
+            var passFile = Path.GetTempFileName();
+            File.WriteAllText(passFile, $"*:*:*:{builder.Username}:{password}");
+            using var passFileVariable = SetEnvironmentVariable("PGPASSFILE", passFile);
+
+            try
+            {
+                using var pool = CreateTempPool(builder.ConnectionString, out var connectionString);
+                using var conn = await OpenConnectionAsync(connectionString);
+            }
+            finally
+            {
+                File.Delete(passFile);
+            }
+        }
+
+        [Test]
+        [NonParallelizable]
+        public async Task Use_pgpass_from_homedir()
+        {
+            using var resetPassword = SetEnvironmentVariable("PGPASSWORD", null);
+            var builder = new EDBConnectionStringBuilder(ConnectionString);
+
+            var password = builder.Password;
+            builder.Password = null;
+
+            string? dirToDelete = null;
+            string passFile;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var dir = Path.Combine(Environment.GetEnvironmentVariable("APPDATA")!, "postgresql");
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                    dirToDelete = dir;
+
+                }
+                passFile = Path.Combine(dir, "pgpass.conf");
+            }
+            else
+            {
+                passFile = Path.Combine(Environment.GetEnvironmentVariable("HOME")!, ".pgpass");
+            }
+
+            try
+            {
+                File.WriteAllText(passFile, $"*:*:*:{builder.Username}:{password}");
+                using var pool = CreateTempPool(builder.ConnectionString, out var connectionString);
+                using var conn = await OpenConnectionAsync(connectionString);
+            }
+            finally
+            {
+                File.Delete(passFile);
+                if (dirToDelete is not null)
+                    Directory.Delete(dirToDelete);
+            }
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void PasswordSourcePrecedence()
         {
             using var resetPassword = SetEnvironmentVariable("PGPASSWORD", null);
             var builder = new EDBConnectionStringBuilder(ConnectionString);
@@ -1444,7 +1600,7 @@ CREATE TABLE record ()");
                 builder.Password = password;
                 builder.Passfile = passFile;
                 builder.IntegratedSecurity = false;
-                builder.ApplicationName = $"{nameof(PasswordSourcePrecendence)}:{Guid.NewGuid()}";
+                builder.ApplicationName = $"{nameof(PasswordSourcePrecedence)}:{Guid.NewGuid()}";
 
                 using var pool = CreateTempPool(builder.ConnectionString, out var connectionString);
                 using var connection = await OpenConnectionAsync(connectionString);
@@ -1452,7 +1608,7 @@ CREATE TABLE record ()");
         }
 
         [Test, Description("Simulates a timeout during the authentication phase")]
-        [IssueLink("https://github.com/EDB/EDB/issues/3227")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3227")]
         [Timeout(10000)]
         public async Task TimeoutDuringAuthentication()
         {

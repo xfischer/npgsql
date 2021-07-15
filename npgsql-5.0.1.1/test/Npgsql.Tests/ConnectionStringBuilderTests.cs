@@ -105,7 +105,7 @@ namespace EnterpriseDB.EDBClient.Tests
         public void InvalidConnectionString()
         {
             var builder = new EDBConnectionStringBuilder();
-            Assert.That(() => builder.ConnectionString = "Server=127.0.0.1;User Id=EDB_tests;Pooling:false",
+            Assert.That(() => builder.ConnectionString = "Server=127.0.0.1;User Id=npgsql_tests;Pooling:false",
                 Throws.Exception.TypeOf<ArgumentException>());
         }
     }

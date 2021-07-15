@@ -81,11 +81,11 @@ namespace EnterpriseDB.EDBClient.TypeMapping
     {
         internal EDBTypeMapping(
             string pgTypeName,
-            EDBDbType? eDBDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType,
+            EDBDbType? npgsqlDbType, DbType[]? dbTypes, Type[]? clrTypes, DbType? inferredDbType,
             EDBTypeHandlerFactory typeHandlerFactory)
         {
             PgTypeName = pgTypeName;
-            EDBDbType = eDBDbType;
+            EDBDbType = npgsqlDbType;
             DbTypes = dbTypes ?? EmptyDbTypes;
             ClrTypes = clrTypes ?? EmptyClrTypes;
             InferredDbType = inferredDbType;

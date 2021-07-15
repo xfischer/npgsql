@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <AssemblyName>EnterpriseDB.EDBClient.Specification.Tests</AssemblyName>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="../../src/Npgsql/Npgsql.csproj" />
   </ItemGroup>

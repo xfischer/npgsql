@@ -424,6 +424,24 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3438")]
+        public void Bug3438()
+        {
+            using var conn = OpenConnection();
+            using var cmd = new EDBCommand("SELECT @p1, @p2", conn);
+
+            var expected = Duration.FromSeconds(2148);
+
+            cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.Interval) { Value = expected });
+            cmd.Parameters.AddWithValue("p2", expected);
+            using var reader = cmd.ExecuteReader();
+            reader.Read();
+            for (var i = 0; i < 2; i++)
+            {
+                Assert.That(reader.GetFieldType(i), Is.EqualTo(typeof(Period)));
+            }
+        }
+
         [Test]
         public void IntervalAsTimeSpan()
         {

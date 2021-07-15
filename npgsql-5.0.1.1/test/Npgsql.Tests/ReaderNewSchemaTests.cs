@@ -156,7 +156,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(columns[4].ColumnName, Is.EqualTo("varchar"));
             }
 
-            // See https://github.com/EDB/EDB/issues/1676
+            // See https://github.com/npgsql/npgsql/issues/1676
             using (var conn = await OpenConnectionAsync())
             {
                 await using var _ = await CreateTempTable(conn, "col TEXT", out var table);
@@ -405,7 +405,7 @@ CREATE UNIQUE INDEX idx_{table} ON {table} (non_id_second, non_id_third)");
             Assert.That(columns[1].DataType, Is.SameAs(typeof(int)));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1305")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1305")]
         public async Task DataTypeUnknownType()
         {
             using var conn = await OpenConnectionAsync();
@@ -648,7 +648,7 @@ CREATE TABLE {table2} (foo INTEGER)");
             Assert.That(columns[0].BaseTableName, Is.Not.EqualTo(columns[1].BaseTableName));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1553")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1553")]
         public async Task DomainTypes()
         {
             if (IsRedshift)
@@ -695,7 +695,7 @@ CREATE TABLE {table2} (foo INTEGER)");
             Assert.That(columns[0].EDBDbType, Is.EqualTo(EDBTypes.EDBDbType.Hstore));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1950")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1950")]
         public async Task NoResultset()
         {
             using var conn = await OpenConnectionAsync();

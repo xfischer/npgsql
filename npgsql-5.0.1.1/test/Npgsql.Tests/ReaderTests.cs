@@ -164,7 +164,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1037")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1037")]
         public async Task Statements()
         {
             using var conn = await OpenConnectionAsync();
@@ -316,7 +316,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/794")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public async Task GetFieldType()
         {
             using (var conn = await OpenConnectionAsync())
@@ -339,7 +339,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1096")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1096")]
         public async Task GetFieldTypeSchemaOnly()
         {
             using (var conn = await OpenConnectionAsync())
@@ -389,7 +389,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         }
 
         /// <seealso cref="ReaderNewSchemaTests.DataTypeName"/>
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/787")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/787")]
         [TestCase("integer")]
         [TestCase("real")]
         [TestCase("integer[]")]
@@ -465,7 +465,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/794")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public async Task GetDataTypeNameTypesUnknown()
         {
             using (var conn = await OpenConnectionAsync())
@@ -483,8 +483,8 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/791")]
-        [IssueLink("https://github.com/EDB/EDB/issues/794")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/791")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/794")]
         public async Task GetDataTypeOID()
         {
             using (var conn = await OpenConnectionAsync())
@@ -638,6 +638,42 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         }
 
         [Test]
+        public async Task ReaderDisposeStateNotLeaking()
+        {
+            if (IsMultiplexing || Behavior != CommandBehavior.Default)
+                return;
+
+            var startReaderClosedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var continueReaderClosedTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            using var _ = CreateTempPool(ConnectionString, out var connectionString);
+            await using var conn1 = await OpenConnectionAsync(connectionString);
+            var connID = conn1.Connector!.Id;
+            var readerCloseTask = Task.Run(async () =>
+            {
+                using var cmd = conn1.CreateCommand();
+                cmd.CommandText = "SELECT 1";
+                await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+                reader.ReaderClosed += (s, e) =>
+                {
+                    startReaderClosedTcs.SetResult();
+                    continueReaderClosedTcs.Task.GetAwaiter().GetResult();
+                };
+            });
+
+            await startReaderClosedTcs.Task;
+            await using var conn2 = await OpenConnectionAsync(connectionString);
+            Assert.That(conn2.Connector!.Id, Is.EqualTo(connID));
+            using var cmd = conn2.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            await using var reader = await cmd.ExecuteReaderAsync();
+            Assert.That(reader.State, Is.EqualTo(ReaderState.BeforeResult));
+            continueReaderClosedTcs.SetResult();
+            await readerCloseTask;
+            Assert.That(reader.State, Is.EqualTo(ReaderState.BeforeResult));
+        }
+
+        [Test]
         public async Task SingleResult()
         {
             using (var conn = await OpenConnectionAsync())
@@ -650,7 +686,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/400")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/400")]
         public async Task ExceptionThrownFromExecuteQuery([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -675,7 +711,7 @@ LANGUAGE 'plpgsql';
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1032")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1032")]
         public async Task ExceptionThrownFromNextResult([Values(PrepareOrNot.Prepared, PrepareOrNot.NotPrepared)] PrepareOrNot prepare)
         {
             if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -701,7 +737,7 @@ LANGUAGE 'plpgsql';
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/967")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/967")]
         public async Task EDBExceptionReferencesStatement()
         {
             using (var conn = await OpenConnectionAsync())
@@ -775,7 +811,7 @@ LANGUAGE 'plpgsql';
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2827")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2827")]
         public async Task SchemaOnlyNextResultBeyondEnd()
         {
             using var conn = await OpenConnectionAsync();
@@ -908,10 +944,10 @@ LANGUAGE 'plpgsql';
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/742")]
-        [IssueLink("https://github.com/EDB/EDB/issues/800")]
-        [IssueLink("https://github.com/EDB/EDB/issues/1234")]
-        [IssueLink("https://github.com/EDB/EDB/issues/1898")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/742")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/800")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/1234")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/1898")]
         public async Task HasRows([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
         {
             if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -1006,7 +1042,7 @@ LANGUAGE 'plpgsql';
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/pull/1266")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/pull/1266")]
         [Description("NextResult was throwing an ArgumentOutOfRangeException when trying to determine the statement to associate with the PostgresException")]
         public async Task ReaderNextResultExceptionHandling()
         {
@@ -1114,7 +1150,7 @@ LANGUAGE plpgsql VOLATILE";
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2913")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2913")]
         public async Task ReaderReadingPreviousQueryMessagesBug()
         {
             // No point in testing for multiplexing, as every query may use another connection
@@ -1169,8 +1205,8 @@ LANGUAGE plpgsql VOLATILE";
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/2913")]
-        [IssueLink("https://github.com/EDB/EDB/issues/3289")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2913")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3289")]
         public async Task ReaderCloseAndDisposeBug()
         {
             await using var conn = await OpenConnectionAsync();
@@ -1192,7 +1228,7 @@ LANGUAGE plpgsql VOLATILE";
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/2964")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2964")]
         public async Task ConnectionCloseAndReaderDisposeBug()
         {
             await using var conn = await OpenConnectionAsync();
@@ -1228,7 +1264,7 @@ LANGUAGE plpgsql VOLATILE";
             Assert.That(reader1, Is.SameAs(reader2));
             await reader2.DisposeAsync();
         }
-        
+
         [Test]
         public async Task DisposeSwallowsExceptions([Values(true, false)] bool async)
         {
@@ -1375,7 +1411,12 @@ LANGUAGE plpgsql VOLATILE";
 
             var position = 0;
             while (position < actual.Length)
-                position += await stream.ReadAsync(actual, position, actual.Length - position);
+            {
+                if (isAsync)
+                    position += await stream.ReadAsync(actual, position, actual.Length - position);
+                else
+                    position += stream.Read(actual, position, actual.Length - position);
+            }
 
             Assert.That(actual, Is.EqualTo(expected));
         }
@@ -1680,6 +1721,55 @@ LANGUAGE plpgsql VOLATILE";
 
         #region Cancellation
 
+        [Test, Description("Cancels ReadAsync via the EDBCommand.Cancel, with successful PG cancellation")]
+        public async Task ReadAsync_cancel_command_soft()
+        {
+            if (IsMultiplexing)
+                return; // Multiplexing, cancellation
+
+            await using var postmasterMock = PgPostmasterMock.Start(ConnectionString);
+            using var _ = CreateTempPool(postmasterMock.ConnectionString, out var connectionString);
+            await using var conn = await OpenConnectionAsync(connectionString);
+
+            // Write responses to the query we're about to send, with a single data row (we'll attempt to read two)
+            var pgMock = await postmasterMock.WaitForServerConnection();
+            await pgMock
+                .WriteParseComplete()
+                .WriteBindComplete()
+                .WriteRowDescription(new FieldDescription(PostgresTypeOIDs.Int4))
+                .WriteDataRow(BitConverter.GetBytes(BinaryPrimitives.ReverseEndianness(1)))
+                .FlushAsync();
+
+            using var cmd = new EDBCommand("SELECT some_int FROM some_table", conn);
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                // Successfully read the first row
+                Assert.True(await reader.ReadAsync());
+                Assert.That(reader.GetInt32(0), Is.EqualTo(1));
+
+                // Attempt to read the second row - simulate blocking and cancellation
+                var task = reader.ReadAsync();
+                cmd.Cancel();
+
+                var processId = (await postmasterMock.WaitForCancellationRequest()).ProcessId;
+                Assert.That(processId, Is.EqualTo(conn.ProcessID));
+
+                await pgMock
+                    .WriteErrorResponse(PostgresErrorCodes.QueryCanceled)
+                    .WriteReadyForQuery()
+                    .FlushAsync();
+
+                var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
+                Assert.That(exception.InnerException,
+                    Is.TypeOf<PostgresException>().With.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled));
+
+                Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open | ConnectionState.Fetching));
+            }
+
+            await pgMock.WriteScalarResponseAndFlush(1);
+            Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
+        }
+
         [Test, Description("Cancels ReadAsync via the cancellation token, with successful PG cancellation")]
         public async Task ReadAsync_cancel_soft()
         {
@@ -1711,7 +1801,7 @@ LANGUAGE plpgsql VOLATILE";
                 var task = reader.ReadAsync(cancellationSource.Token);
                 cancellationSource.Cancel();
 
-                var (processId, _) = await postmasterMock.WaitForCancellationRequest();
+                var processId = (await postmasterMock.WaitForCancellationRequest()).ProcessId;
                 Assert.That(processId, Is.EqualTo(conn.ProcessID));
 
                 await pgMock
@@ -1719,7 +1809,7 @@ LANGUAGE plpgsql VOLATILE";
                     .WriteReadyForQuery()
                     .FlushAsync();
 
-                var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+                var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
                 Assert.That(exception.InnerException,
                     Is.TypeOf<PostgresException>().With.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled));
                 Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
@@ -1763,7 +1853,7 @@ LANGUAGE plpgsql VOLATILE";
                 var task = reader.NextResultAsync(cancellationSource.Token);
                 cancellationSource.Cancel();
 
-                var (processId, _) = await postmasterMock.WaitForCancellationRequest();
+                var processId = (await postmasterMock.WaitForCancellationRequest()).ProcessId;
                 Assert.That(processId, Is.EqualTo(conn.ProcessID));
 
                 await pgMock
@@ -1771,7 +1861,7 @@ LANGUAGE plpgsql VOLATILE";
                     .WriteReadyForQuery()
                     .FlushAsync();
 
-                var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+                var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
                 Assert.That(exception.InnerException,
                     Is.TypeOf<PostgresException>().With.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled));
                 Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
@@ -1816,11 +1906,11 @@ LANGUAGE plpgsql VOLATILE";
             var task = reader.ReadAsync(cancellationSource.Token);
             cancellationSource.Cancel();
 
-            var (processId, _) = await postmasterMock.WaitForCancellationRequest();
+            var processId = (await postmasterMock.WaitForCancellationRequest()).ProcessId;
             Assert.That(processId, Is.EqualTo(conn.ProcessID));
 
             // Send no response from server, wait for the cancellation attempt to time out
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
             Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
 
@@ -1861,11 +1951,11 @@ LANGUAGE plpgsql VOLATILE";
             var task = reader.NextResultAsync(cancellationSource.Token);
             cancellationSource.Cancel();
 
-            var (processId, _) = await postmasterMock.WaitForCancellationRequest();
+            var processId = (await postmasterMock.WaitForCancellationRequest()).ProcessId;
             Assert.That(processId, Is.EqualTo(conn.ProcessID));
 
             // Send no response from server, wait for the cancellation attempt to time out
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
             Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
 
@@ -1904,7 +1994,7 @@ LANGUAGE plpgsql VOLATILE";
             var task = reader.GetFieldValueAsync<byte[]>(0, cts.Token);
             cts.Cancel();
 
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.Null);
 
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
@@ -1942,10 +2032,29 @@ LANGUAGE plpgsql VOLATILE";
             var task = reader.IsDBNullAsync(1, cts.Token);
             cts.Cancel();
 
-            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task);
+            var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.Null);
 
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
+        }
+
+        [Test, Description("Cancellation does not work with the multiplexing")]
+        public async Task Cancel_multiplexing_disabled()
+        {
+            if (!IsMultiplexing)
+                return;
+
+            using var _ = CreateTempPool(ConnectionString, out var connString);
+            await using var conn = await OpenConnectionAsync(connString);
+            await using var cmd = new EDBCommand("SELECT generate_series(1, 100); SELECT generate_series(1, 100)", conn);
+            using var cts = new CancellationTokenSource();
+            await using var reader = await cmd.ExecuteReaderAsync(Behavior);
+            Assert.IsTrue(await reader.ReadAsync());
+            cts.Cancel();
+            while (await reader.ReadAsync(cts.Token)) { }
+            Assert.IsTrue(await reader.NextResultAsync(cts.Token));
+            while (await reader.ReadAsync(cts.Token)) { }
+            Assert.IsFalse(conn.Connector!.UserCancellationRequested);
         }
 
         #endregion Cancellation
@@ -1985,7 +2094,7 @@ LANGUAGE plpgsql VOLATILE";
 
             var task = reader.GetFieldValueAsync<byte[]>(0);
 
-            var exception = Assert.ThrowsAsync<EDBException>(async () => await task);
+            var exception = Assert.ThrowsAsync<EDBException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
 
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
@@ -2024,10 +2133,43 @@ LANGUAGE plpgsql VOLATILE";
 
             var task = reader.GetFieldValueAsync<byte[]>(0);
 
-            var exception = Assert.ThrowsAsync<EDBException>(async () => await task);
+            var exception = Assert.ThrowsAsync<EDBException>(async () => await task)!;
             Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
 
             Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3446")]
+        public async Task Bug3446()
+        {
+            if (IsMultiplexing)
+                return; // Multiplexing, cancellation
+
+            await using var postmasterMock = PgPostmasterMock.Start(ConnectionString);
+            using var _ = CreateTempPool(postmasterMock.ConnectionString, out var connectionString);
+            await using var conn = await OpenConnectionAsync(connectionString);
+
+            var pgMock = await postmasterMock.WaitForServerConnection();
+            await pgMock
+                .WriteParseComplete()
+                .WriteBindComplete()
+                .WriteRowDescription(new FieldDescription(PostgresTypeOIDs.Int4))
+                .WriteDataRow(new byte[4])
+                .FlushAsync();
+
+            using var cmd = new EDBCommand("SELECT some_int FROM some_table", conn);
+            await using (var reader = await cmd.ExecuteReaderAsync(Behavior))
+            {
+                await reader.ReadAsync();
+                cmd.Cancel();
+                await postmasterMock.WaitForCancellationRequest();
+                await pgMock
+                        .WriteErrorResponse(PostgresErrorCodes.QueryCanceled)
+                        .WriteReadyForQuery()
+                        .FlushAsync();
+            }
+
+            Assert.That(conn.Connector!.State, Is.EqualTo(ConnectorState.Ready));
         }
 
         #endregion

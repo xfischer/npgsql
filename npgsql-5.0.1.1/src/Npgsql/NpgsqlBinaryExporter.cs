@@ -300,7 +300,6 @@ namespace EnterpriseDB.EDBClient
             catch (Exception e)
             {
                 _connector.Break(e);
-                Cleanup();
                 throw;
             }
         }
@@ -394,7 +393,7 @@ namespace EnterpriseDB.EDBClient
             if (_isDisposed)
                 return;
 
-            if (!_isConsumed)
+            if (!_isConsumed && !_connector.IsBroken)
             {
                 try
                 {
@@ -424,6 +423,7 @@ namespace EnterpriseDB.EDBClient
 #pragma warning disable CS8625
         void Cleanup()
         {
+            Debug.Assert(!_isDisposed);
             var connector = _connector;
             Log.Debug("COPY operation ended", connector?.Id ?? -1);
 

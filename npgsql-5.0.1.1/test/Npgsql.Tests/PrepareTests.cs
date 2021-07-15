@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using EDBTypes;
 using NUnit.Framework;
@@ -51,6 +52,28 @@ namespace EnterpriseDB.EDBClient.Tests
                 AssertNumPreparedStatements(conn, 1);
                 conn.UnprepareAll();
             }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3443")]
+        public void Bug3443()
+        {
+            using var conn = OpenConnectionAndUnprepare();
+            using var cmd = new EDBCommand("SELECT 1", conn);
+            AssertNumPreparedStatements(conn, 0);
+            Assert.That(cmd.ExecuteScalar(), Is.EqualTo(1));
+            Assert.That(cmd.IsPrepared, Is.False);
+
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            Assert.ThrowsAsync<OperationCanceledException>(() => cmd.PrepareAsync(cts.Token));
+            AssertNumPreparedStatements(conn, 0);
+            Assert.That(cmd.IsPrepared, Is.False);
+
+            using var cmd2 = new EDBCommand("SELECT 1", conn);
+            cmd2.Prepare();
+            Assert.That(cmd2.ExecuteScalar(), Is.EqualTo(1));
+            AssertNumPreparedStatements(conn, 1);
+            Assert.That(cmd2.IsPrepared, Is.True);
         }
 
         [Test]
@@ -108,7 +131,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1207")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1207")]
         public void DoublePrepareSameSql()
         {
             using (var conn = OpenConnectionAndUnprepare())
@@ -143,7 +166,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/395")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/395")]
         public void AcrossCloseOpenSameConnector()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -515,7 +538,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2665")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2665")]
         public void PreparedCommandFailure()
         {
             using var conn = OpenConnection();

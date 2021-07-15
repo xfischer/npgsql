@@ -78,7 +78,7 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';");
 
-            var ex = Assert.ThrowsAsync<PostgresException>(() => conn.ExecuteNonQueryAsync($"SELECT * FROM {raiseExceptionFunc}()"));
+            var ex = Assert.ThrowsAsync<PostgresException>(() => conn.ExecuteNonQueryAsync($"SELECT * FROM {raiseExceptionFunc}()"))!;
             Assert.That(ex.Detail, Does.Not.Contain("secret"));
             Assert.That(ex.Data[nameof(PostgresException.Detail)], Does.Not.Contain("secret"));
             Assert.That(ex.ToString(), Does.Not.Contain("secret"));
@@ -111,7 +111,7 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';");
 
-            var ex = Assert.ThrowsAsync<PostgresException>(() => conn.ExecuteNonQueryAsync($"SELECT * FROM {raiseExceptionFunc}()"));
+            var ex = Assert.ThrowsAsync<PostgresException>(() => conn.ExecuteNonQueryAsync($"SELECT * FROM {raiseExceptionFunc}()"))!;
             Assert.That(ex.Detail, Does.Contain("secret"));
             Assert.That(ex.Data[nameof(PostgresException.Detail)], Does.Contain("secret"));
             Assert.That(ex.ToString(), Does.Contain("secret"));
@@ -298,7 +298,7 @@ $$ LANGUAGE 'plpgsql';");
 #pragma warning restore SYSLIB0011
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/3204")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3204")]
         public void BaseExceptionPropertySerialization()
         {
             var ex = new PostgresException("the message", "low", "low2", "XX123");

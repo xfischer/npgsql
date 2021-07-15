@@ -62,16 +62,25 @@ namespace EnterpriseDB.EDBClient
             foreach (var argument in arguments)
                 command.Parameters.Add(new EDBParameter { Value = argument });
 
-            using var reader = async
+            var reader = async
                 ? await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken)
                 : command.ExecuteReader(CommandBehavior.SequentialAccess);
+            try
+            {
+                if (async)
+                    await reader.ReadAsync(cancellationToken);
+                else
+                    reader.Read();
 
-            if (async)
-                await reader.ReadAsync(cancellationToken);
-            else
-                reader.Read();
-
-            return (int)reader.GetBytes(0, 0, buffer, offset, len);
+                return (int)reader.GetBytes(0, 0, buffer, offset, len);
+            }
+            finally
+            {
+                if (async)
+                    await reader.DisposeAsync();
+                else
+                    reader.Dispose();
+            }
         }
 
         /// <summary>
@@ -94,7 +103,7 @@ namespace EnterpriseDB.EDBClient
             => Create(preferredOid, true, cancellationToken);
 
         Task<uint> Create(uint preferredOid, bool async, CancellationToken cancellationToken = default)
-            => ExecuteFunction<uint>("lo_create", async, cancellationToken, (int)preferredOid);
+            => ExecuteFunction<uint>("lo_create($1)", async, cancellationToken, (int)preferredOid);
 
         /// <summary>
         /// Opens a large object on the backend, returning a stream controlling this remote object.
@@ -124,7 +133,7 @@ namespace EnterpriseDB.EDBClient
 
         async Task<EDBLargeObjectStream> OpenRead(uint oid, bool async, CancellationToken cancellationToken = default)
         {
-            var fd = await ExecuteFunction<int>("lo_open", async, cancellationToken, (int)oid, InvRead);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, cancellationToken, (int)oid, InvRead);
             return new EDBLargeObjectStream(this, fd, false);
         }
 
@@ -152,7 +161,7 @@ namespace EnterpriseDB.EDBClient
 
         async Task<EDBLargeObjectStream> OpenReadWrite(uint oid, bool async, CancellationToken cancellationToken = default)
         {
-            var fd = await ExecuteFunction<int>("lo_open", async, cancellationToken, (int)oid, InvRead | InvWrite);
+            var fd = await ExecuteFunction<int>("lo_open($1, $2)", async, cancellationToken, (int)oid, InvRead | InvWrite);
             return new EDBLargeObjectStream(this, fd, true);
         }
 
@@ -161,7 +170,7 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="oid">Oid of the object to delete</param>
         public void Unlink(uint oid)
-            => ExecuteFunction<object>("lo_unlink", false, CancellationToken.None, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_unlink($1)", false, CancellationToken.None, (int)oid).GetAwaiter().GetResult();
 
         /// <summary>
         /// Deletes a large object on the backend.
@@ -171,7 +180,7 @@ namespace EnterpriseDB.EDBClient
         public Task UnlinkAsync(uint oid, CancellationToken cancellationToken = default)
         {
             using (NoSynchronizationContextScope.Enter())
-                return ExecuteFunction<object>("lo_unlink", true, cancellationToken, (int)oid);
+                return ExecuteFunction<object>("lo_unlink($1)", true, cancellationToken, (int)oid);
         }
 
         /// <summary>
@@ -180,7 +189,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="oid">Oid of the object to export</param>
         /// <param name="path">Path to write the file on the backend</param>
         public void ExportRemote(uint oid, string path)
-            => ExecuteFunction<object>("lo_export", false, CancellationToken.None, (int)oid, path).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_export($1, $2)", false, CancellationToken.None, (int)oid, path).GetAwaiter().GetResult();
 
         /// <summary>
         /// Exports a large object stored in the database to a file on the backend. This requires superuser permissions.
@@ -191,7 +200,7 @@ namespace EnterpriseDB.EDBClient
         public Task ExportRemoteAsync(uint oid, string path, CancellationToken cancellationToken = default)
         {
             using (NoSynchronizationContextScope.Enter())
-                return ExecuteFunction<object>("lo_export", true, cancellationToken, (int)oid, path);
+                return ExecuteFunction<object>("lo_export($1, $2)", true, cancellationToken, (int)oid, path);
         }
 
         /// <summary>
@@ -200,7 +209,7 @@ namespace EnterpriseDB.EDBClient
         /// <param name="path">Path to read the file on the backend</param>
         /// <param name="oid">A preferred oid, or specify 0 if one should be automatically assigned</param>
         public void ImportRemote(string path, uint oid = 0)
-            => ExecuteFunction<object>("lo_import", false, CancellationToken.None, path, (int)oid).GetAwaiter().GetResult();
+            => ExecuteFunction<object>("lo_import($1, $2)", false, CancellationToken.None, path, (int)oid).GetAwaiter().GetResult();
 
         /// <summary>
         /// Imports a large object to be stored as a large object in the database from a file stored on the backend. This requires superuser permissions.
@@ -211,7 +220,7 @@ namespace EnterpriseDB.EDBClient
         public Task ImportRemoteAsync(string path, uint oid, CancellationToken cancellationToken = default)
         {
             using (NoSynchronizationContextScope.Enter())
-                return ExecuteFunction<object>("lo_import", true, cancellationToken, path, (int)oid);
+                return ExecuteFunction<object>("lo_import($1, $2)", true, cancellationToken, path, (int)oid);
         }
 
         /// <summary>

@@ -628,9 +628,9 @@ namespace EnterpriseDB.EDBClient
             set
             {
                 // No integrated security if we're on mono and .NET 4.5 because of ClaimsIdentity,
-                // see https://github.com/EDB/EnterpriseDB.EDBClient/issues/133
+                // see https://github.com/npgsql/EnterpriseDB.EDBClient/issues/133
                 if (value && Type.GetType("Mono.Runtime") != null)
-                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/EDB/EnterpriseDB.EDBClient/issues/133)");
+                    throw new NotSupportedException("IntegratedSecurity is currently unsupported on mono and .NET 4.5 (see https://github.com/npgsql/EnterpriseDB.EDBClient/issues/133)");
                 _integratedSecurity = value;
                 SetValue(nameof(IntegratedSecurity), value);
             }
@@ -940,6 +940,7 @@ namespace EnterpriseDB.EDBClient
 
         /// <summary>
         /// The time to wait (in milliseconds) while trying to read a response for a cancellation request for a timed out or cancelled query, before terminating the attempt and generating an error.
+        /// Zero for infinity, -1 to skip the wait.
         /// Defaults to 2000 milliseconds.
         /// </summary>
         [Category("Timeouts")]
@@ -952,8 +953,8 @@ namespace EnterpriseDB.EDBClient
             get => _cancellationTimeout;
             set
             {
-                if (value < 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(CancellationTimeout)} can't be negative");
+                if (value < -1)
+                    throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(CancellationTimeout)} can't less than -1");
 
                 _cancellationTimeout = value;
                 SetValue(nameof(CancellationTimeout), value);
@@ -1254,7 +1255,7 @@ namespace EnterpriseDB.EDBClient
         bool _loadTableComposites;
 
         /// <summary>
-        /// A compatibility mode for special PostgreSQL server types.
+        /// /// A compatibility mode for special PostgreSQL server types.
         /// Load table composite type definitions, and not just free-standing composite types.
         /// </summary>
         [Category("Advanced")]
@@ -1443,73 +1444,73 @@ namespace EnterpriseDB.EDBClient
         #region Properties - Obsolete
 
         /// <summary>
-        /// Obsolete, see https://www.EDB.org/doc/release-notes/3.1.html
+        /// Obsolete, see https://www.npgsql.org/doc/release-notes/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see https://www.EDB.org/doc/release-notes/3.1.html")]
+        [Description("Obsolete, see https://www.npgsql.org/doc/release-notes/3.1.html")]
         [DisplayName("Continuous Processing")]
         [EDBConnectionStringProperty]
         [Obsolete("The ContinuousProcessing parameter is no longer supported.")]
         public bool ContinuousProcessing
         {
             get => false;
-            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see https://www.EDB.org/doc/release-notes/3.1.html");
+            set => throw new NotSupportedException("The ContinuousProcessing parameter is no longer supported. Please see https://www.npgsql.org/doc/release-notes/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see https://www.EDB.org/doc/release-notes/3.1.html
+        /// Obsolete, see https://www.npgsql.org/doc/release-notes/3.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see https://www.EDB.org/doc/release-notes/3.1.html")]
+        [Description("Obsolete, see https://www.npgsql.org/doc/release-notes/3.1.html")]
         [DisplayName("Backend Timeouts")]
         [EDBConnectionStringProperty]
         [Obsolete("The BackendTimeouts parameter is no longer supported")]
         public bool BackendTimeouts
         {
             get => false;
-            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see https://www.EDB.org/doc/release-notes/3.1.html");
+            set => throw new NotSupportedException("The BackendTimeouts parameter is no longer supported. Please see https://www.npgsql.org/doc/release-notes/3.1.html");
         }
 
         /// <summary>
-        /// Obsolete, see https://www.EDB.org/doc/release-notes/3.0.html
+        /// Obsolete, see https://www.npgsql.org/doc/release-notes/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see https://www.EDB.org/doc/v/3.0.html")]
+        [Description("Obsolete, see https://www.npgsql.org/doc/v/3.0.html")]
         [DisplayName("Preload Reader")]
         [EDBConnectionStringProperty]
         [Obsolete("The PreloadReader parameter is no longer supported")]
         public bool PreloadReader
         {
             get => false;
-            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see https://www.EDB.org/doc/release-notes/3.0.html");
+            set => throw new NotSupportedException("The PreloadReader parameter is no longer supported. Please see https://www.npgsql.org/doc/release-notes/3.0.html");
         }
 
         /// <summary>
-        /// Obsolete, see https://www.EDB.org/doc/release-notes/3.0.html
+        /// Obsolete, see https://www.npgsql.org/doc/release-notes/3.0.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see https://www.EDB.org/doc/release-notes/3.0.html")]
+        [Description("Obsolete, see https://www.npgsql.org/doc/release-notes/3.0.html")]
         [DisplayName("Use Extended Types")]
         [EDBConnectionStringProperty]
         [Obsolete("The UseExtendedTypes parameter is no longer supported")]
         public bool UseExtendedTypes
         {
             get => false;
-            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see https://www.EDB.org/doc/release-notes/3.0.html");
+            set => throw new NotSupportedException("The UseExtendedTypes parameter is no longer supported. Please see https://www.npgsql.org/doc/release-notes/3.0.html");
         }
 
         /// <summary>
-        /// Obsolete, see https://www.EDB.org/doc/release-notes/4.1.html
+        /// Obsolete, see https://www.npgsql.org/doc/release-notes/4.1.html
         /// </summary>
         [Category("Obsolete")]
-        [Description("Obsolete, see https://www.EDB.org/doc/release-notes/4.1.html")]
+        [Description("Obsolete, see https://www.npgsql.org/doc/release-notes/4.1.html")]
         [DisplayName("Use Ssl Stream")]
         [EDBConnectionStringProperty]
         [Obsolete("The UseSslStream parameter is no longer supported (always true)")]
         public bool UseSslStream
         {
             get => true;
-            set => throw new NotSupportedException("The UseSslStream parameter is no longer supported (SslStream is always used). Please see https://www.EDB.org/doc/release-notes/4.1.html");
+            set => throw new NotSupportedException("The UseSslStream parameter is no longer supported (SslStream is always used). Please see https://www.npgsql.org/doc/release-notes/4.1.html");
         }
 
         /// <summary>
@@ -1523,7 +1524,7 @@ namespace EnterpriseDB.EDBClient
         public bool UsePerfCounters
         {
             get => false;
-            set => throw new NotSupportedException("The UsePerfCounters parameter is no longer supported. Please see https://www.EDB.org/doc/release-notes/5.0.html");
+            set => throw new NotSupportedException("The UsePerfCounters parameter is no longer supported. Please see https://www.npgsql.org/doc/release-notes/5.0.html");
         }
 
         #endregion

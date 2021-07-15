@@ -178,7 +178,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1022")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1022")]
         public void MultiPolygonWithMultiplePolygons()
         {
             var geom2 = new PostgisMultiPolygon(new[]
@@ -213,7 +213,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/EDB/EDB/issues/1260")]
+        [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/npgsql/npgsql/issues/1260")]
         public void CopyBinary(TestAtt a)
         {
             using (var c = OpenConnection())
@@ -253,7 +253,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/EDB/EDB/issues/1260")]
+        [Test, TestCaseSource(nameof(Tests)), IssueLink("https://github.com/npgsql/npgsql/issues/1260")]
         public void CopyBinaryArray(TestAtt a)
         {
             using (var c = OpenConnection())
@@ -344,7 +344,7 @@ namespace EnterpriseDB.EDBClient.PluginTests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1557")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1557")]
         public void SubGeometriesWithSRID()
         {
             var point = new PostgisPoint(1, 1)

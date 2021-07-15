@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EDBTypes;
 using NUnit.Framework;
 using System.Transactions;
+using EnterpriseDB.EDBClient.Tests.Support;
+
+using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -27,7 +28,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1034")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1034")]
         public void SequentialSkipOverFirstRow()
         {
             using (var conn = OpenConnection())
@@ -51,7 +52,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         #endregion
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1210")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1210")]
         public void ManyParametersWithMixedFormatCode()
         {
             using (var conn = OpenConnection())
@@ -76,7 +77,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1238")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1238")]
         public void RecordWithNonIntField()
         {
             using (var conn = OpenConnection())
@@ -90,7 +91,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1450")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1450")]
         public void Bug1450()
         {
             using (var conn = OpenConnection())
@@ -130,7 +131,28 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1497")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3600")]
+        public async Task Bug3600()
+        {
+            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            {
+                CommandTimeout = 1,
+            };
+            await using var postmasterMock = PgPostmasterMock.Start(csb.ConnectionString);
+            using var _ = CreateTempPool(postmasterMock.ConnectionString, out var connectionString);
+            await using var conn = await OpenConnectionAsync(connectionString);
+            var serverMock = await postmasterMock.WaitForServerConnection();
+            await serverMock
+                .WriteCopyInResponse()
+                .FlushAsync();
+            var ex = Assert.ThrowsAsync<EDBException>(async () =>
+            {
+                await using var importer = conn.BeginTextImport($"COPY SomeTable (field_text, field_int4) FROM STDIN");
+            });
+            Assert.That(ex!.InnerException, Is.TypeOf<TimeoutException>());
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1497")]
         public void Bug1497()
         {
             using (var conn = OpenConnection())
@@ -146,7 +168,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1558")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1558")]
         public void Bug1558()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -183,7 +205,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1700")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1700")]
         public void Bug1700()
         {
             Assert.That(() =>
@@ -212,7 +234,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }, Throws.InvalidOperationException.With.Message.EqualTo("Some problem parsing the returned data"));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1964")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1964")]
         public void Bug1964()
         {
             using (var conn = OpenConnection())
@@ -224,7 +246,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1986")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1986")]
         public void Bug1986()
         {
             using (var conn = OpenConnection())
@@ -243,7 +265,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1987")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1987")]
         public void Bug1987()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -271,7 +293,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         enum Mood { Sad, Ok, Happy };
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2003")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2003")]
         public void Bug2003()
         {
             // A big RowDescription (larger than buffer size) causes an oversize buffer allocation, but which isn't
@@ -407,7 +429,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/2178")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2178")]
         public void Bug2178()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString);
@@ -464,7 +486,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2660")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2660")]
         public void StandardConformingStrings()
         {
             using var conn = OpenConnection();
@@ -483,7 +505,7 @@ WHERE table_name LIKE @p0 escape '\' AND (is_updatable = 'NO') = @p1";
 
         #region Bug1285
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1285")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1285")]
         public void Bug1285()
         {
             using (var conn = OpenConnection())
@@ -1145,7 +1167,7 @@ CREATE TEMP TABLE ""OrganisatieQmo_Organisatie_QueryModelObjects_Imp""
 )";
         #endregion Bug1285
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2849")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2849")]
         public async Task ChunkedStringWriteBufferEncodingSpace()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString);
@@ -1182,7 +1204,7 @@ CREATE TEMP TABLE ""OrganisatieQmo_Organisatie_QueryModelObjects_Imp""
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2849")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2849")]
         public async Task ChunkedCharArrayWriteBufferEncodingSpace()
         {
             var builder = new EDBConnectionStringBuilder(ConnectionString);
@@ -1219,7 +1241,7 @@ CREATE TEMP TABLE ""OrganisatieQmo_Organisatie_QueryModelObjects_Imp""
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/2371")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2371")]
         public void NullReferenceExceptionInBeginTextExport()
         {
             using var conn = OpenConnection();
@@ -1280,7 +1302,7 @@ $$;");
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/3117")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/3117")]
         public void Bug3117()
         {
             const string OkCommand = "SELECT 1";
@@ -1308,7 +1330,7 @@ $$;");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3209")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3209")]
         public async Task Bug3209()
         {
             await using var conn = CreateConnection();
@@ -1318,7 +1340,7 @@ $$;");
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3373")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3373")]
         public async Task Bug3373()
         {
             await using var conn = await OpenConnectionAsync();
@@ -1328,6 +1350,35 @@ $$;");
 
             await using var reader = await cmd.ExecuteReaderAsync();
             Assert.DoesNotThrowAsync(async () => await reader.NextResultAsync());
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3649")]
+        public async Task Bug3649()
+        {
+            await using var conn = await OpenConnectionAsync();
+            await using var _ = await CreateTempTable(conn, "value integer", out var table);
+
+            using (var importer = conn.BeginBinaryImport($"COPY {table} (value) FROM STDIN (FORMAT binary)"))
+            {
+                await importer.StartRowAsync();
+                await importer.WriteAsync(DBNull.Value, EDBDbType.Integer);
+                await importer.StartRowAsync();
+                await importer.WriteAsync(1, EDBDbType.Integer);
+                await importer.StartRowAsync();
+                await importer.WriteAsync(2, EDBDbType.Integer);
+                await importer.CompleteAsync();
+            }
+
+            using (var exporter = conn.BeginBinaryExport($"COPY {table} (value) TO STDIN (FORMAT binary)"))
+            {
+                await exporter.StartRowAsync();
+                Assert.IsTrue(exporter.IsNull);
+                await exporter.SkipAsync();
+                await exporter.StartRowAsync();
+                Assert.AreEqual(1, await exporter.ReadAsync<int?>());
+                await exporter.StartRowAsync();
+                Assert.AreEqual(2, await exporter.ReadAsync<int?>());
+            }
         }
     }
 }

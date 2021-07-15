@@ -135,14 +135,15 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
         /// <inheritdoc />
         protected override async Task WriteWithLength<TAny>(TAny value, EDBWriteBuffer buf, EDBLengthCache? lengthCache, EDBParameter? parameter, bool async, CancellationToken cancellationToken = default)
         {
+            var spaceRequired = _isJsonb ? 5 : 4;
+
+            if (buf.WriteSpaceLeft < spaceRequired)
+                await buf.Flush(async, cancellationToken);
+
             buf.WriteInt32(ValidateAndGetLength(value, ref lengthCache, parameter));
 
             if (_isJsonb)
-            {
-                if (buf.WriteSpaceLeft < 1)
-                    await buf.Flush(async, cancellationToken);
                 buf.WriteByte(JsonbProtocolVersion);
-            }
 
             if (typeof(TAny) == typeof(string))
                 await _textHandler.Write((string)(object)value!, buf, lengthCache, parameter, async, cancellationToken);

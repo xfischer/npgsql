@@ -1,10 +1,8 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
-
-#pragma warning disable CS8600
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes
@@ -27,7 +25,7 @@ namespace EDBTypes
         // > a bitwise and operation, which would also be fast under .NET Core 2.0 and .NET Framework.
         //
         // See:
-        //   - https://github.com/EDB/EDB/pull/1939#pullrequestreview-121308396
+        //   - https://github.com/npgsql/npgsql/pull/1939#pullrequestreview-121308396
         //   - https://blogs.msdn.microsoft.com/dotnet/2018/04/18/performance-improvements-in-net-core-2-1
         // -----------------------------------------------------------------------------------------------
 
@@ -186,7 +184,7 @@ namespace EDBTypes
         internal EDBRange([AllowNull] T lowerBound, [AllowNull] T upperBound, RangeFlags flags) : this()
         {
             // TODO: We need to check if the bounds are implicitly empty. E.g. '(1,1)' or '(0,0]'.
-            // See: https://github.com/EDB/EDB/issues/1943.
+            // See: https://github.com/npgsql/npgsql/issues/1943.
 
             LowerBound = (flags & RangeFlags.LowerBoundInfinite) != 0 ? default : lowerBound;
             UpperBound = (flags & RangeFlags.UpperBoundInfinite) != 0 ? default : upperBound;
@@ -219,8 +217,8 @@ namespace EDBTypes
             //   4. The bounds must be considered equal.
             //
             // See:
-            //  - https://github.com/EDB/EDB/pull/1939
-            //  - https://github.com/EDB/EDB/issues/1943
+            //  - https://github.com/npgsql/npgsql/pull/1939
+            //  - https://github.com/npgsql/npgsql/issues/1943
             // ---------------------------------------------------------------------------------
 
             if ((flags & RangeFlags.Empty) == RangeFlags.Empty)
@@ -431,8 +429,10 @@ namespace EDBTypes
                 string.Equals(upperSegment, NullLiteral, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(upperSegment, UpperInfinityLiteral, StringComparison.OrdinalIgnoreCase);
 
+#nullable disable
             T lower = lowerInfinite ? default : (T)BoundConverter.ConvertFromString(lowerSegment);
             T upper = upperInfinite ? default : (T)BoundConverter.ConvertFromString(upperSegment);
+#nullable restore
 
             return new EDBRange<T>(lower, lowerInclusive, lowerInfinite, upper, upperInclusive, upperInfinite);
         }

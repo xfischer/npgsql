@@ -166,7 +166,7 @@ namespace EnterpriseDB.EDBClient
 
             var saslContinueMsg = Expect<AuthenticationSASLContinueMessage>(await ReadMessage(async), this);
             if (saslContinueMsg.AuthRequestType != AuthenticationRequestType.AuthenticationSASLContinue)
-                throw new EDBException("[SASL] AuthenticationSASLFinal message expected");
+                throw new EDBException("[SASL] AuthenticationSASLContinue message expected");
             var firstServerMsg = AuthenticationSCRAMServerFirstMessage.Load(saslContinueMsg.Payload);
             if (!firstServerMsg.Nonce.StartsWith(clientNonce))
                 throw new EDBException("[SCRAM] Malformed SCRAMServerFirst message: server nonce doesn't start with client nonce");
@@ -460,12 +460,7 @@ namespace EnterpriseDB.EDBClient
             if (password != null)
                 return password;
 
-            var passFile = Settings.Passfile ?? PostgresEnvironment.PassFile;
-            if (passFile is null && PostgresEnvironment.PassFileDefault is string passFileDefault)
-            {
-                passFile = passFileDefault;
-            }
-
+            var passFile = Settings.Passfile ?? PostgresEnvironment.PassFile ?? PostgresEnvironment.PassFileDefault;
             if (passFile != null)
             {
                 var matchingEntry = new PgPassFile(passFile!)

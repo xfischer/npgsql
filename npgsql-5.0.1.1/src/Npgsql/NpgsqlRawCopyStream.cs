@@ -155,7 +155,6 @@ namespace EnterpriseDB.EDBClient
             catch (Exception e)
             {
                 _connector.Break(e);
-                Cleanup();
                 throw;
             }
         }
@@ -201,7 +200,6 @@ namespace EnterpriseDB.EDBClient
                 catch (Exception e)
                 {
                     _connector.Break(e);
-                    Cleanup();
                     throw;
                 }
             }
@@ -295,7 +293,8 @@ namespace EnterpriseDB.EDBClient
                 }
                 catch
                 {
-                    Cleanup();
+                    if (!_isDisposed)
+                        Cleanup();
                     throw;
                 }
 
@@ -371,9 +370,8 @@ namespace EnterpriseDB.EDBClient
                     _connector.EndUserAction();
                     Cleanup();
 
-                    if (e.SqlState == PostgresErrorCodes.QueryCanceled)
-                        return;
-                    throw;
+                    if (e.SqlState != PostgresErrorCodes.QueryCanceled)
+                        throw;
                 }
             }
             else
@@ -390,10 +388,13 @@ namespace EnterpriseDB.EDBClient
 
         async ValueTask DisposeAsync(bool disposing, bool async)
         {
-            if (_isDisposed || !disposing) { return; }
+            if (_isDisposed || !disposing)
+                return;
 
             try
             {
+                _connector.CurrentCopyOperation = null;
+
                 if (CanWrite)
                 {
                     await FlushAsync(async);
@@ -436,9 +437,10 @@ namespace EnterpriseDB.EDBClient
 #pragma warning disable CS8625
         void Cleanup()
         {
+            Debug.Assert(!_isDisposed);
             Log.Debug("COPY operation ended", _connector.Id);
             _connector.CurrentCopyOperation = null;
-            _connector.Connection!.EndBindingScope(ConnectorBindingScope.Copy);
+            _connector.Connection?.EndBindingScope(ConnectorBindingScope.Copy);
             _connector = null;
             _readBuf = null;
             _writeBuf = null;
@@ -449,7 +451,7 @@ namespace EnterpriseDB.EDBClient
         void CheckDisposed()
         {
             if (_isDisposed) {
-                throw new ObjectDisposedException(GetType().FullName, "The COPY operation has already ended.");
+                throw new ObjectDisposedException(nameof(EDBRawCopyStream), "The COPY operation has already ended.");
             }
         }
 

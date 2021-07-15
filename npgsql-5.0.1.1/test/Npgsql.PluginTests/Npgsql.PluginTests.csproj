@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
+    <AssemblyName>Npgsql.PluginTests</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NodaTime" />

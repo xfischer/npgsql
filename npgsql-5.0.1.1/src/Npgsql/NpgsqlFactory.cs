@@ -88,19 +88,19 @@ namespace EnterpriseDB.EDBClient
             // First time, attempt to find the EntityFramework5.EnterpriseDB.EDBClient assembly and load the type via reflection
             var assemblyName = typeof(EDBFactory).GetTypeInfo().Assembly.GetName();
             assemblyName.Name = "EntityFramework5.EnterpriseDB.EDBClient";
-            Assembly EDBEfAssembly;
+            Assembly npgsqlEfAssembly;
             try {
-                EDBEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
+                npgsqlEfAssembly = Assembly.Load(new AssemblyName(assemblyName.FullName));
             } catch {
                 return null;
             }
 
-            Type? EDBServicesType;
-            if ((EDBServicesType = EDBEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null ||
-                EDBServicesType.GetProperty("Instance") == null)
+            Type? npgsqlServicesType;
+            if ((npgsqlServicesType = npgsqlEfAssembly.GetType("EnterpriseDB.EDBClient.EDBServices")) == null ||
+                npgsqlServicesType.GetProperty("Instance") == null)
                 throw new Exception("EntityFramework5.EnterpriseDB.EDBClient assembly does not seem to contain the correct type!");
 
-            return _legacyEntityFrameworkServices = EDBServicesType
+            return _legacyEntityFrameworkServices = npgsqlServicesType
                 .GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)!
                 .GetMethod!.Invoke(null, new object[0]);
         }

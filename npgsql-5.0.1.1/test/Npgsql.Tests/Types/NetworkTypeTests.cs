@@ -222,7 +222,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/835")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/835")]
         public async Task MacaddrMultiple()
         {
             using (var conn = await OpenConnectionAsync())
@@ -252,7 +252,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     var send8 = PhysicalAddress.Parse("08-00-2B-01-02-03-04-05");
                     cmd.Parameters.Add(new EDBParameter("p1", EDBDbType.MacAddr) { Value = send8 });
 
-                    var exception = Assert.ThrowsAsync<PostgresException>(() => cmd.ExecuteReaderAsync());
+                    var exception = Assert.ThrowsAsync<PostgresException>(() => cmd.ExecuteReaderAsync())!;
                     Assert.That(exception.Message, Does.StartWith("22P03:").And.Contain("1"));
                 }
             }

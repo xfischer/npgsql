@@ -505,7 +505,7 @@ INSERT INTO {table} (interval) VALUES ('1 hour'::INTERVAL);");
         }
 
         [Test, Description("Makes sure that the INSERT/UPDATE/DELETE commands are auto-populated on EDBDataAdapter")]
-        [IssueLink("https://github.com/EDB/EDB/issues/179")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/179")]
         [Ignore("Somehow related to us using a temporary table???")]
         public async Task AutoPopulateAdapterCommands()
         {
@@ -547,7 +547,7 @@ INSERT INTO {table} (interval) VALUES ('1 hour'::INTERVAL);");
         }
 
         [Test, Description("Makes sure a correct SQL string is built with GetUpdateCommand(true) using correct parameter names and placeholders")]
-        [IssueLink("https://github.com/EDB/EDB/issues/397")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/397")]
         [Ignore("Somehow related to us using a temporary table???")]
         public async Task GetUpdateCommand()
         {

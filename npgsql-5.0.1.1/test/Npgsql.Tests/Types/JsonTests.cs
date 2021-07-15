@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/3085")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3085")]
         public async Task RoundtripStringTypes()
         {
             var expected = "{\"p\":1}";
@@ -211,9 +211,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test]
-        [IssueLink("https://github.com/EDB/EDB/issues/2811")]
-        [IssueLink("https://github.com/EDB/efcore.pg/issues/1177")]
-        [IssueLink("https://github.com/EDB/efcore.pg/issues/1082")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/2811")]
+        [IssueLink("https://github.com/npgsql/efcore.pg/issues/1177")]
+        [IssueLink("https://github.com/npgsql/efcore.pg/issues/1082")]
         public async Task CanReadTwoJsonDocuments()
         {
             using var conn = await OpenConnectionAsync();
@@ -236,12 +236,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             Assert.That(car.RootElement.GetProperty("key").GetString(), Is.EqualTo("foo"));
         }
 
-        public JsonTests(MultiplexingMode multiplexingMode, EDBDbType eDBDbType)
+        public JsonTests(MultiplexingMode multiplexingMode, EDBDbType npgsqlDbType)
             : base(multiplexingMode)
         {
             using (var conn = OpenConnection())
                 TestUtil.MinimumPgVersion(conn, "9.4.0", "JSONB data type not yet introduced");
-            EDBDbType = eDBDbType;
+            EDBDbType = npgsqlDbType;
         }
 
         bool IsJsonb => EDBDbType == EDBDbType.Jsonb;

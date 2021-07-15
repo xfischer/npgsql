@@ -22,7 +22,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         //[Test, Description("Generates a notification that arrives after reader data that is already being read")]
-        [IssueLink("https://github.com/EDB/EDB/issues/252")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/252")]
         public void NotificationAfterData()
         {
             var receivedNotification = false;
@@ -60,7 +60,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1024")]
         [Timeout(10000)]
         public void Wait()
         {
@@ -77,7 +77,7 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1024")]
         //[Timeout(10000)]
         public void WaitWithTimeout()
         {
@@ -96,7 +96,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(conn.Wait(100), Is.EqualTo(false));
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1024")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1024")]
         [Timeout(10000)]
         public async Task WaitAsync()
         {

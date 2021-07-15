@@ -251,15 +251,15 @@ namespace EnterpriseDB.EDBClient
         /// <param name="adapter">The <see cref="System.Data.Common.DbDataAdapter" /> to be used for the update.</param>
         protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
-            var EDBAdapter = adapter as EDBDataAdapter;
-            if (EDBAdapter == null)
+            var npgsqlAdapter = adapter as EDBDataAdapter;
+            if (npgsqlAdapter == null)
                 throw new ArgumentException("adapter needs to be a EDBDataAdapter", nameof(adapter));
 
             // Being called twice for the same adapter means unregister
             if (adapter == DataAdapter)
-                EDBAdapter.RowUpdating -= RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating -= RowUpdatingHandler;
             else
-                EDBAdapter.RowUpdating += RowUpdatingHandler;
+                npgsqlAdapter.RowUpdating += RowUpdatingHandler;
         }
 
         /// <summary>

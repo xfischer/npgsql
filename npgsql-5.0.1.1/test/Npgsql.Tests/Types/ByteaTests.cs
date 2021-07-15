@@ -250,7 +250,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         }
 
         [Test, Description("Writes a bytea that doesn't fit in a partially-full buffer, but does fit in an empty buffer")]
-        [IssueLink("https://github.com/EDB/EDB/issues/654")]
+        [IssueLink("https://github.com/npgsql/npgsql/issues/654")]
         public async Task WriteDoesntFitInitiallyButFitsLater()
         {
             using (var conn = await OpenConnectionAsync())

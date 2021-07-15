@@ -60,9 +60,9 @@ namespace EnterpriseDB.EDBClient.Tests
             catch (PostgresException e)
             {
                 if (e.SqlState == PostgresErrorCodes.InvalidCatalogName)
-                    TestUtil.IgnoreExceptOnBuildServer("Please create a database EDB_tests, owned by user EDB_tests");
+                    TestUtil.IgnoreExceptOnBuildServer("Please create a database npgsql_tests, owned by user npgsql_tests");
                 else if (e.SqlState == PostgresErrorCodes.InvalidPassword && connectionString == TestUtil.DefaultConnectionString)
-                    TestUtil.IgnoreExceptOnBuildServer("Please create a user EDB_tests as follows: create user EDB_tests with password 'EDB_tests'");
+                    TestUtil.IgnoreExceptOnBuildServer("Please create a user npgsql_tests as follows: create user npgsql_tests with password 'npgsql_tests'");
                 else
                     throw;
             }

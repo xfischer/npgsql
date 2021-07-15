@@ -138,7 +138,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToUniversalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/EDB/EDB/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToUniversalTime()
@@ -154,7 +154,19 @@ namespace EDBTypes
                     return new EDBDateTime(Subtract(TimeZoneInfo.Local.GetUtcOffset(new DateTime(ToDateTime().Ticks, DateTimeKind.Local))).Ticks, DateTimeKind.Utc);
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
-                return new EDBDateTime(Subtract(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Utc);
+                var timeTicks = _time.Ticks - TimeZoneInfo.Local.BaseUtcOffset.Ticks;
+                var date = _date;
+                if (timeTicks < 0)
+                {
+                    timeTicks += EDBTimeSpan.TicksPerDay;
+                    date = date.AddDays(-1);
+                }
+                else if (timeTicks > EDBTimeSpan.TicksPerDay)
+                {
+                    timeTicks -= EDBTimeSpan.TicksPerDay;
+                    date = date.AddDays(1);
+                }
+                return new EDBDateTime(date, TimeSpan.FromTicks(timeTicks), DateTimeKind.Utc);
             case InternalType.FiniteUtc:
             case InternalType.Infinity:
             case InternalType.NegativeInfinity:
@@ -170,7 +182,7 @@ namespace EDBTypes
         /// <remarks>
         /// See the MSDN documentation for DateTime.ToLocalTime().
         /// <b>Note:</b> this method <b>only</b> takes into account the time zone's base offset, and does
-        /// <b>not</b> respect daylight savings. See https://github.com/EDB/EDB/pull/684 for more
+        /// <b>not</b> respect daylight savings. See https://github.com/npgsql/npgsql/pull/684 for more
         /// details.
         /// </remarks>
         public EDBDateTime ToLocalTime()
@@ -185,7 +197,19 @@ namespace EDBTypes
                     return new EDBDateTime(TimeZoneInfo.ConvertTime(new DateTime(ToDateTime().Ticks, DateTimeKind.Utc), TimeZoneInfo.Local));
                 }
                 // Else there are no DST rules available in the system for outside the DateTime range, so just use the base offset
-                return new EDBDateTime(Add(TimeZoneInfo.Local.BaseUtcOffset).Ticks, DateTimeKind.Local);
+                var timeTicks = _time.Ticks + TimeZoneInfo.Local.BaseUtcOffset.Ticks;
+                var date = _date;
+                if (timeTicks < 0)
+                {
+                    timeTicks += EDBTimeSpan.TicksPerDay;
+                    date = date.AddDays(-1);
+                }
+                else if (timeTicks > EDBTimeSpan.TicksPerDay)
+                {
+                    timeTicks -= EDBTimeSpan.TicksPerDay;
+                    date = date.AddDays(1);
+                }
+                return new EDBDateTime(date, TimeSpan.FromTicks(timeTicks), DateTimeKind.Local);
             case InternalType.FiniteLocal:
             case InternalType.Infinity:
             case InternalType.NegativeInfinity:
@@ -286,8 +310,8 @@ namespace EDBTypes
         public int CompareTo(object? o)
             => o == null
                 ? 1
-                : o is EDBDateTime EDBDateTime
-                    ? CompareTo(EDBDateTime)
+                : o is EDBDateTime npgsqlDateTime
+                    ? CompareTo(npgsqlDateTime)
                     : throw new ArgumentException();
 
         public int Compare(EDBDateTime x, EDBDateTime y) => x.CompareTo(y);
@@ -448,10 +472,10 @@ namespace EDBTypes
         /// <summary>
         /// Explicit cast of an <see cref="EDBDateTime"/> to a <see cref="DateTime"/>.
         /// </summary>
-        /// <param name="EDBDateTime">An <see cref="EDBDateTime"/>.</param>
+        /// <param name="npgsqlDateTime">An <see cref="EDBDateTime"/>.</param>
         /// <returns>An equivalent <see cref="DateTime"/>.</returns>
-        public static explicit operator DateTime(EDBDateTime EDBDateTime)
-            => EDBDateTime.ToDateTime();
+        public static explicit operator DateTime(EDBDateTime npgsqlDateTime)
+            => npgsqlDateTime.ToDateTime();
 
         #endregion
 

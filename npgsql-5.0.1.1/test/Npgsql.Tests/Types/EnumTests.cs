@@ -427,7 +427,7 @@ CREATE TABLE {table} (value1 {type})");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/859")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/859")]
         public async Task NameTranslationDefaultSnakeCase()
         {
             // Per-connection mapping
@@ -483,7 +483,7 @@ CREATE TABLE {table} (value1 {type})");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/859")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/859")]
         public async Task NameTranslationNull()
         {
             // Per-connection mapping
@@ -518,7 +518,7 @@ CREATE TABLE {table} (value1 {type})");
             SomeClrName
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/632")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/632")]
         public async Task Schemas()
         {
             using var adminConn = await OpenConnectionAsync();
@@ -581,7 +581,7 @@ CREATE TYPE {schema2}.my_enum AS ENUM ('alpha');");
         enum Enum1 { One }
         enum Enum2 { Alpha }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1017")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1017")]
         public async Task GlobalMappingsAndPooling()
         {
             using var adminConn = await OpenConnectionAsync();
@@ -613,7 +613,7 @@ CREATE TYPE {schema2}.my_enum AS ENUM ('alpha');");
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1779")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1779")]
         public async Task EnumPostgresType()
         {
             using var _ = CreateTempPool(ConnectionString, out var connectionString);

@@ -2577,6 +2577,11 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
         [Test, /*Ignore("Investigate")*/]
+
+
+
+
+
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
         {
             EDBCommand command = null;

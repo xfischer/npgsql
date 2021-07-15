@@ -56,13 +56,13 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
         /// <inheritdoc />
         public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
-            var EDBDate = ReadPsv(buf, len, fieldDescription);
+            var npgsqlDate = ReadPsv(buf, len, fieldDescription);
 
-            if (EDBDate.IsFinite)
-                return (DateTime)EDBDate;
+            if (npgsqlDate.IsFinite)
+                return (DateTime)npgsqlDate;
             if (!_convertInfinityDateTime)
                 throw new InvalidCastException("Can't convert infinite date values to DateTime");
-            if (EDBDate.IsInfinity)
+            if (npgsqlDate.IsInfinity)
                 return DateTime.MaxValue;
             return DateTime.MinValue;
         }

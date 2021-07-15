@@ -252,7 +252,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             var reader = await cmd.ExecuteReaderAsync();
             reader.Read();
 
-            var ex = Assert.Throws<InvalidOperationException>(() => reader.GetFieldValue<int[]>(0));
+            var ex = Assert.Throws<InvalidOperationException>(() => reader.GetFieldValue<int[]>(0))!;
             Assert.That(ex.Message, Is.EqualTo("Cannot read an array with 1 dimension(s) from an array with 2 dimension(s)"));
         }
 
@@ -513,13 +513,13 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     var exception = Assert.Throws<NotSupportedException>(() =>
                     {
                         reader.GetFieldValue<List<int>>(0);
-                    });
+                    })!;
                     Assert.That(exception.Message, Is.EqualTo("Can't read multidimensional array as List<Int32>"));
                 }
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/844")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/844")]
         public async Task IEnumerableThrowsFriendlyException()
         {
             using (var conn = await OpenConnectionAsync())
@@ -530,7 +530,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/960")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/960")]
         public async Task MixedElementTypes()
         {
             var mixedList = new ArrayList { 1, "yo" };
@@ -544,7 +544,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/960")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/960")]
         public async Task JaggedArraysNotSupported()
         {
             var jagged = new int[2][];
@@ -571,7 +571,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             }
         }
 
-        [Test, IssueLink("https://github.com/EDB/EDB/issues/1546")]
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1546")]
         public void GenericListGetEDBDbType()
         {
             var p = new EDBParameter
@@ -652,6 +652,18 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                     Assert.That(reader.GetProviderSpecificFieldType(1), Is.EqualTo(typeof(Array)));
                 }
             }
+        }
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3417")]
+        public async Task ReadTwoEmptyArrays()
+        {
+            using var conn = await OpenConnectionAsync();
+            using var cmd = new EDBCommand("SELECT '{}'::INT[], '{}'::INT[]", conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            await reader.ReadAsync();
+            Assert.AreSame(reader.GetFieldValue<int[]>(0), reader.GetFieldValue<int[]>(1));
+            // Unlike T[], List<T> is mutable so we should not return the same instance
+            Assert.AreNotSame(reader.GetFieldValue<List<int>>(0), reader.GetFieldValue<List<int>>(1));
         }
 
         async Task AssertIListRoundtrips<TElement>(EDBConnection conn, IEnumerable<TElement> value)

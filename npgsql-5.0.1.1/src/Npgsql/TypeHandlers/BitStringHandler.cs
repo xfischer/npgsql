@@ -21,7 +21,7 @@ namespace EnterpriseDB.EDBClient.TypeHandlers
     /// See https://www.postgresql.org/docs/current/static/datatype-bit.html.
     ///
     /// Note that for BIT(1), this handler will return a bool by default, to align with SQLClient
-    /// (see discussion https://github.com/EDB/EDB/pull/362#issuecomment-59622101).
+    /// (see discussion https://github.com/npgsql/npgsql/pull/362#issuecomment-59622101).
     ///
     /// The type handler API allows customizing EnterpriseDB.EDBClient's behavior in powerful ways. However, although it is public, it
     /// should be considered somewhat unstable, and  may change in breaking ways, including in non-major releases.
