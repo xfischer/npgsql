@@ -6,12 +6,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 {
     public abstract class TypeHandlerTestBase<T> : MultiplexingTestBase
     {
-        readonly EDBDbType? _EDBDbType;
+        readonly EDBDbType? _npgsqlDbType;
         readonly string? _typeName;
         readonly string? _minVersion;
 
-        protected TypeHandlerTestBase(MultiplexingMode multiplexingMode, EDBDbType? EDBDbType, string? typeName, string? minVersion = null)
-            : base(multiplexingMode) => (_EDBDbType, _typeName, _minVersion) = (EDBDbType, typeName, minVersion);
+        protected TypeHandlerTestBase(MultiplexingMode multiplexingMode, EDBDbType? npgsqlDbType, string? typeName, string? minVersion = null)
+            : base(multiplexingMode) => (_npgsqlDbType, _typeName, _minVersion) = (npgsqlDbType, typeName, minVersion);
 
         [OneTimeSetUp]
         public async Task MinimumPgVersion()
@@ -39,8 +39,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
         {
             var parameter = new EDBParameter<T>("p", expected);
 
-            if (_EDBDbType != null)
-                parameter.EDBDbType = _EDBDbType.Value;
+            if (_npgsqlDbType != null)
+                parameter.EDBDbType = _npgsqlDbType.Value;
 
             if (_typeName != null)
                 parameter.DataTypeName = _typeName;

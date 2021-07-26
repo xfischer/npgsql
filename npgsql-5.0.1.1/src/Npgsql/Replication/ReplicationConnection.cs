@@ -28,7 +28,7 @@ namespace EnterpriseDB.EDBClient.Replication
         static readonly Version FirstVersionWithoutDropSlotDoubleCommandCompleteMessage = new Version(13, 0);
         static readonly Version FirstVersionWithTemporarySlotsAndSlotSnapshotInitMode = new Version(10, 0);
         static readonly EDBLogger Log = EDBLogManager.CreateLogger(nameof(ReplicationConnection));
-        readonly EDBConnection _EDBConnection;
+        readonly EDBConnection _npgsqlConnection;
         readonly SemaphoreSlim _feedbackSemaphore = new SemaphoreSlim(1, 1);
         string? _userFacingConnectionString;
         TimeSpan? _commandTimeout;
@@ -36,7 +36,9 @@ namespace EnterpriseDB.EDBClient.Replication
         Timer? _sendFeedbackTimer;
         Timer? _requestFeedbackTimer;
         TimeSpan _requestFeedbackInterval;
-        Task _replicationCompletion = Task.CompletedTask;
+
+        IAsyncEnumerator<XLogDataMessage>? _currentEnumerator;
+        CancellationTokenSource? _replicationCancellationTokenSource;
         bool _pgCancellationSupported;
         bool _isDisposed;
 
@@ -57,7 +59,7 @@ namespace EnterpriseDB.EDBClient.Replication
 
         private protected ReplicationConnection()
         {
-            _EDBConnection = new EDBConnection();
+            _npgsqlConnection = new EDBConnection();
             _requestFeedbackInterval = new TimeSpan(_walReceiverTimeout.Ticks / 2);
         }
 
@@ -87,7 +89,7 @@ namespace EnterpriseDB.EDBClient.Replication
             set
             {
                 _userFacingConnectionString = value;
-                _EDBConnection.ConnectionString = new EDBConnectionStringBuilder(value)
+                _npgsqlConnection.ConnectionString = new EDBConnectionStringBuilder(value)
                 {
                     Pooling = false,
                     Enlist = false,
@@ -150,10 +152,10 @@ namespace EnterpriseDB.EDBClient.Replication
 
         private protected abstract ReplicationMode ReplicationMode { get; }
 
-        internal Version PostgreSqlVersion => _EDBConnection.PostgreSqlVersion;
+        internal Version PostgreSqlVersion => _npgsqlConnection.PostgreSqlVersion;
 
         internal EDBConnector Connector
-            => _EDBConnection.Connector ??
+            => _npgsqlConnection.Connector ??
                throw new InvalidOperationException($"The {Connector} property can only be used when there is an active connection");
 
         /// <summary>
@@ -162,8 +164,8 @@ namespace EnterpriseDB.EDBClient.Replication
         /// <value>The time to wait for the command to execute. The default value is 30 seconds.</value>
         public TimeSpan CommandTimeout
         {
-            get => _commandTimeout ?? (_EDBConnection.CommandTimeout > 0
-                ? TimeSpan.FromSeconds(_EDBConnection.CommandTimeout)
+            get => _commandTimeout ?? (_npgsqlConnection.CommandTimeout > 0
+                ? TimeSpan.FromSeconds(_npgsqlConnection.CommandTimeout)
                 : Timeout.InfiniteTimeSpan);
             set
             {
@@ -181,13 +183,13 @@ namespace EnterpriseDB.EDBClient.Replication
         /// The client encoding for the connection
         /// This can only be called when there is an active connection.
         /// </summary>
-        public Encoding Encoding => _EDBConnection.Connector?.TextEncoding ?? throw new InvalidOperationException($"The {Encoding} property can only be used when there is an active connection");
+        public Encoding Encoding => _npgsqlConnection.Connector?.TextEncoding ?? throw new InvalidOperationException($"The {Encoding} property can only be used when there is an active connection");
 
         /// <summary>
         /// Process id of backend server.
         /// This can only be called when there is an active connection.
         /// </summary>
-        public int ProcessID => _EDBConnection.Connector?.BackendProcessId ?? throw new InvalidOperationException($"The {ProcessID} property can only be used when there is an active connection");
+        public int ProcessID => _npgsqlConnection.Connector?.BackendProcessId ?? throw new InvalidOperationException($"The {ProcessID} property can only be used when there is an active connection");
 
         #endregion Properties
 
@@ -205,11 +207,11 @@ namespace EnterpriseDB.EDBClient.Replication
         {
             CheckDisposed();
 
-            await _EDBConnection.OpenAsync(cancellationToken)
+            await _npgsqlConnection.OpenAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             // PG versions before 10 ignore cancellations during replication
-            _pgCancellationSupported = _EDBConnection.PostgreSqlVersion >= new Version(10, 0);
+            _pgCancellationSupported = _npgsqlConnection.PostgreSqlVersion >= new Version(10, 0);
 
             SetTimeouts(CommandTimeout, CommandTimeout);
         }
@@ -229,16 +231,41 @@ namespace EnterpriseDB.EDBClient.Replication
                 if (_isDisposed)
                     return;
 
-                if (Connector.State == ConnectorState.Replication)
+                if (_npgsqlConnection.Connector?.State == ConnectorState.Replication)
                 {
-                    Connector.PerformPostgresCancellation();
-                    await _replicationCompletion;
+                    Debug.Assert(_currentEnumerator is not null);
+                    Debug.Assert(_replicationCancellationTokenSource is not null);
+
+                    // Replication is in progress; cancel it (soft or hard) and iterate the enumerator until we get the cancellation
+                    // exception. Note: this isn't thread-safe: a user calling DisposeAsync and enumerating at the same time is violating
+                    // our contract.
+                    _replicationCancellationTokenSource.Cancel();
+                    try
+                    {
+                        while (await _currentEnumerator.MoveNextAsync())
+                        {
+                            // Do nothing with messages - simply enumerate until cancellation/termination
+                        }
+                    }
+                    catch
+                    {
+                        // Cancellation/termination occurred
+                    }
                 }
 
                 Debug.Assert(_sendFeedbackTimer is null, "Send feedback timer isn't null at replication shutdown");
                 Debug.Assert(_requestFeedbackTimer is null, "Request feedback timer isn't null at replication shutdown");
                 _feedbackSemaphore.Dispose();
-                await _EDBConnection.Close(async: true);
+
+                try
+                {
+                    await _npgsqlConnection.Close(async: true);
+                }
+                catch
+                {
+                    // Dispose
+                }
+
                 _isDisposed = true;
             }
         }
@@ -393,20 +420,28 @@ namespace EnterpriseDB.EDBClient.Replication
             }
         }
 
-        internal async IAsyncEnumerable<XLogDataMessage> StartReplicationInternal(
+        internal IAsyncEnumerator<XLogDataMessage> StartReplicationInternalWrapper(
             string command,
             bool bypassingStream,
-            [EnumeratorCancellation] CancellationToken cancellationToken)
+            CancellationToken cancellationToken)
+        {
+            _currentEnumerator = StartReplicationInternal(command, bypassingStream, cancellationToken);
+            return _currentEnumerator;
+        }
+
+        internal async IAsyncEnumerator<XLogDataMessage> StartReplicationInternal(
+            string command,
+            bool bypassingStream,
+            CancellationToken cancellationToken)
         {
             CheckDisposed();
 
-            var connector = _EDBConnection.Connector!;
+            var connector = _npgsqlConnection.Connector!;
+
+            _replicationCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             using var _ = Connector.StartUserAction(
-                ConnectorState.Replication, cancellationToken, attemptPgCancellation: _pgCancellationSupported);
-
-            var completionSource = new TaskCompletionSource<int>();
-            _replicationCompletion = completionSource.Task;
+                ConnectorState.Replication, _replicationCancellationTokenSource.Token, attemptPgCancellation: _pgCancellationSupported);
 
             try
             {
@@ -530,8 +565,34 @@ namespace EnterpriseDB.EDBClient.Replication
 
                 SetTimeouts(CommandTimeout, CommandTimeout);
 
-                completionSource.SetResult(0);
+                _replicationCancellationTokenSource.Dispose();
+                _replicationCancellationTokenSource = null;
+
+                _currentEnumerator = null;
             }
+        }
+
+        /// <summary>
+        /// Sets the current status of the replication as it is interpreted by the consuming client. The value supplied
+        /// in <see paramref="lastAppliedAndFlushedLsn" /> will be sent to the server via <see cref="LastAppliedLsn"/> and
+        /// <see cref="LastFlushedLsn"/> with the next status update.
+        /// <para>
+        /// A status update which will happen upon server request, upon expiration of <see cref="WalReceiverStatusInterval"/>
+        /// our upon an enforced status update via <see cref="SendStatusUpdate"/>, whichever happens first.
+        /// If you want the value you set here to be pushed to the server immediately (e. g. in synchronous replication scenarios),
+        /// call <see cref="SendStatusUpdate"/> after calling this method.
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// This is a convenience method setting both <see cref="LastAppliedLsn"/> and <see cref="LastFlushedLsn"/> in one operation.
+        /// You can use it if your application processes replication messages in  a way that doesn't care about the difference between
+        /// writing a message and flushing it to a permanent storage medium.
+        /// </remarks>
+        /// <param name="lastAppliedAndFlushedLsn">The location of the last WAL byte + 1 applied (e. g. processed or written to disk) and flushed to disk in the standby.</param>
+        public void SetReplicationStatus(EDBLogSequenceNumber lastAppliedAndFlushedLsn)
+        {
+            Interlocked.Exchange(ref _lastAppliedLsn, unchecked((long)(ulong)lastAppliedAndFlushedLsn));
+            Interlocked.Exchange(ref _lastFlushedLsn, unchecked((long)(ulong)lastAppliedAndFlushedLsn));
         }
 
         /// <summary>
@@ -569,7 +630,7 @@ namespace EnterpriseDB.EDBClient.Replication
 
             try
             {
-                var connector = _EDBConnection.Connector!;
+                var connector = _npgsqlConnection.Connector!;
                 var buf = connector.WriteBuffer;
 
                 const int len = 39;
@@ -592,7 +653,8 @@ namespace EnterpriseDB.EDBClient.Replication
             finally
             {
                 _sendFeedbackTimer!.Change(WalReceiverStatusInterval, Timeout.InfiniteTimeSpan);
-                _requestFeedbackTimer!.Change(_requestFeedbackInterval, Timeout.InfiniteTimeSpan);
+                if (requestReply)
+                    _requestFeedbackTimer!.Change(_requestFeedbackInterval, Timeout.InfiniteTimeSpan);
                 _feedbackSemaphore.Release();
             }
         }
@@ -608,7 +670,7 @@ namespace EnterpriseDB.EDBClient.Replication
             }
             catch (Exception e)
             {
-                Log.Error("An exception occurred while requesting streaming replication feedback from the server.", e, _EDBConnection?.Connector?.Id ?? 0);
+                Log.Error("An exception occurred while requesting streaming replication feedback from the server.", e, _npgsqlConnection?.Connector?.Id ?? 0);
             }
         }
 
@@ -623,7 +685,7 @@ namespace EnterpriseDB.EDBClient.Replication
             }
             catch (Exception e)
             {
-                Log.Error("An exception occurred while sending streaming replication feedback to the server.", e, _EDBConnection?.Connector?.Id ?? 0);
+                Log.Error("An exception occurred while sending streaming replication feedback to the server.", e, _npgsqlConnection?.Connector?.Id ?? 0);
             }
         }
 

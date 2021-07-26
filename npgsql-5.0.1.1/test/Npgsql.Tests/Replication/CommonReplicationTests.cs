@@ -233,12 +233,8 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
                 {
                     await using var c = await OpenConnectionAsync();
                     TestUtil.MinimumPgVersion(c, "10.0", "The SHOW command, which is required to run this test was added to the Streaming Replication Protocol in PostgreSQL 10");
-                    var messages = new ConcurrentQueue<ReplicationMessage>();
                     await c.ExecuteNonQueryAsync($"CREATE TABLE {tableName} (id serial PRIMARY KEY, name TEXT NOT NULL);");
-                    await using var rc = await OpenReplicationConnectionAsync(new EDBConnectionStringBuilder(ConnectionString)
-                    {
-                        ApplicationName = slotName
-                    });
+                    await using var rc = await OpenReplicationConnectionAsync(new EDBConnectionStringBuilder(ConnectionString));
                     var walSenderTimeout = ParseTimespan(await rc.Show("wal_sender_timeout"));
                     var info = await rc.IdentifySystem();
                     if (walSenderTimeout > TimeSpan.FromSeconds(3) && !TestUtil.IsOnBuildServer)
@@ -252,12 +248,13 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
                     using var streamingCts = new CancellationTokenSource();
 
                     var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
-
-                    var delay = TimeSpan.FromTicks((long)(walSenderTimeout.Ticks * 1.1));
-                    Console.WriteLine($"Going to sleep for {delay}");
-                    await Task.Delay(delay, CancellationToken.None);
-
                     Assert.That(await replicationEnumerator.MoveNextAsync(), Is.True);
+
+                    await Task.Delay(walSenderTimeout * 1.1, CancellationToken.None);
+
+                    await c.ExecuteNonQueryAsync($"INSERT INTO \"{tableName}\" (name) VALUES ('val2')");
+                    Assert.That(await replicationEnumerator.MoveNextAsync(), Is.True);
+
                     var message = replicationEnumerator.Current;
                     Assert.That(message.WalStart, Is.GreaterThanOrEqualTo(info.XLogPos));
                     Assert.That(message.WalEnd, Is.GreaterThanOrEqualTo(message.WalStart));
@@ -287,8 +284,8 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
                     if (synchronousCommit != "local")
                         TestUtil.IgnoreExceptOnBuildServer("Ignoring because synchronous_commit isn't 'local'");
                     var synchronousStandbyNames = (string)(await c.ExecuteScalarAsync("SHOW synchronous_standby_names"))!;
-                    if (synchronousStandbyNames != "EDB_test_sync_standby")
-                        TestUtil.IgnoreExceptOnBuildServer("Ignoring because synchronous_standby_names isn't 'EDB_test_sync_standby'");
+                    if (synchronousStandbyNames != "npgsql_test_sync_standby")
+                        TestUtil.IgnoreExceptOnBuildServer("Ignoring because synchronous_standby_names isn't 'npgsql_test_sync_standby'");
 
                     await c.ExecuteNonQueryAsync(@$"
     CREATE TABLE {tableName} (id serial PRIMARY KEY, name TEXT NOT NULL);
@@ -297,7 +294,7 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
                     await using var rc = await OpenReplicationConnectionAsync(new EDBConnectionStringBuilder(ConnectionString)
                     {
                         // This must be one of the configured synchronous_standby_names from postgresql.conf
-                        ApplicationName = "EDB_test_sync_standby",
+                        ApplicationName = "npgsql_test_sync_standby",
                         // We need wal_sender_timeout to be at least twice checkpoint_timeout to avoid getting feedback requests
                         // from the backend in physical replication which makes this test fail, so we disable it for this test.
                         Options = "-c wal_sender_timeout=0"
@@ -454,6 +451,43 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
 
         #endregion
 
+        #region BugTests
+
+        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3534")]
+        public Task Bug3534()
+            => SafeReplicationTest(
+                async (slotName, _) =>
+                {
+                    await using var rc = await OpenReplicationConnectionAsync();
+                    var info = await rc.IdentifySystem();
+                    await CreateReplicationSlot(slotName);
+                    using var streamingCts = new CancellationTokenSource();
+                    rc.WalReceiverStatusInterval = TimeSpan.FromSeconds(1D);
+                    rc.WalReceiverTimeout = TimeSpan.FromSeconds(3D);
+                    await using var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
+
+                    var replicationMessageTask = replicationEnumerator.MoveNextAsync();
+                    streamingCts.CancelAfter(rc.WalReceiverTimeout * 2);
+
+                    Assert.Multiple(() =>
+                    {
+                        Assert.That(async () =>
+                        {
+                            // We only expect one transaction here but we need to keep polling
+                            // because in physical replication we can't prevent internal transactions
+                            // from being sent to the replication connection
+                            while (true)
+                            {
+                                await replicationMessageTask;
+                                replicationMessageTask = replicationEnumerator.MoveNextAsync();
+                            }
+                        }, Throws.Exception.AssignableTo<OperationCanceledException>());
+                        Assert.That(streamingCts.IsCancellationRequested);
+                    });
+                });
+
+        #endregion
+
         async Task CreateReplicationSlot(string slotName)
         {
             await using var c = await OpenConnectionAsync();
@@ -478,7 +512,7 @@ namespace EnterpriseDB.EDBClient.Tests.Replication
             {
                 var slot = new TestDecodingReplicationSlot(slotName);
                 var rc = (LogicalReplicationConnection)(ReplicationConnection)connection;
-                await foreach (var msg in rc.StartReplication(slot, cancellationToken, walLocation: xLogPos))
+                await foreach (var msg in rc.StartReplication(slot, cancellationToken, options: new TestDecodingOptions(skipEmptyXacts: true), walLocation: xLogPos))
                 {
                     yield return msg;
                 }

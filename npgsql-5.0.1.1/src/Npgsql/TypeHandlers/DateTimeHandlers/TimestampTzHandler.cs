@@ -54,13 +54,32 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
 
         /// <inheritdoc />
         public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
-            => base.Read(buf, len, fieldDescription).ToLocalTime();
+        {
+            var postgresTimestamp = buf.ReadInt64();
+            if (postgresTimestamp == long.MaxValue)
+                return ConvertInfinityDateTime
+                    ? DateTime.MaxValue
+                    : throw new InvalidCastException(InfinityExceptionMessage);
+            if (postgresTimestamp == long.MinValue)
+                return ConvertInfinityDateTime
+                    ? DateTime.MinValue
+                    : throw new InvalidCastException(InfinityExceptionMessage);
+
+            try
+            {
+                return FromPostgresTimestamp(postgresTimestamp).ToLocalTime();
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                throw new InvalidCastException(OutOfRangeExceptionMessage, e);
+            }
+        }
 
         /// <inheritdoc />
         protected override EDBDateTime ReadPsv(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
         {
             var ts = ReadTimeStamp(buf, len, fieldDescription);
-            return new EDBDateTime(ts.Date, ts.Time, DateTimeKind.Utc).ToLocalTime();
+            return ts.IsFinite ? new EDBDateTime(ts.Date, ts.Time, DateTimeKind.Utc).ToLocalTime() : ts;
         }
 
         DateTimeOffset IEDBSimpleTypeHandler<DateTimeOffset>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
@@ -124,7 +143,21 @@ namespace EnterpriseDB.EDBClient.TypeHandlers.DateTimeHandlers
                 throw new InvalidOperationException($"Internal EnterpriseDB.EDBClient bug: unexpected value {value.Kind} of enum {nameof(DateTimeKind)}. Please file a bug.");
             }
 
-            base.Write(value, buf, parameter);
+            EDBDateTime pgValue = value;
+            if (ConvertInfinityDateTime)
+            {
+                if (value == DateTime.MinValue)
+                {
+                    pgValue = EDBDateTime.NegativeInfinity;
+                }
+                else if (value == DateTime.MaxValue)
+                {
+                    pgValue = EDBDateTime.Infinity;
+                }
+            }
+
+            // We cannot pass the DateTime value due to it implicitly converting to the EDBDateTime anyway
+            base.Write(pgValue, buf, parameter);
         }
 
         /// <inheritdoc />

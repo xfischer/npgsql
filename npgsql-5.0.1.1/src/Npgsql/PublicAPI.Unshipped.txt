@@ -19,6 +19,7 @@ override EnterpriseDB.EDBClient.TypeHandlers.RangeHandler<TElement>.CreateArrayH
 override EnterpriseDB.EDBClient.TypeHandling.EDBSimpleTypeHandlerWithPsv<TDefault, TPsv>.CreateArrayHandler(EnterpriseDB.EDBClient.PostgresTypes.PostgresArrayType! arrayBackendType, EnterpriseDB.EDBClient.ArrayNullabilityMode arrayNullabilityMode) -> EnterpriseDB.EDBClient.TypeHandlers.ArrayHandler!
 *REMOVED*override EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<TDefault>.CreateArrayHandler(EnterpriseDB.EDBClient.PostgresTypes.PostgresArrayType! arrayBackendType) -> EnterpriseDB.EDBClient.TypeHandlers.ArrayHandler!
 override EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<TDefault>.CreateArrayHandler(EnterpriseDB.EDBClient.PostgresTypes.PostgresArrayType! arrayBackendType, EnterpriseDB.EDBClient.ArrayNullabilityMode arrayNullabilityMode) -> EnterpriseDB.EDBClient.TypeHandlers.ArrayHandler!
+EnterpriseDB.EDBClient.Replication.ReplicationConnection.SetReplicationStatus(EDBTypes.EDBLogSequenceNumber lastAppliedAndFlushedLsn) -> void
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ArrayNullabilityMode.get -> EnterpriseDB.EDBClient.ArrayNullabilityMode
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ArrayNullabilityMode.set -> void
 EnterpriseDB.EDBClient.ArrayNullabilityMode

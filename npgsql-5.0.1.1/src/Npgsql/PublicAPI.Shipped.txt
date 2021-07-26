@@ -332,9 +332,9 @@ EnterpriseDB.EDBClient.EDBBinaryImporter.StartRow() -> void
 EnterpriseDB.EDBClient.EDBBinaryImporter.StartRowAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 EnterpriseDB.EDBClient.EDBBinaryImporter.Timeout.set -> void
 EnterpriseDB.EDBClient.EDBBinaryImporter.Write<T>(T value) -> void
-EnterpriseDB.EDBClient.EDBBinaryImporter.Write<T>(T value, EDBTypes.EDBDbType EDBDbType) -> void
+EnterpriseDB.EDBClient.EDBBinaryImporter.Write<T>(T value, EDBTypes.EDBDbType npgsqlDbType) -> void
 EnterpriseDB.EDBClient.EDBBinaryImporter.Write<T>(T value, string! dataTypeName) -> void
-EnterpriseDB.EDBClient.EDBBinaryImporter.WriteAsync<T>(T value, EDBTypes.EDBDbType EDBDbType, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+EnterpriseDB.EDBClient.EDBBinaryImporter.WriteAsync<T>(T value, EDBTypes.EDBDbType npgsqlDbType, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 EnterpriseDB.EDBClient.EDBBinaryImporter.WriteAsync<T>(T value, string! dataTypeName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 EnterpriseDB.EDBClient.EDBBinaryImporter.WriteAsync<T>(T value, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 EnterpriseDB.EDBClient.EDBBinaryImporter.WriteNull() -> void
@@ -665,7 +665,7 @@ EnterpriseDB.EDBClient.EDBParameter.Scale.get -> byte
 EnterpriseDB.EDBClient.EDBParameter.Scale.set -> void
 EnterpriseDB.EDBClient.EDBParameter<T>
 EnterpriseDB.EDBClient.EDBParameter<T>.EDBParameter() -> void
-EnterpriseDB.EDBClient.EDBParameter<T>.EDBParameter(string! parameterName, EDBTypes.EDBDbType eDBDbType) -> void
+EnterpriseDB.EDBClient.EDBParameter<T>.EDBParameter(string! parameterName, EDBTypes.EDBDbType npgsqlDbType) -> void
 EnterpriseDB.EDBClient.EDBParameter<T>.EDBParameter(string! parameterName, System.Data.DbType dbType) -> void
 EnterpriseDB.EDBClient.EDBParameter<T>.EDBParameter(string! parameterName, T value) -> void
 EnterpriseDB.EDBClient.EDBParameter<T>.TypedValue.get -> T
@@ -2294,7 +2294,7 @@ static EDBTypes.EDBDate.Tomorrow.get -> EDBTypes.EDBDate
 static EDBTypes.EDBDate.ToEDBDate(System.DateTime date) -> EDBTypes.EDBDate
 static EDBTypes.EDBDate.TryParse(string! str, out EDBTypes.EDBDate date) -> bool
 static EDBTypes.EDBDate.Yesterday.get -> EDBTypes.EDBDate
-static EDBTypes.EDBDateTime.explicit operator System.DateTime(EDBTypes.EDBDateTime EDBDateTime) -> System.DateTime
+static EDBTypes.EDBDateTime.explicit operator System.DateTime(EDBTypes.EDBDateTime npgsqlDateTime) -> System.DateTime
 static EDBTypes.EDBDateTime.implicit operator EDBTypes.EDBDateTime(System.DateTime dateTime) -> EDBTypes.EDBDateTime
 static EDBTypes.EDBDateTime.Now.get -> EDBTypes.EDBDateTime
 static EDBTypes.EDBDateTime.operator !=(EDBTypes.EDBDateTime x, EDBTypes.EDBDateTime y) -> bool
