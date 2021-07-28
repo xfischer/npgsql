@@ -437,16 +437,15 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
         }
 
+        //## merged by ali shahzad
         [Test]
         [Timeout(10000)]
         public void ConnectTimeoutCancel()
         {
-            var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
-            if (unknownIp is null)
-            {
-                Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection cancellation tests");
-                return;
-            }
+            var unknownIp = Environment.GetEnvironmentVariable("EDB_UNKNOWN_IP");
+            if (unknownIp == null)
+                return; // https://github.com/nunit/nunit/issues/3282
+            //Assert.Ignore("EDB_UNKNOWN_IP isn't defined and is required for connection cancellation tests");
 
             var connString = new EDBConnectionStringBuilder(ConnectionString)
             {
@@ -461,6 +460,31 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
             }
         }
+
+        //[Test]
+        //[Timeout(10000)]
+        //public void ConnectTimeoutCancel()
+        //{
+        //    var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
+        //    if (unknownIp is null)
+        //    {
+        //        Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection cancellation tests");
+        //        return;
+        //    }
+
+        //    var connString = new EDBConnectionStringBuilder(ConnectionString)
+        //    {
+        //        Host = unknownIp,
+        //        Pooling = false,
+        //        Timeout = 30
+        //    }.ToString();
+        //    using (var conn = new EDBConnection(connString))
+        //    {
+        //        var cts = new CancellationTokenSource(1000);
+        //        Assert.That(async () => await conn.OpenAsync(cts.Token), Throws.Exception.TypeOf<OperationCanceledException>());
+        //        Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
+        //    }
+        //}
 
         #endregion
 

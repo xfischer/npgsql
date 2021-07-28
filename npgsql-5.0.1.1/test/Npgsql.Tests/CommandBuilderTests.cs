@@ -134,20 +134,34 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
+        //## merged by ali shahzad
         [Test]
-        public async Task DeriveFunctionParameters_ParameterNameFromFunction()
+        public void DeriveFunctionParameters_ParameterNameFromFunction()
         {
-            using (var conn = await OpenConnectionAsync())
+            using (var conn = OpenConnection())
             {
-                await using var _ = GetTempFunctionName(conn, out var function);
-
-                await conn.ExecuteNonQueryAsync($@"CREATE OR REPLACE FUNCTION {function}(x int, y int, out sum int, out product int) as 'select $1 + $2, $1 * $2' language 'sql';");
-                var command = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+                conn.ExecuteNonQuery(@"CREATE OR REPLACE FUNCTION pg_temp.testoutparameter2(x int, y int, out sum int, out product int) as 'select $1 + $2, $1 * $2' language 'sql';");
+                var command = new EDBCommand("pg_temp.testoutparameter2", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(command);
                 Assert.AreEqual("x", command.Parameters[0].ParameterName);
                 Assert.AreEqual("y", command.Parameters[1].ParameterName);
             }
         }
+
+        //[Test]
+        //public async Task DeriveFunctionParameters_ParameterNameFromFunction()
+        //{
+        //    using (var conn = await OpenConnectionAsync())
+        //    {
+        //        await using var _ = GetTempFunctionName(conn, out var function);
+
+        //        await conn.ExecuteNonQueryAsync($@"CREATE OR REPLACE FUNCTION {function}(x int, y int, out sum int, out product int) as 'select $1 + $2, $1 * $2' language 'sql';");
+        //        var command = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+        //        EDBCommandBuilder.DeriveParameters(command);
+        //        Assert.AreEqual("x", command.Parameters[0].ParameterName);
+        //        Assert.AreEqual("y", command.Parameters[1].ParameterName);
+        //    }
+        //}
 
         [Test]
         public async Task DeriveFunctionParameters_NonExistingFunction()
@@ -417,31 +431,29 @@ $$ LANGUAGE SQL;
             }
         }
 
+        //## merged by ali shahzad
         [Test, Description("Tests parameter derivation for a function that returns SETOF record")]
-        public async Task DeriveFunctionParameters_FunctionReturningSetofRecord()
+        public void DeriveFunctionParameters_FunctionReturningSetofRecord()
         {
-            using (var conn = await OpenConnectionAsync())
+            using (var conn = OpenConnection())
             {
-                MinimumPgVersion(conn, "9.2.0");
-
-                await using var _ = await GetTempTableName(conn, out var table);
-                await using var __ = GetTempFunctionName(conn, out var function);
+                TestUtil.MinimumPgVersion(conn, "9.2.0");
 
                 // This function returns record because of the two Out (InOut & Out) parameters
-                await conn.ExecuteNonQueryAsync($@"
-CREATE TABLE {table} (fooid int, foosubid int, fooname text);
+                conn.ExecuteNonQuery(@"
+CREATE TABLE pg_temp.foo (fooid int, foosubid int, fooname text);
 
-INSERT INTO {table} VALUES
+INSERT INTO pg_temp.foo VALUES
 (1, 1, 'Joe'),
 (1, 2, 'Ed'),
 (2, 1, 'Mary');
 
-CREATE FUNCTION {function}(int, OUT fooid int, OUT foosubid int, OUT fooname text) RETURNS SETOF record AS $$
-    SELECT * FROM {table} WHERE {table}.fooid = $1 ORDER BY {table}.foosubid;
+CREATE FUNCTION pg_temp.getfoo(int, OUT fooid int, OUT foosubid int, OUT fooname text) RETURNS SETOF record AS $$
+    SELECT * FROM pg_temp.foo WHERE pg_temp.foo.fooid = $1 ORDER BY pg_temp.foo.foosubid;
 $$ LANGUAGE SQL;
                 ");
 
-                var cmd = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new EDBCommand("pg_temp.getfoo", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(4));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
@@ -455,25 +467,60 @@ $$ LANGUAGE SQL;
             }
         }
 
+        //        [Test, Description("Tests parameter derivation for a function that returns SETOF record")]
+        //        public async Task DeriveFunctionParameters_FunctionReturningSetofRecord()
+        //        {
+        //            using (var conn = await OpenConnectionAsync())
+        //            {
+        //                MinimumPgVersion(conn, "9.2.0");
+
+        //                await using var _ = await GetTempTableName(conn, out var table);
+        //                await using var __ = GetTempFunctionName(conn, out var function);
+
+        //                // This function returns record because of the two Out (InOut & Out) parameters
+        //                await conn.ExecuteNonQueryAsync($@"
+        //CREATE TABLE {table} (fooid int, foosubid int, fooname text);
+
+        //INSERT INTO {table} VALUES
+        //(1, 1, 'Joe'),
+        //(1, 2, 'Ed'),
+        //(2, 1, 'Mary');
+
+        //CREATE FUNCTION {function}(int, OUT fooid int, OUT foosubid int, OUT fooname text) RETURNS SETOF record AS $$
+        //    SELECT * FROM {table} WHERE {table}.fooid = $1 ORDER BY {table}.foosubid;
+        //$$ LANGUAGE SQL;
+        //                ");
+
+        //                var cmd = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+        //                EDBCommandBuilder.DeriveParameters(cmd);
+        //                Assert.That(cmd.Parameters, Has.Count.EqualTo(4));
+        //                Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Input));
+        //                Assert.That(cmd.Parameters[1].Direction, Is.EqualTo(ParameterDirection.Output));
+        //                Assert.That(cmd.Parameters[2].Direction, Is.EqualTo(ParameterDirection.Output));
+        //                Assert.That(cmd.Parameters[3].Direction, Is.EqualTo(ParameterDirection.Output));
+        //                cmd.Parameters[0].Value = 1;
+        //                cmd.Prepare();
+        //                cmd.ExecuteNonQuery();
+        //                Assert.That(cmd.Parameters[0].Value, Is.EqualTo(1));
+        //            }
+        //        }
+
+        //## merged by ali shahzad
         [Test, IssueLink("https://github.com/EDB/EDB/issues/2022")]
-        public async Task DeriveFunctionParameters_FunctionReturningSetofTypeWithDroppedColumn()
+        public void DeriveFunctionParameters_FunctionReturningSetofTypeWithDroppedColumn()
         {
-            using (var conn = await OpenConnectionAsync())
+            using (var conn = OpenConnection())
             {
-                MinimumPgVersion(conn, "9.2.0");
-
-                await using var _ = await GetTempTableName(conn, out var table);
-                await using var __ = GetTempFunctionName(conn, out var function);
-
-                await conn.ExecuteNonQueryAsync($@"
-                    CREATE TABLE {table} (id serial PRIMARY KEY, t1 text, t2 text);
-                    CREATE OR REPLACE FUNCTION {function}() RETURNS SETOF {table} AS $$
-                        SELECT * FROM {table}
+                TestUtil.MinimumPgVersion(conn, "9.2.0");
+                conn.ExecuteNonQuery(@"
+                    CREATE TABLE pg_temp.test (id serial PRIMARY KEY, t1 text, t2 text);
+                    CREATE FUNCTION pg_temp.test_func() RETURNS SETOF test AS $$
+                        SELECT * FROM test
                     $$LANGUAGE SQL;
-                    ALTER TABLE {table} DROP t2;
+                    ALTER TABLE test DROP t2;
                 ");
 
-                var cmd = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new EDBCommand("pg_temp.test_func", conn) { CommandType = CommandType.StoredProcedure };
                 EDBCommandBuilder.DeriveParameters(cmd);
                 Assert.That(cmd.Parameters, Has.Count.EqualTo(2));
                 Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Output));
@@ -482,6 +529,34 @@ $$ LANGUAGE SQL;
                 Assert.That(cmd.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Text));
             }
         }
+
+        //[Test, IssueLink("https://github.com/EDB/EDB/issues/2022")]
+        //public async Task DeriveFunctionParameters_FunctionReturningSetofTypeWithDroppedColumn()
+        //{
+        //    using (var conn = await OpenConnectionAsync())
+        //    {
+        //        MinimumPgVersion(conn, "9.2.0");
+
+        //        await using var _ = await GetTempTableName(conn, out var table);
+        //        await using var __ = GetTempFunctionName(conn, out var function);
+
+        //        await conn.ExecuteNonQueryAsync($@"
+        //            CREATE TABLE {table} (id serial PRIMARY KEY, t1 text, t2 text);
+        //            CREATE OR REPLACE FUNCTION {function}() RETURNS SETOF {table} AS $$
+        //                SELECT * FROM {table}
+        //            $$LANGUAGE SQL;
+        //            ALTER TABLE {table} DROP t2;
+        //        ");
+
+        //        var cmd = new EDBCommand(function, conn) { CommandType = CommandType.StoredProcedure };
+        //        EDBCommandBuilder.DeriveParameters(cmd);
+        //        Assert.That(cmd.Parameters, Has.Count.EqualTo(2));
+        //        Assert.That(cmd.Parameters[0].Direction, Is.EqualTo(ParameterDirection.Output));
+        //        Assert.That(cmd.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+        //        Assert.That(cmd.Parameters[1].Direction, Is.EqualTo(ParameterDirection.Output));
+        //        Assert.That(cmd.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Text));
+        //    }
+        //}
 
         #endregion
 

@@ -293,7 +293,8 @@ namespace EnterpriseDB.EDBClient.Tests
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1737")]
+        //## merged by ali shahzad
+        [Test, IssueLink("https://github.com/EDB/EDB/issues/1737")]
         public void Bug1737()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -325,6 +326,39 @@ namespace EnterpriseDB.EDBClient.Tests
                 scope.Complete();
             }
         }
+
+        //[Test, IssueLink("https://github.com/npgsql/npgsql/issues/1737")]
+        //public void Bug1737()
+        //{
+        //    var csb = new EDBConnectionStringBuilder(ConnectionString)
+        //    {
+        //        Pooling = false,
+        //        Enlist = true
+        //    };
+
+        //    // Case 1
+        //    using (var scope = new TransactionScope())
+        //    {
+        //        using (var conn = OpenConnection(csb))
+        //        using (var cmd = new EDBCommand("SELECT 1", conn))
+        //            cmd.ExecuteNonQuery();
+        //        scope.Complete();
+        //    }
+
+        //    // Case 2
+        //    using (var scope = new TransactionScope())
+        //    {
+        //        using (var conn1 = OpenConnection(csb))
+        //        using (var cmd = new EDBCommand("SELECT 1", conn1))
+        //            cmd.ExecuteNonQuery();
+
+        //        using (var conn2 = OpenConnection(csb))
+        //        using (var cmd = new EDBCommand("SELECT 1", conn2))
+        //            cmd.ExecuteNonQuery();
+
+        //        scope.Complete();
+        //    }
+        //}
 
         #region Utilities
 

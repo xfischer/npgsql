@@ -482,31 +482,58 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
             }
         }
 
-        [Test, IssueLink("https://github.com/npgsql/npgsql/issues/657")]
+        //## merged by ali shahzad
+        [Test, Ignore(""), IssueLink("https://github.com/EnterpriseDB.EDBClient/EnterpriseDB.EDBClient/issues/657")]
         [Explicit]
         public async Task ImportByteaMassive()
         {
             using (var conn = await OpenConnectionAsync())
             {
-                await using var _ = await CreateTempTable(conn, "field BYTEA", out var table);
+                await conn.ExecuteNonQueryAsync("CREATE TEMP TABLE data (field BYTEA)");
 
                 const int iterations = 10000;
-                var data = new byte[1024*1024];
+                var data = new byte[1024 * 1024];
 
-                using (var writer = conn.BeginBinaryImport($"COPY {table} (field) FROM STDIN BINARY"))
+                using (var writer = conn.BeginBinaryImport("COPY data (field) FROM STDIN BINARY"))
                 {
                     for (var i = 0; i < iterations; i++)
                     {
-                        if (i%100 == 0)
+                        if (i % 100 == 0)
                             Console.WriteLine("Iteration " + i);
                         writer.StartRow();
                         writer.Write(data, EDBDbType.Bytea);
                     }
                 }
 
-                Assert.That(await conn.ExecuteScalarAsync($"SELECT COUNT(*) FROM {table}"), Is.EqualTo(iterations));
+                Assert.That(await conn.ExecuteScalarAsync("SELECT COUNT(*) FROM data"), Is.EqualTo(iterations));
             }
         }
+
+        //[Test, IssueLink("https://github.com/npgsql/npgsql/issues/657")]
+        //[Explicit]
+        //public async Task ImportByteaMassive()
+        //{
+        //    using (var conn = await OpenConnectionAsync())
+        //    {
+        //        await using var _ = await CreateTempTable(conn, "field BYTEA", out var table);
+
+        //        const int iterations = 10000;
+        //        var data = new byte[1024*1024];
+
+        //        using (var writer = conn.BeginBinaryImport($"COPY {table} (field) FROM STDIN BINARY"))
+        //        {
+        //            for (var i = 0; i < iterations; i++)
+        //            {
+        //                if (i%100 == 0)
+        //                    Console.WriteLine("Iteration " + i);
+        //                writer.StartRow();
+        //                writer.Write(data, EDBDbType.Bytea);
+        //            }
+        //        }
+
+        //        Assert.That(await conn.ExecuteScalarAsync($"SELECT COUNT(*) FROM {table}"), Is.EqualTo(iterations));
+        //    }
+        //}
 
         [Test]
         public async Task ExportLongString()
