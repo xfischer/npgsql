@@ -27,28 +27,65 @@ nuget install System.Threading.Tasks.Extensions -Version 4.3.0
 nuget install EntityFramework
 nuget restore npgsql-5.0.1.1\Npgsql.sln
 
-
-
 cd npgsql-5.0.1.1\src\Npgsql
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM dotnet build --configuration Release
-REM msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% || goto :error
-REM /p:Configuration=%RELEASE_CONFIGURATION% /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
-REM msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0
 copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\ %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1
 copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
+cd %SOURCE_PATH%
+cd EF.core\src\EFCore.PG
+nuget restore EFCore.PG
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+
+cd %SOURCE_PATH%
+cd EF.core\src\EFCore.PG.FuzzyStringMatch
+nuget restore EFCore.PG.FuzzyStringMatch
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.FuzzyStringMatch.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+
+cd %SOURCE_PATH%
+cd EF.core\src\EFCore.PG.NodaTime
+nuget restore EFCore.PG.NodaTime
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+
+cd %SOURCE_PATH%
+cd EF.core\src\EFCore.PG.NTS
+nuget restore EFCore.PG.NTS
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+
+cd %SOURCE_PATH%
+cd EF.core\src\EFCore.PG.Trigrams
+nuget restore EFCore.PG.Trigrams
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Trigrams.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
@@ -57,40 +94,35 @@ cd %SOURCE_PATH%
 cd npgsql-5.0.1.1\src\Npgsql.GeoJSON
 nuget restore Npgsql.GeoJSON.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM msbuild.exe Npgsql.GeoJSON.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.0\Npgsql.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 cd %SOURCE_PATH%
 cd npgsql-5.0.1.1\src\Npgsql.Json.NET
 nuget restore Npgsql.Json.NET.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.0\Npgsql.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
 cd %SOURCE_PATH%
 cd npgsql-5.0.1.1\src\Npgsql.LegacyPostgis
 nuget restore Npgsql.LegacyPostgis.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.0\Npgsql.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
 cd %SOURCE_PATH%
 cd npgsql-5.0.1.1\src\Npgsql.NetTopologySuite
 nuget restore Npgsql.NetTopologySuite.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.0\Npgsql.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
 cd %SOURCE_PATH%
 cd npgsql-5.0.1.1\src\Npgsql.NodaTime
 nuget restore Npgsql.NodaTime.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-REM msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.0\Npgsql.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
 
 :error
 echo "Failed with error %errorlevel%."
