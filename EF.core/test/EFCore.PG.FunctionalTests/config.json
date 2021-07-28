@@ -1,7 +1,7 @@
 {
     "Test": {
       "Npgsql": {
-        "DefaultConnection": "Server=localhost;Username=npgsql_tests;Password=npgsql_tests"
+        "DefaultConnection": "Server=localhost;port=5445;Username=enterprisedb;Password=Fusion123;Database=edb;Timeout=0;Command Timeout=0"
       }
     }
 }

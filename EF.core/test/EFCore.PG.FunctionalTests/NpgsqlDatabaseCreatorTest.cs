@@ -1,4 +1,4 @@
-﻿#if DISABLED_FLAKY_ON_APPVEYOR
+#if DISABLED_FLAKY_ON_APPVEYOR
 
 using System;
 using System.Data;
