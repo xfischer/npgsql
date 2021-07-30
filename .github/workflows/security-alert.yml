@@ -1,20 +1,22 @@
 name: GitHub Security Alerts for Jira
- on:
-   schedule:
-     - cron: '0 */6 * * *'
-   workflow_dispatch:
- jobs:
-   syncSecurityAlerts:
-     runs-on: ubuntu-latest
-     steps:
-       - name: "Sync security alerts to Jira issues"
-         uses: reload/github-security-jira@v1.x
-         env:
-           GH_SECURITY_TOKEN: ${{ secrets.GITHUBSECURITYTOKEN }}
-           JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-           JIRA_HOST: https://enterprisedb.atlassian.net
-           JIRA_USER: muhammad.aqeel@enterprisedb.com
-           JIRA_PROJECT: EC
-           JIRA_ISSUE_TYPE: Security/Compliance
-           JIRA_WATCHERS: eric.mccormack@enterprisedb.com
-           JIRA_RESTRICTED_COMMENT_ROLE: Developers
+
+on:
+  schedule: 
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  syncSecurityAlerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Sync security alerts to Jira issues"
+        uses: reload/github-security-jira@v1.1.0
+        env:
+          GH_SECURITY_TOKEN: ${{ secrets.GITHUBSECURITYTOKEN }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN_DOUG }}
+          JIRA_HOST: https://enterprisedb.atlassian.net
+          JIRA_USER: doug.calobrisi@enterprisedb.com
+          JIRA_PROJECT: EC
+          JIRA_ISSUE_TYPE: Security/Compliance
+          JIRA_WATCHERS: eric.mccormack@enterprisedb.com
+          JIRA_RESTRICTED_COMMENT_ROLE: Developers
