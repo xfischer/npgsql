@@ -56,6 +56,11 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1
 copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
 
+cd %SOURCE_PATH%
+cd npgsql-5.0.1.1\test\Npgsql.Tests
+nuget restore Npgsql.Tests.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
 cd %SOURCE_PATH%
 cd EF.core\src\EFCore.PG
