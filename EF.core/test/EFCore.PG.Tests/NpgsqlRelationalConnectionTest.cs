@@ -28,7 +28,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
             using var connection = new NpgsqlRelationalConnection(CreateDependencies());
             using var master = connection.CreateMasterConnection();
 
-            Assert.Equal(@"Host=localhost;Database=postgres;Username=some_user;Password=some_password;Pooling=False", master.ConnectionString);
+            Assert.Equal(@"Host=localhost;Database=postgres;Username=some_user;Password=some_password;Pooling=False;Multiplexing=False", master.ConnectionString);
         }
 
         [Fact]

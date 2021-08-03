@@ -50,7 +50,8 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
                           ?? "postgres";
             var csb = new EDBConnectionStringBuilder(ConnectionString) {
                 Database = adminDb,
-                Pooling = false
+                Pooling = false,
+                Multiplexing = false
             };
 
             var relationalOptions = RelationalOptionsExtension.Extract(Dependencies.ContextOptions);
@@ -78,6 +79,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
             var clonedDbConnection = DbConnection.CloneWith(connectionString);
 
             var relationalOptions = RelationalOptionsExtension.Extract(Dependencies.ContextOptions)
+                .WithConnectionString(clonedDbConnection.ConnectionString)
                 .WithConnection(clonedDbConnection);
 
             var optionsBuilder = new DbContextOptionsBuilder();

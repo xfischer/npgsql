@@ -127,11 +127,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expression
             case TypeCode.UInt32:
             case TypeCode.UInt64:
                 return _sqlExpressionFactory.Convert(expression, returnType, _typeMappingSource.FindMapping(returnType));
-            default:
-                return unwrappedReturnType == typeof(Guid)
-                    ? _sqlExpressionFactory.Convert(expression, returnType, _typeMappingSource.FindMapping(returnType))
-                    : expression;
             }
+
+            if (unwrappedReturnType == typeof(Guid) || unwrappedReturnType == typeof(DateTimeOffset))
+                return _sqlExpressionFactory.Convert(expression, returnType, _typeMappingSource.FindMapping(returnType));
+
+            return expression;
         }
     }
 }
