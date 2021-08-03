@@ -12,12 +12,12 @@ namespace  EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage
         [ConditionalFact]
         public void CloneWith_with_connection_and_connection_string()
         {
-            var services = EDBTestHelpers.Instance.CreateContextServices(
+            var services = NpgsqlTestHelpers.Instance.CreateContextServices(
                 new DbContextOptionsBuilder()
                     .UseNpgsql("Host=localhost;Database=DummyDatabase")
                     .Options);
 
-            var relationalConnection = (EDBRelationalConnection)services.GetRequiredService<IRelationalConnection>();
+            var relationalConnection = (NpgsqlRelationalConnection)services.GetRequiredService<IRelationalConnection>();
 
             var clone = relationalConnection.CloneWith("Host=localhost;Database=DummyDatabase;Application Name=foo");
 
