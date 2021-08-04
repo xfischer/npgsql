@@ -403,7 +403,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Timeout(10000)]
         public void OpenTimeoutUnknownIp([Values(true, false)] bool async)
         {
-            var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
+            //Fixing unknown IP value so that test do not fail if NPGSQL_UNKNOWN_IP is not defined.
+            //182.002.03.40 is expected to be unknown.
+            var unknownIp = "182.002.03.40";//Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
             if (unknownIp is null)
             {
                 Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection timeout tests");
