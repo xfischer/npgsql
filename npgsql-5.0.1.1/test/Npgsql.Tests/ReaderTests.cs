@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Collections;
 using System.Data;
@@ -1390,6 +1390,7 @@ LANGUAGE plpgsql VOLATILE";
             yield return (bigint, bigintBinary);
         }
 
+/*
         [Test]
         public async Task GetStream<T>(
             [ValueSource(nameof(GetStreamCases))] (T Generic, byte[] Binary) value,
@@ -1420,7 +1421,7 @@ LANGUAGE plpgsql VOLATILE";
 
             Assert.That(actual, Is.EqualTo(expected));
         }
-
+*/
         [Test]
         public async Task OpenStreamWhenChangingColumns([Values(true, false)] bool isAsync)
         {
