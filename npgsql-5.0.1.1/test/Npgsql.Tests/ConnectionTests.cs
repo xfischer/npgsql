@@ -1369,7 +1369,7 @@ CREATE TABLE record ()");
             }
         }
 
-        [Test, Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
+        [Test, Ignore(""), Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
         public async Task TcpKeepaliveTime()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -1380,7 +1380,7 @@ CREATE TABLE record ()");
                 Thread.Sleep(Timeout.Infinite);
         }
 
-        [Test, Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
+        [Test, Ignore(""), Explicit, Description("Turns on TCP keepalive and sleeps forever, good for wiresharking")]
         public async Task TcpKeepalive()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString)
