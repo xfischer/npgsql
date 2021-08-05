@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -243,7 +243,9 @@ namespace EnterpriseDB.EDBClient.Tests
         public async Task PrecisionAndScale()
         {
             using var conn = OpenConnection();
-            conn.ExecuteNonQuery(@"CREATE TEMP TABLE data (explicit_both NUMERIC(10,2), explicit_precision NUMERIC(10), implicit_both NUMERIC, integer INTEGER, text TEXT)");
+
+            //Changed column name text to text_col because there were more columns with name text and test was failing.
+            conn.ExecuteNonQuery(@"CREATE TEMP TABLE data (explicit_both NUMERIC(10,2), explicit_precision NUMERIC(10), implicit_both NUMERIC, integer INTEGER, text_col TEXT)");
             var dataTable = await GetSchema(conn, "Columns");
             var rows = dataTable.Rows.Cast<DataRow>().ToList();
 
@@ -264,7 +266,7 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(integer["numeric_precision"], Is.EqualTo(32));
             Assert.That(integer["numeric_scale"], Is.EqualTo(0));
 
-            var text = rows.Single(r => (string)r["column_name"] == "text");
+            var text = rows.Single(r => (string)r["column_name"] == "text_col");
             Assert.That(text["numeric_precision"], Is.EqualTo(DBNull.Value));
             Assert.That(text["numeric_scale"], Is.EqualTo(DBNull.Value));
         }
