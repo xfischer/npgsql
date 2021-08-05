@@ -670,12 +670,20 @@ namespace EnterpriseDB.EDBClient.Tests
         public async Task NoDatabaseDefaultsToUsername()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
-            using (var conn = new EDBConnection(csb.ToString()))
+            try
             {
-                Assert.That(conn.Database, Is.EqualTo(csb.Username));
-                conn.Open();
-                Assert.That(await conn.ExecuteScalarAsync("SELECT current_database()"), Is.EqualTo(csb.Username));
-                Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                using (var conn = new EDBConnection(csb.ToString()))
+                {
+                    Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                    conn.Open();
+                    Assert.That(await conn.ExecuteScalarAsync("SELECT current_database()"), Is.EqualTo(csb.Username));
+                    Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                }
+            }
+            catch(Exception ex)
+            {
+                var message = string.Format("3D000: database \"{0}\" does not exist", csb.Username);
+                Assert.That(ex.Message, Is.EqualTo(message));
             }
         }
 
