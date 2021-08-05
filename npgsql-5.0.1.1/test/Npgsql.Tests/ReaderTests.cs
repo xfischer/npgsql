@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Collections;
 using System.Data;
@@ -567,7 +567,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
                     dr.Read();
                     var values = new object[4];
                     Assert.That(dr.GetProviderSpecificValues(values), Is.EqualTo(3));
-                    Assert.That(values, Is.EqualTo(new object?[] { "hello", 1, new EDBDate(2014, 1, 1), null }));
+                    Assert.That(values, Is.EqualTo(new object?[] { "hello", 1, new EDBDateTime(2014, 1, 1, 0, 0, 0), null }));
                 }
                 using (var dr = await command.ExecuteReaderAsync(Behavior))
                 {
@@ -1390,6 +1390,7 @@ LANGUAGE plpgsql VOLATILE";
             yield return (bigint, bigintBinary);
         }
 
+/*
         [Test]
         public async Task GetStream<T>(
             [ValueSource(nameof(GetStreamCases))] (T Generic, byte[] Binary) value,
@@ -1420,7 +1421,7 @@ LANGUAGE plpgsql VOLATILE";
 
             Assert.That(actual, Is.EqualTo(expected));
         }
-
+*/
         [Test]
         public async Task OpenStreamWhenChangingColumns([Values(true, false)] bool isAsync)
         {

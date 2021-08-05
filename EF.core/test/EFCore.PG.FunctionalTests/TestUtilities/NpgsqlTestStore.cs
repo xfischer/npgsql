@@ -223,7 +223,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities
                 return ExecuteScalar<long>(master, $@"SELECT COUNT(*) FROM pg_database WHERE datname = '{name}'") > 0;
         }
 
-        void DeleteDatabase()
+        public void DeleteDatabase()
         {
             if (!DatabaseExists(Name))
                 return;

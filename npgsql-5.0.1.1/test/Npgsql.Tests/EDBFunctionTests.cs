@@ -78,7 +78,8 @@ namespace EnterpriseDB.EDBClient.Tests
             // Following extra Close() open sequence will make sure pending transactions are rolled back.
             if (con.State != ConnectionState.Closed)
                 con.Close();
-            con.Open();
+            //con.Open();
+	    con = OpenConnection();
 
             EDBCommand com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;

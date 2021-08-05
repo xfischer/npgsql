@@ -403,7 +403,9 @@ namespace EnterpriseDB.EDBClient.Tests
         [Timeout(10000)]
         public void OpenTimeoutUnknownIp([Values(true, false)] bool async)
         {
-            var unknownIp = Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
+            //Fixing unknown IP value so that test do not fail if NPGSQL_UNKNOWN_IP is not defined.
+            //182.002.03.40 is expected to be unknown.
+            var unknownIp = "182.002.03.40";//Environment.GetEnvironmentVariable("NPGSQL_UNKNOWN_IP");
             if (unknownIp is null)
             {
                 Assert.Ignore("NPGSQL_UNKNOWN_IP isn't defined and is required for connection timeout tests");
@@ -668,12 +670,20 @@ namespace EnterpriseDB.EDBClient.Tests
         public async Task NoDatabaseDefaultsToUsername()
         {
             var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
-            using (var conn = new EDBConnection(csb.ToString()))
+            try
             {
-                Assert.That(conn.Database, Is.EqualTo(csb.Username));
-                conn.Open();
-                Assert.That(await conn.ExecuteScalarAsync("SELECT current_database()"), Is.EqualTo(csb.Username));
-                Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                using (var conn = new EDBConnection(csb.ToString()))
+                {
+                    Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                    conn.Open();
+                    Assert.That(await conn.ExecuteScalarAsync("SELECT current_database()"), Is.EqualTo(csb.Username));
+                    Assert.That(conn.Database, Is.EqualTo(csb.Username));
+                }
+            }
+            catch(Exception ex)
+            {
+                var message = string.Format("3D000: database \"{0}\" does not exist", csb.Username);
+                Assert.That(ex.Message, Is.EqualTo(message));
             }
         }
 

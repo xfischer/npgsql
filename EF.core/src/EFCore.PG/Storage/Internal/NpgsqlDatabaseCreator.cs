@@ -112,10 +112,24 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
         IRelationalCommand CreateHasTablesCommand()
             => _rawSqlCommandBuilder
                 .Build(@"
-                    SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
-                    FROM information_schema.tables
-                    WHERE table_type = 'BASE TABLE' AND table_schema IN ('public')
-                ");
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM pg_class AS cls
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+WHERE
+        cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
+        ns.nspname  IN ('public') AND
+        -- Exclude tables which are members of PG extensions
+        NOT EXISTS (
+            SELECT 1 FROM pg_depend WHERE
+                classid=(
+                    SELECT cls.oid
+                    FROM pg_class AS cls
+                             JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+                    WHERE relname='pg_class' AND ns.nspname='pg_catalog'
+                ) AND
+                objid=cls.oid AND
+                deptype IN ('e', 'x')
+        )");
 
         IReadOnlyList<MigrationCommand> CreateCreateOperations()
             => Dependencies.MigrationsSqlGenerator.Generate(new[]
