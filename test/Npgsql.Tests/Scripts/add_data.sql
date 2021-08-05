@@ -36,5 +36,11 @@ insert into tableE(field_path) values ( '[(4, 3), (5, 4)]'::path );
 insert into tableE(field_polygon) values ( '((4, 3), (5, 4))'::polygon );
 insert into tableE(field_circle) values ( '< (4, 3), 5 >'::circle );
 
+CREATE EXTENSION IF NOT EXISTS hstore;
+
+CREATE EXTENSION IF NOT EXISTS ltree;
+
+CREATE EXTENSION IF NOT EXISTS citext;
+
 	
 
