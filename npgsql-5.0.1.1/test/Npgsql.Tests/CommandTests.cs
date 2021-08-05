@@ -841,34 +841,67 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         //## merged by ali shahzad
+        //[Test]
+        //public async Task TestBug1006158OutputParameters()
+        //{
+        //    if (IsMultiplexing)
+        //        return;
+
+        //    using (var conn = await OpenConnectionAsync())
+        //    {
+        //        const string createFunction =
+        //            @"CREATE OR REPLACE FUNCTION pg_temp.more_params(OUT a integer, OUT b boolean) AS
+        //    $BODY$DECLARE
+        //        BEGIN
+        //            a := 3;
+        //            b := true;
+        //        END;$BODY$
+        //      LANGUAGE 'plpgsql' VOLATILE;";
+
+        //        var command = new EDBCommand(createFunction, conn);
+        //        await command.ExecuteNonQueryAsync();
+
+        //        command = new EDBCommand("pg_temp.more_params", conn);
+        //        command.CommandType = CommandType.StoredProcedure;
+
+        //        command.Parameters.Add(new EDBParameter("a", DbType.Int32));
+        //        command.Parameters[0].Direction = ParameterDirection.Output;
+        //        command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
+        //        command.Parameters[1].Direction = ParameterDirection.Output;
+        //        command.Prepare();
+
+        //        var result = await command.ExecuteScalarAsync();
+
+        //        Assert.AreEqual(3, command.Parameters[0].Value);
+        //        Assert.AreEqual(true, command.Parameters[1].Value);
+        //    }
+        //}
+
         [Test]
         public async Task TestBug1006158OutputParameters()
         {
-            if (IsMultiplexing)
-                return;
-
             using (var conn = await OpenConnectionAsync())
+            await using (GetTempFunctionName(conn, out var function))
             {
-                const string createFunction =
-                    @"CREATE OR REPLACE FUNCTION pg_temp.more_params(OUT a integer, OUT b boolean) AS
-            $BODY$DECLARE
-                BEGIN
-                    a := 3;
-                    b := true;
-                END;$BODY$
-              LANGUAGE 'plpgsql' VOLATILE;";
+                var createFunction = $@"
+        CREATE OR REPLACE FUNCTION {function}(OUT a integer, OUT b boolean) AS
+        $BODY$DECLARE
+        BEGIN
+            a := 3;
+            b := true;
+        END;$BODY$
+        LANGUAGE 'plpgsql' VOLATILE;";
 
                 var command = new EDBCommand(createFunction, conn);
                 await command.ExecuteNonQueryAsync();
 
-                command = new EDBCommand("pg_temp.more_params", conn);
+                command = new EDBCommand(function, conn);
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("a", DbType.Int32));
                 command.Parameters[0].Direction = ParameterDirection.Output;
                 command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
                 command.Parameters[1].Direction = ParameterDirection.Output;
-                command.Prepare();
 
                 var result = await command.ExecuteScalarAsync();
 
@@ -876,39 +909,6 @@ namespace EnterpriseDB.EDBClient.Tests
                 Assert.AreEqual(true, command.Parameters[1].Value);
             }
         }
-
-        //        [Test]
-        //        public async Task TestBug1006158OutputParameters()
-        //        {
-        //            using (var conn = await OpenConnectionAsync())
-        //            await using (GetTempFunctionName(conn, out var function))
-        //            {
-        //                var createFunction = $@"
-        //CREATE OR REPLACE FUNCTION {function}(OUT a integer, OUT b boolean) AS
-        //$BODY$DECLARE
-        //BEGIN
-        //    a := 3;
-        //    b := true;
-        //END;$BODY$
-        //LANGUAGE 'plpgsql' VOLATILE;";
-
-        //                var command = new EDBCommand(createFunction, conn);
-        //                await command.ExecuteNonQueryAsync();
-
-        //                command = new EDBCommand(function, conn);
-        //                command.CommandType = CommandType.StoredProcedure;
-
-        //                command.Parameters.Add(new EDBParameter("a", DbType.Int32));
-        //                command.Parameters[0].Direction = ParameterDirection.Output;
-        //                command.Parameters.Add(new EDBParameter("b", DbType.Boolean));
-        //                command.Parameters[1].Direction = ParameterDirection.Output;
-
-        //                var result = await command.ExecuteScalarAsync();
-
-        //                Assert.AreEqual(3, command.Parameters[0].Value);
-        //                Assert.AreEqual(true, command.Parameters[1].Value);
-        //            }
-        //        }
 
         [Test]
         public async Task Bug1010788UpdateRowSource()
