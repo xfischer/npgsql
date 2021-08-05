@@ -297,33 +297,46 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test, IssueLink("https://github.com/EDB/EDB/issues/1737")]
         public void Bug1737()
         {
-            var csb = new EDBConnectionStringBuilder(ConnectionString)
+            try
             {
-                Pooling = false,
-                Enlist = true
-            };
+                var csb = new EDBConnectionStringBuilder(ConnectionString)
+                {
+                    Pooling = false,
+                    Enlist = true
+                };
 
-            // Case 1
-            using (var scope = new TransactionScope())
-            {
-                using (var conn = OpenConnection(csb))
-                using (var cmd = new EDBCommand("SELECT 1", conn))
-                    cmd.ExecuteNonQuery();
-                scope.Complete();
+                // Case 1
+                using (var scope = new TransactionScope())
+                {
+                    using (var conn = OpenConnection(csb))
+                    using (var cmd = new EDBCommand("SELECT 1", conn))
+                        cmd.ExecuteNonQuery();
+                    scope.Complete();
+                }
+
+                // Case 2
+                using (var scope = new TransactionScope())
+                {
+                    using (var conn1 = OpenConnection(csb))
+                    using (var cmd = new EDBCommand("SELECT 1", conn1))
+                        cmd.ExecuteNonQuery();
+
+                    using (var conn2 = OpenConnection(csb))
+                    using (var cmd = new EDBCommand("SELECT 1", conn2))
+                        cmd.ExecuteNonQuery();
+
+                    scope.Complete();
+                }
             }
-
-            // Case 2
-            using (var scope = new TransactionScope())
+            catch(Exception ex)
             {
-                using (var conn1 = OpenConnection(csb))
-                using (var cmd = new EDBCommand("SELECT 1", conn1))
-                    cmd.ExecuteNonQuery();
+                //Moazzum 5.0.7.1: Control will not come here if prepared transactions is enabled.
+                //If control comes here it should be because prepared transactions is disabled.
+                //This means test is not false positive.
+                Assert.That(ex.Message, Is.EqualTo("The transaction has aborted."));
 
-                using (var conn2 = OpenConnection(csb))
-                using (var cmd = new EDBCommand("SELECT 1", conn2))
-                    cmd.ExecuteNonQuery();
-
-                scope.Complete();
+                var innerMessage = (ex.InnerException != null) ? ex.InnerException.Message : "";
+                Assert.That(innerMessage, Is.EqualTo("55000: prepared transactions are disabled"));
             }
         }
 
