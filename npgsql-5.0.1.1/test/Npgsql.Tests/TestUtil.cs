@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient.Tests
         /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
-        public const string DefaultConnectionString = "Server=192.168.145.3;port=5444;Username=enterprisedb;Password=adminedb;Database=edb;Timeout=0;Command Timeout=0";
+        public const string DefaultConnectionString = "Server=localhost;port=5444;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0";
 
         /// <summary>
         /// The connection string that will be used when opening the connection to the tests database.
