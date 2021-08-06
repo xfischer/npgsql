@@ -72,6 +72,13 @@ namespace EnterpriseDB.EDBClient
         /// <value>The message properties to be used.</value>
         public EDBAQMessageProperties MessageProperties { get; set; }
 
+        static EDBAQQueue()
+        {
+            EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
+            EDBConnection.GlobalTypeMapper.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
+            EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
+        }
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -113,10 +120,6 @@ namespace EnterpriseDB.EDBClient
             }
             try
             {
-                EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
-                EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
-                this.Connection.ReloadTypes();
-
                 EDBCommand command = new EDBCommand("DBMS_AQ.ENQUEUE(:queue_name, :enqueue_options, :message_properties, :payload, :MsgId)", this.Connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.AllResultTypesAreUnknown = true;
@@ -141,6 +144,7 @@ namespace EnterpriseDB.EDBClient
                     DataTypeName = dataTypeName,
                     Value = msg.Payload
                 });
+                
                 command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 var connector = Connection.Connector;//  CheckReadyAndGetConnector();
                 //var ressult = connector._isCallableStmt;

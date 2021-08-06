@@ -77,6 +77,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 try
                 {
                     EDBConnection.GlobalTypeMapper.MapComposite<MyXML>("myxml");
+                    con.ReloadTypes();
                     EDBAQMessage queMsg = new EDBAQMessage();
                     queMsg.Payload = new MyXML { value = "(<Message><MessageText>Mahesh</MessageText></Message>)" };
                     queue.EnqueueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
@@ -138,8 +139,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     if (deqMsg != null)
                     {
                         // process the message payload
-                        MyXML obj = new MyXML();
-                        queueListen.Map<MyXML>(deqMsg.Payload, obj);
+                        MyXML obj = (MyXML) deqMsg.Payload;
                         Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
                         txn.Commit();
                     }
@@ -154,6 +154,7 @@ namespace EnterpriseDB.EDBClient.Tests
                             txn.Dispose();
                         }
                     }
+                    throw;
                 }
             }
         }
