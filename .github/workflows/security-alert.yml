@@ -13,9 +13,9 @@ jobs:
         uses: reload/github-security-jira@v1.1.0
         env:
           GH_SECURITY_TOKEN: ${{ secrets.GITHUBSECURITYTOKEN }}
-          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN_DOUG }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_HOST: https://enterprisedb.atlassian.net
-          JIRA_USER: doug.calobrisi@enterprisedb.com
+          JIRA_USER: muhammad.aqeel@enterprisedb.com
           JIRA_PROJECT: EC
           JIRA_ISSUE_TYPE: Security/Compliance
           JIRA_WATCHERS: eric.mccormack@enterprisedb.com
