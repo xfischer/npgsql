@@ -1274,7 +1274,11 @@ namespace EnterpriseDB.EDBClient
                 try
                 {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-                    CurrentReader.ProcessEDBDataRowMessage(buf, true);
+                    if (_currentCommand.CommandType == CommandType.StoredProcedure
+                        && !_currentCommand.Parameters._hasReturnParam)
+                        CurrentReader.ProcessEDBDataRowMessage(buf, false);
+                    else
+                        CurrentReader.ProcessEDBDataRowMessage(buf, true);
                 }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 catch (Exception)
@@ -1283,9 +1287,14 @@ namespace EnterpriseDB.EDBClient
             /* EnterpriseDB Team */
             case BackendMessageCode.ParamData:
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-                CurrentReader.ProcessEDBDataRowMessage(buf, false);
+                if (CurrentReader != null)
+                {
+                    CurrentReader.ProcessEDBDataRowMessage(buf, false);
+                    return _outParamDataRowMessage.Load(len);
+                }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-                return _outParamDataRowMessage.Load(len);
+                
+                return _commandCompleteMessage.Load(buf, len);
             case BackendMessageCode.CommandComplete:
                 return _commandCompleteMessage.Load(buf, len);
             case BackendMessageCode.ReadyForQuery:
