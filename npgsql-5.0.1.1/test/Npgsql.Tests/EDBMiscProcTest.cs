@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 using EDBTypes;
+using System.Collections.Generic;
 
 namespace EnterpriseDB.EDBClient.Tests
 {
@@ -1685,4 +1686,266 @@ namespace EnterpriseDB.EDBClient.Tests
 #pragma warning restore CS8604
 #pragma warning restore CS8600
 #nullable restore
+
+    [TestFixture]
+    public class EC2114_Fix_Tests : TestBase
+    {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        EDBConnection con = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        [SetUp]
+        public void Init()
+        {
+            //write setup for following test cases
+            con = OpenConnection();
+            var Command = new EDBCommand("", con);
+            Command.CommandText = "CREATE OR REPLACE PACKAGE pkgTest Is\n" +
+            "Type rsOut      Is Ref Cursor;\n" +
+
+            "Error_Msg Exception;\n" +
+            "gstrErrorMessage Varchar2(1000);\n" +
+
+            "Procedure proGetTestData(ParamData In Clob, ErrorData Out Clob, ProcessData Out Clob, curResult Out rsOut);\n" +
+
+            "End pkgTest;";
+
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "CREATE OR REPLACE PACKAGE BODY pkgTest\n" +
+                "Is\n" +
+                    "Procedure proGetTestData(ParamData In Clob, ErrorData Out Clob, ProcessData Out Clob, curResult Out rsOut)\n" +
+                    "Is\n" +
+                    "Begin\n" +
+                        "Open curResult For\n" +
+                        "Select 1 As EmpID, 'Kiran' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 2 As EmpID, 'Peter' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 3 As EmpID, 'Monica' As EmpName From Dual;\n" +
+                        "ProcessData:= 'Success';\n" +
+                    "Exception\n" +
+                        "When Others Then\n" +
+                         "Open curResult For Select 1 From Dual;\n" +
+                        "ErrorData:= Sqlerrm;\n" +
+                    "End proGetTestData;\n" +
+                    "End pkgTest;";
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "CREATE OR REPLACE PACKAGE pkgTest2 Is\n" +
+            "Type rsOut      Is Ref Cursor;\n" +
+
+            "Error_Msg Exception;\n" +
+            "gstrErrorMessage Varchar2(1000);\n" +
+
+            "Procedure proGetTestData(ParamData In Clob, curResult1 Out rsOut, curResult2 Out rsOut);\n" +
+
+            "End pkgTest2;";
+
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "CREATE OR REPLACE PACKAGE BODY pkgTest2\n" +
+                "Is\n" +
+                    "Procedure proGetTestData(ParamData In Clob, curResult1 Out rsOut, curResult2 Out rsOut)\n" +
+                    "Is\n" +
+                    "Begin\n" +
+                        "Open curResult1 For\n" +
+                        "Select 1 As EmpID, 'Kiran1' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 2 As EmpID, 'Peter1' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 3 As EmpID, 'Monica1' As EmpName From Dual;\n" +
+
+                        "Open curResult2 For\n" +
+                        "Select 4 As EmpID, 'Kiran2' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 5 As EmpID, 'Peter2' As EmpName From Dual\n" +
+                        "Union\n" +
+                        "Select 6 As EmpID, 'Monica2' As EmpName From Dual;\n" +
+                    "Exception\n" +
+                        "When Others Then\n" +
+                         "Open curResult1 For Select 1 From Dual;\n" +
+                         "Open curResult2 For Select 2 From Dual;\n" +
+                    "End proGetTestData;\n" +
+                    "End pkgTest2;";
+            Command.ExecuteNonQuery();
+        }
+        [TearDown]
+        public void Dispose()
+        {
+            var Command = new EDBCommand("", con);
+
+            Command.CommandText = "DROP PACKAGE BODY pkgTest";
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "DROP PACKAGE pkgTest";
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "DROP PACKAGE BODY pkgTest2";
+            Command.ExecuteNonQuery();
+
+            Command.CommandText = "DROP PACKAGE pkgTest2";
+            Command.ExecuteNonQuery();
+        }
+
+        private void RunCustomerCase(string query)
+        {
+            EDBTransaction tran = con.BeginTransaction();
+            var command = new EDBCommand(query, con);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Transaction = tran;
+            command.Parameters.Add(new EDBParameter("param_data", EDBTypes.EDBDbType.Varchar, 12, "param_data", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, "Test"));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            command.Parameters.Add(new EDBParameter("e_data", EDBTypes.EDBDbType.Varchar, 12, "e_data", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("proc_data", EDBTypes.EDBDbType.Varchar, 12, "proc_data", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("v_cur", EDBTypes.EDBDbType.Refcursor, 12, "v_cur", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            var cursorName = command.Parameters[3].Value.ToString();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            //We are not sure about the order in which the cursor will return values.
+            //So we put these values in lists and later verify the values exist in list.
+            var items1 = new List<string>();
+            var items2 = new List<string>();
+            while (cur.Read())
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                items1.Add(cur[0].ToString());
+                items2.Add(cur[1].ToString());
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+
+            cur.Close();
+            tran.Commit();
+
+            //We should have three values.
+            Assert.AreEqual(3, items1.Count);
+            Assert.AreEqual(3, items1.Count);
+
+            //These values should exist in the lists.
+            Assert.Contains("1", items1);
+            Assert.Contains("2", items1);
+            Assert.Contains("3", items1);
+
+            Assert.Contains("Kiran", items2);
+            Assert.Contains("Peter", items2);
+            Assert.Contains("Monica", items2);
+        }
+
+        [Test]
+        public void CustomerCase79248_Exact()
+        {
+            RunCustomerCase("pkgTest.proGetTestData");
+        }
+
+        [Test]
+        public void CustomerCase79248_EDBWay()
+        {
+            RunCustomerCase("pkgTest.proGetTestData(:param_data,:e_data,:proc_data,:v_cur)");
+        }
+
+        private void RunPkgProcTwoOutCursors(string query)
+        {
+            EDBTransaction tran = con.BeginTransaction();
+            var command = new EDBCommand(query, con);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Transaction = tran;
+            command.Parameters.Add(new EDBParameter("param_data", EDBTypes.EDBDbType.Varchar, 12, "param_data", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, "Test"));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            command.Parameters.Add(new EDBParameter("v_cur1", EDBTypes.EDBDbType.Refcursor, 12, "v_cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("v_cur2", EDBTypes.EDBDbType.Refcursor, 12, "v_cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            var cursorName1 = command.Parameters[1].Value.ToString();
+            var cursorName2 = command.Parameters[2].Value.ToString();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader cur1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            //We are not sure about the order in which the cursor will return values.
+            //So we put these values in lists and later verify the values exist in list.
+            var items1 = new List<string>();
+            var items2 = new List<string>();
+            while (cur1.Read())
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                items1.Add(cur1[0].ToString());
+                items2.Add(cur1[1].ToString());
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+
+            cur1.Close();
+
+            //We should have three values.
+            Assert.AreEqual(3, items1.Count);
+            Assert.AreEqual(3, items2.Count);
+
+            //These values should exist in the lists.
+            Assert.Contains("1", items1);
+            Assert.Contains("2", items1);
+            Assert.Contains("3", items1);
+
+            Assert.Contains("Kiran1", items2);
+            Assert.Contains("Peter1", items2);
+            Assert.Contains("Monica1", items2);
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader cur2 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            //We are not sure about the order in which the cursor will return values.
+            //So we put these values in lists and later verify the values exist in list.
+            var items3 = new List<string>();
+            var items4 = new List<string>();
+            while (cur2.Read())
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                items3.Add(cur2[0].ToString());
+                items4.Add(cur2[1].ToString());
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+
+            cur2.Close();
+            tran.Commit();
+
+            //We should have three values.
+            Assert.AreEqual(3, items3.Count);
+            Assert.AreEqual(3, items4.Count);
+
+            //These values should exist in the lists.
+            Assert.Contains("4", items3);
+            Assert.Contains("5", items3);
+            Assert.Contains("6", items3);
+
+            Assert.Contains("Kiran2", items4);
+            Assert.Contains("Peter2", items4);
+            Assert.Contains("Monica2", items4);
+        }
+
+        [Test]
+        public void PkgProcTwoOutCursors_ProcNameONLY()
+        {
+            RunPkgProcTwoOutCursors("pkgTest2.proGetTestData");
+        }
+
+        [Test]
+        public void PkgProcTwoOutCursors_EDBWay()
+        {
+            RunPkgProcTwoOutCursors("pkgTest2.proGetTestData(:param_data,:v_cur1,:v_cur2)");
+        }
+    }
 }
