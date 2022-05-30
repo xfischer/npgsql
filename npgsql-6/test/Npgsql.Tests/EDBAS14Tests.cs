@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
@@ -375,7 +375,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-          [Test]
+          [Test, Ignore("Not valid test case of EDB, Oracle specific works in Oracle.")]
         public void SupportPRIORInTargetListForCONNECTBYQueries()
         {
 #nullable disable
