@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests
@@ -118,5 +118,23 @@ namespace EnterpriseDB.EDBClient.Tests
             Assert.That(() => builder.ConnectionString = "Server=127.0.0.1;User Id=npgsql_tests;Pooling:false",
                 Throws.Exception.TypeOf<ArgumentException>());
         }
+
+       [Test]
+        public void PGPoolBasic_True()
+        {
+            var builder = new EDBConnectionStringBuilder();
+            builder.ConnectionString = "IsPgPoolConnection=true;PgPoolSyncTime=20";
+            Assert.That(builder.IsPgPoolConnection, Is.EqualTo(true));
+            Assert.That(builder.PgPoolSyncTime, Is.EqualTo(20));
+        }
+
+        [Test]
+        public void PGPoolBasic_False()
+        {
+            var builder = new EDBConnectionStringBuilder();
+            builder.ConnectionString = "IsPgPoolConnection=false;PgPoolSyncTime=20";
+            Assert.That(builder.IsPgPoolConnection, Is.EqualTo(false));
+        }
+
     }
 }
