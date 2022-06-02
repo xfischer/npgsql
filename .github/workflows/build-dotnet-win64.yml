@@ -22,45 +22,39 @@ jobs:
         dotnet-version: |
           ${{ env.dotnet_sdk_version }}
           3.1.x
-    - name: Driver Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql
-    - name: Driver Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql
+    - name: Driver Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql
 
-    - name: OpenTelemetry Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql.OpenTelemetry
-    - name: OpenTelemetry Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.OpenTelemetry
+    - name: OpenTelemetry Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql.OpenTelemetry
       
-    - name: Plugin GeoJSON Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql.GeoJSON
-    - name: Plugin GeoJSON Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.GeoJSON
+    - name: Plugin GeoJSON Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql.GeoJSON
       
-    - name: Plugin Json.NET Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql.Json.NET
-    - name: Plugin Json.NET Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.Json.NET
+    - name: Plugin Json.NET Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql.Json.NET
       
-    - name: Plugin NetTopologySuite Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql.NetTopologySuite
-    - name: Plugin NetTopologySuite Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.NetTopologySuite
+    - name: Plugin NetTopologySuite Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql.NetTopologySuite
       
-    - name: Plugin NodaTime Restore
-      run: dotnet restore
-      working-directory: npgsql-6\src\Npgsql.NodaTime
-    - name: Plugin NodaTime Build
-      run: dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.NodaTime
+    - name: Plugin NodaTime Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+        working-directory: npgsql-6\src\Npgsql.NodaTime
       
