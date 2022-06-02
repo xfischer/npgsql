@@ -26,35 +26,35 @@ jobs:
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql
+      working-directory: npgsql-6\src\Npgsql
 
     - name: OpenTelemetry Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql.OpenTelemetry
+      working-directory: npgsql-6\src\Npgsql.OpenTelemetry
       
     - name: Plugin GeoJSON Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql.GeoJSON
+      working-directory: npgsql-6\src\Npgsql.GeoJSON
       
     - name: Plugin Json.NET Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql.Json.NET
+      working-directory: npgsql-6\src\Npgsql.Json.NET
       
     - name: Plugin NetTopologySuite Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql.NetTopologySuite
+      working-directory: npgsql-6\src\Npgsql.NetTopologySuite
       
     - name: Plugin NodaTime Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-        working-directory: npgsql-6\src\Npgsql.NodaTime
+      working-directory: npgsql-6\src\Npgsql.NodaTime
       
