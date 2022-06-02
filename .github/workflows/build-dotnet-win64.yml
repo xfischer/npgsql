@@ -1,0 +1,30 @@
+name: EDB .NET Windows64 Build
+
+on:
+  # push:
+  #  branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+env:
+  dotnet_sdk_version: '6.0.x'
+
+jobs:
+  build:
+
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core 6 and 3.1
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: |
+          ${{ env.dotnet_sdk_version }}
+          3.1.x
+    - name: Driver Restore dependencies
+      run: dotnet restore
+      working-directory: npgsql-6\src\Npgsql
+    - name: Driver Build
+      run: dotnet build --no-restore
+      working-directory: npgsql-6\src\Npgsql
