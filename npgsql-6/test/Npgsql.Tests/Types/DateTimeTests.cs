@@ -192,11 +192,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
         static readonly TestCaseData[] TimestampValues =
         {
-            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified), "1998-04-12 13:26:38")
+            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified), "12-APR-98 13:26:38")
                 .SetName("TimestampPre2000"),
-            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Unspecified), "2015-01-27 08:45:12.345")
+            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Unspecified), "27-JAN-15 08:45:12.345")
                 .SetName("TimestampPost2000"),
-            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Unspecified), "2013-07-25 00:00:00")
+            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Unspecified), "25-JUL-13 00:00:00")
                 .SetName("TimestampDateOnly")
         };
 
@@ -283,7 +283,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp without time zone"));
-            Assert.That(reader[1], Is.EqualTo("1998-04-12 13:26:38"));
+            Assert.That(reader[1], Is.EqualTo("12-APR-98 13:26:38"));
         }
 
         static EDBParameter[] TimestampInvalidParameters
@@ -322,7 +322,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp without time zone[]"));
-            Assert.That(reader[1], Is.EqualTo(@"{""1998-04-12 13:26:38""}"));
+            Assert.That(reader[1], Is.EqualTo(@"{""12-APR-98 13:26:38""}"));
         }
 
         [Test]
@@ -349,7 +349,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("tsrange"));
-            Assert.That(reader[1], Is.EqualTo(@"[""1998-04-12 13:26:38"",""1998-04-12 15:26:38""]"));
+            Assert.That(reader[1], Is.EqualTo(@"[""12-APR-98 13:26:38"",""12-APR-98 15:26:38""]"));
         }
 
         [Test]
@@ -383,7 +383,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("tsmultirange"));
-            Assert.That(reader[1], Is.EqualTo(@"{[""1998-04-12 13:26:38"",""1998-04-12 15:26:38""],[""1998-04-13 13:26:38"",""1998-04-13 15:26:38""]}"));
+            Assert.That(reader[1], Is.EqualTo(@"{[""12-APR-98 13:26:38"",""12-APR-98 15:26:38""],[""13-APR-98 13:26:38"",""13-APR-98 15:26:38""]}"));
         }
 
         #endregion
@@ -434,17 +434,17 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
         static readonly TestCaseData[] TimestampTzWriteValues =
         {
-            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "1998-04-12 13:26:38")
+            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "12-APR-98 13:26:38")
                 .SetName("TimestampTzPre2000"),
-            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "2015-01-27 08:45:12.345")
+            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "27-JAN-15 08:45:12.345")
                 .SetName("TimestampTzPost2000"),
-            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "2013-07-25 00:00:00")
+            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "25-JUL-13 00:00:00")
                 .SetName("TimestampTzDateOnly"),
             new TestCaseData(EDBDateTime.Infinity, "infinity")
                 .SetName("TimestampTzEDBDateTimeInfinity"),
             new TestCaseData(EDBDateTime.NegativeInfinity, "-infinity")
                 .SetName("TimestampTzEDBDateTimeNegativeInfinity"),
-            new TestCaseData(new EDBDateTime(-5, 3, 3, 1, 0, 0, DateTimeKind.Utc), "0005-03-03 01:00:00 BC")
+            new TestCaseData(new EDBDateTime(-5, 3, 3, 1, 0, 0, DateTimeKind.Utc), "03-MAR-05 01:00:00")
                 .SetName("TimestampTzBC"),
             new TestCaseData(DateTime.MinValue, "-infinity")
                 .SetName("TimestampNegativeInfinity"),
@@ -501,7 +501,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp with time zone"));
-            Assert.That(reader[1], Is.EqualTo("1998-04-12 15:26:38+02"));
+            Assert.That(reader[1], Is.EqualTo("12-APR-98 15:26:38 +02:00"));
         }
 
         static EDBParameter[] TimestamptzInvalidParameters
@@ -542,7 +542,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp with time zone[]"));
-            Assert.That(reader[1], Is.EqualTo(@"{""1998-04-12 15:26:38+02""}"));
+            Assert.That(reader[1], Is.EqualTo(@"{""12-APR-98 15:26:38 +02:00""}"));
         }
 
         [Test]
@@ -569,7 +569,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("tstzrange"));
-            Assert.That(reader[1], Is.EqualTo(@"[""1998-04-12 15:26:38+02"",""1998-04-12 17:26:38+02""]"));
+            Assert.That(reader[1], Is.EqualTo(@"[""12-APR-98 15:26:38 +02:00"",""12-APR-98 17:26:38 +02:00""]"));
         }
 
         [Test]
@@ -603,7 +603,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("tstzmultirange"));
-            Assert.That(reader[1], Is.EqualTo(@"{[""1998-04-12 15:26:38+02"",""1998-04-12 17:26:38+02""],[""1998-04-13 15:26:38+02"",""1998-04-13 17:26:38+02""]}"));
+            Assert.That(reader[1], Is.EqualTo(@"{[""12-APR-98 15:26:38 +02:00"",""12-APR-98 17:26:38 +02:00""],[""13-APR-98 15:26:38 +02:00"",""13-APR-98 17:26:38 +02:00""]}"));
         }
 
         [Test]

@@ -16,11 +16,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
     {
         static readonly TestCaseData[] TimestampValues =
         {
-            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "1998-04-12 13:26:38")
+            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "12-APR-98 13:26:38")
                 .SetName("TimestampPre2000"),
-            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "2015-01-27 08:45:12.345")
+            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "27-JAN-15 08:45:12.345")
                 .SetName("TimestampPost2000"),
-            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "2013-07-25 00:00:00")
+            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "25-JUL-13 00:00:00")
                 .SetName("TimestampDateOnly"),
         };
 
@@ -107,7 +107,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp without time zone"));
-            Assert.That(reader[1], Is.EqualTo("1998-04-12 13:26:38"));
+            Assert.That(reader[1], Is.EqualTo("12-APR-98 13:26:38"));
         }
 
         static EDBParameter[] TimestampInvalidParameters
@@ -160,11 +160,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 
         static readonly TestCaseData[] TimestampTzValues =
         {
-            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "1998-04-12 15:26:38+02")
+            new TestCaseData(new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), "12-APR-98 15:26:38 +02:00")
                 .SetName("TimestampPre2000"),
-            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "2015-01-27 09:45:12.345+01")
+            new TestCaseData(new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), "27-JAN-15 09:45:12.345 +01:00")
                 .SetName("TimestampPost2000"),
-            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "2013-07-25 02:00:00+02")
+            new TestCaseData(new DateTime(2013, 7, 25, 0, 0, 0, DateTimeKind.Utc), "25-JUL-13 02:00:00 +02:00")
                 .SetName("TimestampDateOnly"),
         };
 
@@ -218,7 +218,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             await using var reader = await cmd.ExecuteReaderAsync();
             await reader.ReadAsync();
             Assert.That(reader[0], Is.EqualTo("timestamp with time zone"));
-            Assert.That(reader[1], Is.EqualTo("1998-04-12 15:26:38+02"));
+            Assert.That(reader[1], Is.EqualTo("12-APR-98 15:26:38 +02:00"));
         }
 
         protected override async ValueTask<EDBConnection> OpenConnectionAsync(string? connectionString = null)

@@ -150,15 +150,15 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             {
                 conn.ReloadTypes();
                 cmd.Parameters.Add(new() { Value = multirange });
-                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[2020-01-01,2020-01-05),[2020-01-11,)}"));
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[01-JAN-20,05-JAN-20),[11-JAN-20,)}"));
 
                 conn.ReloadTypes();
                 cmd.Parameters[0] = new() { Value = multirange, EDBDbType = EDBDbType.DateMultirange };
-                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[2020-01-01,2020-01-05),[2020-01-11,)}"));
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[01-JAN-20,05-JAN-20),[11-JAN-20,)}"));
 
                 conn.ReloadTypes();
                 cmd.Parameters[0] = new() { Value = multirange, DataTypeName = "datemultirange" };
-                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[2020-01-01,2020-01-05),[2020-01-11,)}"));
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[01-JAN-20,05-JAN-20),[11-JAN-20,)}"));
             }
         }
 
@@ -183,11 +183,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             {
                 conn.ReloadTypes();
                 cmd.Parameters.Add(new() { Value = multirange, EDBDbType = EDBDbType.DateMultirange });
-                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[2020-01-01,2020-01-05),[2020-01-11,)}"));
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[01-JAN-20,05-JAN-20),[11-JAN-20,)}"));
 
                 conn.ReloadTypes();
                 cmd.Parameters[0] = new() { Value = multirange, DataTypeName = "datemultirange" };
-                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[2020-01-01,2020-01-05),[2020-01-11,)}"));
+                Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo("{[01-JAN-20,05-JAN-20),[11-JAN-20,)}"));
             }
         }
 
