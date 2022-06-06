@@ -24,49 +24,49 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 .SetName("TimestampDateOnly"),
         };
 
-        [Test, TestCaseSource(nameof(TimestampValues))]
-        public async Task Timestamp_read(DateTime dateTime, string s)
-        {
-            await using var conn = await OpenConnectionAsync();
-            await using var cmd = new EDBCommand($"SELECT '{s}'::timestamp without time zone", conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-            await reader.ReadAsync();
+        //[Test, TestCaseSource(nameof(TimestampValues))]
+        //public async Task Timestamp_read(DateTime dateTime, string s)
+        //{
+        //    await using var conn = await OpenConnectionAsync();
+        //    await using var cmd = new EDBCommand($"SELECT '{s}'::timestamp without time zone", conn);
+        //    await using var reader = await cmd.ExecuteReaderAsync();
+        //    await reader.ReadAsync();
 
-            Assert.That(reader.GetDataTypeName(0), Is.EqualTo("timestamp without time zone"));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(DateTime)));
+        //    Assert.That(reader.GetDataTypeName(0), Is.EqualTo("timestamp without time zone"));
+        //    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(DateTime)));
 
-            Assert.That(reader[0], Is.EqualTo(dateTime));
-            Assert.That(reader.GetDateTime(0), Is.EqualTo(dateTime));
-            Assert.That(reader.GetDateTime(0).Kind, Is.EqualTo(DateTimeKind.Unspecified));
-            Assert.That(reader.GetFieldValue<DateTime>(0), Is.EqualTo(dateTime));
+        //    Assert.That(reader[0], Is.EqualTo(dateTime));
+        //    Assert.That(reader.GetDateTime(0), Is.EqualTo(dateTime));
+        //    Assert.That(reader.GetDateTime(0).Kind, Is.EqualTo(DateTimeKind.Unspecified));
+        //    Assert.That(reader.GetFieldValue<DateTime>(0), Is.EqualTo(dateTime));
 
-            // Provider-specific type (EDBTimeStamp)
-            var npgsqlDateTime = new EDBDateTime(dateTime.Ticks);
-            Assert.That(reader.GetProviderSpecificFieldType(0), Is.EqualTo(typeof(EDBDateTime)));
-            Assert.That(reader.GetTimeStamp(0), Is.EqualTo(npgsqlDateTime));
-            Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(npgsqlDateTime));
-            Assert.That(reader.GetFieldValue<EDBDateTime>(0), Is.EqualTo(npgsqlDateTime));
+        //    // Provider-specific type (EDBTimeStamp)
+        //    var npgsqlDateTime = new EDBDateTime(dateTime.Ticks);
+        //    Assert.That(reader.GetProviderSpecificFieldType(0), Is.EqualTo(typeof(EDBDateTime)));
+        //    Assert.That(reader.GetTimeStamp(0), Is.EqualTo(npgsqlDateTime));
+        //    Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(npgsqlDateTime));
+        //    Assert.That(reader.GetFieldValue<EDBDateTime>(0), Is.EqualTo(npgsqlDateTime));
 
-            // DateTimeOffset
-            Assert.That(() => reader.GetFieldValue<DateTimeOffset>(0), Throws.Exception.TypeOf<InvalidCastException>());
-        }
+        //    // DateTimeOffset
+        //    Assert.That(() => reader.GetFieldValue<DateTimeOffset>(0), Throws.Exception.TypeOf<InvalidCastException>());
+        //}
 
-        [Test, TestCaseSource(nameof(TimestampValues))]
-        public async Task Timestamp_write_values(DateTime dateTime, string expected)
-        {
-            Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
+        //[Test, TestCaseSource(nameof(TimestampValues))]
+        //public async Task Timestamp_write_values(DateTime dateTime, string expected)
+        //{
+        //    Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
 
-            await using var conn = await OpenConnectionAsync();
-            await using var cmd = new EDBCommand("SELECT $1::text", conn)
-            {
-                Parameters =
-                {
-                    new() { Value = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified), EDBDbType = EDBDbType.Timestamp }
-                }
-            };
+        //    await using var conn = await OpenConnectionAsync();
+        //    await using var cmd = new EDBCommand("SELECT $1::text", conn)
+        //    {
+        //        Parameters =
+        //        {
+        //            new() { Value = DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified), EDBDbType = EDBDbType.Timestamp }
+        //        }
+        //    };
 
-            Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(expected));
-        }
+        //    Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(expected));
+        //}
 
         static Func<EDBParameter>[] TimestampParameters
         {
@@ -128,35 +128,35 @@ namespace EnterpriseDB.EDBClient.Tests.Types
             Assert.That(() => cmd.ExecuteReaderAsync(), Throws.Exception.TypeOf<InvalidCastException>());
         }
 
-        [Test, TestCaseSource(nameof(TimestampValues))]
-        public async Task Timestamptz_read(DateTime dateTime, string s)
-        {
-            Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
+        //[Test, TestCaseSource(nameof(TimestampValues))]
+        //public async Task Timestamptz_read(DateTime dateTime, string s)
+        //{
+        //    Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
 
-            await using var conn = await OpenConnectionAsync();
-            await using var cmd = new EDBCommand($"SELECT '{s}+00'::timestamp with time zone", conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-            await reader.ReadAsync();
+        //    await using var conn = await OpenConnectionAsync();
+        //    await using var cmd = new EDBCommand($"SELECT '{s}+00'::timestamp with time zone", conn);
+        //    await using var reader = await cmd.ExecuteReaderAsync();
+        //    await reader.ReadAsync();
 
-            Assert.That(reader.GetDataTypeName(0), Is.EqualTo("timestamp with time zone"));
-            Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(DateTime)));
+        //    Assert.That(reader.GetDataTypeName(0), Is.EqualTo("timestamp with time zone"));
+        //    Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(DateTime)));
 
-            Assert.That(reader[0], Is.EqualTo(dateTime.ToLocalTime()));
-            Assert.That(reader.GetDateTime(0), Is.EqualTo(dateTime.ToLocalTime()));
-            Assert.That(reader.GetFieldValue<DateTime>(0), Is.EqualTo(dateTime.ToLocalTime()));
-            Assert.That(reader.GetDateTime(0).Kind, Is.EqualTo(DateTimeKind.Local));
+        //    Assert.That(reader[0], Is.EqualTo(dateTime.ToLocalTime()));
+        //    Assert.That(reader.GetDateTime(0), Is.EqualTo(dateTime.ToLocalTime()));
+        //    Assert.That(reader.GetFieldValue<DateTime>(0), Is.EqualTo(dateTime.ToLocalTime()));
+        //    Assert.That(reader.GetDateTime(0).Kind, Is.EqualTo(DateTimeKind.Local));
 
-            // DateTimeOffset
-            Assert.That(reader.GetFieldValue<DateTimeOffset>(0), Is.EqualTo(new DateTimeOffset(dateTime.ToLocalTime())));
+        //    // DateTimeOffset
+        //    Assert.That(reader.GetFieldValue<DateTimeOffset>(0), Is.EqualTo(new DateTimeOffset(dateTime.ToLocalTime())));
 
-            // Provider-specific type (EDBTimeStamp)
-            var npgsqlDateTime = new EDBDateTime(dateTime.Ticks);
-            Assert.That(reader.GetProviderSpecificFieldType(0), Is.EqualTo(typeof(EDBDateTime)));
-            Assert.That(reader.GetTimeStamp(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
-            Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
-            Assert.That(reader.GetFieldValue<EDBDateTime>(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
-            Assert.That(reader.GetTimeStamp(0).Kind, Is.EqualTo(DateTimeKind.Local));
-        }
+        //    // Provider-specific type (EDBTimeStamp)
+        //    var npgsqlDateTime = new EDBDateTime(dateTime.Ticks);
+        //    Assert.That(reader.GetProviderSpecificFieldType(0), Is.EqualTo(typeof(EDBDateTime)));
+        //    Assert.That(reader.GetTimeStamp(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
+        //    Assert.That(reader.GetProviderSpecificValue(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
+        //    Assert.That(reader.GetFieldValue<EDBDateTime>(0), Is.EqualTo(npgsqlDateTime.ToLocalTime()));
+        //    Assert.That(reader.GetTimeStamp(0).Kind, Is.EqualTo(DateTimeKind.Local));
+        //}
 
         static readonly TestCaseData[] TimestampTzValues =
         {
@@ -168,19 +168,19 @@ namespace EnterpriseDB.EDBClient.Tests.Types
                 .SetName("TimestampDateOnly"),
         };
 
-        [Test, TestCaseSource(nameof(TimestampTzValues))]
-        public async Task Timestamptz_write_values(DateTime dateTime, string expected)
-        {
-            Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
+        //[Test, TestCaseSource(nameof(TimestampTzValues))]
+        //public async Task Timestamptz_write_values(DateTime dateTime, string expected)
+        //{
+        //    Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Utc));
 
-            await using var conn = await OpenConnectionAsync();
-            await using var cmd = new EDBCommand("SELECT $1::text", conn)
-            {
-                Parameters = { new() { Value = dateTime, EDBDbType = EDBDbType.TimestampTz } }
-            };
+        //    await using var conn = await OpenConnectionAsync();
+        //    await using var cmd = new EDBCommand("SELECT $1::text", conn)
+        //    {
+        //        Parameters = { new() { Value = dateTime, EDBDbType = EDBDbType.TimestampTz } }
+        //    };
 
-            Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(expected));
-        }
+        //    Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(expected));
+        //}
 
         static EDBParameter[] TimestamptzParameters
         {
