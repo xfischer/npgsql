@@ -34,11 +34,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{26203F
 		.github\dependabot.yml = .github\dependabot.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql", "..\npgsql-6\src\Npgsql\Npgsql.csproj", "{B040C90A-E9E0-4972-9F91-243348C1D3FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql", "..\src\Npgsql\Npgsql.csproj", "{B040C90A-E9E0-4972-9F91-243348C1D3FD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.NetTopologySuite", "..\npgsql-6\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj", "{1DEB7D2C-C1B4-457A-8DB3-331BBA2AD68C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.NetTopologySuite", "..\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj", "{1DEB7D2C-C1B4-457A-8DB3-331BBA2AD68C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.NodaTime", "..\npgsql-6\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj", "{90C0B840-0D06-4C18-9C6A-A1D59C903D12}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.NodaTime", "..\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj", "{90C0B840-0D06-4C18-9C6A-A1D59C903D12}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.SourceGenerators", "..\src\Npgsql.SourceGenerators\Npgsql.SourceGenerators.csproj", "{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -146,6 +148,18 @@ Global
 		{90C0B840-0D06-4C18-9C6A-A1D59C903D12}.Release|x64.Build.0 = Release|Any CPU
 		{90C0B840-0D06-4C18-9C6A-A1D59C903D12}.Release|x86.ActiveCfg = Release|Any CPU
 		{90C0B840-0D06-4C18-9C6A-A1D59C903D12}.Release|x86.Build.0 = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|x64.Build.0 = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Debug|x86.Build.0 = Debug|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|x64.ActiveCfg = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|x64.Build.0 = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|x86.ActiveCfg = Release|Any CPU
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -161,6 +175,7 @@ Global
 		{B040C90A-E9E0-4972-9F91-243348C1D3FD} = {8537E50E-CF7F-49CB-B4EF-3E2A1B11F050}
 		{1DEB7D2C-C1B4-457A-8DB3-331BBA2AD68C} = {8537E50E-CF7F-49CB-B4EF-3E2A1B11F050}
 		{90C0B840-0D06-4C18-9C6A-A1D59C903D12} = {8537E50E-CF7F-49CB-B4EF-3E2A1B11F050}
+		{63F722C2-D370-4DC9-AD42-8DBA1F6BE806} = {8537E50E-CF7F-49CB-B4EF-3E2A1B11F050}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F4EAAE6D-758C-4184-9D8C-7113384B61A8}

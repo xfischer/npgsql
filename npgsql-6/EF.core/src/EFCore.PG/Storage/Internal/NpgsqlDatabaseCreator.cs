@@ -116,7 +116,7 @@ FROM pg_class AS cls
 JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
 WHERE
         cls.relkind IN ('r', 'v', 'm', 'f', 'p') AND
-        ns.nspname NOT IN ('pg_catalog', 'information_schema') AND
+        ns.nspname IN ('public') AND
         -- Exclude tables which are members of PG extensions
         NOT EXISTS (
             SELECT 1 FROM pg_depend WHERE

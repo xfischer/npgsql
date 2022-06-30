@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\npgsql-6\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj" />
+    <ProjectReference Include="..\..\..\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj" />
     <ProjectReference Include="..\EFCore.PG\EFCore.PG.csproj" />
   </ItemGroup>
 

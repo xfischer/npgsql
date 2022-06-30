@@ -217,7 +217,7 @@ JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
 LEFT OUTER JOIN pg_description AS des ON des.objoid = cls.oid AND des.objsubid=0
 WHERE
   cls.relkind IN ('r', 'v', 'm', 'f') AND
-  ns.nspname NOT IN ({internalSchemas}) AND
+  ns.nspname IN ('public') AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
   NOT EXISTS (
@@ -324,7 +324,7 @@ LEFT JOIN pg_depend AS dep ON dep.refobjid = cls.oid AND dep.refobjsubid = attr.
 {(connection.PostgreSqlVersion >= new Version(10, 0) ? "LEFT JOIN pg_sequence AS seq ON seq.seqrelid = dep.objid" : "")}
 WHERE
   cls.relkind IN ('r', 'v', 'm', 'f') AND
-  nspname NOT IN ({internalSchemas}) AND
+  nspname IN ('public') AND
   attnum > 0 AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -580,7 +580,7 @@ JOIN pg_class AS idxcls ON idxcls.oid = indexrelid
 JOIN pg_am AS am ON am.oid = idxcls.relam
 WHERE
   cls.relkind = 'r' AND
-  nspname NOT IN ({internalSchemas}) AND
+  nspname IN ('public') AND
   NOT indisprimary AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -784,7 +784,7 @@ LEFT OUTER JOIN pg_class AS frncls ON frncls.oid = con.confrelid
 LEFT OUTER JOIN pg_namespace as frnns ON frnns.oid = frncls.relnamespace
 WHERE
   cls.relkind = 'r' AND
-  ns.nspname NOT IN ({internalSchemas}) AND
+  ns.nspname IN ('public') AND
   con.contype IN ('p', 'f', 'u') AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -968,6 +968,7 @@ WHERE
   /* AND seqtype IN ('integer', 'bigint', 'smallint') */
   /* Filter out owned serial and identity sequences */
   AND NOT EXISTS (SELECT * FROM pg_depend AS dep WHERE dep.objid = cls.oid AND dep.deptype IN ('i', 'I', 'a'))
+  AND sequence_schema='public'
   {(schemaFilter is not null ? $"AND {schemaFilter("nspname")}" : null)}";
 
         using var command = new EDBCommand(commandText, connection);
@@ -1051,7 +1052,7 @@ JOIN pg_namespace ns ON ns.oid=extnamespace";
             var name = reader.GetString(reader.GetOrdinal("extname"));
             var version = reader.GetValueOrDefault<string>("extversion");
 
-            if (name == "plpgsql") // Implicitly installed in all PG databases
+            if (name == "plpgsql" || name == "edbspl") // Implicitly installed in all PG databases
             {
                 continue;
             }
@@ -1078,7 +1079,7 @@ SELECT
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
 WHERE
-    nspname NOT IN ({internalSchemas})";
+    nspname IN ('public')";
 
         try
         {

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\npgsql-6\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj" />
+    <ProjectReference Include="..\..\..\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj" />
     <ProjectReference Include="..\EFCore.PG\EFCore.PG.csproj" />
   </ItemGroup>
 
