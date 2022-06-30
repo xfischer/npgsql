@@ -1,13 +1,13 @@
-CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+REM CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
 REM CALL "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat"
 
 REM @SET PGBUILD=C:\\pgBuild64
-@SET SOURCE_PATH="C:\\\\edbtesting\\\\dotnet\\\\edb-dotnet"
-@SET TARGET_FRAMEWORK="6.0"
-@SET RELEASE_CONFIGURATION="Release"
-@SET TARGET_PLATFORM="AnyCPU"
-@SET FRAMEWORK_DEFINE="NET6.0"
-@SET STAGING_DIR="C:\\\\edbtesting\\\\dotnet\\\\edb-dotnet\\\\builds.edb\\\\inst"
+@SET SOURCE_PATH="%1"
+@SET TARGET_FRAMEWORK="%2"
+@SET RELEASE_CONFIGURATION="%3"
+@SET TARGET_PLATFORM="%4"
+@SET FRAMEWORK_DEFINE="%5"
+@SET STAGING_DIR="%6"
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
@@ -87,36 +87,26 @@ cd npgsql-6\src\Npgsql.OpenTelemetry
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0 || goto :error
 
+REM FuzzyStringMatch and Trigrams are integrated into the main provider: https://github.com/npgsql/efcore.pg/commit/8af92596a77a1b27b8c75693f9b26b98c066d201
+
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
 cd %SOURCE_PATH%
-cd EF.core\src\EFCore.PG
+cd npgsql-6\EF.core\src\EFCore.PG
 REM nuget restore EFCore.PG
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 cd %SOURCE_PATH%
-cd EF.core\src\EFCore.PG.FuzzyStringMatch
-REM nuget restore EFCore.PG.FuzzyStringMatch
-dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.FuzzyStringMatch.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
-
-cd %SOURCE_PATH%
-cd EF.core\src\EFCore.PG.NodaTime
+cd npgsql-6\EF.core\src\EFCore.PG.NodaTime
 REM nuget restore EFCore.PG.NodaTime
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 cd %SOURCE_PATH%
-cd EF.core\src\EFCore.PG.NTS
+cd npgsql-6\EF.core\src\EFCore.PG.NTS
 REM nuget restore EFCore.PG.NTS
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
-
-cd %SOURCE_PATH%
-cd EF.core\src\EFCore.PG.Trigrams
-REM nuget restore EFCore.PG.Trigrams
-dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\netstandard2.1\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Trigrams.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
