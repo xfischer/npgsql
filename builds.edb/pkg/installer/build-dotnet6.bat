@@ -1,4 +1,4 @@
-REM CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+CALL "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
 REM CALL "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat"
 
 REM @SET PGBUILD=C:\\pgBuild64
@@ -8,6 +8,9 @@ REM @SET PGBUILD=C:\\pgBuild64
 @SET TARGET_PLATFORM="%4"
 @SET FRAMEWORK_DEFINE="%5"
 @SET STAGING_DIR="%6"
+
+@SET DOTNET_PATH="C:\\Program Files\\dotnet"
+@SET PATH=%DOTNET_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
