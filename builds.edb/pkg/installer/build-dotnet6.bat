@@ -142,11 +142,13 @@ dotnet build -property:Configuration=Release -property:SourceLinkCreate=false ||
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0
 cd %SOURCE_PATH%
 cd npgsql-6\src\Npgsql.NodaTime
 REM nuget restore Npgsql.NodaTime.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0 || goto :error
 
 :error
 echo "Failed with error %errorlevel%."

@@ -6,7 +6,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFramework>netstandard2.0</TargetFramework>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net6.0</TargetFramework>
-	<AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
+	  <AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
+    <Version>6.0.2.1</Version>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
 

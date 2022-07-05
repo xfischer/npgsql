@@ -6,7 +6,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net6.0</TargetFramework>
     <SignAssembly>false</SignAssembly>
-	<AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
+	  <AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
+    <Version>6.0.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

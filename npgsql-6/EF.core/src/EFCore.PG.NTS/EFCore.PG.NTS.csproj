@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite</RootNamespace>
@@ -7,6 +7,7 @@
     <Description>NetTopologySuite PostGIS spatial support plugin for PostgreSQL/Npgsql Entity Framework Core provider.</Description>
     <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;spatial;postgis;nts</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>6.0.4.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

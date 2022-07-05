@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <Authors>Shay Rojansky</Authors>
@@ -6,7 +6,8 @@
         <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net6.0</TargetFramework>
         <PackageTags>npgsql;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-		<AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>
+		    <AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>
+      <Version>6.0.2.1</Version>
     </PropertyGroup>
 
     <ItemGroup>
