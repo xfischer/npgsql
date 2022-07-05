@@ -646,9 +646,9 @@ ExtractWindowsStaging()
     ExecuteCommand "rm -fr Window*tar.gz"
     ExecuteCommandWithoutExit "find * -type f | grep zip$ | xargs -I{} echo \" echo {}; rm -f {} \" | sh"
 
-    ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/logs ]] && rm -fr c/edbas/builds.edb/inst/logs"
-    ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/regression ]] && rm -fr c/edbas/builds.edb/inst/regression"
-    ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/src ]] && rm -fr c/edbas/builds.edb/inst/src"
+    # ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/logs ]] && rm -fr c/edbas/builds.edb/inst/logs"
+    # ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/regression ]] && rm -fr c/edbas/builds.edb/inst/regression"
+    # ExecuteCommandWithoutExit "[[ -d c/edbas/builds.edb/inst/src ]] && rm -fr c/edbas/builds.edb/inst/src"
 
     ExecuteCommandWithoutExit "rm -fr *.zip"
     #ExecuteCommandWithoutExit "rm -fr *.exe"
