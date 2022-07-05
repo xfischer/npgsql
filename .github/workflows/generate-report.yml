@@ -1,0 +1,75 @@
+name: V14-BlackDuck-Source-Binaries-Scan
+
+env:
+  CLOUDSMITH_REPO: "ibm-dev"
+  DOTNET_VERSION: "5.0.7.1"
+  
+on:
+  push:
+    branches: [ test ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  #schedule:
+    # Runs at 00:00 on day-of-month 1.
+    #- cron: '0 0 1 * *'
+
+jobs:
+  generate-pdf-report:
+    name: generate-report-job
+    runs-on: self-hosted
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@master
+
+      - name: Set version with underscore
+        run: |
+          echo DOTNET_UNDERSCORE_VERSION=$(echo ${{env.DOTNET_VERSION}} | sed -e 's|\.|_|g') >> $GITHUB_ENV
+      - name: Checkout GitHub Action Repo
+        uses: actions/checkout@master
+        with:
+          repository: EnterpriseDB/blackduck_pdf_report_generator.git
+          ref: main
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          path: .github/actions/blackduck_pdf_report_generator
+
+      - name: Generate PDF Report
+        uses: ./.github/actions/blackduck_pdf_report_generator
+        with:
+          PRODUCT_NAME: "EDB-DOTNET"
+          PRODUCT_LONG_NAME: "EDB DOTNET"
+          PRODUCT_VERSION: "${{env.DOTNET_VERSION}}"
+          PDF_REPORT_NAME: "dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
+          BLACKDUCK_API_TOKEN: "${{secrets.BLACKDUCK_API_TOKEN}}"
+
+      - name: Upload packages to artifactory
+        uses: actions/upload-artifact@v2
+        with:
+          name: dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
+          path: dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
+
+      - name: Checkout GitHub Action Repo
+        uses: actions/checkout@master
+        with:
+          repository: EnterpriseDB/edb-s3-copy.git
+          ref: master
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          path: .github/actions/edb-s3-copy
+
+      - name: Copy PDF Report to S3
+        uses: ./.github/actions/edb-s3-copy
+        with:
+          AWS_ACCESS_KEY_ID: "${{secrets.AWS_ACCESS_KEY_ID}}"
+          AWS_SECRET_ACCESS_KEY: "${{secrets.AWS_SECRET_ACCESS_KEY}}"
+          SOURCE: "dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
+          RECURSIVE: "false"
+          AWS_S3_BUCKET: "platform-services-builds-and-logs"
+          S3_BUCKET_PATH: "/blackduck/dotnet/${{env.DOTNET_VERSION}}/dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
+          AWS_REGION: "us-east-1"
+
+     # - name: Slack Notification
+     #  uses: rtCamp/action-slack-notify@v2
+     #   env:
+     #     SLACK_MESSAGE: 'jdbc_${{env.JDBC_UNDERSCORE_VERSION}}.pdf copied to https://platform-services-builds-and-logs.s3.amazonaws.com/blackduck/jdbc/${{env.JDBC_VERSION}}/jdbc_${{env.JDBC_UNDERSCORE_VERSION}}.pdf'
+     #     SLACK_TITLE: 'EDB JDBC BlackDuck PDF Report'
+     #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}   
