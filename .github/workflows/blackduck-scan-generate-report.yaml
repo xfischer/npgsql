@@ -120,8 +120,8 @@ jobs:
       - name: Upload packages to artifactory
         uses: actions/upload-artifact@v2
         with:
-          name: jdbc_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
-          path: jdbc_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
+          name: dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
+          path: dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf
 
       - name: Checkout GitHub Action Repo
         uses: actions/checkout@master
@@ -139,7 +139,7 @@ jobs:
           SOURCE: "dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
           RECURSIVE: "false"
           AWS_S3_BUCKET: "platform-services-builds-and-logs"
-          S3_BUCKET_PATH: "/blackduck/dotnet/${{env.DOTNET_VERSION}}/jdbc_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
+          S3_BUCKET_PATH: "/blackduck/dotnet/${{env.DOTNET_VERSION}}/dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
           AWS_REGION: "us-east-1"
 
      # - name: Slack Notification
