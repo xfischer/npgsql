@@ -63,7 +63,7 @@ jobs:
           JIRA_ACCOUNT_URL: https://enterprisedb.atlassian.net/
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 #         JIRA_ISSUE_ATTACHMENT: log_file.log
-          JIRA_ISSUE_DESCRIPTION: https://enterprisedb.app.blackduck.com/api/projects/45e8b4e7-0402-4522-810a-85e31d22b609/versions/a319a630-cefd-43d9-8598-94df5f2e37e4/components
+          JIRA_ISSUE_DESCRIPTION: https://enterprisedb.app.blackduck.com/api/search/project-versions?limit=25&offset=0&q=edb-dotnet
           JIRA_ISSUE_SUMMARY: Review JDBC ${{env.DOTNET_VERSION}} blackduck scan
           JIRA_ISSUE_TYPE: Story
           JIRA_PROJECT: EC
