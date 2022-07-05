@@ -45,7 +45,7 @@ jobs:
  #         PPAS_VERSION: "${{env.PPAS_VERSION}}"
           PACKAGE_VERSION: "${{env.DOTNET_VERSION}}-1"
           CLOUDSMITH_TOKEN: "${{secrets.CLOUDSMITH_REPO_TOKEN}}"
-          BLACKDUCK_SCRIPT_DIR: "dotnet-jdbc/.github/workflows/blackduck"
+          BLACKDUCK_SCRIPT_DIR: "edb-dotnet/.github/workflows/blackduck"
           BLACKDUCK_API_TOKEN: "${{secrets.BLACKDUCK_API_TOKEN}}"
           CLOUDSMITH_REPO_NAME: "${{env.CLOUDSMITH_REPO}}"
           CLOUDSMITH_ORGANIZATION: "enterprisedb"
