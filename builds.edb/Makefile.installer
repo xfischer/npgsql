@@ -8,8 +8,13 @@ export PKG_STAGING_PATH :=$(PWD)/inst
 ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 
 export PRE_BUILD_STEPS=createSourceArchive 
-export BUILD_COMPONENTS=build-dotnet50
+export BUILD_COMPONENTS=build-dotnet60
 export POST_BUILD_STEPS=copy-samples createBuildArchive
+
+# Build .NET6
+build-dotnet60:
+
+	cmd /c "pkg\\installer\\build-dotnet6.bat $(DOTNET_SOURCE_PATH) $(NET60_FRAMEWORK) Release AnyCPU NET6.0 $(DOTNET_STAGING_PATH)"
 
 # Build .NET5
 build-dotnet50:
