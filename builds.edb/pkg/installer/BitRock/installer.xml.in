@@ -818,23 +818,24 @@ EOF
           <name>programfileswindows</name>
           <platforms>windows</platforms>
           <distributionFileList>
-           <!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\vsix"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\EF"/> -->
-	    <!--<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net45"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net451"/>-->
-	    <!-- <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net461"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net472"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net48"/> -->
-		<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net6.0"/>
-		<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net5.0"/>
-		<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\EF.Core"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.0"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.1"/>
-	    <distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netcoreapp3.1"/>
-           <!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\plugins"/> -->
+			<!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\vsix"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\EF"/> -->
+			<!--<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net45"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net451"/>-->
+			<!-- <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net461"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net472"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net48"/> -->
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net6.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net5.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\EF.Core"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.1"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netcoreapp3.1"/>
+			<!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\plugins"/> -->
 			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\plugins"/>
-            <!--<distributionDirectory origin="DOTNET_STAGING_PATH\4.0\net40"/>-->
-            <distributionDirectory origin="DOTNET_STAGING_PATH\samples"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\OpenTelemetry"/>
+			<!--<distributionDirectory origin="DOTNET_STAGING_PATH\4.0\net40"/>-->
+			<distributionDirectory origin="DOTNET_STAGING_PATH\samples"/>
           </distributionFileList>
         </folder>
       </folderList>
