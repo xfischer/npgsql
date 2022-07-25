@@ -1,4 +1,5 @@
-CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+CALL "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" -arch=amd64
+REM CALL "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat"
 
 REM @SET PGBUILD=C:\\pgBuild64
 @SET SOURCE_PATH="%1"
@@ -9,243 +10,145 @@ REM @SET PGBUILD=C:\\pgBuild64
 @SET STAGING_DIR="%6"
 
 @SET DOTNET_PATH="C:\\Program Files\\dotnet"
-REM @SET PATH=%PGBUILD%\bin;%SOURCE_PATH%;%DOTNET_PATH%;%PATH%
-@SET MSBUILD_PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin"
-@SET VS_2019_PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\Common7\Tools"
-@SET PATH=%DOTNET_PATH%;%SOURCE_PATH%;%MSBUILD_PATH%;%VS_2019_PATH%;%PATH%
+@SET PATH=%DOTNET_PATH%;%PATH%
 
 cd %SOURCE_PATH%
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%
 
-nuget install VSSDK.Shell.12
-nuget install AsyncRewriter -Version 0.6.0 -Output packages
-nuget install System.Threading.Tasks.Extensions -Version 4.3.0
-nuget install EntityFramework
-nuget restore Npgsql.sln
+REM echo "-->nuget install VSSDK.Shell.12"
+REM nuget install VSSDK.Shell.12
+REM nuget install AsyncRewriter -Version 0.6.0 -Output packages
+REM nuget install System.Threading.Tasks.Extensions -Version 4.3.0
+REM nuget install EntityFramework
 
-cd src\Npgsql
-msbuild.exe Npgsql.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+echo "nuget restore Npgsql.sln"
+cd npgsql-6
+REM nuget restore Npgsql.sln
 
-echo %cd%
-echo %RELEASE_CONFIGURATION%
-echo %SOURCE_PATH%
+REM echo "msbuild restore"
+REM msbuild Npgsql.sln /t:restore /p:Configuration=Release /p:Platform="Any CPU"
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net461
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net461 || goto :error
+REM echo "Mmsbuild build"
+REM msbuild Npgsql.sln /t:build /p:Configuration=Release /p:Platform="Any CPU"
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net472
-copy bin\%RELEASE_CONFIGURATION%\net472\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net472\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
+echo "dotnet build"
+cd %SOURCE_PATH%
+cd npgsql-6\src\Npgsql
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net48
-copy bin\%RELEASE_CONFIGURATION%\net48\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net48\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net48 || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0
+copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error
 
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
-REM copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error 
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0
+copy bin\%RELEASE_CONFIGURATION%\net5.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error
 
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1
-REM copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1
+copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
 
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0
-REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error 
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
-REM copy bin\%RELEASE_CONFIGURATION%\%FRAMEWORK_DEFINE%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.0 || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\Microsoft.Bcl.HashCode.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Collections.Immutable.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Text.Encodings.Web.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
+
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Collections.Immutable.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Text.Encodings.Web.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
 
 cd %SOURCE_PATH%
-cd src\VSIX
+cd npgsql-6\test\Npgsql.Tests
+REM nuget restore Npgsql.Tests.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 
-nuget restore VSIX.csproj
-msbuild.exe VSIX.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0
+cd %SOURCE_PATH%
+cd npgsql-6\src\Npgsql.OpenTelemetry
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix
+REM FuzzyStringMatch and Trigrams are integrated into the main provider: https://github.com/npgsql/efcore.pg/commit/8af92596a77a1b27b8c75693f9b26b98c066d201
 
-copy bin\%RELEASE_CONFIGURATION%\EnterpriseDB.vsix %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
-copy bin\%RELEASE_CONFIGURATION%\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
-copy SSDLToPgSQL.tt %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
-copy %SOURCE_PATH%\src\VSIX\Resources\edb_logo.ico %STAGING_DIR%\%TARGET_FRAMEWORK%\vsix || goto :error
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
+cd %SOURCE_PATH%
+cd npgsql-6\EF.core\src\EFCore.PG
+REM nuget restore EFCore.PG
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 cd %SOURCE_PATH%
-cd test\Npgsql.Tests
-nuget restore Npgsql.Tests.csproj
-msbuild.exe Npgsql.Tests.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+cd npgsql-6\EF.core\src\EFCore.PG.NodaTime
+REM nuget restore EFCore.PG.NodaTime
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 cd %SOURCE_PATH%
-cd src\EF6.PG
-nuget restore EntityFramework6.Npgsql.sln
-msbuild.exe EntityFramework6.Npgsql.sln /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform="Any CPU" /p:SourceLinkCreate=false || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net461
-copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net461\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net461 || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net472
-copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net472\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net472 || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net48
-copy EF6.PG\bin\%RELEASE_CONFIGURATION%\net48\EntityFramework6*.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF\net48 || goto :error
+cd npgsql-6\EF.core\src\EFCore.PG.NTS
+REM nuget restore EFCore.PG.NTS
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
-
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
 cd %SOURCE_PATH%
-cd src\Npgsql.GeoJSON
-nuget restore Npgsql.GeoJSON.csproj
-msbuild.exe Npgsql.GeoJSON.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+cd npgsql-6\src\Npgsql.GeoJSON
+REM nuget restore Npgsql.GeoJSON.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
 
-copy bin\Release\net461\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461 || goto :error
-copy bin\Release\net461\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461 || goto :error
-copy bin\Release\net461\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net461 || goto :error
-
-copy bin\Release\net472\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472 || goto :error
-copy bin\Release\net472\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472 || goto :error
-copy bin\Release\net472\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472 || goto :error
-
-copy bin\Release\net48\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48 || goto :error
-copy bin\Release\net48\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48 || goto :error
-copy bin\Release\net48\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48 || goto :error
-
-REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
-
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 cd %SOURCE_PATH%
-cd src\Npgsql.Json.NET
-nuget restore Npgsql.Json.NET.csproj
-msbuild.exe Npgsql.Json.NET.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+cd npgsql-6\src\Npgsql.Json.NET
+REM nuget restore Npgsql.Json.NET.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
 
-copy bin\Release\net461\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461 || goto :error
-copy bin\Release\net461\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net461 || goto :error
-
-copy bin\Release\net472\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472 || goto :error
-copy bin\Release\net472\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472 || goto :error
-
-copy bin\Release\net48\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48 || goto :error
-copy bin\Release\net48\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48 || goto :error
-
-REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
-
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net48
+REM LegacyPostgis has been removed. Details: https://www.npgsql.org/doc/release-notes/6.0.html#npgsqllegacypostgis-has-been-removed
 REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0
-
-cd %SOURCE_PATH%
-cd src\Npgsql.LegacyPostgis
-nuget restore Npgsql.LegacyPostgis.csproj
-msbuild.exe Npgsql.LegacyPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
-copy bin\Release\net461\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net461 || goto :error
-copy bin\Release\net472\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net472 || goto :error
-copy bin\Release\net48\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\net48 || goto :error
-
+REM cd %SOURCE_PATH%
+REM cd npgsql-6\src\Npgsql.LegacyPostgis
+REM nuget restore Npgsql.LegacyPostgis.csproj
+REM dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
 
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
-
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
 cd %SOURCE_PATH%
-cd src\Npgsql.NetTopologySuite
-nuget restore Npgsql.NetTopologySuite.csproj
-msbuild.exe Npgsql.NetTopologySuite.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
+cd npgsql-6\src\Npgsql.NetTopologySuite
+REM nuget restore Npgsql.NetTopologySuite.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 
-copy bin\Release\net461\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461 || goto :error
-copy bin\Release\net461\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461 || goto :error
-copy bin\Release\net461\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net461 || goto :error
-
-copy bin\Release\net472\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472 || goto :error
-copy bin\Release\net472\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472 || goto :error
-copy bin\Release\net472\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472 || goto :error
-
-copy bin\Release\net48\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48 || goto :error
-copy bin\Release\net48\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48 || goto :error
-copy bin\Release\net48\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48 || goto :error
-
-REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
-
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0
 cd %SOURCE_PATH%
-cd src\Npgsql.NodaTime
-nuget restore Npgsql.NodaTime.csproj
-msbuild.exe Npgsql.NodaTime.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
-copy bin\Release\net461\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461 || goto :error
-copy bin\Release\net461\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net461 || goto :error
-
-copy bin\Release\net472\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472 || goto :error
-copy bin\Release\net472\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472 || goto :error
-
-copy bin\Release\net48\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48 || goto :error
-copy bin\Release\net48\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48 || goto :error
-
-REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
-
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net472
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net48
-REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0
-
-cd %SOURCE_PATH%
-cd src\Npgsql.RawPostgis
-nuget restore Npgsql.RawPostgis.csproj
-msbuild.exe Npgsql.RawPostgis.csproj /p:Configuration=%RELEASE_CONFIGURATION% /p:%FRAMEWORK_DEFINE%=1 /p:Platform=%TARGET_PLATFORM% /p:SourceLinkCreate=false || goto :error
-
-copy bin\Release\net461\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net461 || goto :error
-copy bin\Release\net472\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net472 || goto :error
-copy bin\Release\net48\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\net48 || goto :error
-
-
-REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.RawPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\RawPostgis\netstandard2.0 || goto :error
+cd npgsql-6\src\Npgsql.NodaTime
+REM nuget restore Npgsql.NodaTime.csproj
+dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
+copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0 || goto :error
 
 :error
 echo "Failed with error %errorlevel%."
