@@ -16,7 +16,7 @@ export INSTALLATION_FOOTPRINT_FOLDER=
 export BINARIES_FOLDER=
 
 #Synopsys Detect Setting Used
-export BLACKDUCK_DETECT_JAR="$SCAN_BASE_DIR/jars/synopsys-detect-7.13.2.jar"
+export BLACKDUCK_DETECT_JAR="${BLACKDUCK_DETECT_JAR:-$SCAN_BASE_DIR/jars/synopsys-detect-7.13.2.jar}"
 export BLACKDUCK_DETECT_DOCKER_JAR="$SCAN_BASE_DIR/jars/blackduck-docker-inspector-9.0.1.jar"
 export BLACKDUCK_URL=https://enterprisedb.app.blackduck.com/
 export BLACKDUCK_DETECT_CLEANUP=true
