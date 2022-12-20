@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
@@ -231,7 +231,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     //	       Index Cond: (col2 = 10)
                     //(9 rows)
 
-                    //PSQL output shows some INFO: [HINTS] statements which are missing from JDBC output.
+                    //PSQL output shows some INFO: [HINTS] statements which are missing from .NET output.
                     string[] output = {
                 "Append",
                 "  ->  Bitmap Heap Scan on t_1384_p1 s_1",
@@ -903,7 +903,7 @@ namespace EnterpriseDB.EDBClient.Tests
             //<base href="http://:" />
             //<base href="http://:" />
             //
-            //Not sure how to get this in JDBC.
+            //Not sure how to get this in .NET.
             Execute("p");
         }
 
