@@ -95,7 +95,7 @@ StartTime=`date +%s`
 ShowLocalVariables
 ClearDirs
 CreateDirs
-CopySources
+#CopySources
 CopyPackages
 ExtractPackages "$INSTALLATION_FOOTPRINT_FOLDER"
 Scan
