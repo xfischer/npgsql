@@ -2,7 +2,7 @@ name: V14-BlackDuck-Source-Binaries-Scan
 
 env:
   CLOUDSMITH_REPO: "dev"
-  DOTNET_VERSION: "5.0.7.1"
+  DOTNET_VERSION: "6.0.2.1"
   
 on:
   push:
@@ -22,6 +22,7 @@ jobs:
       - name: Checkout source repo
         uses: actions/checkout@master
         with:
+         ref: DNET_6.0.2.1-1-GA
          path: edb-dotnet
 
       - name: Set version with underscore
@@ -54,7 +55,7 @@ jobs:
           COMPONENT: "edb-dotnet"
           BUILDS_SERVER_USER: ${{secrets.BUILDS_SERVER_USER}}
           BUILDS_SERVER_PASSWORD: ${{secrets.BUILDS_SERVER_PASSWORD}}
-          WINDOWS_X64_STAGING_BINARIES_PATH: "https://builds.enterprisedb.com/builds/released-builds/PPAS/Updates/Connectors/Redux-Connectors/DNET/Windows64/5.0.7.1-1/2021-08-09/StagingBinaries/dotnet/windows.zip"
+          WINDOWS_X64_STAGING_BINARIES_PATH: "https://builds.enterprisedb.com/builds/released-builds/PPAS/Updates/Connectors/Redux-Connectors/DNET/Windows64/6.0.2.1-1/20220728/StagingBinaries/dotnet/windows.zip"
 
       - if: steps.run_scan.outcome == 'success'
         name: Open Jira Ticket To Review Scan
