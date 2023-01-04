@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 export PRODUCT="EDB-DotNet"
-export VERSION="5.0.7.1"
+export VERSION=$(echo ${PACKAGE_VERSION} | cut -f1 -d-)
 export REMOTE_PRODUCT_REDUX_DIR="$REDUX_STORE_DIR_BASE/dotnet/latest/*"
 
 # Checkout Tags/Branches
