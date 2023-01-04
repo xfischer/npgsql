@@ -88,4 +88,4 @@ export NPM_ARGUMENTS="\"npm install\""
 export DAYS_TO_SEARCH_OLD_BUILDS=7
 
 # Supported platforms
-export PLATFORM_LIST="windows-x64 windows-x32"
+export PLATFORM_LIST="windows-x64"
