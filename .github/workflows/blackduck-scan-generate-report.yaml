@@ -1,4 +1,4 @@
-name: V14-BlackDuck-Source-Binaries-Scan
+name: BlackDuck-Source-Binaries-Scan
 
 env:
   CLOUDSMITH_REPO: "dev"
@@ -15,14 +15,13 @@ on:
     #- cron: '0 0 1 * *'
 
 jobs:
-  v14-blackduck-scan:
-    name: v14-blackduck-scan-job
+  blackduck-scan:
+    name: blackduck-scan-job
     runs-on: self-hosted
     steps:
       - name: Checkout source repo
         uses: actions/checkout@master
         with:
-         ref: DNET_6.0.2.1-1-GA
          path: edb-dotnet
 
       - name: Set version with underscore
@@ -92,7 +91,7 @@ jobs:
           
   generate-pdf-report:
     name: generate-report-job
-    needs: v14-blackduck-scan
+    needs: blackduck-scan
     runs-on: self-hosted
     steps:
       - name: Checkout source repo
