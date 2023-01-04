@@ -111,8 +111,8 @@ jobs:
       - name: Generate PDF Report
         uses: ./.github/actions/blackduck_pdf_report_generator
         with:
-          PRODUCT_NAME: "EDB-DOTNET"
-          PRODUCT_LONG_NAME: "EDB DOTNET"
+          PRODUCT_NAME: "EDB-DotNet"
+          PRODUCT_LONG_NAME: "EDB .NET"
           PRODUCT_VERSION: "${{env.DOTNET_VERSION}}"
           PDF_REPORT_NAME: "dotnet_${{env.DOTNET_UNDERSCORE_VERSION}}.pdf"
           BLACKDUCK_API_TOKEN: "${{secrets.BLACKDUCK_API_TOKEN}}"
