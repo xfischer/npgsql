@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Xml.Linq;
 using System.Threading;
+using System.Collections;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -72,6 +73,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         {
             conn = OpenConnection();
 
+            Execute("DROP TABLE emp1");
+
             Execute("CREATE TABLE emp1(empno NUMBER(8),  ename VARCHAR2(10), "
                             + "sal NUMBER(10,2), comm NUMBER(10,2))");
 
@@ -94,7 +97,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [TearDown]
         public void Dispose()
         {
-            Execute("DROP TABLE emp1");
             TestUtil.closeDB(conn);
         }
 
@@ -116,13 +118,17 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2638, 42601: syntax error at or near \"v_empno\"")]
-    public void IfThenStatementTest()
+        //        [Ignore("EC-2638, 42601: syntax error at or near \"v_empno\"")]
+        public void IfThenStatementTest()
         {
             //In the following example an IF-THEN statement is used to test and
             //display employees who have a commission.
-            var sqlStr = "DECLARE\n"
-                     + "    v_empno         emp1.empno%TYPE;\n"
+            Execute("DROP PROCEDURE IfThenStatement_SP;");
+
+            var sqlStr = "CREATE OR REPLACE PROCEDURE IfThenStatement_SP()\n"
+                      + " IS\n"
+                      + " DECLARE\n"
+                                 + "    v_empno         emp1.empno%TYPE;\n"
                      + "    v_comm          emp1.comm%TYPE;\n"
                      + "    CURSOR emp_cursor IS SELECT empno, comm FROM emp1 order by empno;\n"
                      + "BEGIN\n"
@@ -141,38 +147,275 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                      + "    CLOSE emp_cursor;\n"
                      + "END;";
 
+            Execute(sqlStr);
+
             var mre = new ManualResetEvent(false);
-            PostgresNotice? notice = null;
+            var notices = new ArrayList();
             NoticeEventHandler action = (sender, args) =>
             {
-                Assert.IsNotNull(args.Notice);
-                notice = args.Notice;
+                notices.Add(args.Notice);
                 mre.Set();
             };
             conn.Notice += action;
             try
             {
-                using (var cstmt = new EDBCommand(sqlStr, conn))
+                using (var cstmt = new EDBCommand("IfThenStatement_SP()", conn))
                 {
                     cstmt.CommandType = CommandType.StoredProcedure;
 
                     cstmt.Prepare();
                     cstmt.ExecuteNonQuery();
                 }
-
                 mre.WaitOne(5000);
-                //Assert.That(notice, Is.Not.Null, "No notice was emitted");
-                Assert.That(notice!.MessageText, Is.EqualTo("number 10"));
-                Assert.That(notice.Severity, Is.EqualTo("NOTICE"));
+                Assert.AreEqual(IF_THEN_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(IF_THEN_RESULT[i], notice.MessageText);
+                }
             }
             finally
             {
                 conn.Notice -= action;
             }
+            mre.Close();
+        }
 
-        //Assert.assertArrayEquals(IF_THEN_RESULT, v.toArray());
+        [Test]
+        public void IfThenElseStatementTest()
+        {
+            //An IF-THEN-ELSE statement is used to display the text Non-commission if
+            //the employee does not get a commission.
+            Execute("DROP PROCEDURE IfThenElseStatement_SP;");
+
+            var sqlStr = "CREATE OR REPLACE PROCEDURE IfThenElseStatement_SP()\n"
+                      + " IS\n"
+                      + " DECLARE\n"
+                                  + "    v_empno         emp1.empno%TYPE;\n"
+                      + "    v_comm          emp1.comm%TYPE;\n"
+                      + "    CURSOR emp_cursor IS SELECT empno, comm FROM emp1 order by empno;\n"
+                      + "BEGIN\n"
+                      + "    OPEN emp_cursor;\n"
+                      + "    LOOP\n"
+                      + "        FETCH emp_cursor INTO v_empno, v_comm;\n"
+                      + "        EXIT WHEN emp_cursor%NOTFOUND;\n"
+                      + "--\n"
+                      + "--  Test whether or not the employee gets a commission\n"
+                      + "--\n"
+                      + "        IF v_comm IS NOT NULL AND v_comm > 0 THEN\n"
+                      + "            DBMS_OUTPUT.PUT_LINE(v_empno || ' ' ||\n"
+                      + "            TO_CHAR(v_comm,'$FM99999.00'));\n"
+                      + "        ELSE\n"
+                      + "            DBMS_OUTPUT.PUT_LINE(v_empno || ' ' || 'Non-commission');\n"
+                      + "        END IF;\n"
+                      + "    END LOOP;\n"
+                      + "    CLOSE emp_cursor;\n"
+                      + "END;";
+
+            Execute(sqlStr);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("IfThenElseStatement_SP()", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(IF_THEN_ELSE_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(IF_THEN_ELSE_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        public void IfThenElseIfStatementTest()
+        {
+            //In the following example the outer IF-THEN-ELSE statement tests whether
+            //or not an employee has a commission. The inner IF-THEN-ELSE statements
+            //then test whether the employee’s total compensation exceeds or is less
+            //than the company average.
+            Execute("DROP PROCEDURE IfThenElseIfStatement_SP;");
+
+            var sqlStr = "CREATE OR REPLACE PROCEDURE IfThenElseIfStatement_SP()\n"
+                    + " IS\n"
+                    + " DECLARE\n"
+                    + "    v_empno         emp1.empno%TYPE;\n"
+                    + "    v_sal           emp1.sal%TYPE;\n"
+                    + "    v_comm          emp1.comm%TYPE;\n"
+                    + "    v_avg           NUMBER(7,2);\n"
+                    + "    CURSOR emp_cursor IS SELECT empno, sal, comm FROM emp1;\n"
+                    + "BEGIN\n"
+                    + "--\n"
+                    + "--  Calculate the average yearly compensation in the company\n"
+                    + "--\n"
+                    + "    SELECT AVG((sal + NVL(comm,0)) * 24) INTO v_avg FROM emp1;\n"
+                    + "    DBMS_OUTPUT.PUT_LINE('Average Yearly Compensation: ' ||\n"
+                    + "        TO_CHAR(v_avg,'$FM999,999.00'));\n"
+                    + "    OPEN emp_cursor;\n"
+                    + "    LOOP\n"
+                    + "        FETCH emp_cursor INTO v_empno, v_sal, v_comm;\n"
+                    + "        EXIT WHEN emp_cursor%NOTFOUND;\n"
+                    + "--\n"
+                    + "--  Test whether or not the employee gets a commission\n"
+                    + "--\n"
+                    + "        IF v_comm IS NOT NULL AND v_comm > 0 THEN\n"
+                    + "--\n"
+                    + "--  Test if the employee's compensation with commission exceeds the average\n"
+                    + "--\n"
+                    + "            IF (v_sal + v_comm) * 24 > v_avg THEN\n"
+                    + "                DBMS_OUTPUT.PUT_LINE(v_empno || ' ' ||\n"
+                    + "                    TO_CHAR((v_sal + v_comm) * 24,'$FM999,999.00') || ' Exceeds Average');\n"
+                    + "            ELSE\n"
+                    + "                DBMS_OUTPUT.PUT_LINE(v_empno || ' ' ||\n"
+                    + "                    TO_CHAR((v_sal + v_comm) * 24,'$FM999,999.00') || ' Below Average');\n"
+                    + "            END IF;\n"
+                    + "        ELSE\n"
+                    + "--\n"
+                    + "--  Test if the employee's compensation without commission exceeds the\n"
+                    + "-- average\n"
+                    + "--\n"
+                    + "            IF v_sal * 24 > v_avg THEN\n"
+                    + "                DBMS_OUTPUT.PUT_LINE(v_empno || ' ' ||\n"
+                    + "                    TO_CHAR(v_sal * 24,'$FM999,999.00') || ' Exceeds Average');\n"
+                    + "            ELSE\n"
+                    + "                DBMS_OUTPUT.PUT_LINE(v_empno || ' ' ||\n"
+                    + "                    TO_CHAR(v_sal * 24,'$FM999,999.00') || ' Below Average');\n"
+                    + "            END IF;\n"
+                    + "        END IF;\n"
+                    + "    END LOOP;\n"
+                    + "    CLOSE emp_cursor;\n"
+                    + "END;";
+
+            Execute(sqlStr);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("IfThenElseIfStatement_SP()", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(IF_THEN_ELSE_IF_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(IF_THEN_ELSE_IF_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        public void IfThenElsifElseStatementTest()
+        {
+            //The following example uses an IF-THEN-ELSIF-ELSE statement
+            //to count the number of employees by compensation ranges of $25,000.
+            Execute("DROP PROCEDURE IfThenElsifElseStatement_SP;");
+
+            var sqlStr = "CREATE OR REPLACE PROCEDURE IfThenElsifElseStatement_SP()\n"
+                      + " IS\n"
+                      + " DECLARE\n"
+                            + "    v_empno         emp1.empno%TYPE;\n"
+                + "    v_comp          NUMBER(8,2);\n"
+                + "    v_lt_25K        SMALLINT := 0;\n"
+                + "    v_25K_50K       SMALLINT := 0;\n"
+                + "    v_50K_75K       SMALLINT := 0;\n"
+                + "    v_75K_100K      SMALLINT := 0;\n"
+                + "    v_ge_100K       SMALLINT := 0;\n"
+                + "    CURSOR emp_cursor IS SELECT empno, (sal + NVL(comm,0)) * 24 FROM emp1;\n"
+                + "BEGIN\n"
+                + "    OPEN emp_cursor;\n"
+                + "    LOOP\n"
+                + "        FETCH emp_cursor INTO v_empno, v_comp;\n"
+                + "        EXIT WHEN emp_cursor%NOTFOUND;\n"
+                + "        IF v_comp < 25000 THEN\n"
+                + "            v_lt_25K := v_lt_25K + 1;\n"
+                + "        ELSIF v_comp < 50000 THEN\n"
+                + "            v_25K_50K := v_25K_50K + 1;\n"
+                + "        ELSIF v_comp < 75000 THEN\n"
+                + "            v_50K_75K := v_50K_75K + 1;\n"
+                + "        ELSIF v_comp < 100000 THEN\n"
+                + "            v_75K_100K := v_75K_100K + 1;\n"
+                + "        ELSE\n"
+                + "            v_ge_100K := v_ge_100K + 1;\n"
+                + "        END IF;\n"
+                + "    END LOOP;\n"
+                + "    CLOSE emp_cursor;\n"
+                + "    DBMS_OUTPUT.PUT_LINE('Less than 25,000 : ' || v_lt_25K);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('25,000 - 49,9999 : ' || v_25K_50K);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('50,000 - 74,9999 : ' || v_50K_75K);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('75,000 - 99,9999 : ' || v_75K_100K);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('100,000 and over : ' || v_ge_100K);\n"
+                + "END;";
+
+            Execute(sqlStr);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("IfThenElsifElseStatement_SP", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(IF_THEN_ELSIF_ELSE_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(IF_THEN_ELSIF_ELSE_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
     }
-}
 }
 
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

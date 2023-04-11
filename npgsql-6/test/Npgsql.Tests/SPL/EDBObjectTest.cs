@@ -44,15 +44,15 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute("DROP TYPE BODY address");
             Execute("DROP TYPE address");
-            Execute("DROP TYPE BODY dept_obj_typ");
-            Execute("DROP TYPE dept_obj_typ");
+            Execute("DROP TYPE BODY dept_obj_type");
+            Execute("DROP TYPE dept_obj_type");
             Execute("DROP TYPE BODY emp_obj_typ");
             Execute("DROP TYPE emp_obj_typ");
             Execute("DROP TYPE addr_obj_typ");
             Execute("DROP FUNCTION postal_code_to_city");
             Execute("DROP FUNCTION postal_code_to_state");
 
-            Execute("DROP TABLE citidata CASCADE");
+            Execute("DROP TABLE citydata CASCADE");
 
             // The first example creates the addr_object_type object type that
             // contains only attributes and no methods.
@@ -105,16 +105,16 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             // The following object type specification includes a static function get_dname
             // and a member procedure display_dept
-            var deptObjType = "CREATE OR REPLACE TYPE dept_obj_typ AS OBJECT (\n"
+            var deptObjType = "CREATE OR REPLACE TYPE dept_obj_type AS OBJECT (\n"
                     + "    deptno          NUMBER(2),\n"
                     + "    STATIC FUNCTION get_dname(p_deptno IN NUMBER) RETURN VARCHAR2,\n"
                     + "    MEMBER PROCEDURE display_dept\n"
                     + ");";
             Execute(deptObjType);
 
-            // The object type body for dept_obj_typ defines a static function named
+            // The object type body for dept_obj_type defines a static function named
             // get_dname and a member procedure named display_dept:
-            var deptObjTypeBody = "CREATE OR REPLACE TYPE BODY dept_obj_typ AS\n"
+            var deptObjTypeBody = "CREATE OR REPLACE TYPE BODY dept_obj_type AS\n"
                     + "    STATIC FUNCTION get_dname(p_deptno IN NUMBER) RETURN VARCHAR2\n"
                     + "    IS\n"
                     + "        v_dname     VARCHAR2(14);\n"
@@ -134,7 +134,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "    BEGIN\n"
                     + "        DBMS_OUTPUT.PUT_LINE('Dept No    : ' || SELF.deptno);\n"
                     + "        DBMS_OUTPUT.PUT_LINE('Dept Name  : ' ||\n"
-                    + "            dept_obj_typ.get_dname(SELF.deptno));\n"
+                    + "            dept_obj_type.get_dname(SELF.deptno));\n"
                     + "    END;\n"
                     + "END;";
             Execute(deptObjTypeBody);
@@ -205,7 +205,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [TearDown]
         public void Dispose()
         {
-            Execute("DROP TABLE emp1");
             TestUtil.closeDB(conn);
         }
 
@@ -301,58 +300,30 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void StaticMethodTest()
         {
+            conn.ReloadTypes();
+
+            //Close and reopen the connection so that custom types are reloaded.
+            TestUtil.closeDB(conn);
+            EDBConnection.GlobalTypeMapper.MapComposite<dept_obj_type>("public.dept_obj_type");
+
+            conn = OpenConnection();
+
             // member method display_dept used static method get_dname
-            var sql = "DECLARE\n"
-                    + "    v_dept           DEPT_OBJ_TYP;\n"
+            Execute("DROP PROCEDURE StaticMethod_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE StaticMethod_SP()\n"
+                      + " IS\n"
+                      + " DECLARE\n"
+                                + "    v_dept           DEPT_OBJ_TYPE;\n"
                     + "BEGIN\n"
-                    + "    v_dept := dept_obj_typ (20);\n"
+                    + "    v_dept := dept_obj_type (20);\n"
                     + "     v_dept.display_dept();"
                     + "END;";
 
-            var mre = new ManualResetEvent(false);
-            var notices = new ArrayList();
-            NoticeEventHandler action = (sender, args) =>
-            {
-                notices.Add(args.Notice);
-                mre.Set();
-            };
-            conn.Notice += action;
-            try
-            {
-                using (var cstmt = new EDBCommand(sql, conn))
-                {
-                    cstmt.CommandType = CommandType.Text;
-                    cstmt.ExecuteNonQuery();
-                }
-                mre.WaitOne(5000);
-                Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
-                for (var i = 0; i < notices.Count; i++)
-                {
-                    var notice = (PostgresNotice?)notices[i];
-                    Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice.MessageText);
-                }
-            }
-            finally
-            {
-                conn.Notice -= action;
-            }
-            mre.Close();
-        }
-
-        [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
-        public void ConstuctorMethodTest()
-        {
-            // call constructor method
-            var sql = "DECLARE\n"
-                + "  cust_addr address := address('100 Main Street', '02203');\n"
-                + "BEGIN\n"
-                + "  DBMS_OUTPUT.PUT_LINE(cust_addr.city);\n"
-                + "  DBMS_OUTPUT.PUT_LINE(cust_addr.state);\n"
-                + "END;";
+            Execute(sql);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -364,141 +335,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             conn.Notice += action;
             try
             {
-                using (var cstmt = new EDBCommand(sql, conn))
+                using (var cstmt = new EDBCommand("StaticMethod_SP", conn))
                 {
-                    cstmt.CommandType = CommandType.Text;
-                    cstmt.ExecuteNonQuery();
-                }
-                mre.WaitOne(5000);
-                Assert.AreEqual(CONSTUCTOR_METHOD_RESULT.Length, notices.Count);
-                for (var i = 0; i < notices.Count; i++)
-                {
-                    var notice = (PostgresNotice?)notices[i];
-                    Assert.AreEqual(CONSTUCTOR_METHOD_RESULT[i], notice.MessageText);
-                }
-            }
-            finally
-            {
-                conn.Notice -= action;
-            }
-            mre.Close();
-        }
+                    cstmt.CommandType = CommandType.StoredProcedure;
 
-        [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
-        public void ReferencingAnObjectTest()
-        {
-            // This example displays the values assigned to the emp_obj_typ object.
-            var sql = "DECLARE\n"
-                + "    v_emp          EMP_OBJ_TYP;\n" + "BEGIN\n"
-                + "    v_emp := emp_obj_typ(9001,'JONES',\n"
-                + "        addr_obj_typ('123 MAIN STREET','EDISON','NJ',08817));\n"
-                + "    DBMS_OUTPUT.PUT_LINE('Employee No   : ' || v_emp.empno);\n"
-                + "    DBMS_OUTPUT.PUT_LINE('Name          : ' || v_emp.ename);\n"
-                + "    DBMS_OUTPUT.PUT_LINE('Street        : ' || v_emp.addr.street);\n"
-                + "    DBMS_OUTPUT.PUT_LINE('City/State/Zip: ' || v_emp.addr.city || ', ' ||\n"
-                + "        v_emp.addr.state || ' ' || LPAD(v_emp.addr.zip,5,'0'));\n"
-                + "END;";
-
-            var mre = new ManualResetEvent(false);
-            var notices = new ArrayList();
-            NoticeEventHandler action = (sender, args) =>
-            {
-                notices.Add(args.Notice);
-                mre.Set();
-            };
-            conn.Notice += action;
-            try
-            {
-                using (var cstmt = new EDBCommand(sql, conn))
-                {
-                    cstmt.CommandType = CommandType.Text;
-                    cstmt.ExecuteNonQuery();
-                }
-                mre.WaitOne(5000);
-                Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
-                for (var i = 0; i < notices.Count; i++)
-                {
-                    var notice = (PostgresNotice?)notices[i];
-                    Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice.MessageText);
-                }
-            }
-            finally
-            {
-                conn.Notice -= action;
-            }
-            mre.Close();
-        }
-
-        [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
-        public void ReferencingAnObjectWithMemberMethodTest()
-        {
-            // You can duplicate the results of the previous anonymous block by calling
-            // the member procedure display_emp.
-            var sql = "DECLARE\n"
-                + "    v_emp          EMP_OBJ_TYP;\n"
-                + "BEGIN\n"
-                + "    v_emp := emp_obj_typ(9001,'JONES',\n"
-                + "        addr_obj_typ('123 MAIN STREET','EDISON','NJ',08817));\n"
-                + "    v_emp.display_emp01;\n"
-                + "END;";
-
-            var mre = new ManualResetEvent(false);
-            var notices = new ArrayList();
-            NoticeEventHandler action = (sender, args) =>
-            {
-                notices.Add(args.Notice);
-                mre.Set();
-            };
-            conn.Notice += action;
-            try
-            {
-                using (var cstmt = new EDBCommand(sql, conn))
-                {
-                    cstmt.CommandType = CommandType.Text;
-                    cstmt.ExecuteNonQuery();
-                }
-                mre.WaitOne(5000);
-                Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
-                for (var i = 0; i < notices.Count; i++)
-                {
-                    var notice = (PostgresNotice?)notices[i];
-                    Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice.MessageText);
-                }
-            }
-            finally
-            {
-                conn.Notice -= action;
-            }
-            mre.Close();
-        }
-
-        [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
-        public void ReferencingAnObjectDisplayDeptTest()
-        {
-            //This anonymous block creates an instance of dept_obj_typ and calls
-            //the member procedure display_dept
-            var sql = "DECLARE\n"
-                + "    v_dept          DEPT_OBJ_TYP := dept_obj_typ (20);\n"
-                + "BEGIN\n"
-                + "    v_dept.display_dept;\n"
-                + "END;";
-
-            var mre = new ManualResetEvent(false);
-            var notices = new ArrayList();
-            NoticeEventHandler action = (sender, args) =>
-            {
-                notices.Add(args.Notice);
-                mre.Set();
-            };
-            conn.Notice += action;
-            try
-            {
-                using (var cstmt = new EDBCommand(sql, conn))
-                {
-                    cstmt.CommandType = CommandType.Text;
+                    cstmt.Prepare();
                     cstmt.ExecuteNonQuery();
                 }
                 mre.WaitOne(5000);
@@ -517,14 +358,22 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
-        public void ReferencingAnObjectGetDnameTest()
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        public void ConstuctorMethodTest()
         {
-            //You can call the static function defined in dept_obj_typ
-            //directly by qualifying it by the object type name as follows:
-            var sql = "BEGIN\n"
-                + "    DBMS_OUTPUT.PUT_LINE(dept_obj_typ.get_dname(20));\n"
+            // call constructor method
+            Execute("DROP PROCEDURE ConstuctorMethod_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE ConstuctorMethod_SP()\n"
+                + " IS\n"
+                + " DECLARE\n"
+                + "  cust_addr address := address('100 Main Street', '02203');\n"
+                + "BEGIN\n"
+                + "  DBMS_OUTPUT.PUT_LINE(cust_addr.city);\n"
+                + "  DBMS_OUTPUT.PUT_LINE(cust_addr.state);\n"
                 + "END;";
+
+            Execute(sql);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -536,9 +385,215 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             conn.Notice += action;
             try
             {
-                using (var cstmt = new EDBCommand(sql, conn))
+                using (var cstmt = new EDBCommand("ConstuctorMethod_SP", conn))
                 {
-                    cstmt.CommandType = CommandType.Text;
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(CONSTUCTOR_METHOD_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(CONSTUCTOR_METHOD_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        public void ReferencingAnObjectTest()
+        {
+            // This example displays the values assigned to the emp_obj_typ object.
+            Execute("DROP PROCEDURE ReferencingAnObject_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObject_SP()\n"
+                + " IS\n"
+                + " DECLARE\n"
+                + "    v_emp          EMP_OBJ_TYP;\n" + "BEGIN\n"
+                + "    v_emp := emp_obj_typ(9001,'JONES',\n"
+                + "        addr_obj_typ('123 MAIN STREET','EDISON','NJ',08817));\n"
+                + "    DBMS_OUTPUT.PUT_LINE('Employee No   : ' || v_emp.empno);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('Name          : ' || v_emp.ename);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('Street        : ' || v_emp.addr.street);\n"
+                + "    DBMS_OUTPUT.PUT_LINE('City/State/Zip: ' || v_emp.addr.city || ', ' ||\n"
+                + "        v_emp.addr.state || ' ' || LPAD(v_emp.addr.zip,5,'0'));\n"
+                + "END;";
+
+            Execute(sql);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("ReferencingAnObject_SP", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        public void ReferencingAnObjectWithMemberMethodTest()
+        {
+            // You can duplicate the results of the previous anonymous block by calling
+            // the member procedure display_emp.
+            Execute("DROP PROCEDURE ReferencingAnObjectWithMemberMethod_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectWithMemberMethod_SP()\n"
+                + " IS\n"
+                + " DECLARE\n"
+                + "    v_emp          EMP_OBJ_TYP;\n"
+                + "BEGIN\n"
+                + "    v_emp := emp_obj_typ(9001,'JONES',\n"
+                + "        addr_obj_typ('123 MAIN STREET','EDISON','NJ',08817));\n"
+                + "    v_emp.display_emp01;\n"
+                + "END;";
+
+            Execute(sql);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("ReferencingAnObjectWithMemberMethod_SP", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        public void ReferencingAnObjectDisplayDeptTest()
+        {
+            //This anonymous block creates an instance of dept_obj_type and calls
+            //the member procedure display_dept
+            Execute("DROP PROCEDURE ReferencingAnObjectDisplayDept_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectDisplayDept_SP()\n"
+                + " IS\n"
+                + " DECLARE\n"
+                + "    v_dept          DEPT_OBJ_TYPE := dept_obj_type (20);\n"
+                + "BEGIN\n"
+                + "    v_dept.display_dept;\n"
+                + "END;";
+
+            Execute(sql);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("ReferencingAnObjectDisplayDept_SP", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
+                    cstmt.ExecuteNonQuery();
+                }
+                mre.WaitOne(5000);
+                Assert.AreEqual(DEPT_DISPLAY_RESULT.Length, notices.Count);
+                for (var i = 0; i < notices.Count; i++)
+                {
+                    var notice = (PostgresNotice?)notices[i];
+                    Assert.AreEqual(DEPT_DISPLAY_RESULT[i], notice.MessageText);
+                }
+            }
+            finally
+            {
+                conn.Notice -= action;
+            }
+            mre.Close();
+        }
+
+        [Test]
+        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+        public void ReferencingAnObjectGetDnameTest()
+        {
+            //You can call the static function defined in dept_obj_type
+            //directly by qualifying it by the object type name as follows:
+            Execute("DROP PROCEDURE ReferencingAnObjectGetDname_SP;");
+
+            var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectGetDname_SP()\n"
+                + " IS\n"
+                + "BEGIN\n"
+                + "    DBMS_OUTPUT.PUT_LINE(dept_obj_type.get_dname(20));\n"
+                + "END;";
+
+            Execute(sql);
+
+            var mre = new ManualResetEvent(false);
+            var notices = new ArrayList();
+            NoticeEventHandler action = (sender, args) =>
+            {
+                notices.Add(args.Notice);
+                mre.Set();
+            };
+            conn.Notice += action;
+            try
+            {
+                using (var cstmt = new EDBCommand("ReferencingAnObjectGetDname_SP", conn))
+                {
+                    cstmt.CommandType = CommandType.StoredProcedure;
+
+                    cstmt.Prepare();
                     cstmt.ExecuteNonQuery();
                 }
                 mre.WaitOne(5000);
@@ -571,6 +626,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public decimal empno;
         public string ename;
         public addr_obj_typ addr;
+    }
+
+    public class dept_obj_type
+    {
+        public decimal deptno;
     }
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

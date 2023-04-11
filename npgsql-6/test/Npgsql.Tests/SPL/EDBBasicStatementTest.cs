@@ -623,7 +623,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+        [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
         public void ReturningIntoFromDeleteStatementExistsTest()
         {
             //Delete a employee and use return into statement to get information
@@ -675,7 +675,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+        [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
         public void ReturnIntoFromDeleteStatementNotExistsTest()
         {
             //Delete non existing employee return not found message
@@ -703,7 +703,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+        [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
         public void SelectIntoStatementExistsTest()
         {
             /* This test is not complete and corresponds to the following JDBC test case.
@@ -749,7 +749,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+        [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
         public void SelectIntoStatementNotExistsTest()
         {
             /* This test is not complete and corresponds to the following JDBC test case.
