@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>Yoh Deadfall;Shay Rojansky</Authors>
     <Description>GeoJSON plugin for EDB, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
@@ -6,6 +6,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
 	<AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
+	<Version>7.0.2.1</Version>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

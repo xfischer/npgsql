@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>Shay Rojansky</Authors>
     <Description>NodaTime plugin for EDB, allowing mapping of PostgreSQL date/time types to NodaTime types.</Description>
@@ -6,6 +6,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
 	  <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
+	<Version>7.0.2.1</Version>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
   </PropertyGroup>
 

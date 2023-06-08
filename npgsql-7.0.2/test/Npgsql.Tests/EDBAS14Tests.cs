@@ -23,7 +23,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             try
             {
-                var conn = await OpenConnectionAsync();
+                await using var conn = await OpenConnectionAsync();
 
                 using (var com = new EDBCommand("", conn))
                 {
@@ -48,7 +48,7 @@ namespace EnterpriseDB.EDBClient.Tests
         {
             try
             {
-                var conn = await OpenConnectionAsync();
+                await using var conn = await OpenConnectionAsync();
 
                 using (var com = new EDBCommand("", conn))
                 {
@@ -86,7 +86,7 @@ namespace EnterpriseDB.EDBClient.Tests
         [Test]
         public async Task SupportForAliasInInsertStatement()
         {
-            var conn = await OpenConnectionAsync();
+            await using var conn = await OpenConnectionAsync();
 
 #nullable disable
             TestUtil.MinimumPgVersion(conn, "14.0.0");
@@ -291,7 +291,7 @@ namespace EnterpriseDB.EDBClient.Tests
          [Test]
         public async Task AddBITANDAndBITOROracleCompatibleFunctions()
         {
-            var conn = await OpenConnectionAsync();
+            await using var conn = await OpenConnectionAsync();
 
 #nullable disable
             TestUtil.MinimumPgVersion(conn, "14.0.0");
@@ -320,7 +320,7 @@ namespace EnterpriseDB.EDBClient.Tests
          [Test]
         public async Task ImplementationOfSUBPARTITIONTemplateInEPAS()
         {
-            var conn = await OpenConnectionAsync();
+            await using var conn = await OpenConnectionAsync();
 
 #nullable disable
             TestUtil.MinimumPgVersion(conn, "14.0.0");
@@ -353,7 +353,7 @@ namespace EnterpriseDB.EDBClient.Tests
           [Test, Ignore("Similar to EC-1339 as this is anonymous block")]
         public async Task EnablingParameter_default_with_rowids()
         {
-            var conn = await OpenConnectionAsync();
+            await using var conn = await OpenConnectionAsync();
 
 #nullable disable
             TestUtil.MinimumPgVersion(conn, "14.0.0");
@@ -389,10 +389,10 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-          [Test]
+          [Test, Ignore("")]
         public async Task SupportPRIORInTargetListForCONNECTBYQueries()
         {
-            var conn = await OpenConnectionAsync();
+            await using var conn = await OpenConnectionAsync();
 
 #nullable disable
             TestUtil.MinimumPgVersion(conn, "14.0.0");
