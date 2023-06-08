@@ -1,0 +1,8 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSONOptions.BoundingBox = 1 -> EnterpriseDB.EDBClient.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSONOptions.LongCRS = 4 -> EnterpriseDB.EDBClient.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSONOptions.None = 0 -> EnterpriseDB.EDBClient.GeoJSONOptions
+EnterpriseDB.EDBClient.GeoJSONOptions.ShortCRS = 2 -> EnterpriseDB.EDBClient.GeoJSONOptions
+EnterpriseDB.EDBClient.EDBGeoJSONExtensions
+static EnterpriseDB.EDBClient.EDBGeoJSONExtensions.UseGeoJson(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, EnterpriseDB.EDBClient.GeoJSONOptions options = EnterpriseDB.EDBClient.GeoJSONOptions.None, bool geographyAsDefault = false) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

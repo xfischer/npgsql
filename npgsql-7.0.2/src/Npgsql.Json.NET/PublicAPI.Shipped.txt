@@ -1,0 +1,3 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.EDBJsonNetExtensions
+static EnterpriseDB.EDBClient.EDBJsonNetExtensions.UseJsonNet(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null, Newtonsoft.Json.JsonSerializerSettings? settings = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
