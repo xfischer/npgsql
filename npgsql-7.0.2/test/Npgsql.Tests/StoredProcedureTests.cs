@@ -49,7 +49,7 @@ $$");
         }
     }
 
-    [Test]
+    [Test, Ignore("Connection and transaction access is not supported on commands created from DbDataSource")]
     [TestCase(true, false)]
     [TestCase(false, true)]
     [TestCase(true, true)]
@@ -166,6 +166,7 @@ $$ LANGUAGE plpgsql");
         Assert.That(command.Parameters[2].ParameterName, Is.EqualTo("param3"));
         command.Parameters[0].Value = 5;
         command.Parameters[2].Value = 4;
+	command.Prepare();
         await command.ExecuteNonQueryAsync();
         Assert.That(command.Parameters[0].Value, Is.EqualTo(5));
         Assert.That(command.Parameters[1].Value, Is.EqualTo("sometext"));

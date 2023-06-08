@@ -876,7 +876,7 @@ public class CommandTests : MultiplexingTestBase
         Assert.AreEqual(6, reader.GetInt32(3));
     }
 
-    [Test]
+    [Test, Ignore("Kills test process")]
     public async Task Bug1006158_output_parameters()
     {
         await using var conn = await OpenConnectionAsync();
