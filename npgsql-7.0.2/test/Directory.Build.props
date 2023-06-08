@@ -1,0 +1,16 @@
+﻿<Project>
+  <Import Project="../Directory.Build.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net7.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+
+    <!-- Suppress warnings for [RequiresPreviewFeatures] (<EnablePreviewFeatures> doesn't seem to work across <ProjectReference>) -->
+    <NoWarn>$(NoWarn);CA2252</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" />
+  </ItemGroup>
+</Project>
