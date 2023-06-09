@@ -11,6 +11,11 @@ export PRE_BUILD_STEPS=createSourceArchive
 export BUILD_COMPONENTS=build-dotnet70
 export POST_BUILD_STEPS=copy-samples createBuildArchive
 
+# Build .NET7
+build-dotnet70:
+
+	cmd /c "pkg\\installer\\build-dotnet7.bat $(DOTNET_SOURCE_PATH) $(NET70_FRAMEWORK) Release AnyCPU NET7.0 $(DOTNET_STAGING_PATH)"
+
 # Build .NET6
 build-dotnet60:
 
