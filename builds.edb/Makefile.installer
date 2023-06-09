@@ -8,7 +8,7 @@ export PKG_STAGING_PATH :=$(PWD)/inst
 ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 
 export PRE_BUILD_STEPS=createSourceArchive 
-export BUILD_COMPONENTS=build-dotnet60
+export BUILD_COMPONENTS=build-dotnet70
 export POST_BUILD_STEPS=copy-samples createBuildArchive
 
 # Build .NET6

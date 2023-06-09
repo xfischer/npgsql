@@ -825,15 +825,17 @@ EOF
 			<!-- <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net461"/>
 			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net472"/>
 			<distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\net48"/> -->
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net6.0"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\net5.0"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\EF.Core"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.0"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netstandard2.1"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\netcoreapp3.1"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\net7.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\net6.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\net5.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\EF.Core"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\netstandard2.0"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\netstandard2.1"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\netcoreapp3.1"/>
 			<!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET45_FRAMEWORK\plugins"/> -->
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\plugins"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET60_FRAMEWORK\OpenTelemetry"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\plugins"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\OpenTelemetry"/>
+			<distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\DependencyInjection"/>
 			<!--<distributionDirectory origin="DOTNET_STAGING_PATH\4.0\net40"/>-->
 			<distributionDirectory origin="DOTNET_STAGING_PATH\samples"/>
           </distributionFileList>
