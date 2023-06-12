@@ -757,6 +757,8 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
                     nameof(PlaceholderType), $"Unknown {nameof(PlaceholderType)} value: {PlaceholderType}");
             }
 
+            p.Bind(typeMapper);
+
             switch (p.Direction)
             {
             case ParameterDirection.Input:
@@ -781,9 +783,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
             default:
                 throw new ArgumentOutOfRangeException(nameof(ParameterDirection),
                     $"Unhandled {nameof(ParameterDirection)} value: {p.Direction}");
-            }
-
-            p.Bind(typeMapper);
+            }            
 
             if (validateValues)
             {

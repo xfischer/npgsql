@@ -2322,7 +2322,143 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
-		/*
+        [Test]
+        public async Task TestProcWithNumericOutputParamOnly_ShouldBeClrType()
+        {
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            await using var dataSource = dataSourceBuilder.Build();
+
+            await using var con = await dataSource.OpenConnectionAsync();
+            //await using var con = await OpenConnectionAsync();
+
+            //////prereq
+            var command = new EDBCommand("", con);
+            command.CommandType = CommandType.Text;
+
+
+            var strSql = """
+                CREATE OR REPLACE PROCEDURE public.TestProcWithNumericOutputParamOnly_ShouldBeClrType(
+                    OUT p_out numeric
+                )
+                LANGUAGE 'edbspl'
+                    SECURITY DEFINER VOLATILE PARALLEL UNSAFE 
+                    COST 100
+                AS $BODY$
+                   BEGIN  
+                   	SELECT 123.45
+                        INTO p_out
+                        FROM DUAL;   
+                   END
+                $BODY$;
+                """;
+            command.CommandText = strSql;
+            await command.ExecuteNonQueryAsync();
+
+
+            //////////////code
+            try
+            {
+                command = new EDBCommand("TestProcWithNumericOutputParamOnly_ShouldBeClrType(:p_out)", con);
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
+
+                var paramValue = command.Parameters["p_out"].Value;
+
+                //////////tear down
+                ///
+                command.Dispose();
+                command = new EDBCommand("", con);
+                command.CommandText = "DROP procedure TestProcWithNumericOutputParamOnly_ShouldBeClrType;";
+                await command.ExecuteNonQueryAsync();
+                TestUtil.closeDB(con);
+
+                Assert.IsNotNull(paramValue);
+                Assert.IsInstanceOf(typeof(decimal), paramValue);
+                Assert.AreEqual(paramValue, 123.45m);
+            }
+            catch (EDBException e)
+            {
+                throw new Exception(e.ToString());
+            }
+        }
+
+        [Test]
+
+        public async Task TestProcWithNumericOutputParamAndOther_ShouldBeClrType()
+        {
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            await using var dataSource = dataSourceBuilder.Build();
+
+            await using var con = await dataSource.OpenConnectionAsync();
+            //await using var con = await OpenConnectionAsync();
+
+            //////prereq
+            var command = new EDBCommand("", con);
+            command.CommandType = CommandType.Text;
+
+
+            var strSql = """
+                CREATE OR REPLACE PROCEDURE public.TestProcWithNumericOutputParamAndOther_ShouldBeClrType(
+                	IN p_empno numeric,
+                    OUT p_out numeric
+                )
+                LANGUAGE 'edbspl'
+                    SECURITY DEFINER VOLATILE PARALLEL UNSAFE 
+                    COST 100
+                AS $BODY$
+                   BEGIN  
+                   	SELECT 123.45
+                        INTO p_out
+                        FROM DUAL;   
+                   END
+                $BODY$;
+                """;
+            command.CommandText = strSql;
+            await command.ExecuteNonQueryAsync();
+
+
+            //////////////code
+            try
+            {
+                command = new EDBCommand("TestProcWithNumericOutputParamAndOther_ShouldBeClrType(:p_empno,:p_out)", con);
+                command.CommandType = CommandType.StoredProcedure;
+
+                //command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
+                command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+                //command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
+                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                //Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Date, 200, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
+
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
+
+                var paramValue = command.Parameters["p_out"].Value;
+
+                //////////tear down
+                ///
+                command.Dispose();
+                command = new EDBCommand("", con);
+                command.CommandText = "DROP procedure TestProcWithNumericOutputParamAndOther_ShouldBeClrType;";
+                await command.ExecuteNonQueryAsync();
+                TestUtil.closeDB(con);
+
+                Assert.IsNotNull(paramValue);
+                Assert.IsInstanceOf(typeof(decimal), paramValue);
+                Assert.AreEqual(paramValue, 123.45m);
+            }
+            catch (EDBException e)
+            {
+                throw new Exception(e.ToString());
+            }
+        }
+
+
+
+        /*
 				[Test]
 				public async Task TERSE_PROC_DEFAULT_TYPES()
 				{
