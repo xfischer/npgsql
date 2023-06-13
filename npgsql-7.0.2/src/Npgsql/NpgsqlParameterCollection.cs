@@ -757,7 +757,9 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
                     nameof(PlaceholderType), $"Unknown {nameof(PlaceholderType)} value: {PlaceholderType}");
             }
 
-            p.Bind(typeMapper);
+            // EnterpriseDB Team : avoid throwing exception if handler not found at this stage
+            // We need the type handler set for output parameters
+            p.TryBind(typeMapper); 
 
             switch (p.Direction)
             {
@@ -783,7 +785,9 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
             default:
                 throw new ArgumentOutOfRangeException(nameof(ParameterDirection),
                     $"Unhandled {nameof(ParameterDirection)} value: {p.Direction}");
-            }            
+            }
+
+            p.Bind(typeMapper);
 
             if (validateValues)
             {
