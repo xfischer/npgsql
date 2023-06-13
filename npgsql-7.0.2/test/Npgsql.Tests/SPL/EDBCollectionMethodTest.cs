@@ -259,13 +259,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
                 cstmt.Prepare();
-                cstmt.ExecuteNonQuery();
+                cstmt.ExecuteNonQuery();                
 
-                var exists10 = cstmt.Parameters[0].Value.ToString().StartsWith('t') ? true : false;
-                var exists20 = cstmt.Parameters[1].Value.ToString().StartsWith('t') ? true : false;
-
-                Assert.AreEqual(true, exists10);
-                Assert.AreEqual(false, exists20);
+                Assert.AreEqual(true, cstmt.Parameters["exists10"].Value);
+                Assert.AreEqual(false, cstmt.Parameters["exists20"].Value);
             }
         }
 
