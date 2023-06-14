@@ -1666,7 +1666,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		/*
 		To verify that maximum 128 OUT parameters are supported in .NET Connector.
 */
-		[Test, Ignore("Investigate Hang")]
+		[Test]
 		public void testMaxParametersSupportInFunctionWithNumericAsOut()
 		{
 			//////prereq
