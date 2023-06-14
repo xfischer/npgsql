@@ -1239,7 +1239,7 @@ namespace EnterpriseDB.EDBClient.Tests
 		}
 
         [Test]
-        public void EDB_EC_2716_TestReaderShouldNotHang()
+        public void EDB_EC_2716_TestReaderShouldNotThrow()
         {
             Assert.DoesNotThrow(() =>
             {
