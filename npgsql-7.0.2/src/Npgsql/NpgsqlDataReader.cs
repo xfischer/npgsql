@@ -307,6 +307,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 if (_statements[StatementIndex].AppendErrorBarrier ?? Command.EnableErrorBarriers)
                     Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector);
                 return false;
+            case BackendMessageCode.ReadyForQuery: // EntepriseDB Team EC-2716
+                ProcessMessage(msg);
+                return false;
 
             default:
                 throw Connector.UnexpectedMessageReceived(msg.Code);
