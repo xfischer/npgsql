@@ -385,13 +385,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
 
-            var beforOpen = cstmt.Parameters[0].Value.ToString().StartsWith('t') ? true : false;
-            var afterOpen = cstmt.Parameters[1].Value.ToString().StartsWith('t') ? true : false;
-            var afterClose = cstmt.Parameters[2].Value.ToString().StartsWith('t') ? true : false;
-
-            Assert.IsFalse(beforOpen);
-            Assert.IsTrue(afterOpen);
-            Assert.IsFalse(afterClose);
+            Assert.AreEqual(false, cstmt.Parameters["param1"].Value);
+            Assert.AreEqual(true, cstmt.Parameters["param2"].Value);
+            Assert.AreEqual(false, cstmt.Parameters["param3"].Value);
         }
 
         [Test]

@@ -31,13 +31,13 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     private protected string? _dataTypeName;
     // ReSharper restore InconsistentNaming
 
-    private protected  string _name = string.Empty;
-    private protected  object? _value;
-    private protected  string _sourceColumn;
+    private protected string _name = string.Empty;
+    private protected object? _value;
+    private protected string _sourceColumn;
 
     internal string TrimmedName { get; private protected set; } = PositionalName;
-    internal const string PositionalName = ""; 
-        
+    internal const string PositionalName = "";
+
     /// <summary>
     /// Can be used to communicate a value from the validation phase to the writing phase.
     /// To be used by type handlers only.
@@ -249,7 +249,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
         {
             if (Collection is not null)
                 Collection.ChangeParameterName(this, value);
-            else 
+            else
                 ChangeParameterName(value);
         }
     }
@@ -509,26 +509,43 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     internal virtual void ResolveHandler(TypeMapper typeMapper)
     {
+        Handler ??= GetResolvedHandler(typeMapper);
+
         if (Handler is not null)
             return;
 
+        var parameterName = !string.IsNullOrEmpty(ParameterName) ? ParameterName : $"${Collection?.IndexOf(this) + 1}";
+        throw new InvalidOperationException($"Parameter '{parameterName}' must have either its EDBDbType or its DataTypeName or its Value set");
+    }
+
+    internal EDBTypeHandler? GetResolvedHandler(TypeMapper typeMapper)
+    {
+        if (Handler is not null)
+            return Handler;
+
         if (_npgsqlDbType.HasValue)
-            Handler = typeMapper.ResolveByEDBDbType(_npgsqlDbType.Value);
+            return typeMapper.ResolveByEDBDbType(_npgsqlDbType.Value);
         else if (_dataTypeName is not null)
-            Handler = typeMapper.ResolveByDataTypeName(_dataTypeName);
+            return typeMapper.ResolveByDataTypeName(_dataTypeName);
         else if (_value is not null)
-            Handler = typeMapper.ResolveByValue(_value);
+            return typeMapper.ResolveByValue(_value);
         else
-        {
-            var parameterName = !string.IsNullOrEmpty(ParameterName) ? ParameterName : $"${Collection?.IndexOf(this) + 1}";
-            throw new InvalidOperationException($"Parameter '{parameterName}' must have either its EDBDbType or its DataTypeName or its Value set");
-        }
+            return null;
     }
 
     internal void Bind(TypeMapper typeMapper)
     {
         ResolveHandler(typeMapper);
         FormatCode = Handler!.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
+    }
+
+    internal void TryBind(TypeMapper typeMapper)
+    {
+        Handler = GetResolvedHandler(typeMapper);
+        if (Handler is not null)
+        {
+            FormatCode = Handler!.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
+        }
     }
 
     internal virtual int ValidateAndGetLength()

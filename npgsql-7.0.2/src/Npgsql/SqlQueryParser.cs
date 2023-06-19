@@ -106,7 +106,7 @@ sealed class SqlQueryParser
         sqlString = sql.ToString();
 
         var temp = sql.ToString().ToUpper();//EnterpriseDB Team
-        if ((temp.StartsWith("CREATE", StringComparison.CurrentCulture) || temp.StartsWith("DECLARE ", StringComparison.CurrentCulture)) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
+        if (ContainsSPLStartingKeyword(temp))
             isProcedure = true;
 
         None:
@@ -123,23 +123,28 @@ sealed class SqlQueryParser
                 temp = sql.ToString().Substring(currCharOfs - 1).ToUpper();
             }
 
-            if (isProcedure && temp.StartsWith("BEGIN", StringComparison.CurrentCulture))
+            if (isProcedure && temp.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase))
             {
                 numActiveBlocks++;
                 variableDeclare--;
             }
 
 
-            if (isProcedure && temp.StartsWith("END", StringComparison.CurrentCulture))
+            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase))
             {
-                if (!(temp.StartsWith("END IF", StringComparison.CurrentCulture) || temp.StartsWith("END_", StringComparison.CurrentCulture) || temp.StartsWith("END LOOP", StringComparison.CurrentCulture) || temp.StartsWith("END CASE", StringComparison.CurrentCulture)))
+                if (!(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
+                    || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
+                    || temp.StartsWith("END LOOP", StringComparison.OrdinalIgnoreCase)
+                    || temp.StartsWith("END CASE", StringComparison.OrdinalIgnoreCase)))
                     numActiveBlocks--;
             }
 
-            if (isProcedure && temp.StartsWith("IS", StringComparison.CurrentCulture) || temp.StartsWith("AS", StringComparison.CurrentCulture) || temp.StartsWith("TRIGGER", StringComparison.CurrentCulture))
+            if (isProcedure && temp.StartsWith("IS", StringComparison.OrdinalIgnoreCase)
+                                || temp.StartsWith("AS", StringComparison.OrdinalIgnoreCase)
+                                || temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase))
             {
                 var next = ' ';
-                if (temp.StartsWith("TRIGGER", StringComparison.CurrentCulture) && temp.Length > 7)
+                if (temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase) && temp.Length > 7)
                 {
 
                     next = temp[7];
@@ -157,7 +162,7 @@ sealed class SqlQueryParser
                 }
             }
 
-            if (isProcedure && temp.StartsWith("DECLARE", StringComparison.CurrentCulture))
+            if (isProcedure && temp.StartsWith("DECLARE", StringComparison.OrdinalIgnoreCase))
             {
                 var next = ' ';
                 if (temp.Length > 7)
@@ -569,7 +574,7 @@ sealed class SqlQueryParser
             if (sqlString != null)
             {
                 temp = sqlString.ToUpper();//EnterpriseDB Team
-                if ((temp.StartsWith("CREATE", StringComparison.CurrentCulture) || temp.StartsWith("DECLARE ", StringComparison.CurrentCulture)) && (temp.Contains("PROCEDURE ") || temp.Contains("FUNCTION ") || temp.Contains("TRIGGER ") || temp.Contains("DECLARE ") || temp.Contains("PACKAGE ")))
+                if (ContainsSPLStartingKeyword(temp))
                     isProcedure = true;
             }
             MoveToNextBatchCommand();
@@ -603,6 +608,27 @@ sealed class SqlQueryParser
                 batchCommands.Add(batchCommand);
             }
         }
+    }
+
+    private static bool ContainsSPLStartingKeyword(string temp)
+    {
+#if NETSTANDARD2_0
+        return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
+            || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
+                        && (temp.Contains("PROCEDURE ")
+                        || temp.Contains("FUNCTION ")
+                        || temp.Contains("TRIGGER ")
+                        || temp.Contains("DECLARE ")
+                        || temp.Contains("PACKAGE "));
+#else
+        return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
+            || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
+                        && (temp.Contains("PROCEDURE ", StringComparison.OrdinalIgnoreCase)
+                        || temp.Contains("FUNCTION ", StringComparison.OrdinalIgnoreCase)
+                        || temp.Contains("TRIGGER ", StringComparison.OrdinalIgnoreCase)
+                        || temp.Contains("DECLARE ", StringComparison.OrdinalIgnoreCase)
+                        || temp.Contains("PACKAGE ", StringComparison.OrdinalIgnoreCase));
+#endif
     }
 
     // Is ASCII letter comparison optimization https://github.com/dotnet/runtime/blob/60cfaec2e6cffeb9a006bec4b8908ffcf71ac5b4/src/libraries/System.Private.CoreLib/src/System/Char.cs#L236

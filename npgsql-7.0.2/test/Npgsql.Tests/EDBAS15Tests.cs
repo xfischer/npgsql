@@ -574,7 +574,7 @@ namespace EnterpriseDB.EDBClient.Tests
                     //(1 row)
 
                     rs.Read();
-                    Assert.AreEqual("8/8/2017 2:39:10 AM", rs.GetDateTime(0).ToString());
+                    Assert.AreEqual(new DateTime(2017,8,8,2,39,10), rs.GetDateTime(0));
 
                     rs.Close();
                 }

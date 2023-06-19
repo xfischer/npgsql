@@ -536,9 +536,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 #nullable disable
         if (hasParams.HasValue && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
         {
-            if (paramNames.Trim().EndsWith(",", StringComparison.CurrentCulture))
+            if (paramNames.Trim().EndsWith(",", StringComparison.OrdinalIgnoreCase))
             {
-                paramNames = paramNames.Substring(0, paramNames.LastIndexOf(",", StringComparison.CurrentCulture));
+                paramNames = paramNames.Substring(0, paramNames.LastIndexOf(",", StringComparison.OrdinalIgnoreCase));
             }
             CommandText = CommandText + "(" + paramNames + ")";
         }
@@ -987,14 +987,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             var sb = new StringBuilder();
             string parameterName;
             var parseCommand = CommandText;
-            if (_parameters.Count > 0 && !parseCommand.Trim().Contains("(") && !parseCommand.Trim().EndsWith(")", StringComparison.CurrentCulture))
+            if (_parameters.Count > 0 && !parseCommand.Trim().Contains("(") && !parseCommand.Trim().EndsWith(")", StringComparison.OrdinalIgnoreCase))
             {
                 parseCommand += "(";
                 for (var i = 0; i < _parameters.Count; i++)
                 {
                     parseCommand += ":" + _parameters[i].ParameterName + ", ";
                 }
-                parseCommand = parseCommand.Substring(0, parseCommand.LastIndexOf(",", StringComparison.CurrentCulture));
+                parseCommand = parseCommand.Substring(0, parseCommand.LastIndexOf(",", StringComparison.OrdinalIgnoreCase));
                 parseCommand += ")";
             }
             for (var i = 0; i < _parameters.Count; i++)
@@ -1004,14 +1004,14 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
             if (inputList.Count > 0)
             {
-                if (!parseCommand.Trim().EndsWith(")", StringComparison.CurrentCulture))
+                if (!parseCommand.Trim().EndsWith(")", StringComparison.OrdinalIgnoreCase))
                 {
                     parseCommand += "(";
                 }
             }
             else
             {
-                if (!parseCommand.Trim().EndsWith(")", StringComparison.CurrentCulture))
+                if (!parseCommand.Trim().EndsWith(")", StringComparison.OrdinalIgnoreCase))
                     parseCommand += "( )";
             }
 

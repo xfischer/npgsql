@@ -2222,7 +2222,7 @@ namespace EnterpriseDB.EDBClient.Tests
         }
 
         [Test]
-        public async Task TestProcWithDateOutputParamOnly_ShouldBeClrType()
+        public async Task TestProcWithNumericOutputParamOnly_ShouldBeClrType()
         {
             ;
             //await using var con = await OpenConnectionAsync();
@@ -2233,7 +2233,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
             var strSql = @"
-                CREATE OR REPLACE PROCEDURE public.TestProcWithDateOutputParamOnly_ShouldBeClrType(
+                CREATE OR REPLACE PROCEDURE public.TestProcWithNumericOutputParamOnly_ShouldBeClrType(
                     OUT p_out numeric
                 )
                 LANGUAGE 'edbspl'
@@ -2254,12 +2254,12 @@ namespace EnterpriseDB.EDBClient.Tests
             //////////////code
             try
             {
-                command = new EDBCommand("TestProcWithDateOutputParamOnly_ShouldBeClrType(:p_out)", con);
+                command = new EDBCommand("TestProcWithNumericOutputParamOnly_ShouldBeClrType(:p_out)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
-                await command.PrepareAsync();
+                //await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();
 
                 var paramValue = command.Parameters["p_out"].Value;
@@ -2268,7 +2268,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 ///
                 command.Dispose();
                 command = new EDBCommand("", con);
-                command.CommandText = "DROP procedure TestProcWithDateOutputParamOnly_ShouldBeClrType;";
+                command.CommandText = "DROP procedure TestProcWithNumericOutputParamOnly_ShouldBeClrType;";
                 await command.ExecuteNonQueryAsync();
                 TestUtil.closeDB(con);
 
@@ -2284,7 +2284,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
         [Test]
 
-        public async Task TestProcWithDateOutputParamAndOther_ShouldBeClrType()
+        public async Task TestProcWithNumericOutputParamAndOther_ShouldBeClrType()
         {
         
             //await using var con = await OpenConnectionAsync();
@@ -2295,7 +2295,7 @@ namespace EnterpriseDB.EDBClient.Tests
 
 
             var strSql = @"
-                CREATE OR REPLACE PROCEDURE public.TestProcWithDateOutputParamAndOther_ShouldBeClrType(
+                CREATE OR REPLACE PROCEDURE public.TestProcWithNumericOutputParamAndOther_ShouldBeClrType(
                 	IN p_empno numeric,
                     OUT p_out numeric
                 )
@@ -2317,7 +2317,7 @@ namespace EnterpriseDB.EDBClient.Tests
             //////////////code
             try
             {
-                command = new EDBCommand("TestProcWithDateOutputParamAndOther_ShouldBeClrType(:p_empno,:p_out)", con);
+                command = new EDBCommand("TestProcWithNumericOutputParamAndOther_ShouldBeClrType(:p_empno,:p_out)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
                 //command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
@@ -2335,7 +2335,7 @@ namespace EnterpriseDB.EDBClient.Tests
                 ///
                 command.Dispose();
                 command = new EDBCommand("", con);
-                command.CommandText = "DROP procedure TestProcWithDateOutputParamAndOther_ShouldBeClrType;";
+                command.CommandText = "DROP procedure TestProcWithNumericOutputParamAndOther_ShouldBeClrType;";
                 await command.ExecuteNonQueryAsync();
                 TestUtil.closeDB(con);
 

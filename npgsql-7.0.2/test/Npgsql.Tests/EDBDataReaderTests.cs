@@ -1238,6 +1238,32 @@ namespace EnterpriseDB.EDBClient.Tests
 			
 		}
 
-	}
+        [Test]
+        public void EDB_EC_2716_TestReaderShouldNotThrow()
+        {
+            Assert.DoesNotThrow(() =>
+            {
+                _conn.Open();
+                EDBCommand callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", _conn);
+                callable_command.CommandType = CommandType.StoredProcedure;
+                callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
+                callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+                callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
+                callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                callable_command.Prepare();
+                callable_command.Parameters[0].Value = 20;
+                callable_command.Parameters[1].Value = 7369;
+                EDBDataReader result = callable_command.ExecuteReader();
+                int fc = result.FieldCount;
+                Console.WriteLine("Count: " + fc);
+                while (result.Read())
+                {
+                }
+            });
+        }
+
+    }
 #pragma warning restore CS8602
 }
