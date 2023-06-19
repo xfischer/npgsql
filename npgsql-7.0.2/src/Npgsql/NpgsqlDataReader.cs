@@ -572,7 +572,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     State = ReaderState.InResult;
                     if (Command.CommandType == CommandType.StoredProcedure && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam || Connector._isScaler))//EnterpriseDB Team
                     {
-                        PopulateOutputParameters(async);
+                        await PopulateOutputParameters(async);
                     }
                     return true;
                 case BackendMessageCode.DataRow:
@@ -710,7 +710,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         PosInColumn = 0;
     }
 
-    async void PopulateOutputParameters(bool async)
+    async Task PopulateOutputParameters(bool async)
     {
         // The first row in a stored procedure command that has output parameters needs to be traversed twice -
         // once for populating the output parameters and once for the actual result set traversal. So in this
