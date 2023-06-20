@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class SqlExecutorNpgsqlTest : SqlExecutorTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {
@@ -10,7 +10,7 @@ public class SqlExecutorNpgsqlTest : SqlExecutorTestBase<NorthwindQueryNpgsqlFix
     }
 
     protected override DbParameter CreateDbParameter(string name, object value)
-        => new NpgsqlParameter
+        => new EDBParameter
         {
             ParameterName = name,
             Value = value

@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class QueryBugsTest : IClassFixture<NpgsqlFixture>
 {

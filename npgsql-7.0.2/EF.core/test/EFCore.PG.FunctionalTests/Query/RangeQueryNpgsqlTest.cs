@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable InconsistentNaming
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 // Note: timestamp range tests are in TimestampQueryTest
 public class RangeQueryNpgsqlTest : IClassFixture<RangeQueryNpgsqlTest.RangeQueryNpgsqlFixture>
@@ -42,7 +42,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(8, 13);
+        var range = new EDBRange<int>(8, 13);
         var result = context.RangeTestEntities.Single(x => x.IntRange.Contains(range));
         Assert.Equal(2, result.Id);
 
@@ -61,7 +61,7 @@ LIMIT 2
     public void ContainedBy()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(8, 13);
+        var range = new EDBRange<int>(8, 13);
         var result = context.RangeTestEntities.Single(x => range.ContainedBy(x.IntRange));
         Assert.Equal(2, result.Id);
 
@@ -80,7 +80,7 @@ LIMIT 2
     public void Equals_operator()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(1, 10);
+        var range = new EDBRange<int>(1, 10);
         var result = context.RangeTestEntities.Single(x => x.IntRange == range);
         Assert.Equal(1, result.Id);
 
@@ -99,7 +99,7 @@ LIMIT 2
     public void Equals_method()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(1, 10);
+        var range = new EDBRange<int>(1, 10);
         var result = context.RangeTestEntities.Single(x => x.IntRange.Equals(range));
         Assert.Equal(1, result.Id);
 
@@ -118,7 +118,7 @@ LIMIT 2
     public void Overlaps_range()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(-5, 4);
+        var range = new EDBRange<int>(-5, 4);
         var result = context.RangeTestEntities.Single(x => x.IntRange.Overlaps(range));
         Assert.Equal(1, result.Id);
 
@@ -137,7 +137,7 @@ LIMIT 2
     public void IsStrictlyLeftOf_range()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(11, 15);
+        var range = new EDBRange<int>(11, 15);
         var result = context.RangeTestEntities.Single(x => x.IntRange.IsStrictlyLeftOf(range));
         Assert.Equal(1, result.Id);
 
@@ -156,7 +156,7 @@ LIMIT 2
     public void IsStrictlyRightOf_range()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(0, 4);
+        var range = new EDBRange<int>(0, 4);
         var result = context.RangeTestEntities.Single(x => x.IntRange.IsStrictlyRightOf(range));
         Assert.Equal(2, result.Id);
 
@@ -175,7 +175,7 @@ LIMIT 2
     public void DoesNotExtendLeftOf()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(2, 20);
+        var range = new EDBRange<int>(2, 20);
         var result = context.RangeTestEntities.Single(x => range.DoesNotExtendLeftOf(x.IntRange));
         Assert.Equal(1, result.Id);
 
@@ -194,7 +194,7 @@ LIMIT 2
     public void DoesNotExtendRightOf()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(1, 13);
+        var range = new EDBRange<int>(1, 13);
         var result = context.RangeTestEntities.Single(x => range.DoesNotExtendRightOf(x.IntRange));
         Assert.Equal(2, result.Id);
 
@@ -213,7 +213,7 @@ LIMIT 2
     public void IsAdjacentTo()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(2, 4);
+        var range = new EDBRange<int>(2, 4);
         var result = context.RangeTestEntities.Single(x => range.IsAdjacentTo(x.IntRange));
         Assert.Equal(2, result.Id);
 
@@ -232,8 +232,8 @@ LIMIT 2
     public void Union()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(-2, 7);
-        var result = context.RangeTestEntities.Single(x => x.IntRange.Union(range) == new NpgsqlRange<int>(-2, 10));
+        var range = new EDBRange<int>(-2, 7);
+        var result = context.RangeTestEntities.Single(x => x.IntRange.Union(range) == new EDBRange<int>(-2, 10));
         Assert.Equal(1, result.Id);
 
         AssertSql(
@@ -259,7 +259,7 @@ LIMIT 2
             .Select(g => g.Select(x => x.IntRange).RangeAgg())
             .Single();
 
-        Assert.Equal(new NpgsqlRange<int>[] { new(1, true, 16, false) }, union);
+        Assert.Equal(new EDBRange<int>[] { new(1, true, 16, false) }, union);
 
         AssertSql(
 """
@@ -278,8 +278,8 @@ LIMIT 2
     public void Intersect()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(-2, 3);
-        var result = context.RangeTestEntities.Single(x => x.IntRange.Intersect(range) == new NpgsqlRange<int>(1, 3));
+        var range = new EDBRange<int>(-2, 3);
+        var result = context.RangeTestEntities.Single(x => x.IntRange.Intersect(range) == new EDBRange<int>(1, 3));
         Assert.Equal(1, result.Id);
 
         AssertSql(
@@ -305,7 +305,7 @@ LIMIT 2
             .Select(g => g.Select(x => x.IntRange).RangeIntersectAgg())
             .Single();
 
-        Assert.Equal(new NpgsqlRange<int>(5, true, 11, false), intersection);
+        Assert.Equal(new EDBRange<int>(5, true, 11, false), intersection);
 
         AssertSql(
 """
@@ -324,8 +324,8 @@ LIMIT 2
     public void Except()
     {
         using var context = CreateContext();
-        var range = new NpgsqlRange<int>(1, 2);
-        var result = context.RangeTestEntities.Single(x => x.IntRange.Except(range) == new NpgsqlRange<int>(3, 10));
+        var range = new EDBRange<int>(1, 2);
+        var result = context.RangeTestEntities.Single(x => x.IntRange.Except(range) == new EDBRange<int>(3, 10));
         Assert.Equal(1, result.Id);
 
         AssertSql(
@@ -455,7 +455,7 @@ WHERE upper_inf(r."IntRange")
     public void Merge()
     {
         using var context = CreateContext();
-        var result = context.RangeTestEntities.Single(x => x.IntRange.Merge(new(12, 13)) == new NpgsqlRange<int>(1, 13));
+        var result = context.RangeTestEntities.Single(x => x.IntRange.Merge(new(12, 13)) == new EDBRange<int>(1, 13));
         Assert.Equal(1, result.Id);
 
         AssertSql(
@@ -627,14 +627,14 @@ LIMIT 2
     public class RangeTestEntity
     {
         public int Id { get; set; }
-        public NpgsqlRange<int> IntRange { get; set; }
-        public NpgsqlRange<long> LongRange { get; set; }
-        public NpgsqlRange<decimal> DecimalRange { get; set; }
-        public NpgsqlRange<DateOnly> DateOnlyDateRange { get; set; }
+        public EDBRange<int> IntRange { get; set; }
+        public EDBRange<long> LongRange { get; set; }
+        public EDBRange<decimal> DecimalRange { get; set; }
+        public EDBRange<DateOnly> DateOnlyDateRange { get; set; }
         [Column(TypeName = "tsrange")]
-        public NpgsqlRange<DateTime> DateTimeDateRange { get; set; }
-        public NpgsqlRange<double> UserDefinedRange { get; set; }
-        public NpgsqlRange<float> UserDefinedRangeWithSchema { get; set; }
+        public EDBRange<DateTime> DateTimeDateRange { get; set; }
+        public EDBRange<double> UserDefinedRange { get; set; }
+        public EDBRange<float> UserDefinedRangeWithSchema { get; set; }
     }
 
     public class RangeContext : PoolableDbContext
@@ -653,24 +653,24 @@ LIMIT 2
                 new RangeTestEntity
                 {
                     Id = 1,
-                    IntRange = new NpgsqlRange<int>(1, 10),
-                    LongRange = new NpgsqlRange<long>(1, 10),
-                    DecimalRange = new NpgsqlRange<decimal>(1, 10),
-                    DateOnlyDateRange = new NpgsqlRange<DateOnly>(new(2020, 1, 1), new(2020, 1, 10)),
-                    DateTimeDateRange = new NpgsqlRange<DateTime>(new(2020, 1, 1), new(2020, 1, 10)),
-                    UserDefinedRange = new NpgsqlRange<double>(1, 10),
-                    UserDefinedRangeWithSchema = new NpgsqlRange<float>(1, 10)
+                    IntRange = new EDBRange<int>(1, 10),
+                    LongRange = new EDBRange<long>(1, 10),
+                    DecimalRange = new EDBRange<decimal>(1, 10),
+                    DateOnlyDateRange = new EDBRange<DateOnly>(new(2020, 1, 1), new(2020, 1, 10)),
+                    DateTimeDateRange = new EDBRange<DateTime>(new(2020, 1, 1), new(2020, 1, 10)),
+                    UserDefinedRange = new EDBRange<double>(1, 10),
+                    UserDefinedRangeWithSchema = new EDBRange<float>(1, 10)
                 },
                 new RangeTestEntity
                 {
                     Id = 2,
-                    IntRange = new NpgsqlRange<int>(5, 15),
-                    LongRange = new NpgsqlRange<long>(5, 15),
-                    DecimalRange = new NpgsqlRange<decimal>(5, 15),
-                    DateOnlyDateRange = new NpgsqlRange<DateOnly>(new(2020, 1, 5), new(2020, 1, 15)),
-                    DateTimeDateRange = new NpgsqlRange<DateTime>(new(2020, 1, 5), new(2020, 1, 15)),
-                    UserDefinedRange = new NpgsqlRange<double>(5, 15),
-                    UserDefinedRangeWithSchema = new NpgsqlRange<float>(5, 15)
+                    IntRange = new EDBRange<int>(5, 15),
+                    LongRange = new EDBRange<long>(5, 15),
+                    DecimalRange = new EDBRange<decimal>(5, 15),
+                    DateOnlyDateRange = new EDBRange<DateOnly>(new(2020, 1, 5), new(2020, 1, 15)),
+                    DateTimeDateRange = new EDBRange<DateTime>(new(2020, 1, 5), new(2020, 1, 15)),
+                    UserDefinedRange = new EDBRange<double>(5, 15),
+                    UserDefinedRangeWithSchema = new EDBRange<float>(5, 15)
                 });
 
             context.SaveChanges();

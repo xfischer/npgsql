@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public static class TestEnvironment
 {
@@ -36,7 +36,7 @@ public static class TestEnvironment
                 return _postgresVersion;
             }
 
-            using var conn = new NpgsqlConnection(NpgsqlTestStore.CreateConnectionString("postgres"));
+            using var conn = new EDBConnection(NpgsqlTestStore.CreateConnectionString("postgres"));
             conn.Open();
             return _postgresVersion = conn.PostgreSqlVersion;
         }
@@ -53,7 +53,7 @@ public static class TestEnvironment
                 return _isPostgisAvailable.Value;
             }
 
-            using var conn = new NpgsqlConnection(NpgsqlTestStore.CreateConnectionString("postgres"));
+            using var conn = new EDBConnection(NpgsqlTestStore.CreateConnectionString("postgres"));
             conn.Open();
             using var cmd = conn.CreateCommand();
 

@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using NodaTime.Calendars;
 using NodaTime.TimeZones;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class NpgsqlNodaTimeTypeMappingTest
 {
@@ -70,32 +70,32 @@ public class NpgsqlNodaTimeTypeMappingTest
     [Fact]
     public void NpgsqlRange_of_LocalDateTime_is_properly_mapped()
     {
-        Assert.Equal("tsrange", GetMapping(typeof(NpgsqlRange<LocalDateTime>)).StoreType);
-        Assert.Same(typeof(NpgsqlRange<LocalDateTime>), GetMapping("tsrange").ClrType);
+        Assert.Equal("tsrange", GetMapping(typeof(EDBRange<LocalDateTime>)).StoreType);
+        Assert.Same(typeof(EDBRange<LocalDateTime>), GetMapping("tsrange").ClrType);
     }
 
     [Fact]
     public void GenerateSqlLiteral_returns_tsrange_literal()
     {
-        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<LocalDateTime>));
+        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<LocalDateTime>));
         Assert.Equal("tsrange", mapping.StoreType);
         Assert.Equal("timestamp without time zone", mapping.SubtypeMapping.StoreType);
 
-        var value = new NpgsqlRange<LocalDateTime>(new(2020, 1, 1, 12, 0, 0), new(2020, 1, 2, 12, 0, 0));
+        var value = new EDBRange<LocalDateTime>(new(2020, 1, 1, 12, 0, 0), new(2020, 1, 2, 12, 0, 0));
         Assert.Equal(@"'[""2020-01-01T12:00:00"",""2020-01-02T12:00:00""]'::tsrange", mapping.GenerateSqlLiteral(value));
     }
 
     [Fact]
     public void Array_of_NpgsqlRange_of_LocalDateTime_is_properly_mapped()
     {
-        Assert.Equal("tsmultirange", GetMapping(typeof(NpgsqlRange<LocalDateTime>[])).StoreType);
-        Assert.Same(typeof(NpgsqlRange<LocalDateTime>[]), GetMapping("tsmultirange").ClrType);
+        Assert.Equal("tsmultirange", GetMapping(typeof(EDBRange<LocalDateTime>[])).StoreType);
+        Assert.Same(typeof(EDBRange<LocalDateTime>[]), GetMapping("tsmultirange").ClrType);
     }
 
     [Fact]
     public void List_of_NpgsqlRange_of_LocalDateTime_is_properly_mapped()
     {
-        Assert.Equal("tsmultirange", GetMapping(typeof(List<NpgsqlRange<LocalDateTime>>)).StoreType);
+        Assert.Equal("tsmultirange", GetMapping(typeof(List<EDBRange<LocalDateTime>>)).StoreType);
     }
 
     #endregion Timestamp without time zone
@@ -292,11 +292,11 @@ public class NpgsqlNodaTimeTypeMappingTest
     [Fact]
     public void GenerateSqlLiteral_returns_tstzrange_Instant_literal()
     {
-        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<Instant>));
+        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<Instant>));
         Assert.Equal("tstzrange", mapping.StoreType);
         Assert.Equal("timestamp with time zone", mapping.SubtypeMapping.StoreType);
 
-        var value = new NpgsqlRange<Instant>(
+        var value = new EDBRange<Instant>(
             new LocalDateTime(2020, 1, 1, 12, 0, 0).InUtc().ToInstant(),
             new LocalDateTime(2020, 1, 2, 12, 0, 0).InUtc().ToInstant());
         Assert.Equal(@"'[""2020-01-01T12:00:00Z"",""2020-01-02T12:00:00Z""]'::tstzrange", mapping.GenerateSqlLiteral(value));
@@ -305,11 +305,11 @@ public class NpgsqlNodaTimeTypeMappingTest
     [Fact]
     public void GenerateSqlLiteral_returns_tstzrange_ZonedDateTime_literal()
     {
-        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<ZonedDateTime>));
+        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<ZonedDateTime>));
         Assert.Equal("tstzrange", mapping.StoreType);
         Assert.Equal("timestamp with time zone", mapping.SubtypeMapping.StoreType);
 
-        var value = new NpgsqlRange<ZonedDateTime>(
+        var value = new EDBRange<ZonedDateTime>(
             new LocalDateTime(2020, 1, 1, 12, 0, 0).InUtc(),
             new LocalDateTime(2020, 1, 2, 12, 0, 0).InUtc());
         Assert.Equal(@"'[""2020-01-01T12:00:00Z"",""2020-01-02T12:00:00Z""]'::tstzrange", mapping.GenerateSqlLiteral(value));
@@ -318,11 +318,11 @@ public class NpgsqlNodaTimeTypeMappingTest
     [Fact]
     public void GenerateSqlLiteral_returns_tstzrange_OffsetDateTime_literal()
     {
-        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<OffsetDateTime>));
+        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<OffsetDateTime>));
         Assert.Equal("tstzrange", mapping.StoreType);
         Assert.Equal("timestamp with time zone", mapping.SubtypeMapping.StoreType);
 
-        var value = new NpgsqlRange<OffsetDateTime>(
+        var value = new EDBRange<OffsetDateTime>(
             new LocalDateTime(2020, 1, 1, 12, 0, 0).WithOffset(Offset.Zero),
             new LocalDateTime(2020, 1, 2, 12, 0, 0).WithOffset(Offset.Zero));
         Assert.Equal(@"'[""2020-01-01T12:00:00Z"",""2020-01-02T12:00:00Z""]'::tstzrange", mapping.GenerateSqlLiteral(value));
@@ -330,11 +330,11 @@ public class NpgsqlNodaTimeTypeMappingTest
 
     [Fact]
     public void Array_of_NpgsqlRange_of_Instant_is_properly_mapped()
-        => Assert.Equal("tstzmultirange", GetMapping(typeof(NpgsqlRange<Instant>[])).StoreType);
+        => Assert.Equal("tstzmultirange", GetMapping(typeof(EDBRange<Instant>[])).StoreType);
 
     [Fact]
     public void List_of_NpgsqlRange_of_Instant_is_properly_mapped()
-        => Assert.Equal("tstzmultirange", GetMapping(typeof(List<NpgsqlRange<Instant>>)).StoreType);
+        => Assert.Equal("tstzmultirange", GetMapping(typeof(List<EDBRange<Instant>>)).StoreType);
 
     #endregion Timestamp with time zone
 
@@ -457,23 +457,23 @@ public class NpgsqlNodaTimeTypeMappingTest
 
     [Fact]
     public void NpgsqlRange_of_LocalDate_is_properly_mapped()
-        => Assert.Equal("daterange", GetMapping(typeof(NpgsqlRange<LocalDate>)).StoreType);
+        => Assert.Equal("daterange", GetMapping(typeof(EDBRange<LocalDate>)).StoreType);
 
     [Fact]
     public void GenerateSqlLiteral_returns_daterange_LocalDate_literal()
     {
-        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<LocalDate>));
-        var value = new NpgsqlRange<LocalDate>(new(2020, 1, 1), new(2020, 1, 2));
+        var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<LocalDate>));
+        var value = new EDBRange<LocalDate>(new(2020, 1, 1), new(2020, 1, 2));
         Assert.Equal(@"'[2020-01-01,2020-01-02]'::daterange", mapping.GenerateSqlLiteral(value));
     }
 
     [Fact]
     public void Array_of_NpgsqlRange_of_LocalDate_is_properly_mapped()
-        => Assert.Equal("datemultirange", GetMapping(typeof(NpgsqlRange<LocalDate>[])).StoreType);
+        => Assert.Equal("datemultirange", GetMapping(typeof(EDBRange<LocalDate>[])).StoreType);
 
     [Fact]
     public void List_of_NpgsqlRange_of_LocalDate_is_properly_mapped()
-        => Assert.Equal("datemultirange", GetMapping(typeof(List<NpgsqlRange<LocalDate>>)).StoreType);
+        => Assert.Equal("datemultirange", GetMapping(typeof(List<EDBRange<LocalDate>>)).StoreType);
 
     #endregion date/daterange/datemultirange
 

@@ -44,7 +44,7 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
     {
         // PostgreSQL stored procedures cannot return a regular result set, and output parameter values are simply sent back as the
         // result set; this is very different from SQL Server, where output parameter values can be sent back in addition to result
-        // sets. So we avoid adding NpgsqlParameters for output parameters - we'll just retrieve and propagate the values below when
+        // sets. So we avoid adding EDBParameters for output parameters - we'll just retrieve and propagate the values below when
         // consuming the result set.
         if (columnModification.Column is IStoreStoredProcedureParameter { Direction: ParameterDirection.Output })
         {

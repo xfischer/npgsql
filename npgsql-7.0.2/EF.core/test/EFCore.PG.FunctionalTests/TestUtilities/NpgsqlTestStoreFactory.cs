@@ -1,4 +1,4 @@
-﻿namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class NpgsqlTestStoreFactory : RelationalTestStoreFactory
 {

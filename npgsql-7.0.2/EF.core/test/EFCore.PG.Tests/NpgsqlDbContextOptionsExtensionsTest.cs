@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class NpgsqlDbContextOptionsExtensionsTest
 {
@@ -56,7 +56,7 @@ public class NpgsqlDbContextOptionsExtensionsTest
     public void Can_add_extension_with_connection()
     {
         var optionsBuilder = new DbContextOptionsBuilder();
-        var connection = new NpgsqlConnection();
+        var connection = new EDBConnection();
 
         optionsBuilder.UseNpgsql(connection);
 
@@ -70,7 +70,7 @@ public class NpgsqlDbContextOptionsExtensionsTest
     public void Can_add_extension_with_connection_using_generic_options()
     {
         var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
-        var connection = new NpgsqlConnection();
+        var connection = new EDBConnection();
 
         optionsBuilder.UseNpgsql(connection);
 

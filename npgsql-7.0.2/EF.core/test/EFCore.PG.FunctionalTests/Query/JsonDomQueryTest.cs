@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class JsonDomQueryTest : IClassFixture<JsonDomQueryTest.JsonDomQueryFixture>
 {

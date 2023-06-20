@@ -1,6 +1,6 @@
 ﻿using Xunit.Sdk;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class ComplexNavigationsQueryNpgsqlTest : ComplexNavigationsQueryRelationalTestBase<ComplexNavigationsQueryNpgsqlFixture>
 {
@@ -22,7 +22,7 @@ public class ComplexNavigationsQueryNpgsqlTest : ComplexNavigationsQueryRelation
         => AssertTranslationFailedWithDetails(
             () => base.GroupJoin_client_method_in_OrderBy(async),
             CoreStrings.QueryUnableToTranslateMethod(
-                "Microsoft.EntityFrameworkCore.Query.ComplexNavigationsQueryTestBase<Npgsql.EntityFrameworkCore.PostgreSQL.Query.ComplexNavigationsQueryNpgsqlFixture>",
+                "Microsoft.EntityFrameworkCore.Query.ComplexNavigationsQueryTestBase<EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ComplexNavigationsQueryNpgsqlFixture>",
                 "ClientMethodNullableInt"));
 
     public override Task Nested_SelectMany_correlated_with_join_table_correctly_translated_to_apply(bool async)

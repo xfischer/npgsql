@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage;
 
 public class NpgsqlArrayValueConverterTest
 {

@@ -22,7 +22,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
     public static class NpgsqlStrings
     {
         private static readonly ResourceManager _resourceManager
-            = new ResourceManager("Npgsql.EntityFrameworkCore.PostgreSQL.Properties.NpgsqlStrings", typeof(NpgsqlStrings).Assembly);
+            = new ResourceManager("EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Properties.NpgsqlStrings", typeof(NpgsqlStrings).Assembly);
 
         /// <summary>
         ///     Cannot set ProvideClientCertificatesCallback, RemoteCertificateValidationCallback or ProvidePasswordCallback when a data source is provided.
@@ -214,7 +214,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
     public static class NpgsqlResources
     {
         private static readonly ResourceManager _resourceManager
-            = new ResourceManager("Npgsql.EntityFrameworkCore.PostgreSQL.Properties.NpgsqlStrings", typeof(NpgsqlResources).Assembly);
+            = new ResourceManager("EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Properties.NpgsqlStrings", typeof(NpgsqlResources).Assembly);
 
         /// <summary>
         ///     Enum column '{name}' cannot be scaffolded, define a CLR enum type and add the property manually.

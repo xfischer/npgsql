@@ -6,7 +6,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-public class NpgsqlParameterBasedSqlProcessorFactory : IRelationalParameterBasedSqlProcessorFactory
+public class EDBParameterBasedSqlProcessorFactory : IRelationalParameterBasedSqlProcessorFactory
 {
     private readonly RelationalParameterBasedSqlProcessorDependencies _dependencies;
 
@@ -16,7 +16,7 @@ public class NpgsqlParameterBasedSqlProcessorFactory : IRelationalParameterBased
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlParameterBasedSqlProcessorFactory(
+    public EDBParameterBasedSqlProcessorFactory(
         RelationalParameterBasedSqlProcessorDependencies dependencies)
         => _dependencies = dependencies;
 
@@ -27,5 +27,5 @@ public class NpgsqlParameterBasedSqlProcessorFactory : IRelationalParameterBased
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual RelationalParameterBasedSqlProcessor Create(bool useRelationalNulls)
-        => new NpgsqlParameterBasedSqlProcessor(_dependencies, useRelationalNulls);
+        => new EDBParameterBasedSqlProcessor(_dependencies, useRelationalNulls);
 }

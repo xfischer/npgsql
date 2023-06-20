@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class NavigationTest : IClassFixture<NavigationTestFixture>
 {
@@ -91,7 +91,7 @@ public class NavigationTestFixture
             .AddEntityFrameworkNpgsql()
             .BuildServiceProvider();
 
-        var connStrBuilder = new NpgsqlConnectionStringBuilder(TestEnvironment.DefaultConnection)
+        var connStrBuilder = new EDBConnectionStringBuilder(TestEnvironment.DefaultConnection)
         {
             Database = "StateManagerBug"
         };

@@ -1,11 +1,11 @@
 ﻿using System.Data;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable HeapView.CanAvoidClosure
 // ReSharper disable MethodHasAsyncOverload
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class NpgsqlDatabaseCreatorExistsTest : NpgsqlDatabaseCreatorTest
 {

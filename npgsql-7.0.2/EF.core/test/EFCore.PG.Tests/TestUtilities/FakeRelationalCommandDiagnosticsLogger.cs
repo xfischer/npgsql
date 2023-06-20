@@ -2,7 +2,7 @@ using System.Data.Common;
 
 #nullable enable
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class FakeRelationalCommandDiagnosticsLogger
     : FakeDiagnosticsLogger<DbLoggerCategory.Database.Command>, IRelationalCommandDiagnosticsLogger

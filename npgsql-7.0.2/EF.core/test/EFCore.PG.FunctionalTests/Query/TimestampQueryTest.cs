@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // The EF Core specification test suite has:
 //
@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
 // But there's no DateTime mapped to 'timestamp with time zone' (so Utc).
 // This test suite checks this and various PG-specific things.
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class TimestampQueryTest : QueryTestBase<TimestampQueryTest.TimestampQueryFixture>
 {
@@ -816,7 +816,7 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         // This scenario requires that the provider correctly infer the range's type mapping from the subtype's
         using var ctx = CreateContext();
 
-        var range = new NpgsqlRange<DateTime>(new(1998, 4, 12), new (1998, 4, 13));
+        var range = new EDBRange<DateTime>(new(1998, 4, 12), new (1998, 4, 13));
 
         var id = ctx.Entities.Single(e => range.Contains(e.TimestampDateTime)).Id;
         Assert.Equal(1, id);
@@ -859,9 +859,9 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         public DateTime[] TimestampDateTimeArray { get; set; }
         public DateTimeOffset[] TimestampDateTimeOffsetArray { get; set; }
 
-        public NpgsqlRange<DateTime> TimestamptzDateTimeRange { get; set; }
+        public EDBRange<DateTime> TimestamptzDateTimeRange { get; set; }
         [Column(TypeName = "tsrange")]
-        public NpgsqlRange<DateTime> TimestampDateTimeRange { get; set; }
+        public EDBRange<DateTime> TimestampDateTimeRange { get; set; }
     }
 
 #nullable restore
@@ -971,11 +971,11 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
                 new DateTime(2015, 1, 28, 10, 45, 12, 345, DateTimeKind.Unspecified)
             };
 
-            var utcDateTimeRange1 = new NpgsqlRange<DateTime>(utcDateTimeArray1[0], utcDateTimeArray1[1]);
-            var localDateTimeRange1 = new NpgsqlRange<DateTime>(localDateTimeArray1[0], localDateTimeArray1[1]);
+            var utcDateTimeRange1 = new EDBRange<DateTime>(utcDateTimeArray1[0], utcDateTimeArray1[1]);
+            var localDateTimeRange1 = new EDBRange<DateTime>(localDateTimeArray1[0], localDateTimeArray1[1]);
 
-            var utcDateTimeRange2 = new NpgsqlRange<DateTime>(utcDateTimeArray2[0], utcDateTimeArray2[1]);
-            var localDateTimeRange2 = new NpgsqlRange<DateTime>(localDateTimeArray2[0], localDateTimeArray2[1]);
+            var utcDateTimeRange2 = new EDBRange<DateTime>(utcDateTimeArray2[0], utcDateTimeArray2[1]);
+            var localDateTimeRange2 = new EDBRange<DateTime>(localDateTimeArray2[0], localDateTimeArray2[1]);
 
             return new List<Entity>
             {

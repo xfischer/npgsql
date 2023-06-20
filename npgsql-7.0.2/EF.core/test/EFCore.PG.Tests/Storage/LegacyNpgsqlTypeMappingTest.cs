@@ -1,10 +1,10 @@
 #if DEBUG
 
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage
 {
     [Collection("LegacyDateTimeTest")]
     public class LegacyNpgsqlTypeMappingTest : IClassFixture<LegacyNpgsqlTypeMappingTest.LegacyNpgsqlTypeMappingFixture>

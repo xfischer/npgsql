@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Npgsql.EntityFrameworkCore.PostgreSQL.Tests</AssemblyName>
-    <RootNamespace>Npgsql.EntityFrameworkCore.PostgreSQL</RootNamespace>
+    <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Tests</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Npgsql.DependencyInjection\Npgsql.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\EFCore.PG\EFCore.PG.csproj" />
     <ProjectReference Include="..\..\src\EFCore.PG.NodaTime\EFCore.PG.NodaTime.csproj" />
     <ProjectReference Include="..\EFCore.PG.FunctionalTests\EFCore.PG.FunctionalTests.csproj" />
@@ -17,7 +18,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational.Specification.Tests" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
-    <PackageReference Include="Npgsql.DependencyInjection" />
   </ItemGroup>
 
 </Project>

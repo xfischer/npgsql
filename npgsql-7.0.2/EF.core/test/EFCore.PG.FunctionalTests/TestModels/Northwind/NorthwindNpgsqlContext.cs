@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestModels.Northwind;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Northwind;
 
 public class NorthwindNpgsqlContext : NorthwindRelationalContext
 {

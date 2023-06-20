@@ -3,7 +3,7 @@
 
 using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class NorthwindSqlQueryNpgsqlTest : NorthwindSqlQueryTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {
@@ -71,7 +71,7 @@ SELECT "ProductID" FROM "Products" WHERE "ProductID" = @p0
         => TestHelpers.AssertAllMethodsOverridden(GetType());
 
     protected override DbParameter CreateDbParameter(string name, object value)
-        => new NpgsqlParameter { ParameterName = name, Value = value };
+        => new EDBParameter { ParameterName = name, Value = value };
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);

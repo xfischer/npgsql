@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestModels.Array;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Array;
 
 public class ArrayQueryContext : PoolableDbContext
 {

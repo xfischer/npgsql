@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.TestModels.ConcurrencyModel;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class OptimisticConcurrencyBytesNpgsqlTest : OptimisticConcurrencyNpgsqlTestBase<F1BytesNpgsqlFixture, byte[]>
 {

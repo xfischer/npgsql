@@ -1,12 +1,12 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 #nullable enable
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations;
 
 public class MigrationsNpgsqlTest : MigrationsTestBase<MigrationsNpgsqlTest.MigrationsNpgsqlFixture>
 {
@@ -2966,7 +2966,7 @@ CREATE COLLATION some_collation (LOCALE = 'en-u-ks-primary',
         await Test(
             builder => builder.Entity("Blogs", e => e.Property<string>("TextColumn").IsRequired()),
             _ => { },
-            builder => builder.Entity("Blogs").Property<NpgsqlTsVector>("SearchColumn").IsGeneratedTsVectorColumn("english", "TextColumn"),
+            builder => builder.Entity("Blogs").Property<EDBTsVector>("SearchColumn").IsGeneratedTsVectorColumn("english", "TextColumn"),
             model =>
             {
                 var table = Assert.Single(model.Tables);
@@ -2989,7 +2989,7 @@ CREATE COLLATION some_collation (LOCALE = 'en-u-ks-primary',
         await Test(
             builder => builder.Entity("People").Property<string>("JsonbColumn").HasColumnType("jsonb").IsRequired(),
             _ => { },
-            builder => builder.Entity("People").Property<NpgsqlTsVector>("SearchColumn").IsGeneratedTsVectorColumn("english", "JsonbColumn"),
+            builder => builder.Entity("People").Property<EDBTsVector>("SearchColumn").IsGeneratedTsVectorColumn("english", "JsonbColumn"),
             model =>
             {
                 var table = Assert.Single(model.Tables);
@@ -3018,7 +3018,7 @@ CREATE COLLATION some_collation (LOCALE = 'en-u-ks-primary',
                 builder.Entity("People").Property<string>("OptionalJsonColumn").HasColumnType("json");
             },
             _ => { },
-            builder => builder.Entity("People").Property<NpgsqlTsVector>("SearchColumn")
+            builder => builder.Entity("People").Property<EDBTsVector>("SearchColumn")
                 .IsGeneratedTsVectorColumn("english", "RequiredTextColumn", "OptionalTextColumn", "RequiredJsonbColumn", "OptionalJsonColumn"),
             model =>
             {
@@ -3046,9 +3046,9 @@ CREATE COLLATION some_collation (LOCALE = 'en-u-ks-primary',
                     e.Property<string>("Title").IsRequired();
                     e.Property<string>("Description");
                 }),
-            builder => builder.Entity("Blogs").Property<NpgsqlTsVector>("TsVector")
+            builder => builder.Entity("Blogs").Property<EDBTsVector>("TsVector")
                 .IsGeneratedTsVectorColumn("german", "Title", "Description"),
-            builder => builder.Entity("Blogs").Property<NpgsqlTsVector>("TsVector")
+            builder => builder.Entity("Blogs").Property<EDBTsVector>("TsVector")
                 .IsGeneratedTsVectorColumn("english", "Title", "Description"),
             model =>
             {

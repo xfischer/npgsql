@@ -53,7 +53,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
         ISqlGenerationHelper sqlGenerationHelper)
         : base(
             sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), clrType,
-            GenerateNpgsqlDbType(rangeMapping.SubtypeMapping))
+            GenerateEDBDbType(rangeMapping.SubtypeMapping))
     {
         RangeMapping = rangeMapping;
         SubtypeMapping = rangeMapping.SubtypeMapping;
@@ -123,12 +123,12 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
         return sb.ToString();
     }
 
-    private static EDBDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
+    private static EDBDbType GenerateEDBDbType(RelationalTypeMapping subtypeMapping)
     {
-        EDBDbType subtypeNpgsqlDbType;
+        EDBDbType subtypeEDBDbType;
         if (subtypeMapping is INpgsqlTypeMapping npgsqlTypeMapping)
         {
-            subtypeNpgsqlDbType = npgsqlTypeMapping.EDBDbType;
+            subtypeEDBDbType = npgsqlTypeMapping.EDBDbType;
         }
         else
         {
@@ -136,10 +136,10 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
             // Infer the EDBDbType from the DbType (somewhat hacky but why not).
             Debug.Assert(subtypeMapping.DbType.HasValue);
             var p = new EDBParameter { DbType = subtypeMapping.DbType.Value };
-            subtypeNpgsqlDbType = p.EDBDbType;
+            subtypeEDBDbType = p.EDBDbType;
         }
 
-        return EDBDbType.Multirange | subtypeNpgsqlDbType;
+        return EDBDbType.Multirange | subtypeEDBDbType;
     }
 
     /// <summary>

@@ -59,7 +59,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         Type clrType,
         RelationalTypeMapping subtypeMapping,
         ISqlGenerationHelper sqlGenerationHelper)
-        : base(sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), clrType, GenerateNpgsqlDbType(subtypeMapping))
+        : base(sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), clrType, GenerateEDBDbType(subtypeMapping))
     {
         Debug.Assert(clrType == typeof(EDBRange<>).MakeGenericType(subtypeMapping.ClrType));
 
@@ -140,12 +140,12 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         return builder.ToString();
     }
 
-    private static EDBDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
+    private static EDBDbType GenerateEDBDbType(RelationalTypeMapping subtypeMapping)
     {
-        EDBDbType subtypeNpgsqlDbType;
+        EDBDbType subtypeEDBDbType;
         if (subtypeMapping is INpgsqlTypeMapping npgsqlTypeMapping)
         {
-            subtypeNpgsqlDbType = npgsqlTypeMapping.EDBDbType;
+            subtypeEDBDbType = npgsqlTypeMapping.EDBDbType;
         }
         else
         {
@@ -153,10 +153,10 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
             // Infer the EDBDbType from the DbType (somewhat hacky but why not).
             Debug.Assert(subtypeMapping.DbType.HasValue);
             var p = new EDBParameter { DbType = subtypeMapping.DbType.Value };
-            subtypeNpgsqlDbType = p.EDBDbType;
+            subtypeEDBDbType = p.EDBDbType;
         }
 
-        return EDBDbType.Range | subtypeNpgsqlDbType;
+        return EDBDbType.Range | subtypeEDBDbType;
     }
 
     /// <summary>

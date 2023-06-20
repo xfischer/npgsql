@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class FullTextSearchDbFunctionsNpgsqlTest : IClassFixture<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {
@@ -19,7 +19,7 @@ public class FullTextSearchDbFunctionsNpgsqlTest : IClassFixture<NorthwindQueryN
     public void TsVectorParse_converted_to_cast()
     {
         using var context = CreateContext();
-        var tsvector = context.Customers.Select(c => NpgsqlTsVector.Parse("a b")).First();
+        var tsvector = context.Customers.Select(c => EDBTsVector.Parse("a b")).First();
 
         Assert.NotNull(tsvector);
         AssertSql(
@@ -37,7 +37,7 @@ LIMIT 1
         var tsvector = context.Customers.Select(c => EF.Functions.ArrayToTsVector(new[] { "b", "c", "d" }))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("b c d").ToString(), tsvector.ToString());
+        Assert.Equal(EDBTsVector.Parse("b c d").ToString(), tsvector.ToString());
         AssertSql(
 """
 SELECT array_to_tsvector(ARRAY['b','c','d']::text[])
@@ -55,7 +55,7 @@ LIMIT 1
             .Select(c => EF.Functions.ArrayToTsVector(new[] { c.CompanyName, c.Address }))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("'Alfreds Futterkiste' 'Obere Str. 57'").ToString(), tsvector.ToString());
+        Assert.Equal(EDBTsVector.Parse("'Alfreds Futterkiste' 'Obere Str. 57'").ToString(), tsvector.ToString());
         AssertSql(
 """
 SELECT array_to_tsvector(ARRAY[c."CompanyName",c."Address"]::text[])
@@ -115,7 +115,7 @@ LIMIT 1
     public void TsQueryParse_converted_to_cast()
     {
         using var context = CreateContext();
-        var tsquery = context.Customers.Select(c => NpgsqlTsQuery.Parse("a & b")).First();
+        var tsquery = context.Customers.Select(c => EDBTsQuery.Parse("a & b")).First();
 
         Assert.NotNull(tsquery);
         AssertSql(
@@ -610,7 +610,7 @@ LIMIT 1
             .Select(c => EF.Functions.ToTsVector("b").Concat(EF.Functions.ToTsVector("c")))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("b:1 c:2").ToString(), tsVector.ToString());
+        Assert.Equal(EDBTsVector.Parse("b:1 c:2").ToString(), tsVector.ToString());
         AssertSql(
 """
 SELECT to_tsvector('b') || to_tsvector('c')
@@ -624,7 +624,7 @@ LIMIT 1
     {
         using var context = CreateContext();
         var weightedTsVector = context.Customers
-            .Select(c => EF.Functions.ToTsVector("a").SetWeight(NpgsqlTsVector.Lexeme.Weight.A))
+            .Select(c => EF.Functions.ToTsVector("a").SetWeight(EDBTsVector.Lexeme.Weight.A))
             .First();
 
         Assert.NotNull(weightedTsVector);
@@ -641,7 +641,7 @@ LIMIT 1
     {
         using var context = CreateContext();
         var weightedTsVector = context.Customers
-            .Select(c => EF.Functions.ToTsVector("a").SetWeight(NpgsqlTsVector.Lexeme.Weight.A, new[] { "a" }))
+            .Select(c => EF.Functions.ToTsVector("a").SetWeight(EDBTsVector.Lexeme.Weight.A, new[] { "a" }))
             .First();
 
         Assert.NotNull(weightedTsVector);
@@ -695,7 +695,7 @@ LIMIT 1
             .Select(c => EF.Functions.ToTsVector("b c").Delete("c"))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("b:1").ToString(), tsVector.ToString());
+        Assert.Equal(EDBTsVector.Parse("b:1").ToString(), tsVector.ToString());
         AssertSql(
 """
 SELECT ts_delete(to_tsvector('b c'), 'c')
@@ -712,7 +712,7 @@ LIMIT 1
             .Select(c => EF.Functions.ToTsVector("b c d").Delete(new[] { "c", "d" }))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("b:1").ToString(), tsVector.ToString());
+        Assert.Equal(EDBTsVector.Parse("b:1").ToString(), tsVector.ToString());
         AssertSql(
 """
 SELECT ts_delete(to_tsvector('b c d'), ARRAY['c','d']::text[])
@@ -726,10 +726,10 @@ LIMIT 1
     {
         using var context = CreateContext();
         var tsVector = context.Customers
-            .Select(c => NpgsqlTsVector.Parse("b:1A c:2B d:3C").Filter(new[] { 'B', 'C' }))
+            .Select(c => EDBTsVector.Parse("b:1A c:2B d:3C").Filter(new[] { 'B', 'C' }))
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("c:2B d:3C").ToString(), tsVector.ToString());
+        Assert.Equal(EDBTsVector.Parse("c:2B d:3C").ToString(), tsVector.ToString());
         AssertSql(
 """
 SELECT ts_filter(CAST('b:1A c:2B d:3C' AS tsvector), CAST(ARRAY['B','C']::character(1)[] AS "char"[]))
@@ -763,7 +763,7 @@ LIMIT 1
             .Select(c => EF.Functions.ToTsVector("c:A").ToStripped())
             .First();
 
-        Assert.Equal(NpgsqlTsVector.Parse("c").ToString(), strippedTsVector.ToString());
+        Assert.Equal(EDBTsVector.Parse("c").ToString(), strippedTsVector.ToString());
         AssertSql(
 """
 SELECT strip(to_tsvector('c:A'))
@@ -945,7 +945,7 @@ LIMIT 1
         var headline = context.Customers
             .Where(
                 c => EF.Functions.ToTsVector(c.ContactTitle)
-                    .SetWeight(NpgsqlTsVector.Lexeme.Weight.A)
+                    .SetWeight(EDBTsVector.Lexeme.Weight.A)
                     .Matches(EF.Functions.ToTsQuery("accounting").ToPhrase(EF.Functions.ToTsQuery("manager"))))
             .Select(
                 c => EF.Functions.ToTsQuery("accounting").ToPhrase(EF.Functions.ToTsQuery("manager"))

@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {
@@ -25,8 +25,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         // We default to mapping DateTime to 'timestamp with time zone', but here we need to send `timestamp without time zone` to match
         // the database data.
         var city = "London";
-        var startDate = new NpgsqlParameter { Value = new DateTime(1997, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        var endDate = new NpgsqlParameter { Value = new DateTime(1998, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
+        var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
         using var context = CreateContext();
         var query
@@ -45,8 +45,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         Assert.Equal(25, actual.Length);
 
         city = "Berlin";
-        startDate = new NpgsqlParameter { Value = new DateTime(1998, 4, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        endDate = new NpgsqlParameter { Value = new DateTime(1998, 5, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        startDate = new EDBParameter { Value = new DateTime(1998, 4, 1), EDBDbType = EDBDbType.Timestamp };
+        endDate = new EDBParameter { Value = new DateTime(1998, 5, 1), EDBDbType = EDBDbType.Timestamp };
 
         query
             = (from c in context.Set<Customer>().FromSqlRaw(
@@ -71,8 +71,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         // We default to mapping DateTime to 'timestamp with time zone', but here we need to send `timestamp without time zone` to match
         // the database data.
         var city = "London";
-        var startDate = new NpgsqlParameter { Value = new DateTime(1997, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        var endDate = new NpgsqlParameter { Value = new DateTime(1998, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
+        var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
         using var context = CreateContext();
         var query
@@ -91,8 +91,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         Assert.Equal(25, actual.Length);
 
         city = "Berlin";
-        startDate = new NpgsqlParameter { Value = new DateTime(1998, 4, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        endDate = new NpgsqlParameter { Value = new DateTime(1998, 5, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        startDate = new EDBParameter { Value = new DateTime(1998, 4, 1), EDBDbType = EDBDbType.Timestamp };
+        endDate = new EDBParameter { Value = new DateTime(1998, 5, 1), EDBDbType = EDBDbType.Timestamp };
 
         query
             = (from c in context.Set<Customer>().FromSqlRaw(
@@ -115,8 +115,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         // We default to mapping DateTime to 'timestamp with time zone', but here we need to send `timestamp without time zone` to match
         // the database data.
         var city = "London";
-        var startDate = new NpgsqlParameter { Value = new DateTime(1997, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        var endDate = new NpgsqlParameter { Value = new DateTime(1998, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
+        var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
         using var context = CreateContext();
         var query = from c in context.Set<Customer>().FromSqlRaw(
@@ -135,8 +135,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         Assert.Equal(25, actual.Length);
 
         city = "Berlin";
-        startDate = new NpgsqlParameter { Value = new DateTime(1998, 4, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        endDate = new NpgsqlParameter { Value = new DateTime(1998, 5, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        startDate = new EDBParameter { Value = new DateTime(1998, 4, 1), EDBDbType = EDBDbType.Timestamp };
+        endDate = new EDBParameter { Value = new DateTime(1998, 5, 1), EDBDbType = EDBDbType.Timestamp };
 
         query = (from c in context.Set<Customer>().FromSqlRaw(
                      NormalizeDelimitersInRawString("SELECT * FROM [Customers] WHERE [City] = {0}"), city)
@@ -158,8 +158,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
     {
         // We default to mapping DateTime to 'timestamp with time zone', but here we need to send `timestamp without time zone` to match
         // the database data.
-        var startDate = new NpgsqlParameter { Value = new DateTime(1997, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
-        var endDate = new NpgsqlParameter { Value = new DateTime(1998, 1, 1), NpgsqlDbType = NpgsqlDbType.Timestamp };
+        var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
+        var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
         using var context = CreateContext();
         var query = from c in context.Set<Customer>().FromSqlRaw(NormalizeDelimitersInRawString("SELECT * FROM [Customers]"))
@@ -178,7 +178,7 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
     }
 
     protected override DbParameter CreateDbParameter(string name, object value)
-        => new NpgsqlParameter
+        => new EDBParameter
         {
             ParameterName = name,
             Value = value

@@ -1,7 +1,7 @@
 ﻿using System.Data;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class ExistingConnectionTest
 {
@@ -27,7 +27,7 @@ public class ExistingConnectionTest
             var openCount = 0;
             var closeCount = 0;
 
-            using (var connection = new NpgsqlConnection(store.ConnectionString))
+            using (var connection = new EDBConnection(store.ConnectionString))
             {
                 if (openConnection)
                 {
@@ -70,9 +70,9 @@ public class ExistingConnectionTest
     private class NorthwindContext : DbContext
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly NpgsqlConnection _connection;
+        private readonly EDBConnection _connection;
 
-        public NorthwindContext(IServiceProvider serviceProvider, NpgsqlConnection connection)
+        public NorthwindContext(IServiceProvider serviceProvider, EDBConnection connection)
         {
             _serviceProvider = serviceProvider;
             _connection = connection;

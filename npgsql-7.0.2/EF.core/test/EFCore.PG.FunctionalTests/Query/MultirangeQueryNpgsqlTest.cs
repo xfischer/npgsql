@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 [MinimumPostgresVersion(14, 0)] // Multiranges were introduced in PostgreSQL 14
 public class MultirangeQueryNpgsqlTest : IClassFixture<MultirangeQueryNpgsqlTest.MultirangeQueryNpgsqlFixture>
@@ -45,7 +45,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(1, 2) };
+        var multirange = new EDBRange<int>[] { new(1, 2) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.Contains(multirange))
@@ -68,7 +68,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(1, 2);
+        var range = new EDBRange<int>(1, 2);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.Contains(range))
@@ -92,7 +92,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(1, 2) };
+        var multirange = new EDBRange<int>[] { new(1, 2) };
 
         var id = context.TestEntities
             .Single(x => multirange.ContainedBy(x.IntMultirange))
@@ -115,7 +115,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(0, 5), new(7, 10) };
+        var multirange = new EDBRange<int>[] { new(0, 5), new(7, 10) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange == multirange)
@@ -138,7 +138,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(0, 5), new(7, 10) };
+        var multirange = new EDBRange<int>[] { new(0, 5), new(7, 10) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.Equals(multirange))
@@ -161,7 +161,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-3, 0), new(100, 101) };
+        var multirange = new EDBRange<int>[] { new(-3, 0), new(100, 101) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.Overlaps(multirange))
@@ -184,7 +184,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(-3, 0);
+        var range = new EDBRange<int>(-3, 0);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.Overlaps(range))
@@ -207,7 +207,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(11, 13), new(15, 16) };
+        var multirange = new EDBRange<int>[] { new(11, 13), new(15, 16) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsStrictlyLeftOf(multirange))
@@ -230,7 +230,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(11, 13);
+        var range = new EDBRange<int>(11, 13);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsStrictlyLeftOf(range))
@@ -253,7 +253,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-10, -7), new(-5, 3) };
+        var multirange = new EDBRange<int>[] { new(-10, -7), new(-5, 3) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsStrictlyRightOf(multirange))
@@ -276,7 +276,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(-5, 3);
+        var range = new EDBRange<int>(-5, 3);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsStrictlyRightOf(range))
@@ -299,7 +299,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(2, 7), new(13, 18) };
+        var multirange = new EDBRange<int>[] { new(2, 7), new(13, 18) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.DoesNotExtendLeftOf(multirange))
@@ -322,7 +322,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(2, 7);
+        var range = new EDBRange<int>(2, 7);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.DoesNotExtendLeftOf(range))
@@ -345,7 +345,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-5, -3), new(13, 18) };
+        var multirange = new EDBRange<int>[] { new(-5, -3), new(13, 18) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.DoesNotExtendRightOf(multirange))
@@ -368,7 +368,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(13, 18);
+        var range = new EDBRange<int>(13, 18);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.DoesNotExtendRightOf(range))
@@ -391,7 +391,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-5, -4), new(-2, -1) };
+        var multirange = new EDBRange<int>[] { new(-5, -4), new(-2, -1) };
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsAdjacentTo(multirange))
@@ -414,7 +414,7 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var range = new NpgsqlRange<int>(-2, -1);
+        var range = new EDBRange<int>(-2, -1);
 
         var id = context.TestEntities
             .Single(x => x.IntMultirange.IsAdjacentTo(range))
@@ -437,10 +437,10 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-5, -1) };
+        var multirange = new EDBRange<int>[] { new(-5, -1) };
 
         var id = context.TestEntities
-            .Single(x => x.IntMultirange.Union(multirange) == new NpgsqlRange<int>[] { new(-5, 5), new(7, 10) })
+            .Single(x => x.IntMultirange.Union(multirange) == new EDBRange<int>[] { new(-5, 5), new(7, 10) })
             .Id;
         Assert.Equal(1, id);
 
@@ -460,10 +460,10 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(-5, 1), new(9, 13) };
+        var multirange = new EDBRange<int>[] { new(-5, 1), new(9, 13) };
 
         var id = context.TestEntities
-            .Single(x => x.IntMultirange.Intersect(multirange) == new NpgsqlRange<int>[] { new(0, 1), new(9, 10) })
+            .Single(x => x.IntMultirange.Intersect(multirange) == new EDBRange<int>[] { new(0, 1), new(9, 10) })
             .Id;
         Assert.Equal(1, id);
 
@@ -489,7 +489,7 @@ LIMIT 2
             .Select(g => g.Select(x => x.IntMultirange).RangeIntersectAgg())
             .Single();
 
-        Assert.Equal(new NpgsqlRange<int>[]
+        Assert.Equal(new EDBRange<int>[]
         {
             new(4, true, 6, false),
             new(7, true, 9, false)
@@ -513,10 +513,10 @@ LIMIT 2
     {
         using var context = CreateContext();
 
-        var multirange = new NpgsqlRange<int>[] { new(2, 3) };
+        var multirange = new EDBRange<int>[] { new(2, 3) };
 
         var id = context.TestEntities
-            .Single(x => x.IntMultirange.Except(multirange) == new NpgsqlRange<int>[] { new(0, 1), new(4, 5), new(7, 10) })
+            .Single(x => x.IntMultirange.Except(multirange) == new EDBRange<int>[] { new(0, 1), new(4, 5), new(7, 10) })
             .Id;
         Assert.Equal(1, id);
 
@@ -543,7 +543,7 @@ LIMIT 2
         using var context = CreateContext();
 
         var id = context.TestEntities
-            .Single(x => x.IntMultirange.Intersect(new NpgsqlRange<int>[] { new(18, 19) }).Any())
+            .Single(x => x.IntMultirange.Intersect(new EDBRange<int>[] { new(18, 19) }).Any())
             .Id;
         Assert.Equal(2, id);
 
@@ -562,7 +562,7 @@ LIMIT 2
         using var context = CreateContext();
 
         var id = context.TestEntities
-            .Single(x => x.IntMultirange.Merge() == new NpgsqlRange<int>(0, 10))
+            .Single(x => x.IntMultirange.Merge() == new EDBRange<int>(0, 10))
             .Id;
         Assert.Equal(1, id);
 
@@ -689,12 +689,12 @@ LIMIT 2
     public class MultirangeTestEntity
     {
         public int Id { get; set; }
-        public NpgsqlRange<int>[] IntMultirange { get; set; }
-        public NpgsqlRange<long>[] LongMultirange { get; set; }
-        public NpgsqlRange<decimal>[] DecimalMultirange { get; set; }
-        public NpgsqlRange<DateOnly>[] DateOnlyDateMultirange { get; set; }
+        public EDBRange<int>[] IntMultirange { get; set; }
+        public EDBRange<long>[] LongMultirange { get; set; }
+        public EDBRange<decimal>[] DecimalMultirange { get; set; }
+        public EDBRange<DateOnly>[] DateOnlyDateMultirange { get; set; }
         [Column(TypeName = "datemultirange")]
-        public NpgsqlRange<DateTime>[] DateTimeDateMultirange { get; set; }
+        public EDBRange<DateTime>[] DateTimeDateMultirange { get; set; }
     }
 
     private void AssertSql(params string[] expected)
@@ -712,20 +712,20 @@ LIMIT 2
                 new MultirangeTestEntity
                 {
                     Id = 1,
-                    IntMultirange = new NpgsqlRange<int>[] { new(0, 5), new(7, 10) },
-                    LongMultirange = new NpgsqlRange<long>[] { new(0, 5), new(7, 10) },
-                    DecimalMultirange = new NpgsqlRange<decimal>[] { new(0, 5), new(7, 10) },
-                    DateOnlyDateMultirange = new NpgsqlRange<DateOnly>[] { new(new(2020, 1, 1), new(2020, 1, 5)), new(new(2020, 1, 7), new(2020, 1, 10)) },
-                    DateTimeDateMultirange = new NpgsqlRange<DateTime>[] { new(new(2020, 1, 1), new(2020, 1, 5)), new(new(2020, 1, 7), new(2020, 1, 10)) }
+                    IntMultirange = new EDBRange<int>[] { new(0, 5), new(7, 10) },
+                    LongMultirange = new EDBRange<long>[] { new(0, 5), new(7, 10) },
+                    DecimalMultirange = new EDBRange<decimal>[] { new(0, 5), new(7, 10) },
+                    DateOnlyDateMultirange = new EDBRange<DateOnly>[] { new(new(2020, 1, 1), new(2020, 1, 5)), new(new(2020, 1, 7), new(2020, 1, 10)) },
+                    DateTimeDateMultirange = new EDBRange<DateTime>[] { new(new(2020, 1, 1), new(2020, 1, 5)), new(new(2020, 1, 7), new(2020, 1, 10)) }
                 },
                 new MultirangeTestEntity
                 {
                     Id = 2,
-                    IntMultirange = new NpgsqlRange<int>[] { new(4, 8), new(13, 20) },
-                    LongMultirange = new NpgsqlRange<long>[] { new(4, 8), new(13, 20) },
-                    DecimalMultirange = new NpgsqlRange<decimal>[] { new(4, 8), new(13, 20) },
-                    DateOnlyDateMultirange = new NpgsqlRange<DateOnly>[] { new(new(2020, 1, 4), new(2020, 1, 8)), new(new(2020, 1, 13), new(2020, 1, 20)) },
-                    DateTimeDateMultirange = new NpgsqlRange<DateTime>[] { new(new(2020, 1, 4), new(2020, 1, 8)), new(new(2020, 1, 13), new(2020, 1, 20)) }
+                    IntMultirange = new EDBRange<int>[] { new(4, 8), new(13, 20) },
+                    LongMultirange = new EDBRange<long>[] { new(4, 8), new(13, 20) },
+                    DecimalMultirange = new EDBRange<decimal>[] { new(4, 8), new(13, 20) },
+                    DateOnlyDateMultirange = new EDBRange<DateOnly>[] { new(new(2020, 1, 4), new(2020, 1, 8)), new(new(2020, 1, 13), new(2020, 1, 20)) },
+                    DateTimeDateMultirange = new EDBRange<DateTime>[] { new(new(2020, 1, 4), new(2020, 1, 8)), new(new(2020, 1, 13), new(2020, 1, 20)) }
                 });
 
             context.SaveChanges();

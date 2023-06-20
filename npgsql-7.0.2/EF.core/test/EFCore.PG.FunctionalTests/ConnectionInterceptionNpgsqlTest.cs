@@ -1,8 +1,8 @@
 using System.Data;
 using System.Data.Common;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public abstract class ConnectionInterceptionNpgsqlTestBase : ConnectionInterceptionTestBase
 {

@@ -1,10 +1,10 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 #if DEBUG
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
 {
     [Collection("LegacyNodaTimeTest")]
     public class LegacyNpgsqlNodaTimeTypeMappingTest
@@ -46,11 +46,11 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL
         [Fact]
         public void GenerateSqlLiteral_returns_instant_range_in_legacy_mode()
         {
-            var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(NpgsqlRange<Instant>));
+            var mapping = (NpgsqlRangeTypeMapping)GetMapping(typeof(EDBRange<Instant>));
             Assert.Equal("tsrange", mapping.StoreType);
             Assert.Equal("timestamp without time zone", mapping.SubtypeMapping.StoreType);
 
-            var value = new NpgsqlRange<Instant>(
+            var value = new EDBRange<Instant>(
                 new LocalDateTime(2020, 1, 1, 12, 0, 0).InUtc().ToInstant(),
                 new LocalDateTime(2020, 1, 2, 12, 0, 0).InUtc().ToInstant());
             Assert.Equal(@"'[""2020-01-01T12:00:00Z"",""2020-01-02T12:00:00Z""]'::tsrange", mapping.GenerateSqlLiteral(value));

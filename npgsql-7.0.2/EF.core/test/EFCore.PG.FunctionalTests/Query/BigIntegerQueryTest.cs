@@ -1,7 +1,7 @@
 using System.Numerics;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class BigIntegerQueryTest : QueryTestBase<BigIntegerQueryTest.BigIntegerQueryFixture>
 {

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 using Xunit.Sdk;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class NorthwindMiscellaneousQueryNpgsqlTest : NorthwindMiscellaneousQueryRelationalTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {
@@ -107,7 +107,7 @@ LIMIT 1
     {
         Assert.Equal(
             CoreStrings.ClientProjectionCapturingConstantInMethodInstance(
-                "Npgsql.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest",
+                "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest",
                 "InstanceMethod"),
             (await Assert.ThrowsAsync<InvalidOperationException>(
                 () => base.Client_code_using_instance_method_throws(async))).Message);
@@ -119,7 +119,7 @@ LIMIT 1
     {
         Assert.Equal(
             CoreStrings.ClientProjectionCapturingConstantInMethodArgument(
-                "Npgsql.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest",
+                "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest",
                 "StaticMethod"),
             (await Assert.ThrowsAsync<InvalidOperationException>(
                 () => base.Client_code_using_instance_in_static_method(async))).Message);
@@ -131,7 +131,7 @@ LIMIT 1
     {
         Assert.Equal(
             CoreStrings.ClientProjectionCapturingConstantInTree(
-                "Npgsql.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest"),
+                "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.NorthwindMiscellaneousQueryNpgsqlTest"),
             (await Assert.ThrowsAsync<InvalidOperationException>(
                 () => base.Client_code_using_instance_in_anonymous_type(async))).Message);
 
@@ -143,7 +143,7 @@ LIMIT 1
         await AssertTranslationFailedWithDetails(
             () => base.Client_code_unknown_method(async),
             CoreStrings.QueryUnableToTranslateMethod(
-                "Microsoft.EntityFrameworkCore.Query.NorthwindMiscellaneousQueryTestBase<Npgsql.EntityFrameworkCore.PostgreSQL.Query.NorthwindQueryNpgsqlFixture<Microsoft.EntityFrameworkCore.TestUtilities.NoopModelCustomizer>>",
+                "Microsoft.EntityFrameworkCore.Query.NorthwindMiscellaneousQueryTestBase<EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.NorthwindQueryNpgsqlFixture<Microsoft.EntityFrameworkCore.TestUtilities.NoopModelCustomizer>>",
                 nameof(UnknownMethod)));
 
         AssertSql();

@@ -1,8 +1,8 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore.TestModels.StoreValueGenerationModel;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Update;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update;
 
 #nullable enable
 

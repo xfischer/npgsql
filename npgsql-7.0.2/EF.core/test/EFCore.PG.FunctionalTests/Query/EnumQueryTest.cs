@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class EnumQueryTest : QueryTestBase<EnumQueryTest.EnumFixture>
 {
@@ -233,11 +233,11 @@ WHERE s."UnmappedByteEnum" = ANY (@__values_0)
 
         static EnumContext()
         {
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<MappedEnum>("test.mapped_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<InferredEnum>("test.inferred_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<ByteEnum>("test.byte_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<SchemaQualifiedEnum>("test.schema_qualified_enum");
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
+            EDBConnection.GlobalTypeMapper.MapEnum<MappedEnum>("test.mapped_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<InferredEnum>("test.inferred_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<ByteEnum>("test.byte_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<SchemaQualifiedEnum>("test.schema_qualified_enum");
 #pragma warning restore CS0618
         }
 

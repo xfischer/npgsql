@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.NetworkInformation;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class BuiltInDataTypesNpgsqlTest : BuiltInDataTypesTestBase<BuiltInDataTypesNpgsqlTest.BuiltInDataTypesNpgsqlFixture>
 {
@@ -108,20 +108,20 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
                     EnumAsVarchar = StringEnumU16.Value4,
 
                     PhysicalAddressAsMacaddr = PhysicalAddress.Parse("08-00-2B-01-02-03"),
-                    NpgsqlPointAsPoint = new NpgsqlPoint(5.2, 3.3),
+                    EDBPointAsPoint = new EDBPoint(5.2, 3.3),
                     StringAsJsonb = @"{""a"": ""b""}",
                     StringAsJson = @"{""a"": ""b""}",
                     DictionaryAsHstore = new Dictionary<string, string> { { "a", "b" } },
                     ImmutableDictionaryAsHstore = ImmutableDictionary<string, string>.Empty.Add("c", "d"),
-                    NpgsqlRangeAsRange = new NpgsqlRange<int>(4, true, 8, false),
+                    EDBRangeAsRange = new EDBRange<int>(4, true, 8, false),
 
                     IntArrayAsIntArray= new[] { 2, 3 },
                     PhysicalAddressArrayAsMacaddrArray= new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
 
                     UintAsXid = (uint)int.MaxValue + 1,
 
-                    SearchQuery = NpgsqlTsQuery.Parse("a & b"),
-                    SearchVector = NpgsqlTsVector.Parse("a b"),
+                    SearchQuery = EDBTsQuery.Parse("a & b"),
+                    SearchVector = EDBTsVector.Parse("a b"),
                     RankingNormalization = NpgsqlTsRankingNormalization.DivideByLength,
                     Regconfig = 12724,
 
@@ -241,7 +241,7 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.PhysicalAddressAsMacaddr.Equals(param28)));
 
             // PostgreSQL doesn't support equality comparison on point
-            // NpgsqlPoint? param29 = new NpgsqlPoint(5.2, 3.3);
+            // EDBPoint? param29 = new EDBPoint(5.2, 3.3);
             // Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.Point == param29));
 
             // ReSharper disable once ConvertToConstant.Local
@@ -258,8 +258,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             var param33 = ImmutableDictionary<string, string>.Empty.Add("c", "d");
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.ImmutableDictionaryAsHstore == param33));
 
-            var param34 = new NpgsqlRange<int>(4, true, 8, false);
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.NpgsqlRangeAsRange == param34));
+            var param34 = new EDBRange<int>(4, true, 8, false);
+            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.EDBRangeAsRange == param34));
 
             var param35 = new[] { 2, 3 };
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.IntArrayAsIntArray == param35));
@@ -271,10 +271,10 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             var param37 = (uint)int.MaxValue + 1;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.UintAsXid == param37));
 
-            var param38 = NpgsqlTsQuery.Parse("a & b");
+            var param38 = EDBTsQuery.Parse("a & b");
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.SearchQuery == param38));
 
-            var param39 = NpgsqlTsVector.Parse("a b");
+            var param39 = EDBTsVector.Parse("a b");
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.SearchVector == param39));
 
             // ReSharper disable once ConvertToConstant.Local
@@ -414,8 +414,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.PhysicalAddressAsMacaddr == param28));
 
             // PostgreSQL does not support equality comparison on geometry types, see https://www.postgresql.org/docs/current/functions-geometry.html
-            //NpgsqlPoint? param29 = null;
-            //Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.NpgsqlPointAsPoint == param29));
+            //EDBPoint? param29 = null;
+            //Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.EDBPointAsPoint == param29));
 
             string param30 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.StringAsJsonb == param30));
@@ -430,8 +430,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             ImmutableDictionary<string, string> param33 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.ImmutableDictionaryAsHstore == param33));
 
-            NpgsqlRange<int>? param34 = null;
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.NpgsqlRangeAsRange == param34));
+            EDBRange<int>? param34 = null;
+            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.EDBRangeAsRange == param34));
 
             int[] param35 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.IntArrayAsIntArray == param35));
@@ -442,10 +442,10 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             uint? param37 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.UintAsXid == param37));
 
-            NpgsqlTsQuery param38 = null;
+            EDBTsQuery param38 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.SearchQuery == param38));
 
-            NpgsqlTsVector param39 = null;
+            EDBTsVector param39 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.SearchVector == param39));
 
             NpgsqlTsRankingNormalization? param40 = null;
@@ -566,19 +566,19 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         Assert.Equal(StringEnumU16.Value4, entity.EnumAsVarchar);
 
         Assert.Equal(PhysicalAddress.Parse("08-00-2B-01-02-03"), entity.PhysicalAddressAsMacaddr);
-        Assert.Equal(new NpgsqlPoint(5.2, 3.3), entity.NpgsqlPointAsPoint);
+        Assert.Equal(new EDBPoint(5.2, 3.3), entity.EDBPointAsPoint);
         Assert.Equal(@"{""a"": ""b""}", entity.StringAsJsonb);
         Assert.Equal(@"{""a"": ""b""}", entity.StringAsJson);
         Assert.Equal(new Dictionary<string, string> { { "a", "b" } }, entity.DictionaryAsHstore);
-        Assert.Equal(new NpgsqlRange<int>(4, true, 8, false), entity.NpgsqlRangeAsRange);
+        Assert.Equal(new EDBRange<int>(4, true, 8, false), entity.EDBRangeAsRange);
 
         Assert.Equal(new[] { 2, 3 }, entity.IntArrayAsIntArray);
         Assert.Equal(new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") }, entity.PhysicalAddressArrayAsMacaddrArray);
 
         Assert.Equal((uint)int.MaxValue + 1, entity.UintAsXid);
 
-        Assert.Equal(NpgsqlTsQuery.Parse("a & b").ToString(), entity.SearchQuery.ToString());
-        Assert.Equal(NpgsqlTsVector.Parse("a b").ToString(), entity.SearchVector.ToString());
+        Assert.Equal(EDBTsQuery.Parse("a & b").ToString(), entity.SearchQuery.ToString());
+        Assert.Equal(EDBTsVector.Parse("a b").ToString(), entity.SearchVector.ToString());
         Assert.Equal(NpgsqlTsRankingNormalization.DivideByLength, entity.RankingNormalization);
     }
 
@@ -624,19 +624,19 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             EnumAsVarchar = StringEnumU16.Value4,
 
             PhysicalAddressAsMacaddr = PhysicalAddress.Parse("08-00-2B-01-02-03"),
-            NpgsqlPointAsPoint = new NpgsqlPoint(5.2, 3.3),
+            EDBPointAsPoint = new EDBPoint(5.2, 3.3),
             StringAsJsonb = @"{""a"": ""b""}",
             StringAsJson = @"{""a"": ""b""}",
             DictionaryAsHstore = new Dictionary<string, string> { { "a", "b" } },
-            NpgsqlRangeAsRange = new NpgsqlRange<int>(4, true, 8, false),
+            EDBRangeAsRange = new EDBRange<int>(4, true, 8, false),
 
             IntArrayAsIntArray = new[] { 2, 3 },
             PhysicalAddressArrayAsMacaddrArray = new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
 
             UintAsXid = (uint)int.MaxValue + 1,
 
-            SearchQuery = NpgsqlTsQuery.Parse("a & b"),
-            SearchVector = NpgsqlTsVector.Parse("a b"),
+            SearchQuery = EDBTsQuery.Parse("a & b"),
+            SearchVector = EDBTsVector.Parse("a b"),
             RankingNormalization = NpgsqlTsRankingNormalization.DivideByLength,
             Regconfig = 12724,
 
@@ -705,12 +705,12 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         Assert.Null(entity.EnumAsVarchar);
 
         Assert.Null(entity.PhysicalAddressAsMacaddr);
-        Assert.Null(entity.NpgsqlPointAsPoint);
+        Assert.Null(entity.EDBPointAsPoint);
         Assert.Null(entity.StringAsJsonb);
         Assert.Null(entity.StringAsJson);
         Assert.Null(entity.DictionaryAsHstore);
         Assert.Null(entity.ImmutableDictionaryAsHstore);
-        Assert.Null(entity.NpgsqlRangeAsRange);
+        Assert.Null(entity.EDBRangeAsRange);
 
         Assert.Null(entity.IntArrayAsIntArray);
         Assert.Null(entity.PhysicalAddressArrayAsMacaddrArray);
@@ -978,8 +978,8 @@ FROM "MappedDataTypes" AS m
             base.OnModelCreating(modelBuilder, context);
 
             // TODO: Switch to using data source
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<Mood>();
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
+            EDBConnection.GlobalTypeMapper.MapEnum<Mood>();
 #pragma warning restore CS0618
             ((NpgsqlTypeMappingSource)context.GetService<ITypeMappingSource>()).LoadUserDefinedTypeMappings(
                 context.GetService<ISqlGenerationHelper>(), dataSource: null);
@@ -1217,7 +1217,7 @@ FROM "MappedDataTypes" AS m
         public PhysicalAddress PhysicalAddressAsMacaddr { get; set; }
 
         [Column(TypeName = "point")]
-        public NpgsqlPoint NpgsqlPointAsPoint { get; set; }
+        public EDBPoint EDBPointAsPoint { get; set; }
 
         [Column(TypeName = "jsonb")]
         public string StringAsJsonb { get; set; }
@@ -1229,7 +1229,7 @@ FROM "MappedDataTypes" AS m
         public Dictionary<string, string> DictionaryAsHstore { get; set; }
 
         [Column(TypeName = "int4range")]
-        public NpgsqlRange<int> NpgsqlRangeAsRange { get; set; }
+        public EDBRange<int> EDBRangeAsRange { get; set; }
 
         [Column(TypeName = "int[]")]
         public int[] IntArrayAsIntArray { get; set; }
@@ -1240,8 +1240,8 @@ FROM "MappedDataTypes" AS m
         [Column(TypeName = "xid")]
         public uint UintAsXid { get; set; }
 
-        public NpgsqlTsQuery SearchQuery { get; set; }
-        public NpgsqlTsVector SearchVector { get; set; }
+        public EDBTsQuery SearchQuery { get; set; }
+        public EDBTsVector SearchVector { get; set; }
         public NpgsqlTsRankingNormalization RankingNormalization { get; set; }
         public uint Regconfig { get; set; }
 
@@ -1412,7 +1412,7 @@ FROM "MappedDataTypes" AS m
         public PhysicalAddress PhysicalAddressAsMacaddr { get; set; }
 
         [Column(TypeName = "point")]
-        public NpgsqlPoint? NpgsqlPointAsPoint { get; set; }
+        public EDBPoint? EDBPointAsPoint { get; set; }
 
         [Column(TypeName = "jsonb")]
         public string StringAsJsonb { get; set; }
@@ -1427,7 +1427,7 @@ FROM "MappedDataTypes" AS m
         public ImmutableDictionary<string, string> ImmutableDictionaryAsHstore { get; set; }
 
         [Column(TypeName = "int4range")]
-        public NpgsqlRange<int>? NpgsqlRangeAsRange { get; set; }
+        public EDBRange<int>? EDBRangeAsRange { get; set; }
 
         [Column(TypeName = "int[]")]
         public int[] IntArrayAsIntArray { get; set; }
@@ -1438,8 +1438,8 @@ FROM "MappedDataTypes" AS m
         [Column(TypeName = "xid")]
         public uint? UintAsXid { get; set; }
 
-        public NpgsqlTsQuery SearchQuery { get; set; }
-        public NpgsqlTsVector SearchVector { get; set; }
+        public EDBTsQuery SearchQuery { get; set; }
+        public EDBTsVector SearchVector { get; set; }
         public NpgsqlTsRankingNormalization? RankingNormalization { get; set; }
         public uint? Regconfig { get; set; }
 

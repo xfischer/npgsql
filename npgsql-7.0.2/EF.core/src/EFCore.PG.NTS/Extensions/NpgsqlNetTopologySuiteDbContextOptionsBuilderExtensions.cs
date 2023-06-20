@@ -25,7 +25,7 @@ public static class NpgsqlNetTopologySuiteDbContextOptionsBuilderExtensions
         Check.NotNull(optionsBuilder, nameof(optionsBuilder));
 
         // TODO: Global-only setup at the ADO.NET level for now, optionally allow per-connection?
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
         EDBConnection.GlobalTypeMapper.UseNetTopologySuite(coordinateSequenceFactory, precisionModel, handleOrdinates, geographyAsDefault);
 #pragma warning restore CS0618
 

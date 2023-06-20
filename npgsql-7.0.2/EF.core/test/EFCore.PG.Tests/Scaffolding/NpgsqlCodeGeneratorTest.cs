@@ -1,9 +1,9 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite.Scaffolding.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Scaffolding.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.Scaffolding.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Scaffolding.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding;
 
 public class NpgsqlCodeGeneratorTest
 {

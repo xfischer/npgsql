@@ -1,8 +1,8 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Migrations
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
 {
     public class MigrationsInfrastructureNpgsqlTest
         : MigrationsInfrastructureTestBase<MigrationsInfrastructureNpgsqlTest.MigrationsInfrastructureNpgsqlFixture>
@@ -14,7 +14,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Migrations
         {
             base.Can_get_active_provider();
 
-            Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", ActiveProvider);
+            Assert.Equal("EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL", ActiveProvider);
         }
 
         [ConditionalFact]

@@ -121,13 +121,13 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     private readonly NpgsqlCidrTypeMapping         _cidr               = new();
 
     // Built-in geometric types
-    private readonly NpgsqlPointTypeMapping        _point              = new();
-    private readonly NpgsqlBoxTypeMapping          _box                = new();
-    private readonly NpgsqlLineTypeMapping         _line               = new();
-    private readonly NpgsqlLineSegmentTypeMapping  _lseg               = new();
-    private readonly NpgsqlPathTypeMapping         _path               = new();
-    private readonly NpgsqlPolygonTypeMapping      _polygon            = new();
-    private readonly NpgsqlCircleTypeMapping       _circle             = new();
+    private readonly EDBPointTypeMapping        _point              = new();
+    private readonly EDBBoxTypeMapping          _box                = new();
+    private readonly EDBLineTypeMapping         _line               = new();
+    private readonly EDBLineSegmentTypeMapping  _lseg               = new();
+    private readonly EDBPathTypeMapping         _path               = new();
+    private readonly EDBPolygonTypeMapping      _polygon            = new();
+    private readonly EDBCircleTypeMapping       _circle             = new();
 
     // uint mappings
     private readonly NpgsqlUintTypeMapping         _xid                = new("xid", EDBDbType.Xid);

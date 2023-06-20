@@ -5,7 +5,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime extension methods for <see cref="IServiceCollection" />.
+/// EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime extension methods for <see cref="IServiceCollection" />.
 /// </summary>
 public static class NpgsqlNodaTimeServiceCollectionExtensions
 {

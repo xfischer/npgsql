@@ -1,10 +1,10 @@
 using NetTopologySuite.Geometries;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage;
 
 public class NpgsqlTypeMappingSourceTest
 {
@@ -26,10 +26,10 @@ public class NpgsqlTypeMappingSourceTest
     [InlineData("varchar", typeof(string), null, false)]
     [InlineData("timestamp with time zone", typeof(DateTime), null, false)]
     [InlineData("dummy", typeof(DummyType), null, false)]
-    [InlineData("int4range", typeof(NpgsqlRange<int>), null, false)]
-    [InlineData("floatrange", typeof(NpgsqlRange<float>), null, false)]
-    [InlineData("dummyrange", typeof(NpgsqlRange<DummyType>), null, false)]
-    [InlineData("int4multirange", typeof(NpgsqlRange<int>[]), null, false)]
+    [InlineData("int4range", typeof(EDBRange<int>), null, false)]
+    [InlineData("floatrange", typeof(EDBRange<float>), null, false)]
+    [InlineData("dummyrange", typeof(EDBRange<DummyType>), null, false)]
+    [InlineData("int4multirange", typeof(EDBRange<int>[]), null, false)]
     [InlineData("geometry", typeof(Geometry), null, false)]
     [InlineData("geometry(Polygon)", typeof(Polygon), null, false)]
     [InlineData("geography(Point, 4326)", typeof(Point), null, false)]
@@ -98,11 +98,11 @@ public class NpgsqlTypeMappingSourceTest
     [InlineData(typeof(int[]), "integer[]")]
     [InlineData(typeof(byte[]), "bytea")]
     [InlineData(typeof(DummyType), "dummy")]
-    [InlineData(typeof(NpgsqlRange<int>), "int4range")]
-    [InlineData(typeof(NpgsqlRange<float>), "floatrange")]
-    [InlineData(typeof(NpgsqlRange<DummyType>), "dummyrange")]
-    [InlineData(typeof(NpgsqlRange<int>[]), "int4multirange")]
-    [InlineData(typeof(List<NpgsqlRange<int>>), "int4multirange")]
+    [InlineData(typeof(EDBRange<int>), "int4range")]
+    [InlineData(typeof(EDBRange<float>), "floatrange")]
+    [InlineData(typeof(EDBRange<DummyType>), "dummyrange")]
+    [InlineData(typeof(EDBRange<int>[]), "int4multirange")]
+    [InlineData(typeof(List<EDBRange<int>>), "int4multirange")]
     [InlineData(typeof(Geometry), "geometry")]
     [InlineData(typeof(Point), "geometry")]
     public void By_ClrType(Type clrType, string expectedStoreType)
@@ -136,9 +136,9 @@ public class NpgsqlTypeMappingSourceTest
     [InlineData("integer[]", typeof(List<int>))]
     [InlineData("smallint[]", typeof(byte[]))]
     [InlineData("dummy", typeof(DummyType))]
-    [InlineData("int4range", typeof(NpgsqlRange<int>))]
-    [InlineData("floatrange", typeof(NpgsqlRange<float>))]
-    [InlineData("dummyrange", typeof(NpgsqlRange<DummyType>))]
+    [InlineData("int4range", typeof(EDBRange<int>))]
+    [InlineData("floatrange", typeof(EDBRange<float>))]
+    [InlineData("dummyrange", typeof(EDBRange<DummyType>))]
     [InlineData("geometry", typeof(Geometry))]
     [InlineData("geometry(Point, 4326)", typeof(Geometry))]
     public void By_StoreType_with_ClrType(string storeType, Type clrType)
@@ -165,27 +165,27 @@ public class NpgsqlTypeMappingSourceTest
         => Assert.Equal("some_domain", CreateTypeMappingSource().FindMapping(typeof(int), "some_domain").StoreType);
 
     [Fact]
-    public void Varchar_mapping_sets_NpgsqlDbType()
+    public void Varchar_mapping_sets_EDBDbType()
     {
         var mapping = CreateTypeMappingSource().FindMapping("character varying");
-        var parameter = (NpgsqlParameter)mapping.CreateParameter(new NpgsqlCommand(), "p", "foo");
-        Assert.Equal(NpgsqlDbType.Varchar, parameter.NpgsqlDbType);
+        var parameter = (EDBParameter)mapping.CreateParameter(new EDBCommand(), "p", "foo");
+        Assert.Equal(EDBDbType.Varchar, parameter.EDBDbType);
     }
 
     [Fact]
-    public void Single_char_mapping_sets_NpgsqlDbType()
+    public void Single_char_mapping_sets_EDBDbType()
     {
         var mapping = CreateTypeMappingSource().FindMapping(typeof(char));
-        var parameter = (NpgsqlParameter)mapping.CreateParameter(new NpgsqlCommand(), "p", "foo");
-        Assert.Equal(NpgsqlDbType.Char, parameter.NpgsqlDbType);
+        var parameter = (EDBParameter)mapping.CreateParameter(new EDBCommand(), "p", "foo");
+        Assert.Equal(EDBDbType.Char, parameter.EDBDbType);
     }
 
     [Fact]
-    public void String_as_single_char_mapping_sets_NpgsqlDbType()
+    public void String_as_single_char_mapping_sets_EDBDbType()
     {
         var mapping = CreateTypeMappingSource().FindMapping(typeof(string), "char(1)");
-        var parameter = (NpgsqlParameter)mapping.CreateParameter(new NpgsqlCommand(), "p", "foo");
-        Assert.Equal(NpgsqlDbType.Char, parameter.NpgsqlDbType);
+        var parameter = (EDBParameter)mapping.CreateParameter(new EDBCommand(), "p", "foo");
+        Assert.Equal(EDBDbType.Char, parameter.EDBDbType);
     }
 
     [Fact]
@@ -227,9 +227,9 @@ public class NpgsqlTypeMappingSourceTest
     [Fact]
     public void Multirange_by_clr_type_across_pg_versions()
     {
-        var mapping14 = CreateTypeMappingSource(postgresVersion: new(14, 0)).FindMapping(typeof(NpgsqlRange<int>[]))!;
-        var mapping13 = CreateTypeMappingSource(postgresVersion: new(13, 0)).FindMapping(typeof(NpgsqlRange<int>[]))!;
-        var mappingDefault = CreateTypeMappingSource().FindMapping(typeof(NpgsqlRange<int>[]))!;
+        var mapping14 = CreateTypeMappingSource(postgresVersion: new(14, 0)).FindMapping(typeof(EDBRange<int>[]))!;
+        var mapping13 = CreateTypeMappingSource(postgresVersion: new(13, 0)).FindMapping(typeof(EDBRange<int>[]))!;
+        var mappingDefault = CreateTypeMappingSource().FindMapping(typeof(EDBRange<int>[]))!;
 
         Assert.Equal("int4multirange", mapping14.StoreType);
         Assert.Equal("int4range[]", mapping13.StoreType);
@@ -249,7 +249,7 @@ public class NpgsqlTypeMappingSourceTest
         var mapping13 = CreateTypeMappingSource(postgresVersion: new(13, 0)).FindMapping("int4multirange");
         var mappingDefault = CreateTypeMappingSource().FindMapping("int4multirange")!;
 
-        Assert.Same(typeof(NpgsqlRange<int>[]), mapping14.ClrType);
+        Assert.Same(typeof(EDBRange<int>[]), mapping14.ClrType);
         Assert.Null(mapping13);
 
         // See #2351 - we didn't put multiranges behind a version opt-in in 6.0, although the default PG version is still 12; this causes
@@ -257,7 +257,7 @@ public class NpgsqlTypeMappingSourceTest
         // Changing this in a patch would break people already using 6.0 with PG14, so multiranges are on by default unless users explicitly
         // specify < 14.
         // Once 14 is made the default version, this stuff can be removed.
-        Assert.Same(typeof(NpgsqlRange<int>[]), mappingDefault.ClrType);
+        Assert.Same(typeof(EDBRange<int>[]), mappingDefault.ClrType);
     }
 
     #region Support
@@ -298,14 +298,14 @@ public class NpgsqlTypeMappingSourceTest
                     ? _dummyMapping
                     : null;
 
-        private DummyMapping _dummyMapping = new();
+        private readonly DummyMapping _dummyMapping = new();
 
         private class DummyMapping : RelationalTypeMapping
         {
-            // TODO: The DbType is a hack, we currently require of range subtype mapping that they other expose an NpgsqlDbType
-            // or a DbType (from which NpgsqlDbType is computed), since RangeTypeMapping sends an NpgsqlDbType.
-            // This means we currently don't support ranges over types without NpgsqlDbType, which are accessible via
-            // NpgsqlParameter.DataTypeName
+            // TODO: The DbType is a hack, we currently require of range subtype mapping that they other expose an EDBDbType
+            // or a DbType (from which EDBDbType is computed), since RangeTypeMapping sends an EDBDbType.
+            // This means we currently don't support ranges over types without EDBDbType, which are accessible via
+            // EDBParameter.DataTypeName
             public DummyMapping() : base("dummy", typeof(DummyType), System.Data.DbType.Guid) {}
 
             private DummyMapping(RelationalTypeMappingParameters parameters) : base(parameters) {}

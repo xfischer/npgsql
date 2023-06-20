@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestModels.Array;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Array;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class ArrayListQueryTest : ArrayQueryTest<ArrayListQueryTest.ArrayListQueryFixture>
 {

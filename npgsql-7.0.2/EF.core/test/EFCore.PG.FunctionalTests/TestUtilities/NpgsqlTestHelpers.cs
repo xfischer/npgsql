@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class NpgsqlTestHelpers : RelationalTestHelpers
 {
@@ -12,7 +12,7 @@ public class NpgsqlTestHelpers : RelationalTestHelpers
         => services.AddEntityFrameworkNpgsql();
 
     public override DbContextOptionsBuilder UseProviderOptions(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql(new NpgsqlConnection("Host=localhost;Database=DummyDatabase"));
+        => optionsBuilder.UseNpgsql(new EDBConnection("Host=localhost;Database=DummyDatabase"));
 
     public override LoggingDefinitions LoggingDefinitions { get; } = new NpgsqlLoggingDefinitions();
 }

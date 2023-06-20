@@ -3,13 +3,13 @@ using System.Transactions;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities.FakeProvider;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities.FakeProvider;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class NpgsqlRelationalConnectionTest
 {
@@ -18,18 +18,18 @@ public class NpgsqlRelationalConnectionTest
     {
         using var connection = CreateConnection();
 
-        Assert.IsType<NpgsqlConnection>(connection.DbConnection);
+        Assert.IsType<EDBConnection>(connection.DbConnection);
     }
 
     [Fact]
     public void Uses_DbDataSource_from_DbContextOptions()
     {
-        using var dataSource = NpgsqlDataSource.Create("Host=FakeHost");
+        using var dataSource = EDBDataSource.Create("Host=FakeHost");
 
         var serviceCollection = new ServiceCollection();
 
         serviceCollection
-            .AddNpgsqlDataSource("Host=FakeHost")
+            .AddEDBDataSource("Host=FakeHost")
             .AddDbContext<FakeDbContext>(o => o.UseNpgsql(dataSource));
 
         using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -57,12 +57,12 @@ public class NpgsqlRelationalConnectionTest
         var serviceCollection = new ServiceCollection();
 
         serviceCollection
-            .AddNpgsqlDataSource("Host=FakeHost")
+            .AddEDBDataSource("Host=FakeHost")
             .AddDbContext<FakeDbContext>(o => o.UseNpgsql());
 
         using var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        var dataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();
+        var dataSource = serviceProvider.GetRequiredService<EDBDataSource>();
 
         using var scope1 = serviceProvider.CreateScope();
         var context1 = scope1.ServiceProvider.GetRequiredService<FakeDbContext>();

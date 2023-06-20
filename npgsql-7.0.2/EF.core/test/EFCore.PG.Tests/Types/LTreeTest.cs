@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Types;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Types;
 
 public class LTreeTest
 {

@@ -1,11 +1,11 @@
 ﻿using System.Data.Common;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
 {
@@ -39,7 +39,7 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
             connection.Open();
             try
             {
-                var conn = (NpgsqlConnection)connection.DbConnection;
+                var conn = (EDBConnection)connection.DbConnection;
                 DropExtensions(conn);
                 DropTypes(conn);
                 DropFunctions(conn);
@@ -54,13 +54,13 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
         base.Clean(facade);
     }
 
-    private void DropExtensions(NpgsqlConnection conn)
+    private void DropExtensions(EDBConnection conn)
     {
         const string getExtensions = @"
 SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql'";
 
         List<string> extensions;
-        using (var cmd = new NpgsqlCommand(getExtensions, conn))
+        using (var cmd = new EDBCommand(getExtensions, conn))
         {
             using var reader = cmd.ExecuteReader();
             extensions = reader.Cast<DbDataRecord>().Select(r => r.GetString(0)).ToList();
@@ -69,7 +69,7 @@ SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND
         if (extensions.Any())
         {
             var dropExtensionsSql = string.Join("", extensions.Select(e => $"DROP EXTENSION \"{e}\" CASCADE;"));
-            using var cmd = new NpgsqlCommand(dropExtensionsSql, conn);
+            using var cmd = new EDBCommand(dropExtensionsSql, conn);
             cmd.ExecuteNonQuery();
         }
     }
@@ -77,7 +77,7 @@ SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND
     /// <summary>
     /// Drop user-defined ranges and enums, cascading to all tables which depend on them
     /// </summary>
-    private void DropTypes(NpgsqlConnection conn)
+    private void DropTypes(EDBConnection conn)
     {
         const string getUserDefinedRangesEnums = @"
 SELECT ns.nspname, typname
@@ -86,7 +86,7 @@ JOIN pg_namespace AS ns ON ns.oid = pg_type.typnamespace
 WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog'";
 
         (string Schema, string Name)[] userDefinedTypes;
-        using (var cmd = new NpgsqlCommand(getUserDefinedRangesEnums, conn))
+        using (var cmd = new EDBCommand(getUserDefinedRangesEnums, conn))
         {
             using var reader = cmd.ExecuteReader();
             userDefinedTypes = reader.Cast<DbDataRecord>().Select(r => (r.GetString(0), r.GetString(1))).ToArray();
@@ -95,7 +95,7 @@ WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog'";
         if (userDefinedTypes.Any())
         {
             var dropTypes = string.Concat(userDefinedTypes.Select(t => $@"DROP TYPE ""{t.Schema}"".""{t.Name}"" CASCADE;"));
-            using var cmd = new NpgsqlCommand(dropTypes, conn);
+            using var cmd = new EDBCommand(dropTypes, conn);
             cmd.ExecuteNonQuery();
         }
     }
@@ -103,7 +103,7 @@ WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog'";
     /// <summary>
     /// Drop all user-defined functions and procedures
     /// </summary>
-    private void DropFunctions(NpgsqlConnection conn)
+    private void DropFunctions(EDBConnection conn)
     {
         const string getUserDefinedFunctions = @"
 SELECT 'DROP ROUTINE ""' || nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
@@ -117,7 +117,7 @@ WHERE
                     deptype = 'e');";
 
         string dropSql;
-        using (var cmd = new NpgsqlCommand(getUserDefinedFunctions, conn))
+        using (var cmd = new EDBCommand(getUserDefinedFunctions, conn))
         {
             using var reader = cmd.ExecuteReader();
             dropSql = string.Join("", reader.Cast<DbDataRecord>().Select(r => r.GetString(0)));
@@ -125,12 +125,12 @@ WHERE
 
         if (dropSql != "")
         {
-            using var cmd = new NpgsqlCommand(dropSql, conn);
+            using var cmd = new EDBCommand(dropSql, conn);
             cmd.ExecuteNonQuery();
         }
     }
 
-    private void DropCollations(NpgsqlConnection conn)
+    private void DropCollations(EDBConnection conn)
     {
         if (conn.PostgreSqlVersion < new Version(9, 1))
         {
@@ -144,7 +144,7 @@ FROM pg_collation coll
 ";
 
         (string Schema, string Name)[] userDefinedTypes;
-        using (var cmd = new NpgsqlCommand(getUserCollations, conn))
+        using (var cmd = new EDBCommand(getUserCollations, conn))
         {
             using var reader = cmd.ExecuteReader();
             userDefinedTypes = reader.Cast<DbDataRecord>().Select(r => (r.GetString(0), r.GetString(1))).ToArray();
@@ -153,7 +153,7 @@ FROM pg_collation coll
         if (userDefinedTypes.Any())
         {
             var dropTypes = string.Concat(userDefinedTypes.Select(t => $@"DROP COLLATION ""{t.Schema}"".""{t.Name}"" CASCADE;"));
-            using var cmd = new NpgsqlCommand(dropTypes, conn);
+            using var cmd = new EDBCommand(dropTypes, conn);
             cmd.ExecuteNonQuery();
         }
     }

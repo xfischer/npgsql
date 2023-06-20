@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
 public class NpgsqlBuilderExtensionsTest
 {

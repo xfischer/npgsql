@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class TestRelationalTransactionFactory : IRelationalTransactionFactory
 {
@@ -22,7 +22,7 @@ public class TestRelationalTransactionFactory : IRelationalTransactionFactory
 
 public class TestRelationalTransaction : RelationalTransaction
 {
-    private readonly TestNpgsqlConnection _testConnection;
+    private readonly TestEDBConnection _testConnection;
 
     public TestRelationalTransaction(
         IRelationalConnection connection,
@@ -32,7 +32,7 @@ public class TestRelationalTransaction : RelationalTransaction
         ISqlGenerationHelper sqlGenerationHelper)
         : base(connection, transaction, new Guid(), logger, transactionOwned, sqlGenerationHelper)
     {
-        _testConnection = (TestNpgsqlConnection)connection;
+        _testConnection = (TestEDBConnection)connection;
     }
 
     public override void Commit()

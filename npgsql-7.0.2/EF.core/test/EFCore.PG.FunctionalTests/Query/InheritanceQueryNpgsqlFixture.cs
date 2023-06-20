@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class InheritanceQueryNpgsqlFixture : InheritanceQueryRelationalFixture
 {

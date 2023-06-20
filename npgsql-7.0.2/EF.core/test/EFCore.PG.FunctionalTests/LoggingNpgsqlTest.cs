@@ -1,8 +1,8 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class LoggingNpgsqlTest : LoggingRelationalTestBase<NpgsqlDbContextOptionsBuilder, NpgsqlOptionsExtension>
 {
@@ -65,7 +65,7 @@ public class LoggingNpgsqlTest : LoggingRelationalTestBase<NpgsqlDbContextOption
     protected override TestLogger CreateTestLogger()
         => new TestLogger<NpgsqlLoggingDefinitions>();
 
-    protected override string ProviderName => "Npgsql.EntityFrameworkCore.PostgreSQL";
+    protected override string ProviderName => "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL";
 
     protected override string ProviderVersion
         => typeof(NpgsqlOptionsExtension).Assembly

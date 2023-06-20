@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities.FakeProvider;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities.FakeProvider;
 
 public class FakeRelationalOptionsExtension : RelationalOptionsExtension
 {

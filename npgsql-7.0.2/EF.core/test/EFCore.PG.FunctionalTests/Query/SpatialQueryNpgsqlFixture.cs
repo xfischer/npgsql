@@ -1,13 +1,13 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class SpatialQueryNpgsqlFixture : SpatialQueryRelationalFixture
 {
 #pragma warning disable CS0618 // GlobalTypeMapper is obsolete
     public SpatialQueryNpgsqlFixture()
     {
-        NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
+        EDBConnection.GlobalTypeMapper.UseNetTopologySuite();
     }
 #pragma warning restore CS0618
 

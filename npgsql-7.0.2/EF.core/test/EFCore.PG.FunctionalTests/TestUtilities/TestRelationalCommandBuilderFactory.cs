@@ -1,6 +1,6 @@
 using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class TestRelationalCommandBuilderFactory : IRelationalCommandBuilderFactory
 {
@@ -203,7 +203,7 @@ public class TestRelationalCommandBuilderFactory : IRelationalCommandBuilderFact
         private string PreExecution(IRelationalConnection connection)
         {
             string errorNumber = null;
-            var testConnection = (TestNpgsqlConnection)connection;
+            var testConnection = (TestEDBConnection)connection;
 
             testConnection.ExecutionCount++;
             if (testConnection.ExecutionFailures.Count > 0)

@@ -1,7 +1,7 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class NodaTimeQueryNpgsqlTest : QueryTestBase<NodaTimeQueryNpgsqlTest.NodaTimeQueryNpgsqlFixture>
 {
@@ -1862,7 +1862,7 @@ LIMIT 1
     private NodaTimeContext CreateContext()
         => Fixture.CreateContext();
 
-    private static Period _defaultPeriod = Period.FromYears(2018) + Period.FromMonths(4) + Period.FromDays(20) +
+    private static readonly Period _defaultPeriod = Period.FromYears(2018) + Period.FromMonths(4) + Period.FromDays(20) +
         Period.FromHours(10) + Period.FromMinutes(31) + Period.FromSeconds(23) +
         Period.FromMilliseconds(666);
 
@@ -1905,9 +1905,9 @@ LIMIT 1
         public Period Period { get; set; }
         public Duration Duration { get; set; }
         public DateInterval DateInterval { get; set; }
-        public NpgsqlRange<LocalDate> LocalDateRange { get; set; }
+        public EDBRange<LocalDate> LocalDateRange { get; set; }
         public Interval Interval { get; set; }
-        public NpgsqlRange<Instant> InstantRange { get; set; }
+        public EDBRange<Instant> InstantRange { get; set; }
         public long Long { get; set; }
         public string TimeZoneId { get; set; }
         // ReSharper restore UnusedAutoPropertyAccessor.Global
@@ -1920,7 +1920,7 @@ LIMIT 1
 #pragma warning disable CS0618 // GlobalTypeMapper is obsolete
         public NodaTimeQueryNpgsqlFixture()
         {
-            NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
+            EDBConnection.GlobalTypeMapper.UseNodaTime();
         }
 #pragma warning restore CS0618
 
@@ -2034,7 +2034,7 @@ LIMIT 1
                     Period = _defaultPeriod,
                     Duration = duration,
                     DateInterval = new(localDateTime.Date, localDateTime.Date.PlusDays(4)), // inclusive
-                    LocalDateRange = new NpgsqlRange<LocalDate>(localDateTime.Date, localDateTime.Date.PlusDays(5)), // exclusive
+                    LocalDateRange = new EDBRange<LocalDate>(localDateTime.Date, localDateTime.Date.PlusDays(5)), // exclusive
                     Interval = new(instant, instant + Duration.FromDays(5)),
                     InstantRange = new(instant, true, instant + Duration.FromDays(5), false),
                     Long = 1,

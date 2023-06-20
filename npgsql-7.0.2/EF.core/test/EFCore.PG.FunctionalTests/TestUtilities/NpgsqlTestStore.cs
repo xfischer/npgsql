@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Text.RegularExpressions;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class NpgsqlTestStore : RelationalTestStore
 {
@@ -57,7 +57,7 @@ public class NpgsqlTestStore : RelationalTestStore
 
         // ReSharper disable VirtualMemberCallInConstructor
         ConnectionString = CreateConnectionString(Name, connectionStringOptions);
-        Connection = new NpgsqlConnection(ConnectionString);
+        Connection = new EDBConnection(ConnectionString);
         // ReSharper restore VirtualMemberCallInConstructor
     }
 
@@ -120,7 +120,7 @@ public class NpgsqlTestStore : RelationalTestStore
 
     private bool CreateDatabase(Action<DbContext> clean)
     {
-        using (var master = new NpgsqlConnection(CreateAdminConnectionString()))
+        using (var master = new EDBConnection(CreateAdminConnectionString()))
         {
             if (DatabaseExists(Name))
             {
@@ -142,15 +142,15 @@ public class NpgsqlTestStore : RelationalTestStore
             }
 
             ExecuteNonQuery(master, GetCreateDatabaseStatement(Name));
-            WaitForExists((NpgsqlConnection)Connection);
+            WaitForExists((EDBConnection)Connection);
         }
 
         return true;
     }
 
-    private static void WaitForExists(NpgsqlConnection connection) => WaitForExistsImplementation(connection);
+    private static void WaitForExists(EDBConnection connection) => WaitForExistsImplementation(connection);
 
-    private static void WaitForExistsImplementation(NpgsqlConnection connection)
+    private static void WaitForExistsImplementation(EDBConnection connection)
     {
         var retryCount = 0;
         while (true)
@@ -162,7 +162,7 @@ public class NpgsqlTestStore : RelationalTestStore
                     connection.Close();
                 }
 
-                NpgsqlConnection.ClearPool(connection);
+                EDBConnection.ClearPool(connection);
 
                 connection.Open();
                 connection.Close();
@@ -221,7 +221,7 @@ public class NpgsqlTestStore : RelationalTestStore
 
     private static bool DatabaseExists(string name)
     {
-        using (var master = new NpgsqlConnection(CreateAdminConnectionString()))
+        using (var master = new EDBConnection(CreateAdminConnectionString()))
         {
             return ExecuteScalar<long>(master, $@"SELECT COUNT(*) FROM pg_database WHERE datname = '{name}'") > 0;
         }
@@ -234,12 +234,12 @@ public class NpgsqlTestStore : RelationalTestStore
             return;
         }
 
-        using (var master = new NpgsqlConnection(CreateAdminConnectionString()))
+        using (var master = new EDBConnection(CreateAdminConnectionString()))
         {
             ExecuteNonQuery(master, GetDisconnectDatabaseSql(Name));
             ExecuteNonQuery(master, GetDropDatabaseSql(Name));
 
-            NpgsqlConnection.ClearAllPools();
+            EDBConnection.ClearAllPools();
         }
     }
 
@@ -399,7 +399,7 @@ SELECT pg_terminate_backend (pg_stat_activity.pid)
     private static DbCommand CreateCommand(
         DbConnection connection, string commandText, IReadOnlyList<object> parameters = null)
     {
-        var command = (NpgsqlCommand)connection.CreateCommand();
+        var command = (EDBCommand)connection.CreateCommand();
 
         command.CommandText = commandText;
         command.CommandTimeout = CommandTimeout;
@@ -417,7 +417,7 @@ SELECT pg_terminate_backend (pg_stat_activity.pid)
 
     public static string CreateConnectionString(string name, string options = null)
     {
-        var builder = new NpgsqlConnectionStringBuilder(TestEnvironment.DefaultConnection) { Database = name };
+        var builder = new EDBConnectionStringBuilder(TestEnvironment.DefaultConnection) { Database = name };
 
         if (options is not null)
         {

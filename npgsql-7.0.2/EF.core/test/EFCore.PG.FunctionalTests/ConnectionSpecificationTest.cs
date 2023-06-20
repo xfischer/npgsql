@@ -1,8 +1,8 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable StringLiteralTypo
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class ConnectionSpecificationTest
 {
@@ -38,7 +38,7 @@ public class ConnectionSpecificationTest
     public void Can_specify_connection_in_OnConfiguring()
     {
         var serviceProvider = new ServiceCollection()
-            .AddScoped(_ => new NpgsqlConnection(NpgsqlTestStore.NorthwindConnectionString))
+            .AddScoped(_ => new EDBConnection(NpgsqlTestStore.NorthwindConnectionString))
             .AddDbContext<ConnectionInOnConfiguringContext>().BuildServiceProvider();
 
         using var _ = NpgsqlTestStore.GetNorthwindStore();
@@ -51,16 +51,16 @@ public class ConnectionSpecificationTest
     public void Can_specify_connection_in_OnConfiguring_with_default_service_provider()
     {
         using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = new ConnectionInOnConfiguringContext(new NpgsqlConnection(NpgsqlTestStore.NorthwindConnectionString));
+        using var context = new ConnectionInOnConfiguringContext(new EDBConnection(NpgsqlTestStore.NorthwindConnectionString));
 
         Assert.True(context.Customers.Any());
     }
 
     private class ConnectionInOnConfiguringContext : NorthwindContextBase
     {
-        private readonly NpgsqlConnection _connection;
+        private readonly EDBConnection _connection;
 
-        public ConnectionInOnConfiguringContext(NpgsqlConnection connection)
+        public ConnectionInOnConfiguringContext(EDBConnection connection)
             => _connection = connection;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -114,7 +114,7 @@ public class ConnectionSpecificationTest
     public void Can_depend_on_DbContextOptions()
     {
         var serviceProvider = new ServiceCollection()
-            .AddScoped(_ => new NpgsqlConnection(NpgsqlTestStore.NorthwindConnectionString))
+            .AddScoped(_ => new EDBConnection(NpgsqlTestStore.NorthwindConnectionString))
             .AddDbContext<OptionsContext>()
             .BuildServiceProvider();
 
@@ -130,17 +130,17 @@ public class ConnectionSpecificationTest
         using var _ = NpgsqlTestStore.GetNorthwindStore();
         using var context = new OptionsContext(
             new DbContextOptions<OptionsContext>(),
-            new NpgsqlConnection(NpgsqlTestStore.NorthwindConnectionString));
+            new EDBConnection(NpgsqlTestStore.NorthwindConnectionString));
 
         Assert.True(context.Customers.Any());
     }
 
     private class OptionsContext : NorthwindContextBase
     {
-        private readonly NpgsqlConnection _connection;
+        private readonly EDBConnection _connection;
         private readonly DbContextOptions<OptionsContext> _options;
 
-        public OptionsContext(DbContextOptions<OptionsContext> options, NpgsqlConnection connection)
+        public OptionsContext(DbContextOptions<OptionsContext> options, EDBConnection connection)
             : base(options)
         {
             _options = options;
@@ -241,7 +241,7 @@ public class ConnectionSpecificationTest
     [Fact]
     public void Can_create_admin_connection_with_data_source()
     {
-        using var dataSource = NpgsqlDataSource.Create(NpgsqlTestStore.NorthwindConnectionString);
+        using var dataSource = EDBDataSource.Create(NpgsqlTestStore.NorthwindConnectionString);
 
         using var _ = NpgsqlTestStore.GetNorthwindStore();
 
@@ -252,7 +252,7 @@ public class ConnectionSpecificationTest
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
         using var adminConnection = relationalConnection.CreateAdminConnection();
 
-        Assert.Equal("postgres", new NpgsqlConnectionStringBuilder(adminConnection.ConnectionString).Database);
+        Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
         adminConnection.Open();
     }
@@ -269,7 +269,7 @@ public class ConnectionSpecificationTest
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
         using var adminConnection = relationalConnection.CreateAdminConnection();
 
-        Assert.Equal("postgres", new NpgsqlConnectionStringBuilder(adminConnection.ConnectionString).Database);
+        Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
         adminConnection.Open();
     }
@@ -277,7 +277,7 @@ public class ConnectionSpecificationTest
     [Fact]
     public void Can_create_admin_connection_with_connection()
     {
-        using var connection = new NpgsqlConnection(NpgsqlTestStore.NorthwindConnectionString);
+        using var connection = new EDBConnection(NpgsqlTestStore.NorthwindConnectionString);
         connection.Open();
 
         using var _ = NpgsqlTestStore.GetNorthwindStore();
@@ -289,7 +289,7 @@ public class ConnectionSpecificationTest
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
         using var adminConnection = relationalConnection.CreateAdminConnection();
 
-        Assert.Equal("postgres", new NpgsqlConnectionStringBuilder(adminConnection.ConnectionString).Database);
+        Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
         adminConnection.Open();
     }
