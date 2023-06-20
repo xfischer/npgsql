@@ -2,9 +2,9 @@ using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Transactions;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -174,7 +174,7 @@ public class NpgsqlRelationalConnection : RelationalConnection, INpgsqlRelationa
             throw new InvalidOperationException($"{nameof(NpgsqlOptionsExtension)} not found in {nameof(CreateAdminConnection)}");
         }
 
-        var adminConnectionString = new NpgsqlConnectionStringBuilder(ConnectionString)
+        var adminConnectionString = new EDBConnectionStringBuilder(ConnectionString)
         {
             Database = npgsqlOptions.AdminDatabase ?? "postgres",
             Pooling = false,

@@ -1,7 +1,7 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

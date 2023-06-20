@@ -1,4 +1,4 @@
-﻿namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
+﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
 /// <summary>
 /// A convention that configures the default model <see cref="NpgsqlValueGenerationStrategy"/> as

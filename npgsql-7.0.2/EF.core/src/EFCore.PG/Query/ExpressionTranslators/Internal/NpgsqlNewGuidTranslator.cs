@@ -1,7 +1,7 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// Provides translation services for PostgreSQL UUID functions.

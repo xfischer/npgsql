@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
 /// <summary>
 /// A convention that creates an optimized copy of the mutable model.

@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.NetworkInformation;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
 using ExpressionExtensions = Microsoft.EntityFrameworkCore.Query.ExpressionExtensions;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// Provides translation services for operators and functions of PostgreSQL network typess (cidr, inet, macaddr, macaddr8).

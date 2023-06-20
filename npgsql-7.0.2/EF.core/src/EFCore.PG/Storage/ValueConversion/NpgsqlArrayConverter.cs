@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
 /// <summary>
 /// A value converter that can convert between array types, given another <see cref="ValueConverter"/> for the

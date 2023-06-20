@@ -1,10 +1,10 @@
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
 using ExpressionExtensions = Microsoft.EntityFrameworkCore.Query.ExpressionExtensions;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// Provides translation services for PostgreSQL string functions.

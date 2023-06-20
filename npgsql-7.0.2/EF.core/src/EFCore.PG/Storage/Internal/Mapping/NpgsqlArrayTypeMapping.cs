@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Data.Common;
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// Abstract base class for PostgreSQL array mappings (i.e. CLR array and <see cref="List{T}"/>.
@@ -45,11 +45,11 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
         // If the element mapping has an EDBDbType or DbType, set our own EDBDbType as an array of that.
         // Otherwise let the ADO.NET layer infer the PostgreSQL type. We can't always let it infer, otherwise
         // when given a byte[] it will infer byte (but we want smallint[])
-        EDBDbType = NpgsqlTypes.EDBDbType.Array |
+        EDBDbType = EDBTypes.EDBDbType.Array |
             (elementMapping is INpgsqlTypeMapping elementNpgsqlTypeMapping
                 ? elementNpgsqlTypeMapping.EDBDbType
                 : elementMapping.DbType.HasValue
-                    ? new NpgsqlParameter { DbType = elementMapping.DbType.Value }.EDBDbType
+                    ? new EDBParameter { DbType = elementMapping.DbType.Value }.EDBDbType
                     : default(EDBDbType?));
     }
 
@@ -176,7 +176,7 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     /// </summary>
     protected override void ConfigureParameter(DbParameter parameter)
     {
-        var npgsqlParameter = parameter as NpgsqlParameter;
+        var npgsqlParameter = parameter as EDBParameter;
         if (npgsqlParameter is null)
         {
             throw new ArgumentException($"Npgsql-specific type mapping {GetType()} being used with non-Npgsql parameter type {parameter.GetType().Name}");

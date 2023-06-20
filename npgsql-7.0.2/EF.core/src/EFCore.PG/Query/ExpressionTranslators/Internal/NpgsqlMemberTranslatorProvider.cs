@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// A composite member translator that dispatches to multiple specialized member translators specific to Npgsql.

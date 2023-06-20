@@ -1,7 +1,7 @@
 using System.Net.Security;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 /// <summary>
 /// Allows for options specific to PostgreSQL to be configured for a <see cref="DbContext"/>.

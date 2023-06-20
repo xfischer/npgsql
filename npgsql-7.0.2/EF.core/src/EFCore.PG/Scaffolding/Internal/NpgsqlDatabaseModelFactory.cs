@@ -3,12 +3,12 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Utilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 
 /// <summary>
 /// The default database model factory for Npgsql.
@@ -85,7 +85,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
         try
         {
             var internalSchemas = "'pg_catalog', 'information_schema'";
-            using (var command = new NpgsqlCommand("SELECT version()", connection))
+            using (var command = new EDBCommand("SELECT version()", connection))
             {
                 var longVersion = (string)command.ExecuteScalar()!;
                 if (longVersion.Contains("CockroachDB"))
@@ -179,7 +179,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
         var commandText = @"
 SELECT datcollate FROM pg_database WHERE datname=current_database() AND
         datcollate <> (SELECT datcollate FROM pg_database WHERE datname='template1')";
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
         if (reader.Read())
         {
@@ -224,7 +224,7 @@ WHERE
 
         var tables = new List<DatabaseTable>();
 
-        using (var command = new NpgsqlCommand(commandText, connection))
+        using (var command = new EDBCommand(commandText, connection))
         using (var reader = command.ExecuteReader())
         {
             while (reader.Read())
@@ -331,7 +331,7 @@ WHERE
   {tableFilter}
 ORDER BY attnum";
 
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
         var tableGroups = reader.Cast<DbDataRecord>().GroupBy(ddr => (
@@ -510,7 +510,7 @@ ORDER BY attnum";
         var opClasses = new Dictionary<uint, (string Name, bool IsDefault)>();
         try
         {
-            using var command = new NpgsqlCommand("SELECT oid, opcname, opcdefault FROM pg_opclass", connection);
+            using var command = new EDBCommand("SELECT oid, opcname, opcdefault FROM pg_opclass", connection);
             using var reader = command.ExecuteReader();
 
             foreach (var opClass in reader.Cast<DbDataRecord>())
@@ -530,7 +530,7 @@ ORDER BY attnum";
 
         if (connection.PostgreSqlVersion >= new Version(9, 1))
         {
-            using (var command = new NpgsqlCommand("SELECT oid, collname FROM pg_collation", connection))
+            using (var command = new EDBCommand("SELECT oid, collname FROM pg_collation", connection))
             using (var reader = command.ExecuteReader())
             {
                 foreach (var collation in reader.Cast<DbDataRecord>())
@@ -587,7 +587,7 @@ WHERE
   )
   {tableFilter}";
 
-        using (var command = new NpgsqlCommand(commandText, connection))
+        using (var command = new EDBCommand(commandText, connection))
         using (var reader = command.ExecuteReader())
         {
             var tableGroups = reader.Cast<DbDataRecord>().GroupBy(ddr => (
@@ -786,7 +786,7 @@ WHERE
   )
   {tableFilter}";
 
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
         constraintIndexes = new List<uint>();
@@ -955,7 +955,7 @@ WHERE
   AND NOT EXISTS (SELECT * FROM pg_depend AS dep WHERE dep.objid = cls.oid AND dep.deptype IN ('i', 'I', 'a'))
   {(schemaFilter is not null ? $"AND {schemaFilter("nspname")}" : null)}";
 
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
         foreach (var record in reader.Cast<DbDataRecord>())
@@ -1004,7 +1004,7 @@ JOIN pg_type ON pg_type.oid = enumtypid
 JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
 GROUP BY nspname, typname";
 
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
         // TODO: just return a collection and make this a static utility method.
@@ -1034,7 +1034,7 @@ GROUP BY nspname, typname";
         const string commandText = @"
 SELECT ns.nspname, extname, extversion FROM pg_extension
 JOIN pg_namespace ns ON ns.oid=extnamespace";
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
         while (reader.Read())
@@ -1070,7 +1070,7 @@ WHERE
 
         try
         {
-            using var command = new NpgsqlCommand(commandText, connection);
+            using var command = new EDBCommand(commandText, connection);
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {

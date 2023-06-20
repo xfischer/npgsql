@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

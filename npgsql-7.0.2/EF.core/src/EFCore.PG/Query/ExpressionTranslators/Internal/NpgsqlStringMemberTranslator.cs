@@ -1,6 +1,6 @@
-﻿using static Npgsql.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
+﻿using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// Translates <see cref="M:string.Length"/> to 'length(text)'.

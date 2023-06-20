@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 
 /// <summary>
 ///     Converts the relational <see cref="NonQueryExpression" /> into a PG-specific <see cref="PostgresDeleteExpression" />, which

@@ -1,12 +1,12 @@
 using System.Globalization;
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Update.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations;
 
 /// <summary>
 ///     PostgreSQL-specific implementation of <see cref="MigrationsSqlGenerator" />.

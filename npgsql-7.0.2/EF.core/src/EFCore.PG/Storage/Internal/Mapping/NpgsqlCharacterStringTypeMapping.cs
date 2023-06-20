@@ -1,6 +1,6 @@
 using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// Type mapping for the PostgreSQL 'character' data type. Handles both CLR strings and chars.

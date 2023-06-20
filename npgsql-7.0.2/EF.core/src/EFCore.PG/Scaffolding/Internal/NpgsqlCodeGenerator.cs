@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 
 /// <summary>
 /// The default code generator for Npgsql.

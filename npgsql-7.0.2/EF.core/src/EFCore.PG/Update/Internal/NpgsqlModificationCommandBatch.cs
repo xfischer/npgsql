@@ -1,6 +1,6 @@
 using System.Data;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Update.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update.Internal;
 
 /// <summary>
 /// The Npgsql-specific implementation for <see cref="ModificationCommandBatch" />.
@@ -74,7 +74,7 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
 
     private async Task Consume(RelationalDataReader reader, bool async, CancellationToken cancellationToken = default)
     {
-        var npgsqlReader = (NpgsqlDataReader)reader.DbDataReader;
+        var npgsqlReader = (EDBDataReader)reader.DbDataReader;
 
 #pragma warning disable 618
         Debug.Assert(npgsqlReader.Statements.Count == ModificationCommands.Count, $"Reader has {npgsqlReader.Statements.Count} statements, expected {ModificationCommands.Count}");

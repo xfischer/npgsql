@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

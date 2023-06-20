@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 /// <summary>
 ///     An <see cref="IExecutionStrategy" /> implementation for retrying failed executions on PostgreSQL.
@@ -112,7 +112,7 @@ public class NpgsqlRetryingExecutionStrategy : ExecutionStrategy
         => _additionalErrorCodes = errorCodesToAdd;
 
     // TODO: Unlike SqlException, which seems to also wrap various transport/IO errors
-    // and expose them via error codes, we have NpgsqlException with an inner exception.
+    // and expose them via error codes, we have EDBException with an inner exception.
     // Would be good to provide a way to add these into the additional list.
     /// <inheritdoc />
     protected override bool ShouldRetryOn(Exception? exception)

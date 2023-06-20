@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
 /// An expression that represents a PostgreSQL-specific binary operation in a SQL tree.

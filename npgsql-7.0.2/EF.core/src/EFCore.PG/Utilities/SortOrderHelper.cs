@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Utilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities;
 
 internal static class SortOrderHelper
 {

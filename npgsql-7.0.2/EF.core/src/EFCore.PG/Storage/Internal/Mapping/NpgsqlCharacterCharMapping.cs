@@ -1,6 +1,6 @@
 using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// Type mapping for the PostgreSQL 'character' data type. Handles both CLR strings and chars.
@@ -57,7 +57,7 @@ public class NpgsqlCharacterCharTypeMapping : CharTypeMapping, INpgsqlTypeMappin
     /// </summary>
     protected override void ConfigureParameter(DbParameter parameter)
     {
-        if (parameter is not NpgsqlParameter npgsqlParameter)
+        if (parameter is not EDBParameter npgsqlParameter)
         {
             throw new InvalidOperationException($"Npgsql-specific type mapping {GetType().Name} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Text;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// The type mapping for PostgreSQL multirange types.
@@ -135,7 +135,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
             // We're using a built-in, non-Npgsql mapping such as IntTypeMapping.
             // Infer the EDBDbType from the DbType (somewhat hacky but why not).
             Debug.Assert(subtypeMapping.DbType.HasValue);
-            var p = new NpgsqlParameter { DbType = subtypeMapping.DbType.Value };
+            var p = new EDBParameter { DbType = subtypeMapping.DbType.Value };
             subtypeNpgsqlDbType = p.EDBDbType;
         }
 

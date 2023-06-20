@@ -1,7 +1,7 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities.Statics;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 
 /// <summary>
 /// Provides translations for PostgreSQL full-text search methods.

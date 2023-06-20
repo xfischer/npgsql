@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.NetworkInformation;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// The type mapping for the PostgreSQL macaddr type.

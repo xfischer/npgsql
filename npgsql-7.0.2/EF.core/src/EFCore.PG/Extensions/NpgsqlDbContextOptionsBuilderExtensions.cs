@@ -1,6 +1,6 @@
 using System.Data.Common;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;

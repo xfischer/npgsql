@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions;
 
 /// <summary>
 /// PostgreSQL-specific expression node types.

@@ -1,6 +1,6 @@
 using System.Data.Common;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// The base class for mapping Npgsql-specific types. It configures parameters with the
@@ -39,7 +39,7 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
     /// </summary>
     protected override void ConfigureParameter(DbParameter parameter)
     {
-        if (parameter is not NpgsqlParameter npgsqlParameter)
+        if (parameter is not EDBParameter npgsqlParameter)
         {
             throw new InvalidOperationException($"Npgsql-specific type mapping {GetType().Name} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }

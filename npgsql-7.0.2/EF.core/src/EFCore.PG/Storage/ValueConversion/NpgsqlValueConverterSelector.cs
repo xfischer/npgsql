@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

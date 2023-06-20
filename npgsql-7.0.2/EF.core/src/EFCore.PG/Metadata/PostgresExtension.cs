@@ -1,6 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
 /// <summary>
 /// Represents the metadata for a PostgreSQL extension.

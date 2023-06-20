@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 #nullable enable
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Internal
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -203,7 +203,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Internal
     }
 }
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Internal
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

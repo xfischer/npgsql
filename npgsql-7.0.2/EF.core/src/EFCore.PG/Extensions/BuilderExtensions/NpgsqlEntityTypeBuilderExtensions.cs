@@ -1,4 +1,4 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;

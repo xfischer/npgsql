@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 
 internal static class DbDataReaderExtension
 {

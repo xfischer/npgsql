@@ -1,6 +1,6 @@
 ﻿#pragma warning disable 8632
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
 /// Represents a SQL function call expression, supporting PostgreSQL's named parameter notation

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;

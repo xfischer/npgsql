@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
 ///     Represents a PostgreSQL regular expression match expression.

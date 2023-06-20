@@ -1,7 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
 /// <summary>
 ///     A convention that discovers certain common PostgreSQL extensions based on store types used in the model (e.g. hstore).

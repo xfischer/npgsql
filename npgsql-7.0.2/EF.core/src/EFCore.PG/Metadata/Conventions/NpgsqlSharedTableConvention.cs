@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
 /// <summary>
 ///     A convention that manipulates names of database objects for entity types that share a table to avoid clashes.

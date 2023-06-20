@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// A mapping for an arbitrary user POCO to PostgreSQL jsonb or json.

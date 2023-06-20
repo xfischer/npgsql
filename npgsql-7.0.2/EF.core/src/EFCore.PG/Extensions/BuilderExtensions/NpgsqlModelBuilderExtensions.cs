@@ -1,5 +1,6 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+﻿using EnterpriseDB.EDBClient.NameTranslation;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;
@@ -461,7 +462,7 @@ public static class NpgsqlModelBuilderExtensions
     /// <param name="name">The name of the enum type to create.</param>
     /// <param name="nameTranslator">
     /// The translator for name and label inference.
-    /// Defaults to <see cref="NpgsqlSnakeCaseNameTranslator"/>.</param>
+    /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>.</param>
     /// <typeparam name="TEnum"></typeparam>
     /// <returns>
     /// The updated <see cref="ModelBuilder"/>.

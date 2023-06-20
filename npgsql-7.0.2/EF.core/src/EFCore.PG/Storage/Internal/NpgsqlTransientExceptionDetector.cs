@@ -1,4 +1,4 @@
-﻿namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -15,5 +15,5 @@ public class NpgsqlTransientExceptionDetector
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public static bool ShouldRetryOn(Exception? ex)
-        => (ex as NpgsqlException)?.IsTransient == true || ex is TimeoutException;
+        => (ex as EDBException)?.IsTransient == true || ex is TimeoutException;
 }

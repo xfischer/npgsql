@@ -1,4 +1,4 @@
-﻿namespace Npgsql.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
+﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
 
 /// <summary>
 ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

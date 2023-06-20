@@ -1,8 +1,8 @@
 using System.Net.Sockets;
 using System.Transactions;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -201,9 +201,9 @@ WHERE
     {
         // When checking whether a database exists, pooling must be off, otherwise we may
         // attempt to reuse a pooled connection, which may be broken (this happened in the tests).
-        // If Pooling is off, but Multiplexing is on - NpgsqlConnectionStringBuilder.Validate will throw,
+        // If Pooling is off, but Multiplexing is on - EDBConnectionStringBuilder.Validate will throw,
         // so we turn off Multiplexing as well.
-        var unpooledCsb = new NpgsqlConnectionStringBuilder(_connection.ConnectionString)
+        var unpooledCsb = new EDBConnectionStringBuilder(_connection.ConnectionString)
         {
             Pooling = false,
             Multiplexing = false
@@ -234,14 +234,14 @@ WHERE
 
             throw;
         }
-        catch (NpgsqlException e) when (
+        catch (EDBException e) when (
             // This can happen when Npgsql attempts to connect to multiple hosts
             e.InnerException is AggregateException ae &&
             ae.InnerExceptions.Any(ie => ie is PostgresException pe && IsDoesNotExist(pe)))
         {
             return false;
         }
-        catch (NpgsqlException e) when (
+        catch (EDBException e) when (
             e.InnerException is IOException &&
             e.InnerException.InnerException is SocketException socketException &&
             socketException.SocketErrorCode == SocketError.ConnectionReset

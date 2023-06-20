@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 
 /// <summary>
 /// Options for modifying sort ordering of index values.

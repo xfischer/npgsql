@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
 
 /// <summary>
 ///     This API supports the Entity Framework Core infrastructure and is not intended to be used

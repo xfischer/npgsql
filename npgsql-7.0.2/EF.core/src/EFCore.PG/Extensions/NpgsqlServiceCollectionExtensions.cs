@@ -1,19 +1,19 @@
 using System.Data.Common;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Update.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;

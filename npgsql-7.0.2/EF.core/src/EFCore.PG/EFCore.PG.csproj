@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Npgsql.EntityFrameworkCore.PostgreSQL</AssemblyName>
-    <RootNamespace>Npgsql.EntityFrameworkCore.PostgreSQL</RootNamespace>
+    <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</RootNamespace>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
 
@@ -42,7 +42,7 @@
     </Compile>
 
     <EmbeddedResource Update="Properties\NpgsqlStrings.resx">
-      <CustomToolNamespace>Npgsql.EntityFrameworkCore.PostgreSQL.Internal</CustomToolNamespace>
+      <CustomToolNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
 

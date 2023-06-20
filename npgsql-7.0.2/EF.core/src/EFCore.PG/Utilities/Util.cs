@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Utilities;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Utilities;
 
 internal static class Statics
 {
