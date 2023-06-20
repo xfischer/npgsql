@@ -28,7 +28,7 @@ internal static class Check
     {
         NotNull(value, parameterName);
 
-        if (value.Count == 0)
+        if (value!.Count == 0)
         {
             NotEmpty(parameterName, nameof(parameterName));
 
@@ -89,14 +89,14 @@ internal static class Check
     {
         NotNull(value, parameterName);
 
-        if (value.Any(e => e is null))
+        if (value!.Any(e => e is null))
         {
             NotEmpty(parameterName, nameof(parameterName));
 
             throw new ArgumentException(parameterName);
         }
 
-        return value;
+        return value!;
     }
 
     public static IReadOnlyList<string> HasNoEmptyElements(
@@ -105,14 +105,14 @@ internal static class Check
     {
         NotNull(value, parameterName);
 
-        if (value.Any(s => string.IsNullOrWhiteSpace(s)))
+        if (value!.Any(s => string.IsNullOrWhiteSpace(s)))
         {
             NotEmpty(parameterName, nameof(parameterName));
 
             throw new ArgumentException(AbstractionsStrings.CollectionArgumentHasEmptyElements(parameterName));
         }
 
-        return value;
+        return value!;
     }
 
     [Conditional("DEBUG")]
