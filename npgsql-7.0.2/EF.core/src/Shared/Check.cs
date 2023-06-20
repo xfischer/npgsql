@@ -10,7 +10,7 @@ internal static class Check
 {
     [ContractAnnotation("value:null => halt")]
     [return: NotNull]
-    public static T NotNull<T>([NoEnumeration][AllowNull][NotNull] T value, [InvokerParameterName] string parameterName)
+    public static T NotNull<T>([NoEnumeration][AllowNull]T value, [InvokerParameterName] string parameterName)
     {
         if (value is null)
         {
@@ -24,7 +24,7 @@ internal static class Check
 
     [ContractAnnotation("value:null => halt")]
     public static IReadOnlyList<T> NotEmpty<T>(
-        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
     {
         NotNull(value, parameterName);
 
@@ -39,7 +39,7 @@ internal static class Check
     }
 
     [ContractAnnotation("value:null => halt")]
-    public static string NotEmpty([NotNull] string? value, [InvokerParameterName] string parameterName)
+    public static string NotEmpty(string? value, [InvokerParameterName] string parameterName)
     {
         if (value is null)
         {
@@ -84,7 +84,7 @@ internal static class Check
     }
 
     public static IReadOnlyList<T> HasNoNulls<T>(
-        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
         where T : class
     {
         NotNull(value, parameterName);
@@ -100,7 +100,7 @@ internal static class Check
     }
 
     public static IReadOnlyList<string> HasNoEmptyElements(
-        [NotNull] IReadOnlyList<string>? value,
+        IReadOnlyList<string>? value,
         [InvokerParameterName] string parameterName)
     {
         NotNull(value, parameterName);

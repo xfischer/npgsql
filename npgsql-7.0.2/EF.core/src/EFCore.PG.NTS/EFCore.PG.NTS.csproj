@@ -12,11 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Npgsql.NetTopologySuite\Npgsql.NetTopologySuite.csproj" />
     <ProjectReference Include="..\EFCore.PG\EFCore.PG.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Npgsql.NetTopologySuite" />
   </ItemGroup>
 
   <ItemGroup>

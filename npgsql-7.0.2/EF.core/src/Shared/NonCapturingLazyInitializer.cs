@@ -7,7 +7,7 @@ namespace Microsoft.EntityFrameworkCore.Internal;
 internal static class NonCapturingLazyInitializer
 {
     public static TValue EnsureInitialized<TParam, TValue>(
-        [NotNull] ref TValue? target,
+        ref TValue? target,
         TParam param,
         Func<TParam, TValue> valueFactory)
         where TValue : class
@@ -25,7 +25,7 @@ internal static class NonCapturingLazyInitializer
     }
 
     public static TValue EnsureInitialized<TParam1, TParam2, TValue>(
-        [NotNull] ref TValue? target,
+        ref TValue? target,
         TParam1 param1,
         TParam2 param2,
         Func<TParam1, TParam2, TValue> valueFactory)
@@ -44,7 +44,7 @@ internal static class NonCapturingLazyInitializer
     }
 
     public static TValue EnsureInitialized<TParam1, TParam2, TParam3, TValue>(
-        [NotNull] ref TValue? target,
+        ref TValue? target,
         TParam1 param1,
         TParam2 param2,
         TParam3 param3,
@@ -86,7 +86,7 @@ internal static class NonCapturingLazyInitializer
     }
 
     public static TValue EnsureInitialized<TValue>(
-        [NotNull] ref TValue? target,
+        ref TValue? target,
         TValue value)
         where TValue : class
     {
@@ -103,7 +103,7 @@ internal static class NonCapturingLazyInitializer
     }
 
     public static TValue EnsureInitialized<TParam, TValue>(
-        [NotNull] ref TValue? target,
+        ref TValue? target,
         TParam param,
         Action<TParam> valueFactory)
         where TValue : class
