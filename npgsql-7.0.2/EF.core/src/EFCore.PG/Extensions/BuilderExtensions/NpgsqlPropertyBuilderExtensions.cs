@@ -735,11 +735,11 @@ public static class NpgsqlPropertyBuilderExtensions
     /// </param>
     /// <param name="includedPropertyNames">An array of property names to be included in the tsvector.</param>
     /// <returns>A builder to further configure the property.</returns>
-    public static PropertyBuilder<NpgsqlTsVector> IsGeneratedTsVectorColumn(
-        this PropertyBuilder<NpgsqlTsVector> propertyBuilder,
+    public static PropertyBuilder<EDBTsVector> IsGeneratedTsVectorColumn(
+        this PropertyBuilder<EDBTsVector> propertyBuilder,
         string config,
         params string[] includedPropertyNames)
-        => (PropertyBuilder<NpgsqlTsVector>)IsGeneratedTsVectorColumn((PropertyBuilder)propertyBuilder, config, includedPropertyNames);
+        => (PropertyBuilder<EDBTsVector>)IsGeneratedTsVectorColumn((PropertyBuilder)propertyBuilder, config, includedPropertyNames);
 
     /// <summary>
     /// Configures the property to be a full-text search tsvector column over the given properties.

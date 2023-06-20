@@ -1,6 +1,5 @@
 ﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
-using Npgsql.NameTranslation;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;
@@ -475,11 +474,11 @@ public static class NpgsqlModelBuilderExtensions
         this ModelBuilder modelBuilder,
         string? schema = null,
         string? name = null,
-        INpgsqlNameTranslator? nameTranslator = null)
+        IEDBNameTranslator? nameTranslator = null)
         where TEnum : struct, Enum
     {
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        nameTranslator ??= NpgsqlConnection.GlobalTypeMapper.DefaultNameTranslator;
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
+        nameTranslator ??= EDBConnection.GlobalTypeMapper.DefaultNameTranslator;
 #pragma warning restore CS0618
 
         return modelBuilder.HasPostgresEnum(
@@ -790,12 +789,12 @@ public static class NpgsqlModelBuilderExtensions
     #region Helpers
 
     // See: https://github.com/npgsql/npgsql/blob/dev/src/Npgsql/TypeMapping/TypeMapperBase.cs#L132-L138
-    private static string GetTypePgName<TEnum>(INpgsqlNameTranslator nameTranslator) where TEnum : struct, Enum
+    private static string GetTypePgName<TEnum>(IEDBNameTranslator nameTranslator) where TEnum : struct, Enum
         => typeof(TEnum).GetCustomAttribute<PgNameAttribute>()?.PgName ??
             nameTranslator.TranslateTypeName(typeof(TEnum).Name);
 
     // See: https://github.com/npgsql/npgsql/blob/dev/src/Npgsql/TypeHandlers/EnumHandler.cs#L118-L129
-    private static string[] GetMemberPgNames<TEnum>(INpgsqlNameTranslator nameTranslator) where TEnum : struct, Enum
+    private static string[] GetMemberPgNames<TEnum>(IEDBNameTranslator nameTranslator) where TEnum : struct, Enum
         => typeof(TEnum)
             .GetFields(BindingFlags.Static | BindingFlags.Public)
             .Select(x => x.GetCustomAttribute<PgNameAttribute>()?.PgName ??

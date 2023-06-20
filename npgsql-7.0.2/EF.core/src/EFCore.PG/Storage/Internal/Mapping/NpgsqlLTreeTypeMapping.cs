@@ -23,7 +23,7 @@ public class NpgsqlLTreeTypeMapping : NpgsqlStringTypeMapping
                     typeof(LTree),
                     new ValueConverter<LTree, string>(l => l, s => new(s))),
                 "ltree"),
-            NpgsqlDbType.LTree)
+            EDBDbType.LTree)
     {
     }
 
@@ -34,7 +34,7 @@ public class NpgsqlLTreeTypeMapping : NpgsqlStringTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlLTreeTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.LTree)
+        : base(parameters, EDBDbType.LTree)
     {
     }
 

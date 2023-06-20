@@ -2,7 +2,7 @@
 namespace Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Provides extension methods for <see cref="NpgsqlRange{T}"/> supporting PostgreSQL translation.
+/// Provides extension methods for <see cref="EDBRange{T}"/> supporting PostgreSQL translation.
 /// </summary>
 public static class NpgsqlRangeDbFunctionsExtensions
 {
@@ -16,9 +16,9 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <value>true</value> if the range contains the specified value; otherwise, <value>false</value>.
     /// </returns>
     /// <exception cref="NotSupportedException">
-    /// <see cref="Contains{T}(NpgsqlRange{T}, T)" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
+    /// <see cref="Contains{T}(EDBRange{T}, T)" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool Contains<T>(this NpgsqlRange<T> range, T value)
+    public static bool Contains<T>(this EDBRange<T> range, T value)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Contains)));
 
     /// <summary>
@@ -31,10 +31,10 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <value>true</value> if the range contains the specified range; otherwise, <value>false</value>.
     /// </returns>
     /// <exception cref="NotSupportedException">
-    /// <see cref="Contains{T}(NpgsqlRange{T}, NpgsqlRange{T})" /> is only intended for use via SQL translation as part of an EF Core LINQ
+    /// <see cref="Contains{T}(EDBRange{T}, EDBRange{T})" /> is only intended for use via SQL translation as part of an EF Core LINQ
     /// query.
     /// </exception>
-    public static bool Contains<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool Contains<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Contains)));
 
     /// <summary>
@@ -49,7 +49,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="ContainedBy{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool ContainedBy<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool ContainedBy<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ContainedBy)));
 
     /// <summary>
@@ -64,7 +64,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="Overlaps{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool Overlaps<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool Overlaps<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Overlaps)));
 
     /// <summary>
@@ -79,7 +79,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="IsStrictlyLeftOf{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool IsStrictlyLeftOf<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool IsStrictlyLeftOf<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(IsStrictlyLeftOf)));
 
     /// <summary>
@@ -94,7 +94,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="IsStrictlyRightOf{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool IsStrictlyRightOf<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool IsStrictlyRightOf<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(IsStrictlyRightOf)));
 
     /// <summary>
@@ -109,7 +109,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="DoesNotExtendLeftOf{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool DoesNotExtendLeftOf<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool DoesNotExtendLeftOf<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DoesNotExtendLeftOf)));
 
     /// <summary>
@@ -124,7 +124,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="DoesNotExtendRightOf{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool DoesNotExtendRightOf<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool DoesNotExtendRightOf<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(DoesNotExtendRightOf)));
 
     /// <summary>
@@ -137,7 +137,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="IsAdjacentTo{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static bool IsAdjacentTo<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static bool IsAdjacentTo<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(IsAdjacentTo)));
 
     /// <summary>
@@ -150,7 +150,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="Union{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static NpgsqlRange<T> Union<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static EDBRange<T> Union<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Union)));
 
     /// <summary>
@@ -163,7 +163,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="Intersect{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static NpgsqlRange<T> Intersect<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static EDBRange<T> Intersect<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Intersect)));
 
     /// <summary>
@@ -178,7 +178,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="Except{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static NpgsqlRange<T> Except<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static EDBRange<T> Except<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Except)));
 
     /// <summary>
@@ -193,7 +193,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="Merge{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static NpgsqlRange<T> Merge<T>(this NpgsqlRange<T> a, NpgsqlRange<T> b)
+    public static EDBRange<T> Merge<T>(this EDBRange<T> a, EDBRange<T> b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(Merge)));
 
     /// <summary>
@@ -204,7 +204,7 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <exception cref="NotSupportedException">
     /// <see cref="RangeAgg{T}" /> is only intended for use via SQL translation as part of an EF Core LINQ query.
     /// </exception>
-    public static NpgsqlRange<T>[] RangeAgg<T>(this IEnumerable<NpgsqlRange<T>> input)
+    public static EDBRange<T>[] RangeAgg<T>(this IEnumerable<EDBRange<T>> input)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(RangeAgg)));
 
     /// <summary>
@@ -213,10 +213,10 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <param name="input">The ranges on which to perform the intersection operation.</param>
     /// <seealso href="https://www.postgresql.org/docs/current/functions-aggregate.html">PostgreSQL documentation for aggregate functions.</seealso>
     /// <exception cref="NotSupportedException">
-    /// <see cref="RangeIntersectAgg{T}(IEnumerable{NpgsqlRange{T}})" /> is only intended for use via SQL translation as part of an EF Core
+    /// <see cref="RangeIntersectAgg{T}(IEnumerable{EDBRange{T}})" /> is only intended for use via SQL translation as part of an EF Core
     /// LINQ query.
     /// </exception>
-    public static NpgsqlRange<T> RangeIntersectAgg<T>(this IEnumerable<NpgsqlRange<T>> input)
+    public static EDBRange<T> RangeIntersectAgg<T>(this IEnumerable<EDBRange<T>> input)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(RangeIntersectAgg)));
 
     /// <summary>
@@ -226,9 +226,9 @@ public static class NpgsqlRangeDbFunctionsExtensions
     /// <param name="input">The multiranges on which to perform the intersection operation.</param>
     /// <seealso href="https://www.postgresql.org/docs/current/functions-aggregate.html">PostgreSQL documentation for aggregate functions.</seealso>
     /// <exception cref="NotSupportedException">
-    /// <see cref="RangeIntersectAgg{T}(IEnumerable{NpgsqlRange{T}[]})" /> is only intended for use via SQL translation as part of an EF Core
+    /// <see cref="RangeIntersectAgg{T}(IEnumerable{EDBRange{T}[]})" /> is only intended for use via SQL translation as part of an EF Core
     /// LINQ query.
     /// </exception>
-    public static NpgsqlRange<T>[] RangeIntersectAgg<T>(this IEnumerable<NpgsqlRange<T>[]> input)
+    public static EDBRange<T>[] RangeIntersectAgg<T>(this IEnumerable<EDBRange<T>[]> input)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(RangeIntersectAgg)));
 }

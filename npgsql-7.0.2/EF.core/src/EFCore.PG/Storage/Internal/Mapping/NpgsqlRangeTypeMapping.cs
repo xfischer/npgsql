@@ -61,7 +61,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         ISqlGenerationHelper sqlGenerationHelper)
         : base(sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), clrType, GenerateNpgsqlDbType(subtypeMapping))
     {
-        Debug.Assert(clrType == typeof(NpgsqlRange<>).MakeGenericType(subtypeMapping.ClrType));
+        Debug.Assert(clrType == typeof(EDBRange<>).MakeGenericType(subtypeMapping.ClrType));
 
         SubtypeMapping = subtypeMapping;
         _sqlGenerationHelper = sqlGenerationHelper;
@@ -75,7 +75,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected NpgsqlRangeTypeMapping(
         RelationalTypeMappingParameters parameters,
-        NpgsqlDbType npgsqlDbType,
+        EDBDbType npgsqlDbType,
         RelationalTypeMapping subtypeMapping,
         ISqlGenerationHelper sqlGenerationHelper)
         : base(parameters, npgsqlDbType)
@@ -91,7 +91,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlRangeTypeMapping(parameters, NpgsqlDbType, SubtypeMapping, _sqlGenerationHelper);
+        => new NpgsqlRangeTypeMapping(parameters, EDBDbType, SubtypeMapping, _sqlGenerationHelper);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -140,23 +140,23 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         return builder.ToString();
     }
 
-    private static NpgsqlDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
+    private static EDBDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
     {
-        NpgsqlDbType subtypeNpgsqlDbType;
+        EDBDbType subtypeNpgsqlDbType;
         if (subtypeMapping is INpgsqlTypeMapping npgsqlTypeMapping)
         {
-            subtypeNpgsqlDbType = npgsqlTypeMapping.NpgsqlDbType;
+            subtypeNpgsqlDbType = npgsqlTypeMapping.EDBDbType;
         }
         else
         {
             // We're using a built-in, non-Npgsql mapping such as IntTypeMapping.
-            // Infer the NpgsqlDbType from the DbType (somewhat hacky but why not).
+            // Infer the EDBDbType from the DbType (somewhat hacky but why not).
             Debug.Assert(subtypeMapping.DbType.HasValue);
             var p = new NpgsqlParameter { DbType = subtypeMapping.DbType.Value };
-            subtypeNpgsqlDbType = p.NpgsqlDbType;
+            subtypeNpgsqlDbType = p.EDBDbType;
         }
 
-        return NpgsqlDbType.Range | subtypeNpgsqlDbType;
+        return EDBDbType.Range | subtypeNpgsqlDbType;
     }
 
     /// <summary>
@@ -206,13 +206,13 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         "_rangeConstructor1", "_rangeConstructor2", "_rangeConstructor3")]
     private void InitializeAccessors(Type rangeClrType, Type subtypeClrType)
     {
-        _isEmptyProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.IsEmpty))!;
-        _lowerProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.LowerBound))!;
-        _upperProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.UpperBound))!;
-        _lowerInclusiveProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.LowerBoundIsInclusive))!;
-        _upperInclusiveProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.UpperBoundIsInclusive))!;
-        _lowerInfiniteProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.LowerBoundInfinite))!;
-        _upperInfiniteProperty = rangeClrType.GetProperty(nameof(NpgsqlRange<int>.UpperBoundInfinite))!;
+        _isEmptyProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.IsEmpty))!;
+        _lowerProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.LowerBound))!;
+        _upperProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.UpperBound))!;
+        _lowerInclusiveProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.LowerBoundIsInclusive))!;
+        _upperInclusiveProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.UpperBoundIsInclusive))!;
+        _lowerInfiniteProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.LowerBoundInfinite))!;
+        _upperInfiniteProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.UpperBoundInfinite))!;
 
         _rangeConstructor1 = rangeClrType.GetConstructor(
             new[] { subtypeClrType, subtypeClrType })!;

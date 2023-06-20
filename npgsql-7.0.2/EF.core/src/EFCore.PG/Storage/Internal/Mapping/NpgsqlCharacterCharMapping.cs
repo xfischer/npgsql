@@ -11,8 +11,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 public class NpgsqlCharacterCharTypeMapping : CharTypeMapping, INpgsqlTypeMapping
 {
     /// <inheritdoc />
-    public virtual NpgsqlDbType NpgsqlDbType
-        => NpgsqlDbType.Char;
+    public virtual EDBDbType EDBDbType
+        => EDBDbType.Char;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -63,6 +63,6 @@ public class NpgsqlCharacterCharTypeMapping : CharTypeMapping, INpgsqlTypeMappin
         }
 
         base.ConfigureParameter(parameter);
-        npgsqlParameter.NpgsqlDbType = NpgsqlDbType;
+        npgsqlParameter.EDBDbType = EDBDbType;
     }
 }

@@ -86,7 +86,7 @@ public class NpgsqlRelationalConnection : RelationalConnection, INpgsqlRelationa
             return _dataSource.CreateConnection();
         }
 
-        var conn = new NpgsqlConnection(ConnectionString);
+        var conn = new EDBConnection(ConnectionString);
 
         if (_provideClientCertificatesCallback is not null)
         {
@@ -133,9 +133,9 @@ public class NpgsqlRelationalConnection : RelationalConnection, INpgsqlRelationa
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     [AllowNull]
-    public new virtual NpgsqlConnection DbConnection
+    public new virtual EDBConnection DbConnection
     {
-        get => (NpgsqlConnection)base.DbConnection;
+        get => (EDBConnection)base.DbConnection;
         set
         {
             base.DbConnection = value;
@@ -182,7 +182,7 @@ public class NpgsqlRelationalConnection : RelationalConnection, INpgsqlRelationa
         }.ToString();
 
         var adminNpgsqlOptions = _dataSource is not null
-            ? npgsqlOptions.WithConnection(((NpgsqlConnection)CreateDbConnection()).CloneWith(adminConnectionString))
+            ? npgsqlOptions.WithConnection(((EDBConnection)CreateDbConnection()).CloneWith(adminConnectionString))
             : npgsqlOptions.Connection is not null
                 ? npgsqlOptions.WithConnection(DbConnection.CloneWith(adminConnectionString))
                 : npgsqlOptions.WithConnectionString(adminConnectionString);

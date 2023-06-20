@@ -21,7 +21,7 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     /// <summary>
     /// The database type used by Npgsql.
     /// </summary>
-    public virtual NpgsqlDbType? NpgsqlDbType { get; }
+    public virtual EDBDbType? EDBDbType { get; }
 
     /// <summary>
     /// Whether the array's element is nullable. This is required since <see cref="Type"/> and <see cref="ElementMapping"/> do not
@@ -42,15 +42,15 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
         ElementMapping = elementMapping;
         IsElementNullable = isElementNullable;
 
-        // If the element mapping has an NpgsqlDbType or DbType, set our own NpgsqlDbType as an array of that.
+        // If the element mapping has an EDBDbType or DbType, set our own EDBDbType as an array of that.
         // Otherwise let the ADO.NET layer infer the PostgreSQL type. We can't always let it infer, otherwise
         // when given a byte[] it will infer byte (but we want smallint[])
-        NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Array |
+        EDBDbType = NpgsqlTypes.EDBDbType.Array |
             (elementMapping is INpgsqlTypeMapping elementNpgsqlTypeMapping
-                ? elementNpgsqlTypeMapping.NpgsqlDbType
+                ? elementNpgsqlTypeMapping.EDBDbType
                 : elementMapping.DbType.HasValue
-                    ? new NpgsqlParameter { DbType = elementMapping.DbType.Value }.NpgsqlDbType
-                    : default(NpgsqlDbType?));
+                    ? new NpgsqlParameter { DbType = elementMapping.DbType.Value }.EDBDbType
+                    : default(EDBDbType?));
     }
 
     /// <summary>
@@ -184,9 +184,9 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
 
         base.ConfigureParameter(parameter);
 
-        if (NpgsqlDbType.HasValue)
+        if (EDBDbType.HasValue)
         {
-            npgsqlParameter.NpgsqlDbType = NpgsqlDbType.Value;
+            npgsqlParameter.EDBDbType = EDBDbType.Value;
         }
     }
 

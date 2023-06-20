@@ -240,7 +240,7 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
 
         // If we don't have an explicitly-configured data source, try to get one from the application service provider.
         var dataSource = DataSource
-            ?? options.FindExtension<CoreOptionsExtension>()?.ApplicationServiceProvider?.GetService<NpgsqlDataSource>();
+            ?? options.FindExtension<CoreOptionsExtension>()?.ApplicationServiceProvider?.GetService<EDBDataSource>();
 
         if (dataSource is not null
             && (ProvideClientCertificatesCallback is not null
@@ -495,7 +495,7 @@ public record UserRangeDefinition
 
     /// <summary>
     /// The CLR type of the range's subtype (or element).
-    /// The actual mapped type will be an <see cref="NpgsqlRange{T}"/> over this type.
+    /// The actual mapped type will be an <see cref="EDBRange{T}"/> over this type.
     /// </summary>
     public virtual Type SubtypeClrType { get; }
 

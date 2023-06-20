@@ -68,7 +68,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected NpgsqlMultirangeTypeMapping(
         RelationalTypeMappingParameters parameters,
-        NpgsqlDbType npgsqlDbType,
+        EDBDbType npgsqlDbType,
         NpgsqlRangeTypeMapping rangeMapping,
         ISqlGenerationHelper sqlGenerationHelper)
         : base(parameters, npgsqlDbType)
@@ -85,7 +85,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlMultirangeTypeMapping(parameters, NpgsqlDbType, RangeMapping, _sqlGenerationHelper);
+        => new NpgsqlMultirangeTypeMapping(parameters, EDBDbType, RangeMapping, _sqlGenerationHelper);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -123,23 +123,23 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
         return sb.ToString();
     }
 
-    private static NpgsqlDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
+    private static EDBDbType GenerateNpgsqlDbType(RelationalTypeMapping subtypeMapping)
     {
-        NpgsqlDbType subtypeNpgsqlDbType;
+        EDBDbType subtypeNpgsqlDbType;
         if (subtypeMapping is INpgsqlTypeMapping npgsqlTypeMapping)
         {
-            subtypeNpgsqlDbType = npgsqlTypeMapping.NpgsqlDbType;
+            subtypeNpgsqlDbType = npgsqlTypeMapping.EDBDbType;
         }
         else
         {
             // We're using a built-in, non-Npgsql mapping such as IntTypeMapping.
-            // Infer the NpgsqlDbType from the DbType (somewhat hacky but why not).
+            // Infer the EDBDbType from the DbType (somewhat hacky but why not).
             Debug.Assert(subtypeMapping.DbType.HasValue);
             var p = new NpgsqlParameter { DbType = subtypeMapping.DbType.Value };
-            subtypeNpgsqlDbType = p.NpgsqlDbType;
+            subtypeNpgsqlDbType = p.EDBDbType;
         }
 
-        return NpgsqlDbType.Multirange | subtypeNpgsqlDbType;
+        return EDBDbType.Multirange | subtypeNpgsqlDbType;
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     {
         // Note that arrays are handled in EF Core's CSharpHelper, so this method doesn't get called for them.
 
-        // Unfortunately, List<NpgsqlRange<T>> requires MemberInit, which CSharpHelper doesn't support
+        // Unfortunately, List<EDBRange<T>> requires MemberInit, which CSharpHelper doesn't support
         var type = value.GetType();
 
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))

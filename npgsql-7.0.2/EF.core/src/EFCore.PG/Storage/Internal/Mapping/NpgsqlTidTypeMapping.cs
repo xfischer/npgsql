@@ -17,7 +17,7 @@ public class NpgsqlTidTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public NpgsqlTidTypeMapping()
-        : base("tid", typeof(NpgsqlTid), NpgsqlDbType.Tid) {}
+        : base("tid", typeof(EDBTid), EDBDbType.Tid) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,7 +26,7 @@ public class NpgsqlTidTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlTidTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Tid) {}
+        : base(parameters, EDBDbType.Tid) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -45,7 +45,7 @@ public class NpgsqlTidTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
     {
-        var tid = (NpgsqlTid)value;
+        var tid = (EDBTid)value;
         var builder = new StringBuilder("TID '(");
         builder.Append(tid.BlockNumber);
         builder.Append(',');
@@ -62,10 +62,10 @@ public class NpgsqlTidTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public override Expression GenerateCodeLiteral(object value)
     {
-        var tid = (NpgsqlTid)value;
+        var tid = (EDBTid)value;
         return Expression.New(Constructor, Expression.Constant(tid.BlockNumber), Expression.Constant(tid.OffsetNumber));
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(NpgsqlTid).GetConstructor(new[] { typeof(uint), typeof(ushort) })!;
+        typeof(EDBTid).GetConstructor(new[] { typeof(uint), typeof(ushort) })!;
 }

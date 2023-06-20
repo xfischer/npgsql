@@ -16,7 +16,7 @@ public class NpgsqlTsVectorTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlTsVectorTypeMapping() : base("tsvector", typeof(NpgsqlTsVector), NpgsqlDbType.TsVector) { }
+    public NpgsqlTsVectorTypeMapping() : base("tsvector", typeof(EDBTsVector), EDBDbType.TsVector) { }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -25,7 +25,7 @@ public class NpgsqlTsVectorTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlTsVectorTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.TsVector) {}
+        : base(parameters, EDBDbType.TsVector) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -45,7 +45,7 @@ public class NpgsqlTsVectorTypeMapping : NpgsqlTypeMapping
     protected override string GenerateNonNullSqlLiteral(object value)
     {
         Check.NotNull(value, nameof(value));
-        var vector = (NpgsqlTsVector)value;
+        var vector = (EDBTsVector)value;
         var builder = new StringBuilder();
         builder.Append("TSVECTOR  ");
         var indexOfFirstQuote = builder.Length - 1;

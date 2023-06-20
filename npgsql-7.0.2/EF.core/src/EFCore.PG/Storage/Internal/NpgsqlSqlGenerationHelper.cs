@@ -16,7 +16,7 @@ public class NpgsqlSqlGenerationHelper : RelationalSqlGenerationHelper
     static NpgsqlSqlGenerationHelper()
     {
         // https://www.postgresql.org/docs/current/static/sql-keywords-appendix.html
-        using (var conn = new NpgsqlConnection())
+        using (var conn = new EDBConnection())
         {
             ReservedWords = new HashSet<string>(conn.GetSchema("ReservedWords").Rows.Cast<DataRow>().Select(r => (string)r["ReservedWord"]));
         }

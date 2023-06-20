@@ -18,7 +18,7 @@ public class NpgsqlDecimalTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlDecimalTypeMapping(Type? clrType = null) : base("numeric", clrType ?? typeof(decimal), NpgsqlDbType.Numeric) {}
+    public NpgsqlDecimalTypeMapping(Type? clrType = null) : base("numeric", clrType ?? typeof(decimal), EDBDbType.Numeric) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -27,7 +27,7 @@ public class NpgsqlDecimalTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlDecimalTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Numeric)
+        : base(parameters, EDBDbType.Numeric)
     {
     }
 

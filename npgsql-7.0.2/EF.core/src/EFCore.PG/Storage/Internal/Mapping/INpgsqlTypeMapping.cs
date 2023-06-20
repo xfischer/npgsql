@@ -11,5 +11,5 @@ public interface INpgsqlTypeMapping
     /// <summary>
     /// The database type used by Npgsql.
     /// </summary>
-    NpgsqlDbType NpgsqlDbType { get; }
+    EDBDbType EDBDbType { get; }
 }

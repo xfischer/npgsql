@@ -830,7 +830,7 @@ public class NpgsqlSqlExpressionFactory : SqlExpressionFactory
                 {
                     NpgsqlRangeTypeMapping rangeTypeMapping => rangeTypeMapping.SubtypeMapping,
                     NpgsqlMultirangeTypeMapping multirangeTypeMapping
-                        => containee.Type.IsGenericType && containee.Type.GetGenericTypeDefinition() == typeof(NpgsqlRange<>)
+                        => containee.Type.IsGenericType && containee.Type.GetGenericTypeDefinition() == typeof(EDBRange<>)
                             ? multirangeTypeMapping.RangeMapping
                             : multirangeTypeMapping.SubtypeMapping,
                     _ => null

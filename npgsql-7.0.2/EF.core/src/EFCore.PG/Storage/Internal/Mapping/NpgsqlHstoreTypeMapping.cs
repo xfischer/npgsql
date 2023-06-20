@@ -25,7 +25,7 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
             new RelationalTypeMappingParameters(
                 new CoreTypeMappingParameters(clrType, comparer: GetComparer(clrType)),
                 "hstore"),
-            NpgsqlDbType.Hstore)
+            EDBDbType.Hstore)
     {
     }
 
@@ -36,7 +36,7 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlHstoreTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Hstore) {}
+        : base(parameters, EDBDbType.Hstore) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

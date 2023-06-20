@@ -16,7 +16,7 @@ public class NpgsqlJsonTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public NpgsqlJsonTypeMapping(string storeType, Type clrType)
-        : base(storeType, clrType, storeType == "jsonb" ? NpgsqlDbType.Jsonb : NpgsqlDbType.Json)
+        : base(storeType, clrType, storeType == "jsonb" ? EDBDbType.Jsonb : EDBDbType.Json)
     {
         if (storeType != "json" && storeType != "jsonb")
         {
@@ -30,7 +30,7 @@ public class NpgsqlJsonTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected NpgsqlJsonTypeMapping(RelationalTypeMappingParameters parameters, NpgsqlDbType npgsqlDbType)
+    protected NpgsqlJsonTypeMapping(RelationalTypeMappingParameters parameters, EDBDbType npgsqlDbType)
         : base(parameters, npgsqlDbType)
     {
     }
@@ -50,7 +50,7 @@ public class NpgsqlJsonTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlJsonTypeMapping(parameters, NpgsqlDbType);
+        => new NpgsqlJsonTypeMapping(parameters, EDBDbType);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

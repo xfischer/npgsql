@@ -23,7 +23,7 @@ internal static class TypeExtensions
 
     internal static bool TryGetRangeSubtype(this Type type, [NotNullWhen(true)] out Type? subtypeType)
     {
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(NpgsqlRange<>))
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(EDBRange<>))
         {
             subtypeType = type.GetGenericArguments()[0];
             return true;

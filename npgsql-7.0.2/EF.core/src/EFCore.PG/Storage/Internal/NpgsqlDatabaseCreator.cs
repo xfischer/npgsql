@@ -340,7 +340,7 @@ WHERE
             _connection.Open();
             try
             {
-                ((NpgsqlConnection)_connection.DbConnection).ReloadTypes();
+                ((EDBConnection)_connection.DbConnection).ReloadTypes();
             }
             catch
             {
@@ -388,7 +388,7 @@ WHERE
             try
             {
                 // TODO: Not async
-                ((NpgsqlConnection)_connection.DbConnection).ReloadTypes();
+                ((EDBConnection)_connection.DbConnection).ReloadTypes();
             }
             catch
             {
@@ -410,9 +410,9 @@ WHERE
     }
 
     // Clear connection pools in case there are active connections that are pooled
-    private static void ClearAllPools() => NpgsqlConnection.ClearAllPools();
+    private static void ClearAllPools() => EDBConnection.ClearAllPools();
 
     // Clear connection pool for the database connection since after the 'create database' call, a previously
     // invalid connection may now be valid.
-    private void ClearPool() => NpgsqlConnection.ClearPool((NpgsqlConnection)_connection.DbConnection);
+    private void ClearPool() => EDBConnection.ClearPool((EDBConnection)_connection.DbConnection);
 }

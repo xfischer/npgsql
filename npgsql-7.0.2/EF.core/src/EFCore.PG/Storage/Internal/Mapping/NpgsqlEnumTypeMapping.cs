@@ -9,7 +9,7 @@
 public class NpgsqlEnumTypeMapping : RelationalTypeMapping
 {
     private readonly ISqlGenerationHelper _sqlGenerationHelper;
-    private readonly INpgsqlNameTranslator _nameTranslator;
+    private readonly IEDBNameTranslator _nameTranslator;
 
     /// <summary>
     /// Translates the CLR member value to the PostgreSQL value label.
@@ -27,7 +27,7 @@ public class NpgsqlEnumTypeMapping : RelationalTypeMapping
         string? storeTypeSchema,
         Type enumType,
         ISqlGenerationHelper sqlGenerationHelper,
-        INpgsqlNameTranslator? nameTranslator = null)
+        IEDBNameTranslator? nameTranslator = null)
         : base(sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), enumType)
     {
         if (!enumType.IsEnum || !enumType.IsValueType)
@@ -35,8 +35,8 @@ public class NpgsqlEnumTypeMapping : RelationalTypeMapping
             throw new ArgumentException($"Enum type mappings require a CLR enum. {enumType.FullName} is not an enum.");
         }
 
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        nameTranslator ??= NpgsqlConnection.GlobalTypeMapper.DefaultNameTranslator;
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
+        nameTranslator ??= EDBConnection.GlobalTypeMapper.DefaultNameTranslator;
 #pragma warning restore CS0618
 
         _nameTranslator = nameTranslator;
@@ -53,7 +53,7 @@ public class NpgsqlEnumTypeMapping : RelationalTypeMapping
     protected NpgsqlEnumTypeMapping(
         RelationalTypeMappingParameters parameters,
         ISqlGenerationHelper sqlGenerationHelper,
-        INpgsqlNameTranslator nameTranslator)
+        IEDBNameTranslator nameTranslator)
         : base(parameters)
     {
         _nameTranslator = nameTranslator;
@@ -84,7 +84,7 @@ public class NpgsqlEnumTypeMapping : RelationalTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    private static Dictionary<object, string> CreateValueMapping(Type enumType, INpgsqlNameTranslator nameTranslator)
+    private static Dictionary<object, string> CreateValueMapping(Type enumType, IEDBNameTranslator nameTranslator)
         => enumType.GetFields(BindingFlags.Static | BindingFlags.Public)
             .ToDictionary(
                 x => x.GetValue(null)!,

@@ -9,10 +9,10 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Inte
 public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
 {
     private static readonly MethodInfo TsQueryParse =
-        typeof(NpgsqlTsQuery).GetMethod(nameof(NpgsqlTsQuery.Parse), BindingFlags.Public | BindingFlags.Static)!;
+        typeof(EDBTsQuery).GetMethod(nameof(EDBTsQuery.Parse), BindingFlags.Public | BindingFlags.Static)!;
 
     private static readonly MethodInfo TsVectorParse =
-        typeof(NpgsqlTsVector).GetMethod(nameof(NpgsqlTsVector.Parse), BindingFlags.Public | BindingFlags.Static)!;
+        typeof(EDBTsVector).GetMethod(nameof(EDBTsVector.Parse), BindingFlags.Public | BindingFlags.Static)!;
 
     private readonly IRelationalTypeMappingSource _typeMappingSource;
     private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
@@ -124,7 +124,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
             if (method.Name == nameof(NpgsqlFullTextSearchLinqExtensions.SetWeight))
             {
                 var newArgs = new List<SqlExpression>(arguments);
-                if (newArgs[1].Type == typeof(NpgsqlTsVector.Lexeme.Weight))
+                if (newArgs[1].Type == typeof(EDBTsVector.Lexeme.Weight))
                 {
                     newArgs[1] = newArgs[1] is SqlConstantExpression weightExpression
                         ? _sqlExpressionFactory.Constant(weightExpression.Value!.ToString()![0])
@@ -170,7 +170,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
                                 new[] { arguments[1] },
                                 nullable: true,
                                 argumentsPropagateNullability: TrueArrays[1],
-                                typeof(NpgsqlTsQuery),
+                                typeof(EDBTsQuery),
                                 _tsQueryMapping)
                             : arguments[1]),
 
@@ -235,7 +235,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
                         arguments,
                         nullable: true,
                         argumentsPropagateNullability: TrueArrays[3],
-                        typeof(NpgsqlTsQuery),
+                        typeof(EDBTsQuery),
                         _tsQueryMapping),
 
                 nameof(NpgsqlFullTextSearchLinqExtensions.ToPhrase)
@@ -244,7 +244,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
                         arguments,
                         nullable: true,
                         argumentsPropagateNullability: TrueArrays[arguments.Count],
-                        typeof(NpgsqlTsQuery),
+                        typeof(EDBTsQuery),
                         _tsQueryMapping),
 
                 nameof(NpgsqlFullTextSearchLinqExtensions.Delete)
@@ -259,7 +259,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
                 // TODO: Here we need to cast the char[] array we got into a "char"[] internal array...
                 nameof(NpgsqlFullTextSearchLinqExtensions.Filter)
                     => throw new NotImplementedException(),
-                //=> _sqlExpressionFactory.Function("ts_filter", arguments, typeof(NpgsqlTsVector), _tsVectorMapping),
+                //=> _sqlExpressionFactory.Function("ts_filter", arguments, typeof(EDBTsVector), _tsVectorMapping),
 
                 nameof(NpgsqlFullTextSearchLinqExtensions.GetLength)
                     => _sqlExpressionFactory.Function(

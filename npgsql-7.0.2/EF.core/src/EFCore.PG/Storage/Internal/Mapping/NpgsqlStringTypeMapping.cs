@@ -4,7 +4,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// The base class for mapping Npgsql-specific string types. It configures parameters with the
-/// <see cref="NpgsqlDbType"/> provider-specific type enum.
+/// <see cref="EDBDbType"/> provider-specific type enum.
 /// </summary>
 public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
 {
@@ -14,7 +14,7 @@ public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual NpgsqlDbType NpgsqlDbType { get; }
+    public virtual EDBDbType EDBDbType { get; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -22,9 +22,9 @@ public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlStringTypeMapping(string storeType, NpgsqlDbType npgsqlDbType)
+    public NpgsqlStringTypeMapping(string storeType, EDBDbType npgsqlDbType)
         : base(storeType, System.Data.DbType.String)
-        => NpgsqlDbType = npgsqlDbType;
+        => EDBDbType = npgsqlDbType;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -34,9 +34,9 @@ public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
     /// </summary>
     protected NpgsqlStringTypeMapping(
         RelationalTypeMappingParameters parameters,
-        NpgsqlDbType npgsqlDbType)
+        EDBDbType npgsqlDbType)
         : base(parameters)
-        => NpgsqlDbType = npgsqlDbType;
+        => EDBDbType = npgsqlDbType;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -45,7 +45,7 @@ public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlStringTypeMapping(parameters, NpgsqlDbType);
+        => new NpgsqlStringTypeMapping(parameters, EDBDbType);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -61,6 +61,6 @@ public class NpgsqlStringTypeMapping : StringTypeMapping, INpgsqlTypeMapping
         }
 
         base.ConfigureParameter(parameter);
-        npgsqlParameter.NpgsqlDbType = NpgsqlDbType;
+        npgsqlParameter.EDBDbType = EDBDbType;
     }
 }

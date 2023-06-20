@@ -87,7 +87,7 @@ public class NpgsqlSingletonOptions : INpgsqlSingletonOptions
         // TODO: Remove after https://github.com/dotnet/efcore/pull/29950
         ApplicationServiceProvider = coreOptions.ApplicationServiceProvider;
 
-        DataSource = npgsqlOptions.DataSource ?? coreOptions.ApplicationServiceProvider?.GetService<NpgsqlDataSource>();
+        DataSource = npgsqlOptions.DataSource ?? coreOptions.ApplicationServiceProvider?.GetService<EDBDataSource>();
     }
 
     /// <inheritdoc />

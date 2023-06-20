@@ -17,7 +17,7 @@ public class NpgsqlMacaddrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlMacaddrTypeMapping() : base("macaddr", typeof(PhysicalAddress), NpgsqlDbType.MacAddr) {}
+    public NpgsqlMacaddrTypeMapping() : base("macaddr", typeof(PhysicalAddress), EDBDbType.MacAddr) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,7 +26,7 @@ public class NpgsqlMacaddrTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlMacaddrTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.MacAddr) {}
+        : base(parameters, EDBDbType.MacAddr) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -72,7 +72,7 @@ public class NpgsqlMacaddr8TypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlMacaddr8TypeMapping() : base("macaddr8", typeof(PhysicalAddress), NpgsqlDbType.MacAddr8) {}
+    public NpgsqlMacaddr8TypeMapping() : base("macaddr8", typeof(PhysicalAddress), EDBDbType.MacAddr8) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -81,7 +81,7 @@ public class NpgsqlMacaddr8TypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlMacaddr8TypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.MacAddr8) {}
+        : base(parameters, EDBDbType.MacAddr8) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -127,7 +127,7 @@ public class NpgsqlInetTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlInetTypeMapping() : base("inet", typeof(IPAddress), NpgsqlDbType.Inet) {}
+    public NpgsqlInetTypeMapping() : base("inet", typeof(IPAddress), EDBDbType.Inet) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -136,7 +136,7 @@ public class NpgsqlInetTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlInetTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Inet) {}
+        : base(parameters, EDBDbType.Inet) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -182,7 +182,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlCidrTypeMapping() : base("cidr", typeof((IPAddress, int)), NpgsqlDbType.Cidr) {}
+    public NpgsqlCidrTypeMapping() : base("cidr", typeof((IPAddress, int)), EDBDbType.Cidr) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -191,7 +191,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlCidrTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Cidr) {}
+        : base(parameters, EDBDbType.Cidr) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

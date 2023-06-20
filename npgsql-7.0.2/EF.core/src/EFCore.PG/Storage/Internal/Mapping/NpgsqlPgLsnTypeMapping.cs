@@ -1,5 +1,4 @@
-﻿using NpgsqlTypes;
-using System.Text;
+﻿using System.Text;
 
 namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -18,7 +17,7 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public NpgsqlPgLsnTypeMapping()
-        : base("pg_lsn", typeof(NpgsqlLogSequenceNumber), NpgsqlDbType.PgLsn) {}
+        : base("pg_lsn", typeof(EDBLogSequenceNumber), EDBDbType.PgLsn) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -27,7 +26,7 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlPgLsnTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.PgLsn) {}
+        : base(parameters, EDBDbType.PgLsn) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -46,7 +45,7 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
     {
-        var lsn = (NpgsqlLogSequenceNumber)value;
+        var lsn = (EDBLogSequenceNumber)value;
         var builder = new StringBuilder("PG_LSN '")
                 .Append(lsn.ToString())
                 .Append('\'');
@@ -61,10 +60,10 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public override Expression GenerateCodeLiteral(object value)
     {
-        var lsn = (NpgsqlLogSequenceNumber)value;
+        var lsn = (EDBLogSequenceNumber)value;
         return Expression.New(Constructor, Expression.Constant((ulong)lsn));
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(NpgsqlLogSequenceNumber).GetConstructor(new[] { typeof(ulong) })!;
+        typeof(EDBLogSequenceNumber).GetConstructor(new[] { typeof(ulong) })!;
 }

@@ -51,7 +51,7 @@ public class NpgsqlDbContextOptionsBuilder
     /// </summary>
     /// <typeparam name="TSubtype">
     /// The CLR type of the range's subtype (or element).
-    /// The actual mapped type will be an <see cref="NpgsqlRange{T}"/> over this type.
+    /// The actual mapped type will be an <see cref="EDBRange{T}"/> over this type.
     /// </typeparam>
     /// <param name="rangeName">The name of the PostgreSQL range type to be mapped.</param>
     /// <param name="schemaName">The name of the PostgreSQL schema in which the range is defined.</param>
@@ -76,7 +76,7 @@ public class NpgsqlDbContextOptionsBuilder
     /// <param name="schemaName">The name of the PostgreSQL schema in which the range is defined.</param>
     /// <param name="subtypeClrType">
     /// The CLR type of the range's subtype (or element).
-    /// The actual mapped type will be an <see cref="NpgsqlRange{T}"/> over this type.
+    /// The actual mapped type will be an <see cref="EDBRange{T}"/> over this type.
     /// </param>
     /// <param name="subtypeName">
     /// Optionally, the name of the range's PostgreSQL subtype (or element).

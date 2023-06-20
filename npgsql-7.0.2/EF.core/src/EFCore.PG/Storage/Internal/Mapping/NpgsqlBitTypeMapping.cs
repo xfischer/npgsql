@@ -14,7 +14,7 @@ public class NpgsqlBitTypeMapping : NpgsqlTypeMapping
     /// <summary>
     /// Constructs an instance of the <see cref="NpgsqlBitTypeMapping"/> class.
     /// </summary>
-    public NpgsqlBitTypeMapping() : base("bit", typeof(BitArray), NpgsqlDbType.Bit) {}
+    public NpgsqlBitTypeMapping() : base("bit", typeof(BitArray), EDBDbType.Bit) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -23,7 +23,7 @@ public class NpgsqlBitTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlBitTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Bit) {}
+        : base(parameters, EDBDbType.Bit) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

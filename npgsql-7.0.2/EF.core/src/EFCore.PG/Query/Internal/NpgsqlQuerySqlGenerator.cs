@@ -114,7 +114,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
             // string type mapping. Same for full-text search's TsVector.
             ExpressionType.Add when
                 e.Type == typeof(string) || e.Left.TypeMapping?.ClrType == typeof(string) || e.Right.TypeMapping?.ClrType == typeof(string) ||
-                e.Type == typeof(NpgsqlTsVector) || e.Left.TypeMapping?.ClrType == typeof(NpgsqlTsVector) || e.Right.TypeMapping?.ClrType == typeof(NpgsqlTsVector)
+                e.Type == typeof(EDBTsVector) || e.Left.TypeMapping?.ClrType == typeof(EDBTsVector) || e.Right.TypeMapping?.ClrType == typeof(EDBTsVector)
                 => " || ",
             ExpressionType.And when e.Type == typeof(bool)   => " AND ",
             ExpressionType.Or  when e.Type == typeof(bool)   => " OR ",
@@ -600,7 +600,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
                 return sqlUnaryExpression;
 
             // Not operation on full-text queries
-            case ExpressionType.Not when sqlUnaryExpression.Operand.TypeMapping.ClrType == typeof(NpgsqlTsQuery):
+            case ExpressionType.Not when sqlUnaryExpression.Operand.TypeMapping.ClrType == typeof(EDBTsQuery):
                 Sql.Append("!!");
                 Visit(sqlUnaryExpression.Operand);
                 return sqlUnaryExpression;

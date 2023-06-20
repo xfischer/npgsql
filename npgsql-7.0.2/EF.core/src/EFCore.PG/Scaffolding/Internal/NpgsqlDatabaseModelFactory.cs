@@ -61,7 +61,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
         Check.NotEmpty(connectionString, nameof(connectionString));
         Check.NotNull(options, nameof(options));
 
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new EDBConnection(connectionString);
         return Create(connection, options);
     }
 
@@ -73,7 +73,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
 
         var databaseModel = new DatabaseModel();
 
-        var connection = (NpgsqlConnection)dbConnection;
+        var connection = (EDBConnection)dbConnection;
 
         var connectionStartedOpen = connection.State == ConnectionState.Open;
 
@@ -169,7 +169,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
 
     #region Type information queries
 
-    private static void PopulateGlobalDatabaseInfo(NpgsqlConnection connection, DatabaseModel databaseModel)
+    private static void PopulateGlobalDatabaseInfo(EDBConnection connection, DatabaseModel databaseModel)
     {
         if (connection.PostgreSqlVersion < new Version(8, 4))
         {
@@ -191,7 +191,7 @@ SELECT datcollate FROM pg_database WHERE datname=current_database() AND
     /// Queries the database for defined tables and registers them with the model.
     /// </summary>
     private static IEnumerable<DatabaseTable> GetTables(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         DatabaseModel databaseModel,
         Func<string, string, string>? tableFilter,
         string internalSchemas,
@@ -262,7 +262,7 @@ WHERE
     /// Queries the database for defined columns and registers them with the model.
     /// </summary>
     private static void GetColumns(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         IReadOnlyList<DatabaseTable> tables,
         string? tableFilter,
         string internalSchemas,
@@ -498,7 +498,7 @@ ORDER BY attnum";
     /// Queries the database for defined indexes and registers them with the model.
     /// </summary>
     private static void GetIndexes(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         IReadOnlyList<DatabaseTable> tables,
         string? tableFilter,
         string internalSchemas,
@@ -743,7 +743,7 @@ WHERE
     /// Queries the database for defined constraints and registers them with the model.
     /// </summary>
     private static void GetConstraints(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         IReadOnlyList<DatabaseTable> tables,
         string? tableFilter,
         string internalSchemas,
@@ -926,7 +926,7 @@ WHERE
     /// Queries the database for defined sequences and registers them with the model.
     /// </summary>
     private static IEnumerable<DatabaseSequence> GetSequences(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         DatabaseModel databaseModel,
         Func<string, string>? schemaFilter,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
@@ -984,7 +984,7 @@ WHERE
     /// <summary>
     /// Queries the database for defined enums and registers them with the model.
     /// </summary>
-    private static HashSet<string> GetEnums(NpgsqlConnection connection, DatabaseModel databaseModel)
+    private static HashSet<string> GetEnums(EDBConnection connection, DatabaseModel databaseModel)
     {
         var enums = new HashSet<string>();
 
@@ -1029,7 +1029,7 @@ GROUP BY nspname, typname";
     /// <summary>
     /// Queries the installed database extensions and registers them with the model.
     /// </summary>
-    private static void GetExtensions(NpgsqlConnection connection, DatabaseModel databaseModel)
+    private static void GetExtensions(EDBConnection connection, DatabaseModel databaseModel)
     {
         const string commandText = @"
 SELECT ns.nspname, extname, extversion FROM pg_extension
@@ -1053,7 +1053,7 @@ JOIN pg_namespace ns ON ns.oid=extnamespace";
     }
 
     private static void GetCollations(
-        NpgsqlConnection connection,
+        EDBConnection connection,
         DatabaseModel databaseModel,
         string internalSchemas,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)

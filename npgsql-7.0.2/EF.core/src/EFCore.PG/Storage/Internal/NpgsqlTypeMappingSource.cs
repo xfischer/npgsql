@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
-using Npgsql.Internal.TypeMapping;
+using EnterpriseDB.EDBClient.Internal.TypeMapping;
 
 namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
@@ -88,11 +88,11 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
 
     // Character types
     private readonly StringTypeMapping                _text               = new("text", DbType.String);
-    private readonly NpgsqlStringTypeMapping          _varchar            = new("character varying", NpgsqlDbType.Varchar);
+    private readonly NpgsqlStringTypeMapping          _varchar            = new("character varying", EDBDbType.Varchar);
     private readonly NpgsqlCharacterStringTypeMapping _char               = new("character");
     private readonly NpgsqlCharacterCharTypeMapping   _singleChar         = new("character(1)");
-    private readonly NpgsqlStringTypeMapping          _xml                = new("xml", NpgsqlDbType.Xml);
-    private readonly NpgsqlStringTypeMapping          _citext             = new("citext", NpgsqlDbType.Citext);
+    private readonly NpgsqlStringTypeMapping          _xml                = new("xml", EDBDbType.Xml);
+    private readonly NpgsqlStringTypeMapping          _citext             = new("citext", EDBDbType.Citext);
 
     // JSON mappings
     private readonly NpgsqlJsonTypeMapping         _jsonbString        = new("jsonb", typeof(string));
@@ -130,11 +130,11 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     private readonly NpgsqlCircleTypeMapping       _circle             = new();
 
     // uint mappings
-    private readonly NpgsqlUintTypeMapping         _xid                = new("xid", NpgsqlDbType.Xid);
-    private readonly NpgsqlUintTypeMapping         _oid                = new("oid", NpgsqlDbType.Oid);
-    private readonly NpgsqlUintTypeMapping         _cid                = new("cid", NpgsqlDbType.Cid);
-    private readonly NpgsqlUintTypeMapping         _regtype            = new("regtype", NpgsqlDbType.Regtype);
-    private readonly NpgsqlUintTypeMapping         _lo                 = new("lo", NpgsqlDbType.Oid);
+    private readonly NpgsqlUintTypeMapping         _xid                = new("xid", EDBDbType.Xid);
+    private readonly NpgsqlUintTypeMapping         _oid                = new("oid", EDBDbType.Oid);
+    private readonly NpgsqlUintTypeMapping         _cid                = new("cid", EDBDbType.Cid);
+    private readonly NpgsqlUintTypeMapping         _regtype            = new("regtype", EDBDbType.Regtype);
+    private readonly NpgsqlUintTypeMapping         _lo                 = new("lo", EDBDbType.Oid);
 
     // Full text search mappings
     private readonly NpgsqlTsQueryTypeMapping   _tsquery               = new();
@@ -184,9 +184,9 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     private readonly NpgsqlPgLsnTypeMapping           _pgLsn           = new();
 
     private readonly NpgsqlLTreeTypeMapping           _ltree           = new();
-    private readonly NpgsqlStringTypeMapping          _ltreeString     = new("ltree", NpgsqlDbType.LTree);
-    private readonly NpgsqlStringTypeMapping          _lquery          = new("lquery", NpgsqlDbType.LQuery);
-    private readonly NpgsqlStringTypeMapping          _ltxtquery       = new("ltxtquery", NpgsqlDbType.LTxtQuery);
+    private readonly NpgsqlStringTypeMapping          _ltreeString     = new("ltree", EDBDbType.LTree);
+    private readonly NpgsqlStringTypeMapping          _lquery          = new("lquery", EDBDbType.LQuery);
+    private readonly NpgsqlStringTypeMapping          _ltxtquery       = new("ltxtquery", EDBDbType.LTxtQuery);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -218,13 +218,13 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         _sqlGenerationHelper = Check.NotNull(sqlGenerationHelper, nameof(sqlGenerationHelper));
 
         // Initialize some mappings which depend on other mappings
-        _int4range         = new NpgsqlRangeTypeMapping("int4range", typeof(NpgsqlRange<int>),      _int4,         sqlGenerationHelper);
-        _int8range         = new NpgsqlRangeTypeMapping("int8range", typeof(NpgsqlRange<long>),     _int8,         sqlGenerationHelper);
-        _numrange          = new NpgsqlRangeTypeMapping("numrange",  typeof(NpgsqlRange<decimal>),  _numeric,      sqlGenerationHelper);
-        _tsrange           = new NpgsqlRangeTypeMapping("tsrange",   typeof(NpgsqlRange<DateTime>), _timestamp,    sqlGenerationHelper);
-        _tstzrange         = new NpgsqlRangeTypeMapping("tstzrange", typeof(NpgsqlRange<DateTime>), _timestamptz,  sqlGenerationHelper);
-        _dateOnlyDaterange = new NpgsqlRangeTypeMapping("daterange", typeof(NpgsqlRange<DateOnly>), _dateDateOnly, sqlGenerationHelper);
-        _dateTimeDaterange = new NpgsqlRangeTypeMapping("daterange", typeof(NpgsqlRange<DateTime>), _dateDateTime, sqlGenerationHelper);
+        _int4range         = new NpgsqlRangeTypeMapping("int4range", typeof(EDBRange<int>),      _int4,         sqlGenerationHelper);
+        _int8range         = new NpgsqlRangeTypeMapping("int8range", typeof(EDBRange<long>),     _int8,         sqlGenerationHelper);
+        _numrange          = new NpgsqlRangeTypeMapping("numrange",  typeof(EDBRange<decimal>),  _numeric,      sqlGenerationHelper);
+        _tsrange           = new NpgsqlRangeTypeMapping("tsrange",   typeof(EDBRange<DateTime>), _timestamp,    sqlGenerationHelper);
+        _tstzrange         = new NpgsqlRangeTypeMapping("tstzrange", typeof(EDBRange<DateTime>), _timestamptz,  sqlGenerationHelper);
+        _dateOnlyDaterange = new NpgsqlRangeTypeMapping("daterange", typeof(EDBRange<DateOnly>), _dateDateOnly, sqlGenerationHelper);
+        _dateTimeDaterange = new NpgsqlRangeTypeMapping("daterange", typeof(EDBRange<DateTime>), _dateDateTime, sqlGenerationHelper);
 
         _rangeTypeMappings = new()
         {
@@ -235,21 +235,21 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             { typeof(DateTime), new() { _tsrange, _tstzrange, _dateTimeDaterange } }
         };
 
-        _int4multirangeArray         = new NpgsqlMultirangeTypeMapping("int4multirange", typeof(NpgsqlRange<int>[]),          _int4range,         sqlGenerationHelper);
-        _int8multirangeArray         = new NpgsqlMultirangeTypeMapping("int8multirange", typeof(NpgsqlRange<long>[]),         _int8range,         sqlGenerationHelper);
-        _nummultirangeArray          = new NpgsqlMultirangeTypeMapping("nummultirange",  typeof(NpgsqlRange<decimal>[]),      _numrange,          sqlGenerationHelper);
-        _tsmultirangeArray           = new NpgsqlMultirangeTypeMapping("tsmultirange",   typeof(NpgsqlRange<DateTime>[]),     _tsrange,           sqlGenerationHelper);
-        _tstzmultirangeArray         = new NpgsqlMultirangeTypeMapping("tstzmultirange", typeof(NpgsqlRange<DateTime>[]),     _tstzrange,         sqlGenerationHelper);
-        _dateOnlyDatemultirangeArray = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(NpgsqlRange<DateOnly>[]),     _dateOnlyDaterange, sqlGenerationHelper);
-        _dateTimeDatemultirangeArray = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(NpgsqlRange<DateTime>[]),     _dateTimeDaterange, sqlGenerationHelper);
+        _int4multirangeArray         = new NpgsqlMultirangeTypeMapping("int4multirange", typeof(EDBRange<int>[]),          _int4range,         sqlGenerationHelper);
+        _int8multirangeArray         = new NpgsqlMultirangeTypeMapping("int8multirange", typeof(EDBRange<long>[]),         _int8range,         sqlGenerationHelper);
+        _nummultirangeArray          = new NpgsqlMultirangeTypeMapping("nummultirange",  typeof(EDBRange<decimal>[]),      _numrange,          sqlGenerationHelper);
+        _tsmultirangeArray           = new NpgsqlMultirangeTypeMapping("tsmultirange",   typeof(EDBRange<DateTime>[]),     _tsrange,           sqlGenerationHelper);
+        _tstzmultirangeArray         = new NpgsqlMultirangeTypeMapping("tstzmultirange", typeof(EDBRange<DateTime>[]),     _tstzrange,         sqlGenerationHelper);
+        _dateOnlyDatemultirangeArray = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(EDBRange<DateOnly>[]),     _dateOnlyDaterange, sqlGenerationHelper);
+        _dateTimeDatemultirangeArray = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(EDBRange<DateTime>[]),     _dateTimeDaterange, sqlGenerationHelper);
 
-        _int4multirangeList          = new NpgsqlMultirangeTypeMapping("int4multirange", typeof(List<NpgsqlRange<int>>),      _int4range,         sqlGenerationHelper);
-        _int8multirangeList          = new NpgsqlMultirangeTypeMapping("int8multirange", typeof(List<NpgsqlRange<long>>),     _int8range,         sqlGenerationHelper);
-        _nummultirangeList           = new NpgsqlMultirangeTypeMapping("nummultirange",  typeof(List<NpgsqlRange<decimal>>),  _numrange,          sqlGenerationHelper);
-        _tsmultirangeList            = new NpgsqlMultirangeTypeMapping("tsmultirange",   typeof(List<NpgsqlRange<DateTime>>), _tsrange,           sqlGenerationHelper);
-        _tstzmultirangeList          = new NpgsqlMultirangeTypeMapping("tstzmultirange", typeof(List<NpgsqlRange<DateTime>>), _tstzrange,         sqlGenerationHelper);
-        _dateOnlyDatemultirangeList  = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(List<NpgsqlRange<DateOnly>>), _dateOnlyDaterange, sqlGenerationHelper);
-        _dateTimeMultirangeList      = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(List<NpgsqlRange<DateTime>>), _dateTimeDaterange, sqlGenerationHelper);
+        _int4multirangeList          = new NpgsqlMultirangeTypeMapping("int4multirange", typeof(List<EDBRange<int>>),      _int4range,         sqlGenerationHelper);
+        _int8multirangeList          = new NpgsqlMultirangeTypeMapping("int8multirange", typeof(List<EDBRange<long>>),     _int8range,         sqlGenerationHelper);
+        _nummultirangeList           = new NpgsqlMultirangeTypeMapping("nummultirange",  typeof(List<EDBRange<decimal>>),  _numrange,          sqlGenerationHelper);
+        _tsmultirangeList            = new NpgsqlMultirangeTypeMapping("tsmultirange",   typeof(List<EDBRange<DateTime>>), _tsrange,           sqlGenerationHelper);
+        _tstzmultirangeList          = new NpgsqlMultirangeTypeMapping("tstzmultirange", typeof(List<EDBRange<DateTime>>), _tstzrange,         sqlGenerationHelper);
+        _dateOnlyDatemultirangeList  = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(List<EDBRange<DateOnly>>), _dateOnlyDaterange, sqlGenerationHelper);
+        _dateTimeMultirangeList      = new NpgsqlMultirangeTypeMapping("datemultirange", typeof(List<EDBRange<DateTime>>), _dateTimeDaterange, sqlGenerationHelper);
 
         _multirangeTypeMappings = new()
         {
@@ -392,26 +392,26 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             { typeof(BitArray),                            _varbit               },
             { typeof(ImmutableDictionary<string, string>), _immutableHstore      },
             { typeof(Dictionary<string, string>),          _hstore               },
-            { typeof(NpgsqlTid),                           _tid                  },
-            { typeof(NpgsqlLogSequenceNumber),             _pgLsn                },
+            { typeof(EDBTid),                           _tid                  },
+            { typeof(EDBLogSequenceNumber),             _pgLsn                },
 
-            { typeof(NpgsqlPoint),                         _point                },
-            { typeof(NpgsqlBox),                           _box                  },
-            { typeof(NpgsqlLine),                          _line                 },
-            { typeof(NpgsqlLSeg),                          _lseg                 },
-            { typeof(NpgsqlPath),                          _path                 },
-            { typeof(NpgsqlPolygon),                       _polygon              },
-            { typeof(NpgsqlCircle),                        _circle               },
+            { typeof(EDBPoint),                         _point                },
+            { typeof(EDBBox),                           _box                  },
+            { typeof(EDBLine),                          _line                 },
+            { typeof(EDBLSeg),                          _lseg                 },
+            { typeof(EDBPath),                          _path                 },
+            { typeof(EDBPolygon),                       _polygon              },
+            { typeof(EDBCircle),                        _circle               },
 
-            { typeof(NpgsqlRange<int>),                    _int4range            },
-            { typeof(NpgsqlRange<long>),                   _int8range            },
-            { typeof(NpgsqlRange<decimal>),                _numrange             },
-            { typeof(NpgsqlRange<DateTime>),               LegacyTimestampBehavior ? _tsrange : _tstzrange },
-            { typeof(NpgsqlRange<DateTimeOffset>),          _tstzrange           },
-            { typeof(NpgsqlRange<DateOnly>),               _dateOnlyDaterange },
+            { typeof(EDBRange<int>),                    _int4range            },
+            { typeof(EDBRange<long>),                   _int8range            },
+            { typeof(EDBRange<decimal>),                _numrange             },
+            { typeof(EDBRange<DateTime>),               LegacyTimestampBehavior ? _tsrange : _tstzrange },
+            { typeof(EDBRange<DateTimeOffset>),          _tstzrange           },
+            { typeof(EDBRange<DateOnly>),               _dateOnlyDaterange },
 
-            { typeof(NpgsqlTsQuery),                       _tsquery              },
-            { typeof(NpgsqlTsVector),                      _tsvector             },
+            { typeof(EDBTsQuery),                       _tsquery              },
+            { typeof(EDBTsVector),                      _tsvector             },
             { typeof(NpgsqlTsRankingNormalization),        _rankingNormalization },
 
             { typeof(LTree),                               _ltree                }
@@ -426,23 +426,23 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             storeTypeMappings["tstzmultirange"] = new[] { _tstzmultirangeArray, _tstzmultirangeList };
             storeTypeMappings["datemultirange"] = new[] { _dateOnlyDatemultirangeArray, _dateOnlyDatemultirangeList, _dateTimeDatemultirangeArray, _dateTimeMultirangeList };
 
-            clrTypeMappings[typeof(NpgsqlRange<int>[])] = _int4multirangeArray;
-            clrTypeMappings[typeof(NpgsqlRange<long>[])] = _int8multirangeArray;
-            clrTypeMappings[typeof(NpgsqlRange<decimal>[])] = _nummultirangeArray;
-            clrTypeMappings[typeof(NpgsqlRange<DateTime>[])] = LegacyTimestampBehavior ? _tsmultirangeArray : _tstzmultirangeArray;
-            clrTypeMappings[typeof(NpgsqlRange<DateOnly>[])] = _dateOnlyDatemultirangeArray;
+            clrTypeMappings[typeof(EDBRange<int>[])] = _int4multirangeArray;
+            clrTypeMappings[typeof(EDBRange<long>[])] = _int8multirangeArray;
+            clrTypeMappings[typeof(EDBRange<decimal>[])] = _nummultirangeArray;
+            clrTypeMappings[typeof(EDBRange<DateTime>[])] = LegacyTimestampBehavior ? _tsmultirangeArray : _tstzmultirangeArray;
+            clrTypeMappings[typeof(EDBRange<DateOnly>[])] = _dateOnlyDatemultirangeArray;
 
-            clrTypeMappings[typeof(List<NpgsqlRange<int>>)] = _int4multirangeList;
-            clrTypeMappings[typeof(List<NpgsqlRange<long>>)] = _int8multirangeList;
-            clrTypeMappings[typeof(List<NpgsqlRange<decimal>>)] = _nummultirangeList;
-            clrTypeMappings[typeof(List<NpgsqlRange<DateTime>>)] = LegacyTimestampBehavior ? _tsmultirangeList : _tstzmultirangeList;
-            clrTypeMappings[typeof(List<NpgsqlRange<DateOnly>>)] = _dateOnlyDatemultirangeList;
+            clrTypeMappings[typeof(List<EDBRange<int>>)] = _int4multirangeList;
+            clrTypeMappings[typeof(List<EDBRange<long>>)] = _int8multirangeList;
+            clrTypeMappings[typeof(List<EDBRange<decimal>>)] = _nummultirangeList;
+            clrTypeMappings[typeof(List<EDBRange<DateTime>>)] = LegacyTimestampBehavior ? _tsmultirangeList : _tstzmultirangeList;
+            clrTypeMappings[typeof(List<EDBRange<DateOnly>>)] = _dateOnlyDatemultirangeList;
         }
 
         StoreTypeMappings = new ConcurrentDictionary<string, RelationalTypeMapping[]>(storeTypeMappings, StringComparer.OrdinalIgnoreCase);
         ClrTypeMappings = new ConcurrentDictionary<Type, RelationalTypeMapping>(clrTypeMappings);
 
-        LoadUserDefinedTypeMappings(sqlGenerationHelper, options.DataSource as NpgsqlDataSource);
+        LoadUserDefinedTypeMappings(sqlGenerationHelper, options.DataSource as EDBDataSource);
 
         _userRangeDefinitions = options.UserRangeDefinitions;
     }
@@ -453,19 +453,19 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     /// </summary>
     public virtual void LoadUserDefinedTypeMappings(
         ISqlGenerationHelper sqlGenerationHelper,
-        NpgsqlDataSource? dataSource)
+        EDBDataSource? dataSource)
         => SetupEnumMappings(sqlGenerationHelper, dataSource);
 
     /// <summary>
     /// Gets all global enum mappings from the ADO.NET layer and creates mappings for them
     /// </summary>
-    protected virtual void SetupEnumMappings(ISqlGenerationHelper sqlGenerationHelper, NpgsqlDataSource? dataSource)
+    protected virtual void SetupEnumMappings(ISqlGenerationHelper sqlGenerationHelper, EDBDataSource? dataSource)
     {
         var adoEnumMappings = new List<IUserEnumTypeMapping>();
 
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        if (NpgsqlConnection.GlobalTypeMapper.GetType().GetProperty("UserTypeMappings")?.GetMethod is { } globalTypeMappingsMethodInfo
-            && globalTypeMappingsMethodInfo.Invoke(NpgsqlConnection.GlobalTypeMapper, Array.Empty<object>()) is
+#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
+        if (EDBConnection.GlobalTypeMapper.GetType().GetProperty("UserTypeMappings")?.GetMethod is { } globalTypeMappingsMethodInfo
+            && globalTypeMappingsMethodInfo.Invoke(EDBConnection.GlobalTypeMapper, Array.Empty<object>()) is
                 IDictionary<string, IUserTypeMapping> globalUserMappings)
         {
             adoEnumMappings.AddRange(globalUserMappings.Values.OfType<IUserEnumTypeMapping>());
@@ -475,7 +475,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         // TODO: Think about what to do here. We could just require users to do the mapping at the EF level, and then EF would take care
         // of the ADO mapping.
         if (dataSource is not null
-            && typeof(NpgsqlDataSource).GetField("_userTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance) is
+            && typeof(EDBDataSource).GetField("_userTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance) is
                 { } dataSourceTypeMappingsFieldInfo
             && dataSourceTypeMappingsFieldInfo.GetValue(dataSource) is IDictionary<string, IUserTypeMapping> dataSourceUserMappings)
         {
@@ -759,9 +759,9 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         var rangeStoreType = mappingInfo.StoreTypeName;
         var rangeClrType = mappingInfo.ClrType;
 
-        // If the incoming MappingInfo contains a ClrType, make sure it's an NpgsqlRange<T>, otherwise bail
+        // If the incoming MappingInfo contains a ClrType, make sure it's an EDBRange<T>, otherwise bail
         if (rangeClrType is not null &&
-            (!rangeClrType.IsGenericType || rangeClrType.GetGenericTypeDefinition() != typeof(NpgsqlRange<>)))
+            (!rangeClrType.IsGenericType || rangeClrType.GetGenericTypeDefinition() != typeof(EDBRange<>)))
         {
             return null;
         }
@@ -781,9 +781,9 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             {
                 // The incoming MappingInfo does not contain a ClrType, only a StoreType (i.e. scaffolding).
                 // Construct the range ClrType from the range definition's subtype ClrType
-                rangeClrType = typeof(NpgsqlRange<>).MakeGenericType(rangeDefinition.SubtypeClrType);
+                rangeClrType = typeof(EDBRange<>).MakeGenericType(rangeDefinition.SubtypeClrType);
             }
-            else if (rangeClrType != typeof(NpgsqlRange<>).MakeGenericType(rangeDefinition.SubtypeClrType))
+            else if (rangeClrType != typeof(EDBRange<>).MakeGenericType(rangeDefinition.SubtypeClrType))
             {
                 // If the incoming MappingInfo also contains a ClrType (in addition to the StoreType), make sure it
                 // corresponds to the subtype ClrType on the range definition

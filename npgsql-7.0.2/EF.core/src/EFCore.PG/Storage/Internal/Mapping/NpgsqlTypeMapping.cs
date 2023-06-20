@@ -4,12 +4,12 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 /// The base class for mapping Npgsql-specific types. It configures parameters with the
-/// <see cref="NpgsqlDbType"/> provider-specific type enum.
+/// <see cref="EDBDbType"/> provider-specific type enum.
 /// </summary>
 public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapping
 {
     /// <inheritdoc />
-    public virtual NpgsqlDbType NpgsqlDbType { get; }
+    public virtual EDBDbType EDBDbType { get; }
 
     // ReSharper disable once PublicConstructorInAbstractClass
     /// <summary>
@@ -18,18 +18,18 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
     /// <param name="storeType">The database type to map.</param>
     /// <param name="clrType">The CLR type to map.</param>
     /// <param name="npgsqlDbType">The database type used by Npgsql.</param>
-    public NpgsqlTypeMapping(string storeType, Type clrType, NpgsqlDbType npgsqlDbType)
+    public NpgsqlTypeMapping(string storeType, Type clrType, EDBDbType npgsqlDbType)
         : base(storeType, clrType)
-        => NpgsqlDbType = npgsqlDbType;
+        => EDBDbType = npgsqlDbType;
 
     /// <summary>
     /// Constructs an instance of the <see cref="NpgsqlTypeMapping"/> class.
     /// </summary>
     /// <param name="parameters">The parameters for this mapping.</param>
     /// <param name="npgsqlDbType">The database type of the range subtype.</param>
-    protected NpgsqlTypeMapping(RelationalTypeMappingParameters parameters, NpgsqlDbType npgsqlDbType)
+    protected NpgsqlTypeMapping(RelationalTypeMappingParameters parameters, EDBDbType npgsqlDbType)
         : base(parameters)
-        => NpgsqlDbType = npgsqlDbType;
+        => EDBDbType = npgsqlDbType;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -45,7 +45,7 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
         }
 
         base.ConfigureParameter(parameter);
-        npgsqlParameter.NpgsqlDbType = NpgsqlDbType;
+        npgsqlParameter.EDBDbType = EDBDbType;
     }
 
     /// <summary>

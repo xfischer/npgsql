@@ -337,7 +337,7 @@ public class NpgsqlLTreeTranslator : IMethodCallTranslator, IMemberTranslator
     // Applying e.g. the LQuery type mapping on a function operator is a bit tricky.
     // If it's a constant, we can just apply the mapping: the constant will get rendered as an untyped string literal, and PG will
     // coerce it as the function parameter.
-    // If it's a parameter, we can also just apply the mapping (which causes NpgsqlDbType to be set to LQuery).
+    // If it's a parameter, we can also just apply the mapping (which causes EDBDbType to be set to LQuery).
     // For anything else, we may need an explicit cast to LQuery, e.g. a plain text column or a concatenation between strings;
     // apply the default type mapping and then apply an additional Convert node if the resulting mapping isn't what we need.
     private SqlExpression ApplyTypeMappingOrConvert(SqlExpression sqlExpression, RelationalTypeMapping typeMapping)

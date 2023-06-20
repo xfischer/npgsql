@@ -45,7 +45,7 @@ public static class NpgsqlEntityTypeBuilderExtensions
     /// <returns>A builder to further configure the property.</returns>
     public static EntityTypeBuilder<TEntity> HasGeneratedTsVectorColumn<TEntity>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
-        Expression<Func<TEntity, NpgsqlTsVector>> tsVectorPropertyExpression,
+        Expression<Func<TEntity, EDBTsVector>> tsVectorPropertyExpression,
         string config,
         Expression<Func<TEntity, object>> includeExpression)
         where TEntity : class

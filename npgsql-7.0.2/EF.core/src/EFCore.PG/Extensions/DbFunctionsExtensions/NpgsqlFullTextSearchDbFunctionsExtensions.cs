@@ -19,7 +19,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// https://www.postgresql.org/docs/current/static/functions-textsearch.html
     /// </remarks>
-    public static NpgsqlTsVector ArrayToTsVector(this DbFunctions _, string[] lexemes)
+    public static EDBTsVector ArrayToTsVector(this DbFunctions _, string[] lexemes)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ArrayToTsVector)));
 
     /// <summary>
@@ -28,7 +28,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-DOCUMENTS
     /// </remarks>
-    public static NpgsqlTsVector ToTsVector(this DbFunctions _, string document)
+    public static EDBTsVector ToTsVector(this DbFunctions _, string document)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ToTsVector)));
 
     /// <summary>
@@ -38,7 +38,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-DOCUMENTS
     /// </remarks>
-    public static NpgsqlTsVector ToTsVector(this DbFunctions _, [NotParameterized] string config, string document)
+    public static EDBTsVector ToTsVector(this DbFunctions _, [NotParameterized] string config, string document)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ToTsVector)));
 
     /// <summary>
@@ -47,7 +47,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery PlainToTsQuery(this DbFunctions _, string query)
+    public static EDBTsQuery PlainToTsQuery(this DbFunctions _, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(PlainToTsQuery)));
 
     /// <summary>
@@ -57,7 +57,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery PlainToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
+    public static EDBTsQuery PlainToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(PlainToTsQuery)));
 
     /// <summary>
@@ -66,7 +66,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery PhraseToTsQuery(this DbFunctions _, string query)
+    public static EDBTsQuery PhraseToTsQuery(this DbFunctions _, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(PhraseToTsQuery)));
 
     /// <summary>
@@ -76,7 +76,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery PhraseToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
+    public static EDBTsQuery PhraseToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(PhraseToTsQuery)));
 
     /// <summary>
@@ -87,7 +87,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery ToTsQuery(this DbFunctions _, string query)
+    public static EDBTsQuery ToTsQuery(this DbFunctions _, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ToTsQuery)));
 
     /// <summary>
@@ -99,7 +99,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery ToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
+    public static EDBTsQuery ToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ToTsQuery)));
 
     /// <summary>
@@ -108,7 +108,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery WebSearchToTsQuery(this DbFunctions _, string query)
+    public static EDBTsQuery WebSearchToTsQuery(this DbFunctions _, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(WebSearchToTsQuery)));
 
     /// <summary>
@@ -118,7 +118,7 @@ public static class NpgsqlFullTextSearchDbFunctionsExtensions
     /// <remarks>
     /// http://www.postgresql.org/docs/current/static/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES
     /// </remarks>
-    public static NpgsqlTsQuery WebSearchToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
+    public static EDBTsQuery WebSearchToTsQuery(this DbFunctions _, [NotParameterized] string config, string query)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(WebSearchToTsQuery)));
 
     /// <summary>

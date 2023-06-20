@@ -69,7 +69,7 @@ public class NpgsqlCharacterStringTypeMapping : NpgsqlStringTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlCharacterStringTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Char)
+        : base(parameters, EDBDbType.Char)
     {
     }
 

@@ -47,7 +47,7 @@ public class NpgsqlRangeTranslator : IMethodCallTranslator, IMemberTranslator
         IReadOnlyList<SqlExpression> arguments,
         IDiagnosticsLogger<DbLoggerCategory.Query> logger)
     {
-        // Any() over multirange -> NOT isempty(). NpgsqlRange<T> has IsEmpty which is translated below.
+        // Any() over multirange -> NOT isempty(). EDBRange<T> has IsEmpty which is translated below.
         if (_supportsMultiranges
             && method.IsGenericMethod
             && method.GetGenericMethodDefinition() == EnumerableAnyWithoutPredicate
@@ -139,19 +139,19 @@ public class NpgsqlRangeTranslator : IMethodCallTranslator, IMemberTranslator
         IDiagnosticsLogger<DbLoggerCategory.Query> logger)
     {
         var type = member.DeclaringType;
-        if (type is null || !type.IsGenericType || type.GetGenericTypeDefinition() != typeof(NpgsqlRange<>))
+        if (type is null || !type.IsGenericType || type.GetGenericTypeDefinition() != typeof(EDBRange<>))
         {
             return null;
         }
 
-        if (member.Name == nameof(NpgsqlRange<int>.LowerBound) || member.Name == nameof(NpgsqlRange<int>.UpperBound))
+        if (member.Name == nameof(EDBRange<int>.LowerBound) || member.Name == nameof(EDBRange<int>.UpperBound))
         {
             var typeMapping = instance!.TypeMapping is NpgsqlRangeTypeMapping rangeMapping
                 ? rangeMapping.SubtypeMapping
                 : _typeMappingSource.FindMapping(returnType, _model);
 
             return _sqlExpressionFactory.Function(
-                member.Name == nameof(NpgsqlRange<int>.LowerBound) ? "lower" : "upper",
+                member.Name == nameof(EDBRange<int>.LowerBound) ? "lower" : "upper",
                 new[] { instance },
                 nullable: true,
                 argumentsPropagateNullability: TrueArrays[1],
@@ -161,11 +161,11 @@ public class NpgsqlRangeTranslator : IMethodCallTranslator, IMemberTranslator
 
         return member.Name switch
         {
-            nameof(NpgsqlRange<int>.IsEmpty)               => SingleArgBoolFunction("isempty", instance!),
-            nameof(NpgsqlRange<int>.LowerBoundIsInclusive) => SingleArgBoolFunction("lower_inc", instance!),
-            nameof(NpgsqlRange<int>.UpperBoundIsInclusive) => SingleArgBoolFunction("upper_inc", instance!),
-            nameof(NpgsqlRange<int>.LowerBoundInfinite)    => SingleArgBoolFunction("lower_inf", instance!),
-            nameof(NpgsqlRange<int>.UpperBoundInfinite)    => SingleArgBoolFunction("upper_inf", instance!),
+            nameof(EDBRange<int>.IsEmpty)               => SingleArgBoolFunction("isempty", instance!),
+            nameof(EDBRange<int>.LowerBoundIsInclusive) => SingleArgBoolFunction("lower_inc", instance!),
+            nameof(EDBRange<int>.UpperBoundIsInclusive) => SingleArgBoolFunction("upper_inc", instance!),
+            nameof(EDBRange<int>.LowerBoundInfinite)    => SingleArgBoolFunction("lower_inf", instance!),
+            nameof(EDBRange<int>.UpperBoundInfinite)    => SingleArgBoolFunction("upper_inf", instance!),
 
             _ => null
         };
