@@ -229,12 +229,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string>(
                         logger.Options,
-                        NpgsqlEventId.EnumColumnSkippedWarning,
+                        NpgsqlEfEventId.EnumColumnSkippedWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.EnumColumnSkippedWarning",
+                        "NpgsqlEfEventId.EnumColumnSkippedWarning",
                         level => LoggerMessage.Define<string>(
                             level,
-                            NpgsqlEventId.EnumColumnSkippedWarning,
+                            NpgsqlEfEventId.EnumColumnSkippedWarning,
                             _resourceManager.GetString("LogEnumColumnSkipped")!)));
             }
 
@@ -254,12 +254,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string>(
                         logger.Options,
-                        NpgsqlEventId.ExpressionIndexSkippedWarning,
+                        NpgsqlEfEventId.ExpressionIndexSkippedWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.ExpressionIndexSkippedWarning",
+                        "NpgsqlEfEventId.ExpressionIndexSkippedWarning",
                         level => LoggerMessage.Define<string, string>(
                             level,
-                            NpgsqlEventId.ExpressionIndexSkippedWarning,
+                            NpgsqlEfEventId.ExpressionIndexSkippedWarning,
                             _resourceManager.GetString("LogExpressionIndexSkipped")!)));
             }
 
@@ -279,12 +279,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string, string, string, string?, bool>(
                         logger.Options,
-                        NpgsqlEventId.CollationFound,
+                        NpgsqlEfEventId.CollationFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.CollationFound",
+                        "NpgsqlEfEventId.CollationFound",
                         level => LoggerMessage.Define<string, string, string, string, string?, bool>(
                             level,
-                            NpgsqlEventId.CollationFound,
+                            NpgsqlEfEventId.CollationFound,
                             _resourceManager.GetString("LogFoundCollation")!)));
             }
 
@@ -304,9 +304,9 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new FallbackEventDefinition(
                         logger.Options,
-                        NpgsqlEventId.ColumnFound,
+                        NpgsqlEfEventId.ColumnFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.ColumnFound",
+                        "NpgsqlEfEventId.ColumnFound",
                         _resourceManager.GetString("LogFoundColumn")!));
             }
 
@@ -326,12 +326,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string, string, string>(
                         logger.Options,
-                        EDBEventId.ForeignKeyFound,
+                        NpgsqlEfEventId.ForeignKeyFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.ForeignKeyFound",
+                        "NpgsqlEfEventId.ForeignKeyFound",
                         level => LoggerMessage.Define<string, string, string, string>(
                             level,
-                            NpgsqlEventId.ForeignKeyFound,
+                            NpgsqlEfEventId.ForeignKeyFound,
                             _resourceManager.GetString("LogFoundForeignKey")!)));
             }
 
@@ -351,12 +351,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string, bool>(
                         logger.Options,
-                        NpgsqlEventId.IndexFound,
+                        NpgsqlEfEventId.IndexFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.IndexFound",
+                        "NpgsqlEfEventId.IndexFound",
                         level => LoggerMessage.Define<string, string, bool>(
                             level,
-                            NpgsqlEventId.IndexFound,
+                            NpgsqlEfEventId.IndexFound,
                             _resourceManager.GetString("LogFoundIndex")!)));
             }
 
@@ -376,12 +376,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string>(
                         logger.Options,
-                        NpgsqlEventId.PrimaryKeyFound,
+                        NpgsqlEfEventId.PrimaryKeyFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.PrimaryKeyFound",
+                        "NpgsqlEfEventId.PrimaryKeyFound",
                         level => LoggerMessage.Define<string, string>(
                             level,
-                            NpgsqlEventId.PrimaryKeyFound,
+                            NpgsqlEfEventId.PrimaryKeyFound,
                             _resourceManager.GetString("LogFoundPrimaryKey")!)));
             }
 
@@ -401,9 +401,9 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new FallbackEventDefinition(
                         logger.Options,
-                        NpgsqlEventId.SequenceFound,
+                        NpgsqlEfEventId.SequenceFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.SequenceFound",
+                        "NpgsqlEfEventId.SequenceFound",
                         _resourceManager.GetString("LogFoundSequence")!));
             }
 
@@ -423,12 +423,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string>(
                         logger.Options,
-                        NpgsqlEventId.TableFound,
+                        NpgsqlEfEventId.TableFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.TableFound",
+                        "NpgsqlEfEventId.TableFound",
                         level => LoggerMessage.Define<string>(
                             level,
-                            NpgsqlEventId.TableFound,
+                            NpgsqlEfEventId.TableFound,
                             _resourceManager.GetString("LogFoundTable")!)));
             }
 
@@ -448,12 +448,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string?, string>(
                         logger.Options,
-                        NpgsqlEventId.UniqueConstraintFound,
+                        NpgsqlEfEventId.UniqueConstraintFound,
                         LogLevel.Debug,
-                        "NpgsqlEventId.UniqueConstraintFound",
+                        "NpgsqlEfEventId.UniqueConstraintFound",
                         level => LoggerMessage.Define<string?, string>(
                             level,
-                            NpgsqlEventId.UniqueConstraintFound,
+                            NpgsqlEfEventId.UniqueConstraintFound,
                             _resourceManager.GetString("LogFoundUniqueConstraint")!)));
             }
 
@@ -473,12 +473,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string?>(
                         logger.Options,
-                        NpgsqlEventId.MissingSchemaWarning,
+                        NpgsqlEfEventId.MissingSchemaWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.MissingSchemaWarning",
+                        "NpgsqlEfEventId.MissingSchemaWarning",
                         level => LoggerMessage.Define<string?>(
                             level,
-                            NpgsqlEventId.MissingSchemaWarning,
+                            NpgsqlEfEventId.MissingSchemaWarning,
                             _resourceManager.GetString("LogMissingSchema")!)));
             }
 
@@ -498,12 +498,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string?>(
                         logger.Options,
-                        NpgsqlEventId.MissingTableWarning,
+                        NpgsqlEfEventId.MissingTableWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.MissingTableWarning",
+                        "NpgsqlEfEventId.MissingTableWarning",
                         level => LoggerMessage.Define<string?>(
                             level,
-                            NpgsqlEventId.MissingTableWarning,
+                            NpgsqlEfEventId.MissingTableWarning,
                             _resourceManager.GetString("LogMissingTable")!)));
             }
 
@@ -523,12 +523,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string, string, string>(
                         logger.Options,
-                        NpgsqlEventId.ForeignKeyPrincipalColumnMissingWarning,
+                        NpgsqlEfEventId.ForeignKeyPrincipalColumnMissingWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.ForeignKeyPrincipalColumnMissingWarning",
+                        "NpgsqlEfEventId.ForeignKeyPrincipalColumnMissingWarning",
                         level => LoggerMessage.Define<string, string, string, string>(
                             level,
-                            NpgsqlEventId.ForeignKeyPrincipalColumnMissingWarning,
+                            NpgsqlEfEventId.ForeignKeyPrincipalColumnMissingWarning,
                             _resourceManager.GetString("LogPrincipalColumnNotFound")!)));
             }
 
@@ -548,12 +548,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string?, string?, string?>(
                         logger.Options,
-                        NpgsqlEventId.ForeignKeyReferencesMissingPrincipalTableWarning,
+                        NpgsqlEfEventId.ForeignKeyReferencesMissingPrincipalTableWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.ForeignKeyReferencesMissingPrincipalTableWarning",
+                        "NpgsqlEfEventId.ForeignKeyReferencesMissingPrincipalTableWarning",
                         level => LoggerMessage.Define<string?, string?, string?>(
                             level,
-                            NpgsqlEventId.ForeignKeyReferencesMissingPrincipalTableWarning,
+                            NpgsqlEfEventId.ForeignKeyReferencesMissingPrincipalTableWarning,
                             _resourceManager.GetString("LogPrincipalTableNotInSelectionSet")!)));
             }
 
@@ -573,12 +573,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string?, string>(
                         logger.Options,
-                        NpgsqlEventId.UnsupportedColumnConstraintSkippedWarning,
+                        NpgsqlEfEventId.UnsupportedColumnConstraintSkippedWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.UnsupportedColumnConstraintSkippedWarning",
+                        "NpgsqlEfEventId.UnsupportedColumnConstraintSkippedWarning",
                         level => LoggerMessage.Define<string?, string>(
                             level,
-                            NpgsqlEventId.UnsupportedColumnConstraintSkippedWarning,
+                            NpgsqlEfEventId.UnsupportedColumnConstraintSkippedWarning,
                             _resourceManager.GetString("LogUnsupportedColumnConstraintSkipped")!)));
             }
 
@@ -598,12 +598,12 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal
                     logger,
                     static logger => new EventDefinition<string, string>(
                         logger.Options,
-                        NpgsqlEventId.UnsupportedColumnIndexSkippedWarning,
+                        NpgsqlEfEventId.UnsupportedColumnIndexSkippedWarning,
                         LogLevel.Warning,
-                        "NpgsqlEventId.UnsupportedColumnIndexSkippedWarning",
+                        "NpgsqlEfEventId.UnsupportedColumnIndexSkippedWarning",
                         level => LoggerMessage.Define<string, string>(
                             level,
-                            NpgsqlEventId.UnsupportedColumnIndexSkippedWarning,
+                            NpgsqlEfEventId.UnsupportedColumnIndexSkippedWarning,
                             _resourceManager.GetString("LogUnsupportedColumnIndexSkipped")!)));
             }
 
