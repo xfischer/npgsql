@@ -2,10 +2,10 @@ using System.Data.Common;
 using System.Text;
 using JetBrains.Annotations;
 using NetTopologySuite.IO;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -19,8 +19,8 @@ public class NpgsqlGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMappin
     private readonly bool _isGeography;
 
     /// <inheritdoc />
-    public virtual NpgsqlDbType NpgsqlDbType
-        => _isGeography ? NpgsqlDbType.Geography : NpgsqlDbType.Geometry;
+    public virtual EDBDbType EDBDbType
+        => _isGeography ? EDBDbType.Geography : EDBDbType.Geometry;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -59,7 +59,7 @@ public class NpgsqlGeometryTypeMapping<TGeometry> : RelationalGeometryTypeMappin
     {
         base.ConfigureParameter(parameter);
 
-        ((NpgsqlParameter)parameter).NpgsqlDbType = NpgsqlDbType;
+        ((EDBParameter)parameter).EDBDbType = EDBDbType;
     }
 
     /// <summary>

@@ -1,5 +1,5 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;
@@ -26,7 +26,7 @@ public static class NpgsqlNetTopologySuiteDbContextOptionsBuilderExtensions
 
         // TODO: Global-only setup at the ADO.NET level for now, optionally allow per-connection?
 #pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite(coordinateSequenceFactory, precisionModel, handleOrdinates, geographyAsDefault);
+        EDBConnection.GlobalTypeMapper.UseNetTopologySuite(coordinateSequenceFactory, precisionModel, handleOrdinates, geographyAsDefault);
 #pragma warning restore CS0618
 
         var coreOptionsBuilder = ((IRelationalDbContextOptionsBuilderInfrastructure)optionsBuilder).OptionsBuilder;
