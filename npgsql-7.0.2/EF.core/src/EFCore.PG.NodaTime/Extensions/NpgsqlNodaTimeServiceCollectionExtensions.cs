@@ -1,5 +1,5 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;

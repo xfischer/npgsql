@@ -1,7 +1,7 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -20,7 +20,7 @@ public class DateIntervalMultirangeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public DateIntervalMultirangeMapping(Type clrType, DateIntervalRangeMapping dateIntervalRangeMapping)
-        : base("datemultirange", clrType, NpgsqlDbType.DateMultirange)
+        : base("datemultirange", clrType, EDBDbType.DateMultirange)
         => _dateIntervalRangeMapping = dateIntervalRangeMapping;
 
     /// <summary>
@@ -30,7 +30,7 @@ public class DateIntervalMultirangeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected DateIntervalMultirangeMapping(RelationalTypeMappingParameters parameters, DateIntervalRangeMapping dateIntervalRangeMapping)
-        : base(parameters, NpgsqlDbType.DateMultirange)
+        : base(parameters, EDBDbType.DateMultirange)
         => _dateIntervalRangeMapping = dateIntervalRangeMapping;
 
     /// <summary>

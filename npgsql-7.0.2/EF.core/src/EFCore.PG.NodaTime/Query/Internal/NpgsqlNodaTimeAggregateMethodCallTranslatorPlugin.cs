@@ -1,6 +1,6 @@
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

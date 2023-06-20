@@ -1,9 +1,9 @@
 using NodaTime.Text;
 using NodaTime.TimeZones;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -23,7 +23,7 @@ public class TimestampTzZonedDateTimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public TimestampTzZonedDateTimeMapping() : base("timestamp with time zone", typeof(ZonedDateTime), NpgsqlDbType.TimestampTz) {}
+    public TimestampTzZonedDateTimeMapping() : base("timestamp with time zone", typeof(ZonedDateTime), EDBDbType.TimestampTz) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -32,7 +32,7 @@ public class TimestampTzZonedDateTimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected TimestampTzZonedDateTimeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.TimestampTz) {}
+        : base(parameters, EDBDbType.TimestampTz) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -1,8 +1,8 @@
 using NodaTime.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -30,7 +30,7 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public PeriodIntervalMapping() : base("interval", typeof(Period), NpgsqlDbType.Interval) {}
+    public PeriodIntervalMapping() : base("interval", typeof(Period), EDBDbType.Interval) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -39,7 +39,7 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected PeriodIntervalMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Interval) {}
+        : base(parameters, EDBDbType.Interval) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

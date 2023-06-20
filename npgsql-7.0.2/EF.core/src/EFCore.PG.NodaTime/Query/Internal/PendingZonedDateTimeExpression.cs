@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
 
 internal class PendingZonedDateTimeExpression : SqlExpression
 {

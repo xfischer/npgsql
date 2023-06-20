@@ -1,9 +1,9 @@
 using NodaTime.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -29,7 +29,7 @@ public class TimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public TimeMapping() : base("time", typeof(LocalTime), NpgsqlDbType.Time) {}
+    public TimeMapping() : base("time", typeof(LocalTime), EDBDbType.Time) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -38,7 +38,7 @@ public class TimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected TimeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.Time) {}
+        : base(parameters, EDBDbType.Time) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

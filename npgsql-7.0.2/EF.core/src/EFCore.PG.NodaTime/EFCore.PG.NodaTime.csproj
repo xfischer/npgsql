@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
-    <RootNamespace>Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
+    <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
     <TargetFramework>net6.0</TargetFramework>
     <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
 

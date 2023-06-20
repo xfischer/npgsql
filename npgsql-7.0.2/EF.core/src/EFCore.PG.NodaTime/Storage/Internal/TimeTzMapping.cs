@@ -1,9 +1,9 @@
 using NodaTime.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
-using static Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
 
 // ReSharper disable once CheckNamespace
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -41,7 +41,7 @@ public class TimeTzMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public TimeTzMapping() : base("time with time zone", typeof(OffsetTime), NpgsqlDbType.TimeTz) {}
+    public TimeTzMapping() : base("time with time zone", typeof(OffsetTime), EDBDbType.TimeTz) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -50,7 +50,7 @@ public class TimeTzMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected TimeTzMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, NpgsqlDbType.TimeTz) {}
+        : base(parameters, EDBDbType.TimeTz) {}
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -1,7 +1,7 @@
-﻿using Npgsql.EntityFrameworkCore.PostgreSQL.Query;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Query.Internal;
 
 /// <summary>
 /// Provides translation services for <see cref="NodaTime"/> members.

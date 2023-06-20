@@ -1,4 +1,4 @@
-namespace Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties;
 
 internal static class Util
 {
