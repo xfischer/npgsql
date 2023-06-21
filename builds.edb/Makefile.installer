@@ -49,6 +49,7 @@ copy-samples:
 
 	mkdir -p $(DOTNET_STAGING_PATH)/samples
 	cp -rp $(SRC_DIR)/samples/SAMPLE_TEST.cs $(DOTNET_STAGING_PATH)/samples
+	cp -rp $(SRC_DIR)/samples/SAMPLE_TEST.vb $(DOTNET_STAGING_PATH)/samples
 
 # Install .NET
 install: edbclean get-commit $(PRE_BUILD_STEPS) $(BUILD_COMPONENTS) $(POST_BUILD_STEPS)
