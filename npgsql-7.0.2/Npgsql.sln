@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28822.285
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33801.468
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8537E50E-CF7F-49CB-B4EF-3E2A1B11F050}"
 EndProject
@@ -30,27 +30,29 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
-		README.md = README.md
 		global.json = global.json
+		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Npgsql.SourceGenerators", "src\Npgsql.SourceGenerators\Npgsql.SourceGenerators.csproj", "{63026A19-60B8-4906-81CB-216F30E8094B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.SourceGenerators", "src\Npgsql.SourceGenerators\Npgsql.SourceGenerators.csproj", "{63026A19-60B8-4906-81CB-216F30E8094B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Npgsql.NodaTime.Tests", "test\Npgsql.NodaTime.Tests\Npgsql.NodaTime.Tests.csproj", "{C00D2EB1-5719-4372-9E1C-5ED05DC23A00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.NodaTime.Tests", "test\Npgsql.NodaTime.Tests\Npgsql.NodaTime.Tests.csproj", "{C00D2EB1-5719-4372-9E1C-5ED05DC23A00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Npgsql.OpenTelemetry", "src\Npgsql.OpenTelemetry\Npgsql.OpenTelemetry.csproj", "{DA29F063-1828-47D8-B051-800AF7C9A0BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.OpenTelemetry", "src\Npgsql.OpenTelemetry\Npgsql.OpenTelemetry.csproj", "{DA29F063-1828-47D8-B051-800AF7C9A0BE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{BA7B6F53-D24D-45AC-927A-266857EA8D1E}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\build.yml = .github\workflows\build.yml
-		.github\dependabot.yml = .github\dependabot.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
+		.github\dependabot.yml = .github\dependabot.yml
 		.github\workflows\rich-code-nav.yml = .github\workflows\rich-code-nav.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Npgsql.DependencyInjection", "src\Npgsql.DependencyInjection\Npgsql.DependencyInjection.csproj", "{B58E12EB-E43D-4D77-894E-5157D2269836}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.DependencyInjection", "src\Npgsql.DependencyInjection\Npgsql.DependencyInjection.csproj", "{B58E12EB-E43D-4D77-894E-5157D2269836}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Npgsql.DependencyInjection.Tests", "test\Npgsql.DependencyInjection.Tests\Npgsql.DependencyInjection.Tests.csproj", "{EB2530FC-69F7-4DCB-A8B3-3671A157ED32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Npgsql.DependencyInjection.Tests", "test\Npgsql.DependencyInjection.Tests\Npgsql.DependencyInjection.Tests.csproj", "{EB2530FC-69F7-4DCB-A8B3-3671A157ED32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EDBSample", "EDBSample\EDBSample.csproj", "{F3A0216C-9EDA-4986-9B0C-25C8BD444443}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -172,6 +174,14 @@ Global
 		{EB2530FC-69F7-4DCB-A8B3-3671A157ED32}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EB2530FC-69F7-4DCB-A8B3-3671A157ED32}.Release|x86.ActiveCfg = Release|Any CPU
 		{EB2530FC-69F7-4DCB-A8B3-3671A157ED32}.Release|x86.Build.0 = Release|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Debug|x86.Build.0 = Debug|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Release|x86.ActiveCfg = Release|Any CPU
+		{F3A0216C-9EDA-4986-9B0C-25C8BD444443}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
