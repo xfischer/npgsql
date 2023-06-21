@@ -57,7 +57,7 @@ Module Program
                     Using EDBUpdateCommand As EDBCommand = New EDBCommand("UPDATE EMP SET ENAME ='DOTNET' WHERE EMPNO < 100", conn)
                         EDBUpdateCommand.CommandType = CommandType.Text
                         Await EDBUpdateCommand.ExecuteNonQueryAsync()
-                        Console.WriteLine("Record has been updated")
+                        Console.WriteLine("Record updated")
                     End Using
 
                     'Delete using EDBCommand Object

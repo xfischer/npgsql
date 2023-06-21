@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using EnterpriseDB.EDBClient;
 using System.Threading.Tasks;
@@ -84,7 +84,7 @@ namespace EDBClientTest
 
                     await using var result = await callable_command.ExecuteReaderAsync();
                     var fc = result.FieldCount;
-                    for (var i = 0; i < fc; i++)
+                    for (var i = 0; i < (fc + 1); i++)
                         Console.WriteLine("RESULT[" + i + "]=" + Convert.ToString(callable_command.Parameters[i].Value));
                     result.Close();
                 }
