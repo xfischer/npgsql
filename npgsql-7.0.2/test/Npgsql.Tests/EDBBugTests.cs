@@ -115,7 +115,7 @@ namespace EnterpriseDB.EDBClient.Tests
     /// Tests around EC-1113
     /// </summary>
     /// 
-        [TestFixture]
+    [TestFixture]
     public class EDB_EC_1113_Tests : TestBase
     {
         /// <summary>
@@ -303,7 +303,7 @@ namespace EnterpriseDB.EDBClient.Tests
     /// Tests around EC-1084
     /// </summary>
     /// 
-    [TestFixture, Ignore("Aborts the process")]
+    [TestFixture]
     public class EDB_EC_1084_Tests : TestBase
     {
         EDBConnection? con = null;
