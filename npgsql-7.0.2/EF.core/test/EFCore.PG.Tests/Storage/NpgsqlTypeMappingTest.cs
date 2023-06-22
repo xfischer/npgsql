@@ -272,7 +272,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_point_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBPoint(3.5, 4.5)", CodeLiteral(new EDBPoint(3.5, 4.5)));
+        => Assert.Equal("new EDBTypes.EDBPoint(3.5, 4.5)", CodeLiteral(new EDBPoint(3.5, 4.5)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_line_literal()
@@ -280,7 +280,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_line_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBLine(3.5, 4.5, 10.0)", CodeLiteral(new EDBLine(3.5, 4.5, 10)));
+        => Assert.Equal("new EDBTypes.EDBLine(3.5, 4.5, 10.0)", CodeLiteral(new EDBLine(3.5, 4.5, 10)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_lseg_literal()
@@ -288,7 +288,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_lseg_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBILSeg(3.5, 4.5, 5.5, 6.5)", CodeLiteral(new EDBLSeg(3.5, 4.5, 5.5, 6.5)));
+        => Assert.Equal("new EDBTypes.EDBLSeg(3.5, 4.5, 5.5, 6.5)", CodeLiteral(new EDBLSeg(3.5, 4.5, 5.5, 6.5)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_box_literal()
@@ -296,7 +296,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_box_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBBox(1.0, 2.0, 3.0, 4.0)", CodeLiteral(new EDBBox(1, 2, 3, 4)));
+        => Assert.Equal("new EDBTypes.EDBBox(1.0, 2.0, 3.0, 4.0)", CodeLiteral(new EDBBox(1, 2, 3, 4)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_path_closed_literal()
@@ -307,7 +307,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_closed_path_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBPath(new EDBPoint[] { new NpgsqlTypes.EDBPoint(1.0, 2.0), new NpgsqlTypes.EDBPoint(3.0, 4.0) }, false)", CodeLiteral(new EDBPath(
+        => Assert.Equal("new EDBTypes.EDBPath(new EDBPoint[] { new EDBTypes.EDBPoint(1.0, 2.0), new EDBTypes.EDBPoint(3.0, 4.0) }, false)", CodeLiteral(new EDBPath(
             new EDBPoint(1, 2),
             new EDBPoint(3, 4)
         )));
@@ -321,7 +321,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_open_path_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBPath(new EDBPoint[] { new NpgsqlTypes.EDBPoint(1.0, 2.0), new NpgsqlTypes.EDBPoint(3.0, 4.0) }, true)", CodeLiteral(new EDBPath(
+        => Assert.Equal("new EDBTypes.EDBPath(new EDBPoint[] { new EDBTypes.EDBPoint(1.0, 2.0), new EDBTypes.EDBPoint(3.0, 4.0) }, true)", CodeLiteral(new EDBPath(
             new EDBPoint(1, 2),
             new EDBPoint(3, 4)
         ) { Open = true }));
@@ -335,7 +335,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_polygon_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBPolygon(new EDBPoint[] { new NpgsqlTypes.EDBPoint(1.0, 2.0), new NpgsqlTypes.EDBPoint(3.0, 4.0) })", CodeLiteral(new EDBPolygon(
+        => Assert.Equal("new EDBTypes.EDBPolygon(new EDBPoint[] { new EDBTypes.EDBPoint(1.0, 2.0), new EDBTypes.EDBPoint(3.0, 4.0) })", CodeLiteral(new EDBPolygon(
             new EDBPoint(1, 2),
             new EDBPoint(3, 4)
         )));
@@ -346,7 +346,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_circle_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBCircle(3.5, 4.5, 5.5)", CodeLiteral(new EDBCircle(3.5, 4.5, 5.5)));
+        => Assert.Equal("new EDBTypes.EDBCircle(3.5, 4.5, 5.5)", CodeLiteral(new EDBCircle(3.5, 4.5, 5.5)));
 
     #endregion Geometric
 
@@ -592,7 +592,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_range_empty_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBRange<int>(0, false, 0, false)", CodeLiteral(EDBRange<int>.Empty));
+        => Assert.Equal("new EDBTypes.EDBRange<int>(0, false, 0, false)", CodeLiteral(EDBRange<int>.Empty));
 
     [Fact]
     public void GenerateSqlLiteral_returns_range_inclusive_literal()
@@ -604,7 +604,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_range_inclusive_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBRange<int>(4, 7)", CodeLiteral(new EDBRange<int>(4, 7)));
+        => Assert.Equal("new EDBTypes.EDBRange<int>(4, 7)", CodeLiteral(new EDBRange<int>(4, 7)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_range_inclusive_exclusive_literal()
@@ -616,7 +616,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_range_inclusive_exclusive_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBRange<int>(4, false, 7, true)", CodeLiteral(new EDBRange<int>(4, false, 7, true)));
+        => Assert.Equal("new EDBTypes.EDBRange<int>(4, false, 7, true)", CodeLiteral(new EDBRange<int>(4, false, 7, true)));
 
     [Fact]
     public void GenerateSqlLiteral_returns_range_infinite_literal()
@@ -628,7 +628,7 @@ public class NpgsqlTypeMappingTest
 
     [Fact]
     public void GenerateCodeLiteral_returns_range_infinite_literal()
-        => Assert.Equal("new NpgsqlTypes.EDBRange<int>(0, false, true, 7, true, false)", CodeLiteral(new EDBRange<int>(0, false, true, 7, true, false)));
+        => Assert.Equal("new EDBTypes.EDBRange<int>(0, false, true, 7, true, false)", CodeLiteral(new EDBRange<int>(0, false, true, 7, true, false)));
 
     // Tests for the built-in ranges
 
@@ -730,7 +730,7 @@ public class NpgsqlTypeMappingTest
             new(13, lowerBoundIsInclusive: false, lowerBoundInfinite: false, default, upperBoundIsInclusive: false, upperBoundInfinite: true)
         };
         var literal = CodeLiteral(value);
-        Assert.Equal("new[] { new NpgsqlTypes.EDBRange<int>(4, 7), new NpgsqlTypes.EDBRange<int>(9, true, 10, false), new NpgsqlTypes.EDBRange<int>(13, false, false, 0, false, true) }", literal);
+        Assert.Equal("new[] { new EDBTypes.EDBRange<int>(4, 7), new EDBTypes.EDBRange<int>(9, true, 10, false), new EDBTypes.EDBRange<int>(13, false, false, 0, false, true) }", literal);
     }
 
     [Fact]
@@ -743,7 +743,7 @@ public class NpgsqlTypeMappingTest
             new(13, lowerBoundIsInclusive: false, lowerBoundInfinite: false, default, upperBoundIsInclusive: false, upperBoundInfinite: true)
         };
         var literal = CodeLiteral(value);
-        Assert.Equal("new List<EDBRange<int>> { new NpgsqlTypes.EDBRange<int>(4, 7), new NpgsqlTypes.EDBRange<int>(9, true, 10, false), new NpgsqlTypes.EDBRange<int>(13, false, false, 0, false, true) }", literal);
+        Assert.Equal("new List<EDBRange<int>> { new EDBTypes.EDBRange<int>(4, 7), new EDBTypes.EDBRange<int>(9, true, 10, false), new EDBTypes.EDBRange<int>(13, false, false, 0, false, true) }", literal);
     }
 
     [Fact]
