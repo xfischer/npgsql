@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
+    <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
+    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
+
+    <Authors>Shay Rojansky</Authors>
+    <Description>NodaTime support plugin for PostgreSQL/Npgsql Entity Framework Core provider.</Description>
+    <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;nodatime;date;time</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Npgsql.NodaTime\Npgsql.NodaTime.csproj" />
+    <ProjectReference Include="..\EFCore.PG\EFCore.PG.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="NodaTime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="build\**\*">
+      <Pack>True</Pack>
+      <PackagePath>build</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
