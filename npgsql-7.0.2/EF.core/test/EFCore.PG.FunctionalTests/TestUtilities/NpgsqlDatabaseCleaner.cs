@@ -56,8 +56,9 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
 
     private void DropExtensions(EDBConnection conn)
     {
+    	// EnterpriseDB Team
         const string getExtensions = @"
-SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql'";
+SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql' AND name <> 'edbspl'";
 
         List<string> extensions;
         using (var cmd = new EDBCommand(getExtensions, conn))
@@ -105,6 +106,7 @@ WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog'";
     /// </summary>
     private void DropFunctions(EDBConnection conn)
     {
+    	// EntepriseDB Team : check if nspname IN ('public') WHERE clause still relevant
         const string getUserDefinedFunctions = @"
 SELECT 'DROP ROUTINE ""' || nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
 JOIN pg_namespace AS ns ON ns.oid = pg_proc.pronamespace
@@ -137,10 +139,11 @@ WHERE
             return;
         }
 
+ 		// EntepriseDB Team
         const string getUserCollations = @"SELECT nspname, collname
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
-    JOIN pg_authid auth ON auth.oid = coll.collowner WHERE rolname <> 'postgres';
+    JOIN pg_authid auth ON auth.oid = coll.collowner WHERE rolname <> 'postgres' AND rolname <> 'enteprisedb';
 ";
 
         (string Schema, string Name)[] userDefinedTypes;

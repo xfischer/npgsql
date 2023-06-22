@@ -199,6 +199,7 @@ SELECT datcollate FROM pg_database WHERE datname=current_database() AND
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
         var filter = tableFilter is not null ? $"AND {tableFilter("ns.nspname", "cls.relname")}" : null;
+        // EnterpriseDB Team : replace ns.nspname NOT IN ({internalSchemas}) by  ns.nspname IN ('public') still relevant
         var commandText = $@"
 SELECT nspname, relname, relkind, description
 FROM pg_class AS cls
@@ -206,7 +207,7 @@ JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
 LEFT OUTER JOIN pg_description AS des ON des.objoid = cls.oid AND des.objsubid=0
 WHERE
   cls.relkind IN ('r', 'v', 'm', 'f') AND
-  ns.nspname NOT IN ({internalSchemas}) AND
+  ns.nspname IN ('public')  AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
   NOT EXISTS (
@@ -269,6 +270,7 @@ WHERE
         HashSet<string> enums,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
+        // EnterpriseDB Team : replace nspname NOT IN ({internalSchemas}) by nspname IN ('public')
         var commandText = $@"
 SELECT
   nspname,
@@ -313,7 +315,7 @@ LEFT JOIN pg_depend AS dep ON dep.refobjid = cls.oid AND dep.refobjsubid = attr.
 {(connection.PostgreSqlVersion >= new Version(10, 0) ? "LEFT JOIN pg_sequence AS seq ON seq.seqrelid = dep.objid" : "")}
 WHERE
   cls.relkind IN ('r', 'v', 'm', 'f') AND
-  nspname NOT IN ({internalSchemas}) AND
+  nspname IN ('public') AND
   attnum > 0 AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -540,6 +542,7 @@ ORDER BY attnum";
             }
         }
 
+        // EnterpriseDB Team : replaced nspname NOT IN ({internalSchemas}) by nspname IN ('public')
         var commandText = $@"
 SELECT
   idxcls.oid AS idx_oid,
@@ -570,7 +573,7 @@ JOIN pg_class AS idxcls ON idxcls.oid = indexrelid
 JOIN pg_am AS am ON am.oid = idxcls.relam
 WHERE
   cls.relkind = 'r' AND
-  nspname NOT IN ({internalSchemas}) AND
+  nspname IN ('public') AND
   NOT indisprimary AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -750,6 +753,7 @@ WHERE
         out List<uint> constraintIndexes,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
+        // EnterpriseDB Team : replaced ns.nspname NOT IN ({internalSchemas}) by ns.nspname IN ('public')
         var commandText = $@"
 SELECT
   ns.nspname,
@@ -769,7 +773,7 @@ LEFT OUTER JOIN pg_class AS frncls ON frncls.oid = con.confrelid
 LEFT OUTER JOIN pg_namespace as frnns ON frnns.oid = frncls.relnamespace
 WHERE
   cls.relkind = 'r' AND
-  ns.nspname NOT IN ({internalSchemas}) AND
+  ns.nspname IN ('public') AND
   con.contype IN ('p', 'f', 'u') AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -931,6 +935,7 @@ WHERE
         Func<string, string>? schemaFilter,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
+    	// EnterpriseDB Team : check if sequence_schema='public' still relevant (int NOT EXISTS below)
         // Note: we consult information_schema.sequences instead of pg_sequence but the latter was only introduced in PG 10
         var commandText = $@"
 SELECT
@@ -953,6 +958,7 @@ WHERE
   /* AND seqtype IN ('integer', 'bigint', 'smallint') */
   /* Filter out owned serial and identity sequences */
   AND NOT EXISTS (SELECT * FROM pg_depend AS dep WHERE dep.objid = cls.oid AND dep.deptype IN ('i', 'I', 'a'))
+  AND sequence_schema='public'
   {(schemaFilter is not null ? $"AND {schemaFilter("nspname")}" : null)}";
 
         using var command = new EDBCommand(commandText, connection);
@@ -1043,7 +1049,8 @@ JOIN pg_namespace ns ON ns.oid=extnamespace";
             var name = reader.GetString(reader.GetOrdinal("extname"));
             var version = reader.GetValueOrDefault<string>("extversion");
 
-            if (name == "plpgsql") // Implicitly installed in all PG databases
+            //if (name == "plpgsql") // Implicitly installed in all PG databases
+            if (name == "plpgsql" || name == "edbspl") // EnterpriseDB Team
             {
                 continue;
             }
@@ -1058,6 +1065,7 @@ JOIN pg_namespace ns ON ns.oid=extnamespace";
         string internalSchemas,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
+        // EnterpriseDB Team : replaced nspname NOT IN ({internalSchemas}) by nspname IN ('public')
         var commandText = @$"
 SELECT
     nspname, collname, collprovider, collcollate, collctype,
@@ -1066,7 +1074,7 @@ SELECT
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
 WHERE
-    nspname NOT IN ({internalSchemas})";
+    nspname IN ('public')";
 
         try
         {
