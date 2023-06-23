@@ -339,19 +339,20 @@ public class EDBDataSourceBuilder : IEDBTypeMapper
     public EDBDataSource Build()
     {
         var config = PrepareConfiguration();
+        var connectionStringBuilder = ConnectionStringBuilder.Clone();
 
         if (ConnectionStringBuilder.Host!.Contains(","))
         {
             ValidateMultiHost();
 
-            return new EDBMultiHostDataSource(ConnectionStringBuilder, config);
+            return new EDBMultiHostDataSource(connectionStringBuilder, config);
         }
 
         return ConnectionStringBuilder.Multiplexing
-            ? new MultiplexingDataSource(ConnectionStringBuilder, config)
+            ? new MultiplexingDataSource(connectionStringBuilder, config)
             : ConnectionStringBuilder.Pooling
-                ? new PoolingDataSource(ConnectionStringBuilder, config)
-                : new UnpooledDataSource(ConnectionStringBuilder, config);
+                ? new PoolingDataSource(connectionStringBuilder, config)
+                : new UnpooledDataSource(connectionStringBuilder, config);
     }
 
     /// <summary>
@@ -363,7 +364,7 @@ public class EDBDataSourceBuilder : IEDBTypeMapper
 
         ValidateMultiHost();
 
-        return new(ConnectionStringBuilder, config);
+        return new(ConnectionStringBuilder.Clone(), config);
     }
 
     EDBDataSourceConfiguration PrepareConfiguration()

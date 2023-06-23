@@ -49,12 +49,4 @@ sealed class UnpooledDataSource : EDBDataSource
 
     internal override void Clear() {}
 
-    internal override bool TryRentEnlistedPending(Transaction transaction, EDBConnection connection,
-        [NotNullWhen(true)] out EDBConnector? connector)
-    {
-        connector = null;
-        return false;
-    }
-
-    internal override bool TryRemovePendingEnlistedConnector(EDBConnector connector, Transaction transaction) => false;
 }

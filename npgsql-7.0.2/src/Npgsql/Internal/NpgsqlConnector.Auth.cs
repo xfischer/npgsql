@@ -19,35 +19,38 @@ partial class EDBConnector
 {
     async Task Authenticate(string username, EDBTimeout timeout, bool async, CancellationToken cancellationToken)
     {
-        timeout.CheckAndApply(this);
-        var msg = ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
-        switch (msg.AuthRequestType)
+        while (true)
         {
-        case AuthenticationRequestType.AuthenticationOk:
-            return;
+            timeout.CheckAndApply(this);
+            var msg = ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
+            switch (msg.AuthRequestType)
+            {
+            case AuthenticationRequestType.AuthenticationOk:
+                return;
 
-        case AuthenticationRequestType.AuthenticationCleartextPassword:
-            await AuthenticateCleartext(username, async, cancellationToken);
-            return;
+            case AuthenticationRequestType.AuthenticationCleartextPassword:
+                await AuthenticateCleartext(username, async, cancellationToken);
+                break;
 
-        case AuthenticationRequestType.AuthenticationMD5Password:
-            await AuthenticateMD5(username, ((AuthenticationMD5PasswordMessage)msg).Salt, async, cancellationToken);
-            return;
+            case AuthenticationRequestType.AuthenticationMD5Password:
+                await AuthenticateMD5(username, ((AuthenticationMD5PasswordMessage)msg).Salt, async, cancellationToken);
+                break;
 
-        case AuthenticationRequestType.AuthenticationSASL:
-            await AuthenticateSASL(((AuthenticationSASLMessage)msg).Mechanisms, username, async, cancellationToken);
-            return;
+            case AuthenticationRequestType.AuthenticationSASL:
+                await AuthenticateSASL(((AuthenticationSASLMessage)msg).Mechanisms, username, async, cancellationToken);
+                break;
 
-        case AuthenticationRequestType.AuthenticationGSS:
-        case AuthenticationRequestType.AuthenticationSSPI:
-            await AuthenticateGSS(async);
-            return;
+            case AuthenticationRequestType.AuthenticationGSS:
+            case AuthenticationRequestType.AuthenticationSSPI:
+                await AuthenticateGSS(async);
+                return;
 
-        case AuthenticationRequestType.AuthenticationGSSContinue:
-            throw new EDBException("Can't start auth cycle with AuthenticationGSSContinue");
+            case AuthenticationRequestType.AuthenticationGSSContinue:
+                throw new EDBException("Can't start auth cycle with AuthenticationGSSContinue");
 
-        default:
-            throw new NotSupportedException($"Authentication method not supported (Received: {msg.AuthRequestType})");
+            default:
+                throw new NotSupportedException($"Authentication method not supported (Received: {msg.AuthRequestType})");
+            }
         }
     }
 
@@ -62,7 +65,6 @@ partial class EDBConnector
 
         await WritePassword(encoded, async, cancellationToken);
         await Flush(async, cancellationToken);
-        ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
     }
 
     async Task AuthenticateSASL(List<string> mechanisms, string username, bool async, CancellationToken cancellationToken = default)
@@ -204,11 +206,6 @@ partial class EDBConnector
         if (scramFinalServerMsg.ServerSignature != Convert.ToBase64String(serverSignature))
             throw new EDBException("[SCRAM] Unable to verify server signature");
 
-        var okMsg = ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
-        if (okMsg.AuthRequestType != AuthenticationRequestType.AuthenticationOk)
-            throw new EDBException("[SASL] Expected AuthenticationOK message");
-
-
         static string GetNonce()
         {
             using var rncProvider = RandomNumberGenerator.Create();
@@ -281,7 +278,6 @@ partial class EDBConnector
 
         await WritePassword(result, async, cancellationToken);
         await Flush(async, cancellationToken);
-        ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
     }
 
 #if NET7_0_OR_GREATER
@@ -302,13 +298,15 @@ partial class EDBConnector
             var response = ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async), this);
             if (response.AuthRequestType == AuthenticationRequestType.AuthenticationOk)
                 break;
-            var gssMsg = response as AuthenticationGSSContinueMessage;
-            if (gssMsg == null)
+            if (response is not AuthenticationGSSContinueMessage gssMsg)
                 throw new EDBException($"Received unexpected authentication request message {response.AuthRequestType}");
             data = authContext.GetOutgoingBlob(gssMsg.AuthenticationData.AsSpan(), out statusCode)!;
-            if (statusCode == NegotiateAuthenticationStatusCode.Completed)
+            if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
+                throw new EDBException($"Error while authenticating GSS/SSPI: {statusCode}");
+            // We might get NegotiateAuthenticationStatusCode.Completed but the data will not be null
+            // This can happen if it's the first cycle, in which case we have to send that data to complete handshake (#4888)
+            if (data is null)
                 continue;
-            Debug.Assert(statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded);
             await WritePassword(data, 0, data.Length, async, UserCancellationToken);
             await Flush(async, UserCancellationToken);
         }

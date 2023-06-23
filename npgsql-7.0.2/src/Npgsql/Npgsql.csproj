@@ -9,9 +9,6 @@
          necessary for older TFMs. -->
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0;net6.0;net7.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
-	<AssemblyName>EnterpriseDB.EDBClient</AssemblyName>
-	<Version>7.0.2.1</Version>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

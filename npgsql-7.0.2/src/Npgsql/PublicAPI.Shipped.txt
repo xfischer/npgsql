@@ -1786,6 +1786,7 @@ override EnterpriseDB.EDBClient.EDBTransaction.RollbackAsync(string! name, Syste
 override EnterpriseDB.EDBClient.EDBTransaction.RollbackAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 override EnterpriseDB.EDBClient.EDBTransaction.Save(string! name) -> void
 override EnterpriseDB.EDBClient.EDBTransaction.SaveAsync(string! name, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override EnterpriseDB.EDBClient.EDBTransaction.SupportsSavepoints.get -> bool
 override EnterpriseDB.EDBClient.PostgresException.GetObjectData(System.Runtime.Serialization.SerializationInfo! info, System.Runtime.Serialization.StreamingContext context) -> void
 override EnterpriseDB.EDBClient.PostgresException.IsTransient.get -> bool
 override EnterpriseDB.EDBClient.PostgresException.SqlState.get -> string!
