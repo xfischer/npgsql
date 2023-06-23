@@ -1007,7 +1007,8 @@ SELECT
   array_agg(enumlabel{(connection.PostgreSqlVersion >= new Version(9, 1) ? " ORDER BY enumsortorder" : "")}) AS labels
 FROM pg_enum
 JOIN pg_type ON pg_type.oid = enumtypid
-JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace AND
+typname NOT IN ('dss_freq_enum','dss_program_type_enum')
 GROUP BY nspname, typname";
 
         using var command = new EDBCommand(commandText, connection);
@@ -1050,7 +1051,7 @@ JOIN pg_namespace ns ON ns.oid=extnamespace";
             var version = reader.GetValueOrDefault<string>("extversion");
 
             //if (name == "plpgsql") // Implicitly installed in all PG databases
-            if (name == "plpgsql" || name == "edbspl") // EnterpriseDB Team
+            if (name == "plpgsql" || name == "edbspl" || name.StartsWith("edb",StringComparison.OrdinalIgnoreCase) || name == "adminpack")  // EnterpriseDB Team
             {
                 continue;
             }

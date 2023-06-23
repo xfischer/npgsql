@@ -10,5 +10,6 @@
     <ProjectReference Include="../Npgsql.Tests/Npgsql.Tests.csproj" />
     <ProjectReference Include="../../src/Npgsql.NetTopologySuite/Npgsql.NetTopologySuite.csproj" />
     <ProjectReference Include="../../src/Npgsql.GeoJSON/Npgsql.GeoJSON.csproj" />
+    <ProjectReference Include="../Npgsql.NodaTime.Tests/Npgsql.NodaTime.Tests.csproj" />
   </ItemGroup>
 </Project>

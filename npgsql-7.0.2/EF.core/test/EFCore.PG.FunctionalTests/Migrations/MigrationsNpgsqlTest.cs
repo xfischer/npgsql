@@ -3100,5 +3100,5 @@ CREATE COLLATION some_collation (LOCALE = 'en-u-ks-primary',
     protected override ICollection<BuildReference> GetAdditionalReferences()
         => AdditionalReferences;
 
-    private static readonly BuildReference[] AdditionalReferences = { BuildReference.ByName("Npgsql") };
+    private static readonly BuildReference[] AdditionalReferences = { BuildReference.ByName("EnterpriseDB.EDBClient") };
 }

@@ -19,7 +19,7 @@ public static class TestUtil
     /// test database.
     /// </summary>
     public const string DefaultConnectionString =
-        "port=5444;Server=localhost;Username=enterprisedb;Password=password;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+        "port=5444;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
     /// <summary>
     /// The connection string that will be used when opening the connection to the tests database.

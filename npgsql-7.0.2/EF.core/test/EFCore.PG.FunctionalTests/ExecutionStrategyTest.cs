@@ -90,7 +90,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             var retryMessage =
                 "A transient exception occurred during execution. The operation will be retried after 0ms."
                 + Environment.NewLine
-                + "Npgsql.PostgresException (0x80004005): XX000";
+                + "EnterpriseDB.EDBClient.PostgresException (0x80004005): XX000";
             if (realFailure)
             {
                 var logEntry = Fixture.TestSqlLoggerFactory.Log.Single(l => l.Id == CoreEventId.ExecutionStrategyRetrying);
@@ -203,7 +203,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             var retryMessage =
                 "A transient exception occurred during execution. The operation will be retried after 0ms."
                 + Environment.NewLine
-                + "Npgsql.PostgresException (0x80004005): XX000";
+                + "EnterpriseDB.EDBClient.PostgresException (0x80004005): XX000";
             if (realFailure)
             {
                 var logEntry = Fixture.TestSqlLoggerFactory.Log.Single(l => l.Id == CoreEventId.ExecutionStrategyRetrying);
