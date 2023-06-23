@@ -5,8 +5,9 @@
     <PackageTags>npgsql;postgresql;postgres;nodatime;date;time;ado;ado;net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-	  <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
-	  <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
+	<TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
+	<AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
