@@ -6,8 +6,6 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFramework>netstandard2.0</TargetFramework>
 	<AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
-	<Version>7.0.2.1</Version>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>

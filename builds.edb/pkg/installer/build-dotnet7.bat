@@ -114,23 +114,37 @@ copy bin\Release\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstrac
 REM FuzzyStringMatch and Trigrams are integrated into the main provider: https://github.com/npgsql/efcore.pg/commit/8af92596a77a1b27b8c75693f9b26b98c066d201
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NodaTime
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NTS
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NodaTime\net6.0
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NTS\net6.0
 cd %SOURCE_PATH%
-cd npgsql-6\EF.core\src\EFCore.PG
+cd npgsql-7.0.2\EF.core\src\EFCore.PG
 REM nuget restore EFCore.PG
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net7.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0 || goto :error
+copy bin\Release\net7.0\Microsoft.EntityFrameworkCore.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0 || goto :error
+copy bin\Release\net7.0\Microsoft.EntityFrameworkCore.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0 || goto :error
+copy bin\Release\net7.0\Microsoft.EntityFrameworkCore.Relational.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0 || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0 || goto :error
+copy bin\Release\net6.0\Microsoft.EntityFrameworkCore.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0 || goto :error
+copy bin\Release\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0 || goto :error
+copy bin\Release\net6.0\Microsoft.EntityFrameworkCore.Relational.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0 || goto :error
 
 cd %SOURCE_PATH%
-cd npgsql-6\EF.core\src\EFCore.PG.NodaTime
+cd npgsql-7.0.2\EF.core\src\EFCore.PG.NodaTime
 REM nuget restore EFCore.PG.NodaTime
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NodaTime\net6.0 || goto :error
 
 cd %SOURCE_PATH%
-cd npgsql-6\EF.core\src\EFCore.PG.NTS
+cd npgsql-7.0.2\EF.core\src\EFCore.PG.NTS
 REM nuget restore EFCore.PG.NTS
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
-copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core || goto :error
+copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NTS\net6.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0

@@ -6,8 +6,6 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
 	  <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
-	<Version>7.0.2.1</Version>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
   </PropertyGroup>
 

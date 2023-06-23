@@ -6,8 +6,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
 	<AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
-	<Version>7.0.2.1</Version>
-	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
