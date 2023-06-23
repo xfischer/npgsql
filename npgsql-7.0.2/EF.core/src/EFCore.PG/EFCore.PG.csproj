@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</AssemblyName>
@@ -10,6 +10,8 @@
     <Description>PostgreSQL/Npgsql provider for Entity Framework Core.</Description>
     <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>7.0.4.1</Version>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

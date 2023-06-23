@@ -9,6 +9,8 @@
     <Description>NodaTime support plugin for PostgreSQL/Npgsql Entity Framework Core provider.</Description>
     <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;nodatime;date;time</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>7.0.4.1</Version>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
