@@ -114,6 +114,9 @@ copy bin\Release\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstrac
 REM FuzzyStringMatch and Trigrams are integrated into the main provider: https://github.com/npgsql/efcore.pg/commit/8af92596a77a1b27b8c75693f9b26b98c066d201
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NodaTime
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NTS
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG\net6.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\EF.Core\EFCore.PG.NodaTime\net6.0
