@@ -219,7 +219,7 @@ SELECT table_catalog, table_schema, table_name, table_type
 FROM information_schema.tables
 WHERE
     table_type IN ('BASE TABLE', 'FOREIGN', 'FOREIGN TABLE') AND
-    table_schema NOT IN ('pg_catalog', 'information_schema')");
+    table_schema NOT IN ('pg_catalog', 'information_schema', 'sys')");
 
         using var command = BuildCommand(conn, getTables, restrictions, false, "table_catalog", "table_schema", "table_name", "table_type");
         using var adapter = new EDBDataAdapter(command);
@@ -280,7 +280,7 @@ JOIN pg_type AS typ ON typnamespace = ns.oid AND typname = udt_name");
         var getViews = new StringBuilder(@"
 SELECT table_catalog, table_schema, table_name, check_option, is_updatable
 FROM information_schema.views
-WHERE table_schema NOT IN ('pg_catalog', 'information_schema')");
+WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'sys')");
 
         using var command = BuildCommand(conn, getViews, restrictions, false, "table_catalog", "table_schema", "table_name");
         using var adapter = new EDBDataAdapter(command);

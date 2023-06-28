@@ -60,7 +60,7 @@ WHERE
      atttypid <> 0 AND
      relkind IN ('r', 'v', 'm') AND
      NOT attisdropped AND
-     nspname NOT IN ('pg_catalog', 'information_schema') AND
+     nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
      attnum > 0 AND
      ({columnFieldFilter})
 ORDER BY attnum";
@@ -87,7 +87,7 @@ WHERE
      atttypid <> 0 AND
      relkind IN ('r', 'v', 'm') AND
      NOT attisdropped AND
-     nspname NOT IN ('pg_catalog', 'information_schema') AND
+     nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
      attnum > 0 AND
      ({columnFieldFilter})
 ORDER BY attnum";

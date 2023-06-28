@@ -10,7 +10,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <ImplicitUsings>true</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <AccelerateBuildsInVisualStudio>false</AccelerateBuildsInVisualStudio>
 
     <Copyright>Copyright 2023 © The Npgsql Development Team</Copyright>
     <Company>Npgsql</Company>

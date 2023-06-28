@@ -84,7 +84,7 @@ SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND
 SELECT ns.nspname, typname
 FROM pg_type
 JOIN pg_namespace AS ns ON ns.oid = pg_type.typnamespace
-WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog' and typname NOT IN ('dss_freq_enum','dss_program_type_enum')";
+WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')";
 
         (string Schema, string Name)[] userDefinedTypes;
         using (var cmd = new EDBCommand(getUserDefinedRangesEnums, conn))
@@ -108,10 +108,12 @@ WHERE typtype IN ('r', 'e') AND nspname <> 'pg_catalog' and typname NOT IN ('dss
     {
         // EntepriseDB Team : replaced NOT IN ('pg_catalog', 'information_schema') by nspname IN ('public')
         const string getUserDefinedFunctions = @"
-SELECT 'DROP ROUTINE ""' || nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
+SELECT 'DROP ROUTINE ""' || ns.nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
 JOIN pg_namespace AS ns ON ns.oid = pg_proc.pronamespace
+LEFT JOIN pg_namespace AS nsp ON nsp.oid = ns.nspparent
 WHERE
-        nspname IN ('public') AND
+    ns.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
+    nsp.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
     NOT EXISTS (
             SELECT * FROM pg_depend AS dep
             WHERE dep.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc') AND

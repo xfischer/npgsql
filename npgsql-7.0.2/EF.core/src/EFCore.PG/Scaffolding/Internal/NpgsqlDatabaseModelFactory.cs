@@ -84,7 +84,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
 
         try
         {
-            var internalSchemas = "'pg_catalog', 'information_schema'";
+            var internalSchemas = "'pg_catalog', 'information_schema', 'sys'";
             using (var command = new EDBCommand("SELECT version()", connection))
             {
                 var longVersion = (string)command.ExecuteScalar()!;
@@ -207,7 +207,7 @@ JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
 LEFT OUTER JOIN pg_description AS des ON des.objoid = cls.oid AND des.objsubid=0
 WHERE
   cls.relkind IN ('r', 'v', 'm', 'f') AND
-  ns.nspname IN ('public')  AND
+  ns.nspname NOT IN ({internalSchemas}) AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
   NOT EXISTS (
@@ -314,8 +314,8 @@ LEFT JOIN pg_description AS des ON des.objoid = cls.oid AND des.objsubid = attnu
 LEFT JOIN pg_depend AS dep ON dep.refobjid = cls.oid AND dep.refobjsubid = attr.attnum AND dep.deptype = 'i'
 {(connection.PostgreSqlVersion >= new Version(10, 0) ? "LEFT JOIN pg_sequence AS seq ON seq.seqrelid = dep.objid" : "")}
 WHERE
-  cls.relkind IN ('r', 'v', 'm', 'f') AND
-  nspname IN ('public') AND
+  cls.relkind IN ('r', 'v', 'm', 'f') AND  
+  nspname NOT IN ({internalSchemas}) AND
   attnum > 0 AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -573,7 +573,7 @@ JOIN pg_class AS idxcls ON idxcls.oid = indexrelid
 JOIN pg_am AS am ON am.oid = idxcls.relam
 WHERE
   cls.relkind = 'r' AND
-  nspname IN ('public') AND
+  nspname NOT IN ({internalSchemas}) AND
   NOT indisprimary AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -773,7 +773,7 @@ LEFT OUTER JOIN pg_class AS frncls ON frncls.oid = con.confrelid
 LEFT OUTER JOIN pg_namespace as frnns ON frnns.oid = frncls.relnamespace
 WHERE
   cls.relkind = 'r' AND
-  ns.nspname IN ('public') AND
+  ns.nspname NOT IN ({internalSchemas}) AND
   con.contype IN ('p', 'f', 'u') AND
   cls.relname <> '{HistoryRepository.DefaultTableName}' AND
   -- Exclude tables which are members of PG extensions
@@ -935,7 +935,7 @@ WHERE
         Func<string, string>? schemaFilter,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
-    	// EnterpriseDB Team : check if sequence_schema='public' still relevant (int NOT EXISTS below)
+    	// EnterpriseDB Team : check if sequence_schema='public' still relevant (in NOT EXISTS below)
         // Note: we consult information_schema.sequences instead of pg_sequence but the latter was only introduced in PG 10
         var commandText = $@"
 SELECT
@@ -958,7 +958,7 @@ WHERE
   /* AND seqtype IN ('integer', 'bigint', 'smallint') */
   /* Filter out owned serial and identity sequences */
   AND NOT EXISTS (SELECT * FROM pg_depend AS dep WHERE dep.objid = cls.oid AND dep.deptype IN ('i', 'I', 'a'))
-  AND sequence_schema='public'
+  AND nspname NOT IN ('pg_catalog', 'information_schema', 'sys')
   {(schemaFilter is not null ? $"AND {schemaFilter("nspname")}" : null)}";
 
         using var command = new EDBCommand(commandText, connection);
@@ -1075,7 +1075,7 @@ SELECT
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
 WHERE
-    nspname IN ('public')";
+    nspname NOT IN ({internalSchemas})";
 
         try
         {

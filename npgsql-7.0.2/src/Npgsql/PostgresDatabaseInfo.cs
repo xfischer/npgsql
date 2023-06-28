@@ -141,12 +141,12 @@ FROM (
 JOIN pg_namespace AS ns ON (ns.oid = typnamespace)
 WHERE
     typtype IN ('b', 'r', 'm', 'e', 'd') OR -- Base, range, multirange, enum, domain
-    (typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" : "relkind='c'")}) OR -- User-defined free-standing composites (not table composites) by default
+    (typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'sys')" : "relkind='c'")}) OR -- User-defined free-standing composites (not table composites) by default
     (typtype = 'p' AND typname IN ('record', 'void')) OR -- Some special supported pseudo-types
     (typtype = 'a' AND (  -- Array of...
         elemtyptype IN ('b', 'r', 'm', 'e', 'd') OR -- Array of base, range, multirange, enum, domain
         (elemtyptype = 'p' AND elemtypname IN ('record', 'void')) OR -- Arrays of special supported pseudo-types
-        (elemtyptype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" : "elemrelkind='c'")}) -- Array of user-defined free-standing composites (not table composites) by default
+        (elemtyptype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'sys')" : "elemrelkind='c'")}) -- Array of user-defined free-standing composites (not table composites) by default
     ))
 ORDER BY CASE
        WHEN typtype IN ('b', 'e', 'p') THEN 0           -- First base types, enums, pseudo-types
@@ -167,7 +167,7 @@ JOIN pg_namespace AS ns ON (ns.oid = typ.typnamespace)
 JOIN pg_class AS cls ON (cls.oid = typ.typrelid)
 JOIN pg_attribute AS att ON (att.attrelid = typ.typrelid)
 WHERE
-  (typ.typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')" : "cls.relkind='c'")}) AND
+  (typ.typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'sys')" : "cls.relkind='c'")}) AND
   attnum > 0 AND     -- Don't load system attributes
   NOT attisdropped
 ORDER BY typ.oid, att.attnum;";
