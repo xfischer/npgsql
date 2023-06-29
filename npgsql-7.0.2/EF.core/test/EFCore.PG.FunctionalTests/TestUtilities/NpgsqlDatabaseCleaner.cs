@@ -56,7 +56,7 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
 
     private void DropExtensions(EDBConnection conn)
     {
-    	// EnterpriseDB Team
+        // EnterpriseDB Team
         const string getExtensions = @"
 SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql' AND name NOT LIKE 'edb%'";
 
@@ -106,19 +106,39 @@ WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')";
     /// </summary>
     private void DropFunctions(EDBConnection conn)
     {
-        // EntepriseDB Team : replaced NOT IN ('pg_catalog', 'information_schema') by nspname IN ('public')
-        const string getUserDefinedFunctions = @"
-SELECT 'DROP ROUTINE ""' || ns.nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
-JOIN pg_namespace AS ns ON ns.oid = pg_proc.pronamespace
-LEFT JOIN pg_namespace AS nsp ON nsp.oid = ns.nspparent
-WHERE
-    ns.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
-    nsp.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
-    NOT EXISTS (
-            SELECT * FROM pg_depend AS dep
-            WHERE dep.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc') AND
-                    dep.objid = pg_proc.oid AND
-                    deptype = 'e');";
+        string getUserDefinedFunctions;
+        // EntepriseDB Team : need to lookup also parent namespace to prevent 'sys' deletions
+        if (conn.PostgresParameters.TryGetValue("db_dialect", out string dialect)
+            && dialect == "redwood")
+        {
+            getUserDefinedFunctions = @"
+                SELECT 'DROP ROUTINE ""' || ns.nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
+                JOIN pg_namespace AS ns ON ns.oid = pg_proc.pronamespace
+                LEFT JOIN pg_namespace AS nsp ON nsp.oid = ns.nspparent
+                WHERE
+                    ns.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
+                    COALESCE(nsp.nspname,'public')  NOT IN ('pg_catalog', 'information_schema', 'sys') AND
+                    NOT EXISTS (
+                            SELECT * FROM pg_depend AS dep
+                            WHERE dep.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc') AND
+                                    dep.objid = pg_proc.oid AND
+                                    deptype = 'e');";
+        }
+        else
+        {
+
+            getUserDefinedFunctions = @"
+                SELECT 'DROP ROUTINE ""' || ns.nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
+                JOIN pg_namespace AS ns ON ns.oid = pg_proc.pronamespace
+                WHERE
+                    ns.nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
+                    NOT EXISTS (
+                            SELECT * FROM pg_depend AS dep
+                            WHERE dep.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_proc') AND
+                                    dep.objid = pg_proc.oid AND
+                                    deptype = 'e');";
+
+        }
 
         string dropSql;
         using (var cmd = new EDBCommand(getUserDefinedFunctions, conn))
@@ -141,11 +161,12 @@ WHERE
             return;
         }
 
- 		// EntepriseDB Team
+        // EntepriseDB Team
         const string getUserCollations = @"SELECT nspname, collname
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
-    JOIN pg_authid auth ON auth.oid = coll.collowner WHERE rolname <> 'postgres' AND rolname <> 'enterprisedb';
+    JOIN pg_authid auth ON auth.oid = coll.collowner
+    WHERE (rolname <> 'postgres' AND rolname <> 'enterprisedb') OR ns.nspname = 'public';
 ";
 
         (string Schema, string Name)[] userDefinedTypes;
