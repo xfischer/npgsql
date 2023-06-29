@@ -86,40 +86,15 @@ public partial class DateHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimpleTyp
     #endregion Write
 
 #if NET6_0_OR_GREATER
-    static readonly DateOnly BaseValueDateOnly = new(2000, 1, 1);
 
     DateOnly IEDBSimpleTypeHandler<DateOnly>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
-        => buf.ReadInt32() switch
-        {
-            int.MaxValue => DisableDateTimeInfinityConversions
-                ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
-                : DateOnly.MaxValue,
-            int.MinValue => DisableDateTimeInfinityConversions
-                ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
-                : DateOnly.MinValue,
-            var value => BaseValueDateOnly.AddDays(value)
-        };
+        => DateTimeUtils.ReadDateOnly(buf, len, fieldDescription);
 
     public int ValidateAndGetLength(DateOnly value, EDBParameter? parameter) => 4;
 
     public void Write(DateOnly value, EDBWriteBuffer buf, EDBParameter? parameter)
     {
-        if (!DisableDateTimeInfinityConversions)
-        {
-            if (value == DateOnly.MaxValue)
-            {
-                buf.WriteInt32(int.MaxValue);
-                return;
-            }
-
-            if (value == DateOnly.MinValue)
-            {
-                buf.WriteInt32(int.MinValue);
-                return;
-            }
-        }
-
-        buf.WriteInt32(value.DayNumber - BaseValueDateOnly.DayNumber);
+       DateTimeUtils.WriteDateOnly(value, buf, parameter);
     }
 
     public override EDBTypeHandler CreateRangeHandler(PostgresType pgRangeType)

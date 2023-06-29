@@ -3,7 +3,6 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal.TypeHandling;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using static EnterpriseDB.EDBClient.Util.Statics;
-using static EnterpriseDB.EDBClient.Internal.TypeHandlers.DateTimeHandlers.DateTimeUtils;
 
 namespace EnterpriseDB.EDBClient.Internal.TypeHandlers.DateTimeHandlers;
 
@@ -18,6 +17,9 @@ namespace EnterpriseDB.EDBClient.Internal.TypeHandlers.DateTimeHandlers;
 /// Use it at your own risk.
 /// </remarks>
 public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimpleTypeHandler<long>
+#if NET6_0_OR_GREATER
+    , IEDBSimpleTypeHandler<DateOnly> // EnterpriseDB Team : EPAS date data type in redwood mode serves as an emulation of the Oracle date data type. As the Oracle date type stores both date and time information, we have mapped the EPAS date data type to timestamp without timezone. 
+#endif
 {
     /// <summary>
     /// Constructs a <see cref="TimestampHandler"/>.
@@ -28,7 +30,7 @@ public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimp
 
     /// <inheritdoc />
     public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
-        => ReadDateTime(buf, DateTimeKind.Unspecified);
+        => DateTimeUtils.ReadDateTime(buf, DateTimeKind.Unspecified);
 
     long IEDBSimpleTypeHandler<long>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
         => buf.ReadInt64();
@@ -52,11 +54,26 @@ public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimp
 
     /// <inheritdoc />
     public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
-        => WriteTimestamp(value, buf);
+        => DateTimeUtils.WriteTimestamp(value, buf);
 
     /// <inheritdoc />
     public void Write(long value, EDBWriteBuffer buf, EDBParameter? parameter)
         => buf.WriteInt64(value);
 
     #endregion Write
+
+    // EnterpriseDB Team
+#if NET6_0_OR_GREATER
+
+    DateOnly IEDBSimpleTypeHandler<DateOnly>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
+        => DateTimeUtils.ReadDateOnly(buf, len, fieldDescription);
+
+    public int ValidateAndGetLength(DateOnly value, EDBParameter? parameter) => 4;
+
+    public void Write(DateOnly value, EDBWriteBuffer buf, EDBParameter? parameter)
+    {
+        DateTimeUtils.WriteDateOnly(value, buf, parameter);
+    }
+
+#endif
 }
