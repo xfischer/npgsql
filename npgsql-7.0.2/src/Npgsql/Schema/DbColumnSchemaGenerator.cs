@@ -29,6 +29,7 @@ sealed class DbColumnSchemaGenerator
 
     #region Columns queries
 
+    // EnterpriseDB Team : add sys schema
     static string GenerateColumnsQuery(Version pgVersion, string columnFieldFilter) =>
         $@"SELECT
      typ.oid AS typoid, nspname, relname, attname, attrelid, attnum, attnotnull,
@@ -90,7 +91,7 @@ WHERE
      nspname NOT IN ('pg_catalog', 'information_schema', 'sys') AND
      attnum > 0 AND
      ({columnFieldFilter})
-ORDER BY attnum";
+ORDER BY attnum"; // EnterpriseDB Team : add sys schema
 
     #endregion Column queries
 

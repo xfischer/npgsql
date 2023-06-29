@@ -156,7 +156,7 @@ ORDER BY CASE
        WHEN typtype = 'd' AND elemtyptype <> 'a' THEN 4 -- Domains over non-arrays after
        WHEN typtype = 'a' THEN 5                        -- Arrays after
        WHEN typtype = 'd' AND elemtyptype = 'a' THEN 6  -- Domains over arrays last
-END;";
+END;"; // EnterpriseDB Team : add sys schema
 
     static string GenerateLoadCompositeTypesQuery(bool loadTableComposites)
         => $@"
@@ -170,7 +170,7 @@ WHERE
   (typ.typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'sys')" : "cls.relkind='c'")}) AND
   attnum > 0 AND     -- Don't load system attributes
   NOT attisdropped
-ORDER BY typ.oid, att.attnum;";
+ORDER BY typ.oid, att.attnum;"; // EnterpriseDB Team : add sys schema
 
     static string GenerateLoadEnumFieldsQuery(bool withEnumSortOrder)
         => $@"

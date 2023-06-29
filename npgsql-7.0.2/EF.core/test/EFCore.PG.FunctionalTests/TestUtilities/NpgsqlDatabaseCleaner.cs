@@ -84,7 +84,7 @@ SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND
 SELECT ns.nspname, typname
 FROM pg_type
 JOIN pg_namespace AS ns ON ns.oid = pg_type.typnamespace
-WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')";
+WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')"; // EnterpriseDB Team : add sys schema
 
         (string Schema, string Name)[] userDefinedTypes;
         using (var cmd = new EDBCommand(getUserDefinedRangesEnums, conn))

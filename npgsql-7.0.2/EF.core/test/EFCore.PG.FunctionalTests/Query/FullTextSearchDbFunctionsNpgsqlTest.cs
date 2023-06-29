@@ -602,7 +602,7 @@ LIMIT 1
 """);
     }
 
-    [Fact(Skip = "Also fails in community")]
+    [Fact]
     public void TsVector_Concat()
     {
         using var context = CreateContext();
@@ -738,7 +738,7 @@ LIMIT 1
 """);
     }
 
-    [Fact (Skip ="Also fails in community")]
+    [Fact]
     public void GetLength()
     {
         using var context = CreateContext();
@@ -755,7 +755,7 @@ LIMIT 1
 """);
     }
 
-    [Fact(Skip = "Also fails in community")]
+    [Fact]
     public void ToStripped()
     {
         using var context = CreateContext();

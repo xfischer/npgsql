@@ -84,6 +84,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
 
         try
         {
+            // EnterpriseDB Team : add sys schema
             var internalSchemas = "'pg_catalog', 'information_schema', 'sys'";
             using (var command = new EDBCommand("SELECT version()", connection))
             {
@@ -199,7 +200,6 @@ SELECT datcollate FROM pg_database WHERE datname=current_database() AND
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
         var filter = tableFilter is not null ? $"AND {tableFilter("ns.nspname", "cls.relname")}" : null;
-        // EnterpriseDB Team : replace ns.nspname NOT IN ({internalSchemas}) by  ns.nspname IN ('public') still relevant
         var commandText = $@"
 SELECT nspname, relname, relkind, description
 FROM pg_class AS cls
@@ -935,7 +935,7 @@ WHERE
         Func<string, string>? schemaFilter,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
-    	// EnterpriseDB Team : check if sequence_schema='public' still relevant (in NOT EXISTS below)
+    	// EnterpriseDB Team : add sys schema
         // Note: we consult information_schema.sequences instead of pg_sequence but the latter was only introduced in PG 10
         var commandText = $@"
 SELECT
