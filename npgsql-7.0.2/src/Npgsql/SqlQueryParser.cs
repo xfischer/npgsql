@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace EnterpriseDB.EDBClient;
@@ -10,6 +11,12 @@ sealed class SqlQueryParser
     readonly Dictionary<string, int> _paramIndexMap = new();
     readonly StringBuilder _rewrittenSql = new();
     string? sqlString;
+    readonly bool supportsRedwoodDialect; // EnterpriseDB Team
+
+    // EnterpriseDB Team
+    // Added for best parsing perfs
+    // When db is in Redwood mode : perfoms SPL detection, but reverts back to plpgsql if detected
+    public SqlQueryParser(bool redwoodDialect) => supportsRedwoodDialect = redwoodDialect;
 
     /// <summary>
     /// <p>
@@ -307,7 +314,7 @@ sealed class SqlQueryParser
 
         Quoted:
         Debug.Assert(ch == '\'' || ch == '"');
-        while (currCharOfs < end && sql[currCharOfs] != ch)
+        while (currCharOfs < end && sql[currCharOfs] != ch) // skip until end quote
         {
             currCharOfs++;
         }
@@ -610,8 +617,22 @@ sealed class SqlQueryParser
         }
     }
 
-    private static bool ContainsSPLStartingKeyword(string temp)
+    private bool ContainsSPLStartingKeyword(string temp)
     {
+        // abort if postgres
+        if (!supportsRedwoodDialect)
+            return false;
+
+        // abort if redwood and plpgsql
+#if NETSTANDARD2_0
+        if (temp.IndexOf("LANGUAGE PLPGSQL", StringComparison.OrdinalIgnoreCase) >= 0)
+            return false;
+#else
+        if (temp.Contains("LANGUAGE PLPGSQL", StringComparison.OrdinalIgnoreCase))
+            return false;
+#endif
+
+
 #if NETSTANDARD2_0
         return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
             || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))

@@ -158,7 +158,23 @@ public sealed partial class EDBConnector : IDisposable
 
     internal PreparedStatementManager PreparedStatementManager { get; }
 
-    internal SqlQueryParser SqlQueryParser { get; } = new();
+    // EnterpriseDB Team : added support for non redwood dialect (read from PostGres connection parameters)
+    SqlQueryParser _sqlQueryParser = null;
+    internal SqlQueryParser SqlQueryParser
+    {
+        get
+        {
+            if (_sqlQueryParser != null)
+                return _sqlQueryParser;
+
+            if (DatabaseInfo == null)
+                throw new NotSupportedException("Cannot create SqlQueryParser without DatabaseInfo");
+
+            _sqlQueryParser = new SqlQueryParser(DatabaseInfo.SupportsRedwoodDialect);
+
+            return _sqlQueryParser;
+        }
+    }
 
     /// <summary>
     /// If the connector is currently in COPY mode, holds a reference to the importer/exporter object.

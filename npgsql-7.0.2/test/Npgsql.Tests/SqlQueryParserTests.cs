@@ -26,7 +26,7 @@ class SqlQueryParserTests
     }
 
     [Test, Description("Checks several scenarios in which the SQL is supposed to pass untouched")]
-    [TestCase(@"SELECT to_tsvector('fat cats ate rats') @@ to_tsquery('cat & rat')", TestName="AtAt")]
+    [TestCase(@"SELECT to_tsvector('fat cats ate rats') @@ to_tsquery('cat & rat')", TestName = "AtAt")]
     [TestCase(@"SELECT 'cat'::tsquery @> 'cat & rat'::tsquery", TestName = "AtGt")]
     [TestCase(@"SELECT 'cat'::tsquery <@ 'cat & rat'::tsquery", TestName = "AtLt")]
     [TestCase(@"SELECT 'b''la'", TestName = "DoubleTicks")]
@@ -47,7 +47,7 @@ class SqlQueryParserTests
     [TestCase(@"SELECT 1<:param", TestName = "LessThan")]
     [TestCase(@"SELECT 1>:param", TestName = "GreaterThan")]
     [TestCase(@"SELECT 1<>:param", TestName = "NotEqual")]
-    [TestCase("SELECT--comment\r:param", TestName="LineComment")]
+    [TestCase("SELECT--comment\r:param", TestName = "LineComment")]
     public void Parameter_gets_bound(string sql)
     {
         var p = new EDBParameter(":param", "foo");
@@ -168,7 +168,7 @@ class SqlQueryParserTests
     [Test]
     public void Reduce_number_of_statements()
     {
-        var parser = new SqlQueryParser();
+        var parser = new SqlQueryParser(redwoodDialect: true);
 
         var cmd = new EDBCommand("SELECT 1; SELECT 2");
         parser.ParseRawQuery(cmd);
@@ -197,7 +197,7 @@ class SqlQueryParserTests
     {
         var cmd = new EDBCommand(sql);
         cmd.Parameters.AddRange(parameters);
-        var parser = new SqlQueryParser();
+        var parser = new SqlQueryParser(redwoodDialect: true);
         parser.ParseRawQuery(cmd, standardConformingStrings);
         return cmd.InternalBatchCommands;
     }

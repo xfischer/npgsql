@@ -19,6 +19,7 @@ using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Properties;
 using System.Text.RegularExpressions;
 using EnterpriseDB.EDBClient.Replication.PgOutput;
+using System.Collections.Immutable;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -663,7 +664,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     connector._hasParams = true;
                 if (Parameters?.Count == 0 && Parameters._hasReturnParam)
                     connector._hasReturnParams = true;
-                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand);
+                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);
 
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
             }
@@ -674,7 +675,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         else
         {
             Parameters.ProcessParameters(connector.TypeMapper, validateValues: false, CommandType);
-            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null);
+            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);
 
             foreach (var batchCommand in InternalBatchCommands)
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
@@ -901,7 +902,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     #region Query analysis
 
-    internal void ProcessRawQuery(SqlQueryParser? parser, bool standardConformingStrings, EDBBatchCommand? batchCommand)
+    // EnterpriseDB : redwoodDialect param added for multiplexing scenarii where parser is null and databaseInfo is not available
+    internal void ProcessRawQuery(SqlQueryParser? parser, bool standardConformingStrings, EDBBatchCommand? batchCommand, bool redwoodDialect)
     {
         var (commandText, commandType, parameters) = batchCommand is null
             ? (CommandText, CommandType, Parameters)
@@ -946,7 +948,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     throw new NotSupportedException($"Named parameters are not supported when EnterpriseDB.EDBClient.{nameof(EnableSqlRewriting)} is disabled");
 
                 // The parser is cached on EDBConnector - unless we're in multiplexing mode.
-                parser ??= new SqlQueryParser();
+                parser ??= new SqlQueryParser(redwoodDialect); // EnterpriseDB
 
                 if (batchCommand is null)
                 {
@@ -1517,7 +1519,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                 var batchCommand = InternalBatchCommands[i];
 
                                 batchCommand.Parameters.ProcessParameters(dataSource.TypeMapper, validateParameterValues, CommandType);
-                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand);
+                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, dataSource.DatabaseInfo.SupportsRedwoodDialect);
 
                                 if (connector.Settings.MaxAutoPrepare > 0 && batchCommand.TryAutoPrepare(connector))
                                 {
@@ -1529,7 +1531,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         else
                         {
                             Parameters.ProcessParameters(dataSource.TypeMapper, validateParameterValues, CommandType);
-                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null);
+                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, dataSource.DatabaseInfo.SupportsRedwoodDialect);
 
                             if (connector.Settings.MaxAutoPrepare > 0)
                                 for (var i = 0; i < InternalBatchCommands.Count; i++)
@@ -1609,6 +1611,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 // The connection isn't bound to a connector - it's multiplexing time.
                 var dataSource = (MultiplexingDataSource)conn.EDBDataSource;
 
+                // EnterpriseDB Team
+                var isRedwood = dataSource.DatabaseInfo.SupportsRedwoodDialect;
+
                 if (!async)
                 {
                     // The waiting on the ExecutionCompletion ManualResetValueTaskSource is necessarily
@@ -1622,13 +1627,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     foreach (var batchCommand in InternalBatchCommands)
                     {
                         batchCommand.Parameters.ProcessParameters(dataSource.TypeMapper, validateValues: true, CommandType);
-                        ProcessRawQuery(null, standardConformingStrings: true, batchCommand);
+                        ProcessRawQuery(null, standardConformingStrings: true, batchCommand, isRedwood);
                     }
                 }
                 else
                 {
                     Parameters.ProcessParameters(dataSource.TypeMapper, validateValues: true, CommandType);
-                    ProcessRawQuery(null, standardConformingStrings: true, batchCommand: null);
+                    ProcessRawQuery(null, standardConformingStrings: true, batchCommand: null, isRedwood);
                 }
 
                 State = CommandState.InProgress;

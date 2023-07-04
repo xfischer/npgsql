@@ -107,6 +107,12 @@ public abstract class EDBDatabaseInfo
     /// </summary>
     public virtual bool HasIntegerDateTimes { get; protected set; } = true;
 
+    // EnterpriseDB
+    /// <summary>
+    /// Reports whether EPAS is installed in 'redwood' compatibility mode.
+    /// </summary>
+    public virtual bool SupportsRedwoodDialect { get; internal set; } = false;
+
     /// <summary>
     /// Whether the database supports transactions.
     /// </summary>

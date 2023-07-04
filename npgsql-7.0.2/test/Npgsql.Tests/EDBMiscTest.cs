@@ -967,6 +967,34 @@ namespace EnterpriseDB.EDBClient.Tests
 
         }
 
+        [Test]
+        public void OutParamProcVarcharPostGres()
+        {
+
+            EDBCommand Command = new EDBCommand("", con);
+
+            Command.CommandText = @"CREATE OR REPLACE PROCEDURE oneOutArgProc_test1(a OUT varchar)
+                                        LANGUAGE plpgsql
+                                        AS $$
+                                        BEGIN
+                                        a:= 'HELLO';
+                                    END; $$";
+            Command.ExecuteNonQuery();
+
+            Command = new EDBCommand("oneOutArgProc_test1(:param1)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+            Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 1));
+            Command.Prepare();
+            EDBDataReader result = Command.ExecuteReader();
+            Assert.AreEqual("HELLO", Command.Parameters[0].Value.ToString());
+            result.Close();
+            Command = new EDBCommand();
+            Command.Connection = con;
+            Command.CommandText = "DROP PROCEDURE oneOutArgProc_test1";
+            Command.ExecuteNonQuery();
+
+        }
+
         //ZK: Redundent cases     [Test]
         public void OutParamSingleInParamProc()
         {

@@ -78,6 +78,7 @@ static class DateTimeUtils
                : DateOnly.MinValue,
            var value => BaseValueDateOnly.AddDays(value)
        };
+
     internal static void WriteDateOnly(DateOnly value, EDBWriteBuffer buf, EDBParameter? parameter)
     {
         if (!DisableDateTimeInfinityConversions)
