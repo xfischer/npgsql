@@ -142,6 +142,7 @@ public class MultirangeTests : TestBase
         var multirangeList = new List<EDBRange<DateOnly>>(multirangeArray);
 
         await using var conn = await OpenConnectionAsync();
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EntepriseDB Team -> date translated to timestamp in redwood
         await using var cmd = new EDBCommand("SELECT $1::text", conn);
 
         await WriteInternal(multirangeArray);
@@ -176,6 +177,8 @@ public class MultirangeTests : TestBase
         var multirangeList = new List<EDBRange<DateTime>>(multirangeArray);
 
         await using var conn = await OpenConnectionAsync();
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EntepriseDB Team -> date translated to timestamp in redwood
+
         await using var cmd = new EDBCommand("SELECT $1::text", conn);
 
         await WriteInternal(multirangeArray);
