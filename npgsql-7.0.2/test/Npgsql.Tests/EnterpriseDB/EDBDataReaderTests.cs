@@ -10,7 +10,7 @@ using System.IO;
 using System.Configuration;
 
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable CS8602
     [TestFixture]

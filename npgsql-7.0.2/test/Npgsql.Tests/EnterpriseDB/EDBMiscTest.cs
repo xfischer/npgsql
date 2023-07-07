@@ -6,7 +6,7 @@ using System.Collections;
 using NUnit;
 
 //Haroon
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable CS8602
     /// <summary>

@@ -42,7 +42,7 @@ using System.Reflection;
 using System.Text;
 using NUnit.Framework.Constraints;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable CS8602
     [TestFixture]

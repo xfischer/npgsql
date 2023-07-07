@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable CS8604
 #pragma warning disable CS8602
@@ -154,10 +154,10 @@ namespace EnterpriseDB.EDBClient.Tests
                 com2.CommandText = strSqlOneInArg;
                 await com2.ExecuteNonQueryAsync();
 
-				var command = new EDBCommand("oneInArg_test(:a)",con);
+				var command = new EDBCommand("oneInArg_test(@1)",con);
 				command.CommandType = CommandType.StoredProcedure;
 
-				command.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Numeric));
+				command.Parameters.Add(new EDBParameter("",EDBTypes.EDBDbType.Numeric));
 				command.Parameters[0].Value = 5;
 
 				command.Prepare();

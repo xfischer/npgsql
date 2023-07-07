@@ -6,7 +6,7 @@ using System.Collections;
 using NUnit;
 
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
     /// <summary>
     /// Summary description for EDBArrayTest.

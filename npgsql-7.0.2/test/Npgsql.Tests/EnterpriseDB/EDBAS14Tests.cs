@@ -5,7 +5,7 @@ using System.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable CS8602
     /// <summary>

@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 #pragma warning disable IDE0007 // Use implicit type
 #pragma warning disable CS8604

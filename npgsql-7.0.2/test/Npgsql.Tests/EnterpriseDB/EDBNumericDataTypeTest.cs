@@ -5,7 +5,7 @@ using System.Data;
 using NUnit;
 
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
 	/// <summary>
 	/// Summary description for NumericDataTypeTest.

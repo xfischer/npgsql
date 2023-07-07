@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 #nullable disable
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
     class MyXML
     {

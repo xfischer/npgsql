@@ -10,7 +10,7 @@ using System.Reflection.PortableExecutable;
 using static System.Collections.Specialized.BitVector32;
 using System.Threading.Tasks;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
     public class ct1
     {
