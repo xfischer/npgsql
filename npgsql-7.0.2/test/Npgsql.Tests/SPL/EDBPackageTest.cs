@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
@@ -478,7 +478,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             cstmt.ExecuteNonQuery();
 
             //check if employee exists
-            var getEmp = "SELECT * from emp WHERE empno =2009;";
+            var getEmp = "SELECT * from emp1 WHERE empno =2009;";
 
             var selectCommand = new EDBCommand(getEmp, conn);
             var selectResult = selectCommand.ExecuteReader();
