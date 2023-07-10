@@ -193,6 +193,9 @@ public class BatchTests : MultiplexingTestBase
     {
         await using var conn = await OpenConnectionAsync();
         var table = await CreateTempTable(conn, "name TEXT");
+        var sproc = await GetTempProcedureName(conn);
+
+        await conn.ExecuteNonQueryAsync(@$"CREATE PROCEDURE {sproc}() LANGUAGE sql AS ''");
 
         await using var batch = new EDBBatch(conn)
         {
@@ -204,6 +207,7 @@ public class BatchTests : MultiplexingTestBase
                 new("BEGIN"),
                 new($"SELECT name FROM {table}"),
                 new($"DELETE FROM {table}"),
+                new($"CALL {sproc}()"),
                 new("COMMIT")
             }
         };
@@ -219,7 +223,8 @@ public class BatchTests : MultiplexingTestBase
         Assert.That(batch.BatchCommands[3].StatementType, Is.EqualTo(StatementType.Other));
         Assert.That(batch.BatchCommands[4].StatementType, Is.EqualTo(StatementType.Select));
         Assert.That(batch.BatchCommands[5].StatementType, Is.EqualTo(StatementType.Delete));
-        Assert.That(batch.BatchCommands[6].StatementType, Is.EqualTo(StatementType.Other));
+        Assert.That(batch.BatchCommands[6].StatementType, Is.EqualTo(StatementType.Call));
+        Assert.That(batch.BatchCommands[7].StatementType, Is.EqualTo(StatementType.Other));
     }
 
     [Test]

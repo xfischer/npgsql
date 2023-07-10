@@ -481,8 +481,8 @@ public class NodaTimeTests : TestBase
     }
 
 #if NET6_0_OR_GREATER
-    [Test, Ignore("")]
-    public Task Date_as_DateOnly()
+    [Test]
+    public Task Date_as_DateOnly() // EntepriseDB Team -> date translated to timestamp in redwood
         => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForReading: false);
 
     [Test]
