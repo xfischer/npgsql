@@ -139,14 +139,13 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
                     catch (Exception ex)
                     {
                         txn.Rollback();
-                        throw ex;
+                        throw;
                     }
 
                     if (deqMsg != null)
                     {
                         // process the message payload
-                        var obj = new MyXML();
-                        queueListen.Map<MyXML>(deqMsg.Payload, obj);
+                        var obj = (MyXML)deqMsg.Payload;
                         Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
                         txn.Commit();
                     }
@@ -161,6 +160,7 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
                             txn.Dispose();
                         }
                     }
+                    throw;
                 }
             }
         }
