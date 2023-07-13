@@ -293,16 +293,24 @@ namespace EnterpriseDB.EDBClient
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
         /// <param name="destination"></param>
+        [Obsolete("Advanced Queue messages payload are now strongly typed, no mapping is required.")]
         public void Map<T>(object source, T destination)
         {
+            // If types are mapped, parameters are strongly typed, so direct cast is OK
+            if (source is T)
+            {
+                destination = DeepCopyReflection<T>((T)source, ref destination);
+                return;
+            }
+
+            // Old implementation not working, as there is no ExpandoObject instanciated on the caller, neither docs suggesting it
             if (!(source is System.Dynamic.ExpandoObject))
             {
                 throw new InvalidOperationException("Invalid Object provided");
             }
             IDictionary<string, object> dict = (System.Dynamic.ExpandoObject)source;
-            var type = destination.GetType();
 
-            foreach (var prop in type.GetProperties())
+            foreach (var prop in typeof(T).GetProperties())
             {
                 var lower = prop.Name.ToLower();
                 var key = dict.Keys.SingleOrDefault(k => k.ToLower() == lower);
@@ -312,6 +320,49 @@ namespace EnterpriseDB.EDBClient
                     prop.SetValue(destination, dict[key], null);
                 }
             }
+        }
+
+        private static T DeepCopyReflection<T>(T input, ref T clonedObj)
+        {
+            var properties = typeof(T).GetProperties();
+            foreach (var property in properties)
+            {
+                if (property.CanWrite)
+                {
+                    object value = property.GetValue(input);
+                    if (value != null && value.GetType().IsClass && !value.GetType().FullName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        property.SetValue(clonedObj, DeepCopyReflection(value));
+                    }
+                    else
+                    {
+                        property.SetValue(clonedObj, value);
+                    }
+                }
+            }
+            return clonedObj;
+        }
+
+        private static T DeepCopyReflection<T>(T input)
+        {
+            var properties = typeof(T).GetProperties();
+            T clonedObj = (T)Activator.CreateInstance(typeof(T));
+            foreach (var property in properties)
+            {
+                if (property.CanWrite)
+                {
+                    object value = property.GetValue(input);
+                    if (value != null && value.GetType().IsClass && !value.GetType().FullName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        property.SetValue(clonedObj, DeepCopyReflection(value));
+                    }
+                    else
+                    {
+                        property.SetValue(clonedObj, value);
+                    }
+                }
+            }
+            return clonedObj;
         }
 
 

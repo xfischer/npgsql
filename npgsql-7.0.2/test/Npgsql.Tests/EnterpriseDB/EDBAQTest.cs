@@ -145,8 +145,16 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
                     if (deqMsg != null)
                     {
                         // process the message payload
+
+                        // Direct cast
                         var obj = (MyXML)deqMsg.Payload;
                         Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
+
+                        // via Map
+                        var obj2 = new MyXML();
+                        queueListen.Map<MyXML>(deqMsg.Payload, obj2);
+
+                        Assert.AreEqual(obj2.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
                         txn.Commit();
                     }
                 }
