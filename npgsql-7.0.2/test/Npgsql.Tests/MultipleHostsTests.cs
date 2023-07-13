@@ -842,7 +842,7 @@ public class MultipleHostsTests : TestBase
         }
     }
 
-    [Test]
+    [Test, Timeout(50000)]
     public async Task Primary_host_failover_can_connect()
     {
         await using var firstPostmaster = PgPostmasterMock.Start(ConnectionString, state: Primary);

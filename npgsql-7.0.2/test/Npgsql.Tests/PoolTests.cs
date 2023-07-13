@@ -312,7 +312,7 @@ class PoolTests : TestBase
         }
     }
 
-    [Test] //TODO: parallelize
+    [Test, Timeout(50000)] //TODO: parallelize
     public void Release_waiter_on_connection_failure()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString)

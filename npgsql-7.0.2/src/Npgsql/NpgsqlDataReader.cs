@@ -190,6 +190,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         CheckClosedOrDisposed();
 
+        if (!HasRows) // EnterpriseDB team
+            return false;
+
         UniqueRowId++;
         var fastRead = TryFastRead();
         return fastRead.HasValue
@@ -2299,7 +2302,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
             CheckColumnStart();
         }
-        else if (Command.CommandType == CommandType.StoredProcedure)
+        else if (Command.CommandType == CommandType.StoredProcedure) // EnterpriseDB Team
         {
             SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
             //CheckColumnStart();
@@ -2313,14 +2316,14 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var position = Buffer.ReadPosition;
         try
         {
-            if (fieldDescription._isUnsupportedField)
+            if (fieldDescription._isUnsupportedField) // EnterpriseDB Team
             {
 #nullable disable
                 var _textHandler = new TextHandler(fieldDescription.PostgresType, Connector.TextEncoding);
                 result = _textHandler.Read(Buffer, ColumnLen, false, fieldDescription);
             }
             else
-            {
+            {   // // EnterpriseDB Team : community code
                 result = _isSequential
                 ? fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, false, fieldDescription).GetAwaiter().GetResult()
                 : fieldDescription.Handler.ReadAsObject(Buffer, ColumnLen, fieldDescription);
@@ -2361,7 +2364,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <param name="ordinal">The zero-based column ordinal.</param>
     /// <returns>The value of the specified column.</returns>
-    public object GetEDBValue(int ordinal)
+    public object GetEDBValue(int ordinal) // // EnterpriseDB Team
     {
         var fieldDescription = CheckRowAndGetField(ordinal);
 
