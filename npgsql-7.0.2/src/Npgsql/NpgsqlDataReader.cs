@@ -211,6 +211,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         CheckClosedOrDisposed();
 
+        if (!HasRows) // EnterpriseDB team
+            return Task.FromResult(false);
+
         UniqueRowId++;
         var fastRead = TryFastRead();
         if (fastRead.HasValue)
