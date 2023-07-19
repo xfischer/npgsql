@@ -8,7 +8,7 @@ using EDBTypes;
 using NUnit.Framework;
 using System.IO;
 using System.Configuration;
-
+using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 {
@@ -1238,13 +1238,25 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
 			
 		}
 
-        [Test]
-        public void EDB_EC_2716_TestReaderShouldNotThrow()
+        [Test, Timeout(5000)]
+        public async Task EDB_EC_2716_TestReaderShouldNotHangAsync()
         {
-            Assert.DoesNotThrow(() =>
+            await _conn.OpenAsync();
+            var callable_command = GetEC2716_Command(_conn);
+            await callable_command.PrepareAsync();
+            callable_command.Parameters[0].Value = 20;
+            callable_command.Parameters[1].Value = 7369;
+            await using EDBDataReader result = await callable_command.ExecuteReaderAsync();
+            int fc = result.FieldCount;
+            Console.WriteLine("Count: " + fc);
+            while (await result.ReadAsync())
             {
-                _conn.Open();
-                EDBCommand callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", _conn);
+            }
+        }
+
+        private EDBCommand GetEC2716_Command(EDBConnection conn)
+        {
+            EDBCommand callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn);
                 callable_command.CommandType = CommandType.StoredProcedure;
                 callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
                 callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
@@ -1252,6 +1264,14 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
                 callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            return callable_command;
+        }
+
+        [Test, Timeout(5000)]
+        public void EDB_EC_2716_TestReaderShouldNotHangSync()
+        {
+            _conn.Open();
+            var callable_command = GetEC2716_Command(_conn);
                 callable_command.Prepare();
                 callable_command.Parameters[0].Value = 20;
                 callable_command.Parameters[1].Value = 7369;
@@ -1261,7 +1281,6 @@ namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
                 while (result.Read())
                 {
                 }
-            });
         }
 
     }
