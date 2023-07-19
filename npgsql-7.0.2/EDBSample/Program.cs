@@ -5,7 +5,7 @@ namespace EDBSample
 {
     internal class Program
     {
-        static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=password;Database=edb";
+        static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
 
         static async Task Main(string[] args)
         {
@@ -86,7 +86,14 @@ namespace EDBSample
                     var fc = result.FieldCount;
                     for (var i = 0; i < fc; i++)
                         Console.WriteLine($"RESULT[{i}]={Convert.ToString(callable_command.Parameters[i].Value)} ({callable_command.Parameters[i].Value.GetType().Name})");
+
+                    while (await result.ReadAsync())
+                    {
+                        Console.WriteLine("Emp Name" + " " + result.GetInt32(0));
+                    }
+
                     result.Close();
+
                 }
                 catch (EDBException exp)
                 {
