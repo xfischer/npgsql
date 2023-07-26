@@ -1,4 +1,7 @@
-﻿using EnterpriseDB.EDBClient;
+﻿global using global::System;
+global using global::System.Threading.Tasks;
+
+using EnterpriseDB.EDBClient;
 using System.Data;
 
 namespace EDBSample

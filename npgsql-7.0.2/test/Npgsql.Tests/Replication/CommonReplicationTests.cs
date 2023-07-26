@@ -250,7 +250,11 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
                 var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
                 Assert.That(await replicationEnumerator.MoveNextAsync(), Is.True);
 
+#if NETFRAMEWORK
+                await Task.Delay(new TimeSpan(ticks: (long)(walSenderTimeout.Ticks * 1.1)), CancellationToken.None);
+#else
                 await Task.Delay(walSenderTimeout * 1.1, CancellationToken.None);
+#endif
 
                 await c.ExecuteNonQueryAsync($"INSERT INTO \"{tableName}\" (name) VALUES ('val2')");
                 Assert.That(await replicationEnumerator.MoveNextAsync(), Is.True);
@@ -468,7 +472,11 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
                 await using var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
 
                 var replicationMessageTask = replicationEnumerator.MoveNextAsync();
+#if NETFRAMEWORK
+                streamingCts.CancelAfter(new TimeSpan(rc.WalReceiverTimeout.Ticks * 2L));
+#else
                 streamingCts.CancelAfter(rc.WalReceiverTimeout * 2);
+#endif
 
                 Assert.Multiple(() =>
                 {

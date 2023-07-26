@@ -561,7 +561,7 @@ public abstract class ReplicationConnection : IAsyncDisposable
             if (columnStream != null && !bypassingStream && !_replicationCancellationTokenSource.Token.IsCancellationRequested)
                 await columnStream.DisposeAsync();
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
             if (_sendFeedbackTimer != null)
             {
                 var mre = new ManualResetEvent(false);

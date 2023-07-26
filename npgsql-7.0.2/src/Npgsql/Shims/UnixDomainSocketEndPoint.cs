@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0
+﻿#if NETSTANDARD2_0 || NETFRAMEWORK
 using System.Net.Sockets;
 using System.Text;
 

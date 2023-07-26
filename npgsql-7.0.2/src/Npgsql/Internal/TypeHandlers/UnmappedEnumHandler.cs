@@ -118,7 +118,7 @@ sealed class UnmappedEnumHandler : TextHandler
 
     TypeRecord GetTypeRecord(Type type)
     {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         return _types.GetOrAdd(type, t => CreateTypeRecord(t, _nameTranslator));
 #else
         return _types.GetOrAdd(type, static (t, translator) => CreateTypeRecord(t, translator), _nameTranslator);

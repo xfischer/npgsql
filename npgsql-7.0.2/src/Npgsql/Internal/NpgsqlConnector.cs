@@ -907,7 +907,7 @@ public sealed partial class EDBConnector : IDisposable
 
                         var sslProtocols = SslProtocols.None;
                         // On .NET Framework SslProtocols.None can be disabled, see #3718
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
                         sslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
 #endif
 
@@ -1124,7 +1124,7 @@ public sealed partial class EDBConnector : IDisposable
                 ? Settings.TcpKeepAliveInterval
                 : Settings.TcpKeepAliveTime;
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK
             var timeMilliseconds = timeSeconds * 1000;
             var intervalMilliseconds = intervalSeconds * 1000;
 

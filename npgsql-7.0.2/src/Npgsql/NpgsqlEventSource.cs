@@ -16,7 +16,7 @@ sealed class EDBEventSource : EventSource
     internal const int CommandStartId = 3;
     internal const int CommandStopId = 4;
 
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
     IncrementingPollingCounter? _bytesWrittenPerSecondCounter;
     IncrementingPollingCounter? _bytesReadPerSecondCounter;
 
@@ -78,7 +78,7 @@ sealed class EDBEventSource : EventSource
 
     internal void DataSourceCreated(EDBDataSource dataSource)
     {
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
         lock (_dataSourcesLock)
         {
             _dataSources.Add(dataSource, null);
@@ -94,7 +94,7 @@ sealed class EDBEventSource : EventSource
         Interlocked.Add(ref _multiplexingTicksWritten, stopwatch.ElapsedTicks);
     }
 
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
     double GetDataSourceCount()
     {
         lock (_dataSourcesLock)

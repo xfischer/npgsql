@@ -10,4 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Npgsql/Npgsql.csproj" />
   </ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net471' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481' ">
+		<Reference Include="System.Transactions" />
+	</ItemGroup>
 </Project>

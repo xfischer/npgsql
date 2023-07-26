@@ -1,4 +1,4 @@
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
 
 #pragma warning disable 1591
 

@@ -150,7 +150,7 @@ public readonly struct EDBLogSequenceNumber : IEquatable<EDBLogSequenceNumber>, 
         {
             if (s[i] != '/') continue;
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
             var firstPart = s.Slice(0, i).ToString();
             var secondPart = s.Slice(++i).ToString();
 #else

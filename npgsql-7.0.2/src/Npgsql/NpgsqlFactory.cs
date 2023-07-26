@@ -49,7 +49,7 @@ public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     /// </summary>
     public override DbDataAdapter CreateDataAdapter() => new EDBDataAdapter();
 
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
     /// <summary>
     /// Specifies whether the specific <see cref="DbProviderFactory"/> supports the <see cref="DbDataAdapter"/> class.
     /// </summary>

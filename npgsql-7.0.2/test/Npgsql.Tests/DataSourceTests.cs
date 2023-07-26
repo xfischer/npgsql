@@ -249,12 +249,12 @@ public class DataSourceTests : TestBase
     public async Task As_DbDataSource([Values] bool async)
     {
         await using DbDataSource dataSource = EDBDataSource.Create(ConnectionString);
-        await using var connection = async
+        using var connection = async
             ? await dataSource.OpenConnectionAsync()
             : dataSource.OpenConnection();
         Assert.That(connection.State, Is.EqualTo(ConnectionState.Open));
 
-        await using var command = dataSource.CreateCommand("SELECT 1");
+        using var command = dataSource.CreateCommand("SELECT 1");
 
         Assert.That(async
             ? await command.ExecuteScalarAsync()

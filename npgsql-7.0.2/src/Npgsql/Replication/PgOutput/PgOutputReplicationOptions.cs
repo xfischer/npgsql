@@ -127,7 +127,7 @@ public class PgOutputReplicationOptions : IEquatable<PgOutputReplicationOptions>
     /// <inheritdoc />
     public override int GetHashCode()
     {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         var hashCode = ProtocolVersion.GetHashCode();
         hashCode = (hashCode * 397) ^ PublicationNames.GetHashCode();
         hashCode = (hashCode * 397) ^ Binary.GetHashCode();

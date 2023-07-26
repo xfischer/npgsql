@@ -4,7 +4,7 @@
     <Description>NodaTime plugin for EDB, allowing mapping of PostgreSQL date/time types to NodaTime types.</Description>
     <PackageTags>npgsql;postgresql;postgres;nodatime;date;time;ado;ado;net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net471;net472;net48;net481;netstandard2.0;net6.0</TargetFrameworks>
 	<TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
 	<AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>

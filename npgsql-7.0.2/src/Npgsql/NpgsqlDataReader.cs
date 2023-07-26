@@ -1530,7 +1530,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <summary>
     /// Releases the resources used by the <see cref="EDBDataReader"/>.
     /// </summary>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()
@@ -1575,7 +1575,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <summary>
     /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
     /// </summary>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public Task CloseAsync()
 #else
     public override Task CloseAsync()

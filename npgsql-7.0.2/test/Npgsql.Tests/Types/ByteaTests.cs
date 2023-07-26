@@ -103,7 +103,12 @@ public class ByteaTests : MultiplexingTestBase
         var fsList = new List<FileStream>();
         try
         {
+#if NETFRAMEWORK
+            File.WriteAllBytes(filePath, new byte[] { 1, 2, 3 });
+#else
             await File.WriteAllBytesAsync(filePath, new byte[] { 1, 2, 3 });
+#endif
+
 
             await AssertTypeWrite(
                 () => FileStreamFactory(filePath, fsList), "\\x010203", "bytea", EDBDbType.Bytea, DbType.Binary, isDefault: false);
@@ -111,7 +116,12 @@ public class ByteaTests : MultiplexingTestBase
         finally
         {
             foreach (var fs in fsList)
+
+#if NETFRAMEWORK
+                fs.Dispose();
+#else
                 await fs.DisposeAsync();
+#endif
 
             try
             {
@@ -138,7 +148,11 @@ public class ByteaTests : MultiplexingTestBase
         {
             var bytes = new byte[8192 * 4];
             rnd.NextBytes(bytes);
+#if NETFRAMEWORK
+            File.WriteAllBytes(filePath, bytes);
+#else
             await File.WriteAllBytesAsync(filePath, bytes);
+#endif
             var expectedSql = "\\x" + ToHex(bytes);
 
             await AssertTypeWrite(
@@ -147,7 +161,11 @@ public class ByteaTests : MultiplexingTestBase
         finally
         {
             foreach (var fs in fsList)
+#if NETFRAMEWORK
+                fs.Dispose();
+#else
                 await fs.DisposeAsync();
+#endif
 
             try
             {

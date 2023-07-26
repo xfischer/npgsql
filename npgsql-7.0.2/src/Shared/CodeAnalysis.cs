@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace System.Diagnostics.CodeAnalysis
 {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     [AttributeUsageAttribute(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
     sealed class AllowNullAttribute : Attribute
     {

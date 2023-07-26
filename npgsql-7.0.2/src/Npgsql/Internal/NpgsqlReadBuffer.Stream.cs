@@ -142,7 +142,7 @@ public sealed partial class EDBReadBuffer
                 return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         public int Read(Span<byte> span)
 #else
         public override int Read(Span<byte> span)
@@ -161,7 +161,7 @@ public sealed partial class EDBReadBuffer
             return read;
         }
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
 #else
         public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
@@ -200,7 +200,7 @@ public sealed partial class EDBReadBuffer
         protected override void Dispose(bool disposing)
             => DisposeAsync(disposing, async: false).GetAwaiter().GetResult();
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         public ValueTask DisposeAsync()
 #else
         public override ValueTask DisposeAsync()

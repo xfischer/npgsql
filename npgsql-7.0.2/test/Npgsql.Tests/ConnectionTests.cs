@@ -1229,6 +1229,7 @@ CREATE TABLE record ()");
         }
     }
 
+#if !NETFRAMEWORK
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
     [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]
@@ -1287,6 +1288,7 @@ CREATE TABLE record ()");
             await adminConn.ExecuteNonQueryAsync("DROP DATABASE IF EXISTS sqlascii");
         }
     }
+#endif
 
     [Test]
     public async Task Oversize_buffer()

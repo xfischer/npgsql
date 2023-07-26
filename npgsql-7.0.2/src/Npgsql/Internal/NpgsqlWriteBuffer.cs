@@ -425,7 +425,7 @@ public sealed partial class EDBWriteBuffer : IDisposable
         WritePosition += TextEncoding.GetBytes(chars, offset, charCount, Buffer, WritePosition);
     }
 
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
     internal void WriteChars(ReadOnlySpan<char> chars)
     {
         Debug.Assert(TextEncoding.GetByteCount(chars) <= WriteSpaceLeft);

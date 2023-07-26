@@ -56,9 +56,9 @@ class ReadBufferTests
     public void ReadNullTerminatedString_buffered_only()
     {
         Writer
-            .Write(PGUtil.UTF8Encoding.GetBytes(new string("foo")))
+            .Write(PGUtil.UTF8Encoding.GetBytes("foo"))
             .WriteByte(0)
-            .Write(PGUtil.UTF8Encoding.GetBytes(new string("bar")))
+            .Write(PGUtil.UTF8Encoding.GetBytes("bar"))
             .WriteByte(0);
 
         ReadBuffer.Ensure(1);
@@ -70,15 +70,15 @@ class ReadBufferTests
     [Test]
     public async Task ReadNullTerminatedString_with_io()
     {
-        Writer.Write(PGUtil.UTF8Encoding.GetBytes(new string("Chunked ")));
+        Writer.Write(PGUtil.UTF8Encoding.GetBytes("Chunked "));
         ReadBuffer.Ensure(1);
         var task = ReadBuffer.ReadNullTerminatedString(async: true);
         Assert.That(!task.IsCompleted);
 
         Writer
-            .Write(PGUtil.UTF8Encoding.GetBytes(new string("string")))
+            .Write(PGUtil.UTF8Encoding.GetBytes("string"))
             .WriteByte(0)
-            .Write(PGUtil.UTF8Encoding.GetBytes(new string("bar")))
+            .Write(PGUtil.UTF8Encoding.GetBytes("bar"))
             .WriteByte(0);
         Assert.That(task.IsCompleted);
         Assert.That(await task, Is.EqualTo("Chunked string"));

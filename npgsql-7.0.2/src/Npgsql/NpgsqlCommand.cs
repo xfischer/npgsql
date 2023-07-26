@@ -30,6 +30,9 @@ namespace EnterpriseDB.EDBClient;
 // ReSharper disable once RedundantNameQualifier
 [System.ComponentModel.DesignerCategory("")]
 public class EDBCommand : DbCommand, ICloneable, IComponent
+#if NETFRAMEWORK
+    , IAsyncDisposable
+#endif
 {
     #region Fields
 
@@ -634,7 +637,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public virtual Task PrepareAsync(CancellationToken cancellationToken = default)
 #else
     public override Task PrepareAsync(CancellationToken cancellationToken = default)
@@ -1943,6 +1946,18 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         }
     }
 
+#if NETFRAMEWORK
+    /// <summary>
+    /// Async wrapper for .Net Framework IAsyncDisposable() support
+    /// </summary>
+    /// <returns></returns>
+    public ValueTask DisposeAsync()
+    {
+        Dispose(true);
+        return new ValueTask();
+    }
+#endif
+
     /// <summary>
     /// This event is unsupported by EnterpriseDB.EDBClient. Use <see cref="System.Data.Common.DbConnection.StateChange"/> instead.
     /// </summary>
@@ -1959,7 +1974,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         remove => Disposed -= value;
     }
 
-    #endregion
+#endregion
 }
 
 enum CommandState

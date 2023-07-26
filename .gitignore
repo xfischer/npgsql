@@ -15,3 +15,5 @@ artifacts/
 *.ide/
 *.lock.json
 .vs
+*InternalTrace*.log
+**/TestResults

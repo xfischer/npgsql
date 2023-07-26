@@ -42,7 +42,7 @@ sealed class PreparedTextReader : TextReader
             : -1;
     }
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public int Read(Span<char> buffer)
 #else
     public override int Read(Span<char> buffer)
@@ -81,7 +81,7 @@ sealed class PreparedTextReader : TextReader
         => Task.FromResult(Read(buffer, index, count));
 
     public
-#if !NETSTANDARD2_0
+#if !(NETSTANDARD2_0 || NETFRAMEWORK)
     override 
 #endif
     ValueTask<int> ReadAsync(Memory<char> buffer, CancellationToken cancellationToken = default) => new(Read(buffer.Span));

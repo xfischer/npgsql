@@ -214,7 +214,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                         Debug.Assert(e is OperationCanceledException ? async : !async);
 
                         var isStreamBroken = false;
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
                         // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
                         // return garbage if reused. To prevent this, we flow down and break the connection immediately.
                         // See #4305.

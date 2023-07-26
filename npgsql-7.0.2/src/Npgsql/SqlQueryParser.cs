@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Text;
 
 namespace EnterpriseDB.EDBClient;
@@ -624,7 +623,7 @@ sealed class SqlQueryParser
             return false;
 
         // abort if redwood and plpgsql
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         if (temp.IndexOf("LANGUAGE PLPGSQL", StringComparison.OrdinalIgnoreCase) >= 0)
             return false;
 #else
@@ -633,7 +632,7 @@ sealed class SqlQueryParser
 #endif
 
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
         return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
             || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
                         && (temp.Contains("PROCEDURE ")

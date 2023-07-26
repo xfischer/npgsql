@@ -143,7 +143,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public Task CommitAsync(CancellationToken cancellationToken = default)
 #else
     public override Task CommitAsync(CancellationToken cancellationToken = default)
@@ -182,7 +182,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public Task RollbackAsync(CancellationToken cancellationToken = default)
 #else
     public override Task RollbackAsync(CancellationToken cancellationToken = default)
@@ -403,7 +403,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <summary>
     /// Disposes the transaction, rolling it back if it is still pending.
     /// </summary>
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()
