@@ -103,7 +103,7 @@ public class ByteaTests : MultiplexingTestBase
         var fsList = new List<FileStream>();
         try
         {
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
             File.WriteAllBytes(filePath, new byte[] { 1, 2, 3 });
 #else
             await File.WriteAllBytesAsync(filePath, new byte[] { 1, 2, 3 });
@@ -117,7 +117,7 @@ public class ByteaTests : MultiplexingTestBase
         {
             foreach (var fs in fsList)
 
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
                 fs.Dispose();
 #else
                 await fs.DisposeAsync();
@@ -148,7 +148,7 @@ public class ByteaTests : MultiplexingTestBase
         {
             var bytes = new byte[8192 * 4];
             rnd.NextBytes(bytes);
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
             File.WriteAllBytes(filePath, bytes);
 #else
             await File.WriteAllBytesAsync(filePath, bytes);
@@ -161,7 +161,7 @@ public class ByteaTests : MultiplexingTestBase
         finally
         {
             foreach (var fs in fsList)
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
                 fs.Dispose();
 #else
                 await fs.DisposeAsync();

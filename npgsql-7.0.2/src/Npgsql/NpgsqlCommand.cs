@@ -30,7 +30,7 @@ namespace EnterpriseDB.EDBClient;
 // ReSharper disable once RedundantNameQualifier
 [System.ComponentModel.DesignerCategory("")]
 public class EDBCommand : DbCommand, ICloneable, IComponent
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
     , IAsyncDisposable
 #endif
 {
@@ -1946,15 +1946,20 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         }
     }
 
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
+    // EnterpriseDB Team
     /// <summary>
     /// Async wrapper for .Net Framework IAsyncDisposable() support
     /// </summary>
     /// <returns></returns>
     public ValueTask DisposeAsync()
     {
-        Dispose(true);
-        return new ValueTask();
+        //await DisposeAsyncCore().ConfigureAwait(false);
+
+        Dispose(disposing: false);
+        GC.SuppressFinalize(this);
+
+        return default(ValueTask);
     }
 #endif
 

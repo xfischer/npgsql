@@ -1229,7 +1229,7 @@ CREATE TABLE record ()");
         }
     }
 
-#if !NETFRAMEWORK
+#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
     [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]

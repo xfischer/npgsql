@@ -449,7 +449,7 @@ sealed class BuiltInTypeHandlerResolver : TypeHandlerResolver
             { typeof(BitArray),                            "bit varying" },
             { typeof(BitVector32),                         "bit varying" },
             { typeof(Dictionary<string, string>),          "hstore" },
-#if !(NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK)
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1
             { typeof(ImmutableDictionary<string, string>), "hstore" },
 #endif
 

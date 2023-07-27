@@ -4,12 +4,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// Missing parts for Net471, net48+ support
+// EnterpriseDB Team : Missing parts for Net471, net48+ support
 namespace EnterpriseDB.EDBClient.Tests
 {
     internal static class NetFrameworkShims
     {
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETSTANDARD2_0
         internal static string[] Split(this string s, string separator, int count = 0)
             => count == 0 ? s.Split(new string[] { separator }, StringSplitOptions.None)
             : s.Split(new string[] { separator }, count, StringSplitOptions.None);

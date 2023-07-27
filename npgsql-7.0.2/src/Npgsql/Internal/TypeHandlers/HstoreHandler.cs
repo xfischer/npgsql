@@ -7,7 +7,7 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal.TypeHandling;
 using EnterpriseDB.EDBClient.PostgresTypes;
 
-#if NETCOREAPP1_0_OR_GREATER
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB same condition as in BuiltInTypeHandlerResolver
 using System.Collections.Immutable;
 #endif
 
@@ -27,7 +27,7 @@ namespace EnterpriseDB.EDBClient.Internal.TypeHandlers;
 public class HstoreHandler :
     EDBTypeHandler<Dictionary<string, string?>>,
     IEDBTypeHandler<IDictionary<string, string?>>
-#if NETCOREAPP1_0_OR_GREATER
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1
     , IEDBTypeHandler<ImmutableDictionary<string, string?>>
 #endif
 {
@@ -166,7 +166,7 @@ public class HstoreHandler :
 
     #endregion
 
-#if NETCOREAPP1_0_OR_GREATER
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1
     #region ImmutableDictionary
 
     /// <inheritdoc />
