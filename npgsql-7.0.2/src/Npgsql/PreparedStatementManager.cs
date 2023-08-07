@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Internal;
+using System.Linq;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -12,6 +13,7 @@ sealed class PreparedStatementManager
     internal int MaxAutoPrepared { get; }
     internal int UsagesBeforePrepare { get; }
 
+    private HashSet<DateTime> _assignedDates = new();
     internal Dictionary<string, PreparedStatement> BySql { get; } = new();
     internal PreparedStatement?[] AutoPrepared { get; }
 
@@ -147,7 +149,7 @@ sealed class PreparedStatementManager
             if (!pStatement.DoParametersMatch(batchCommand.PositionalParameters))
                 return null;
             // Prevent this statement from being replaced within this batch
-            pStatement.LastUsed = DateTime.MaxValue;
+            SetLastUsed(pStatement, DateTime.MaxValue);
             return pStatement;
 
         case PreparedState.BeingUnprepared:
@@ -163,7 +165,7 @@ sealed class PreparedStatementManager
         {
             // Statement still hasn't passed the usage threshold, no automatic preparation.
             // Return null for unprepared execution.
-            pStatement.LastUsed = DateTime.UtcNow;
+            SetLastUsed(pStatement, DateTime.UtcNow);
             return null;
         }
 
@@ -247,7 +249,7 @@ sealed class PreparedStatementManager
 
 
         // Make sure this statement isn't replaced by a later statement in the same batch.
-        pStatement.LastUsed = DateTime.MaxValue;
+        SetLastUsed(pStatement, DateTime.MaxValue);
 
         // Note that the parameter types are only set at the moment of preparation - in the candidate phase
         // there's no differentiation between overloaded statements, which are a pretty rare case, saving
@@ -276,6 +278,7 @@ sealed class PreparedStatementManager
 
     internal void ClearAll()
     {
+        _assignedDates.Clear();
         BySql.Clear();
         NumPrepared = 0;
         _preparedStatementIndex = 0;
@@ -285,5 +288,24 @@ sealed class PreparedStatementManager
         if (_candidates != null)
             for (var i = 0; i < _candidates.Length; i++)
                 _candidates[i] = null;
+    }
+
+    // EnterpriseDB: prevent DateTime.UtcNow collision bug in .net Framework
+    // due to > 1 ms precision error
+    internal void SetLastUsed(PreparedStatement pStatement, DateTime dateTime)
+    {
+        if (pStatement.LastUsed == dateTime)
+            return;
+
+#if NETFRAMEWORK
+        _assignedDates.Remove(pStatement.LastUsed);
+        while (_assignedDates.Contains(dateTime))
+        {
+            dateTime = new DateTime(dateTime.Ticks + 1);
+        }        
+        _assignedDates.Add(dateTime);
+#endif
+
+        pStatement.LastUsed = dateTime;
     }
 }

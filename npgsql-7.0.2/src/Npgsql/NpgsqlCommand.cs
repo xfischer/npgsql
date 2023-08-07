@@ -1134,7 +1134,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     await connector.WriteSync(async, cancellationToken);
 
                 if (pStatement != null)
-                    pStatement.LastUsed = DateTime.UtcNow;
+                    connector.PreparedStatementManager.SetLastUsed(pStatement, DateTime.UtcNow);
             }
 
             if (batchCommand is null || !(batchCommand.AppendErrorBarrier ?? EnableErrorBarriers))
