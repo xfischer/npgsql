@@ -46,9 +46,25 @@ public class AutoPrepareTests : TestBase
         Assert.That(checkCmd.ExecuteScalar(), Is.EqualTo(1));
     }
 
-    [Test, Description("Passes the maximum limit for autoprepared statements, recycling the least-recently used one")]
+    [Test, Timeout(10000), Description("Passes the maximum limit for autoprepared statements, recycling the least-recently used one")]
     public void Recycle()
     {
+        //
+        // EntepriseDB : uncomment on .NET471 to see precision around 1ms vs 0.0001 ms on .net Core....
+        // This causes collisions on prepared statements and eviction errors
+        //
+        //Console.WriteLine("Running for 5 seconds...");
+        //var distinctValues = new HashSet<DateTime>();
+        //var sw = Stopwatch.StartNew();
+        //while (sw.Elapsed.TotalSeconds < 5)
+        //{
+        //    distinctValues.Add(DateTime.UtcNow);
+        //}
+        //sw.Stop();
+        //Console.WriteLine("Precision: {0:0.000000} ms ({1} samples)",
+        //                  sw.Elapsed.TotalMilliseconds / distinctValues.Count,
+        //                  distinctValues.Count);
+
         var csb = new EDBConnectionStringBuilder(ConnectionString)
         {
             AutoPrepareMinUsages = 2,

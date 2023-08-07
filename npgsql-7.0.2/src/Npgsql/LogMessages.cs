@@ -12,6 +12,11 @@ namespace EnterpriseDB.EDBClient;
 
 static partial class LogMessages
 {
+    [LoggerMessage(
+       Level = LogLevel.Trace,
+       Message = "EDB: {message}")]
+    internal static partial void CustomMessageEDB(ILogger logger, string message);
+
     #region Connection
 
     [LoggerMessage(

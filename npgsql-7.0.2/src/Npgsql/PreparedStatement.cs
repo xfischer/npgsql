@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define EDB_DIAGNOSTICS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using EnterpriseDB.EDBClient.BackendMessages;
@@ -22,7 +23,20 @@ sealed class PreparedStatement
 
     internal int Usages;
 
+#if EDB_DIAGNOSTICS
+    PreparedState _state;
+    internal PreparedState State
+    {
+        get { return _state; }
+        set
+        {
+            LogMessages.CustomMessageEDB(_manager._commandLogger, $"PreparedStatement state {_state} -> {value} (SQL: {Sql})");
+            _state = value;
+        }
+    }
+#else
     internal PreparedState State { get; set; }
+#endif
 
     internal bool IsPrepared => State == PreparedState.Prepared;
 
@@ -40,7 +54,24 @@ sealed class PreparedStatement
 
     internal int AutoPreparedSlotIndex { get; set; }
 
+#if EDB_DIAGNOSTICS
+    private DateTime lastUsed;
+
+    internal DateTime LastUsed
+    {
+        get => lastUsed;
+        set
+        {
+            if (value.Ticks != lastUsed.Ticks)
+            {
+                LogMessages.CustomMessageEDB(_manager._commandLogger, $"PreparedStatement lastUsed {lastUsed} -> {value.Ticks} now/value diff(ms): {new TimeSpan(DateTime.UtcNow.Ticks-value.Ticks).TotalMilliseconds} (SQL: {Sql})");
+                lastUsed = value;
+            }
+        }
+    }
+#else
     internal DateTime LastUsed { get; set; }
+#endif
 
     /// <summary>
     /// Contains the handler types for a prepared statement's parameters, for overloaded cases (same SQL, different param types)

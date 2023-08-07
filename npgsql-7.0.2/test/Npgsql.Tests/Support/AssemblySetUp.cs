@@ -12,6 +12,9 @@ public class AssemblySetUp
     [OneTimeSetUp]
     public void Setup()
     {
+        var loggerFactory = LoggerFactory.Create(c => c.AddProvider(new NUnitLoggerProvider()).SetMinimumLevel(LogLevel.Trace));
+        EDBLoggingConfiguration.InitializeLogging(loggerFactory);
+
         var connString = TestUtil.ConnectionString;
         using var conn = new EDBConnection(connString);
         try
@@ -44,5 +47,38 @@ public class AssemblySetUp
 
             throw;
         }
+    }
+}
+
+public class NUnitLoggerProvider : ILoggerProvider
+{
+    public ILogger CreateLogger(string categoryName) => TestLogger.Create(categoryName);
+    public void Dispose() => throw new NotImplementedException();
+}
+public static class TestLogger
+{
+    public static ILogger Create(string categoryName)
+    {
+        var logger = new NUnitLogger(categoryName);
+        return logger;
+    }
+
+    class NUnitLogger : ILogger, IDisposable
+    {
+        private readonly Action<string> output = Console.WriteLine;
+        private string categoryName;
+
+        public NUnitLogger(string categoryName) => this.categoryName = categoryName;
+
+        public void Dispose()
+        {
+        }
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
+            Func<TState, Exception, string> formatter) => output($"{categoryName}: {formatter(state, exception)}");
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public IDisposable BeginScope<TState>(TState state) => this;
     }
 }

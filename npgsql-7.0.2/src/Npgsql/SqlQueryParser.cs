@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define EDB_DIAGNOSTICS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -87,6 +88,9 @@ sealed class SqlQueryParser
             sql = command.CommandText;
             parameters = command.Parameters;
             batchCommands = command.InternalBatchCommands;
+#if EDB_DIAGNOSTICS
+            LogMessages.CustomMessageEDB(command?.InternalConnection?.Connector.CommandLogger, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
+#endif
             MoveToNextBatchCommand();
         }
 
@@ -602,6 +606,9 @@ sealed class SqlQueryParser
 
         void MoveToNextBatchCommand()
         {
+#if EDB_DIAGNOSTICS
+            LogMessages.CustomMessageEDB(command?.InternalConnection?.Connector.CommandLogger, "MoveToNextBatchCommand");
+#endif
             Debug.Assert(batchCommands is not null);
             if (batchCommands.Count > statementIndex)
             {
@@ -612,6 +619,9 @@ sealed class SqlQueryParser
             {
                 batchCommand = new EDBBatchCommand();
                 batchCommands.Add(batchCommand);
+#if EDB_DIAGNOSTICS
+                LogMessages.CustomMessageEDB(command?.InternalConnection?.Connector.CommandLogger, "Batch command added");
+#endif
             }
         }
     }

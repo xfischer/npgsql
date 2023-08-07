@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define EDB_DIAGNOSTICS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ sealed class PreparedStatementManager
     internal string NextPreparedStatementName() => "_p" + (++_preparedStatementIndex);
     ulong _preparedStatementIndex;
 
-    readonly ILogger _commandLogger;
+    internal readonly ILogger _commandLogger;
 
     internal const int CandidateCount = 100;
 
@@ -213,6 +214,10 @@ sealed class PreparedStatementManager
         if (pStatement.State != PreparedState.Invalidated)
             RemoveCandidate(pStatement);
 
+#if EDB_DIAGNOSTICS
+        LogMessages.CustomMessageEDB(_commandLogger, $"oldPreparedStatement: AutoPrepared: [{string.Join(",", AutoPrepared.Where(s => s != null).Select(s => string.Concat(s?.Sql, "/", s?.State, "/", s?.LastUsed.Ticks)))}] (index: {selectedIndex})");
+#endif
+
         var oldPreparedStatement = AutoPrepared[selectedIndex];
 
         if (oldPreparedStatement is null)
@@ -254,6 +259,9 @@ sealed class PreparedStatementManager
 
     void RemoveCandidate(PreparedStatement candidate)
     {
+#if EDB_DIAGNOSTICS
+        LogMessages.CustomMessageEDB(_commandLogger, $"BEGIN Remove candidate {candidate}");
+#endif
         var i = 0;
         for (; i < _candidates.Length; i++)
         {
