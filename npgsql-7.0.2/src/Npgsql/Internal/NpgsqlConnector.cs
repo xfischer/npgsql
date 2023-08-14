@@ -1,3 +1,4 @@
+//#define EDB_DIAGNOSTICS
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -1313,9 +1314,11 @@ public sealed partial class EDBConnector : IDisposable
         }
 
         var messageCode = (BackendMessageCode)ReadBuffer.ReadByte();
+
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("Read message {messageCode}", messageCode);
+        ConnectionLogger.LogTrace("<=BE {messageCode}", messageCode);
 #endif
+
         switch (messageCode)
         {
         case BackendMessageCode.NoticeResponse:
@@ -1335,7 +1338,6 @@ public sealed partial class EDBConnector : IDisposable
             ReadBuffer.ReadPosition -= 5;
             return ReadMessageLong(this, async, dataRowLoadingMode, readingNotifications: false);
         }
-
         return new ValueTask<IBackendMessage?>(ParseServerMessage(ReadBuffer, messageCode, len, false));
 
         static async ValueTask<IBackendMessage?> ReadMessageLong(
@@ -1376,10 +1378,11 @@ public sealed partial class EDBConnector : IDisposable
                 {
                     await connector.ReadBuffer.Ensure(5, async, readingNotifications);
                     var messageCode = (BackendMessageCode)connector.ReadBuffer.ReadByte();
-#if EDB_DIAGNOSTICS
-                    connector.ConnectionLogger.LogTrace("Read message {messageCode}", messageCode);
-#endif
+
                     PGUtil.ValidateBackendMessageCode(messageCode);
+#if EDB_DIAGNOSTICS
+                    connector.ConnectionLogger.LogTrace("<=BE {messageCode}", messageCode);
+#endif
                     var len = connector.ReadBuffer.ReadInt32() - 4; // Transmitted length includes itself
 
                     if ((messageCode == BackendMessageCode.DataRow &&
@@ -1408,7 +1411,6 @@ public sealed partial class EDBConnector : IDisposable
 
                         await connector.ReadBuffer.Ensure(len, async);
                     }
-
                     var msg = connector.ParseServerMessage(connector.ReadBuffer, messageCode, len, isReadingPrependedMessage);
 
                     switch (messageCode)
@@ -1493,14 +1495,26 @@ public sealed partial class EDBConnector : IDisposable
 
     internal IBackendMessage? ParseServerMessage(EDBReadBuffer buf, BackendMessageCode code, int len, bool isPrependedMessage)
     {
+//#if EDB_DIAGNOSTICS
+//        ConnectionLogger.LogTrace($"ParseServerMessage {code} len={len}");
+//#endif
         switch (code)
         {
+        /* EnterpriseDB Team (diagnostics) */
         case BackendMessageCode.RowDescription:
-            return _rowDescriptionMessage.Load(buf, TypeMapper, false);
-        /* EnterpriseDB Team */
+            var rowDescription = _rowDescriptionMessage.Load(buf, TypeMapper, false);
+#if EDB_DIAGNOSTICS
+            ConnectionLogger.LogTrace($"ParseServerMessage/RowDescription : {string.Join(",", rowDescription)}");
+#endif
+            return rowDescription;
+        /* EnterpriseDB Team (diagnostics) */
         case BackendMessageCode.OutDescription:
             var rowOutDescriptionMessage = new RowDescriptionMessage();
-            return rowOutDescriptionMessage.Load(buf, TypeMapper, true);
+            rowOutDescriptionMessage.Load(buf, TypeMapper, true);
+#if EDB_DIAGNOSTICS
+            ConnectionLogger.LogTrace($"ParseServerMessage/OutDescription : {string.Join(",", rowOutDescriptionMessage)}");
+#endif
+            return rowOutDescriptionMessage;
         case BackendMessageCode.DataRow:
             try
             {
@@ -1521,7 +1535,11 @@ public sealed partial class EDBConnector : IDisposable
             if (CurrentReader != null)
             {
                 CurrentReader.ProcessEDBDataRowMessage(buf, false);
-                return _outParamDataRowMessage.Load(len);
+                _outParamDataRowMessage.Load(len);
+#if EDB_DIAGNOSTICS
+                ConnectionLogger.LogTrace($"ParseServerMessage/ParamData : {string.Join(",", _outParamDataRowMessage)}");
+#endif
+                return _outParamDataRowMessage;
             }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             return _commandCompleteMessage.Load(buf, len);
@@ -1543,7 +1561,13 @@ public sealed partial class EDBConnector : IDisposable
         case BackendMessageCode.ParseComplete:
             return ParseCompleteMessage.Instance;
         case BackendMessageCode.ParameterDescription:
-            return _parameterDescriptionMessage.Load(buf);
+            _parameterDescriptionMessage.Load(buf);
+#if EDB_DIAGNOSTICS
+            var typeNames = _parameterDescriptionMessage.TypeOIDs.Select(oid => DatabaseInfo.ByOID.TryGetValue(oid, out var typeName) ? typeName.ToString() : "?");
+            ConnectionLogger.LogTrace($"ParseServerMessage/ParameterDescription : {string.Join(",", typeNames)}");
+#endif
+            return _parameterDescriptionMessage;
+
         case BackendMessageCode.BindComplete:
             return BindCompleteMessage.Instance;
         case BackendMessageCode.NoData:
@@ -1647,7 +1671,7 @@ public sealed partial class EDBConnector : IDisposable
         }
     }
 
-#endregion Backend message processing
+    #endregion Backend message processing
 
     #region Transactions
 

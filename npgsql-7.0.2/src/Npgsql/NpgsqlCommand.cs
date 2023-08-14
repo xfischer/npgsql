@@ -16,10 +16,7 @@ using static EnterpriseDB.EDBClient.Util.Statics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Internal;
-using EnterpriseDB.EDBClient.Properties;
 using System.Text.RegularExpressions;
-using EnterpriseDB.EDBClient.Replication.PgOutput;
-using System.Collections.Immutable;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -1211,11 +1208,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (statementToClose != null)
                 await connector.WriteClose(StatementOrPortal.Statement, statementToClose.Name!, async, cancellationToken);
 
-            //await connector.WriteParse(batchCommand.FinalCommandText!, pStatement.Name!, batchCommand.PositionalParameters, async, cancellationToken);
+            //await connector.WriteParse(batchCommand.FinalCommandText!, pStatement.Name!, async, cancellationToken);
             if (CommandType == CommandType.StoredProcedure)
             {
                 connector._isCallableStmt = true;
-                await connector.WriteParseOut(batchCommand.FinalCommandText!, pStatement.Name!, _parameters, batchCommand.PositionalParameters, async, connector.TypeMapper);
+                await connector.WriteParseOut(batchCommand.FinalCommandText!, pStatement.Name!, _parameters, async, connector.TypeMapper);
             }
             else
             {

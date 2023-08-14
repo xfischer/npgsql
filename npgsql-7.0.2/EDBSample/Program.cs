@@ -11,13 +11,19 @@ namespace EDBSample
     {
         static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
 
+        static ILoggerFactory? _loggerFactory;
         static ILogger? _logger;
 
         static async Task Main(string[] args)
         {
+            InitLogging();
+
+            _logger.LogDebug("---- Starting");
             //await Sample();            
             await EC_2716_ExecuteNonQueryAsync();
-            
+            //await EC_2716_ExecuteReaderAsync();
+            _logger.LogDebug("---- end");
+
         }
 
         static async Task Sample()
@@ -147,15 +153,22 @@ namespace EDBSample
             callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
             callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
             callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            _logger.LogDebug("---- BEFORE PREPARE");
             await callable_command.PrepareAsync();
+            _logger.LogDebug("---- AFTER PREPARE");
             callable_command.Parameters[0].Value = 20;
             callable_command.Parameters[1].Value = 7369;
+            _logger.LogDebug("---- BEFORE ExecuteReaderAsync");
             await using EDBDataReader result = await callable_command.ExecuteReaderAsync();
+            _logger.LogDebug("---- AFTER ExecuteReaderAsync");
             var fc = result.FieldCount;
             Console.WriteLine("Count: " + fc);
+
+            _logger.LogDebug("---- BEFORE ReadAsync");
             while (await result.ReadAsync())
             {
             }
+            _logger.LogDebug("---- AFTER ReadAsync");
         }
 
         private static async Task EC_2716_ExecuteNonQueryAsync()
@@ -171,33 +184,45 @@ namespace EDBSample
             callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
             callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
             callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            _logger.LogTrace("---- BEFORE PREPARE");
+            _logger.LogDebug("---- BEFORE PREPARE");
             await callable_command.PrepareAsync();
-            _logger.LogTrace("---- AFTER PREPARE");
+            _logger.LogDebug("---- AFTER PREPARE");
             callable_command.Parameters[0].Value = 20;
             callable_command.Parameters[1].Value = 7369;
-            _logger.LogTrace("---- BEFORE ExecuteNonQueryAsync");
+            _logger.LogDebug("---- BEFORE ExecuteNonQueryAsync");
             int fc = await callable_command.ExecuteNonQueryAsync();
-            _logger.LogTrace("---- AFTER ExecuteNonQueryAsync");
+            _logger.LogDebug("---- AFTER ExecuteNonQueryAsync");
             Console.WriteLine("Count: " + fc);
             
         }
 
+        private static void InitLogging()
+        {
+            _loggerFactory = LoggerFactory.Create(builder => builder
+               .SetMinimumLevel(LogLevel.Trace)
+               //.AddSimpleConsole(options =>
+               //{
+               //    options.SingleLine = true;
+               //    options.TimestampFormat = "yyyy/MM/dd HH:mm:ss ";
+               //})
+               //.AddConsole(options =>
+               //{
+               //    options.MaxQueueLength = 1;
+               //    options.QueueFullMode = Microsoft.Extensions.Logging.Console.ConsoleLoggerQueueFullMode.Wait;
+               //})
+               .AddSystemdConsole(options =>
+               {
+                   options.TimestampFormat = "yyyy/MM/dd HH:mm:ss ";
+               }).AddDebug()
+               );
+
+            _logger = _loggerFactory.CreateLogger("Sample");
+        }
+
         private static EDBDataSource BuildDataSource(string connectionString)
         {
-            var loggerFactory = LoggerFactory.Create(builder => builder
-                .SetMinimumLevel(LogLevel.Trace)
-                .AddSimpleConsole(options =>
-                {
-                    options.SingleLine = true;
-                    options.TimestampFormat = "yyyy/MM/dd HH:mm:ss ";
-                })
-                );
-
-            _logger = loggerFactory.CreateLogger("Sample");
-
             var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
-            dataSourceBuilder.UseLoggerFactory(loggerFactory);
+            dataSourceBuilder.UseLoggerFactory(_loggerFactory);
             return dataSourceBuilder.Build();
         }
 

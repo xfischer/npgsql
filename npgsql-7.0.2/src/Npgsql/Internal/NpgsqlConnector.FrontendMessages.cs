@@ -1,4 +1,4 @@
-// #define EDB_DIAGNOSTICS
+//#define EDB_DIAGNOSTICS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,7 +19,7 @@ partial class EDBConnector
     {
         Debug.Assert(name.All(c => c < 128));
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteDescribe {name}", name);
+        ConnectionLogger.LogTrace("FE=> Describe (portal={name})", name);
 #endif
 
         var len = sizeof(byte) +       // Message code
@@ -54,7 +54,7 @@ partial class EDBConnector
 
         Debug.Assert(name.All(c => c < 128));
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteDescribeOut {name}", name);
+        ConnectionLogger.LogTrace("FE=> DescribeOut (portal={name})", name);
 #endif
 
         var len = sizeof(byte) +       // Message code
@@ -100,7 +100,7 @@ partial class EDBConnector
 
 
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteExecuteOut {maxRows}", maxRows);
+        ConnectionLogger.LogTrace("FE=> ExecuteOut (maxRows={maxRows})", maxRows);
 #endif
         Write(maxRows);
         return Task.CompletedTask;
@@ -124,11 +124,11 @@ partial class EDBConnector
     /*
      * EnterpriseDB Team: ParseOut Message 
     */
-    internal async Task WriteParseOut(string sql, string statementName, EDBParameterCollection _paramerters, List<EDBParameter> inputParameters, bool async, TypeMapper mapper)
+    internal async Task WriteParseOut(string sql, string statementName, EDBParameterCollection _parameters, bool async, TypeMapper mapper)
     {
         Debug.Assert(statementName.All(c => c < 128));
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteParseOut {sql}", sql);
+        ConnectionLogger.LogTrace($"FE=> ParseOut (stmt={statementName}, query=\"{sql}\", parameters=({string.Join(",", _parameters.Select(p => $"{p.ParameterName}={p.DataTypeName},<{p.Value}>"))})");
 #endif
 
         var queryByteLen = TextEncoding.GetByteCount(sql);
@@ -142,8 +142,8 @@ partial class EDBConnector
             sizeof(byte) +         // Null terminator for the statement name
             queryByteLen + sizeof(byte) +         // SQL query length plus null terminator
             sizeof(short) +         // Number of parameters
-            _paramerters.Count * sizeof(int) + //  Parameter OIDs
-            _paramerters.Count * 2;  //
+            _parameters.Count * sizeof(int) + //  Parameter OIDs
+            _parameters.Count * 2;  //
 
 
         WriteBuffer.WriteByte(FrontendMessageCode.ParseOut);
@@ -155,10 +155,10 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < 1 + 2)
             await Flush(async);
         WriteBuffer.WriteByte(0); // Null terminator for the query
-        WriteBuffer.WriteInt16((short)_paramerters.Count);
+        WriteBuffer.WriteInt16((short)_parameters.Count);
 
         /*EDB should change to goto etc*/
-        for (Int32 i = 0; i < _paramerters.Count; i++)
+        for (int i = 0; i < _parameters.Count; i++)
         {
             // PGUtil.WriteInt32(outputStream, Convert.ToInt32(EDBParameter.ParamToOid(_parameters[i].TypeInfo.Name.ToString())));
 
@@ -167,9 +167,9 @@ partial class EDBConnector
 #nullable disable
             if (mapper != null)
             {
-                if (_paramerters[i].DataTypeName != null)
+                if (_parameters[i].DataTypeName != null)
                 {
-                    EDBTypeHandler handler = mapper.ResolveByDataTypeName(_paramerters[i].DataTypeName);
+                    EDBTypeHandler handler = mapper.ResolveByDataTypeName(_parameters[i].DataTypeName);
                     if (handler != null)
                     {
                         oid = handler.PostgresType.OID;
@@ -179,19 +179,19 @@ partial class EDBConnector
 #nullable restore
             if (oid != 0)
             {
-                WriteBuffer.WriteInt32((Int32)oid);
+                WriteBuffer.WriteInt32((int)oid);
             }
             else
             {
-                WriteBuffer.WriteInt32((Int32)EDBParameter.ParamToOid((string)_paramerters[i].EDBDbType.ToString()));
+                WriteBuffer.WriteInt32((int)EDBParameter.ParamToOid((string)_parameters[i].EDBDbType.ToString()));
             }
 
         }
 
-        for (Int32 i = 0; i < _paramerters.Count; i++)
+        for (int i = 0; i < _parameters.Count; i++)
         {
             // PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction)));
-            WriteBuffer.WriteInt16((short)EDBParameter.NetParamDirectionToEDBParamDirection(_paramerters[i].Direction));
+            WriteBuffer.WriteInt16((short)EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction));
         }
     }
     /*
@@ -201,7 +201,7 @@ partial class EDBConnector
      */
     internal async Task WriteBindOut(
        List<EDBParameter> inputParameters,
-       EDBParameterCollection _parameters,
+       EDBParameterCollection parameters,
        string portal,
        string statement,
        bool allResultTypesAreUnknown,
@@ -211,7 +211,7 @@ partial class EDBConnector
         Debug.Assert(statement.All(c => c < 128));
         Debug.Assert(portal.All(c => c < 128));
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteBindOut");
+        ConnectionLogger.LogTrace("FE=> Bind(stmt={statement},portal={portal})", statement, portal);
 #endif
 
         var headerLength =
@@ -236,12 +236,12 @@ partial class EDBConnector
             paramsLength += p.ValidateAndGetLength();
         }
 
-        var formatCodeListLength = _parameters.Count;//formatCodesSum == 0 ? 0 : formatCodesSum == inputParameters.Count ? 1 : inputParameters.Count;
+        var formatCodeListLength = parameters.Count;//formatCodesSum == 0 ? 0 : formatCodesSum == inputParameters.Count ? 1 : inputParameters.Count;
 
         var messageLength = headerLength +
             sizeof(short) * formatCodeListLength +                  // List of format codes
             sizeof(short) +                  // Number of parameters
-            sizeof(int) * _parameters.Count +                  // Parameter lengths
+            sizeof(int) * parameters.Count +                  // Parameter lengths
             paramsLength +                  // Parameter values
             sizeof(short) +                  // Number of result format codes
             sizeof(short) * (unknownResultTypeList?.Length ?? 1);   // Result format codes
@@ -263,37 +263,33 @@ partial class EDBConnector
         }
         else if (formatCodeListLength > 1)
         {
-
-            //foreach (EDBParameter p in _parameters)
-            for (int i = 0; i < _parameters.Count; i++)
-            {
-                WriteBuffer.WriteInt16((short)_parameters[i].FormatCode);
+            foreach (EDBParameter p in parameters)
+            { 
+                WriteBuffer.WriteInt16((short)p.FormatCode);
             }
-
         }
 
         if (WriteBuffer.WriteSpaceLeft < 2)
             await Flush(async);
 
-        WriteBuffer.WriteInt16(_parameters.Count);
+        WriteBuffer.WriteInt16(parameters.Count);
 
-        //foreach (EDBParameter param in _parameters)
-        for (int i = 0; i < _parameters.Count; i++)
+        foreach (EDBParameter p in parameters)
         {
             try
             {
                 if (WriteBuffer.WriteSpaceLeft < 80)
                     await Flush(async);
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-                _parameters[i].LengthCache?.Rewind();
+                p.LengthCache?.Rewind();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 //   param.LengthCache?.Rewind();
-                if (_parameters[i].Direction == System.Data.ParameterDirection.Output)
+                if (p.Direction == System.Data.ParameterDirection.Output)
                 {
                     WriteBuffer.WriteInt32((int)-1);
                     continue;
                 }
-                await _parameters[i].WriteWithLength(WriteBuffer, async);
+                await p.WriteWithLength(WriteBuffer, async);
 
             }
             catch (Exception e)
@@ -327,7 +323,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(async, cancellationToken);
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteSync");
+        ConnectionLogger.LogTrace("FE=> Sync");
 #endif
         Write();
         return Task.CompletedTask;
@@ -358,7 +354,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(maxRows, async, cancellationToken);
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteExecute {maxRows}", maxRows);
+        ConnectionLogger.LogTrace("FE=> Execute {maxRows}", maxRows);
 #endif
         Write(maxRows);
         return Task.CompletedTask;
@@ -383,7 +379,7 @@ partial class EDBConnector
     {
         Debug.Assert(statementName.All(c => c < 128));
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteParse {sql}", sql);
+        ConnectionLogger.LogTrace("FE=> Parse(stmt={statementName}, query=\"{sql}\")", statementName, sql);
 #endif
 
         int queryByteLen;
@@ -442,7 +438,7 @@ partial class EDBConnector
         Debug.Assert(portal.All(c => c < 128));
 
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteBind");
+        ConnectionLogger.LogTrace("FE=> Bind(stmt={statement}, portal={portal})", statement, portal);
 #endif
 
         var headerLength =
@@ -543,7 +539,7 @@ partial class EDBConnector
             return FlushAndWrite(len, type, name, async, cancellationToken);
 
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteClose {name}", name);
+        ConnectionLogger.LogTrace("FE=> Close ({name})", name);
 #endif
 
         Write(len, type, name);
@@ -574,7 +570,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < 1 + 4)
             await Flush(async, cancellationToken);
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteQuery {sql}", sql);
+        ConnectionLogger.LogTrace("FE=> Query {sql}", sql);
 #endif
         WriteBuffer.WriteByte(FrontendMessageCode.Query);
         WriteBuffer.WriteInt32(
@@ -598,7 +594,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < len)
             await Flush(async, cancellationToken);
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("CopyDone {async}", async);
+        ConnectionLogger.LogTrace("FE=> CopyDone {async}", async);
 #endif
         WriteBuffer.WriteByte(FrontendMessageCode.CopyDone);
         WriteBuffer.WriteInt32(len - 1);
@@ -615,7 +611,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < len)
             await Flush(async, cancellationToken);
 #if EDB_DIAGNOSTICS
-        ConnectionLogger.LogTrace("WriteCopyFail {async}", async);
+        ConnectionLogger.LogTrace("FE=> CopyFail {async}", async);
 #endif
         WriteBuffer.WriteByte(FrontendMessageCode.CopyFail);
         WriteBuffer.WriteInt32(len - 1);
