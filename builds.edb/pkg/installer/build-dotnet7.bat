@@ -276,7 +276,7 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net482
+mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net471
 cd %SOURCE_PATH%
 cd npgsql-7.0.2\src\Npgsql.Json.NET
 REM nuget restore Npgsql.Json.NET.csproj
