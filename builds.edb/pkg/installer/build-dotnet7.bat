@@ -45,16 +45,16 @@ copy bin\%RELEASE_CONFIGURATION%\net6.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%
 copy bin\%RELEASE_CONFIGURATION%\net6.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0
-copy bin\%RELEASE_CONFIGURATION%\net5.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\net5.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\net5.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0
+REM copy bin\%RELEASE_CONFIGURATION%\net5.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
+REM copy bin\%RELEASE_CONFIGURATION%\net5.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error 
+REM copy bin\%RELEASE_CONFIGURATION%\net5.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net5.0 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1
-copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1
+REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\netcoreapp3.1\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netcoreapp3.1 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
