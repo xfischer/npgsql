@@ -33,7 +33,7 @@ using EDBTypes;
 using NUnit.Framework;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS8602
     [TestFixture]

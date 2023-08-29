@@ -5,7 +5,7 @@ using System.Data;
 using EDBTypes;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS8604
 #pragma warning disable CS8602
