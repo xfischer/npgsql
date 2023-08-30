@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Threading;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+//using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using System.Dynamic;
 using System.IO;
 
