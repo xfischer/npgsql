@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Sync security alerts to Jira issues"
-        uses: reload/github-security-jira@v1.1.0
+        uses: reload/github-security-jira@v1.x
         env:
-          GH_SECURITY_TOKEN: ${{ secrets.GITHUBSECURITYTOKEN }}
-          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          GH_SECURITY_TOKEN: ${{ secrets.GH_SLONIK }}
+          JIRA_TOKEN: ${{ secrets.GH_SLONIK }}
           JIRA_HOST: https://enterprisedb.atlassian.net
-          JIRA_USER: muhammad.aqeel@enterprisedb.com
+          JIRA_USER: edb.slonik@enterprisedb.com
           JIRA_PROJECT: EC
           JIRA_ISSUE_TYPE: Security/Compliance
-          JIRA_WATCHERS: eric.mccormack@enterprisedb.com
+          JIRA_WATCHERS: edb.slonik@enterprisedb.com
           JIRA_RESTRICTED_COMMENT_ROLE: Developers
