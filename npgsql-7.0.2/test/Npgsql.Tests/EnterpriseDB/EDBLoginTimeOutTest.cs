@@ -4,7 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 	/// <summary>
 	/// Summary description for LoginTimeOutTest.

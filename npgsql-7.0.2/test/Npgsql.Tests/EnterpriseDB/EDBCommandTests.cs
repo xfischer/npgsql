@@ -42,7 +42,7 @@ using System.Reflection;
 using System.Text;
 using NUnit.Framework.Constraints;
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS0618
 #pragma warning disable CS8602

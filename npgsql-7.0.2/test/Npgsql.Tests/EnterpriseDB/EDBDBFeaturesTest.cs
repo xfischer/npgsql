@@ -4,7 +4,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS8602
     /// <summary>

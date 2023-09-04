@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 #nullable disable
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
     class MyXML
     {

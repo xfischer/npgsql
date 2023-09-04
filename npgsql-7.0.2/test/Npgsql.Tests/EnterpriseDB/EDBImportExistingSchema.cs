@@ -5,7 +5,7 @@ using System.Data;
 using NUnit;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 	/// <summary>
 	/// it creates a new table importing the schema of an existing table

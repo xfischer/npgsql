@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using NUnit.Framework;
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB;
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
 class EDBSqlQueryParserTests
 {

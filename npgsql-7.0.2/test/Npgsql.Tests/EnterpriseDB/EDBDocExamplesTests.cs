@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
@@ -9,7 +9,7 @@ using System.Collections;
 using System.Xml.Linq;
 using System.Numerics;
 
-namespace EnterpriseDB.EDBClient.Tests.EntepriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
     public class EDBDocExamplesTests : TestBase
     {
