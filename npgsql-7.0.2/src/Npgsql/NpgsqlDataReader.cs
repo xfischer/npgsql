@@ -1,4 +1,4 @@
-//#define EDB_DIAGNOSTICS
+#define EDB_DIAGNOSTICS
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -256,7 +256,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             return null;
         var messageCode = (BackendMessageCode)readBuf.ReadByte();
 #if EDB_DIAGNOSTICS
-        _commandLogger.LogTrace("<=BE {messageCode}", messageCode);
+        LogMessages.EDBTrace(_commandLogger, $"<=BE {messageCode}");
 #endif
         var len = readBuf.ReadInt32() - 4;  // Transmitted length includes itself
         if (messageCode != BackendMessageCode.DataRow || readBuf.ReadBytesLeft < len)
@@ -1432,7 +1432,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     {
                         break;
                     }
-                } else
+                }
+                else
                 {
                     /*EnterpriseDB Team */
                     if (_isSchemaOnly && _statements.All(s => s.IsPrepared))
@@ -1477,7 +1478,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                     }
                 }
-                    
+
             }
             catch (Exception e)
             {
@@ -1613,7 +1614,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 {
                     await Consume(async);
                 }
-                catch (Exception ex) when (ex is OperationCanceledException or EDBException { InnerException : TimeoutException })
+                catch (Exception ex) when (ex is OperationCanceledException or EDBException { InnerException: TimeoutException })
                 {
                     // Timeout/cancellation - completely normal, consume has basically completed.
                 }
@@ -2305,7 +2306,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         var fieldDescription = CheckRowAndGetField(ordinal);
 
-        if (_isSequential) {
+        if (_isSequential)
+        {
             SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
             CheckColumnStart();
         }
@@ -2313,8 +2315,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         {
             SeekToColumnSequential(ordinal, false).GetAwaiter().GetResult();
             //CheckColumnStart();
-        } else
-        SeekToColumnNonSequential(ordinal);
+        }
+        else
+            SeekToColumnNonSequential(ordinal);
 
         if (ColumnLen == -1)
             return DBNull.Value;
@@ -2801,7 +2804,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         for (var lastColumnRead = _columns.Count; column >= lastColumnRead; lastColumnRead++)
         {
             int lastColumnLen;
-            (Buffer.ReadPosition, lastColumnLen) = _columns[lastColumnRead-1];
+            (Buffer.ReadPosition, lastColumnLen) = _columns[lastColumnRead - 1];
             if (lastColumnLen != -1)
                 Buffer.ReadPosition += lastColumnLen;
             var len = Buffer.ReadInt32();

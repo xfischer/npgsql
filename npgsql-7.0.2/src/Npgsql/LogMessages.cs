@@ -15,7 +15,7 @@ static partial class LogMessages
     [LoggerMessage(
        Level = LogLevel.Trace,
        Message = "EDB: {message}")]
-    internal static partial void CustomMessageEDB(ILogger logger, string message);
+    internal static partial void EDBTrace(this ILogger logger, string message);
 
     #region Connection
 

@@ -1,4 +1,4 @@
-﻿//#define EDB_DIAGNOSTICS
+﻿#define EDB_DIAGNOSTICS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +30,7 @@ sealed class PreparedStatement
         get { return _state; }
         set
         {
-            LogMessages.CustomMessageEDB(_manager._commandLogger, $"PreparedStatement state {_state} -> {value} (SQL: {Sql})");
+            LogMessages.EDBTrace(_manager._commandLogger, $"PreparedStatement state {_state} -> {value} (SQL: {Sql})");
             _state = value;
         }
     }
@@ -64,7 +64,7 @@ sealed class PreparedStatement
         {
             if (value.Ticks != lastUsed.Ticks)
             {
-                LogMessages.CustomMessageEDB(_manager._commandLogger, $"PreparedStatement lastUsed {lastUsed} -> {value.Ticks} now/value diff(ms): {new TimeSpan(DateTime.UtcNow.Ticks-value.Ticks).TotalMilliseconds} (SQL: {Sql})");
+                LogMessages.EDBTrace(_manager._commandLogger, $"PreparedStatement lastUsed {lastUsed} -> {value.Ticks} now/value diff(ms): {new TimeSpan(DateTime.UtcNow.Ticks-value.Ticks).TotalMilliseconds} (SQL: {Sql})");
                 lastUsed = value;
             }
         }

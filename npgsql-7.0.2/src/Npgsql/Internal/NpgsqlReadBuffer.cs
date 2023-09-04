@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define EDB_DIAGNOSTICS
+using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
+using Microsoft.Extensions.Logging;
 using static System.Threading.Timeout;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -195,6 +197,9 @@ public sealed partial class EDBReadBuffer : IDisposable
                 }
                 catch (Exception e)
                 {
+#if EDB_DIAGNOSTICS
+                    LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure error : {e.Message}");
+#endif
                     var connector = buffer.Connector;
 
                     // Stopping twice (in case the previous Stop() call succeeded) doesn't hurt.
@@ -513,6 +518,9 @@ public sealed partial class EDBReadBuffer : IDisposable
         }
         catch (Exception e)
         {
+#if EDB_DIAGNOSTICS
+            LogMessages.EDBTrace(Connector.ConnectionLogger, $"Readbuffer Read error : {e.Message}");
+#endif
             throw Connector.Break(new EDBException("Exception while reading from stream", e));
         }
     }
@@ -570,6 +578,9 @@ public sealed partial class EDBReadBuffer : IDisposable
             }
             catch (Exception e)
             {
+#if EDB_DIAGNOSTICS
+                LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ReadAsyncLong error : {e.Message}");
+#endif
                 throw buffer.Connector.Break(new EDBException("Exception while reading from stream", e));
             }
         }
