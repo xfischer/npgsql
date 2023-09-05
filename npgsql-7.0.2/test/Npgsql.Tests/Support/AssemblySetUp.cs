@@ -12,7 +12,10 @@ public class AssemblySetUp
     [OneTimeSetUp]
     public void Setup()
     {
-        var loggerFactory = LoggerFactory.Create(c => c.AddProvider(new NUnitLoggerProvider()).SetMinimumLevel(LogLevel.Trace));
+        var loggerFactory = LoggerFactory.Create(c => c
+            .AddProvider(new NUnitLoggerProvider())
+            .SetMinimumLevel(LogLevel.Warning)
+            );
         EDBLoggingConfiguration.InitializeLogging(loggerFactory);
 
         var connString = TestUtil.ConnectionString;

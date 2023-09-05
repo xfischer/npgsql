@@ -1516,7 +1516,12 @@ public sealed partial class EDBConnector : IDisposable
         case BackendMessageCode.RowDescription:
             var rowDescription = _rowDescriptionMessage.Load(buf, TypeMapper, false);
 #if EDB_DIAGNOSTICS
-            LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/RowDescription : {string.Join(",", rowDescription)}");
+            try 
+            {
+                // Some tests are purposely using exception raisong type handlers, make sure to swallow this exception
+                LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/RowDescription : {string.Join(",", rowDescription)}");
+            }
+            catch (NullReferenceException) { }
 #endif
             return rowDescription;
         /* EnterpriseDB Team (diagnostics) */
@@ -1920,7 +1925,7 @@ public sealed partial class EDBConnector : IDisposable
             catch (Exception e)
             {
 #if EDB_DIAGNOSTICS
-                LogMessages.EDBTrace(ConnectionLogger,$"Exception: {e}");
+                LogMessages.EDBTrace(ConnectionLogger, $"Exception: {e}");
 #endif
                 var socketException = e.InnerException as SocketException;
                 if (socketException == null || socketException.SocketErrorCode != SocketError.ConnectionReset)

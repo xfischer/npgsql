@@ -3,7 +3,6 @@ using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -11,7 +10,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
-using Microsoft.Extensions.Logging;
 using static System.Threading.Timeout;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -176,6 +174,21 @@ public sealed partial class EDBReadBuffer : IDisposable
             {
                 try
                 {
+#if NETFRAMEWORK
+                    // In .Net Framework NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
+                    // When there is no data to read, it hangs. The workaround is not wait for available data and check the token
+                    if (readingNotifications || true)
+                    {
+                        if (buffer.Underlying is NetworkStream networkStream)
+                        {
+                            while (!networkStream.DataAvailable)
+                            {
+                                finalCt.ThrowIfCancellationRequested();
+                                await Task.Delay(100, finalCt);
+                            }
+                        }
+                    }
+#endif
                     var toRead = buffer.Size - buffer.FilledBytes;
                     var read = async
                         ? await buffer.Underlying.ReadAsync(buffer.Buffer.AsMemory(buffer.FilledBytes, toRead), finalCt)

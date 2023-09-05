@@ -89,7 +89,10 @@ sealed class SqlQueryParser
             parameters = command.Parameters;
             batchCommands = command.InternalBatchCommands;
 #if EDB_DIAGNOSTICS
-            LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
+            if (command?.InternalConnection?.Connector?.CommandLogger != null)
+            {
+                LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
+            }
 #endif
             MoveToNextBatchCommand();
         }
@@ -607,7 +610,10 @@ sealed class SqlQueryParser
         void MoveToNextBatchCommand()
         {
 #if EDB_DIAGNOSTICS
-            LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, "MoveToNextBatchCommand");
+            if (command?.InternalConnection?.Connector?.CommandLogger != null)
+            {
+                LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, "MoveToNextBatchCommand");
+            }
 #endif
             Debug.Assert(batchCommands is not null);
             if (batchCommands.Count > statementIndex)
@@ -620,7 +626,10 @@ sealed class SqlQueryParser
                 batchCommand = new EDBBatchCommand();
                 batchCommands.Add(batchCommand);
 #if EDB_DIAGNOSTICS
-                LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, "Batch command added");
+                if (command?.InternalConnection?.Connector?.CommandLogger != null)
+                {
+                    LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, "Batch command added");
+                }
 #endif
             }
         }
