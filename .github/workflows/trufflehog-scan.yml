@@ -1,17 +1,18 @@
 ###
-# Foundation-security BlackDuck workflow
+# Foundation-security Trufflehog workflow
 # version: 2.0
 ###
-name: Foundation-Security/Black Duck Scan
+name: Foundation-Security/Trufflehog Scan
 
 on:
   push:
     tags:
       - "**"
-  workflow_dispatch:
+    branches:
+      - "**"
 
 jobs:
-  Blackduck-Scan:
+  Trufflehog-Scan:
     runs-on: ubuntu-22.04
     permissions:
       id-token: write
@@ -35,14 +36,8 @@ jobs:
           path: foundation-security
           token: ${{secrets.GH_SLONIK}}
 
-      - name: BlackDuck Scan
-        id: call-bd-action
-        uses: ./foundation-security/actions/blackduck
+      - name: Secrets Scan
+        id: call-th-composite
+        uses: ./foundation-security/actions/trufflehog
         with:
-          github-token: ${{ secrets.GH_SLONIK }}
-          blackduck-url: ${{ secrets.BLACKDUCK_URL }}
-          blackduck-api-token: ${{ secrets.BLACKDUCK_API_TOKEN }}
           cloudsmith-token: ${{ secrets.CLOUDSMITH_READ_ALL }}
-          project-name: ${{ github.event.repository.name }} # set to  project-name: <repo name>  if this workflow is not in the same repo as the source to be scanned.
-          project-version: ${{ github.ref_name }} # set to  project-version: <version or tag>  if this workflow is not in the same repo as the source to be scanned.
-          use-clang-tools: false
