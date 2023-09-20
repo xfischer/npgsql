@@ -195,7 +195,7 @@ public class AutoPrepareTests : TestBase
         cmd2.ExecuteScalar();
     }
 
-    [Test]
+    [Test, Timeout(60000)]
     public void Candidate_eject()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -384,7 +384,7 @@ public class AutoPrepareTests : TestBase
         Assert.That(reader.GetName(0), Is.EqualTo("foo"));
     }
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
+    [Test, Timeout(15000), IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
     public async Task Dont_auto_prepare_more_than_max_statements_in_batch()
     {
         var builder = new EDBConnectionStringBuilder(ConnectionString)
@@ -404,7 +404,7 @@ public class AutoPrepareTests : TestBase
         Assert.That(await connection.ExecuteScalarAsync(CountPreparedStatements), Is.LessThanOrEqualTo(builder.MaxAutoPrepare));
     }
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
+    [Test, Timeout(15000), IssueLink("https://github.com/npgsql/npgsql/issues/3106")]
     public async Task Dont_auto_prepare_more_than_max_statements_in_batch_random()
     {
         var builder = new EDBConnectionStringBuilder(ConnectionString)

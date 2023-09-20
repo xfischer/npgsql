@@ -1,5 +1,4 @@
-﻿#define EDB_DIAGNOSTICS
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -216,9 +215,7 @@ sealed class PreparedStatementManager
         if (pStatement.State != PreparedState.Invalidated)
             RemoveCandidate(pStatement);
 
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(_commandLogger, $"oldPreparedStatement: AutoPrepared: [{string.Join(",", AutoPrepared.Where(s => s != null).Select(s => string.Concat(s?.Sql, "/", s?.State, "/", s?.LastUsed.Ticks)))}] (index: {selectedIndex})");
-#endif
 
         var oldPreparedStatement = AutoPrepared[selectedIndex];
 
@@ -261,9 +258,7 @@ sealed class PreparedStatementManager
 
     void RemoveCandidate(PreparedStatement candidate)
     {
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(_commandLogger, $"BEGIN Remove candidate {candidate}");
-#endif
         var i = 0;
         for (; i < _candidates.Length; i++)
         {
@@ -298,12 +293,15 @@ sealed class PreparedStatementManager
             return;
 
 #if NETFRAMEWORK
-        _assignedDates.Remove(pStatement.LastUsed);
-        while (_assignedDates.Contains(dateTime))
+        if (dateTime < DateTime.MaxValue)
         {
-            dateTime = new DateTime(dateTime.Ticks + 1);
-        }        
-        _assignedDates.Add(dateTime);
+            _assignedDates.Remove(pStatement.LastUsed);
+            while (_assignedDates.Contains(dateTime))
+            {
+                dateTime = new DateTime(dateTime.Ticks + 1);
+            }
+            _assignedDates.Add(dateTime);
+        }
 #endif
 
         pStatement.LastUsed = dateTime;

@@ -1,4 +1,4 @@
-﻿#define EDB_DIAGNOSTICS
+﻿//#define EDB_DIAGNOSTICS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

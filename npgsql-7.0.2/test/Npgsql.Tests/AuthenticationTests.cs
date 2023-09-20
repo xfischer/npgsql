@@ -287,7 +287,7 @@ public class AuthenticationTests : MultiplexingTestBase
         };
     }
 
-    [Test, Description("Connects with a bad password to ensure the proper error is thrown")]
+    [Test, Timeout(15000), Description("Connects with a bad password to ensure the proper error is thrown")]
     public void Authentication_failure()
     {
         var builder = new EDBConnectionStringBuilder(ConnectionString)
@@ -305,7 +305,7 @@ public class AuthenticationTests : MultiplexingTestBase
         }
     }
 
-    [Test, Description("Simulates a timeout during the authentication phase")]
+    [Test, Timeout(15000), Description("Simulates a timeout during the authentication phase")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/3227")]
     public async Task Timeout_during_authentication()
     {
@@ -322,7 +322,7 @@ public class AuthenticationTests : MultiplexingTestBase
                 .With.InnerException.TypeOf<TimeoutException>());
     }
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1180")]
+    [Test, Timeout(15000), IssueLink("https://github.com/npgsql/npgsql/issues/1180")]
     public void Pool_by_password()
     {
         using var _ = CreateTempPool(ConnectionString, out var connectionString);

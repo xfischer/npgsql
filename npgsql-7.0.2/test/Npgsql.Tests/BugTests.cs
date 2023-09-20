@@ -1293,7 +1293,7 @@ $$;");
         }
     }
 
-    [Test]
+    [Test, Timeout(15000)]
     [IssueLink("https://github.com/npgsql/npgsql/issues/3839")]
     public async Task SingleThreadedSynchronizationContext_deadlock()
     {

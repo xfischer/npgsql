@@ -1,4 +1,3 @@
-#define EDB_DIAGNOSTICS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,9 +17,7 @@ partial class EDBConnector
     internal Task WriteDescribe(StatementOrPortal statementOrPortal, string name, bool async, CancellationToken cancellationToken = default)
     {
         Debug.Assert(name.All(c => c < 128));
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Describe (portal={name})");
-#endif
 
         var len = sizeof(byte) +       // Message code
                   sizeof(int)  +       // Length
@@ -53,9 +50,7 @@ partial class EDBConnector
     {
 
         Debug.Assert(name.All(c => c < 128));
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> DescribeOut (portal={name})");
-#endif
 
         var len = sizeof(byte) +       // Message code
                   sizeof(int) +       // Length
@@ -99,9 +94,7 @@ partial class EDBConnector
             return FlushAndWrite(maxRows, async);
 
 
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> ExecuteOut (maxRows={maxRows})");
-#endif
         Write(maxRows);
         return Task.CompletedTask;
 
@@ -127,9 +120,7 @@ partial class EDBConnector
     internal async Task WriteParseOut(string sql, string statementName, EDBParameterCollection _parameters, bool async, TypeMapper mapper)
     {
         Debug.Assert(statementName.All(c => c < 128));
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> ParseOut (stmt={statementName}, query=\"{sql}\", parameters=({string.Join(",", _parameters.Select(p => $"{p.ParameterName}={p.DataTypeName},<{p.Value}>"))})");
-#endif
 
         var queryByteLen = TextEncoding.GetByteCount(sql);
         if (WriteBuffer.WriteSpaceLeft < 1 + 4 + statementName.Length + 1)
@@ -210,9 +201,7 @@ partial class EDBConnector
     {
         Debug.Assert(statement.All(c => c < 128));
         Debug.Assert(portal.All(c => c < 128));
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Bind(stmt={statement},portal={portal})");
-#endif
 
         var headerLength =
             sizeof(byte) +     // Message code
@@ -294,10 +283,7 @@ partial class EDBConnector
             }
             catch (Exception e)
             {
-#if EDB_DIAGNOSTICS
                 LogMessages.EDBTrace(ConnectionLogger, $"WriteBindOut error : {e.Message}");
-#endif
-                e.ToString();
             }
         }
 
@@ -325,9 +311,7 @@ partial class EDBConnector
 
         if (WriteBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(async, cancellationToken);
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, "FE=> Sync");
-#endif
         Write();
         return Task.CompletedTask;
 
@@ -356,9 +340,7 @@ partial class EDBConnector
 
         if (WriteBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(maxRows, async, cancellationToken);
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Execute {maxRows}");
-#endif
         Write(maxRows);
         return Task.CompletedTask;
 
@@ -381,9 +363,7 @@ partial class EDBConnector
     internal async Task WriteParse(string sql, string statementName, List<EDBParameter> inputParameters, bool async, CancellationToken cancellationToken = default)
     {
         Debug.Assert(statementName.All(c => c < 128));
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Parse(stmt={statementName}, query=\"{sql}\")");
-#endif
 
         int queryByteLen;
         try
@@ -440,9 +420,7 @@ partial class EDBConnector
         Debug.Assert(statement.All(c => c < 128));
         Debug.Assert(portal.All(c => c < 128));
 
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Bind(stmt={statement}, portal={portal})");
-#endif
 
         var headerLength =
             sizeof(byte)                    +     // Message code
@@ -541,9 +519,7 @@ partial class EDBConnector
         if (WriteBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(len, type, name, async, cancellationToken);
 
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Close ({name})");
-#endif
 
         Write(len, type, name);
         return Task.CompletedTask;
@@ -572,9 +548,7 @@ partial class EDBConnector
 
         if (WriteBuffer.WriteSpaceLeft < 1 + 4)
             await Flush(async, cancellationToken);
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> Query {sql}");
-#endif
         WriteBuffer.WriteByte(FrontendMessageCode.Query);
         WriteBuffer.WriteInt32(
             sizeof(int)  +        // Message length (including self excluding code)
@@ -596,9 +570,7 @@ partial class EDBConnector
 
         if (WriteBuffer.WriteSpaceLeft < len)
             await Flush(async, cancellationToken);
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> CopyDone {async}");
-#endif
         WriteBuffer.WriteByte(FrontendMessageCode.CopyDone);
         WriteBuffer.WriteInt32(len - 1);
     }
@@ -613,9 +585,7 @@ partial class EDBConnector
 
         if (WriteBuffer.WriteSpaceLeft < len)
             await Flush(async, cancellationToken);
-#if EDB_DIAGNOSTICS
         LogMessages.EDBTrace(ConnectionLogger, $"FE=> CopyFail {async}");
-#endif
         WriteBuffer.WriteByte(FrontendMessageCode.CopyFail);
         WriteBuffer.WriteInt32(len - 1);
         WriteBuffer.WriteByte(0);   // Error message is always empty (only a null terminator)

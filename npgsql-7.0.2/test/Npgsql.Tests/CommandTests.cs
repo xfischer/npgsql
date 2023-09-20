@@ -138,7 +138,7 @@ public class CommandTests : MultiplexingTestBase
 
     #region Timeout
 
-    [Test, Description("Checks that CommandTimeout gets enforced as a socket timeout")]
+    [Test, Timeout(15000), Description("Checks that CommandTimeout gets enforced as a socket timeout")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/327")]
     public async Task Timeout()
     {
@@ -156,7 +156,7 @@ public class CommandTests : MultiplexingTestBase
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
     }
 
-    [Test, Description("Times out an async operation, testing that cancellation occurs successfully")]
+    [Test, Timeout(15000), Description("Times out an async operation, testing that cancellation occurs successfully")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/607")]
     public async Task Timeout_async_soft()
     {
@@ -172,7 +172,7 @@ public class CommandTests : MultiplexingTestBase
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
     }
 
-    [Test, Description("Times out an async operation, with unsuccessful cancellation (socket break)")]
+    [Test, Timeout(30000),Description("Times out an async operation, with unsuccessful cancellation (socket break)")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/607")]
     public async Task Timeout_async_hard()
     {
@@ -499,7 +499,7 @@ public class CommandTests : MultiplexingTestBase
         using var conn = await OpenConnectionAsync();
         using (var cmd = new EDBCommand("SELECT 1", conn))
         using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection))
-            while (reader.Read()) {}
+            while (reader.Read()) { }
         Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
     }
 
@@ -835,7 +835,7 @@ public class CommandTests : MultiplexingTestBase
         //Without parenthesis the meaning of [, . and potentially other characters is
         //a syntax error. See comment in EDBCommand.GetClearCommandText() on "usually-redundant parenthesis".
         using var command = new EDBCommand("select :arr[2]", conn);
-        command.Parameters.AddWithValue(":arr", new int[] {5, 4, 3, 2, 1});
+        command.Parameters.AddWithValue(":arr", new int[] { 5, 4, 3, 2, 1 });
         using var rdr = await command.ExecuteReaderAsync();
         rdr.Read();
         Assert.AreEqual(rdr.GetInt32(0), 4);
@@ -1578,5 +1578,5 @@ $$ LANGUAGE plpgsql;";
 
     #endregion Logging
 
-    public CommandTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
+    public CommandTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) { }
 }

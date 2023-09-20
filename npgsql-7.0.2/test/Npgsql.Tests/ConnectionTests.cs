@@ -208,7 +208,7 @@ public class ConnectionTests : MultiplexingTestBase
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Closed));
     }
 
-    [Test]
+    [Test, Timeout(10000)]
     public void Bad_database()
     {
         var builder = new EDBConnectionStringBuilder(ConnectionString)

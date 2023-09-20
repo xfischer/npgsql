@@ -1,4 +1,3 @@
-#define EDB_DIAGNOSTICS
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -255,9 +254,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (readBuf.ReadBytesLeft < 5)
             return null;
         var messageCode = (BackendMessageCode)readBuf.ReadByte();
-#if EDB_DIAGNOSTICS
+
         LogMessages.EDBTrace(_commandLogger, $"<=BE {messageCode}");
-#endif
+
         var len = readBuf.ReadInt32() - 4;  // Transmitted length includes itself
         if (messageCode != BackendMessageCode.DataRow || readBuf.ReadBytesLeft < len)
         {
@@ -470,7 +469,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                     }
 
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async), Connector);
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async, checkDataAvailable: false), Connector);
 
                     if (statement.IsPreparing)
                     {

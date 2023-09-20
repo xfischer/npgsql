@@ -18,8 +18,8 @@ public static class TestUtil
     /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
     /// test database.
     /// </summary>
-    public const string DefaultConnectionString =
-        "port=5444;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+    public const string DefaultConnectionString = //"port=5432;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+    "port=5444;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
     /// <summary>
     /// The connection string that will be used when opening the connection to the tests database.

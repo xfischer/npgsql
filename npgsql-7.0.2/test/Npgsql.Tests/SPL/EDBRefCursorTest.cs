@@ -322,7 +322,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             return 0;
         }
 
-        [Test]
+        [Test, Timeout(10000)]
         public void ClosingCursorVariableTest()
         {
             var sqlStr = "emp_by_dept(20)";
@@ -359,7 +359,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
         }
 
-        [Test]
+        [Test, Timeout(10000)]
         public void ReturningRefCursorFromFunctionTest()
         {
             //conn.setAutoCommit(false);                    //JDBC does this.
@@ -461,7 +461,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
     }
 
-        [Test]
+        [Test, Timeout(10000)]
     public void DynamicQueriesTest()
         {
             //conn.setAutoCommit(false);                    //JDBC does this.
@@ -498,7 +498,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             tran.Commit();
     }
 
-        [Test]
+        [Test, Timeout(10000)]
     public void DynamicQueriesWithParametersTest()
         {
             var sqlStr = "dept_query_with_parameters(30, 1500)";
@@ -540,7 +540,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
     }
 
-        [Test]
+        [Test, Timeout(10000)]
     public void DynamicQueriesFromStringTest()
         {
             var sqlStr = "dept_query_from_string(20, 1500)";
