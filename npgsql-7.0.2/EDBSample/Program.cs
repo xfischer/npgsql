@@ -68,9 +68,9 @@ namespace EDBSample
 
         private static void Invalid_constringParams()
         {
-            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
+            var conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
-            EDBCommand command = new EDBCommand("select * from tablea", conn);
+            var command = new EDBCommand("select * from tablea", conn);
 
             try
             {

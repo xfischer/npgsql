@@ -846,7 +846,7 @@ public sealed partial class EDBConnector : IDisposable
 
                         if (Path.GetExtension(certPath).ToUpperInvariant() != ".PFX")
                         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                             // It's PEM time
                             var keyPath = Settings.SslKey ?? PostgresEnvironment.SslKey ?? PostgresEnvironment.SslKeyDefault;
                             _certificate = string.IsNullOrEmpty(password)
@@ -1104,7 +1104,7 @@ public sealed partial class EDBConnector : IDisposable
             // we always fake-cancel the operation with the help of TaskTimeoutAndCancellation.ExecuteAsync. It stops waiting
             // and raises the exception, while the actual task may be left running.
             Task ConnectAsync(CancellationToken ct) =>
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 socket.ConnectAsync(endpoint, ct).AsTask();
 #else
                 socket.ConnectAsync(endpoint);
@@ -1792,7 +1792,7 @@ public sealed partial class EDBConnector : IDisposable
 
             var certs = new X509Certificate2Collection();
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             if (Path.GetExtension(certRootPath).ToUpperInvariant() != ".PFX")
                 certs.ImportFromPemFile(certRootPath);
 #endif
@@ -1800,7 +1800,7 @@ public sealed partial class EDBConnector : IDisposable
             if (certs.Count == 0)
                 certs.Add(new X509Certificate2(certRootPath));
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             chain.ChainPolicy.CustomTrustStore.AddRange(certs);
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 #endif

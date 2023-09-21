@@ -1725,7 +1725,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
@@ -1740,7 +1740,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
@@ -1759,7 +1759,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)

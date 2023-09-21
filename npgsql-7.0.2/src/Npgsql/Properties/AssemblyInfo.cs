@@ -8,7 +8,7 @@ using System.Security;
 [assembly: AssemblyTrademark("")]
 [assembly: SecurityRules(SecurityRuleSet.Level1)]
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
 [module: SkipLocalsInit]
 #endif
 

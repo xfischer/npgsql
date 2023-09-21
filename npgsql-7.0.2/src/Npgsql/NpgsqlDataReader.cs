@@ -2665,7 +2665,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Asynchronously returns schema information for the columns in the current resultset.
     /// </summary>
     /// <returns></returns>
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #else
     public Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
@@ -2698,7 +2698,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     [UnconditionalSuppressMessage(
         "Composite type mapping currently isn't trimming-safe, and warnings are generated at the MapComposite level.", "IL2026")]
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)

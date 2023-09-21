@@ -65,7 +65,7 @@ namespace System.Diagnostics.CodeAnalysis
     }
 #endif
 
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
     sealed class MemberNotNullAttribute : Attribute
     {
@@ -167,7 +167,7 @@ namespace System.Diagnostics.CodeAnalysis
 #endif
 }
 
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
 namespace System.Runtime.CompilerServices
 {
     internal static class IsExternalInit {}

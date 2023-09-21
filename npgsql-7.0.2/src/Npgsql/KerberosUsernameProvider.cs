@@ -49,7 +49,7 @@ sealed class KerberosUsernameProvider
         async ValueTask<string?> GetUsernameAsyncInternal()
 #pragma warning restore CS1998
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             if (async)
                 await process.WaitForExitAsync(cancellationToken);
             else
@@ -71,7 +71,7 @@ sealed class KerberosUsernameProvider
                 // ReSharper disable once MethodHasAsyncOverload
 #if NET7_0_OR_GREATER
                 if ((line = async ? await process.StandardOutput.ReadLineAsync(cancellationToken) : process.StandardOutput.ReadLine()) == null)
-#elif NET5_0_OR_GREATER
+#elif NET6_0_OR_GREATER
                 if ((line = async ? await process.StandardOutput.ReadLineAsync() : process.StandardOutput.ReadLine()) == null)
 #else
                 if ((line = process.StandardOutput.ReadLine()) == null)
