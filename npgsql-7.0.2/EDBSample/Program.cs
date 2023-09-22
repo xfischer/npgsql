@@ -9,6 +9,9 @@ using System.Threading;
 
 namespace EDBSample
 {
+
+    // Sample program to test "default" EDB samples and run tests outside of test
+    // environment, easier debugging
     internal class Program
     {
         static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
