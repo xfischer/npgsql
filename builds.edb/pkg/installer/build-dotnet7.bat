@@ -87,22 +87,22 @@ copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Numerics.Vectors.dll %STA
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.1\System.Text.Encodings.Web.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.1 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net471
-copy bin\%RELEASE_CONFIGURATION%\net471\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Bcl.HashCode.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Collections.Immutable.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.Text.Encodings.Web.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
-copy bin\%RELEASE_CONFIGURATION%\net471\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net471
+REM copy bin\%RELEASE_CONFIGURATION%\net471\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Bcl.AsyncInterfaces.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\Microsoft.Bcl.HashCode.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Collections.Immutable.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Memory.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Threading.Tasks.Extensions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Threading.Channels.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Numerics.Vectors.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Buffers.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.Text.Encodings.Web.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
+REM copy bin\%RELEASE_CONFIGURATION%\net471\System.ValueTuple.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net471 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net472
 copy bin\%RELEASE_CONFIGURATION%\net472\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net472 || goto :error
