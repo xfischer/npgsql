@@ -191,10 +191,10 @@ namespace EDBSample
         protected static EDBCommand CreateSleepCommand(EDBConnection conn, int seconds = 1000)
        => new($"SELECT pg_sleep({seconds}){(conn.PostgreSqlVersion < new Version(9, 1, 0) ? "::TEXT" : "")}", conn);
 
-        private static void InitLogging()
+        private static void InitLogging(LogLevel logLevel = LogLevel.Warning)
         {
             _loggerFactory = LoggerFactory.Create(builder => builder
-               .SetMinimumLevel(LogLevel.Trace)
+               .SetMinimumLevel(logLevel)
                //.AddSimpleConsole(options =>
                //{
                //    options.SingleLine = true;

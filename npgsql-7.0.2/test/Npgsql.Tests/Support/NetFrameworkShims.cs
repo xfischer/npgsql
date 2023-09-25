@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// EnterpriseDB Team : Missing parts for Net471, net48+ support
+// EnterpriseDB Team : Missing parts for Net472, net48+ support
 namespace EnterpriseDB.EDBClient.Tests
 {
     internal static class NetFrameworkShims

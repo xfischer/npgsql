@@ -1324,8 +1324,11 @@ public sealed partial class EDBConnector : IDisposable
 
         var messageCode = (BackendMessageCode)ReadBuffer.ReadByte();
 
+#if NETFRAMEWORK
         LogMessages.EDBTrace(ConnectionLogger, $"<=BE {messageCode} readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable}");
-
+#else
+        LogMessages.EDBTrace(ConnectionLogger, $"<=BE {messageCode}");
+#endif
         switch (messageCode)
         {
         case BackendMessageCode.NoticeResponse:
@@ -1393,7 +1396,6 @@ public sealed partial class EDBConnector : IDisposable
 
                     LogMessages.EDBTrace(connector.ConnectionLogger, $"--> ValidateBackendMessageCode {messageCode}");
                     PGUtil.ValidateBackendMessageCode(messageCode);
-                    LogMessages.EDBTrace(connector.ConnectionLogger, $"<=BE2 {messageCode}, readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable}");
 
                     var len = connector.ReadBuffer.ReadInt32() - 4; // Transmitted length includes itself
 
@@ -1682,7 +1684,7 @@ public sealed partial class EDBConnector : IDisposable
         }
     }
 
-    #endregion Backend message processing
+#endregion Backend message processing
 
     #region Transactions
 
