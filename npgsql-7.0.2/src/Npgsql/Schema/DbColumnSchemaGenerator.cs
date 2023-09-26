@@ -122,10 +122,16 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
                 var query = oldQueryMode
                     ? GenerateOldColumnsQuery(columnFieldFilter)
                     : GenerateColumnsQuery(_connection.PostgreSqlVersion, columnFieldFilter);
-	
+
+                // EnterpriseDB Team : .Net Framework support
+#if NETFRAMEWORK
+                TransactionScopeAsyncFlowOption transactionScopeAsyncFlowOption = TransactionScopeAsyncFlowOption.Enabled;
+#else
+                TransactionScopeAsyncFlowOption transactionScopeAsyncFlowOption = async ? TransactionScopeAsyncFlowOption.Enabled : TransactionScopeAsyncFlowOption.Suppress;
+#endif
                 using var scope = new TransactionScope(
                     TransactionScopeOption.Suppress,
-                    async ? TransactionScopeAsyncFlowOption.Enabled : TransactionScopeAsyncFlowOption.Suppress);
+                    transactionScopeAsyncFlowOption);
                 using var connection = (EDBConnection)((ICloneable)_connection).Clone();
 	
                 await connection.Open(async, cancellationToken);
