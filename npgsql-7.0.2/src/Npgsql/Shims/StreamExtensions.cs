@@ -40,7 +40,7 @@ namespace System.IO
 
                 var readTask = stream.ReadAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
 
-                Task.WaitAny(new Task[] { readTask }, 10000, cancellationToken);
+                Task.WaitAny(new Task[] { readTask }, 6000, cancellationToken);
 
                 if (readTask.IsCompleted)
                 {
@@ -53,11 +53,11 @@ namespace System.IO
                     throw new OperationCanceledException(cancellationToken);
                 }
             }
-            catch (Exception e)
+            catch
             {
                 //EnterpriseDB.EDBClient.EDBLoggingConfiguration.GlobalLoggerFactory.CreateLogger("StreamExtensions").LogError($"{e.GetType().Name}: {e.Message}");
                 cancellationToken.ThrowIfCancellationRequested();
-                return 0;
+                throw;
             }
             finally
             {

@@ -469,7 +469,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                     }
 
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async, checkDataAvailable: false), Connector);
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async, checkDataAvailable: true), Connector);
 
                     if (statement.IsPreparing)
                     {
