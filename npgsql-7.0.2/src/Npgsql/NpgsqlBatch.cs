@@ -118,7 +118,10 @@ public class EDBBatch : DbBatch
     }
 
     /// <inheritdoc />
-    protected override DbBatchCommand CreateDbBatchCommand()
+    protected override DbBatchCommand CreateDbBatchCommand() => CreateBatchCommand();
+
+    /// <inheritdoc cref="DbBatch.CreateBatchCommand"/>
+    public new EDBBatchCommand CreateBatchCommand()
         => new EDBBatchCommand();
 
     /// <inheritdoc />

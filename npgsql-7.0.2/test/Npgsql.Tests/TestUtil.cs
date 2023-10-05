@@ -418,6 +418,9 @@ CREATE TABLE {tableName} ({columns});");
     internal static IDisposable DisableSqlRewriting()
     {
 #if DEBUG
+        // We clear the pools to make sure we don't accidentally reuse a pool
+        // Since EnableSqlRewriting is a global change
+        PoolManager.Reset();
         EDBCommand.EnableSqlRewriting = false;
         return new DeferredExecutionDisposable(() => EDBCommand.EnableSqlRewriting = true);
 #else

@@ -41,12 +41,12 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
     public override bool CanTimeout => true;
     public override int WriteTimeout
     {
-        get => (int) _writeBuf.Timeout.TotalMilliseconds;
+        get => (int)_writeBuf.Timeout.TotalMilliseconds;
         set => _writeBuf.Timeout = TimeSpan.FromMilliseconds(value);
     }
     public override int ReadTimeout
     {
-        get => (int) _readBuf.Timeout.TotalMilliseconds;
+        get => (int)_readBuf.Timeout.TotalMilliseconds;
         set
         {
             _readBuf.Timeout = TimeSpan.FromMilliseconds(value);
@@ -89,13 +89,13 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         switch (msg.Code)
         {
         case BackendMessageCode.CopyInResponse:
-            var copyInResponse = (CopyInResponseMessage) msg;
+            var copyInResponse = (CopyInResponseMessage)msg;
             IsBinary = copyInResponse.IsBinary;
             _canWrite = true;
             _writeBuf.StartCopyMode();
             break;
         case BackendMessageCode.CopyOutResponse:
-            var copyOutResponse = (CopyOutResponseMessage) msg;
+            var copyOutResponse = (CopyOutResponseMessage)msg;
             IsBinary = copyOutResponse.IsBinary;
             _canRead = true;
             break;
@@ -143,25 +143,17 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
             return;
         }
 
-        try
-        {
-            // Value is too big, flush.
-            Flush();
+        // Value is too big, flush.
+        Flush();
 
-            if (buffer.Length <= _writeBuf.WriteSpaceLeft)
-            {
-                _writeBuf.WriteBytes(buffer);
-                return;
-            }
-
-            // Value is too big even after a flush - bypass the buffer and write directly.
-            _writeBuf.DirectWrite(buffer);
-        }
-        catch (Exception e)
+        if (buffer.Length <= _writeBuf.WriteSpaceLeft)
         {
-            _connector.Break(e);
-            throw;
+            _writeBuf.WriteBytes(buffer);
+            return;
         }
+
+        // Value is too big even after a flush - bypass the buffer and write directly.
+        _writeBuf.DirectWrite(buffer);
     }
 
 #if NETSTANDARD2_0 || NETFRAMEWORK
@@ -188,25 +180,17 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
                 return;
             }
 
-            try
-            {
-                // Value is too big, flush.
-                await FlushAsync(true, cancellationToken);
+            // Value is too big, flush.
+            await FlushAsync(true, cancellationToken);
 
-                if (buffer.Length <= _writeBuf.WriteSpaceLeft)
-                {
-                    _writeBuf.WriteBytes(buffer.Span);
-                    return;
-                }
-
-                // Value is too big even after a flush - bypass the buffer and write directly.
-                await _writeBuf.DirectWrite(buffer, true, cancellationToken);
-            }
-            catch (Exception e)
+            if (buffer.Length <= _writeBuf.WriteSpaceLeft)
             {
-                _connector.Break(e);
-                throw;
+                _writeBuf.WriteBytes(buffer.Span);
+                return;
             }
+
+            // Value is too big even after a flush - bypass the buffer and write directly.
+            await _writeBuf.DirectWrite(buffer, true, cancellationToken);
         }
     }
 
@@ -463,7 +447,8 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
     void CheckDisposed()
     {
-        if (_isDisposed) {
+        if (_isDisposed)
+        {
             throw new ObjectDisposedException(nameof(EDBRawCopyStream), "The COPY operation has already ended.");
         }
     }

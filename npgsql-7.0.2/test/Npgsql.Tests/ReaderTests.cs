@@ -1235,6 +1235,24 @@ LANGUAGE plpgsql VOLATILE";
             Assert.ThrowsAsync<EDBException>(async () => await reader.DisposeAsync());
     }
 
+    [Test]
+    public async Task Read_string_as_char()
+    {
+        await using var conn = await OpenConnectionAsync();
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT 'abcdefgh', 'ijklmnop'";
+
+        await using var reader = await cmd.ExecuteReaderAsync(Behavior);
+        Assert.IsTrue(await reader.ReadAsync());
+        Assert.That(reader.GetChar(0), Is.EqualTo('a'));
+        if (Behavior == CommandBehavior.SequentialAccess)
+            Assert.Throws<InvalidOperationException>(() => reader.GetChar(0));
+        else
+            Assert.That(reader.GetChar(0), Is.EqualTo('a'));
+        Assert.That(reader.GetChar(1), Is.EqualTo('i'));
+    }
+
     #region GetBytes / GetStream
 
     [Test]
@@ -1454,7 +1472,55 @@ LANGUAGE plpgsql VOLATILE";
             Assert.That(() => reader.GetStream(0), Throws.Exception.TypeOf<InvalidOperationException>());
     }
 
-    #endregion GetBytes / GetStream
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5223")]
+    public async Task GetStream_seek()
+    {
+        // Sequential doesn't allow to seek
+        if (IsSequential)
+            return;
+
+        await using var conn = await OpenConnectionAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT 'abcdefgh'";
+        await using var reader = await cmd.ExecuteReaderAsync();
+        await reader.ReadAsync();
+
+        var buffer = new byte[4];
+
+#if NETFRAMEWORK
+        using var stream = reader.GetStream(0);
+#else
+        await using var stream = reader.GetStream(0);
+#endif
+        Assert.IsTrue(stream.CanSeek);
+
+        var seekPosition = stream.Seek(-1, SeekOrigin.End);
+        Assert.That(seekPosition, Is.EqualTo(stream.Length - 1));
+        var read = stream.Read(buffer);
+        Assert.That(read, Is.EqualTo(1));
+        Assert.That(Encoding.ASCII.GetString(buffer, 0, 1), Is.EqualTo("h"));
+        read = stream.Read(buffer);
+        Assert.That(read, Is.EqualTo(0));
+
+        seekPosition = stream.Seek(2, SeekOrigin.Begin);
+        Assert.That(seekPosition, Is.EqualTo(2));
+        read = stream.Read(buffer);
+        Assert.That(read, Is.EqualTo(buffer.Length));
+        Assert.That(Encoding.ASCII.GetString(buffer), Is.EqualTo("cdef"));
+
+        seekPosition = stream.Seek(-3, SeekOrigin.Current);
+        Assert.That(seekPosition, Is.EqualTo(3));
+        read = stream.Read(buffer);
+        Assert.That(read, Is.EqualTo(buffer.Length));
+        Assert.That(Encoding.ASCII.GetString(buffer), Is.EqualTo("defg"));
+
+        stream.Position = 1;
+        read = stream.Read(buffer);
+        Assert.That(read, Is.EqualTo(buffer.Length));
+        Assert.That(Encoding.ASCII.GetString(buffer), Is.EqualTo("bcde"));
+    }
+
+#endregion GetBytes / GetStream
 
     #region GetChars / GetTextReader
 

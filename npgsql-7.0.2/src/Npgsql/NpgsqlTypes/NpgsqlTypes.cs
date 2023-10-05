@@ -233,7 +233,10 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
     readonly List<EDBPoint> _points;
     public bool Open { get; set; }
 
-    public EDBPath(IEnumerable<EDBPoint> points, bool open) : this()
+    public EDBPath()
+        => _points = new();
+
+    public EDBPath(IEnumerable<EDBPoint> points, bool open)
     {
         _points = new List<EDBPoint>(points);
         Open = open;
@@ -353,13 +356,15 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 public struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
 {
     readonly List<EDBPoint> _points;
+    public EDBPolygon()
+        => _points = new();
 
     public EDBPolygon(IEnumerable<EDBPoint> points)
     {
         _points = new List<EDBPoint>(points);
     }
 
-    public EDBPolygon(params EDBPoint[] points) : this ((IEnumerable<EDBPoint>) points) {}
+    public EDBPolygon(params EDBPoint[] points) : this((IEnumerable<EDBPoint>) points) {}
 
     public EDBPolygon(int capacity)
     {

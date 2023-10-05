@@ -186,6 +186,14 @@ public class TypesTests
     }
 
     [Test]
+    public void NpgsqlPath_empty()
+        => Assert.That(new EDBPath { new(1, 2) }, Is.EqualTo(new EDBPath(new EDBPoint(1, 2))));
+
+    [Test]
+    public void NpgsqlPolygon_empty()
+        => Assert.That(new EDBPolygon { new(1, 2) }, Is.EqualTo(new EDBPolygon(new EDBPoint(1, 2))));
+
+    [Test]
     public void Bug1011018()
     {
         var p = new EDBParameter();

@@ -670,10 +670,12 @@ public sealed partial class EDBConnector : IDisposable
     internal async ValueTask<DatabaseState> QueryDatabaseState(
         EDBTimeout timeout, bool async, CancellationToken cancellationToken = default)
     {
-        using var cmd = CreateCommand("select pg_is_in_recovery(); SHOW default_transaction_read_only");
-        cmd.CommandTimeout = (int)timeout.CheckAndGetTimeLeft().TotalSeconds;
+        using var batch = CreateBatch();
+        batch.BatchCommands.Add(new EDBBatchCommand("select pg_is_in_recovery()"));
+        batch.BatchCommands.Add(new EDBBatchCommand("SHOW default_transaction_read_only"));
+        batch.Timeout = (int)timeout.CheckAndGetTimeLeft().TotalSeconds;
 
-        var reader = async ? await cmd.ExecuteReaderAsync(cancellationToken) : cmd.ExecuteReader();
+        var reader = async ? await batch.ExecuteReaderAsync(cancellationToken) : batch.ExecuteReader();
         try
         {
             if (async)
@@ -2424,6 +2426,20 @@ public sealed partial class EDBConnector : IDisposable
     {
         if (_origReadBuffer != null)
         {
+            Debug.Assert(_origReadBuffer.ReadBytesLeft == 0);
+            Debug.Assert(_origReadBuffer.ReadPosition == 0);
+            if (ReadBuffer.ReadBytesLeft > 0)
+            {
+                // There is still something in the buffer which we haven't read yet
+                // In most cases it's ParameterStatus which can be sent asynchronously
+                // If in some extreme case we have too much data left in the buffer to store in the original buffer
+                // we just leave the oversize buffer as is and will try again on next reset
+                if (ReadBuffer.ReadBytesLeft > _origReadBuffer.Size)
+                    return;
+
+                ReadBuffer.CopyTo(_origReadBuffer);
+            }
+
             ReadBuffer.Dispose();
             ReadBuffer = _origReadBuffer;
             _origReadBuffer = null;
@@ -2779,6 +2795,12 @@ public sealed partial class EDBConnector : IDisposable
     /// <param name="cmdText">The text of the query.</param>
     /// <returns>A <see cref="EDBCommand"/> object.</returns>
     public EDBCommand CreateCommand(string? cmdText = null) => new(cmdText, this);
+
+    /// <summary>
+    /// Creates and returns a <see cref="EDBBatch"/> object associated with the <see cref="EDBConnector"/>.
+    /// </summary>
+    /// <returns>A <see cref="EDBBatch"/> object.</returns>
+    public EDBBatch CreateBatch() => new EDBBatch(this);
 
     void ReadParameterStatus(ReadOnlySpan<byte> incomingName, ReadOnlySpan<byte> incomingValue)
     {

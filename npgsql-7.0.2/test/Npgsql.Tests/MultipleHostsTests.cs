@@ -954,6 +954,26 @@ public class MultipleHostsTests : TestBase
     }
 
     [Test]
+    [IssueLink("https://github.com/npgsql/npgsql/issues/5055")]
+    [NonParallelizable] // Disables sql rewriting
+    public async Task Multiple_hosts_with_disabled_sql_rewriting()
+    {
+        using var _ = DisableSqlRewriting();
+
+        var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString)
+        {
+            ConnectionStringBuilder =
+            {
+                Host = "localhost,127.0.0.1",
+                Pooling = true,
+                HostRecheckSeconds = 0
+            }
+        };
+        await using var dataSource = dataSourceBuilder.BuildMultiHost();
+        await using var conn = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
     public async Task DataSource_with_wrappers()
     {
         await using var primaryPostmasterMock = PgPostmasterMock.Start(state: Primary);
