@@ -162,7 +162,6 @@ dotnet build -property:Configuration=Release -property:SourceLinkCreate=false ||
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net471
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net481
@@ -171,9 +170,6 @@ cd npgsql-7.0.2\src\Npgsql.OpenTelemetry
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net471 || goto :error
-copy bin\Release\net471\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net472 || goto :error
 copy bin\Release\net472\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net472 || goto :error
@@ -187,7 +183,6 @@ copy bin\Release\net481\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\O
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net471
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net481
@@ -199,9 +194,6 @@ copy bin\Release\net7.0\Microsoft.Extensions.DependencyInjection.Abstractions.dl
 
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net471 || goto :error
-copy bin\Release\net471\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net472 || goto :error
 copy bin\Release\net472\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net472 || goto :error
@@ -249,7 +241,6 @@ copy bin\Release\net6.0\EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Ne
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net471
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net481
@@ -259,9 +250,6 @@ REM nuget restore Npgsql.GeoJSON.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net471 || goto :error
-copy bin\Release\net471\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472 || goto :error
 copy bin\Release\net472\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472 || goto :error
@@ -276,16 +264,12 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net471
 cd %SOURCE_PATH%
 cd npgsql-7.0.2\src\Npgsql.Json.NET
 REM nuget restore Npgsql.Json.NET.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net471 || goto :error
-copy bin\Release\net471\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472 || goto :error
 copy bin\Release\net472\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472 || goto :error
@@ -305,7 +289,6 @@ REM dotnet build -property:Configuration=Release -property:SourceLinkCreate=fals
 REM copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.LegacyPostgis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\LegacyPostgis\netstandard2.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net471
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net481
@@ -316,10 +299,6 @@ dotnet build -property:Configuration=Release -property:SourceLinkCreate=false ||
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net471 || goto :error
-copy bin\Release\net471\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net471 || goto :error
-copy bin\Release\net471\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472 || goto :error
 copy bin\Release\net472\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472 || goto :error
@@ -334,7 +313,6 @@ copy bin\Release\net481\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\pl
 copy bin\Release\net481\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net481 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net471
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net481
@@ -345,9 +323,6 @@ REM nuget restore Npgsql.NodaTime.csproj
 dotnet build -property:Configuration=Release -property:SourceLinkCreate=false || goto :error
 copy bin\Release\netstandard2.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
 copy bin\Release\netstandard2.0\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\netstandard2.0 || goto :error
-
-copy bin\Release\net471\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net471 || goto :error
-copy bin\Release\net471\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net471 || goto :error
 
 copy bin\Release\net472\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472 || goto :error
 copy bin\Release\net472\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472 || goto :error
