@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Authors>Shay Rojansky</Authors>
-		<TargetFrameworks>net471;net472;net48;net481;netstandard2.0</TargetFrameworks>
+		<Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+	    <TargetFrameworks>net471;net472;net48;net481;netstandard2.0</TargetFrameworks>
         <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
-        <PackageTags>npgsql;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
+        <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-	<AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	    <AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	</PropertyGroup>
 
     <ItemGroup>

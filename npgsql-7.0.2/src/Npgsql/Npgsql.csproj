@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Authors>Shay Rojansky;Nikita Kazmin;Brar Piening;Yoh Deadfall;;Austin Drenski;Emil Lenngren;Francisco Figueiredo Jr.;Kenji Uno</Authors>
-    <Description>EDB is the open source .NET data provider for PostgreSQL.</Description>
-    <PackageTags>npgsql;postgresql;postgres;ado;ado.net;database;sql</PackageTags>
+    <Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+    <Description>EDB .NET Connector is the .NET data provider for EDB Postgres Advanced Server.</Description>
+    <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net7.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>

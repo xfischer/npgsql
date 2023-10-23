@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors>Shay Rojansky</Authors>
-    <Description>Json.NET plugin for EDB, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
-    <PackageTags>npgsql;postgresql;json;postgres;ado;ado.net;database;sql</PackageTags>
+    <Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+    <Description>Json.NET plugin for EDB Postgres Advanced Server, allowing transparent serialization/deserialization of JSON objects directly to and from the database.</Description>
+    <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;json;postgres;ado;ado.net;database;sql</PackageTags>
     <TargetFrameworks>net471;net472;net48;net481;netstandard2.0</TargetFrameworks>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
 	<AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>

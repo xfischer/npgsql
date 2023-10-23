@@ -1,10 +1,13 @@
-# Npgsql - the .NET data provider for PostgreSQL
+# EDB .NET Connector - the .NET data provider for EDB Postgres Advanced Server
 
-[![stable](https://img.shields.io/nuget/v/Npgsql.svg?label=stable)](https://www.nuget.org/packages/Npgsql/) [![unstable](https://img.shields.io/myget/npgsql-unstable/v/npgsql.svg?label=unstable)](https://www.myget.org/feed/npgsql-unstable/package/nuget/Npgsql) [![next patch](https://img.shields.io/myget/npgsql/v/npgsql.svg?label=next%20patch)](https://www.myget.org/feed/npgsql/package/nuget/Npgsql)
-[![appveyor](https://img.shields.io/appveyor/ci/roji/npgsql/dev.svg?label=appveyor)](https://ci.appveyor.com/project/roji/npgsql) [![travis](https://img.shields.io/travis/npgsql/npgsql.svg?label=travis)](https://travis-ci.org/npgsql/npgsql) [![gitter](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/npgsql/npgsql)
+[![stable](https://img.shields.io/nuget/v/EnterpriseDB.EDBClient.svg?label=stable)](https://www.nuget.org/packages/EnterpriseDB.EDBClient/) 
 
-## What is Npgsql?
+## What is EDB .NET Connector?
 
-Npgsql is a .NET data provider for PostgreSQL. It allows you to connect and interact with PostgreSQL server using .NET.
+The EDB .NET Connector distributed with EDB Postgres Advanced Server provides connectivity between a .NET client application and an EDB Postgres Advanced Server database server. You can:
 
-For any additional information, please visit the Npgsql website at [https://www.npgsql.org](https://www.npgsql.org).
+- Connect to an instance of EDB Postgres Advanced Server.
+- Retrieve information from an EDB Postgres Advanced Server database.
+- Update information stored on an EDB Postgres Advanced Server database.
+
+The EDB .NET Connector functionality is built on the core functionality of the Npgsql open source project. For details, see the [Npgsql User Guide](http://www.npgsql.org/doc/index.html).

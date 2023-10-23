@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Authors>Shay Rojansky</Authors>
-        <!-- DbDataSource was introduced to .NET in net7.0. Before that EDB has its own built-in copy. -->
+		<Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+		<!-- DbDataSource was introduced to .NET in net7.0. Before that EDB has its own built-in copy. -->
         <TargetFrameworks>net471;net472;net48;net481;netstandard2.0;net7.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
-        <PackageTags>npgsql;postgresql;postgres;ado;ado.net;database;sql;di;dependency injection</PackageTags>
+		<PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql;di;dependency injection</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
 	<AssemblyName>EnterpriseDB.EDBClient.DependencyInjection</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>

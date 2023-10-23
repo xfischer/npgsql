@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors>Shay Rojansky;Yoh Deadfall</Authors>
-    <Description>NetTopologySuite plugin for EDB, allowing mapping of PostGIS geometry types to NetTopologySuite types.</Description>
-    <PackageTags>npgsql;postgresql;postgres;postgis;spatial;nettopologysuite;nts;ado;ado.net;database;sql</PackageTags>
+	<Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+    <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgis;spatial;nettopologysuite;nts;postgres;ado;ado.net;database;sql</PackageTags>
+	<Description>NetTopologySuite plugin for EDB Postgres Advanced Server, allowing mapping of PostGIS geometry types to NetTopologySuite types.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>net471;net472;net48;net481;netstandard2.0</TargetFrameworks>
 	<AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>

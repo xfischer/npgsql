@@ -13,12 +13,8 @@
     <Copyright>Copyright 2023 © The EDB Development Team</Copyright>
     <Company>EDB</Company>
     <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/npgsql/npgsql</PackageProjectUrl>
-    <PackageIcon>postgresql.png</PackageIcon>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
+    <PackageIcon>edb-dotnet.png</PackageIcon>
     <NoWarn>$(NoWarn);NETSDK1138</NoWarn> <!-- The target framework is out of support  -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
@@ -30,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)postgresql.png" Pack="true" PackagePath="" />
+    <None Include="$(MSBuildThisFileDirectory)edb-dotnet.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
