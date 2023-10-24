@@ -189,7 +189,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                             {
                                 delay = (int)(Math.Pow(delay, 1.15)); // Wait a bit more at each iteration
 
-                                LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{delaysMs.Length}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
+                                LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{maxLoops}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
 
                                 await Task.Delay(delay);
                                 finalCt.ThrowIfCancellationRequested();
