@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+    <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
     <Description>EDB .NET Connector is the .NET data provider for EDB Postgres Advanced Server.</Description>
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

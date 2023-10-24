@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-		<Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+		<Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
 	    <TargetFrameworks>net471;net472;net48;net481;netstandard2.0</TargetFrameworks>
         <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFramework>
         <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>

@@ -6,18 +6,32 @@
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest</AnalysisLevel>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)Npgsql.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)EnterpriseDB.EDBClient.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <Copyright>Copyright 2023 © The EDB Development Team</Copyright>
     <Company>EDB</Company>
-    <PackageLicenseExpression>PostgreSQL</PackageLicenseExpression>
+	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	  
     <PackageIcon>edb-dotnet.png</PackageIcon>
     <NoWarn>$(NoWarn);NETSDK1138</NoWarn> <!-- The target framework is out of support  -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
+
+	<!-- License file -->
+	<PropertyGroup>
+		<PackageLicenseFile>EDBLimitedUseLicense.txt</PackageLicenseFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\EDBLimitedUseLicense.txt" Pack="true" PackagePath="EDBLimitedUseLicense.txt"/>
+	</ItemGroup>
 
   <!-- In netstandard2.0, the BCL isn't annotated for nullability so we disable nullability there -->
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">

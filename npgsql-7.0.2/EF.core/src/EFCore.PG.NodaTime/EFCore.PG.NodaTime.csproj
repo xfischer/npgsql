@@ -2,12 +2,11 @@
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
-    <TargetFramework>net6.0</TargetFramework>
-    <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
 
-    <Authors>Shay Rojansky</Authors>
-    <Description>NodaTime support plugin for PostgreSQL/Npgsql Entity Framework Core provider.</Description>
-    <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;nodatime;date;time</PackageTags>
+    <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
+    <Description>NodaTime support plugin for PostgreSQL/EDB .NET Connector Entity Framework Core provider.</Description>
+    <PackageTags>epas;advanced server;edb;enterprisedb;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;nodatime;date;time</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

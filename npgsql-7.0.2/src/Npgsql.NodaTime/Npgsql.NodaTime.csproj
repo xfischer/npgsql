@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<Authors>EnterpriseDB Team, Mahesh Bidve, Moazzum Ali, Zahid Khan, Xavier Fischer, Npgsql Contributors</Authors>
+    <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
     <Description>NodaTime plugin for EDB Postgres Advanced Server, allowing mapping of PostgreSQL date/time types to NodaTime types.</Description>
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;nodatime;date;time;ado;ado;net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

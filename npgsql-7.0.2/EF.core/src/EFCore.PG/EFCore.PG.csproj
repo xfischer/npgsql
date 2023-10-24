@@ -4,11 +4,10 @@
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</RootNamespace>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
 
-    <Authors>Shay Rojansky;Austin Drenski;Yoh Deadfall;</Authors>
-    <Description>PostgreSQL/Npgsql provider for Entity Framework Core.</Description>
-    <PackageTags>npgsql;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql</PackageTags>
+    <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
+    <Description>EDB Postgres Advanced Server provider for Entity Framework Core.</Description>
+    <PackageTags>epas;advanced server;edb;enterprisedb;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
