@@ -183,15 +183,23 @@ public sealed partial class EDBReadBuffer : IDisposable
                     {
                         if (buffer.Underlying is NetworkStream networkStream)
                         {
-                            var numLoops = 0; const int maxLoops = 6;
-                            var delay = 20;
-                            while (!networkStream.DataAvailable && numLoops++ <= maxLoops)
+                            var numLoops = 0;
+                            var delaysMs = new double[] { 0.1d, 0.2d, 0.5d, 1d, 2d, 5d, 100d }; // Wait a bit more at each iteration
+                            while (!networkStream.DataAvailable && numLoops < delaysMs.Length)
                             {
-                                delay = (int)(Math.Pow(delay, 1.15)); // Wait a bit more at each iteration
+                                var delay = delaysMs[numLoops++];
 
                                 LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{delaysMs.Length}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
 
-                                await Task.Delay(delay);
+                                if (async)
+                                {
+                                    await Task.Delay(TimeSpan.FromMilliseconds(delay), finalCt);
+                                }
+                                else
+                                {
+                                    Thread.Sleep(TimeSpan.FromMilliseconds(delay));
+                                }
+                                
                                 finalCt.ThrowIfCancellationRequested();
                             }
                         }
@@ -304,11 +312,27 @@ public sealed partial class EDBReadBuffer : IDisposable
                         throw connector.Break(CreateException(connector));
 
                         static Exception CreateException(EDBConnector connector)
+#if DEBUG
+                        {
+                            if (connector.UserCancellationRequested)
+                            {
+                                if (connector.PostgresCancellationPerformed)
+                                    return new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken);
+                                else
+                                    return new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
+                            }
+                            else
+                            {
+                                return EDBTimeoutException();
+                            }
+                        }
+#else
                             => !connector.UserCancellationRequested
                                 ? EDBTimeoutException()
                                 : connector.PostgresCancellationPerformed
                                     ? new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken)
                                     : new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
+#endif
                     }
 
                     default:
@@ -351,7 +375,7 @@ public sealed partial class EDBReadBuffer : IDisposable
     /// <summary>
     /// Skip a given number of bytes.
     /// </summary>
-    public async Task Skip(long len, bool async)
+    public async Task Skip(long len, bool async, bool checkDataAvailable = false)
     {
         Debug.Assert(len >= 0);
 
@@ -361,11 +385,11 @@ public sealed partial class EDBReadBuffer : IDisposable
             while (len > Size)
             {
                 Clear();
-                await Ensure(Size, async);
+                await Ensure(Size, async, readingNotifications: false, checkDataAvailable);
                 len -= Size;
             }
             Clear();
-            await Ensure((int)len, async);
+            await Ensure((int)len, async, readingNotifications: false, checkDataAvailable);
         }
 
         ReadPosition += (int)len;

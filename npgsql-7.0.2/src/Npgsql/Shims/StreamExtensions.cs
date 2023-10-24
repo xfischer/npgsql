@@ -40,7 +40,8 @@ namespace System.IO
 
                 var readTask = stream.ReadAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
 
-                Task.WaitAny(new Task[] { readTask }, 6000, cancellationToken);
+                await Task.WhenAny(readTask, Task.Delay(1500, cancellationToken));
+                //Task.WaitAny(new Task[] { readTask }, 6000, cancellationToken);
 
                 if (readTask.IsCompleted)
                 {

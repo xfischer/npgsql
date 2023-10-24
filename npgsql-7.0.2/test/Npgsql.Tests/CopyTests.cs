@@ -56,7 +56,7 @@ public class CopyTests : MultiplexingTestBase
 
     #region Raw
 
-    [Test, Description("Exports data in binary format (raw mode) and then loads it back in")]
+    [Test, Timeout(35000), Description("Exports data in binary format (raw mode) and then loads it back in")]
     public async Task Raw_binary_roundtrip([Values(false, true)] bool async)
     {
         using var conn = await OpenConnectionAsync();

@@ -2046,7 +2046,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
 
-    [Test, Description("Cancels sequential ReadAsGetFieldValueAsync")]
+    [Test, Timeout(60000), Description("Cancels sequential ReadAsGetFieldValueAsync")]
     public async Task IsDBNullAsync_sequential_cancel([Values(true, false)] bool passCancelledToken)
     {
         if (IsMultiplexing)
