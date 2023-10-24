@@ -255,7 +255,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             return null;
         var messageCode = (BackendMessageCode)readBuf.ReadByte();
 
-        LogMessages.EDBTrace(_commandLogger, $"<=BE {messageCode}");
+        LogMessages.TryEDBTrace(_commandLogger, $"<=BE {messageCode}");
 
         var len = readBuf.ReadInt32() - 4;  // Transmitted length includes itself
         if (messageCode != BackendMessageCode.DataRow || readBuf.ReadBytesLeft < len)

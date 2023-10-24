@@ -592,7 +592,7 @@ public sealed partial class EDBConnector : IDisposable
         }
         catch (Exception e)
         {
-            LogMessages.EDBTrace(ConnectionLogger, $"Error : {e}");
+            LogMessages.TryEDBTrace(ConnectionLogger, $"Error : {e}");
             Break(e);
             throw;
         }
@@ -622,7 +622,7 @@ public sealed partial class EDBConnector : IDisposable
                 when (e.SqlState == PostgresErrorCodes.InvalidAuthorizationSpecification &&
                       (sslMode == SslMode.Prefer && conn.IsSecure || sslMode == SslMode.Allow && !conn.IsSecure))
             {
-                LogMessages.EDBTrace(conn.ConnectionLogger, $"Error: {e}");
+                LogMessages.TryEDBTrace(conn.ConnectionLogger, $"Error: {e}");
 
                 cancellationRegistration.Dispose();
                 Debug.Assert(!conn.IsBroken);
@@ -643,7 +643,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch (Exception ex) // EnterpriseDB
             {
-                LogMessages.EDBTrace(conn.ConnectionLogger, $"Unexpected exception : {ex.Message}");
+                LogMessages.TryEDBTrace(conn.ConnectionLogger, $"Unexpected exception : {ex.Message}");
                 throw;
             }
 
@@ -999,7 +999,7 @@ public sealed partial class EDBConnector : IDisposable
                 }
                 catch (SocketException e)
                 {
-                    LogMessages.EDBTrace(ConnectionLogger, $"SocketErrorCode: {e.SocketErrorCode}, Error:{e}");
+                    LogMessages.TryEDBTrace(ConnectionLogger, $"SocketErrorCode: {e.SocketErrorCode}, Error:{e}");
                     if (e.SocketErrorCode != SocketError.WouldBlock)
                         throw;
                 }
@@ -1327,9 +1327,9 @@ public sealed partial class EDBConnector : IDisposable
         var messageCode = (BackendMessageCode)ReadBuffer.ReadByte();
 
 #if NETFRAMEWORK
-        LogMessages.EDBTrace(ConnectionLogger, $"<=BE {messageCode} readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable}");
+        LogMessages.TryEDBTrace(ConnectionLogger, $"<=BE {messageCode} readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable}");
 #else
-        LogMessages.EDBTrace(ConnectionLogger, $"<=BE {messageCode}");
+        LogMessages.TryEDBTrace(ConnectionLogger, $"<=BE {messageCode}");
 #endif
         switch (messageCode)
         {
@@ -1375,7 +1375,7 @@ public sealed partial class EDBConnector : IDisposable
                 }
                 catch (Exception e)
                 {
-                    LogMessages.EDBTrace(connector.ConnectionLogger, $"Error: {e}");
+                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"Error: {e}");
 
                     // Prepended queries should never fail.
                     // If they do, we're not even going to attempt to salvage the connector.
@@ -1391,12 +1391,12 @@ public sealed partial class EDBConnector : IDisposable
 
                 while (true)
                 {
-                    LogMessages.EDBTrace(connector.ConnectionLogger, $"--> ReadMessage");
+                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"--> ReadMessage");
 
                     await connector.ReadBuffer.Ensure(5, async, readingNotifications, checkDataAvailable);
                     var messageCode = (BackendMessageCode)connector.ReadBuffer.ReadByte();
 
-                    LogMessages.EDBTrace(connector.ConnectionLogger, $"--> ValidateBackendMessageCode {messageCode}");
+                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"--> ValidateBackendMessageCode {messageCode}");
                     PGUtil.ValidateBackendMessageCode(messageCode);
 
                     var len = connector.ReadBuffer.ReadInt32() - 4; // Transmitted length includes itself
@@ -1428,7 +1428,7 @@ public sealed partial class EDBConnector : IDisposable
                         await connector.ReadBuffer.Ensure(len, async);
                     }
                     var msg = connector.ParseServerMessage(connector.ReadBuffer, messageCode, len, isReadingPrependedMessage);
-                    LogMessages.EDBTrace(connector.ConnectionLogger, $"ParseServerMessage {messageCode}");
+                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"ParseServerMessage {messageCode}");
 
                     switch (messageCode)
                     {
@@ -1502,7 +1502,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch (EDBException e)
             {
-                LogMessages.EDBTrace(connector.ConnectionLogger, $"EDBException: {e}");
+                LogMessages.TryEDBTrace(connector.ConnectionLogger, $"EDBException: {e}");
 
                 // An ErrorResponse isn't followed by ReadyForQuery
                 if (error != null)
@@ -1522,7 +1522,7 @@ public sealed partial class EDBConnector : IDisposable
             try
             {
                 // Some tests are purposely using exception raising type handlers, make sure to swallow this exception
-                LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/RowDescription : {string.Join(",", rowDescription)}");
+                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/RowDescription : {string.Join(",", rowDescription)}");
             }
             catch (NullReferenceException) { }
 
@@ -1531,7 +1531,7 @@ public sealed partial class EDBConnector : IDisposable
         case BackendMessageCode.OutDescription:
             var rowOutDescriptionMessage = new RowDescriptionMessage();
             rowOutDescriptionMessage.Load(buf, TypeMapper, true);
-            LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/OutDescription : {string.Join(",", rowOutDescriptionMessage)}");
+            LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/OutDescription : {string.Join(",", rowOutDescriptionMessage)}");
 
             return rowOutDescriptionMessage;
         case BackendMessageCode.DataRow:
@@ -1555,7 +1555,7 @@ public sealed partial class EDBConnector : IDisposable
             {
                 CurrentReader.ProcessEDBDataRowMessage(buf, false);
                 _outParamDataRowMessage.Load(len);
-                LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", _outParamDataRowMessage)}");
+                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", _outParamDataRowMessage)}");
                 return _outParamDataRowMessage;
             }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
@@ -1580,7 +1580,7 @@ public sealed partial class EDBConnector : IDisposable
         case BackendMessageCode.ParameterDescription:
             _parameterDescriptionMessage.Load(buf);
             var typeNames = _parameterDescriptionMessage.TypeOIDs.Select(oid => DatabaseInfo.ByOID.TryGetValue(oid, out var typeName) ? typeName.ToString() : "?");
-            LogMessages.EDBTrace(ConnectionLogger, $"ParseServerMessage/ParameterDescription : {string.Join(",", typeNames)}");
+            LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParameterDescription : {string.Join(",", typeNames)}");
             return _parameterDescriptionMessage;
 
         case BackendMessageCode.BindComplete:
@@ -1836,6 +1836,8 @@ public sealed partial class EDBConnector : IDisposable
             || UserCancellationRequested)
             return;
 
+        LogMessages.TryEDBTrace(ConnectionLogger, "PerformUserCancellation");
+
         // Take the lock first to make sure there is no concurrent Break.
         // We should be safe to take it as Break only take it to set the state.
         lock (SyncObj)
@@ -1922,7 +1924,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch (Exception e)
             {
-                LogMessages.EDBTrace(ConnectionLogger, $"Exception: {e}");
+                LogMessages.TryEDBTrace(ConnectionLogger, $"Exception: {e}");
                 var socketException = e.InnerException as SocketException;
                 if (socketException == null || socketException.SocketErrorCode != SocketError.ConnectionReset)
                 {
@@ -1969,6 +1971,8 @@ public sealed partial class EDBConnector : IDisposable
         ReadBuffer.Cts.ResetCts();
 
         AttemptPostgresCancellation = attemptPgCancellation;
+
+        LogMessages.TryEDBTrace(ConnectionLogger, "StartCancellableOperation");
         return _cancellationTokenRegistration =
             cancellationToken.Register(static c => ((EDBConnector)c!).PerformUserCancellation(), this);
     }
@@ -1999,7 +2003,7 @@ public sealed partial class EDBConnector : IDisposable
     {
         UserCancellationToken = cancellationToken;
         AttemptPostgresCancellation = attemptPgCancellation;
-
+        LogMessages.TryEDBTrace(ConnectionLogger, "StartNestedCancellableOperation");
         return _cancellationTokenRegistration =
             cancellationToken.Register(static c => ((EDBConnector)c!).PerformUserCancellation(), this);
     }
@@ -2266,7 +2270,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch
             {
-                LogMessages.EDBTrace(ConnectionLogger, "Reader close error");
+                LogMessages.TryEDBTrace(ConnectionLogger, "Reader close error");
                 // ignored
             }
             CurrentReader = null;
@@ -2283,7 +2287,7 @@ public sealed partial class EDBConnector : IDisposable
             catch
             {
                 // ignored
-                LogMessages.EDBTrace(ConnectionLogger, "CurrentCopyOperation Dispose error");
+                LogMessages.TryEDBTrace(ConnectionLogger, "CurrentCopyOperation Dispose error");
             }
             CurrentCopyOperation = null;
         }
@@ -2579,6 +2583,7 @@ public sealed partial class EDBConnector : IDisposable
     {
         Debug.Assert(CurrentReader == null);
 
+        LogMessages.TryEDBTrace(ConnectionLogger,"EndUserAction");
         _cancellationTokenRegistration.Dispose();
 
         if (_isKeepAliveEnabled)

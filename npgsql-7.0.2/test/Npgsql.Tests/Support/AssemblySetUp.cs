@@ -14,7 +14,11 @@ public class AssemblySetUp
     {
         var loggerFactory = LoggerFactory.Create(c => c
             .AddProvider(new NUnitLoggerProvider())
+#if DEBUG
+            .SetMinimumLevel(LogLevel.Trace)
+#else
             .SetMinimumLevel(LogLevel.Warning)
+#endif
             );
         EDBLoggingConfiguration.InitializeLogging(loggerFactory);
 

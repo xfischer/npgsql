@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using Microsoft.Extensions.Logging;
 using EDBTypes;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
+using System.Threading;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -16,6 +19,21 @@ static partial class LogMessages
        Level = LogLevel.Trace,
        Message = "EDB: {message}")]
     internal static partial void EDBTrace(this ILogger logger, string message);
+
+    internal static void TryEDBTrace(this ILogger logger, string message)
+    {
+        if (logger is null || logger is NullLogger)
+        {
+#if DEBUG
+            Console.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
+#endif
+        }
+        else
+        {
+            EDBTrace(logger, $"[{Thread.CurrentThread.ManagedThreadId}] {message}");
+        }
+
+    }
 
     #region Connection
 

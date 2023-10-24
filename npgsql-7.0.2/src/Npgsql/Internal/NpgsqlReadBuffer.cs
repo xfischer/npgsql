@@ -130,11 +130,7 @@ public sealed partial class EDBReadBuffer : IDisposable
     internal void Ensure(int count) => Ensure(count, false).GetAwaiter().GetResult();
 
     public Task Ensure(int count, bool async)
-#if NETFRAMEWORK
         => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);
-#else
-        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);
-#endif
 
     public Task EnsureAsync(int count)
         => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false);
@@ -179,7 +175,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                 try
                 {
 #if NETFRAMEWORK
-                    if (buffer.Connector is not null) LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
+                    if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
 
                     // In .Net Framework NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
                     // When there is no data to read, it hangs. The workaround is not wait for available data and check the token
@@ -193,7 +189,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                             {
                                 delay = (int)(Math.Pow(delay, 1.15)); // Wait a bit more at each iteration
 
-                                LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops-1}/{maxLoops}), delay = {delay}ms");
+                                LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{delaysMs.Length}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
 
                                 await Task.Delay(delay);
                                 finalCt.ThrowIfCancellationRequested();
@@ -202,7 +198,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                     }
                     else
                     {
-                        if (buffer.Connector is not null) LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure [direct read]. (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
+                        if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure [direct read]. (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
                     }
 #endif
                     var toRead = buffer.Size - buffer.FilledBytes;
@@ -215,10 +211,10 @@ public sealed partial class EDBReadBuffer : IDisposable
                     }
                     catch (Exception ex)
                     {
-                        LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
+                        LogMessages.TryEDBTrace(buffer.Connector?.ConnectionLogger, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
                         throw;
                     }
-                    
+
 
                     if (read == 0)
                         throw new EndOfStreamException();
@@ -276,11 +272,11 @@ public sealed partial class EDBReadBuffer : IDisposable
                             if (connector.AttemptPostgresCancellation &&
                                 !connector.PostgresCancellationPerformed)
                             {
-                                LogMessages.EDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation attempt");
+                                LogMessages.TryEDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation attempt");
 
                                 if (connector.PerformPostgresCancellation())
                                 {
-                                    LogMessages.EDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation OK");
+                                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation OK");
 
                                     // Note that if the cancellation timeout is negative, we flow down and break the
                                     // connection immediately.
@@ -298,7 +294,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                                 }
                                 else
                                 {
-                                    LogMessages.EDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation FAILED");
+                                    LogMessages.TryEDBTrace(connector.ConnectionLogger, $"PerformPostgresCancellation FAILED");
                                 }
                             }
                         }
@@ -564,7 +560,7 @@ public sealed partial class EDBReadBuffer : IDisposable
         }
         catch (Exception e)
         {
-            LogMessages.EDBTrace(Connector.ConnectionLogger, $"Readbuffer Read error : {e.Message}");
+            LogMessages.TryEDBTrace(Connector.ConnectionLogger, $"Readbuffer Read error : {e.Message}");
             throw Connector.Break(new EDBException("Exception while reading from stream", e));
         }
     }
@@ -622,7 +618,7 @@ public sealed partial class EDBReadBuffer : IDisposable
             }
             catch (Exception e)
             {
-                LogMessages.EDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ReadAsyncLong error : {e.Message}");
+                LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ReadAsyncLong error : {e.Message}");
                 throw buffer.Connector.Break(new EDBException("Exception while reading from stream", e));
             }
         }

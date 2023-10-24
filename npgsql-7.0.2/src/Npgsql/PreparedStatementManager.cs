@@ -215,7 +215,7 @@ sealed class PreparedStatementManager
         if (pStatement.State != PreparedState.Invalidated)
             RemoveCandidate(pStatement);
 
-        LogMessages.EDBTrace(_commandLogger, $"oldPreparedStatement: AutoPrepared: [{string.Join(",", AutoPrepared.Where(s => s != null).Select(s => string.Concat(s?.Sql, "/", s?.State, "/", s?.LastUsed.Ticks)))}] (index: {selectedIndex})");
+        LogMessages.TryEDBTrace(_commandLogger, $"oldPreparedStatement: AutoPrepared: [{string.Join(",", AutoPrepared.Where(s => s != null).Select(s => string.Concat(s?.Sql, "/", s?.State, "/", s?.LastUsed.Ticks)))}] (index: {selectedIndex})");
 
         var oldPreparedStatement = AutoPrepared[selectedIndex];
 
@@ -258,7 +258,7 @@ sealed class PreparedStatementManager
 
     void RemoveCandidate(PreparedStatement candidate)
     {
-        LogMessages.EDBTrace(_commandLogger, $"BEGIN Remove candidate {candidate}");
+        LogMessages.TryEDBTrace(_commandLogger, $"BEGIN Remove candidate {candidate}");
         var i = 0;
         for (; i < _candidates.Length; i++)
         {

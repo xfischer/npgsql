@@ -89,7 +89,7 @@ sealed class SqlQueryParser
             batchCommands = command.InternalBatchCommands;
             if (command?.InternalConnection?.Connector?.CommandLogger != null)
             {
-                LogMessages.EDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
+                LogMessages.TryEDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
             }
             MoveToNextBatchCommand();
         }
