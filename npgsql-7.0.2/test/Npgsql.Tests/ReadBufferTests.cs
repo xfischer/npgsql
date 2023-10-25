@@ -67,7 +67,7 @@ class ReadBufferTests
         Assert.That(ReadBuffer.ReadNullTerminatedString(), Is.EqualTo("bar"));
     }
 
-    [Test]
+    [Test, Timeout(15000)]
     public async Task ReadNullTerminatedString_with_io()
     {
         Writer.Write(PGUtil.UTF8Encoding.GetBytes("Chunked "));

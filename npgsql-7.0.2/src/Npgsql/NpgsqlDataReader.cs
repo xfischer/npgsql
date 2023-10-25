@@ -2853,10 +2853,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             await Buffer.Ensure(4, async);
             var len = Buffer.ReadInt32();
             if (len != -1)
-                await Buffer.Skip(len, async);
+                await Buffer.Skip(len, async, checkDataAvailable:true);
         }
 
-        await Buffer.Ensure(4, async);
+        await Buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true);
         ColumnLen = Buffer.ReadInt32();
         PosInColumn = 0;
         _column = column;

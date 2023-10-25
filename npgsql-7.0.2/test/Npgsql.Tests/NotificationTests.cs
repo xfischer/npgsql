@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Internal;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
@@ -111,7 +112,7 @@ public class NotificationTests : TestBase
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
 
-    [Test]
+    [Test, Timeout(5000)]//, EDBExplicit("Hangs")]
     public void WaitAsync_with_timeout()
     {
         using var conn = OpenConnection();
@@ -161,7 +162,7 @@ public class NotificationTests : TestBase
         await notificationTask;
     }
 
-    [Test]
+    [Test, Timeout(5000)]//, EDBExplicit("Hangs")]
     public void WaitAsync_cancellation()
     {
         var notify = GetUniqueIdentifier(nameof(NotificationTests));

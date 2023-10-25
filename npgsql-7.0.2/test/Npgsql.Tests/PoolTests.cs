@@ -476,7 +476,7 @@ class PoolTests : TestBase
 
     // With MaxPoolSize=1, opens many connections in parallel and executes a simple SELECT. Since there's only one
     // physical connection, all operations will be completely serialized
-    [Test]
+    [Test, Timeout(150000)]
     public Task OnePhysicalConnectionManyCommands()
     {
         const int numParallelCommands = 10000;

@@ -244,7 +244,7 @@ public class CommandTests : MultiplexingTestBase
         }
     }
 
-    [Test]
+    [Test, Timeout(60000)]
     public async Task Prepare_timeout_hard([Values] SyncOrAsync async)
     {
         if (IsMultiplexing)
