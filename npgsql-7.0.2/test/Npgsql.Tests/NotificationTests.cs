@@ -112,7 +112,7 @@ public class NotificationTests : TestBase
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
 
-    [Test, Timeout(5000)]//, EDBExplicit("Hangs")]
+    [Test, Timeout(5000), EDBExplicit("Hangs")]
     public void WaitAsync_with_timeout()
     {
         using var conn = OpenConnection();
@@ -162,7 +162,7 @@ public class NotificationTests : TestBase
         await notificationTask;
     }
 
-    [Test, Timeout(5000)]//, EDBExplicit("Hangs")]
+    [Test, Timeout(5000), EDBExplicit("Hangs")]
     public void WaitAsync_cancellation()
     {
         var notify = GetUniqueIdentifier(nameof(NotificationTests));
