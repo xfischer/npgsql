@@ -20,8 +20,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void Init()
 		{
 			con = OpenConnection();
-			
-		}
+            TestUtil.EnsureEDBAdvancedServer(con);
+
+        }
 		
 		[Test]
 		public void CreateTable()

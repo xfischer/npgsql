@@ -6,8 +6,15 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
-class EDBSqlQueryParserTests
+class EDBSqlQueryParserTests : TestBase
 {
+    [OneTimeSetUp]
+    public void OneTimeSetup()
+    {
+        var con = OpenConnection();
+        TestUtil.EnsureEDBAdvancedServer(con);
+    }
+
     [TestCase(true)]
     public void CreateSPLProcedureLf(bool redwoodMode)
     {

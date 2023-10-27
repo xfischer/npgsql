@@ -28,6 +28,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE insert_dept_70;");
             Execute("DROP PROCEDURE insert_dept_70_rollback;");

@@ -23,6 +23,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE dept_salary_rpt");
             Execute("DROP PROCEDURE emp_delete");

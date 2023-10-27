@@ -98,8 +98,11 @@ class PostgresDatabaseInfo : EDBDatabaseInfo
             intDateTimes == "on";
 
         IsRedshift = conn.Settings.ServerCompatibilityMode == ServerCompatibilityMode.Redshift;
-        SupportsRedwoodDialect = conn.PostgresParameters.TryGetValue("db_dialect", out var db_dialect) &&
-            db_dialect == "redwood";
+        if (conn.PostgresParameters.TryGetValue("db_dialect", out var db_dialect))
+        {
+            SupportsDbDialect = true;
+            SupportsRedwoodDialect = db_dialect == "redwood";
+        }
 
         _types = await LoadBackendTypes(conn, timeout, async);
     }

@@ -33,7 +33,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=edb;Password=edb;Database=edb;Timeout=45;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5433;UserId=edb;Password=edb;Database=edb;Timeout=45;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -47,7 +47,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=edb;Password=edb;Database=edb;Timeout=45;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5433;UserId=edb;Password=edb;Database=edb;Timeout=45;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -61,7 +61,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=edb;Password=edb;Database=edb;Timeout=0;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5433;UserId=edb;Password=edb;Database=edb;Timeout=0;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=edb;Password=edb;Database=edb;Timeout=1;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5433;UserId=edb;Password=edb;Database=edb;Timeout=1;"); 
 				con.Close();
 			}
 			catch(EDBException exp)
@@ -90,7 +90,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				con=new EDBConnection("Server=127.0.0.1;Port=5444;UserId=edb;Password=edb;Database=edb;Timeout=10;"); 
+				con=new EDBConnection("Server=127.0.0.1;Port=5433;UserId=edb;Password=edb;Database=edb;Timeout=10;"); 
 				con.Close();
 			}
 			catch(EDBException exp)

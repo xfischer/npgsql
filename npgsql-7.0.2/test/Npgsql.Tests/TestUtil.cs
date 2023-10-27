@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests;
@@ -18,7 +19,8 @@ public static class TestUtil
     /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
     /// test database.
     /// </summary>
-    public const string DefaultConnectionString = //"port=5432;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+    public const string DefaultConnectionString =
+        //"port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
     "port=5444;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
     /// <summary>
@@ -106,6 +108,45 @@ public static class TestUtil
 
             */
         }
+    }
+
+    // EnterpriseDB Team
+    public static void EnsureIsEPASRedwood(EDBConnection conn)
+    {
+        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
+        if (isRedwood == null)
+        {
+            Assert.Ignore("No db_dialect. This server is PG or PGE");
+        }
+        else
+        {
+            if (!isRedwood.Value)
+            {
+                Assert.Ignore("db_dialect is not Redwood. This server is EPAS is postgres compatibility mode.");
+            }
+        }
+    }
+
+    // EnterpriseDB Team
+    public static bool EnsureEDBAdvancedServer(EDBConnection conn, bool assertIgnore = true)
+    {
+        // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
+        var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
+        if (!(hasDbDialectProperty ?? false))
+        {
+            if (assertIgnore)
+            {
+                Assert.Ignore("Requires EDB PG Advanced Server (No db_dialect found)");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public static void EnsureVersion(EDBConnection conn)
+    {
+
+        // ((EnterpriseDB.EDBClient.PostgresDatabaseInfo)conn.Connector.DatabaseInfo).LongVersionv 
     }
 
     public static void MinimumPgVersion(EDBConnection conn, string minVersion, string? ignoreText = null)

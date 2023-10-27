@@ -21,7 +21,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			//write setup for following test cases
 			con = OpenConnection();
-			EDBCommand Command=new EDBCommand("",con);
+            TestUtil.EnsureEDBAdvancedServer(con);
+            EDBCommand Command=new EDBCommand("",con);
             
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayVarchar(Name IN VARCHAR, Age IN INT, "+
 				"     		Sal IN  INT, WhoAmI IN OUT VARCHAR,CheckOut OUT INT) return VARCHAR[]  "+ 

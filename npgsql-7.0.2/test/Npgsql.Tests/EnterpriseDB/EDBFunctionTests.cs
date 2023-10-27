@@ -23,8 +23,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void Init()
 		{
 			con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
 
-			var com  = new EDBCommand("",con);
+            var com  = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;
 
 			//	Testing Functions without parameters

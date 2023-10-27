@@ -38,6 +38,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
         }
 
         [TearDown]
@@ -196,8 +197,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-            //--DB-1384 : issue:Index hint is not getting inherited on partitions
-            [Test]
+        //--DB-1384 : issue:Index hint is not getting inherited on partitions
+        [Test]
         public void DB_1384IndexHintPartitionsTest()
         {
 #nullable disable
@@ -279,8 +280,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-            //--DB-2021 : Quick fix/Assess of ERROR row variable cannot be part of a multiple-item INTO list
-            [Test/*, Ignore("Custom types functionality has changed, need to re-look")*/]
+        //--DB-2021 : Quick fix/Assess of ERROR row variable cannot be part of a multiple-item INTO list
+        [Test/*, Ignore("Custom types functionality has changed, need to re-look")*/]
         public async Task DB_2021_RowVarMultipleItemINTOListTest()
         {
 #nullable disable
@@ -574,7 +575,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     //(1 row)
 
                     rs.Read();
-                    Assert.AreEqual(new DateTime(2017,8,8,2,39,10), rs.GetDateTime(0));
+                    Assert.AreEqual(new DateTime(2017, 8, 8, 2, 39, 10), rs.GetDateTime(0));
 
                     rs.Close();
                 }
@@ -584,8 +585,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.Fail("Error while retrieving values: " + exp.Message);
             }
         }
-            //--DB-1708 : Implement Oracle TO_NCHAR Function in Advanced Server
-            [Test]
+        //--DB-1708 : Implement Oracle TO_NCHAR Function in Advanced Server
+        [Test]
         public void DB_1708_TO_NCHARTest()
         {
 #nullable disable
@@ -618,8 +619,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.Fail("Error while retrieving values: " + exp.Message);
             }
         }
-            //--DB-1703 : Oracle Function : Add TO_CLOB() & TO_BLOB()
-            [Test]
+        //--DB-1703 : Oracle Function : Add TO_CLOB() & TO_BLOB()
+        [Test]
         public void DB_1703_TO_CLOB_and_TO_BLOBTest()
         {
 #nullable disable
@@ -672,8 +673,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-            //--DB-1714 : Implement Oracle SQLERRM and SQLCODE Functions in Advanced Server
-            [Test]
+        //--DB-1714 : Implement Oracle SQLERRM and SQLCODE Functions in Advanced Server
+        [Test]
         public void DB_1714SQLERRM_and_SQLCODETest()
         {
 #nullable disable
@@ -802,8 +803,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-            //--DB-1408 : [MP] Support for IN parameter mention for Dynamic SQL inside PL/SQL block
-            [Test]
+        //--DB-1408 : [MP] Support for IN parameter mention for Dynamic SQL inside PL/SQL block
+        [Test]
         public void DB_1408_INParamInPLSQLBlockTest()
         {
 #nullable disable
@@ -991,8 +992,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Execute("how_much_fund");
         }
 
-            //DB-1691 : Oracle Function : XML extractvalue()
-            [Test]
+        //DB-1691 : Oracle Function : XML extractvalue()
+        [Test]
         public void DB_1691XMLextractvalueTest()
         {
 #nullable disable

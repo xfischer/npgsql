@@ -21,6 +21,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             //write setup for following test cases
             con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
             EDBCommand Command = new EDBCommand("", con);
 
             Command.CommandText = "CREATE OR REPLACE FUNCTION surname1(a IN INTEGER, b IN VARCHAR2) RETURN VARCHAR2 \n" +
@@ -41,11 +42,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            EDBCommand Command = new EDBCommand("", con);
-            Command.CommandText = "DROP FUNCTION surname1(integer, varchar2)";
-            Command.ExecuteNonQuery();
-            Command.CommandText = "DROP TABLE IF EXISTS Quote";
-            Command.ExecuteNonQuery();
+            if (TestUtil.EnsureEDBAdvancedServer(con, false))
+            {
+                EDBCommand Command = new EDBCommand("", con);
+                Command.CommandText = "DROP FUNCTION surname1(integer, varchar2)";
+                Command.ExecuteNonQuery();
+                Command.CommandText = "DROP TABLE IF EXISTS Quote";
+                Command.ExecuteNonQuery();
+            }
             TestUtil.closeDB(con);
         }
 
@@ -54,7 +58,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             EDBCommand edbFunctionCmd = new EDBCommand("surname1", con);
             edbFunctionCmd.CommandType = CommandType.StoredProcedure;
-            
+
             //
             // Note: This line raised exception.
             // Case 11665:   EDBCommandBuilder.DeriveParameters() raises an exception.  

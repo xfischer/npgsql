@@ -48,20 +48,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [TestFixture]
     public class EDBInsertTests : TestBase
     {
-        private EDBConnection? _conn = null;
+        private EDBConnection? con = null;
 
         #region Setup / Tear Down
         [SetUp]
         protected void SetUp()
         {
-            _conn = new EDBConnection(ConnectionString);
+            con = new EDBConnection(ConnectionString);
+            TestUtil.EnsureEDBAdvancedServer(con);
         }
 
         [TearDown]
         protected void TearDown()
         {
-            if (_conn.State != ConnectionState.Closed)
-                _conn.Close();
+            if (con.State != ConnectionState.Closed)
+                con.Close();
         }
 
         #endregion
@@ -69,10 +70,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertDoubleValue()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
             command.Parameters.Add(new EDBParameter(":a", DbType.Double));
 
             command.Parameters[0].Value = 7.4D;
@@ -103,9 +104,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertDoubleValueEDBDbType()
         {
-            _conn.Open();
+            con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
             command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
 
             command.Parameters[0].Value = 7.4D;
@@ -133,9 +134,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullString()
         {
-            _conn.Open();
+            con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.String));
 
@@ -162,9 +163,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullStringEDBDbType()
         {
-            _conn.Open();
+            con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Text));
 
@@ -193,9 +194,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullDateTime()
         {
-            _conn.Open();
+            con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
 
@@ -223,9 +224,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullDateTimeEDBDbType()
         {
-            _conn.Open();
+            con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
 
@@ -254,10 +255,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullInt16()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -284,10 +285,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullInt16EDBDbType()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
 
@@ -314,10 +315,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullInt32()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int32));
 
@@ -343,10 +344,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullNumeric()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
 
@@ -371,10 +372,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InsertNullBoolean()
         {
-            _conn.Open();
+            con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_bool) values (:a)", _conn);
+            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_bool) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Boolean));
 
@@ -401,9 +402,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                _conn.Open();
+                con.Open();
 
-                EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", _conn);
+                EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
 
                 command.Parameters.Add(new EDBParameter("a", DbType.AnsiString));
 

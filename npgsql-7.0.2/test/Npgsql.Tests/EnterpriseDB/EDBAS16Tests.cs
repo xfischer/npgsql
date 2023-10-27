@@ -147,6 +147,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await using var conn = await OpenConnectionAsync();
 
 #nullable disable
+            TestUtil.EnsureIsEPASRedwood(conn);
             TestUtil.MinimumPgVersion(conn, "16.0.0");
 #nullable restore
             //Clean

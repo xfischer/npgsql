@@ -24,6 +24,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             TestUtil.dropTable(conn, "emp1 CASCADE");
             TestUtil.dropTable(conn, "emp_copy CASCADE");

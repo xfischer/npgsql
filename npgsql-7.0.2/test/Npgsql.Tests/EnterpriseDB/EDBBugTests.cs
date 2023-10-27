@@ -22,6 +22,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
+
+            TestUtil.EnsureEDBAdvancedServer(con);
+
         }
 
         [TearDown]
@@ -134,6 +137,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
 
             //Table
             string tableString = "CREATE TABLE account(\n" +
@@ -174,20 +178,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            //Drop Procedure
-            CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
-
-            //Drop table.
-            TestUtil.dropTable(con, "account");
-
-            //Drop type.
-            using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
+            try
             {
-                dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
-                dropTypeCommand.ExecuteNonQuery();
-            }
 
-            TestUtil.closeDB(con);
+                //Drop Procedure
+                CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
+
+                //Drop table.
+                TestUtil.dropTable(con, "account");
+
+                //Drop type.
+                using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
+                {
+                    dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
+                    dropTypeCommand.ExecuteNonQuery();
+                }
+
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+                TestUtil.closeDB(con);
+            }
         }
 
         private void CreateDropProcedure(string procString)
@@ -254,6 +269,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con = OpenConnection();
 
+            TestUtil.EnsureEDBAdvancedServer(con);
+
             //Table
             string tableString = "create table testclob (datasource clob);";
             using (EDBCommand createTableCommand = new EDBCommand("", con))
@@ -275,7 +292,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             //Drop table.
             TestUtil.dropTable(con, "testclob");
-            
+
             TestUtil.closeDB(con);
         }
 
@@ -312,6 +329,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
 
             //Drop table.
             TestUtil.dropTable(con, "ca.epas_test_table2");
@@ -410,7 +428,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 try
-                {                    
+                {
                     command.Prepare();
                     command.ExecuteNonQuery();
 

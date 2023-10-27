@@ -35,6 +35,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PACKAGE BODY pkgSimpleTest;");
             Execute("DROP PACKAGE pkgSimpleTest;");

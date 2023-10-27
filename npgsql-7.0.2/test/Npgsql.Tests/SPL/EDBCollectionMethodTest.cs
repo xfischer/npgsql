@@ -54,6 +54,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP FUNCTION collection_count;");
             Execute("DROP PROCEDURE collection_exists;");

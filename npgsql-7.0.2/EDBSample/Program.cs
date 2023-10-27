@@ -14,7 +14,8 @@ namespace EDBSample
     // environment, easier debugging
     internal class Program
     {
-        static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
+        //static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
+        static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
         static ILoggerFactory _loggerFactory;
         static ILogger _logger;

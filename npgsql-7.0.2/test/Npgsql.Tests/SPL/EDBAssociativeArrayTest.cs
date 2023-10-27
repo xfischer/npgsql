@@ -35,6 +35,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         {
             //conn = OpenConnection();
             var conn = await OpenConnectionAsync();
+            TestUtil.EnsureEDBAdvancedServer(conn);
             TestUtil.dropTable(conn, "emp1 CASCADE");
 
             await Execute("CREATE TABLE emp1(empno NUMBER(4),  ename VARCHAR2(10))");

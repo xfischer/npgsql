@@ -19,12 +19,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[SetUp]
 		public void Init()
 		{
-			//write setup for following test cases
-			con = OpenConnection();
-			
-						
+            //write setup for following test cases
+            con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
 
-		}
+
+
+        }
 
 		[TearDown] 
 		public void Dispose()

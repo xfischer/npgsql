@@ -20,6 +20,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(con);
 
             EDBCommand com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;

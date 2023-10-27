@@ -68,6 +68,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE fetching_rows;");
             Execute("DROP PROCEDURE fetching_rows_variable_type;");

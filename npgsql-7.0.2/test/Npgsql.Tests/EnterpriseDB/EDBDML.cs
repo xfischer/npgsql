@@ -17,7 +17,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void Init()
 		{
 			con = OpenConnection();
-			TestUtil.createTempTable(con, "dml_TestTable1",
+            TestUtil.EnsureEDBAdvancedServer(con);
+            TestUtil.createTempTable(con, "dml_TestTable1",
 										"RecNo int, Name varchar(20)");
 			TestUtil.createTempTable(con, "dml_TestTable2",
 										"RecNo int, Name varchar(20)");

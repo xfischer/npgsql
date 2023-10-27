@@ -23,7 +23,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			//write setup for following test cases
 			con = OpenConnection();
-			TestUtil.createTempTable(con,"TESTTAB","a VARCHAR, b INT4");
+            TestUtil.EnsureEDBAdvancedServer(con);
+            TestUtil.createTempTable(con,"TESTTAB","a VARCHAR, b INT4");
 			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V1',1)";
 			Command.ExecuteNonQuery();

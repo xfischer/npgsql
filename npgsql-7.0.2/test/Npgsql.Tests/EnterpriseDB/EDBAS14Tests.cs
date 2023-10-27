@@ -16,8 +16,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [NonParallelizable]
     public class EDBAS14Tests : TestBase
     {
+        [SetUp]
+        public void Init()
+        {
+            var conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
+        }
 
-        
 
         private async Task<int> Execute(string query, bool ignoreResult)
         {

@@ -40,19 +40,20 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     public class EDBDataAdapterTests : TestBase
     {
 
-        private EDBConnection? 	_conn = null;
+        private EDBConnection? 	con = null;
 
         [SetUp]
         protected void SetUp()
         {
-			_conn = new EDBConnection(ConnectionString);
+			con = new EDBConnection(ConnectionString);
+            TestUtil.EnsureEDBAdvancedServer(con);
         }
 
         [TearDown]
         protected void TearDown()
         {
-            if (_conn.State != ConnectionState.Closed)
-                _conn.Close();
+            if (con.State != ConnectionState.Closed)
+                con.Close();
         }
 
         private EDBConnection OpenConnection()
@@ -74,14 +75,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
         public void FB8070_1()
         {
-            _conn.Open();
-            TestUtil.dropTable(_conn, "Quote");
+            con.Open();
+            TestUtil.dropTable(con, "Quote");
 
-            EDBCommand com = new EDBCommand("", _conn);
+            EDBCommand com = new EDBCommand("", con);
 
             com.CommandText = "create table Quote(id int4, b char)";
             com.ExecuteNonQuery();
-            com = new EDBCommand("", _conn);
+            com = new EDBCommand("", con);
 
             com.CommandText = "create or replace procedure quoteproc(abc in integer)\n"
                 + "is\n"
@@ -96,7 +97,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             com.ExecuteNonQuery();
 
-            com = new EDBCommand("quoteproc(:a)", _conn);
+            com = new EDBCommand("quoteproc(:a)", con);
             com.CommandType = CommandType.StoredProcedure;
 
             com.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
@@ -107,18 +108,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Console.WriteLine("Data inserted");
             DataSet ds = new DataSet();
             Console.WriteLine("selecting data");
-            EDBDataAdapter da = new EDBDataAdapter("select * from Quote", _conn);
+            EDBDataAdapter da = new EDBDataAdapter("select * from Quote", con);
             da.Fill(ds);
             Console.WriteLine("selected data");
   
             Console.WriteLine("Values selected");
-            com = new EDBCommand("drop table Quote", _conn);
+            com = new EDBCommand("drop table Quote", con);
             com.ExecuteNonQuery();
 
-            com = new EDBCommand("drop procedure quoteproc", _conn);
+            com = new EDBCommand("drop procedure quoteproc", con);
             com.ExecuteNonQuery();
             GC.Collect();
-            _conn.Close();
+            con.Close();
 
 
         }
@@ -170,9 +171,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void TestDSNotNull()
 		{
-			_conn.Open();
+			con.Open();
 			DataSet ds = new DataSet();
-			EDBDataAdapter da = new EDBDataAdapter("select * from emp",_conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from emp",con);
 				
 			da.Fill(ds);           
 			Console.WriteLine(ds.Tables[0].Rows.Count.ToString());    
@@ -184,12 +185,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         //[Test]
 		public void FB8070_2()
 		{
-			_conn.Open();
-			EDBCommand com=new EDBCommand("",_conn);
+			con.Open();
+			EDBCommand com=new EDBCommand("",con);
 
 			com.CommandText="create table Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com=new EDBCommand("",_conn);
+			com=new EDBCommand("",con);
 
 			com.CommandText="create or replace procedure quoteproc(abc in integer)\n"
 				+"is\n"
@@ -204,7 +205,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			com.ExecuteNonQuery();
 			
-			com=new EDBCommand("quoteproc(:a)",_conn);
+			com=new EDBCommand("quoteproc(:a)",con);
 			com.CommandType=CommandType.StoredProcedure;
 			
 			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
@@ -215,30 +216,30 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Console.WriteLine("Data inserted");
 			DataSet ds=new DataSet();
 			Console.WriteLine("selecting data");
-			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",_conn);
+			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",con);
 			da.Fill(ds);
 			Console.WriteLine("selected data");
 			Console.WriteLine("filled data="+ ds.Tables[0].Rows.Count);
 
 			Console.WriteLine("Values selected");
-			com=new EDBCommand("drop table Quote",_conn);
+			com=new EDBCommand("drop table Quote",con);
 			com.ExecuteNonQuery();
-			com=new EDBCommand("drop procedure quoteproc",_conn);
+			com=new EDBCommand("drop procedure quoteproc",con);
 			com.ExecuteNonQuery();
 			GC.Collect();
-			_conn.Close();
+			con.Close();
 			
 		}
 
         //Redundent case	[Test]
 		public void FB8070_3()
 		{
-			_conn.Open();
-			EDBCommand com=new EDBCommand("",_conn);
+			con.Open();
+			EDBCommand com=new EDBCommand("",con);
 
 			com.CommandText="create table Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com=new EDBCommand("",_conn);
+			com=new EDBCommand("",con);
 
 			com.CommandText="create or replace procedure quoteproc(abc in integer)\n"
 				+"is\n"
@@ -253,7 +254,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			com.ExecuteNonQuery();
 			
-			com=new EDBCommand("quoteproc(:a)",_conn);
+			com=new EDBCommand("quoteproc(:a)",con);
 			com.CommandType=CommandType.StoredProcedure;
 			
 			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
@@ -264,29 +265,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Console.WriteLine("Data inserted");
 			DataSet ds=new DataSet();
 			Console.WriteLine("selecting data");
-			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",_conn);
+			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",con);
 			da.Fill(ds);
 			Console.WriteLine("selected data");
 			Console.WriteLine("filled data="+ ds.Tables[0].Rows.Count);
 
 			Console.WriteLine("Values selected");
-			com=new EDBCommand("drop table Quote",_conn);
+			com=new EDBCommand("drop table Quote",con);
 			com.ExecuteNonQuery();
-			com=new EDBCommand("drop procedure quoteproc",_conn);
+			com=new EDBCommand("drop procedure quoteproc",con);
 			com.ExecuteNonQuery();
 			GC.Collect();
-			_conn.Close();
+			con.Close();
 			
 		}
 	//Redundent case	[Test]
 		public void FB8070_4()
 		{
-			_conn.Open();
-			EDBCommand com=new EDBCommand("",_conn);
+			con.Open();
+			EDBCommand com=new EDBCommand("",con);
 
 			com.CommandText="create table Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com=new EDBCommand("",_conn);
+			com=new EDBCommand("",con);
 
 			com.CommandText="create or replace procedure quoteproc(abc in integer)\n"
 				+"is\n"
@@ -301,7 +302,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			com.ExecuteNonQuery();
             			
-			com=new EDBCommand("quoteproc(:a)",_conn);
+			com=new EDBCommand("quoteproc(:a)",con);
 			com.CommandType=CommandType.StoredProcedure;
             com.CommandTimeout = 1500;
 			
@@ -313,28 +314,28 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Console.WriteLine("Data inserted");
 			DataSet ds=new DataSet();
 			Console.WriteLine("selecting data");
-			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",_conn);
+			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",con);
 			da.Fill(ds);
 			Console.WriteLine("selected data");
 			Console.WriteLine("filled data="+ ds.Tables[0].Rows.Count);
 
 			Console.WriteLine("Values selected");
-			com=new EDBCommand("drop table Quote",_conn);
+			com=new EDBCommand("drop table Quote",con);
 			com.ExecuteNonQuery();
-			com=new EDBCommand("drop procedure quoteproc",_conn);
+			com=new EDBCommand("drop procedure quoteproc",con);
 			com.ExecuteNonQuery();
 			GC.Collect();
-			_conn.Close();
+			con.Close();
 		}
         //Redundent case	[Test]
 		public void FB8070_5()
 		{
-			_conn.Open();
-			EDBCommand com=new EDBCommand("",_conn);
+			con.Open();
+			EDBCommand com=new EDBCommand("",con);
 
 			com.CommandText="create table Quote(id int4, b char)";
 			com.ExecuteNonQuery();
-			com=new EDBCommand("",_conn);
+			com=new EDBCommand("",con);
 
 			com.CommandText="create or replace procedure quoteproc(abc in integer)\n"
 				+"is\n"
@@ -349,7 +350,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			com.ExecuteNonQuery();
 			
-			com=new EDBCommand("quoteproc(:a)",_conn);
+			com=new EDBCommand("quoteproc(:a)",con);
 			com.CommandType=CommandType.StoredProcedure;
             com.CommandTimeout = 1500;		
 			com.Parameters.Add(new EDBParameter("a",EDBTypes.EDBDbType.Integer));
@@ -360,25 +361,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Console.WriteLine("Data inserted");
 			DataSet ds=new DataSet();
 			Console.WriteLine("selecting data");
-			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",_conn);
+			EDBDataAdapter da =new EDBDataAdapter("select * from Quote",con);
 			da.Fill(ds);
 			Console.WriteLine("selected data");
 			Console.WriteLine("filled data="+ ds.Tables[0].Rows.Count);
 
 			Console.WriteLine("Values selected");
-			com=new EDBCommand("drop table Quote",_conn);
+			com=new EDBCommand("drop table Quote",con);
 			com.ExecuteNonQuery();
-			com=new EDBCommand("drop procedure quoteproc",_conn);
+			com=new EDBCommand("drop procedure quoteproc",con);
 			com.ExecuteNonQuery();
 			GC.Collect();
-			_conn.Close();
+			con.Close();
 			
 		}
 
 		[Test]
 		public void _AdapFillSchemaMapped()
 		{
-			_conn.Open();
+			con.Open();
 
 		/*	DataSet ds= new DataSet();
 
@@ -399,11 +400,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void _AdapFillSchemaSource()
 		{
-			_conn.Open();
+			con.Open();
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",con);
 			try
 			{
 		//		da.FillSchema(ds,SchemaType.Source);
@@ -412,21 +413,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			catch(Exception exp)
 			{
 				Assert.Fail(exp.Message);
-				_conn.Close();
+				con.Close();
 			}
 			
-			_conn.Close();
+			con.Close();
 
 		}
 
 		[Test]
 		public void AdapFillSchemaDataTableSourceColumnNameAccess()
 		{
-			_conn.Open();
+			con.Open();
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",con);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);
@@ -438,22 +439,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			catch(Exception )
 			{
-				_conn.Close();
+				con.Close();
 			}
 
 			
-			_conn.Close();
+			con.Close();
 
 		}
 
 		[Test]
 		public void AdapFillSchemaDataTableSourceColumnType()
 		{
-			_conn.Open();
+			con.Open();
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",con);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);
@@ -474,11 +475,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			catch(Exception )
 			{
-				_conn.Close();
+				con.Close();
 			}
 
 			
-			_conn.Close();
+			con.Close();
 
 		}
 
@@ -486,11 +487,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void AdapFillSchemaDataTableSourcePrimaryKey()
 		{
-			_conn.Open();
+			con.Open();
 
 			DataSet ds= new DataSet();
 
-			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",_conn);
+			EDBDataAdapter da=new EDBDataAdapter("select * from emp limit 1",con);
 			try
 			{
 				da.FillSchema(ds,SchemaType.Source);
@@ -502,11 +503,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			catch(Exception )
 			{
-				_conn.Close();
+				con.Close();
 			}
 
 			
-			_conn.Close();
+			con.Close();
 
 		}
         

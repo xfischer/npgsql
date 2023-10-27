@@ -113,6 +113,12 @@ public abstract class EDBDatabaseInfo
     /// </summary>
     public virtual bool SupportsRedwoodDialect { get; internal set; } = false;
 
+    // EnterpriseDB
+    /// <summary>
+    /// Reports whether EPAS is installed in 'redwood' compatibility mode.
+    /// </summary>
+    public virtual bool SupportsDbDialect { get; internal set; } = false;
+
     /// <summary>
     /// Whether the database supports transactions.
     /// </summary>

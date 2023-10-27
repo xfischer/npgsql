@@ -20,6 +20,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             conn = OpenConnection();
+            TestUtil.EnsureEDBAdvancedServer(conn);
         }
 
         [TearDown]

@@ -22,6 +22,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			//write setup for following test cases
 			con = OpenConnection();
+
+            TestUtil.EnsureEDBAdvancedServer(con);
+
 		}
 
 		[TearDown] 

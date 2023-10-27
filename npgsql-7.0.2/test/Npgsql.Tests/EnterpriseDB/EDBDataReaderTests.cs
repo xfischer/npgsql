@@ -17,29 +17,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 	public class EDBDataReaderTests : TestBase
     {
 
-		private EDBConnection? 	_conn = null;
+		private EDBConnection? 	con = null;
 		string connectionString = string.Empty;
 
 		[SetUp]
 		protected void SetUp()
 		{
 			connectionString = ConnectionString;
-			_conn = new EDBConnection(connectionString);
-		}
+			con = new EDBConnection(connectionString);
+
+            TestUtil.EnsureEDBAdvancedServer(con);
+        }
 
 		[TearDown]
 		protected void TearDown()
 		{
-			if (_conn.State != ConnectionState.Closed)
-				_conn.Close();
+			if (con.State != ConnectionState.Closed)
+				con.Close();
 		}
 
 		[Test]
 		public void GetBoolean()
 		{
-			_conn.Open();
+			con.Open();
 
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 4;", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 4;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -52,8 +54,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetChars()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -69,8 +71,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetInt32()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 2;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 2;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -85,8 +87,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetInt16()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 1;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 1;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -101,8 +103,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetDecimal()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 3;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tableb where field_serial = 3;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -117,8 +119,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetDouble()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 2;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 2;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -133,8 +135,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetFloat()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 1;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tabled where field_serial = 1;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -149,8 +151,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetString()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -165,8 +167,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetStringWithParameter()
 		{
-			_conn.Open();
-			 EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+			con.Open();
+			 EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", con);
 
 			 string test = "Random text";
 			 EDBParameter param = new EDBParameter();
@@ -189,8 +191,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetStringWithQuoteWithParameter()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", con);
 
 			string test = "Text with ' single quote";
 			EDBParameter param = new EDBParameter();
@@ -214,8 +216,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetValueByName()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = 1;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -230,8 +232,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void GetValueFromEmptyResultset()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where field_text = :value;", con);
 
 			string test = "Text single quote";
 			EDBParameter param = new EDBParameter();
@@ -261,9 +263,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void TestOverlappedParameterNames()
 		{
-			_conn.Open();
+			con.Open();
 
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", con);
 			command.Parameters.Add(new EDBParameter("a", DbType.Int32, 4, "a"));
 			command.Parameters.Add(new EDBParameter("aa", DbType.Int32, 4, "aa"));
 
@@ -277,9 +279,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void TestNonExistentParameterName()
 		{
-			_conn.Open();
+			con.Open();
 
-			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea where field_serial = :a or field_serial = :aa", con);
 			command.Parameters.Add(new EDBParameter(":b", DbType.Int32, 4, "b"));
 			command.Parameters.Add(new EDBParameter(":aa", DbType.Int32, 4, "aa"));
 
@@ -300,9 +302,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void UseDataAdapter()
 		{
 
-			_conn.Open();
+			con.Open();
 
-			EDBCommand command = new EDBCommand("select * from tablea", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea", con);
 
 			EDBDataAdapter da = new EDBDataAdapter();
 
@@ -321,11 +323,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void UseDataAdapterEDBConnectionConstructor()
 		{
 
-			_conn.Open();
+			con.Open();
 
-			EDBCommand command = new EDBCommand("select * from tablea", _conn);
+			EDBCommand command = new EDBCommand("select * from tablea", con);
 
-			command.Connection = _conn;
+			command.Connection = con;
 
 			EDBDataAdapter da = new EDBDataAdapter(command);
 
@@ -342,7 +344,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void UseDataAdapterStringEDBConnectionConstructor()
 		{
 
-			_conn.Open();
+			con.Open();
 
 			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
 
@@ -360,7 +362,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void UseDataAdapterStringStringConstructor()
 		{
 
-			_conn.Open();
+			con.Open();
 
 			EDBDataAdapter da = new EDBDataAdapter("select * from tablea", connectionString);
 
@@ -377,7 +379,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void UseDataAdapterStringStringConstructor2()
 		{
 
-			_conn.Open();
+			con.Open();
 
 			EDBDataAdapter da = new EDBDataAdapter("select * from tableb", connectionString);
 
@@ -412,8 +414,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		//[ExpectedException(typeof(InvalidOperationException))]
 		public void ReadPastDataReaderEnd()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -427,8 +429,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void IsDBNull()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select field_text from tablea;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select field_text from tablea;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -442,8 +444,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void IsDBNullFromScalar()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select max(field_serial) from tablea;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select max(field_serial) from tablea;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -455,8 +457,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test, /*Ignore("Needs Investigation")*/]
 		public void TypesNames()
 		{
-			_conn.Open();
-			EDBCommand command = new EDBCommand("select * from tablea where 1 = 2;", _conn);
+			con.Open();
+			EDBCommand command = new EDBCommand("select * from tablea where 1 = 2;", con);
 
 			EDBDataReader dr = command.ExecuteReader();
 
@@ -528,17 +530,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void AddRowWithDataSet()
 		{	
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest");
-            EDBCommand	command=new EDBCommand("create table DataSetTest(field_int2 int2, field_timestamp timestamp, field_numeric numeric);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest");
+            EDBCommand	command=new EDBCommand("create table DataSetTest(field_int2 int2, field_timestamp timestamp, field_numeric numeric);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest(field_int2, field_timestamp, field_numeric) " + 
-				" values (:a, :b, :c)", _conn);
+				" values (:a, :b, :c)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -568,28 +570,28 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			dt.Rows.Add(dr);
 			da.Update(dt);
 
-			command=new EDBCommand("select * from DataSetTest",_conn);
+			command=new EDBCommand("select * from DataSetTest",con);
 			EDBDataReader Reader=command.ExecuteReader();
 			Assert.IsTrue(Reader.HasRows);
             Reader.Close();
 			
-			command=new EDBCommand("drop table DataSetTest;",_conn);
+			command=new EDBCommand("drop table DataSetTest;",con);
 			command.ExecuteNonQuery();
 		}
 
 		[Test]
 		public void DataSetTableByIndex()
 		{	
-			_conn.Open();
-			EDBCommand	command=new EDBCommand("create table DataSetTest1(field_int2 int2);",_conn);
+			con.Open();
+			EDBCommand	command=new EDBCommand("create table DataSetTest1(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest1", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest1", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest1(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -607,30 +609,30 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			dt.Rows.Add(dr);
 			da.Update(dt);
 
-			command=new EDBCommand("select * from DataSetTest1",_conn);
+			command=new EDBCommand("select * from DataSetTest1",con);
 			EDBDataReader Reader=command.ExecuteReader();
 			Assert.IsTrue(Reader.HasRows);
             Reader.Close();
 			
-			command=new EDBCommand("drop table DataSetTest1;",_conn);
+			command=new EDBCommand("drop table DataSetTest1;",con);
 			command.ExecuteNonQuery();
 		}
 
 		[Test]
 		public void DataSetTableColumnByIndex()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
 
-            EDBCommand command =new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+            EDBCommand command =new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -648,29 +650,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			dt.Rows.Add(dr);
 			da.Update(dt);
 			
-			command=new EDBCommand("select * from DataSetTest3",_conn);
+			command=new EDBCommand("select * from DataSetTest3",con);
 			EDBDataReader Reader=command.ExecuteReader();
 			Assert.IsTrue(Reader.HasRows);
             Reader.Close();
 			Assert.AreEqual("field_int2",ds.Tables[0].Columns[0].ToString());
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 		}
 
 		[Test]
 		public void DataSetTableColumnByName()
 		{	
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -688,13 +690,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			dt.Rows.Add(dr);
 			da.Update(dt);
 			
-			command=new EDBCommand("select * from DataSetTest3",_conn);
+			command=new EDBCommand("select * from DataSetTest3",con);
 			EDBDataReader Reader=command.ExecuteReader();
 			Assert.IsTrue(Reader.HasRows);
             Reader.Close();
 			Assert.AreEqual("field_int2",ds.Tables[0].Columns["field_int2"].ToString());
 			//Console.WriteLine(ds.Tables[0].Columns["field_int2"].ToString());
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 			
 		}
@@ -702,17 +704,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetCopyTest()
 		{	
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -736,7 +738,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			Assert.AreEqual("field_int2",ds2.Tables[0].Columns[0].ToString());
 			//Console.WriteLine(ds2.Tables[0].Columns["field_int2"].ToString());
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -744,17 +746,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetNameTest()
 		{	
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -768,7 +770,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			
 			//Console.WriteLine(ds.Namespace);
 			Assert.AreEqual("ds",ds.DataSetName);
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -776,17 +778,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetClearTest()
 		{
-				_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+				con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -811,7 +813,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			//Console.WriteLine(ds.Tables[0].Rows.Count);
 			Assert.AreEqual("0",ds.Tables[0].Rows.Count.ToString());
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -819,17 +821,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetNameSpaceTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -843,24 +845,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			ds.Namespace="TestNameSpace";
 			Console.WriteLine("TestNameSpace",ds.Namespace);
 			Assert.AreEqual("TestNameSpace",ds.Namespace);
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 		}
 
 		[Test]
 		public void DataSetWriteXML()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -876,7 +878,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		
 			File.Delete("XMLTest.xml");
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -884,17 +886,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetReadXML()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -921,7 +923,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			finally
 			{
 				File.Delete("XMLTest.xml");
-				command=new EDBCommand("drop table DataSetTest3;",_conn);
+				command=new EDBCommand("drop table DataSetTest3;",con);
 				command.ExecuteNonQuery();
 			}
 
@@ -955,18 +957,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetWriteXMLSchema()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+			EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 			
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -982,7 +984,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		
 			File.Delete("XMLSchemaTest.xml");
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -990,17 +992,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetReadXMLSchema()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -1027,7 +1029,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			finally
 			{
 				File.Delete("XMLTest.xml");
-				command=new EDBCommand("drop table DataSetTest3;",_conn);
+				command=new EDBCommand("drop table DataSetTest3;",con);
 				command.ExecuteNonQuery();
 			}
 
@@ -1065,18 +1067,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetPrefixTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 			
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 	
@@ -1091,7 +1093,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			ds.Prefix="TestPrefix";
 			//Console.WriteLine("TestPrefix",ds.Prefix);
 			Assert.AreEqual("TestPrefix",ds.Prefix);
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -1101,17 +1103,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetAddNewTableTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -1124,7 +1126,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			DataTable dt=new DataTable();
 			ds.Tables.Add(dt);
 			Assert.AreEqual(2,ds.Tables.Count);
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 
 		}
@@ -1132,17 +1134,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetRemoveTableByObjectTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -1159,24 +1161,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			ds.Tables.Remove(dt);
 			Assert.AreEqual(1,ds.Tables.Count);
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 		}
 
 		[Test]
 		public void DataSetRemoveTableByNameTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 
@@ -1193,7 +1195,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			ds.Tables.Remove("TestTable");
 			Assert.AreEqual(1,ds.Tables.Count);
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 		}
 
@@ -1201,18 +1203,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void DataSetObjectClearanceTest()
 		{
-			_conn.Open();
-            TestUtil.dropTable(_conn, "DataSetTest3");
-            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",_conn);
+			con.Open();
+            TestUtil.dropTable(con, "DataSetTest3");
+            EDBCommand	command=new EDBCommand("create table DataSetTest3(field_int2 int2);",con);
 			command.ExecuteNonQuery();
 			
 			DataSet ds = new DataSet();
 			
 		
-			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", _conn);
+			EDBDataAdapter da = new EDBDataAdapter("select * from DataSetTest3", con);
 	
 			da.InsertCommand = new EDBCommand("insert into DataSetTest3(field_int2) " + 
-				" values (:a)", _conn);
+				" values (:a)", con);
 			
 			da.InsertCommand.Parameters.Add(new EDBParameter("a", DbType.Int16));
 	
@@ -1232,7 +1234,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			Assert.AreEqual(0,ds.Tables.Count);
 
-			command=new EDBCommand("drop table DataSetTest3;",_conn);
+			command=new EDBCommand("drop table DataSetTest3;",con);
 			command.ExecuteNonQuery();
 			
 			
@@ -1241,8 +1243,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Timeout(5000)]
         public async Task EDB_EC_2716_TestReaderShouldNotHangAsync()
         {
-            await _conn.OpenAsync();
-            var callable_command = GetEC2716_Command(_conn);
+            await con.OpenAsync();
+            var callable_command = GetEC2716_Command(con);
             await callable_command.PrepareAsync();
             callable_command.Parameters[0].Value = 20;
             callable_command.Parameters[1].Value = 7369;
@@ -1270,8 +1272,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Timeout(5000)]
         public void EDB_EC_2716_TestReaderShouldNotHangSync()
         {
-            _conn.Open();
-            var callable_command = GetEC2716_Command(_conn);
+            con.Open();
+            var callable_command = GetEC2716_Command(con);
                 callable_command.Prepare();
                 callable_command.Parameters[0].Value = 20;
                 callable_command.Parameters[1].Value = 7369;

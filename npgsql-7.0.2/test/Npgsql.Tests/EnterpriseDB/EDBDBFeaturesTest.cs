@@ -19,9 +19,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void Init()
 		{
 
-			string connectionString = ConnectionString;
-			con = new EDBConnection(connectionString);			
-		}
+			var connectionString = ConnectionString;
+			con = new EDBConnection(connectionString);
+            TestUtil.EnsureEDBAdvancedServer(con);
+        }
         [Test]
         public void TestExecImmediate()
         {
