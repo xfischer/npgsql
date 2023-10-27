@@ -12,7 +12,7 @@
 
     <Copyright>Copyright 2023 © The EDB Development Team</Copyright>
     <Company>EDB</Company>
-	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
