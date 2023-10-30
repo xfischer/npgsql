@@ -8,7 +8,7 @@ namespace EnterpriseDB.EDBClient.Tests
         public void OneTimeSetUp()
         {
             using var con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
+            TestUtil.EnsureIsEPASRedwood(con);
         }
     }
 }
