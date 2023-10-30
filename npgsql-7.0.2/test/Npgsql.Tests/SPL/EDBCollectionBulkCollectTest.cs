@@ -18,7 +18,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBCollectionBulkCollectTest : TestBase
+    internal class EDBCollectionBulkCollectTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -57,7 +57,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             TestUtil.dropTable(conn, "emp1 CASCADE");
             TestUtil.dropTable(conn, "dept1 CASCADE");

@@ -18,7 +18,7 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBTransactionControlCommitRollbackTest : TestBase
+    internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -44,7 +44,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE emp_insert;");
             TestUtil.dropTable(conn, "dept1 CASCADE");

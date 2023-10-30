@@ -134,7 +134,10 @@ END$$");
     [Test, Description("Tests function parameter derivation with IN, OUT and INOUT parameters")]
     public async Task DeriveParameters_procedure_various()
     {
+        
         await using var conn = await OpenConnectionAsync();
+        TestUtil.EnsureEDBAdvancedServer(conn);
+
         MinimumPgVersion(conn, "14.0", "Stored procedure OUT parameters are only support starting with version 14");
         var sproc = await GetTempProcedureName(conn);
 
@@ -177,6 +180,7 @@ $$ LANGUAGE plpgsql");
     public async Task DeriveParameters_procedure_in_only()
     {
         await using var conn = await OpenConnectionAsync();
+        TestUtil.EnsureEDBAdvancedServer(conn);
         var sproc = await GetTempProcedureName(conn);
 
         await conn.ExecuteNonQueryAsync($@"CREATE PROCEDURE {sproc}(IN param1 INT, IN param2 INT) AS '' LANGUAGE sql");

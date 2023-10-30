@@ -198,7 +198,8 @@ public class ConnectionTests : MultiplexingTestBase
     {
         var connString = new EDBConnectionStringBuilder(ConnectionString)
         {
-            Username = "unknown", Pooling = false
+            Username = "unknown",
+            Pooling = false
         }.ToString();
         using var conn = new EDBConnection(connString);
         Assert.That(conn.Open, Throws.Exception
@@ -409,15 +410,15 @@ public class ConnectionTests : MultiplexingTestBase
 
     #region ConnectionString - Host
 
-    [TestCase("127.0.0.1", ExpectedResult = new [] { "127.0.0.1:5444" })]
-    [TestCase("127.0.0.1:5444", ExpectedResult = new [] { "127.0.0.1:5444" })]
-    [TestCase("::1", ExpectedResult = new [] { "::1:5444" })]
-    [TestCase("[::1]", ExpectedResult = new [] { "[::1]:5444" })]
-    [TestCase("[::1]:5444", ExpectedResult = new [] { "[::1]:5444" })]
-    [TestCase("localhost", ExpectedResult = new [] { "localhost:5444" })]
-    [TestCase("localhost:5444", ExpectedResult = new [] { "localhost:5444" })]
+    [TestCase("127.0.0.1", ExpectedResult = new[] { "127.0.0.1:5444" })]
+    [TestCase("127.0.0.1:5444", ExpectedResult = new[] { "127.0.0.1:5444" })]
+    [TestCase("::1", ExpectedResult = new[] { "::1:5444" })]
+    [TestCase("[::1]", ExpectedResult = new[] { "[::1]:5444" })]
+    [TestCase("[::1]:5444", ExpectedResult = new[] { "[::1]:5444" })]
+    [TestCase("localhost", ExpectedResult = new[] { "localhost:5444" })]
+    [TestCase("localhost:5444", ExpectedResult = new[] { "localhost:5444" })]
     [TestCase("127.0.0.1,127.0.0.1:5444,::1,[::1],[::1]:5444,localhost,localhost:5444",
-        ExpectedResult = new []
+        ExpectedResult = new[]
         {
             "127.0.0.1:5444",
             "127.0.0.1:5444",
@@ -668,6 +669,9 @@ public class ConnectionTests : MultiplexingTestBase
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/703")]
     public async Task No_database_defaults_to_username()
     {
+        using var tempCon = OpenConnection();
+        TestUtil.EnsurePostgres(tempCon);
+
         var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
         using var conn = new EDBConnection(csb.ToString());
         Assert.That(conn.Database, Is.EqualTo(csb.Username));
@@ -1230,7 +1234,7 @@ CREATE TABLE record ()");
     }
 
 #if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
+    [Test, Timeout(10000), IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
     [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]
     public async Task Non_UTF8_Encoding()
@@ -1752,5 +1756,5 @@ CREATE TABLE record ()");
 
     #endregion Logging tests
 
-    public ConnectionTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
+    public ConnectionTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) { }
 }

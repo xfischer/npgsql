@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDBLargeObjectTests : TestBase
+    public class EDBLargeObjectTests : EPASTestBase
     {
         EDBConnection? con = null;
         string testPath = @"C:\Windows\media\Windows Background.wav";
@@ -24,12 +24,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             //write setup for following test cases
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             EDBCommand command = new EDBCommand("CREATE TABLE LOTest(id serial, f1 oid);", con);
             int result = command.ExecuteNonQuery();
             Console.WriteLine("CREATE TABLE returned " + result);
         }
+
         [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
         public void LOCreateTest()
         {
@@ -106,12 +106,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            if (TestUtil.EnsureEDBAdvancedServer(con, false))
-            {
-                EDBCommand command = new EDBCommand("DROP TABLE LOTest;", con);
-                int result = command.ExecuteNonQuery();
-                Console.WriteLine("DROP TABLE returned " + result);
-            }
+            EDBCommand command = new EDBCommand("DROP TABLE LOTest;", con);
+            int result = command.ExecuteNonQuery();
+            Console.WriteLine("DROP TABLE returned " + result);
+
             TestUtil.closeDB(con);
         }
     }

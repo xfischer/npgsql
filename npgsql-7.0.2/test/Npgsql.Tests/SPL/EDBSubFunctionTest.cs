@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBSubFunctionTest : TestBase
+    internal class EDBSubFunctionTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -33,7 +33,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP function test_max_three();");
 

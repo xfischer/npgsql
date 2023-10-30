@@ -12,7 +12,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     }
 
     [TestFixture]
-    class EDBAQTest : TestBase
+    class EDBAQTest : EPASTestBase
     {
         EDBConnection con = null;
         EDBDataSourceBuilder dataSourceBuilder = null;
@@ -29,8 +29,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             //write setup for following test cases
             con = dataSourceBuilder.Build().OpenConnection();
-
-            TestUtil.EnsureIsEPASRedwood(con);
 
             var Command = new EDBCommand("", con);
 
@@ -61,16 +59,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            if (TestUtil.EnsureEDBAdvancedServer(con, false))
-            {
-                var Command = new EDBCommand("", con);
-                Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE(queue_name => 'MSG_QUEUE'); ";
-                Command.ExecuteNonQuery();
-                Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE_TABLE('MSG_QUEUE_TABLE', force => TRUE); ";
-                Command.ExecuteNonQuery();
-                Command.CommandText = "DROP TYPE myxml;";
-                Command.ExecuteNonQuery();
-            }
+            var Command = new EDBCommand("", con);
+            Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE(queue_name => 'MSG_QUEUE'); ";
+            Command.ExecuteNonQuery();
+            Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE_TABLE('MSG_QUEUE_TABLE', force => TRUE); ";
+            Command.ExecuteNonQuery();
+            Command.CommandText = "DROP TYPE myxml;";
+            Command.ExecuteNonQuery();
             TestUtil.closeDB(con);
         }
 

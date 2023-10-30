@@ -17,7 +17,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBPackageTest : TestBase
+    internal class EDBPackageTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -51,7 +51,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PACKAGE BODY emp_admin;");
             Execute("DROP PACKAGE emp_admin;");

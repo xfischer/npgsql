@@ -17,7 +17,7 @@ using static System.Collections.Specialized.BitVector32;
 //Port JDBC tests to .NET from enhancements\spl\BasicStatementTest.java
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBStaticCursorTest : TestBase
+    internal class EDBStaticCursorTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -68,7 +68,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE fetching_rows;");
             Execute("DROP PROCEDURE fetching_rows_variable_type;");

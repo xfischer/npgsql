@@ -19,7 +19,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public string loc;
     }
 
-    internal class EDBNestedTableTest : TestBase
+    internal class EDBNestedTableTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -35,7 +35,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PACKAGE BODY pkgSimpleTest;");
             Execute("DROP PACKAGE pkgSimpleTest;");

@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS8602
     [TestFixture]
-	public class EDBDataReaderTests : TestBase
+	public class EDBDataReaderTests : EPASTestBase
     {
 
 		private EDBConnection? 	con = null;
@@ -25,8 +25,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			connectionString = ConnectionString;
 			con = new EDBConnection(connectionString);
-
-            TestUtil.EnsureEDBAdvancedServer(con);
         }
 
 		[TearDown]

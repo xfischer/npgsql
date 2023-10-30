@@ -313,9 +313,12 @@ INSERT INTO {table} VALUES('key1', 'description', '2018-07-03', '2018-07-03 07:0
         daDataAdapter.UpdateCommand = cbCommandBuilder.GetUpdateCommand();
         daDataAdapter.DeleteCommand = cbCommandBuilder.GetDeleteCommand();
 
+        // EnterpriseDB Team
+        EDBDbType timeStampType = TestUtil.IsEPASRedwood(conn) ? EDBDbType.Timestamp : EDBDbType.Date;
+
         Assert.That(daDataAdapter.UpdateCommand.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
-        Assert.That(daDataAdapter.UpdateCommand.Parameters[2].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
+        Assert.That(daDataAdapter.UpdateCommand.Parameters[2].EDBDbType, Is.EqualTo(timeStampType));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[3].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[4].EDBDbType, Is.EqualTo(EDBDbType.Smallint));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[5].EDBDbType, Is.EqualTo(EDBDbType.Money));
@@ -327,7 +330,7 @@ INSERT INTO {table} VALUES('key1', 'description', '2018-07-03', '2018-07-03 07:0
 
         Assert.That(daDataAdapter.UpdateCommand.Parameters[11].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[13].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
-        Assert.That(daDataAdapter.UpdateCommand.Parameters[15].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
+        Assert.That(daDataAdapter.UpdateCommand.Parameters[15].EDBDbType, Is.EqualTo(timeStampType));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[17].EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[18].EDBDbType, Is.EqualTo(EDBDbType.Smallint));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[20].EDBDbType, Is.EqualTo(EDBDbType.Money));

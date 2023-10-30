@@ -12,7 +12,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Summary description for FBs.
     /// </summary>
     [TestFixture]
-    public class EDBFBs : TestBase
+    public class EDBFBs : EPASTestBase
     {
         EDBConnection? con = null;
 
@@ -21,7 +21,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             //write setup for following test cases
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
             EDBCommand Command = new EDBCommand("", con);
 
             Command.CommandText = "CREATE OR REPLACE FUNCTION surname1(a IN INTEGER, b IN VARCHAR2) RETURN VARCHAR2 \n" +
@@ -42,14 +41,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            if (TestUtil.EnsureEDBAdvancedServer(con, false))
-            {
-                EDBCommand Command = new EDBCommand("", con);
-                Command.CommandText = "DROP FUNCTION surname1(integer, varchar2)";
-                Command.ExecuteNonQuery();
-                Command.CommandText = "DROP TABLE IF EXISTS Quote";
-                Command.ExecuteNonQuery();
-            }
+            EDBCommand Command = new EDBCommand("", con);
+            Command.CommandText = "DROP FUNCTION surname1(integer, varchar2)";
+            Command.ExecuteNonQuery();
+            Command.CommandText = "DROP TABLE IF EXISTS Quote";
+            Command.ExecuteNonQuery();
+
             TestUtil.closeDB(con);
         }
 

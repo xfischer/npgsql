@@ -14,7 +14,7 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBControlStructuresRaiseAppErrTest : TestBase
+    internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -22,7 +22,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init(string table, string proc)
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE " + proc);
             Execute("DROP TABLE " + table + " CASCADE");

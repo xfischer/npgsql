@@ -36,17 +36,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #pragma warning disable CS8600
 #pragma warning disable CS8602
     [TestFixture]
-    public class EDBQuotsTests : TestBase
+    public class EDBQuotesTests : EPASTestBase
     {
         private EDBConnection? con = null;
 
         #region Setup / Tear Down
-        [SetUp]
-        protected void SetUp()
-        {
-            con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
+        [SetUp]
+        public void Init()
+        {
+            con = CreateConnection();
         }
 
         [TearDown]

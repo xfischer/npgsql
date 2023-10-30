@@ -16,7 +16,7 @@ using System.Numerics;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBCompoundTriggerTest : TestBase
+    internal class EDBCompoundTriggerTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -54,7 +54,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP Trigger hr_trigger;");
             Execute("DROP TABLE emp1 CASCADE");

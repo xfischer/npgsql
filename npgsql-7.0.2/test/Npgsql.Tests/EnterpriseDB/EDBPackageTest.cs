@@ -11,16 +11,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Testing Procedures with Different combination of parameters
     /// </summary>
     [TestFixture]
-    public class EDBPackageTest : TestBase
+    public class EDBPackageTest : EPASTestBase
     {
         EDBConnection? con = null;
 
         #region Setup / Tear Down
+
         [SetUp]
         public void Init()
         {
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             EDBCommand com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;

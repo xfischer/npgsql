@@ -16,7 +16,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     [TestFixture]
     [NonParallelizable]
-    public class EDBMiscProcTest : TestBase
+    public class EDBMiscProcTest : EPASTestBase
     {
         EDBConnection con = null;
 
@@ -26,7 +26,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             //write setup for following test cases
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
             TestUtil.createTempTable(con, "TESTTAB", "a VARCHAR, b INT4");
             var Command = new EDBCommand("", con);
             Command.CommandText = "INSERT INTO TESTTAB VALUES('V1',1)";

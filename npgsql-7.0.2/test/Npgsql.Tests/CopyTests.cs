@@ -19,7 +19,7 @@ public class CopyTests : MultiplexingTestBase
 {
     #region Issue 2257
 
-    [Test, Description("Reproduce #2257")]
+    [Test, Timeout(10000), Description("Reproduce #2257")]
     public async Task Issue2257()
     {
         await using var conn = await OpenConnectionAsync();

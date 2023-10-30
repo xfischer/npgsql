@@ -14,7 +14,7 @@ using System.Collections.Generic;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBTransactionControlPraAutoTranTest : TestBase
+    internal class EDBTransactionControlPraAutoTranTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -28,7 +28,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE insert_dept_70;");
             Execute("DROP PROCEDURE insert_dept_70_rollback;");

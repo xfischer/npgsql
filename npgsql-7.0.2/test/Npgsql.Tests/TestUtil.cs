@@ -111,33 +111,49 @@ public static class TestUtil
     }
 
     // EnterpriseDB Team
-    public static void EnsureIsEPASRedwood(EDBConnection conn)
+    public static void EnsureIsEPASRedwood(EDBConnection conn, string? message = null)
     {
         var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
         if (isRedwood == null)
         {
-            Assert.Ignore("No db_dialect. This server is PG or PGE");
+            Assert.Ignore(message ?? "No db_dialect. This server is PG or PGE");
         }
         else
         {
             if (!isRedwood.Value)
             {
-                Assert.Ignore("db_dialect is not Redwood. This server is EPAS is postgres compatibility mode.");
+                Assert.Ignore(message ?? "db_dialect is not Redwood. This server is EPAS is postgres compatibility mode.");
             }
         }
     }
 
     // EnterpriseDB Team
-    public static bool EnsureEDBAdvancedServer(EDBConnection conn, bool assertIgnore = true)
+    public static bool IsEPASRedwood(EDBConnection conn)
+    {
+        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
+        return isRedwood ?? false;
+    }
+
+    // EnterpriseDB Team
+    public static bool EnsureEDBAdvancedServer(EDBConnection conn, string? message = null)
     {
         // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
         var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
         if (!(hasDbDialectProperty ?? false))
         {
-            if (assertIgnore)
-            {
-                Assert.Ignore("Requires EDB PG Advanced Server (No db_dialect found)");
-            }
+            Assert.Ignore(message ?? "Requires EDB PG Advanced Server (No db_dialect found)");
+            return false;
+        }
+        return true;
+    }
+
+    public static bool EnsurePostgres(EDBConnection conn, string? message = null)
+    {
+        // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
+        var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
+        if (hasDbDialectProperty is not null)
+        {
+            Assert.Ignore(message ?? "Requires Postgres (EDB PG Advanced Server detected)");
             return false;
         }
         return true;

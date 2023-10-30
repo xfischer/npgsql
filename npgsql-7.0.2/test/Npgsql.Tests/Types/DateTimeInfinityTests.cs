@@ -26,8 +26,14 @@ public class DateTimeInfinityTests : TestBase, IDisposable
             }
         };
 
-        Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
-
+        if (TestUtil.IsEPASRedwood(conn))
+        {
+            Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
+        }
+        else
+        {
+            Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(DisableDateTimeInfinityConversions ? "0001-01-01 00:00:00" : "-infinity"));
+        }
         cmd.Parameters[0].Value = DateTime.MaxValue;
 
         if (DisableDateTimeInfinityConversions)
@@ -79,8 +85,16 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         {
             await reader.ReadAsync();
 
-            Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
-            Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99 23:59:59.999999" : "infinity"));
+            if (TestUtil.IsEPASRedwood(conn))
+            {
+                Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
+                Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99 23:59:59.999999" : "infinity"));
+            }
+            else
+            {
+                Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "0001-01-01 00:00:00" : "-infinity"));
+                Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "9999-12-31 23:59:59.999999" : "infinity"));
+            }
         }
     }
 
@@ -128,8 +142,16 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
 
-        Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
-        Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));
+        if (TestUtil.IsEPASRedwood(conn))
+        {
+            Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
+            Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));
+        }
+        else
+        {
+            Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "0001-01-01" : "-infinity"));
+            Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "9999-12-31" : "infinity"));
+        }
     }
 
     [Test]
@@ -173,8 +195,17 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
 
-        Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
-        Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));
+        if (TestUtil.IsEPASRedwood(conn))
+        {
+            Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
+            Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));
+        }
+        else
+        {
+            Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "0001-01-01" : "-infinity"));
+            Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "9999-12-31" : "infinity"));
+        }
+        
     }
 
     

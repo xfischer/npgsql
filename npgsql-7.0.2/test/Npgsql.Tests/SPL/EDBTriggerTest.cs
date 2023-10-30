@@ -18,7 +18,7 @@ using System.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBTriggerTest : TestBase
+    internal class EDBTriggerTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -62,7 +62,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP Trigger emp_alert_trig;");
             Execute("DROP Trigger emp_audit_trig;");

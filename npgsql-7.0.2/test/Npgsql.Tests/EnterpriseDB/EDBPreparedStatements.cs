@@ -11,18 +11,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Summary description for PreparedStatements.
     /// </summary>
     [TestFixture] 
-	public class EDBPreparedStatements : TestBase
+	public class EDBPreparedStatements : EPASTestBase
     {	
 		EDBConnection? con = null;
 
-		[SetUp]
-		public void Init()
-		{	
-			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
-
+        [SetUp]
+        public void Init()
+        {
+            con = OpenConnection();
         }
-		protected void TearDown()
+
+        [TearDown]
+        protected void TearDown()
 		{
 			if (con.State != ConnectionState.Closed)
 				con.Close();

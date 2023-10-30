@@ -12,22 +12,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 	/// </summary>
 	/// 
 	[TestFixture]
-	public class EDBNumericDataTypeTest : TestBase
+	public class EDBNumericDataTypeTest : EPASTestBase
     {
 		EDBConnection? con = null;
 
-		[SetUp]
-		public void Init()
-		{
-            //write setup for following test cases
+        [SetUp]
+        public void Init()
+        {
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
-
-
-
         }
 
-		[TearDown] 
+        [TearDown] 
 		public void Dispose()
 		{
 			

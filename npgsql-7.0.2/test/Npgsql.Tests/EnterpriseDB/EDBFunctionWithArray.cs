@@ -11,17 +11,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Summary description for EDBFunctionWithArray.
     /// </summary>
     [TestFixture]
-	public class EDBFunctionWithArray : TestBase
-	{
+	public class EDBFunctionWithArray : EPASTestBase
+    {
 		EDBConnection? con = null;
 
         #region Setup / Tear Down
+
         [SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
 			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
             EDBCommand Command=new EDBCommand("",con);
             
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayVarchar(Name IN VARCHAR, Age IN INT, "+

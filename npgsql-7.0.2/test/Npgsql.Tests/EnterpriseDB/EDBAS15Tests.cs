@@ -30,28 +30,27 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDBAS15Tests : TestBase
+    public class EDBAS15Tests : EPASTestBase
     {
-        EDBConnection? conn = null;
+        EDBConnection? con = null;
 
         [SetUp]
         public void Init()
         {
-            conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
+            con = OpenConnection();
         }
 
         [TearDown]
         public void Dispose()
         {
-            TestUtil.closeDB(conn);
+            TestUtil.closeDB(con);
         }
 
         private int Execute(string query)
         {
             try
             {
-                using (var com = new EDBCommand(query, conn))
+                using (var com = new EDBCommand(query, con))
                 {
                     com.CommandType = CommandType.Text;
                     return com.ExecuteNonQuery();
@@ -87,7 +86,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1609_OracleStyleOuterTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP TABLE jobhist1");
@@ -174,7 +173,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                 + " WHERE j.dept1no BETWEEN d.dept1no(+) AND e.dept1no(+);";
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -202,7 +201,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1384IndexHintPartitionsTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
             Execute("DROP TABLE t_1384");
             Execute("CREATE TABLE t_1384(col1 int, col2 int, col3 int)"
@@ -222,7 +221,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -285,7 +284,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public async Task DB_2021_RowVarMultipleItemINTOListTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             await using var adminConnection = await OpenConnectionAsync();
@@ -354,7 +353,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public async Task DB_2021_RowVarMultipleItemINTOListTest_Proc()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             await using var adminConnection = await OpenConnectionAsync();
@@ -412,7 +411,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public async Task DB_2021_RowVarMultipleItemINTOListTest2()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             await using var adminConnection = await OpenConnectionAsync();
@@ -475,14 +474,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1634_TO_DSINTERVALTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             var query = "select to_dsinterval('80 13:30:00');";
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -512,7 +511,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1618_NVL_DOUBLEPRECISIONTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP TABLE db1618_t1");
@@ -527,7 +526,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -557,14 +556,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1692_from_tzTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             var query = "SELECT FROM_TZ(TIMESTAMP '2017-08-08 08:09:10', 'Asia/Kolkata') FROM DUAL;";
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -590,14 +589,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1708_TO_NCHARTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             var query = "SELECT to_nchar(7654321, 'C9G999G999D99'),to_nchar(timestamp '2022-04-20 17:31:12.66', 'Day: MONTH DD, YYYY');";
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -624,7 +623,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1703_TO_CLOB_and_TO_BLOBTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             try
@@ -634,7 +633,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 //--------------------------------+------------------------+----------------------------------
                 // \x756e6b6e6f776e20737472696e67 | \x726f7720737472696e67 | \x6c6f6e672072617720737472696e67
                 //(1 row)
-                using (var cmd = new EDBCommand("SELECT to_blob('unknown string'), to_blob('row string'::RAW), to_blob('long raw string'::LONG RAW);", conn))
+                using (var cmd = new EDBCommand("SELECT to_blob('unknown string'), to_blob('row string'::RAW), to_blob('long raw string'::LONG RAW);", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
                     rs.Read();
@@ -653,7 +652,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 //(1 row)
                 var query = "SELECT to_clob('unknown string'), to_clob('c'::CHAR), to_clob('varchar2 string'::VARCHAR),"
                        + " to_clob('n'::NCHAR), to_clob('nvarchar2 string'::NVARCHAR2), to_clob('clob string'::CLOB);";
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
                     rs.Read();
@@ -678,7 +677,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1714SQLERRM_and_SQLCODETest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP FUNCTION excpt_test");
@@ -725,7 +724,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (var cmd = new EDBCommand("select excpt_test();", conn))
+                using (var cmd = new EDBCommand("select excpt_test();", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -735,7 +734,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     rs.Close();
                 }
 
-                using (var cmd = new EDBCommand("select excpt_test2();", conn))
+                using (var cmd = new EDBCommand("select excpt_test2();", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -756,12 +755,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1711_TO_MULTI_BYTETest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             try
             {
-                using (var cmd = new EDBCommand("SELECT to_multi_byte('ABC&123');", conn))
+                using (var cmd = new EDBCommand("SELECT to_multi_byte('ABC&123');", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -782,12 +781,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1814_TO_SINGLE_BYTETest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             try
             {
-                using (var cmd = new EDBCommand("SELECT to_single_byte('ＡＢＣ＆１２３');", conn))
+                using (var cmd = new EDBCommand("SELECT to_single_byte('ＡＢＣ＆１２３');", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -808,7 +807,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1408_INParamInPLSQLBlockTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP PROCEDURE db1408_pr_in");
@@ -837,7 +836,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (var cmd = new EDBCommand(query, conn))
+                using (var cmd = new EDBCommand(query, con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -859,10 +858,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 notice = args.Notice;
                 mre.Set();
             };
-            conn.Notice += action;
+            con.Notice += action;
             try
             {
-                var callProc = new EDBCommand("db1408_pr_in(:arg_in)", conn);
+                var callProc = new EDBCommand("db1408_pr_in(:arg_in)", con);
                 callProc.CommandType = CommandType.StoredProcedure;
                 callProc.Parameters.Add(new EDBParameter("arg_in", EDBTypes.EDBDbType.Numeric, 10, "arg_in", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 10));
                 callProc.Prepare();
@@ -875,7 +874,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
             finally
             {
-                conn.Notice -= action;
+                con.Notice -= action;
             }
         }
 
@@ -884,7 +883,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1948RedwoodMERGETest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP TABLE target;");
@@ -924,7 +923,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (var cmd = new EDBCommand("select * from target order by tid;", conn))
+                using (var cmd = new EDBCommand("select * from target order by tid;", con))
                 {
                     EDBDataReader rs = cmd.ExecuteReader();
 
@@ -968,7 +967,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1536_OracleCompatibleStackTraceTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP PROCEDURE how_much_fund");
@@ -997,7 +996,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1691XMLextractvalueTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
 
             Execute("DROP TABLE xmltest_db1691");
@@ -1015,7 +1014,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var query = "SELECT extractvalue(xmltest_db1691.data, '/menu/beers/name[position()=1]')"
                     + "  FROM xmltest_db1691 ORDER BY id;";
 
-            var cmd = new EDBCommand(query, conn);
+            var cmd = new EDBCommand(query, con);
             EDBDataReader rs = cmd.ExecuteReader();
 
             //test=# SELECT extractvalue(xmltest_db1691.data, '/menu/beers/name[position()=1]')
@@ -1036,7 +1035,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1410_HTP_HTF_PackageTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
             //Cleanup just in case
             Execute("DROP PROCEDURE p;");
@@ -1071,7 +1070,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DB_1425SetRowTest()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "15.0.0");
+            TestUtil.MinimumPgVersion(con, "15.0.0");
 #nullable restore
             //Cleanup just in case.
             Execute("DROP TABLE db1425_t1;");
@@ -1105,7 +1104,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 + "END;";
             Execute(anony);
 
-            using (var cmd = new EDBCommand("SELECT * FROM db1425_t1 ORDER BY a, b", conn))
+            using (var cmd = new EDBCommand("SELECT * FROM db1425_t1 ORDER BY a, b", con))
             {
                 EDBDataReader rs = cmd.ExecuteReader();
 

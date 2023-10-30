@@ -18,7 +18,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBControlStructuresLoopTest : TestBase
+    internal class EDBControlStructuresLoopTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -47,7 +47,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
         }
 
         [TearDown]
@@ -128,7 +127,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-    public void ContinueTest()
+        public void ContinueTest()
         {
             //The following is a variation of the previous example
             //that uses the CONTINUE statement to skip the display of the odd numbers.
@@ -180,10 +179,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 conn.Notice -= action;
             }
             mre.Close();
-    }
+        }
 
         [Test]
-    public void WhileTest()
+        public void WhileTest()
         {
             //The following example contains the same logic as in the previous example
             //except the WHILE statement is used to take the place of the EXIT
@@ -234,10 +233,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 conn.Notice -= action;
             }
             mre.Close();
-    }
+        }
 
         [Test]
-    public void ForTest()
+        public void ForTest()
         {
             //The following example simplifies the WHILE loop example
             //even further by using a FOR loop that iterates from 1 to 10.
@@ -284,7 +283,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             }
             mre.Close();
         }
-}
+    }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 #pragma warning restore CS8602 // Dereference of a possibly null reference.

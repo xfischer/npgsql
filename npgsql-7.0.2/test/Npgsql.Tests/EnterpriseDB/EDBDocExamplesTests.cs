@@ -11,15 +11,8 @@ using System.Numerics;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
-    public class EDBDocExamplesTests : TestBase
+    public class EDBDocExamplesTests : EPASTestBase
     {
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            var con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
-        }
-
         //Doc link:
         //https://www.enterprisedb.com/docs/net_connector/latest/06_opening_a_database_connection/
         [Test]

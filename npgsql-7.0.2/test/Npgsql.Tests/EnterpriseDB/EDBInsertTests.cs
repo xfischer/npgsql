@@ -46,16 +46,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
 #pragma warning disable CS8602
     [TestFixture]
-    public class EDBInsertTests : TestBase
+    public class EDBInsertTests : EPASTestBase
     {
         private EDBConnection? con = null;
 
         #region Setup / Tear Down
         [SetUp]
-        protected void SetUp()
+        public void Init()
         {
-            con = new EDBConnection(ConnectionString);
-            TestUtil.EnsureEDBAdvancedServer(con);
+            con = CreateConnection();
         }
 
         [TearDown]

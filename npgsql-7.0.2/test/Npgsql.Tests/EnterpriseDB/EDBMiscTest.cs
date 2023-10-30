@@ -14,16 +14,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
 
     [TestFixture]
-	public class EDBMiscTest : TestBase
+	public class EDBMiscTest : EPASTestBase
     {
 		EDBConnection? con = null;
 
-		[SetUp]
+        [SetUp]
 		public void Init()
 		{
 			//write setup for following test cases
 			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
             TestUtil.createTempTable(con,"TESTTAB","a VARCHAR, b INT4");
 			EDBCommand Command=new EDBCommand("",con);
 			Command.CommandText="INSERT INTO TESTTAB VALUES('V1',1)";

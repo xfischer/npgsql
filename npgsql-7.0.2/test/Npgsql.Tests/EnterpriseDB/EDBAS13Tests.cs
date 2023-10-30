@@ -12,28 +12,28 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDBAS13Tests : TestBase
+    public class EDBAS13Tests : EPASTestBase
     {
-        EDBConnection? conn = null;
+        EDBConnection? con = null;
 
         [SetUp]
-        public void Init()
+        public void Setup()
         {
-            conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
+            con = OpenConnection();
+            TestUtil.MinimumPgVersion(con, "13.0.0");
         }
-
+        
         [TearDown]
         public void Dispose()
         {
-            TestUtil.closeDB(conn);
+            TestUtil.closeDB(con);
         }
 
         [Test, Ignore("EC-1339")]
         public void CompatibleSYSDATE_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropProc("DROP FUNCTION rm44158_fun;");
             DropTable("DROP TABLE rm44158_tab;");
@@ -94,7 +94,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Explicit_INDEX__PRIMARY_KEY_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE rm43851_products1;");
             DropTable("DROP TABLE rm43851_products2;");
@@ -157,7 +157,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void UTL_HTTPExceptionHandling_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             string proc1 = "CREATE OR REPLACE PROCEDURE utl_proc1() IS"
                         + " req   UTL_HTTP.REQ;"
@@ -229,7 +229,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void AlterDirectoryOwner_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropDirectory("DROP DIRECTORY dir_Test;");
             DropUser("DROP USER u1 CASCADE;");
@@ -248,7 +248,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void PartitionSubPartitionNumberTable_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE tbl01 CASCADSE;");
             DropTable("DROP TABLE tbl02 CASCADSE;");
@@ -382,7 +382,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Parallel_NoParallel_Create_Table_Index_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE rm43833 CASCADE;");
             DropTable("DROP TABLE rm43833_t1 CASCADE;");
@@ -425,7 +425,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DefaultBehaviour_dbms_output_compatible_Redwood_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropProc("DROP PROCEDURE dbms_output_proc;");
             string createProc = "CREATE OR REPLACE PROCEDURE dbms_output_proc() IS"
@@ -447,7 +447,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Stats_Mode_Function_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE smt1 CASCADE;");
             CreateTable("create table smt1(a int, b int, c varchar2(10));");
@@ -489,7 +489,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void DBMS_SQL_Func_Proc_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropProc("DROP PROCEDURE dbmssql_proc1;");
             DropProc("DROP PROCEDURE dbmssql_proc2;");
@@ -553,7 +553,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Function_to_timestamp_tz_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropView("DROP VIEW tstz_vw;");
             string createView = "CREATE VIEW tstz_vw as SELECT"
@@ -580,7 +580,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void FuncProcInsidePkgBody_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropPackageBody("DROP PACKAGE BODY test_func_spec_pkg");
             DropPackage("DROP PACKAGE test_func_spec_pkg");
@@ -618,7 +618,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void FMFormatIn_to_number_Function_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE fm_tab CASCADE");
             string createTable = "create table fm_tab(c1 varchar2(50));";
@@ -641,7 +641,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void AutomaticListPartitionaing_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             string dropTable = "drop table alp_tab";
             DropTable(dropTable);
@@ -662,7 +662,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void AutomaticListPartitionaing_Workaround_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             string dropTable = "drop table alp_tab";
             DropTable(dropTable);
@@ -683,7 +683,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void AggregateFuncMedian_IndexNumber_Test()
         {
 #nullable disable
-            TestUtil.MinimumPgVersion(conn, "13.0.0");
+            TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE median_test CASCADE");
             //-- Additional smallint, int, bigint, and numeric variants in aggregate function MEDIAN.
@@ -713,7 +713,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             //Log("Calling Procedure...");
             try
             {
-                using (EDBCommand com = new EDBCommand("", conn))
+                using (EDBCommand com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.StoredProcedure;
 
@@ -733,7 +733,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                using (EDBCommand com = new EDBCommand("", conn))
+                using (EDBCommand com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.Text;
 
@@ -878,7 +878,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                using (EDBCommand com = new EDBCommand("", conn))
+                using (EDBCommand com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.Text;
 
@@ -943,7 +943,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand command = new EDBCommand(insert, conn))
+                using (EDBCommand command = new EDBCommand(insert, con))
                 {
                     Int32 rowsAdded = command.ExecuteNonQuery();
                     Log("Inserted rows: " + rowsAdded);
@@ -964,7 +964,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand cmdSelect = new EDBCommand(select, conn))
+                using (EDBCommand cmdSelect = new EDBCommand(select, con))
                 {
                     cmdSelect.CommandType = CommandType.Text;
                     using (EDBDataReader reader = cmdSelect.ExecuteReader())
@@ -994,7 +994,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand cmdSelect = new EDBCommand(query, conn))
+                using (EDBCommand cmdSelect = new EDBCommand(query, con))
                 {
                     cmdSelect.CommandType = CommandType.Text;
                     using (EDBDataReader reader = cmdSelect.ExecuteReader())

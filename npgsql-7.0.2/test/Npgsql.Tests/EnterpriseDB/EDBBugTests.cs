@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDB_EC_1001_Tests : TestBase
+    public class EDB_EC_1001_Tests : EPASTestBase
     {
         EDBConnection? con = null;
 
@@ -22,9 +22,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
-
-            TestUtil.EnsureEDBAdvancedServer(con);
-
         }
 
         [TearDown]
@@ -119,7 +116,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDB_EC_1113_Tests : TestBase
+    public class EDB_EC_1113_Tests : EPASTestBase
     {
         /// <summary>
         /// This class is for matching database type in test EC-1113.
@@ -137,7 +134,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             //Table
             string tableString = "CREATE TABLE account(\n" +
@@ -178,31 +174,20 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            try
+            //Drop Procedure
+            CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
+
+            //Drop table.
+            TestUtil.dropTable(con, "account");
+
+            //Drop type.
+            using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
             {
-
-                //Drop Procedure
-                CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
-
-                //Drop table.
-                TestUtil.dropTable(con, "account");
-
-                //Drop type.
-                using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
-                {
-                    dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
-                    dropTypeCommand.ExecuteNonQuery();
-                }
-
+                dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
+                dropTypeCommand.ExecuteNonQuery();
             }
-            catch
-            {
 
-            }
-            finally
-            {
-                TestUtil.closeDB(con);
-            }
+            TestUtil.closeDB(con);
         }
 
         private void CreateDropProcedure(string procString)
@@ -260,7 +245,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDB_EC_1134_Tests : TestBase
+    public class EDB_EC_1134_Tests : EPASTestBase
     {
         EDBConnection? con = null;
 
@@ -268,8 +253,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
-
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             //Table
             string tableString = "create table testclob (datasource clob);";
@@ -321,7 +304,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
     /// 
     [TestFixture]
-    public class EDB_EC_1084_Tests : TestBase
+    public class EDB_EC_1084_Tests : EPASTestBase
     {
         EDBConnection? con = null;
 
@@ -329,7 +312,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void Init()
         {
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             //Drop table.
             TestUtil.dropTable(con, "ca.epas_test_table2");

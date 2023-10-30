@@ -10,15 +10,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Testing Procedures with Different combination of parameters
     /// </summary>
     [TestFixture]
-    public class EDBCursorTest : TestBase
+    public class EDBCursorTest : EPASTestBase
     {
         EDBConnection? con = null;
 
         [SetUp]
-        public void Init()
+        public void SetUp()
         {
             con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             EDBCommand com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;
@@ -43,14 +42,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            if (TestUtil.EnsureEDBAdvancedServer(con, false))
-            {
-                EDBCommand com = new EDBCommand("", con);
-                com.CommandType = CommandType.Text;
+            EDBCommand com = new EDBCommand("", con);
+            com.CommandType = CommandType.Text;
 
-                com.CommandText = "DROP PROCEDURE CUR_TEST;";
-                com.ExecuteNonQuery();
-            }
+            com.CommandText = "DROP PROCEDURE CUR_TEST;";
+            com.ExecuteNonQuery();
+
             TestUtil.closeDB(con);
         }
 

@@ -14,16 +14,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [TestFixture]
     [NonParallelizable] // Manipulates the EnableStoredProcedureCompatMode global flag
 
-    public class EDBFunctionTests : TestBase
+    public class EDBFunctionTests : EPASTestBase
     {
 		EDBConnection con = null;
 
-        #region Setup / Tear Down
+        #region Setup / Teardown
+
         [SetUp]
 		public void Init()
 		{
 			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             var com  = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;

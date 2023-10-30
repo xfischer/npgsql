@@ -9,15 +9,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 	/// This Class contains functions for unit testing of .Net Driver.
 	/// </summary>
 	[TestFixture] 
-	public class EDBDMLTest : TestBase
+	public class EDBDMLTest : EPASTestBase
     {
 		EDBConnection? con = null;
 
-		[SetUp]
+        [SetUp]
 		public void Init()
 		{
 			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
             TestUtil.createTempTable(con, "dml_TestTable1",
 										"RecNo int, Name varchar(20)");
 			TestUtil.createTempTable(con, "dml_TestTable2",

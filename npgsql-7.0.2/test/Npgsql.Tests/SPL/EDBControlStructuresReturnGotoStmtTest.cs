@@ -13,7 +13,7 @@ using System.Xml.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    public class EDBControlStructuresReturnGotoStmtTest : TestBase
+    public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -21,7 +21,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP FUNCTION emp_comp");
             Execute("DROP PROCEDURE verify_emp");

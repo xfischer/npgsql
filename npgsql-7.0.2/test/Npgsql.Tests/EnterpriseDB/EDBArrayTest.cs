@@ -13,19 +13,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// </summary>
 
     [TestFixture]
-	public class EDBArrayTest : TestBase
+	public class EDBArrayTest : EPASTestBase
     {
 		EDBConnection? con = null;
 
-		[SetUp]
-		public void Init()
-		{
-			//write setup for following test cases
-			con = OpenConnection();
-
-            TestUtil.EnsureEDBAdvancedServer(con);
-
-		}
+        [SetUp]
+        public void Setup()
+        {
+            con = OpenConnection();
+        }
 
 		[TearDown] 
 		public void Dispose()

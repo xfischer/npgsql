@@ -15,7 +15,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBRefCursorTest : TestBase
+    internal class EDBRefCursorTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -82,7 +82,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE emp_by_dept;");
             Execute("DROP FUNCTION emp_by_job;");

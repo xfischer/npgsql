@@ -14,16 +14,9 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBControlStructuresPraExptInitTest : TestBase
+    internal class EDBControlStructuresPraExptInitTest : EPASTestBase
     {
         EDBConnection? conn = null;
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
-        }
 
         //This is not normal Setup method. We call it explicitly
         public void Init(string table, string func, string procPurchase, string procRecord, string pkgAr)

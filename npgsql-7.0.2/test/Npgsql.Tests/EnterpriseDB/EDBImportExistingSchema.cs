@@ -11,20 +11,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 	/// it creates a new table importing the schema of an existing table
 	/// </summary>
 	[TestFixture]
-	public class EDBImportExistingSchema : TestBase
+	public class EDBImportExistingSchema : EPASTestBase
     {
 		
 		EDBConnection? con=null;
 
-		[SetUp]
-		public void Init()
-		{
-			con = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(con);
-
+        [SetUp]
+        public void SetUp()
+        {
+            con = OpenConnection();
         }
-		
-		[Test]
+
+        [Test]
 		public void CreateTable()
 		{
 			try

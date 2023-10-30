@@ -11,18 +11,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// This Class contains functions for unit testing of .Net Driver.
     /// </summary>
     [TestFixture] 
-	public class EDBDBFeaturesTest : TestBase
+	public class EDBDBFeaturesTest : EPASTestBase
     {
 		EDBConnection? con = null;       
  
 		[SetUp]
-		public void Init()
+		public void SetUp()
 		{
-
 			var connectionString = ConnectionString;
 			con = new EDBConnection(connectionString);
-            TestUtil.EnsureEDBAdvancedServer(con);
         }
+
         [Test]
         public void TestExecImmediate()
         {

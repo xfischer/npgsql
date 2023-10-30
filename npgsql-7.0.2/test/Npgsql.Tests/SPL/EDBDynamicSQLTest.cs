@@ -19,7 +19,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBDynamicSQLTest : TestBase
+    internal class EDBDynamicSQLTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -31,7 +31,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             TestUtil.dropTable(conn, "job CASCADE");
         }

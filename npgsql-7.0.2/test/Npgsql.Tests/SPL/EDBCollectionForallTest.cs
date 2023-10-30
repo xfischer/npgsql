@@ -16,15 +16,14 @@ using System.Xml.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBCollectionForallTest : TestBase
+    internal class EDBCollectionForallTest : EPASTestBase
     {
         EDBConnection? conn = null;
-
+                
         [SetUp]
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             TestUtil.dropTable(conn, "emp1 CASCADE");
             TestUtil.dropTable(conn, "emp_copy CASCADE");

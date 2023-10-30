@@ -13,14 +13,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Testing Procedures with Different combination of parameters
     /// </summary>
     [TestFixture]
-	public class EDBProcedureTest : TestBase
-	{
+	public class EDBProcedureTest : EPASTestBase
+    {
 
 		[OneTimeSetUp]
 		public async Task Init()
 		{
             await using var con = await OpenConnectionAsync();
-            TestUtil.EnsureEDBAdvancedServer(con);
 
             var com = new EDBCommand("",con);
 			com.CommandType = CommandType.Text;

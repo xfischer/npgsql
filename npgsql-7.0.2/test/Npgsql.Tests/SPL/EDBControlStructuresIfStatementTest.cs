@@ -15,7 +15,7 @@ using System.Collections;
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
     [TestFixture]
-    public class EDBControlStructuresIfStatementTest : TestBase
+    public class EDBControlStructuresIfStatementTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -72,7 +72,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP TABLE emp1");
 

@@ -16,7 +16,7 @@ using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBObjectTest : TestBase
+    internal class EDBObjectTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -41,7 +41,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP TYPE BODY address");
             Execute("DROP TYPE address");

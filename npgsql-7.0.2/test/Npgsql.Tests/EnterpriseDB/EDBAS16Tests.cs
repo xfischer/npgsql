@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #pragma warning disable CS8602
     [TestFixture]
     [NonParallelizable]
-    internal class EDBAS16Tests : TestBase
+    internal class EDBAS16Tests : EPASTestBase
     {
         private async Task<int> Execute(EDBConnection conn, string query, bool ignoreResult)
         {
@@ -121,7 +121,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 {
                     cstmt.CommandType = CommandType.StoredProcedure;
 
-                     cstmt.Prepare();
+                    cstmt.Prepare();
                     await cstmt.ExecuteNonQueryAsync();
                 }
                 mre.WaitOne(5000);
@@ -147,7 +147,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await using var conn = await OpenConnectionAsync();
 
 #nullable disable
-            TestUtil.EnsureIsEPASRedwood(conn);
             TestUtil.MinimumPgVersion(conn, "16.0.0");
 #nullable restore
             //Clean
@@ -229,9 +228,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var tz1 = await ExecuteSimpleReader(conn, "SELECT sessiontimezone FROM dual;");
             Assert.IsNotNull(tz1);
 
-            //We are only checking the first part as we are not sure about the second part.
-            //Also the actual test is to set and get values.
-            Assert.IsTrue(tz1.ToString().StartsWith("America"));
+            ////We are only checking the first part as we are not sure about the second part.
+            ////Also the actual test is to set and get values.
+            // XFI : removed, results may vary as initial timezone can be different depending on local setup
+            //Assert.IsTrue(tz1.ToString().StartsWith("America"));
 
             await Execute(conn, "SET timezone TO '-5:30';", true);
 
@@ -310,7 +310,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         //--DB-1955 : Implement the Oracle DBTIMEZONE function in Advanced Server
-        [Test]
+        [Test, Timeout(15000)]
         public async Task Oracle_DBTIMEZONE_FunctionTest()
         {
             await using var conn = await OpenConnectionAsync();
@@ -374,13 +374,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             var tz2 = await ExecuteDateTimeReader(conn, "SELECT TO_TIMESTAMP_TZ('20-MAR-20 04:30:00.123456 PM +03:00') FROM DUAL;");
             Assert.IsNotNull(tz2);
-            Assert.AreEqual("3/20/2020 1:30:00 PM", tz2.ToString());
+            Assert.AreEqual(new DateTime(2020, 3, 20, 13, 30, 0).ToString(), tz2.ToString());
 
             await Execute(conn, "SET TIME ZONE 5.5;", true);
 
             var tz3 = await ExecuteDateTimeReader(conn, "SELECT TO_TIMESTAMP_TZ('06-OCT-85 06.40:14.745623 AM +06:00') FROM DUAL;");
             Assert.IsNotNull(tz3);
-            Assert.AreEqual("10/6/1985 12:40:14 AM", tz3.ToString());
+            Assert.AreEqual(new DateTime(1985, 10, 6, 0, 40, 14).ToString(), tz3.ToString());
         }
 
         //--DB-1958 : Implement the Oracle NANVL function in Advanced Server
@@ -988,7 +988,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             var messages1 = await ExecuteProcNotice(conn, "utl_file_fgetattr_test");
             Assert.AreEqual(5, messages1.Count);
-            for(var i=0; i<messages1.Count; i++)
+            for (var i = 0; i < messages1.Count; i++)
                 Assert.AreEqual(msgExpected1[i], messages1[i]);
 
             await Execute(conn, "CREATE OR REPLACE PROCEDURE utl_file_fgetpos_fseek_test\n"
@@ -1055,7 +1055,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var messages4 = await ExecuteProcNotice(conn, "readmy_file_nchar");
             Assert.AreEqual(2, messages4.Count);
 
-            
+
         }
     }
 #pragma warning restore CS8602

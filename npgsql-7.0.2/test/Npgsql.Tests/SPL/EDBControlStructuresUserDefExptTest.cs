@@ -13,7 +13,7 @@ using System.Xml.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    public class EDBControlStructuresUserDefExptTest : TestBase
+    public class EDBControlStructuresUserDefExptTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -21,7 +21,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init(string table, string func, string procPurchase, string procRecord, string procRaise, string pkgAr)
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP PROCEDURE " + procRecord);
             Execute("DROP PROCEDURE " + procRaise);

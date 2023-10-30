@@ -13,20 +13,13 @@ using System.Xml.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBCollectionMultisetUnionTest : TestBase
+    internal class EDBCollectionMultisetUnionTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
         private int[] MULTI_UNION_RESULT = { 10, 20, 30, 30, 40 };
         private int[] MULTI_UNION_DISTINCT_RESULT = { 10, 20, 30, 40 };
         private int[] MULTI_UNION_DISTINCT_RESULT02 = { 10, 20, 30, 40, 50 };
-
-        [SetUp]
-        public void Init()
-        {
-            conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
-        }
 
         [TearDown]
         public void Dispose()

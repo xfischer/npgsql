@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBSubProcedureTest : TestBase
+    internal class EDBSubProcedureTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -29,7 +29,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             Execute("DROP trigger dept_audit_trig on dept1;");
             TestUtil.dropTable(conn, "dept1 CASCADE");

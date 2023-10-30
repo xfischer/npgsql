@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    internal class EDBVarrayTest : TestBase
+    internal class EDBVarrayTest : EPASTestBase
     {
         EDBConnection? conn = null;
 
@@ -27,7 +27,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Init()
         {
             conn = OpenConnection();
-            TestUtil.EnsureEDBAdvancedServer(conn);
 
             TestUtil.dropTable(conn, "dept1 CASCADE");
 
