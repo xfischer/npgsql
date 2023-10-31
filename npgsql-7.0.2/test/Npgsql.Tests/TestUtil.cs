@@ -122,8 +122,18 @@ public static class TestUtil
         {
             if (!isRedwood.Value)
             {
-                Assert.Ignore(message ?? "db_dialect is not Redwood. This server is EPAS is postgres compatibility mode.");
+                Assert.Ignore(message ?? "db_dialect is not 'redwood'. This server is EPAS is postgres compatibility mode.");
             }
+        }
+    }
+
+    // EnterpriseDB Team
+    public static void EnsureNotEPASRedwood(EDBConnection conn, string? message = null)
+    {
+        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
+        if (isRedwood ?? false)
+        {
+            Assert.Ignore(message ?? "EDB Advanced Server is ignored");
         }
     }
 
@@ -138,13 +148,30 @@ public static class TestUtil
     public static bool EnsureEDBAdvancedServer(EDBConnection conn, string? message = null)
     {
         // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
-        var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
-        if (!(hasDbDialectProperty ?? false))
+        var longVersion = (conn?.EDBDataSource?.DatabaseInfo as PostgresDatabaseInfo)?.LongVersion;
+        const string EPASCriteria = "EnterpriseDB Advanced Server";
+        if (longVersion is null)
+            return false;
+
+#if NET472
+        if (!longVersion.Contains(EPASCriteria))
+#else
+        if (!longVersion.Contains(EPASCriteria, StringComparison.OrdinalIgnoreCase))
+#endif
         {
-            Assert.Ignore(message ?? "Requires EDB PG Advanced Server (No db_dialect found)");
+            Assert.Ignore(message ?? $"Requires EDB PG Advanced Server.(Version : {longVersion})");
             return false;
         }
         return true;
+
+        //// assumes db_dialect => EPAS
+        //var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
+        //if (!(hasDbDialectProperty ?? false))
+        //{
+        //    Assert.Ignore(message ?? "Requires EDB PG Advanced Server (No db_dialect found)");
+        //    return false;
+        //}
+        //return true;
     }
 
     public static bool EnsurePostgres(EDBConnection conn, string? message = null)

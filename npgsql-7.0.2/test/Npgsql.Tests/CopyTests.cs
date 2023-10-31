@@ -1085,7 +1085,7 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 1)");
         Assert.That(async () => await conn.ExecuteScalarAsync($"SELECT foo FROM {table}"), Is.EqualTo(3));
     }
 
-    [Test, Ignore(""), IssueLink("https://github.com/npgsql/npgsql/issues/4199")]
+    [Test, EDBExplicit("Works in community"), IssueLink("https://github.com/npgsql/npgsql/issues/4199")]
     public async Task Copy_is_not_supported_in_regular_command_execution()
     {
         // Run in a separate pool to protect other queries in multiplexing

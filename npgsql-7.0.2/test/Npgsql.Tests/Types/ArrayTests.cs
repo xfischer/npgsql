@@ -9,6 +9,7 @@ using EnterpriseDB.EDBClient.Internal.TypeHandlers;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
@@ -79,7 +80,7 @@ public class ArrayTests : MultiplexingTestBase
         }
     }
 
-    [Test, Ignore("")]
+    [Test]
     public async Task Bind_int_then_array_of_int()
     {
         using var pool = CreateTempPool(ConnectionString, out var connString);
@@ -160,7 +161,7 @@ public class ArrayTests : MultiplexingTestBase
         Assert.That(() => reader.GetValue(0), Throws.Exception.TypeOf<InvalidOperationException>());
     }
 
-    [Test, Ignore(""), Description("Checks that PG arrays containing nulls are returned as set via ValueTypeArrayMode.")]
+    [Test, Description("Checks that PG arrays containing nulls are returned as set via ValueTypeArrayMode.")]
     [TestCase(ArrayNullabilityMode.Always)]
     [TestCase(ArrayNullabilityMode.Never)]
     [TestCase(ArrayNullabilityMode.PerInstance)]

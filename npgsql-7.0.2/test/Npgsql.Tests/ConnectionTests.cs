@@ -18,6 +18,7 @@ using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
 [NonParallelizable]
@@ -229,7 +230,7 @@ public class ConnectionTests : MultiplexingTestBase
         => Assert.Throws<ArgumentException>(() =>
             new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests"));
 
-    [Test, Ignore(""), Description("Reuses the same connection instance for a failed connection, then a successful one")]
+    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one")]
     public async Task Fail_connect_then_succeed([Values] bool pooling)
     {
         if (IsMultiplexing && !pooling) // Multiplexing doesn't work without pooling
@@ -721,7 +722,7 @@ public class ConnectionTests : MultiplexingTestBase
         }
     }
 
-    [Test, Ignore("")]
+    [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/4603")]
     public async Task Reload_types_keepalive_concurrent()
     {
@@ -1488,7 +1489,7 @@ CREATE TABLE record ()");
         }
     }
 
-    [Test, Ignore("")]
+    [Test]
     public async Task PhysicalConnectionInitializer_sync_with_break()
     {
         if (IsMultiplexing) // Sync I/O
@@ -1513,7 +1514,7 @@ CREATE TABLE record ()");
         Assert.That(dataSource.Statistics, Is.EqualTo((0, 0, 0)));
     }
 
-    [Test, Ignore("")]
+    [Test]
     public async Task PhysicalConnectionInitializer_async_with_break()
     {
         await using var adminConn = await OpenConnectionAsync();

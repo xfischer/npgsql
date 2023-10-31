@@ -2,6 +2,7 @@
 using System.Data;
 using System.Threading.Tasks;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
@@ -12,16 +13,21 @@ public class DateTimeTests : TestBase
 {
     #region Date
 
-    [Test, Ignore("")]
-    public Task Date_as_DateTime()
-        => AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForWriting: false);
+    [Test]
+    public async Task Date_as_DateTime()
+    {
+        var con = await OpenConnectionAsync();
+        TestUtil.EnsureNotEPASRedwood(con);
+
+        await AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForWriting: false);
+    }
 
     [Test]
     public Task Date_as_DateTime_with_date_and_time_before_2000()
         => AssertTypeWrite(new DateTime(1980, 10, 1, 11, 0, 0), "1980-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
 
     // Internal PostgreSQL representation (days since 2020-01-01), for out-of-range values.
-    [Test, Ignore("")]
+    [Test, EDBExplicit("Works in community")]
     public Task Date_as_int()
         => AssertType(7579, "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
 

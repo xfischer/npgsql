@@ -4,12 +4,13 @@ using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
 public class StoredProcedureTests : TestBase
 {
-    [Test, Ignore("")]
+    [Test, EDBExplicit("Works in community"),]
     [TestCase(true, false)]
     [TestCase(false, true)]
     [TestCase(true, true)]
@@ -90,7 +91,7 @@ END$$");
         Assert.That(reader[1], Is.EqualTo(9));
     }
 
-    [Test, Ignore("")]
+    [Test, EDBExplicit("Works in community"),]
     [TestCase(true, false)]
     [TestCase(false, true)]
     [TestCase(true, true)]

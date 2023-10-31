@@ -105,7 +105,7 @@ public class AutoPrepareTests : TestBase
         }
     }
 
-    [Test, Ignore("")]
+    [Test]
     public void Persist()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString)

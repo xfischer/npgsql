@@ -2,6 +2,7 @@
 using System.Data;
 using System.Threading.Tasks;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
@@ -69,7 +70,7 @@ class MiscTypeTests : MultiplexingTestBase
 
     #region Record
 
-    [Test, Ignore("")]
+    [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/724")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/1980")]
     public async Task Read_Record_as_object_array()

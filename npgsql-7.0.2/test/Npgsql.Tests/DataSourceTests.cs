@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 // ReSharper disable MethodHasAsyncOverload
@@ -49,7 +50,7 @@ public class DataSourceTests : TestBase
         Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
     }
 
-    [Test, Ignore("")]
+    [Test, EDBExplicit("Works in community, see EC-2796")]
     public async Task ExecuteNonQuery_on_connectionless_command([Values] bool async)
     {
         await using var dataSource = EDBDataSource.Create(ConnectionString);
@@ -96,7 +97,7 @@ public class DataSourceTests : TestBase
         Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
     }
 
-    [Test, Ignore("")]
+    [Test, EDBExplicit("Works in community, see EC-2796")]
     public async Task ExecuteNonQuery_on_connectionless_batch([Values] bool async)
     {
         await using var dataSource = EDBDataSource.Create(ConnectionString);

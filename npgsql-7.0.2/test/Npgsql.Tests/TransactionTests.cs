@@ -177,7 +177,7 @@ public class TransactionTests : MultiplexingTestBase
         await conn.BeginTransaction().RollbackAsync();
     }
 
-    [Test, Ignore(""), Description("Disposes an empty transaction")]
+    [Test, EDBExplicit("Works in community"), Description("Disposes an empty transaction")]
     public async Task Empty_Dispose()
     {
         using var _ = CreateTempPool(ConnectionString, out var connString);
@@ -347,7 +347,7 @@ public class TransactionTests : MultiplexingTestBase
         Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
     }
 
-    [Test, Ignore(""), IssueLink("https://github.com/npgsql/npgsql/issues/555")]
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/555")]
     public async Task Transaction_on_recycled_connection()
     {
         if (IsMultiplexing)
@@ -451,7 +451,7 @@ public class TransactionTests : MultiplexingTestBase
         await pgMock.ExpectExtendedQuery();
     }
 
-    [Test, Ignore(""), Description("Check IsCompleted before, during and after a normal committed transaction")]
+    [Test, Description("Check IsCompleted before, during and after a normal committed transaction")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
     public async Task IsCompleted_commit()
     {
@@ -465,7 +465,7 @@ public class TransactionTests : MultiplexingTestBase
         Assert.That(tx.IsCompleted);
     }
 
-    [Test, Ignore(""), Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
+    [Test, Description("Check IsCompleted before, during, and after a successful but rolled back transaction")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/985")]
     public async Task IsCompleted_rollback()
     {
@@ -615,7 +615,7 @@ public class TransactionTests : MultiplexingTestBase
         Assert.That(tx.Connection, Is.SameAs(conn));
     }
 
-    [Test, Ignore("")]
+    [Test]
     public async Task Unbound_transaction_reuse()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -682,7 +682,7 @@ public class TransactionTests : MultiplexingTestBase
         }
     }
 
-    [Test, Ignore(""), IssueLink("https://github.com/npgsql/npgsql/issues/3686")]
+    [Test, EDBExplicit("Works in community"), IssueLink("https://github.com/npgsql/npgsql/issues/3686")]
     public async Task Bug3686()
     {
         if (IsMultiplexing)

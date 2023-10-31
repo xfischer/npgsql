@@ -117,7 +117,7 @@ public class BugTests : TestBase
         Assert.That(await conn.ExecuteScalarAsync($"SELECT COUNT(*) FROM {tableName}"), Is.Zero);
     }
 
-    [Test, Ignore(""), IssueLink("https://github.com/npgsql/npgsql/issues/3600")]
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3600")]
     public async Task Bug3600()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString)
@@ -1314,7 +1314,7 @@ $$;");
         await Task.Yield();
     }
 
-    [Test, Ignore("")]
+    [Test, Timeout(10000)]
     [IssueLink("https://github.com/npgsql/npgsql/issues/3924")]
     public async Task Bug3924()
     {
@@ -1354,7 +1354,7 @@ $$;");
         }
     }
 
-    [Test, Ignore("")]
+    [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/4099")]
     public async Task Bug4099()
     {

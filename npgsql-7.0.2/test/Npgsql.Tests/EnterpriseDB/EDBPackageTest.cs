@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -1832,7 +1833,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, Ignore("")]
+        [Test, EDBExplicit("Works in community")]
         public void TERSE_PKG_FUNC_NATIVE_OUTPUT_TYPES_RETURN_VARCHAR()
 
         {

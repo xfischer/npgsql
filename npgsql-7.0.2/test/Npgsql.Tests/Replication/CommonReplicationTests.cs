@@ -457,7 +457,7 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
 
     #region BugTests
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3534")]
+    [Test, Timeout(15000), IssueLink("https://github.com/npgsql/npgsql/issues/3534")]
     [NonParallelizable]
     public Task Bug3534()
         => SafeReplicationTest(

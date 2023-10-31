@@ -2182,7 +2182,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
 
-    [Test, Ignore(""), IssueLink("https://github.com/npgsql/npgsql/issues/3446")]
+    [Test, EDBExplicit("Works in community"), IssueLink("https://github.com/npgsql/npgsql/issues/3446")]
     public async Task Bug3446()
     {
         if (IsMultiplexing)

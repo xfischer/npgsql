@@ -878,7 +878,7 @@ public class CommandTests : MultiplexingTestBase
         Assert.AreEqual(6, reader.GetInt32(3));
     }
 
-    [Test, Ignore("Kills test process")]
+    [Test, EDBExplicit("Working in community")]
     public async Task Bug1006158_output_parameters()
     {
         await using var conn = await OpenConnectionAsync();
@@ -1099,7 +1099,7 @@ $$ LANGUAGE plpgsql;";
         Assert.That(ex!.SqlState, Is.EqualTo(PostgresErrorCodes.ForeignKeyViolation));
     }
 
-    [Test, Ignore("")]
+    [Test]
     public void Command_is_recycled()
     {
         using var conn = OpenConnection();

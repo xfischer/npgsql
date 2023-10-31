@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
@@ -26,7 +27,7 @@ public partial class CompositeHandlerTests
         assert(() => reader.GetFieldValue<T>(0), composite);
     }
 
-    [Test, Ignore("")]
+    [Test]
     public Task Read_class_with_property() =>
         Read<ClassWithProperty>((execute, expected) => Assert.AreEqual(expected.Value, execute().Value));
 
@@ -84,7 +85,7 @@ public partial class CompositeHandlerTests
     public Task Read_type_with_explicit_property_name() =>
         Read(new TypeWithExplicitPropertyName { MyValue = HelloSlonik }, (execute, expected) => Assert.That(execute().MyValue, Is.EqualTo(expected.MyValue)));
 
-    [Test, Ignore("")]
+    [Test]
     public Task Read_type_with_explicit_parameter_name() =>
         Read(new TypeWithExplicitParameterName(HelloSlonik), (execute, expected) => Assert.That(execute().Value, Is.EqualTo(expected.Value)));
 
@@ -105,7 +106,7 @@ public partial class CompositeHandlerTests
     public Task Read_type_with_less_parameters_than_attributes_throws() =>
         Read(new TypeWithLessParametersThanAttributes(TheAnswer), (execute, expected) => Assert.Throws<InvalidOperationException>(() => execute()));
 
-    [Test, Ignore("")]
+    [Test]
     public Task Read_type_with_more_parameters_than_attributes_throws() =>
         Read(new TypeWithMoreParametersThanAttributes(TheAnswer, HelloSlonik), (execute, expected) => Assert.Throws<InvalidOperationException>(() => execute()));
 
