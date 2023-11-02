@@ -113,7 +113,7 @@ public static class TestUtil
     // EnterpriseDB Team
     public static void EnsureIsEPASRedwood(EDBConnection conn, string? message = null)
     {
-        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
+        var isRedwood = IsEPASRedwood(conn);
         if (isRedwood == null)
         {
             Assert.Ignore(message ?? "No db_dialect. This server is PG or PGE");
@@ -130,24 +130,23 @@ public static class TestUtil
     // EnterpriseDB Team
     public static void EnsureNotEPASRedwood(EDBConnection conn, string? message = null)
     {
-        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
-        if (isRedwood ?? false)
+        if (IsEPASRedwood(conn) ?? false)
         {
-            Assert.Ignore(message ?? "EDB Advanced Server is ignored");
+            Assert.Ignore(message ?? "EDB PG Advanced Server is ignored");
         }
     }
 
     // EnterpriseDB Team
-    public static bool IsEPASRedwood(EDBConnection conn)
+    public static bool? IsEPASRedwood(EDBConnection conn)
     {
         var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
-        return isRedwood ?? false;
+        return isRedwood;
     }
 
     // EnterpriseDB Team
     public static bool EnsureEDBAdvancedServer(EDBConnection conn, string? message = null)
     {
-        // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
+        // Checks for server long version
         var longVersion = (conn?.EDBDataSource?.DatabaseInfo as PostgresDatabaseInfo)?.LongVersion;
         const string EPASCriteria = "EnterpriseDB Advanced Server";
         if (longVersion is null)
@@ -164,6 +163,7 @@ public static class TestUtil
         }
         return true;
 
+        // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
         //// assumes db_dialect => EPAS
         //var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
         //if (!(hasDbDialectProperty ?? false))
