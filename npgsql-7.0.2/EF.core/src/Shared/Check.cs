@@ -10,7 +10,7 @@ internal static class Check
 {
     [ContractAnnotation("value:null => halt")]
     [return: NotNull]
-    public static T NotNull<T>([NoEnumeration][AllowNull]T value, [InvokerParameterName] string parameterName)
+    public static T NotNull<T>([NoEnumeration][AllowNull][NotNull] T value, [InvokerParameterName] string parameterName)
     {
         if (value is null)
         {
@@ -24,11 +24,11 @@ internal static class Check
 
     [ContractAnnotation("value:null => halt")]
     public static IReadOnlyList<T> NotEmpty<T>(
-        IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
     {
         NotNull(value, parameterName);
 
-        if (value!.Count == 0)
+        if (value.Count == 0)
         {
             NotEmpty(parameterName, nameof(parameterName));
 
@@ -39,7 +39,7 @@ internal static class Check
     }
 
     [ContractAnnotation("value:null => halt")]
-    public static string NotEmpty(string? value, [InvokerParameterName] string parameterName)
+    public static string NotEmpty([NotNull] string? value, [InvokerParameterName] string parameterName)
     {
         if (value is null)
         {
@@ -84,35 +84,35 @@ internal static class Check
     }
 
     public static IReadOnlyList<T> HasNoNulls<T>(
-        IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
         where T : class
     {
         NotNull(value, parameterName);
 
-        if (value!.Any(e => e is null))
+        if (value.Any(e => e is null))
         {
             NotEmpty(parameterName, nameof(parameterName));
 
             throw new ArgumentException(parameterName);
         }
 
-        return value!;
+        return value;
     }
 
     public static IReadOnlyList<string> HasNoEmptyElements(
-        IReadOnlyList<string>? value,
+        [NotNull] IReadOnlyList<string>? value,
         [InvokerParameterName] string parameterName)
     {
         NotNull(value, parameterName);
 
-        if (value!.Any(s => string.IsNullOrWhiteSpace(s)))
+        if (value.Any(s => string.IsNullOrWhiteSpace(s)))
         {
             NotEmpty(parameterName, nameof(parameterName));
 
             throw new ArgumentException(AbstractionsStrings.CollectionArgumentHasEmptyElements(parameterName));
         }
 
-        return value!;
+        return value;
     }
 
     [Conditional("DEBUG")]

@@ -117,8 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CannotUseDataSourceWithAuthCallbacks" xml:space="preserve">
-    <value>Cannot set ProvideClientCertificatesCallback, RemoteCertificateValidationCallback or ProvidePasswordCallback when a data source is provided.</value>
+  <data name="TwoDataSourcesInSameServiceProvider" xml:space="preserve">
+    <value>Using two distinct data sources within a service provider is not supported, and Entity Framework is not building its own internal service provider. Either allow Entity Framework to build the service provider by removing the call to '{useInternalServiceProvider}', or ensure that the same data source is used for all uses of a given service provider passed to '{useInternalServiceProvider}'.</value>
   </data>
   <data name="DuplicateColumnCompressionMethodMismatch" xml:space="preserve">
     <value>'{entityType1}.{property1}' and '{entityType2}.{property2}' are both mapped to column '{columnName}' in '{table}' but are configured with different compression methods.</value>
@@ -143,9 +143,6 @@
   </data>
   <data name="HeterogeneousTypesInNewArray" xml:space="preserve">
     <value>Heterogeneous store types detected when making new array ({type1}, {type2}).</value>
-  </data>
-  <data name="IdentityBadType" xml:space="preserve">
-    <value>Identity value generation cannot be used for the property '{property}' on entity type '{entityType}' because the property type is '{propertyType}'. Identity value generation can only be used with signed integer properties.</value>
   </data>
   <data name="IncludePropertyDuplicated" xml:space="preserve">
     <value>Include property '{entityType}.{property}' cannot be defined multiple times</value>
@@ -226,25 +223,28 @@
   <data name="NonKeyValueGeneration" xml:space="preserve">
     <value>The property '{property}' on entity type '{entityType}' is configured to use 'SequenceHiLo' value generator, which is only intended for keys. If this was intentional configure an alternate key on the property, otherwise call 'ValueGeneratedNever' or configure store generation for this property.</value>
   </data>
-  <data name="RowValueComparisonRequiresTuplesOfSameLength" xml:space="preserve">
-    <value>Row values comparisons require two tuple arguments of the same length.</value>
-  </data>
   <data name="SequenceBadType" xml:space="preserve">
     <value>PostgreSQL sequences cannot be used to generate values for the property '{property}' on entity type '{entityType}' because the property type is '{propertyType}'. Sequences can only be used with integer properties.</value>
-  </data>
-  <data name="StoredProcedureResultColumnsNotSupported" xml:space="preserve">
-    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support result columns; use output parameters instead.</value>
-  </data>
-  <data name="StoredProcedureReturnValueNotSupported" xml:space="preserve">
-    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support return values; use output parameters instead.</value>
-  </data>
-  <data name="StoredProcedureReturnValuesNotSupported" xml:space="preserve">
-    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support return values; use output parameters instead.</value>
   </data>
   <data name="TransientExceptionDetected" xml:space="preserve">
     <value>An exception has been raised that is likely due to a transient failure. Consider enabling transient error resiliency by adding 'EnableRetryOnFailure()' to the 'UseSqlServer' call.</value>
   </data>
-  <data name="TwoDataSourcesInSameServiceProvider" xml:space="preserve">
-    <value>Using two distinct data sources within a service provider is not supported, and Entity Framework is not building its own internal service provider. Either allow Entity Framework to build the service provider by removing the call to '{useInternalServiceProvider}', or ensure that the same data source is used for all uses of a given service provider passed to '{useInternalServiceProvider}'.</value>
+  <data name="IdentityBadType" xml:space="preserve">
+    <value>Identity value generation cannot be used for the property '{property}' on entity type '{entityType}' because the property type is '{propertyType}'. Identity value generation can only be used with signed integer properties.</value>
+  </data>
+  <data name="RowValueComparisonRequiresTuplesOfSameLength" xml:space="preserve">
+    <value>Row values comparisons require two tuple arguments of the same length.</value>
+  </data>
+  <data name="CannotUseDataSourceWithAuthCallbacks" xml:space="preserve">
+    <value>Cannot set ProvideClientCertificatesCallback, RemoteCertificateValidationCallback or ProvidePasswordCallback when a data source is provided.</value>
+  </data>
+  <data name="StoredProcedureResultColumnsNotSupported" xml:space="preserve">
+    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support result columns; use output parameters instead.</value>
+  </data>
+  <data name="StoredProcedureReturnValuesNotSupported" xml:space="preserve">
+    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support return values; use output parameters instead.</value>
+  </data>
+  <data name="StoredProcedureReturnValueNotSupported" xml:space="preserve">
+    <value>The entity type '{entityType}' is mapped to the stored procedure '{sproc}', which is configured with result columns. PostgreSQL stored procedures do not support return values; use output parameters instead.</value>
   </data>
 </root>

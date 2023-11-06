@@ -298,7 +298,7 @@ public class NpgsqlTypeMappingSourceTest
                     ? _dummyMapping
                     : null;
 
-        private readonly DummyMapping _dummyMapping = new();
+        private DummyMapping _dummyMapping = new();
 
         private class DummyMapping : RelationalTypeMapping
         {

@@ -722,6 +722,12 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04
                 e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
             entryCount: 1);
 
+        await AssertQuery(
+            async,
+            ss => ss.Set<Entity>().Where(
+                e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
+            entryCount: 1);
+
         AssertSql(
 """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"

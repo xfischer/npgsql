@@ -215,9 +215,9 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
             throw new ArgumentException("Must be null", nameof(instance));
         }
 
-        return !arguments!.SequenceEqual(Arguments)
+        return !arguments.SequenceEqual(Arguments)
             ? new PostgresFunctionExpression(
-                Name, arguments!, ArgumentNames, ArgumentSeparators,
+                Name, arguments, ArgumentNames, ArgumentSeparators,
                 IsAggregateDistinct,
                 AggregatePredicate,
                 AggregateOrderings,
