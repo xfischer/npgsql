@@ -460,6 +460,7 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
     }
 
     [Fact]
+    [RequiresVanillaPostgres]
     public virtual void Can_insert_and_read_back_all_mapped_data_types()
     {
         var entity = CreateMappedDataTypes(77);

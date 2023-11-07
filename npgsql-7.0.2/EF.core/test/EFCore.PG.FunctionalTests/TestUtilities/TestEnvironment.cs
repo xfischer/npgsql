@@ -62,4 +62,33 @@ public static class TestEnvironment
             return _isPostgisAvailable.Value;
         }
     }
+
+    private static bool? _isRedwoodDbDialect;
+
+    public static bool IsRedwoodDbDialect
+    {
+        get
+        {
+            if (_isRedwoodDbDialect.HasValue)
+            {
+                return _isRedwoodDbDialect.Value;
+            }
+
+            using var conn = new EDBConnection(NpgsqlTestStore.CreateConnectionString("postgres"));
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+
+            cmd.CommandText = "show db_dialect";
+            try
+            {
+                _isRedwoodDbDialect = (string)cmd.ExecuteScalar() == "redwood";
+
+            }
+            catch (Exception)
+            {
+                _isRedwoodDbDialect = false;
+            }
+            return _isRedwoodDbDialect ?? false;
+        }
+    }
 }
