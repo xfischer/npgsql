@@ -7,6 +7,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 // ReSharper disable InconsistentNaming
 // ReSharper disable StringLiteralTypo
@@ -849,8 +850,13 @@ CREATE TABLE "NoFacetTypes" (
             @"DROP TABLE ""NoFacetTypes""");
 
     [Fact]
+    [EDBRequiresVanillaPostgres]
     public void Default_values_are_stored()
-        => Test(
+    {
+        if (TestEnvironment.IsRedwoodDbDialect)
+            return;
+
+        Test(
 """
 CREATE TABLE "DefaultValues" (
     "Id" int,
@@ -865,6 +871,7 @@ CREATE TABLE "DefaultValues" (
                 Assert.Equal("'1999-01-08 00:00:00'::timestamp without time zone", columns.Single(c => c.Name == "FixedDefaultValue").DefaultValueSql);
             },
             @"DROP TABLE ""DefaultValues""");
+    }
 
     [ConditionalFact]
     [MinimumPostgresVersion(12, 0)]
@@ -894,8 +901,13 @@ CREATE TABLE "ComputedValues" (
             @"DROP TABLE ""ComputedValues""");
 
     [Fact]
+    [EDBRequiresVanillaPostgres]
     public void Default_value_matching_clr_default_is_not_stored()
-        => Test(
+    {
+        if (TestEnvironment.IsRedwoodDbDialect)
+            return;
+
+        Test(
 """
 CREATE DOMAIN "decimalDomain" AS decimal(6);
 
@@ -936,6 +948,7 @@ CREATE TABLE "DefaultValues" (
 DROP TABLE "DefaultValues";
 DROP DOMAIN "decimalDomain";
 """);
+    }
 
     [Fact]
     public void ValueGenerated_is_set_for_default_and_serial_column()

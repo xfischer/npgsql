@@ -139,7 +139,7 @@ WHERE make_interval(days => n."LocalDate2" - @__date_0) = INTERVAL 'P1D'
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    [RequiresVanillaPostgres]
+    [EDBRequiresVanillaPostgres]
     public async Task Subtract_LocalDate_constant(bool async)
     {
         await AssertQuery(
@@ -297,7 +297,7 @@ WHERE floor(date_part('second', n."LocalDateTime"))::int = 33
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    [RequiresVanillaPostgres]
+    [EDBRequiresVanillaPostgres]
     public async Task LocalDateTime_Date(bool async)
     {
         await AssertQuery(
@@ -1560,7 +1560,7 @@ WHERE (n."Instant" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '2018-04-20T12:31:3
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    [RequiresVanillaPostgres]
+    [EDBRequiresVanillaPostgres]
     public async Task Instance_InZone_Date(bool async)
     {
         await AssertQuery(
@@ -1765,7 +1765,7 @@ WHERE floor(date_part('second', n."ZonedDateTime" AT TIME ZONE 'UTC'))::int = 33
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    [RequiresVanillaPostgres]
+    [EDBRequiresVanillaPostgres]
     public async Task ZonedDateTime_Date(bool async)
     {
         await AssertQuery(

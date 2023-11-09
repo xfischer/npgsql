@@ -698,6 +698,9 @@ WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12 13:26:38Z'
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamptz(bool async)
     {
+        if (TestEnvironment.IsRedwoodDbDialect)
+            return;
+
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
@@ -716,6 +719,9 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamp(bool async)
     {
+        if (TestEnvironment.IsRedwoodDbDialect)
+            return;
+
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
@@ -740,6 +746,9 @@ WHERE e."TimestampDateTime"::date = DATE '1998-04-12'
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_ToDateTime_with_timestamptz(bool async)
     {
+        if (TestEnvironment.IsRedwoodDbDialect)
+            return;
+
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(

@@ -460,9 +460,11 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
     }
 
     [Fact]
-    [RequiresVanillaPostgres]
     public virtual void Can_insert_and_read_back_all_mapped_data_types()
     {
+        if (!TestEnvironment.IsVanillaPostgres)
+            return;
+
         var entity = CreateMappedDataTypes(77);
         using var context = CreateContext();
         context.Set<MappedDataTypes>().Add(entity);

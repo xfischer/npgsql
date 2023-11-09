@@ -91,4 +91,6 @@ public static class TestEnvironment
             return _isRedwoodDbDialect ?? false;
         }
     }
+
+    public static bool IsVanillaPostgres => !IsRedwoodDbDialect;
 }
