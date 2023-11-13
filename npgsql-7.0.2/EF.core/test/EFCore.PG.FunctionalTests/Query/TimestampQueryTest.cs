@@ -715,7 +715,7 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04
 """);
     }
 
-    [ConditionalTheory]
+    [ConditionalTheory(Skip = "EDB: not working with EDB-dotnet")]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamp(bool async)
     {

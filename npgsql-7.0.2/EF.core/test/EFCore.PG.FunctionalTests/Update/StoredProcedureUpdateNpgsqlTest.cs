@@ -440,7 +440,7 @@ CALL "Entity_Insert"(NULL, @p0);
     }
 
 
-    [EDBRequiresVanillaPostgres]
+    [ConditionalTheory(Skip = "EDB: not working with EDB-dotnet")]
     public override async Task Input_or_output_parameter_with_output(bool async)
     {
         await base.Input_or_output_parameter_with_output(
