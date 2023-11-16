@@ -696,7 +696,7 @@ WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12 13:26:38Z'
     #region DateOnly
 
     [ConditionalTheory]
-    [EDBRequiresVanillaPostgres]
+    [EDBNotEPASRedwoodCompatible]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamptz(bool async)
     {
@@ -739,7 +739,7 @@ WHERE e."TimestampDateTime"::date = DATE '1998-04-12'
     }
 
     [ConditionalTheory]
-    [EDBRequiresVanillaPostgres]
+    [EDBNotEPASRedwoodCompatible]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_ToDateTime_with_timestamptz(bool async)
     {

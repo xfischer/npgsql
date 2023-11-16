@@ -2,7 +2,7 @@
 
 // EnterpriseDB Team
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public sealed class EDBRequiresVanillaPostgresAttribute : Attribute, ITestCondition
+public sealed class EDBNotEPASRedwoodCompatibleAttribute : Attribute, ITestCondition
 {
     public ValueTask<bool> IsMetAsync() => new(TestEnvironment.IsVanillaPostgres);
 
