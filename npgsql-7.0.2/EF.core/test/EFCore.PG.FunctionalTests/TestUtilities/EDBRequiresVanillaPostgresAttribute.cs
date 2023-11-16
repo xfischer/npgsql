@@ -6,5 +6,5 @@ public sealed class EDBRequiresVanillaPostgresAttribute : Attribute, ITestCondit
 {
     public ValueTask<bool> IsMetAsync() => new(TestEnvironment.IsVanillaPostgres);
 
-    public string SkipReason => "EPAS in redwood mode not supported - requires Postgres or EDB Postgres Advanced Server with postgres support (postgres db_dialect)";
+    public string SkipReason => "EPAS in redwood mode not supported";
 }

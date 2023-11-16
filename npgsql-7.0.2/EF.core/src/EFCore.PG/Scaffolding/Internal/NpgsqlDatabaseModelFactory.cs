@@ -1180,9 +1180,10 @@ WHERE
             }
         }
 
+        // EnterpriseDB Team : timestamp default
         if (systemTypeName == "bool" && defaultValue == "false" ||
             systemTypeName == "date" && defaultValue == "'0001-01-01'::date" ||
-            systemTypeName == "timestamp" && defaultValue == "'1900-01-01 00:00:00'::timestamp without time zone" ||
+            systemTypeName == "timestamp" && (defaultValue == "'1900-01-01 00:00:00'::timestamp without time zone" || defaultValue == "'01-JAN-01 00:00:00'::timestamp without time zone") ||
             systemTypeName == "time" && defaultValue == "'00:00:00'::time without time zone" ||
             systemTypeName == "interval" && defaultValue == "'00:00:00'::interval" ||
             systemTypeName == "uuid" && defaultValue == "'00000000-0000-0000-0000-000000000000'::uuid")

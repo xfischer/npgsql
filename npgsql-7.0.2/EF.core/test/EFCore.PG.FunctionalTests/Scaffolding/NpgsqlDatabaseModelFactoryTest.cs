@@ -850,11 +850,11 @@ CREATE TABLE "NoFacetTypes" (
             @"DROP TABLE ""NoFacetTypes""");
 
     [Fact]
-    [EDBRequiresVanillaPostgres]
     public void Default_values_are_stored()
     {
-        if (TestEnvironment.IsRedwoodDbDialect)
-            return;
+        string expectedTimeStampDateStyle = TestEnvironment.IsRedwoodDbDialect
+            ? "08-JAN-99 00:00:00"
+            : "1999-01-08 00:00:00";
 
         Test(
 """
@@ -868,7 +868,7 @@ CREATE TABLE "DefaultValues" (
             dbModel =>
             {
                 var columns = dbModel.Tables.Single().Columns;
-                Assert.Equal("'1999-01-08 00:00:00'::timestamp without time zone", columns.Single(c => c.Name == "FixedDefaultValue").DefaultValueSql);
+                Assert.Equal($"'{expectedTimeStampDateStyle}'::timestamp without time zone", columns.Single(c => c.Name == "FixedDefaultValue").DefaultValueSql);
             },
             @"DROP TABLE ""DefaultValues""");
     }
@@ -901,14 +901,18 @@ CREATE TABLE "ComputedValues" (
             @"DROP TABLE ""ComputedValues""");
 
     [Fact]
-    [EDBRequiresVanillaPostgres]
     public void Default_value_matching_clr_default_is_not_stored()
     {
-        if (TestEnvironment.IsRedwoodDbDialect)
-            return;
+        var timeStampDefault = "'1900-01-01T00:00:00.000'";
+        var dateDefault = "'0001-01-01'";
 
-        Test(
-"""
+        if (TestEnvironment.IsRedwoodDbDialect)
+        {
+            timeStampDefault = "'01-JAN-01 00:00:00'";
+            dateDefault = "'01-JAN-01'";
+        }
+
+        Test($"""
 CREATE DOMAIN "decimalDomain" AS decimal(6);
 
 CREATE TABLE "DefaultValues" (
@@ -927,8 +931,8 @@ CREATE TABLE "DefaultValues" (
     "IgnoredDefault18" float8 NOT NULL DEFAULT 0.0,
     "IgnoredDefault24" float8 NOT NULL DEFAULT 0E0,
     "IgnoredDefault4" bool NOT NULL DEFAULT false,
-    "IgnoredDefault25" date NOT NULL DEFAULT '0001-01-01',
-    "IgnoredDefault26" timestamp NOT NULL DEFAULT '1900-01-01T00:00:00.000',
+    "IgnoredDefault25" date NOT NULL DEFAULT {dateDefault},
+    "IgnoredDefault26" timestamp NOT NULL DEFAULT {timeStampDefault},
     "IgnoredDefault27" interval NOT NULL DEFAULT '00:00:00',
     "IgnoredDefault32" time NOT NULL DEFAULT '00:00:00',
     "IgnoredDefault34" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'
