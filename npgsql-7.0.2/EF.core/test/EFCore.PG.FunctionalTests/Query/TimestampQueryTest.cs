@@ -696,11 +696,32 @@ WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12 13:26:38Z'
     #region DateOnly
 
     [ConditionalTheory]
-    [EDBNotEPASRedwoodCompatible]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamptz(bool async)
     {
-        await AssertQuery(
+        // In EPAS Redwood,
+        // DateOnly.FromDateTime(e.TimestamptzDateTime) => CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) => timestamp instead of date
+        // and new DateOnly(1998, 4, 12) => DATE '1998-04-12' => timestamp ("1998-04-12 00:00:00")
+
+        if (TestEnvironment.IsRedwoodDbDialect)
+        {
+
+            await AssertQuery(
+            async,
+            ss => ss.Set<Entity>().Where(
+                e => e.TimestamptzDateTime.ToLocalTime().Date == new DateTime(1998, 4, 12)),
+            entryCount: 1);
+
+            AssertSql(
+"""
+SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
+FROM "Entities" AS e
+WHERE date_trunc('day', e."TimestamptzDateTime"::timestamp) = TIMESTAMP '1998-04-12 00:00:00'
+""");
+        }
+        else
+        {
+            await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
                 e => DateOnly.FromDateTime(e.TimestamptzDateTime) == new DateOnly(1998, 4, 12)),
@@ -712,23 +733,21 @@ SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDa
 FROM "Entities" AS e
 WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04-12'
 """);
+        }
+
+
     }
 
-    [ConditionalTheory(Skip = "EDB: not working with EDB-dotnet")]
+    [ConditionalTheory]
+    [EDBNotEPASRedwoodCompatible("Timestamp with redwood")]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_FromDateTime_with_timestamp(bool async)
     {
         await AssertQuery(
-            async,
-            ss => ss.Set<Entity>().Where(
-                e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
-            entryCount: 1);
-
-        await AssertQuery(
-            async,
-            ss => ss.Set<Entity>().Where(
-                e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
-            entryCount: 1);
+           async,
+           ss => ss.Set<Entity>().Where(
+               e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
+           entryCount: 1);
 
         AssertSql(
 """
@@ -739,10 +758,13 @@ WHERE e."TimestampDateTime"::date = DATE '1998-04-12'
     }
 
     [ConditionalTheory]
-    [EDBNotEPASRedwoodCompatible]
+    [EDBNotEPASRedwoodCompatible("Timestamp in redwood")]
     [MemberData(nameof(IsAsyncData))]
     public virtual async Task DateOnly_ToDateTime_with_timestamptz(bool async)
     {
+        // In EPAS Redwood,
+        // DateOnly.FromDateTime(e.TimestamptzDateTime) => CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) => timestamp instead of date
+        // and new DateOnly(1998, 4, 12) => DATE '1998-04-12' => timestamp ("1998-04-12 00:00:00")
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(

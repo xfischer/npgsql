@@ -459,16 +459,26 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         }
     }
 
-    [Fact(Skip = "EDB: not working with EDB-dotnet")]
+    [Fact]
     public virtual void Can_insert_and_read_back_all_mapped_data_types()
     {
         var entity = CreateMappedDataTypes(77);
+
         using var context = CreateContext();
         context.Set<MappedDataTypes>().Add(entity);
 
         Assert.Equal(1, context.SaveChanges());
 
         var parameters = DumpParameters();
+        // EnterpriseDB Team: parameters are ordered by their type name. As some Npgsql types prefixes are replaced by EDB, this order is different when using EDB.Net connector.
+        // This test was changed accordingly
+        // Here is a way to output params indexes and types
+        /*
+            var test = string.Join(Environment.NewLine, typeof(MappedDataTypes).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .OrderBy(p => p.Name).Select((p,i) => new { i, p.Name }));
+            Debug.WriteLine(test);
+         */
+
         Assert.Equal(
             @"@p0='77'
 @p1='True'
@@ -485,16 +495,16 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
 @p12='103.9'
 @p13='System.Collections.Generic.Dictionary`2[System.String,System.String]' (Nullable = false) (DbType = Object)
 @p14='85.5'
-@p15='Value4' (Nullable = false)
-@p16='Value4' (Nullable = false)
-@p17='84.4'
-@p18='a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
-@p19={ '2'
+@p15='(5.2,3.3)' (DbType = Object)
+@p16='[4,8)' (DbType = Object)
+@p17='Value4' (Nullable = false)
+@p18='Value4' (Nullable = false)
+@p19='84.4'
+@p20='a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+@p21={ '2'
 '3' } (Nullable = false) (DbType = Object)
-@p20='78'
-@p21='Sad' (DbType = Object)
-@p22='(5.2,3.3)' (DbType = Object)
-@p23='[4,8)' (DbType = Object)
+@p22='78'
+@p23='Sad' (DbType = Object)
 @p24={ '08002B010203'
 '08002B010204' } (Nullable = false) (DbType = Object)
 @p25='08002B010203' (Nullable = false) (DbType = Object)

@@ -8,7 +8,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities
 {
     // EnterpriseDB Team
     // Helper used to redirect console messages to xUnit ITestOutputHelper
-    // Use as : Console.SetOut(new RedirectOutput(testOutputHelper));
+    // Use as : Console.SetOut(new EDBRedirectOutput(testOutputHelper));
     public class EDBRedirectOutput : TextWriter
     {
         private readonly ITestOutputHelper _output;
