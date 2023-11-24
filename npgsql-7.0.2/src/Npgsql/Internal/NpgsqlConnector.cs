@@ -329,13 +329,7 @@ public sealed partial class EDBConnector : IDisposable
 
     int _resetWithoutDeallocateResponseCount;
     public bool _isScaler = false;
-    public bool _is_Scaler_fallthrough = false;
     public bool _hasRefCursor = false;
-    public bool _hasReturnParams = false;
-    public bool _AQcalled = false;
-    public bool _hasParams = false;
-    public bool _calledderiveparam = false;
-    public bool _isCallableStmt = false;
 
     // Backend
     readonly CommandCompleteMessage _commandCompleteMessage = new();
@@ -1564,8 +1558,7 @@ public sealed partial class EDBConnector : IDisposable
             return _commandCompleteMessage.Load(buf, len);
         case BackendMessageCode.ReadyForQuery:
             var rfq = _readyForQueryMessage.Load(buf);
-            if (!isPrependedMessage)
-            {
+            if (!isPrependedMessage) {
                 // Transaction status on prepended messages shouldn't be processed, because there may be prepended messages
                 // before the begin transaction message. In this case, they will contain transaction status Idle, which will
                 // clear our Pending transaction status. Only process transaction status on RFQ's from user-provided, non
@@ -1832,8 +1825,7 @@ public sealed partial class EDBConnector : IDisposable
     internal void PerformUserCancellation()
     {
         var connection = Connection;
-        if (connection is null || connection.ConnectorBindingScope == ConnectorBindingScope.Reader
-            || UserCancellationRequested)
+        if (connection is null || connection.ConnectorBindingScope == ConnectorBindingScope.Reader || UserCancellationRequested)
             return;
 
         LogMessages.TryEDBTrace(ConnectionLogger, "PerformUserCancellation");
@@ -2505,10 +2497,8 @@ public sealed partial class EDBConnector : IDisposable
 
 
         if (!_isKeepAliveEnabled)
-        {
             return DoStartUserAction(newState, command);
 
-        }
 
         lock (SyncObj)
         {

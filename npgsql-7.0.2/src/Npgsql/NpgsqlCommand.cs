@@ -675,10 +675,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             foreach (var batchCommand in InternalBatchCommands)
             {
                 batchCommand.Parameters.ProcessParameters(connector.TypeMapper, validateValues: false, CommandType);
-                if (Parameters?.Count > 0)
-                    connector._hasParams = true;
-                if (Parameters?.Count == 0 && Parameters._hasReturnParam)
-                    connector._hasReturnParams = true;
                 ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);
 
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
@@ -1233,7 +1229,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             //await connector.WriteParse(batchCommand.FinalCommandText!, pStatement.Name!, async, cancellationToken);
             if (CommandType == CommandType.StoredProcedure)
             {
-                connector._isCallableStmt = true;
                 await connector.WriteParseOut(batchCommand.FinalCommandText!, pStatement.Name!, _parameters, async, connector.TypeMapper);
             }
             else
@@ -1311,7 +1306,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 
             Connection.Connector._isScaler = true; //ZKK
-            Connection.Connector._is_Scaler_fallthrough = true;
         }
         var reader = await ExecuteReader(CommandBehavior.Default, async, cancellationToken);
         try
@@ -1322,7 +1316,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (Connection.Connector != null)
             {
                 Connection.Connector._isScaler = false; //ZKK
-                Connection.Connector._is_Scaler_fallthrough = false;
                 Connection.Connector._hasRefCursor = false;
                 //    Connection.Connector._isCallableStmt = false;
             }

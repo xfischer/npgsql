@@ -148,8 +148,6 @@ namespace EnterpriseDB.EDBClient
 
                 command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 var connector = Connection.Connector;//  CheckReadyAndGetConnector();
-                //var ressult = connector._isCallableStmt;
-                connector._AQcalled = true;
                 command.Prepare();
                 var reader = command.ExecuteNonQuery();
                 msg.MessageId = Encoding.ASCII.GetBytes(command.Parameters[4].Value?.ToString());
