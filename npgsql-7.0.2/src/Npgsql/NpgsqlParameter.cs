@@ -550,7 +550,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     internal virtual int ValidateAndGetLength()
     {
-        if (Direction == ParameterDirection.Input)//EnterpriseDB Team
+        if (Direction == ParameterDirection.Input || Direction == ParameterDirection.InputOutput)//EnterpriseDB Team
             if (_value is DBNull)
                 return 0;
         if (_value == null)
