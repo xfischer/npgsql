@@ -146,7 +146,7 @@ WHERE (e."IntA", e."StringA") <> (e."IntB", e."StringB") OR ((e."NullableBoolA" 
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    [EDBNotEPASRedwoodCompatible("Redwood nullable strings")]
+    [EDBNotEPASRedwoodCompatible("Redwood nullable strings (replace function impl EC-2924)")]
     public override Task Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(bool async)
     {
         return base.Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(async);

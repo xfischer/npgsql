@@ -108,8 +108,7 @@ WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')"; // Enterpr
     {
         string getUserDefinedFunctions;
         // EntepriseDB Team : need to lookup also parent namespace to prevent 'sys' deletions
-        if (conn.PostgresParameters.TryGetValue("db_dialect", out string dialect)
-            && dialect == "redwood")
+        if (conn.PostgresParameters.TryGetValue("db_dialect", out _))
         {
             getUserDefinedFunctions = @"
                 SELECT 'DROP ROUTINE ""' || ns.nspname || '"".""' || proname || '""(' || oidvectortypes(proargtypes) || ');' FROM pg_proc
