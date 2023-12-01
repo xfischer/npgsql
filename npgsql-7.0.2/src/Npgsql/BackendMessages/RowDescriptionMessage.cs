@@ -42,9 +42,9 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
             _insensitiveIndex = new Dictionary<string, int>(source._insensitiveIndex);
     }
 
-    internal RowDescriptionMessage Load(EDBReadBuffer buf, TypeMapper typeMapper, bool isOutDescription)
+    internal RowDescriptionMessage Load(EDBReadBuffer buf, TypeMapper typeMapper, bool isOutDescription /* EnterpriseDB Team */)
     {
-        Array.Clear(_fields, 0, _fields.Length);
+        Array.Clear(_fields, 0, _fields.Length); /* EnterpriseDB Team */
         _nameIndex.Clear();
         _insensitiveIndex?.Clear();
 
@@ -56,7 +56,7 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
             Array.Copy(oldFields, _fields, oldFields.Length);
         }
 
-        if (isOutDescription != true)
+        if (isOutDescription != true) /* EnterpriseDB Team */
         {
             for (var i = 0; i < numFields; ++i)
             {
@@ -73,11 +73,11 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
                     formatCode: (FormatCode)buf.ReadInt16()
                 );
 
-                if (!_nameIndex.ContainsKey(field.Name))
+                if (!_nameIndex.ContainsKey(field.Name)) /* EnterpriseDB Team */
                     _nameIndex.Add(field.Name, i);
             }
         }
-        else
+        else /* EnterpriseDB Team */
         {
             for (var i = 0; i != numFields; ++i)
             {
@@ -355,22 +355,12 @@ public sealed class FieldDescription
 
     internal short ReturningIndex { get; set; }
 
-    ///<summary>
+    // EnterpriseDB Team
+	///<summary>
     /// is unsupported field 
     /// </summary>
     /// 
     internal bool _isUnsupportedField { get; set; }
-
-    ///// <summary>
-    ///// The EDB type handler assigned to handle this field.
-    ///// Returns <see cref="UnknownTypeHandler"/> for fields with format text.
-    ///// </summary>
-    //public EDBTypeHandler Handler { get; set; }//EnterpriseDB Team
-
-    ///// <summary>
-    ///// The type handler resolved for this field, regardless of whether it's binary or text.
-    ///// </summary>
-    //internal EDBTypeHandler RealHandler { get; private set; }
 
     /// <summary>
     /// The field name.

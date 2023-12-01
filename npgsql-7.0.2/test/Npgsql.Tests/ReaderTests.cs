@@ -25,7 +25,7 @@ namespace EnterpriseDB.EDBClient.Tests;
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.Default)]
 [TestFixture(MultiplexingMode.NonMultiplexing, CommandBehavior.SequentialAccess)]
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.SequentialAccess)]
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class ReaderTests : MultiplexingTestBase
 {
     [Test]
@@ -1487,7 +1487,7 @@ LANGUAGE plpgsql VOLATILE";
 
         var buffer = new byte[4];
 
-#if NETFRAMEWORK
+#if NETFRAMEWORK // EnterpriseDB
         using var stream = reader.GetStream(0);
 #else
         await using var stream = reader.GetStream(0);

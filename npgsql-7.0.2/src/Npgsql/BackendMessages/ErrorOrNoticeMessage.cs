@@ -120,11 +120,11 @@ sealed class ErrorOrNoticeMessage
 
         End:
         if (severity == null)
-            severity = "Severity not received from server";
+            severity = "Severity not received from server"; // EnterpriseDB Team: does not throw
         if (code == null)
-            code = "Error code not received from server";
+            code = "Error code not received from server"; // EnterpriseDB Team: does not throw
         if (message == null)
-            message = "Error message not received from server";
+            message = "Error message not received from server"; // EnterpriseDB Team: does not throw
         //EnterpriseDB Team
 
         return new ErrorOrNoticeMessage(

@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// https://www.postgresql.org/docs/current/static/datatype-binary.html
 /// </summary>
 
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class ByteaTests : MultiplexingTestBase
 {
     [Test]
@@ -103,7 +103,7 @@ public class ByteaTests : MultiplexingTestBase
         var fsList = new List<FileStream>();
         try
         {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
             File.WriteAllBytes(filePath, new byte[] { 1, 2, 3 });
 #else
             await File.WriteAllBytesAsync(filePath, new byte[] { 1, 2, 3 });
@@ -117,7 +117,7 @@ public class ByteaTests : MultiplexingTestBase
         {
             foreach (var fs in fsList)
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
                 fs.Dispose();
 #else
                 await fs.DisposeAsync();
@@ -148,7 +148,7 @@ public class ByteaTests : MultiplexingTestBase
         {
             var bytes = new byte[8192 * 4];
             rnd.NextBytes(bytes);
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
             File.WriteAllBytes(filePath, bytes);
 #else
             await File.WriteAllBytesAsync(filePath, bytes);
@@ -161,7 +161,7 @@ public class ByteaTests : MultiplexingTestBase
         finally
         {
             foreach (var fs in fsList)
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
                 fs.Dispose();
 #else
                 await fs.DisposeAsync();

@@ -15,6 +15,7 @@ namespace EnterpriseDB.EDBClient;
 
 static partial class LogMessages
 {
+	// EnterpriseDB (NETFRAMEWORK)
     [LoggerMessage(
        Level = LogLevel.Trace,
        Message = "EDB: {message}")]

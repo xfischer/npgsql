@@ -643,7 +643,7 @@ sealed partial class GeoJsonHandler : EDBTypeHandler<GeoJSONObject>,
         if (crsType == GeoJSONOptions.None)
             return null;
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK //EnterpriseDB Team
         return _cachedCrs.GetOrAdd(srid, srid =>
         {
             var authority = _crsMap.GetAuthority(srid);

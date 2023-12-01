@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <summary>
 /// Tests on PostgreSQL types which don't fit elsewhere
 /// </summary>
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 class MiscTypeTests : MultiplexingTestBase
 {
     [Test]

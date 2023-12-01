@@ -98,7 +98,7 @@ public class TestDecodingOptions : IEquatable<TestDecodingOptions>
     /// <inheritdoc />
     public override int GetHashCode()
     {
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
         var hashCode = IncludeXids.GetHashCode();
         hashCode = (hashCode * 397) ^ IncludeTimestamp.GetHashCode();
         hashCode = (hashCode * 397) ^ ForceBinary.GetHashCode();

@@ -7,7 +7,7 @@ using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class CompositeTests : MultiplexingTestBase
 {
     [Test]

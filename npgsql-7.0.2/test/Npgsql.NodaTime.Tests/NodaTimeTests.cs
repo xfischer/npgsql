@@ -416,15 +416,15 @@ public class NodaTimeTests : TestBase
 
     #region Date
 
-    [Test, Ignore("")]
+    [Test, Ignore("EDB Redwood dates")]
     public Task Date_as_LocalDate()
         => AssertType(new LocalDate(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date);
 
-    [Test, Ignore("")]
+    [Test, Ignore("EDB Redwood dates")]
     public Task Date_as_DateTime()
         => AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
 
-    [Test, Ignore("")]
+    [Test, Ignore("EDB Redwood dates")]
     public Task Date_as_int()
         => AssertType(7579, "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
 
@@ -481,8 +481,8 @@ public class NodaTimeTests : TestBase
     }
 
 #if NET6_0_OR_GREATER
-    [Test]
-    public Task Date_as_DateOnly() // EntepriseDB Team -> date translated to timestamp in redwood
+    [Test, Ignore("EDB Redwood dates")]
+    public Task Date_as_DateOnly() // EnterpriseDB Team -> date translated to timestamp in redwood
         => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForReading: false);
 
     [Test]
@@ -650,7 +650,7 @@ public class NodaTimeTests : TestBase
     {
         var conn = await base.OpenConnectionAsync(connectionString);
         await conn.ExecuteNonQueryAsync("SET TimeZone='Europe/Berlin'");
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
         return conn;
     }
 

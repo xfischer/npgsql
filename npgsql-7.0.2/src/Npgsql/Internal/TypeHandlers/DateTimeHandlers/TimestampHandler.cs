@@ -2,7 +2,9 @@
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal.TypeHandling;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.Properties;
 using static EnterpriseDB.EDBClient.Util.Statics;
+using static EnterpriseDB.EDBClient.Internal.TypeHandlers.DateTimeHandlers.DateTimeUtils;
 
 namespace EnterpriseDB.EDBClient.Internal.TypeHandlers.DateTimeHandlers;
 
@@ -30,7 +32,7 @@ public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimp
 
     /// <inheritdoc />
     public override DateTime Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription = null)
-        => DateTimeUtils.ReadDateTime(buf, DateTimeKind.Unspecified);
+        => ReadDateTime(buf, DateTimeKind.Unspecified);
 
     long IEDBSimpleTypeHandler<long>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
         => buf.ReadInt64();
@@ -54,7 +56,7 @@ public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimp
 
     /// <inheritdoc />
     public override void Write(DateTime value, EDBWriteBuffer buf, EDBParameter? parameter)
-        => DateTimeUtils.WriteTimestamp(value, buf);
+        => WriteTimestamp(value, buf);
 
     /// <inheritdoc />
     public void Write(long value, EDBWriteBuffer buf, EDBParameter? parameter)
@@ -65,14 +67,40 @@ public partial class TimestampHandler : EDBSimpleTypeHandler<DateTime>, IEDBSimp
     // EnterpriseDB Team
 #if NET6_0_OR_GREATER
 
+    static readonly DateOnly BaseValueDateOnly = new(2000, 1, 1);
+
     DateOnly IEDBSimpleTypeHandler<DateOnly>.Read(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
-        => DateTimeUtils.ReadDateOnly(buf, len, fieldDescription);
+        => buf.ReadInt32() switch
+        {
+            int.MaxValue => DisableDateTimeInfinityConversions
+                ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
+                : DateOnly.MaxValue,
+            int.MinValue => DisableDateTimeInfinityConversions
+                ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
+                : DateOnly.MinValue,
+            var value => BaseValueDateOnly.AddDays(value)
+        };
 
     public int ValidateAndGetLength(DateOnly value, EDBParameter? parameter) => 4;
 
     public void Write(DateOnly value, EDBWriteBuffer buf, EDBParameter? parameter)
     {
-        DateTimeUtils.WriteDateOnly(value, buf, parameter);
+        if (!DisableDateTimeInfinityConversions)
+        {
+            if (value == DateOnly.MaxValue)
+            {
+                buf.WriteInt32(int.MaxValue);
+                return;
+            }
+
+            if (value == DateOnly.MinValue)
+            {
+                buf.WriteInt32(int.MinValue);
+                return;
+            }
+        }
+
+        buf.WriteInt32(value.DayNumber - BaseValueDateOnly.DayNumber);
     }
 
 #endif

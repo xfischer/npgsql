@@ -27,7 +27,7 @@ namespace EnterpriseDB.EDBClient;
 // ReSharper disable once RedundantNameQualifier
 [System.ComponentModel.DesignerCategory("")]
 public class EDBCommand : DbCommand, ICloneable, IComponent
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
     , IAsyncDisposable
 #endif
 {
@@ -209,8 +209,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         get => _timeout ?? (InternalConnection?.CommandTimeout ?? DefaultTimeout);
         set
         {
-            if (value < 0)
-            {
+            if (value < 0) {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "CommandTimeout can't be less than zero.");
             }
 
@@ -474,8 +473,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         string[]? names = null;
         uint[]? types = null;
         char[]? modes = null;
-        bool? hasParams = false;//EnterpriseDB Team
-        string? paramNames = null;//EnterpriseDB Team
+        bool? hasParams = false; //EnterpriseDB Team
+        string? paramNames = null; //EnterpriseDB Team
 
         using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
         {
@@ -503,7 +502,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         for (var i = 0; i < types.Length; i++)
         {
             var param = new EDBParameter();
-            hasParams = true;//EnterpriseDB Team
+            hasParams = true; //EnterpriseDB Team
 
             var (npgsqlDbType, postgresType) = typeMapper.GetTypeInfoByOid(types[i]);
 
@@ -532,11 +531,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 };
             }
 
-            paramNames = paramNames + ":" + param.ParameterName + ", ";//EnterpriseDB Team
+            paramNames = paramNames + ":" + param.ParameterName + ", "; //EnterpriseDB Team
             Parameters.Add(param);
         }
-#nullable disable
-        if (hasParams.HasValue && CommandType == CommandType.StoredProcedure)//EnterpriseDB Team
+
+        if (hasParams.HasValue && CommandType == CommandType.StoredProcedure && paramNames is not null) //EnterpriseDB Team
         {
             if (paramNames.Trim().EndsWith(",", StringComparison.OrdinalIgnoreCase))
             {
@@ -544,7 +543,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
             CommandText = CommandText + "(" + paramNames + ")";
         }
-#nullable restore
+
     }
 
     void DeriveParametersForQuery(EDBConnector connector)
@@ -649,7 +648,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK //EnterpriseDB Team (NETFRAMEWORK)
     public virtual Task PrepareAsync(CancellationToken cancellationToken = default)
 #else
     public override Task PrepareAsync(CancellationToken cancellationToken = default)
@@ -675,7 +674,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             foreach (var batchCommand in InternalBatchCommands)
             {
                 batchCommand.Parameters.ProcessParameters(connector.TypeMapper, validateValues: false, CommandType);
-                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);
+                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
 
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
             }
@@ -686,7 +685,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         else
         {
             Parameters.ProcessParameters(connector.TypeMapper, validateValues: false, CommandType);
-            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);
+            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
 
             foreach (var batchCommand in InternalBatchCommands)
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
@@ -921,7 +920,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     #region Query analysis
 
     // EnterpriseDB : redwoodDialect param added for multiplexing scenarii where parser is null and databaseInfo is not available
-    internal void ProcessRawQuery(SqlQueryParser? parser, bool standardConformingStrings, EDBBatchCommand? batchCommand, bool redwoodDialect)
+    internal void ProcessRawQuery(SqlQueryParser? parser, bool standardConformingStrings, EDBBatchCommand? batchCommand, bool redwoodDialect) // EnterpriseDB (additional param)
     {
         var (commandText, commandType, parameters) = batchCommand is null
             ? (CommandText, CommandType, Parameters)
@@ -966,7 +965,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     throw new NotSupportedException($"Named parameters are not supported when EnterpriseDB.EDBClient.{nameof(EnableSqlRewriting)} is disabled");
 
                 // The parser is cached on EDBConnector - unless we're in multiplexing mode.
-                parser ??= new SqlQueryParser(redwoodDialect); // EnterpriseDB
+                parser ??= new SqlQueryParser(redwoodDialect);  // EnterpriseDB (additional param)
 
                 if (batchCommand is null)
                 {
@@ -1002,6 +1001,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             break;
 
         case CommandType.StoredProcedure:
+			//EnterpriseDB Team (different implementation)
             var inputList = parameters.Where(p => p.IsInputDirection).ToList();
             var numInput = _parameters.Count(p => p.IsInputDirection);//EnterpriseDB Team
             var sb = new StringBuilder();
@@ -1093,6 +1093,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     await connector.WriteParse(batchCommand.FinalCommandText, batchCommand.StatementName, batchCommand.PositionalParameters, async, cancellationToken);
 
+					//EnterpriseDB Team 
                     if (CommandType == CommandType.StoredProcedure)
                     {
                         await connector.WriteBindOut(
@@ -1114,8 +1115,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 else
                 {
                     // The statement is already prepared, only a Bind is needed
-                    if (CommandType == CommandType.StoredProcedure)
-                    {
+                    if (CommandType == CommandType.StoredProcedure)  //EnterpriseDB Team 
+                    { 
                         await connector.WriteBindOut(
                            batchCommand.PositionalParameters, _parameters, string.Empty, batchCommand.StatementName, AllResultTypesAreUnknown,
                            i == 0 ? UnknownResultTypeList : null,
@@ -1132,7 +1133,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     }
                 }
 
-                if (CommandType == CommandType.StoredProcedure)
+				//EnterpriseDB Team 
+                if (CommandType == CommandType.StoredProcedure) 
                 {
                     await connector.WriteDescribe(StatementOrPortal.Portal, string.Empty, async, cancellationToken);
                     await connector.WriteDescribeOut(StatementOrPortal.Portal, string.Empty, async);
@@ -1141,6 +1143,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 await connector.WriteExecute(0, async, cancellationToken);
 
+				//EnterpriseDB Team
                 if (CommandType == CommandType.StoredProcedure)
                 {
                     await connector.WriteExecuteOut(0, async);
@@ -1149,7 +1152,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     await connector.WriteSync(async, cancellationToken);
 
                 if (pStatement != null)
-                    connector.PreparedStatementManager.SetLastUsed(pStatement, DateTime.UtcNow);
+                    connector.PreparedStatementManager.SetLastUsed(pStatement, DateTime.UtcNow); //EnterpriseDB Team
             }
 
             if (batchCommand is null || !(batchCommand.AppendErrorBarrier ?? EnableErrorBarriers))
@@ -1225,9 +1228,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             var statementToClose = pStatement!.StatementBeingReplaced;
             if (statementToClose != null)
                 await connector.WriteClose(StatementOrPortal.Statement, statementToClose.Name!, async, cancellationToken);
-
-            //await connector.WriteParse(batchCommand.FinalCommandText!, pStatement.Name!, async, cancellationToken);
-            if (CommandType == CommandType.StoredProcedure)
+            if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
             {
                 await connector.WriteParseOut(batchCommand.FinalCommandText!, pStatement.Name!, _parameters, async, connector.TypeMapper);
             }
@@ -1301,26 +1302,16 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
     {
-        if (CommandType == CommandType.StoredProcedure) // && Connection.Connector._hasRefCursor == false
+        if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-
-            Connection.Connector._isScaler = true; //ZKK
+            Connection!.Connector!._isScaler = true; //ZKK
         }
         var reader = await ExecuteReader(CommandBehavior.Default, async, cancellationToken);
         try
         {
-            if (CommandType != CommandType.StoredProcedure)//EnterpriseDB Team
+            if (CommandType != CommandType.StoredProcedure) //EnterpriseDB Team
                 while (async ? await reader.NextResultAsync(cancellationToken) : reader.NextResult()) ;
 
-            if (Connection.Connector != null)
-            {
-                Connection.Connector._isScaler = false; //ZKK
-                Connection.Connector._hasRefCursor = false;
-                //    Connection.Connector._isCallableStmt = false;
-            }
-
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             return reader.RecordsAffected;
         }
         finally
@@ -1462,10 +1453,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         else
         {
             Debug.Assert(conn is not null);
-#pragma warning disable CS8602
 
             conn.TryGetBoundConnector(out connector);
-#pragma warning restore CS8602
         }
 
         try
@@ -1531,7 +1520,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                 var batchCommand = InternalBatchCommands[i];
 
                                 batchCommand.Parameters.ProcessParameters(dataSource.TypeMapper, validateParameterValues, CommandType);
-                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, dataSource.DatabaseInfo.SupportsRedwoodDialect);
+                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, dataSource.DatabaseInfo.SupportsRedwoodDialect);   // EnterpriseDB (additional param)
 
                                 if (connector.Settings.MaxAutoPrepare > 0 && batchCommand.TryAutoPrepare(connector))
                                 {
@@ -1543,7 +1532,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         else
                         {
                             Parameters.ProcessParameters(dataSource.TypeMapper, validateParameterValues, CommandType);
-                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, dataSource.DatabaseInfo.SupportsRedwoodDialect);
+                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, dataSource.DatabaseInfo.SupportsRedwoodDialect);  // EnterpriseDB (additional param)
 
                             if (connector.Settings.MaxAutoPrepare > 0)
                                 for (var i = 0; i < InternalBatchCommands.Count; i++)
@@ -1616,10 +1605,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             else
             {
                 Debug.Assert(conn is not null);
-#pragma warning disable CS8602
 
                 Debug.Assert(conn.Settings.Multiplexing);
-#pragma warning restore CS8602
                 // The connection isn't bound to a connector - it's multiplexing time.
                 var dataSource = (MultiplexingDataSource)conn.EDBDataSource;
 
@@ -1639,13 +1626,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     foreach (var batchCommand in InternalBatchCommands)
                     {
                         batchCommand.Parameters.ProcessParameters(dataSource.TypeMapper, validateValues: true, CommandType);
-                        ProcessRawQuery(null, standardConformingStrings: true, batchCommand, isRedwood);
+                        ProcessRawQuery(null, standardConformingStrings: true, batchCommand, isRedwood);  // EnterpriseDB (additional param)
                     }
                 }
                 else
                 {
                     Parameters.ProcessParameters(dataSource.TypeMapper, validateValues: true, CommandType);
-                    ProcessRawQuery(null, standardConformingStrings: true, batchCommand: null, isRedwood);
+                    ProcessRawQuery(null, standardConformingStrings: true, batchCommand: null, isRedwood);  // EnterpriseDB (additional param)
                 }
 
                 State = CommandState.InProgress;
@@ -1676,7 +1663,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 await reader.Cleanup(async);
 
             TraceSetException(e);
-#pragma warning disable CS8602
 
             State = CommandState.Idle;
 
@@ -1688,7 +1674,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 Debug.Assert(_connector is null && conn is not null);
                 conn.Close();
             }
-#pragma warning restore CS8602
             throw;
         }
     }
@@ -1960,7 +1945,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         }
     }
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
     // EnterpriseDB Team
     /// <summary>
     /// Async wrapper for .Net Framework IAsyncDisposable() support

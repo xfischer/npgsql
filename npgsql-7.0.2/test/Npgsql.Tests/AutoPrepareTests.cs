@@ -50,7 +50,7 @@ public class AutoPrepareTests : TestBase
     public void Recycle()
     {
         //
-        // EntepriseDB : uncomment on .NET471 to see precision around 1ms vs 0.0001 ms on .net Core....
+        // EnterpriseDB : uncomment on .NET471 to see precision around 1ms vs 0.0001 ms on .net Core....
         // This causes collisions on prepared statements and eviction errors
         //
         //Console.WriteLine("Running for 5 seconds...");

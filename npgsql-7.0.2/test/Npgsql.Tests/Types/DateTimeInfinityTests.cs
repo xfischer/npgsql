@@ -26,7 +26,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
             }
         };
 
-        if (TestUtil.IsEPASRedwood(conn) ?? false)
+        if (TestUtil.IsEPASRedwood(conn) ?? false) // EnterpriseDB
         {
             Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
         }
@@ -46,7 +46,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
     public async Task TimestampTz_read()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
 
         await using var cmd = new EDBCommand(
@@ -85,7 +85,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         {
             await reader.ReadAsync();
 
-            if (TestUtil.IsEPASRedwood(conn) ?? false)
+            if (TestUtil.IsEPASRedwood(conn) ?? false) // EnterpriseDB
             {
                 Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01 00:00:00" : "-infinity"));
                 Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99 23:59:59.999999" : "infinity"));
@@ -102,7 +102,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
     public async Task Timestamp_read()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
 
         await using var cmd = new EDBCommand(
@@ -142,7 +142,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
 
-        if (TestUtil.IsEPASRedwood(conn) ?? false)
+        if (TestUtil.IsEPASRedwood(conn) ?? false) // EnterpriseDB
         {
             Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
             Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));
@@ -158,7 +158,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
     public async Task Date_DateTime_read()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         await using var cmd = new EDBCommand("SELECT '-infinity'::date, 'infinity'::date", conn);
 
@@ -195,7 +195,7 @@ public class DateTimeInfinityTests : TestBase, IDisposable
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
 
-        if (TestUtil.IsEPASRedwood(conn) ?? false)
+        if (TestUtil.IsEPASRedwood(conn) ?? false) // EnterpriseDB
         {
             Assert.That(reader[0], Is.EqualTo(DisableDateTimeInfinityConversions ? "01-JAN-01" : "-infinity"));
             Assert.That(reader[1], Is.EqualTo(DisableDateTimeInfinityConversions ? "31-DEC-99" : "infinity"));

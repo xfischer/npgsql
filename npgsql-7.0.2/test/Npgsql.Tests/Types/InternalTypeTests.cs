@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class InternalTypeTests : MultiplexingTestBase
 {
     [Test]

@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class FullTextSearchTests : MultiplexingTestBase
 {
     public FullTextSearchTests(MultiplexingMode multiplexingMode)

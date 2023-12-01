@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Properties;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
@@ -62,42 +61,4 @@ static class DateTimeUtils
         var postgresTimestamp = EncodeTimestamp(value);
         buf.WriteInt64(postgresTimestamp);
     }
-
-#if NET6_0_OR_GREATER
-
-    static readonly DateOnly BaseValueDateOnly = new(2000, 1, 1);
-
-    internal static DateOnly ReadDateOnly(EDBReadBuffer buf, int len, FieldDescription? fieldDescription)
-       => buf.ReadInt32() switch
-       {
-           int.MaxValue => DisableDateTimeInfinityConversions
-               ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
-               : DateOnly.MaxValue,
-           int.MinValue => DisableDateTimeInfinityConversions
-               ? throw new InvalidCastException(EDBStrings.CannotReadInfinityValue)
-               : DateOnly.MinValue,
-           var value => BaseValueDateOnly.AddDays(value)
-       };
-
-    internal static void WriteDateOnly(DateOnly value, EDBWriteBuffer buf, EDBParameter? parameter)
-    {
-        if (!DisableDateTimeInfinityConversions)
-        {
-            if (value == DateOnly.MaxValue)
-            {
-                buf.WriteInt32(int.MaxValue);
-                return;
-            }
-
-            if (value == DateOnly.MinValue)
-            {
-                buf.WriteInt32(int.MinValue);
-                return;
-            }
-        }
-
-        buf.WriteInt32(value.DayNumber - BaseValueDateOnly.DayNumber);
-    }
-#endif
-
 }

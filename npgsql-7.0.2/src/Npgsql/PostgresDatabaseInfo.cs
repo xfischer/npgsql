@@ -59,7 +59,7 @@ class PostgresDatabaseInfo : EDBDatabaseInfo
     /// </summary>
     public bool IsRedshift { get; private set; }
 
-    public override bool SupportsRedwoodDialect { get; internal set; }
+    public override bool SupportsRedwoodDialect { get; internal set; } // EnterpriseDB Team
 
     /// <inheritdoc />
     public override bool SupportsUnlisten => Version.IsGreaterOrEqual(6, 4) && !IsRedshift;
@@ -98,6 +98,8 @@ class PostgresDatabaseInfo : EDBDatabaseInfo
             intDateTimes == "on";
 
         IsRedshift = conn.Settings.ServerCompatibilityMode == ServerCompatibilityMode.Redshift;
+		
+		// EnterpriseDB Team
         if (conn.PostgresParameters.TryGetValue("db_dialect", out var db_dialect))
         {
             SupportsDbDialect = true;

@@ -16,7 +16,7 @@ public class DateTimeTests : TestBase
     [Test]
     public async Task Date_as_DateTime()
     {
-        var con = await OpenConnectionAsync();
+        var con = await OpenConnectionAsync(); // EnterpriseDB
         TestUtil.EnsureNotEPASRedwood(con);
 
         await AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForWriting: false);
@@ -44,7 +44,7 @@ public class DateTimeTests : TestBase
     public async Task Datemultirange_as_array_of_EDBRange_of_DateTime()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -61,7 +61,8 @@ public class DateTimeTests : TestBase
     }
 
 #if NET6_0_OR_GREATER
-    [Test, Ignore("")]
+    [Test, Ignore("Redwood dates")]
+    //[Test]
     public Task Date_as_DateOnly()
         => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForReading: false);
 
@@ -78,7 +79,7 @@ public class DateTimeTests : TestBase
     public async Task Datemultirange_as_array_of_EDBRange_of_DateOnly()
     {
         await using var conn = await OpenConnectionAsync();
-                await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+		await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -197,7 +198,7 @@ public class DateTimeTests : TestBase
     public async Task Tsmultirange_as_array_of_EDBRange_of_DateTime()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -305,7 +306,7 @@ public class DateTimeTests : TestBase
     public async Task Tstzmultirange_as_array_of_EDBRange_of_DateTime()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -343,7 +344,7 @@ public class DateTimeTests : TestBase
     public async Task Cannot_mix_DateTime_Kinds_in_multirange()
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -438,7 +439,7 @@ public class DateTimeTests : TestBase
     protected override async ValueTask<EDBConnection> OpenConnectionAsync(string? connectionString = null)
     {
         var conn = await base.OpenConnectionAsync(connectionString);
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
         await conn.ExecuteNonQueryAsync("SET TimeZone='Europe/Berlin'");
         return conn;
     }

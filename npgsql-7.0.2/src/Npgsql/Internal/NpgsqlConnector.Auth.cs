@@ -198,6 +198,7 @@ partial class EDBConnector
         await WriteSASLResponse(Encoding.UTF8.GetBytes(messageStr), async, cancellationToken);
         await Flush(async, cancellationToken);
 
+		// EnterpriseDB Team: added explicit parameters (readingNotifications and checkDataAvailable)
         var saslFinalServerMsg = Expect<AuthenticationSASLFinalMessage>(await ReadMessage(async, DataRowLoadingMode.NonSequential, readingNotifications: false, checkDataAvailable: false), this);
         if (saslFinalServerMsg.AuthRequestType != AuthenticationRequestType.AuthenticationSASLFinal)
             throw new EDBException("[SASL] AuthenticationSASLFinal message expected");

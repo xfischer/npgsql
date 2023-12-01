@@ -140,7 +140,7 @@ sealed class BuiltInTypeHandlerResolver : TypeHandlerResolver
         { "boolean",     new(EDBDbType.Boolean, "boolean", typeof(bool)) },
         { "bool",        new(EDBDbType.Boolean, "boolean", typeof(bool)) },
         { "bytea",       new(EDBDbType.Bytea,   "bytea", typeof(byte[]), typeof(ArraySegment<byte>)
-#if !(NETSTANDARD2_0 || NETFRAMEWORK)
+#if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
             , typeof(ReadOnlyMemory<byte>), typeof(Memory<byte>)
 #endif
         ) },
@@ -149,7 +149,7 @@ sealed class BuiltInTypeHandlerResolver : TypeHandlerResolver
         { "varbit",      new(EDBDbType.Varbit,  "bit varying", typeof(BitArray), typeof(BitVector32)) },
         { "bit",         new(EDBDbType.Bit,     "bit") },
         { "hstore",      new(EDBDbType.Hstore,  "hstore", typeof(Dictionary<string, string?>), typeof(IDictionary<string, string?>)
-#if !(NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK)
+#if !(NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
             , typeof(ImmutableDictionary<string, string?>)
 #endif
         ) },
@@ -441,7 +441,7 @@ sealed class BuiltInTypeHandlerResolver : TypeHandlerResolver
             { typeof(bool),                 "boolean" },
             { typeof(byte[]),               "bytea" },
             { typeof(ArraySegment<byte>),   "bytea" },
-#if !(NETSTANDARD2_0 || NETFRAMEWORK)
+#if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
             { typeof(ReadOnlyMemory<byte>), "bytea" },
             { typeof(Memory<byte>),         "bytea" },
 #endif

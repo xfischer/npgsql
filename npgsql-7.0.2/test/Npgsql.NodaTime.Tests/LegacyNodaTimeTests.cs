@@ -56,7 +56,7 @@ public class LegacyNodaTimeTests : TestBase
         var conn = new EDBConnection(connectionString ?? ConnectionString);
         await conn.OpenAsync();
         await conn.ExecuteNonQueryAsync("SET TimeZone='Europe/Berlin'");
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); //EnterpriseDB Team
 
         return conn;
     }

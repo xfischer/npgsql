@@ -46,7 +46,7 @@ public sealed class EDBLengthCache
 
     internal int GetLast()
     {
-        //Debug.Assert(IsPopulated);
+        //Debug.Assert(IsPopulated); // EnterpriseDB commented
         return Lengths[Position-1];
     }
 

@@ -507,9 +507,10 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     #region Internals
 
+	// EnterpriseDB (changed implementation)
     internal virtual void ResolveHandler(TypeMapper typeMapper)
     {
-        Handler ??= GetResolvedHandler(typeMapper);
+        Handler ??= GetResolvedHandler(typeMapper); // EnterpriseDB
 
         if (Handler is not null)
             return;
@@ -539,6 +540,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
         FormatCode = Handler!.PreferTextWrite ? FormatCode.Text : FormatCode.Binary;
     }
 
+	// EnterpriseDB
     internal void TryBind(TypeMapper typeMapper)
     {
         Handler = GetResolvedHandler(typeMapper);
@@ -550,7 +552,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     internal virtual int ValidateAndGetLength()
     {
-        if (Direction == ParameterDirection.Input || Direction == ParameterDirection.InputOutput)//EnterpriseDB Team
+        if (Direction == ParameterDirection.Input || Direction == ParameterDirection.InputOutput) //EnterpriseDB Team
             if (_value is DBNull)
                 return 0;
         if (_value == null)
@@ -573,6 +575,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
         Handler = null;
     }
 
+    //EnterpriseDB Tea
     ///<summary>
     /// Get param direction
     /// </summary>

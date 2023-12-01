@@ -128,7 +128,7 @@ public partial class TextHandler : EDBTypeHandler<string>, IEDBTypeHandler<char[
         {
             var decoder = buf.TextEncoding.GetDecoder();
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB
             var singleCharArray = new char[1];
             decoder.Convert(buf.Buffer, buf.ReadPosition, maxBytes, singleCharArray, 0, 1, true, out _, out var charsUsed, out _);
 #else
@@ -236,7 +236,7 @@ public partial class TextHandler : EDBTypeHandler<string>, IEDBTypeHandler<char[
     /// <inheritdoc />
     public int ValidateAndGetLength(char value, ref EDBLengthCache? lengthCache, EDBParameter? parameter)
     {
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB
         var singleCharArray = new char[1];
 #else
         Span<char> singleCharArray = stackalloc char[1];
@@ -284,7 +284,7 @@ public partial class TextHandler : EDBTypeHandler<string>, IEDBTypeHandler<char[
 
         static unsafe void WriteCharCore(char value, EDBWriteBuffer buf)
         {
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB
             var singleCharArray = new char[1];
             singleCharArray[0] = value;
             buf.WriteChars(singleCharArray, 0, 1);

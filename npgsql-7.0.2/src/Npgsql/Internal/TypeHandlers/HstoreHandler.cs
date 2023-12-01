@@ -27,7 +27,7 @@ namespace EnterpriseDB.EDBClient.Internal.TypeHandlers;
 public class HstoreHandler :
     EDBTypeHandler<Dictionary<string, string?>>,
     IEDBTypeHandler<IDictionary<string, string?>>
-#if !NETSTANDARD2_0 && !NETSTANDARD2_1
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     , IEDBTypeHandler<ImmutableDictionary<string, string?>>
 #endif
 {
@@ -166,7 +166,7 @@ public class HstoreHandler :
 
     #endregion
 
-#if !NETSTANDARD2_0 && !NETSTANDARD2_1
+#if !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     #region ImmutableDictionary
 
     /// <inheritdoc />

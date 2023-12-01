@@ -205,7 +205,7 @@ public class NodaTimeInfinityTests : TestBase
         Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(DisableDateTimeInfinityConversions ? "9999-12-31" : "infinity"));
     }
 
-    [Test, Ignore("")]
+    [Test, Ignore("EDB Redwood dates")]
     public async Task Date_read()
     {
         await using var conn = await OpenConnectionAsync();
@@ -227,7 +227,7 @@ public class NodaTimeInfinityTests : TestBase
         }
     }
 
-    [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted"), Ignore("")]
+    [Test, Description("Makes sure that when ConvertInfinityDateTime is true, infinity values are properly converted"), Ignore("EDB Redwood dates")]
     public async Task DateConvertInfinity()
     {
         if (DisableDateTimeInfinityConversions)
@@ -270,7 +270,7 @@ public class NodaTimeInfinityTests : TestBase
     {
         var conn = await base.OpenConnectionAsync(connectionString);
         await conn.ExecuteNonQueryAsync("SET TimeZone='Europe/Berlin'");
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         return conn;
     }

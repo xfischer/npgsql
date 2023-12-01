@@ -125,7 +125,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         return WriteAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
     }
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public void Write(ReadOnlySpan<byte> buffer)
 #else
     public override void Write(ReadOnlySpan<byte> buffer)
@@ -156,7 +156,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         _writeBuf.DirectWrite(buffer);
     }
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
 #else
     public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
@@ -226,7 +226,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
     }
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public int Read(Span<byte> span)
 #else
     public override int Read(Span<byte> span)
@@ -242,7 +242,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         return count;
     }
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
 #else
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
@@ -375,7 +375,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
     protected override void Dispose(bool disposing) => DisposeAsync(disposing, false).GetAwaiter().GetResult();
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()
@@ -447,8 +447,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
     void CheckDisposed()
     {
-        if (_isDisposed)
-        {
+        if (_isDisposed) {
             throw new ObjectDisposedException(nameof(EDBRawCopyStream), "The COPY operation has already ended.");
         }
     }
@@ -523,7 +522,7 @@ public sealed class EDBCopyTextWriter : StreamWriter, ICancelable
             return ((EDBRawCopyStream)BaseStream).CancelAsync();
     }
 
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team (NETFRAMEWORK)
     public ValueTask DisposeAsync()
     {
         Dispose();

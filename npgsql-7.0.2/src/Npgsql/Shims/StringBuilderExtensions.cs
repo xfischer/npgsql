@@ -1,4 +1,4 @@
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
 
 // ReSharper disable once CheckNamespace
 namespace System.Text

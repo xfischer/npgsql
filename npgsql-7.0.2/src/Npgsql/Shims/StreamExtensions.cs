@@ -1,5 +1,5 @@
-﻿#if NETSTANDARD2_0 || NETFRAMEWORK
-using Microsoft.Extensions.Logging;
+﻿#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+using Microsoft.Extensions.Logging; // EnterpriseDB (NETFRAMEWORK)
 using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +38,7 @@ namespace System.IO
                 //new Span<byte>(sharedBuffer, 0, result).CopyTo(buffer.Span);
                 //return result;
 
+				// EnterpriseDB
                 var readTask = stream.ReadAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
 
                 await Task.WhenAny(readTask, Task.Delay(1500, cancellationToken));

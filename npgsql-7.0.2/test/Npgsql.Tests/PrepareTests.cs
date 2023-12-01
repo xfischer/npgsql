@@ -788,7 +788,7 @@ public class PrepareTests: TestBase
         await using var conn = await OpenConnectionAsync(builder);
         await using var cmd = conn.CreateCommand();
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
         cmd.CommandText = string.Join(";", Enumerable.Range(1, 500).Select(x => $"SELECT {x}"));
 #else
         cmd.CommandText = string.Join(';', Enumerable.Range(1, 500).Select(x => $"SELECT {x}"));

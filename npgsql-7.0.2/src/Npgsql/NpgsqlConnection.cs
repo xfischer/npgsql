@@ -100,7 +100,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <summary>
     /// The default TCP/IP port for PostgreSQL.
     /// </summary>
-    public const int DefaultPort = 5444;
+    public const int DefaultPort = 5444; 
 
     /// <summary>
     /// Maximum value for connection timeout.
@@ -648,7 +648,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         }
     }
 
-#if !(NETSTANDARD2_0 || NETFRAMEWORK)
+#if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
     /// <summary>
     /// Asynchronously begins a database transaction.
     /// </summary>
@@ -761,7 +761,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// Releases the connection. If the connection is pooled, it will be returned to the pool and made available for re-use.
     /// If it is non-pooled, the physical connection will be closed.
     /// </summary>
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
     public Task CloseAsync()
 #else
     public override Task CloseAsync()
@@ -922,7 +922,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <summary>
     /// Releases all resources used by the <see cref="EDBConnection"/>.
     /// </summary>
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
     public ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()

@@ -55,11 +55,19 @@ class ReadBufferTests
     [Test]
     public void ReadNullTerminatedString_buffered_only()
     {
+#if NETFRAMEWORK
         Writer
             .Write(PGUtil.UTF8Encoding.GetBytes("foo"))
             .WriteByte(0)
             .Write(PGUtil.UTF8Encoding.GetBytes("bar"))
             .WriteByte(0);
+#else
+        Writer
+            .Write(PGUtil.UTF8Encoding.GetBytes(new string("foo")))
+            .WriteByte(0)
+            .Write(PGUtil.UTF8Encoding.GetBytes(new string("bar")))
+            .WriteByte(0);
+#endif
 
         ReadBuffer.Ensure(1);
 
@@ -70,16 +78,29 @@ class ReadBufferTests
     [Test, Timeout(15000)]
     public async Task ReadNullTerminatedString_with_io()
     {
+
+#if NETFRAMEWORK
         Writer.Write(PGUtil.UTF8Encoding.GetBytes("Chunked "));
+#else
+        Writer.Write(PGUtil.UTF8Encoding.GetBytes(new string("Chunked ")));
+#endif
         ReadBuffer.Ensure(1);
         var task = ReadBuffer.ReadNullTerminatedString(async: true);
         Assert.That(!task.IsCompleted);
 
+#if NETFRAMEWORK
         Writer
-            .Write(PGUtil.UTF8Encoding.GetBytes("string"))
+         .Write(PGUtil.UTF8Encoding.GetBytes("string"))
+         .WriteByte(0)
+         .Write(PGUtil.UTF8Encoding.GetBytes("bar"))
+         .WriteByte(0);
+#else
+        Writer
+            .Write(PGUtil.UTF8Encoding.GetBytes(new string("string")))
             .WriteByte(0)
-            .Write(PGUtil.UTF8Encoding.GetBytes("bar"))
+            .Write(PGUtil.UTF8Encoding.GetBytes(new string("bar")))
             .WriteByte(0);
+#endif
         Assert.That(task.IsCompleted);
         Assert.That(await task, Is.EqualTo("Chunked string"));
         Assert.That(ReadBuffer.ReadNullTerminatedString(), Is.EqualTo("bar"));

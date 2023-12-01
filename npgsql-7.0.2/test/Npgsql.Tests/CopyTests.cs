@@ -778,6 +778,22 @@ INSERT INTO {table} (bits, bitarray) VALUES (B'101', ARRAY[B'101', B'111'])");
         await writer.StartRowAsync();
         Assert.ThrowsAsync<InvalidCastException>(async () => await writer.WriteAsync(value, EDBDbType.Integer));
     }
+    [Test]
+    [IssueLink("https://github.com/npgsql/npgsql/issues/5110")]
+    public async Task Binary_copy_read_char_column()
+    {
+        await using var conn = await OpenConnectionAsync();
+        var tableName = await CreateTempTable(conn, "id serial, value char");
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"INSERT INTO {tableName}(value) VALUES ('d'), ('s')";
+        await cmd.ExecuteNonQueryAsync();
+        await using var export = await conn.BeginBinaryExportAsync($"COPY {tableName}(id, value) TO STDOUT (FORMAT BINARY)");
+        while (await export.StartRowAsync() != -1)
+        {
+            var id = export.Read<int>();
+            var value = export.Read<char>();
+        }
+    }
 
     #endregion
 

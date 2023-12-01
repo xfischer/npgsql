@@ -50,6 +50,7 @@ public static class TestUtil
         throw new Exception("Should not occur");
     }
 
+	// EnterpriseDB
     public static void closeDB(EDBConnection? con)
     {
         if (con != null)
@@ -64,6 +65,7 @@ public static class TestUtil
         MinimumPgVersion(connection, minVersion, ignoreText);
     }
 
+	// EnterpriseDB
     public static void createTempTable(EDBConnection con, string table, string columns)
     {
         string strCommandSql = "create temp table " + table + " (" + columns + ")";
@@ -174,6 +176,7 @@ public static class TestUtil
         //return true;
     }
 
+	// EnterpriseDB
     public static bool EnsurePostgres(EDBConnection conn, string? message = null)
     {
         // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
@@ -186,6 +189,7 @@ public static class TestUtil
         return true;
     }
 
+	// EnterpriseDB
     public static void EnsureVersion(EDBConnection conn)
     {
 

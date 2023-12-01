@@ -443,9 +443,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		}
 
-		/* To verify the sanity of IN, INOUT and OUT parameters in functions with BigInt datatype */
-		[Test, Ignore("")]
-		public void testFunctionWithBigIntAsInInoutOut()
+        /* To verify the sanity of IN, INOUT and OUT parameters in functions with BigInt datatype */
+        [Test, Ignore("EDB")]
+        //[Test]
+        public void testFunctionWithBigIntAsInInoutOut()
 		{
 			//////prereq
 			var command = new EDBCommand("",con);

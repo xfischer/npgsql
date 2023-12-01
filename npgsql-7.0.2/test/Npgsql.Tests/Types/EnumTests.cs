@@ -8,7 +8,7 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class EnumTests : MultiplexingTestBase
 {
     enum Mood { Sad, Ok, Happy }

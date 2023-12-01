@@ -19,7 +19,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/arrays.html
 /// </remarks>
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class ArrayTests : MultiplexingTestBase
 {
     [Test, Description("Resolves an array type handler via the different pathways")]

@@ -27,7 +27,7 @@ public sealed partial class EDBReadBuffer : IDisposable
 
     internal readonly EDBConnector Connector;
 
-    public Stream Underlying { get; set; }
+    internal Stream Underlying { get; set; } // EnterpriseDB (internal get)
 
     readonly Socket? _underlyingSocket;
 
@@ -77,7 +77,7 @@ public sealed partial class EDBReadBuffer : IDisposable
     internal int ReadPosition { get; set; }
     internal int ReadBytesLeft => FilledBytes - ReadPosition;
 
-    internal byte[] Buffer;
+    internal byte[] Buffer; // EnterpriseDB (remove readonly)
     internal int FilledBytes;
 
     ColumnStream? _columnStream;
@@ -130,25 +130,25 @@ public sealed partial class EDBReadBuffer : IDisposable
     internal void Ensure(int count) => Ensure(count, false).GetAwaiter().GetResult();
 
     public Task Ensure(int count, bool async)
-        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);
+        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
 
     public Task EnsureAsync(int count)
-        => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false);
+        => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false); // EnterpriseDB (additionnal param)
 
     /// <summary>
     /// Ensures that <paramref name="count"/> bytes are available in the buffer, and if
     /// not, reads from the socket until enough is available.
     /// </summary>
-    internal Task Ensure(int count, bool async, bool readingNotifications, bool checkDataAvailable)
+    internal Task Ensure(int count, bool async, bool readingNotifications, bool checkDataAvailable) // EnterpriseDB (additionnal param)
     {
-        return count <= ReadBytesLeft ? Task.CompletedTask : EnsureLong(this, count, async, readingNotifications, checkDataAvailable);
+        return count <= ReadBytesLeft ? Task.CompletedTask : EnsureLong(this, count, async, readingNotifications, checkDataAvailable); // EnterpriseDB (additionnal param)
 
         static async Task EnsureLong(
             EDBReadBuffer buffer,
             int count,
             bool async,
             bool readingNotifications,
-            bool checkDataAvailable)
+            bool checkDataAvailable) // EnterpriseDB (additionnal param)
         {
             Debug.Assert(count <= buffer.Size);
             Debug.Assert(count > buffer.ReadBytesLeft);
@@ -174,7 +174,7 @@ public sealed partial class EDBReadBuffer : IDisposable
             {
                 try
                 {
-#if NETFRAMEWORK
+#if NETFRAMEWORK // EnterpriseDB (additionnal param)
                     if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
 
                     // In .Net Framework NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
@@ -219,7 +219,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                     }
                     catch (Exception ex)
                     {
-                        LogMessages.TryEDBTrace(buffer.Connector?.ConnectionLogger, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
+                        LogMessages.TryEDBTrace(buffer?.Connector?.ConnectionLogger!, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
                         throw;
                     }
 
@@ -259,7 +259,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                         Debug.Assert(e is OperationCanceledException ? async : !async);
 
                         var isStreamBroken = false;
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (netframework)
                         // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
                         // return garbage if reused. To prevent this, we flow down and break the connection immediately.
                         // See #4305.
@@ -312,7 +312,7 @@ public sealed partial class EDBReadBuffer : IDisposable
                         throw connector.Break(CreateException(connector));
 
                         static Exception CreateException(EDBConnector connector)
-#if DEBUG
+#if DEBUG // EnterpriseDB 
                         {
                             if (connector.UserCancellationRequested)
                             {
@@ -350,7 +350,7 @@ public sealed partial class EDBReadBuffer : IDisposable
         }
     }
 
-    internal Task ReadMore(bool async) => Ensure(ReadBytesLeft + 1, async, readingNotifications: false, checkDataAvailable: true);
+    internal Task ReadMore(bool async) => Ensure(ReadBytesLeft + 1, async, readingNotifications: false, checkDataAvailable: true); // EnterpriseDB 
 
     internal EDBReadBuffer AllocateOversize(int count)
     {
@@ -375,7 +375,7 @@ public sealed partial class EDBReadBuffer : IDisposable
     /// <summary>
     /// Skip a given number of bytes.
     /// </summary>
-    public async Task Skip(long len, bool async, bool checkDataAvailable = false)
+    public async Task Skip(long len, bool async, bool checkDataAvailable = false) // EnterpriseDB (additional param)
     {
         Debug.Assert(len >= 0);
 
@@ -385,11 +385,11 @@ public sealed partial class EDBReadBuffer : IDisposable
             while (len > Size)
             {
                 Clear();
-                await Ensure(Size, async, readingNotifications: false, checkDataAvailable);
+                await Ensure(Size, async, readingNotifications: false, checkDataAvailable); // EnterpriseDB (additional param)
                 len -= Size;
             }
             Clear();
-            await Ensure((int)len, async, readingNotifications: false, checkDataAvailable);
+            await Ensure((int)len, async, readingNotifications: false, checkDataAvailable); // EnterpriseDB (additional param)
         }
 
         ReadPosition += (int)len;
@@ -589,6 +589,7 @@ public sealed partial class EDBReadBuffer : IDisposable
         }
     }
 
+	// EnterpriseDB
     /// <summary>
     /// Seeks within the current in-memory data. Does not read any data from the underlying.
     /// </summary>

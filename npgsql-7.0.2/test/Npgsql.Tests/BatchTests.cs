@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests;
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.Default)]
 [TestFixture(MultiplexingMode.NonMultiplexing, CommandBehavior.SequentialAccess)]
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.SequentialAccess)]
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class BatchTests : MultiplexingTestBase
 {
     #region Parameters
@@ -193,9 +193,9 @@ public class BatchTests : MultiplexingTestBase
     {
         await using var conn = await OpenConnectionAsync();
         var table = await CreateTempTable(conn, "name TEXT");
-        var sproc = await GetTempProcedureName(conn);
+        var sproc = await GetTempProcedureName(conn); // EnterpriseDB
 
-        await conn.ExecuteNonQueryAsync(@$"CREATE PROCEDURE {sproc}() LANGUAGE sql AS ''");
+        await conn.ExecuteNonQueryAsync(@$"CREATE PROCEDURE {sproc}() LANGUAGE sql AS ''"); // EnterpriseDB
 
         await using var batch = new EDBBatch(conn)
         {
@@ -223,7 +223,7 @@ public class BatchTests : MultiplexingTestBase
         Assert.That(batch.BatchCommands[3].StatementType, Is.EqualTo(StatementType.Other));
         Assert.That(batch.BatchCommands[4].StatementType, Is.EqualTo(StatementType.Select));
         Assert.That(batch.BatchCommands[5].StatementType, Is.EqualTo(StatementType.Delete));
-        Assert.That(batch.BatchCommands[6].StatementType, Is.EqualTo(StatementType.Call));
+        Assert.That(batch.BatchCommands[6].StatementType, Is.EqualTo(StatementType.Call)); // EnterpriseDB
         Assert.That(batch.BatchCommands[7].StatementType, Is.EqualTo(StatementType.Other));
     }
 
@@ -416,7 +416,7 @@ public class BatchTests : MultiplexingTestBase
                 new($"INSERT INTO {table} (id) VALUES (8)"),
                 new("INVALID SQL")
             },
-            //EnableErrorBarriers = withErrorBarriers
+            //EnableErrorBarriers = withErrorBarriers // EnterpriseDB commented
         };
 
         var exception = Assert.ThrowsAsync<PostgresException>(async () => await batch.ExecuteReaderAsync(Behavior))!;

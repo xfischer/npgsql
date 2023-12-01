@@ -325,8 +325,7 @@ public class EDBParameterTest : TestBase
 
     #endregion
 
-    [Test]
-    [Ignore("")]
+    [Test, Ignore("EDB")]
     public void InferType_invalid_throws()
     {
         var notsupported = new object[]
@@ -377,8 +376,8 @@ public class EDBParameterTest : TestBase
         Assert.AreEqual(0, param.Scale, "#B2");
     }
 
-    [Test]
-    [Ignore("")]
+    [Test, Ignore("EDB")]
+    //[Test]
     public void Parameter_type()
     {
         EDBParameter p;
@@ -436,8 +435,8 @@ public class EDBParameterTest : TestBase
         Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#J4");
     }
 
+    //[Test, Ignore("")]
     [Test]
-    [Ignore("")]
     public void ParameterName()
     {
         var p = new EDBParameter();
@@ -529,8 +528,8 @@ public class EDBParameterTest : TestBase
     public void ParameterName_retains_prefix()
         => Assert.That(new EDBParameter("@p", DbType.String).ParameterName, Is.EqualTo("@p"));
 
+    //[Test, Ignore("")]
     [Test]
-    [Ignore("")]
     public void SourceColumn()
     {
         var p = new EDBParameter();

@@ -38,7 +38,7 @@ public abstract class TestBase
         Func<T, T, bool>? comparer = null)
     {
         await using var connection = await OpenConnectionAsync();
-        await connection.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await connection.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         return await AssertType(
             connection, value, sqlLiteral, pgTypeName, npgsqlDbType, dbType, inferredDbType, isDefaultForReading, isDefaultForWriting,
@@ -115,7 +115,7 @@ public abstract class TestBase
         bool isEDBDbTypeInferredFromClrType = true)
     {
         await using var connection = await OpenConnectionAsync();
-        await connection.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await connection.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         await AssertTypeWrite(connection, valueFactory, expectedSqlLiteral, pgTypeName, npgsqlDbType, dbType, inferredDbType, isDefault, isEDBDbTypeInferredFromClrType);
     }
@@ -302,7 +302,7 @@ public abstract class TestBase
         where TException : Exception
     {
         await using var conn = await OpenConnectionAsync();
-        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
         await using var cmd = new EDBCommand("SELECT $1", conn)
         {
             Parameters = { new() { Value = value } }
@@ -398,20 +398,12 @@ public abstract class TestBase
         async ValueTask<EDBConnection> OpenConnectionInternal(bool hasLock)
         {
             var conn = CreateConnection(connectionString);
-
             try
             {
                 if (async)
-                {
                     await conn.OpenAsync();
-                    //await conn.ExecuteNonQueryAsync("SET datestyle TO ISO");
-                }
                 else
-                {
                     conn.Open();
-                    //conn.ExecuteNonQuery("SET datestyle TO ISO");
-                }
-
                 return conn;
             }
             catch (PostgresException e)

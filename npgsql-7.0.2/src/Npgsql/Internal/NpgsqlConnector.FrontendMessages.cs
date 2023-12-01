@@ -46,6 +46,7 @@ partial class EDBConnector
         }
     }
 
+    // EnterpriseDB Team
     internal Task WriteDescribeOut(StatementOrPortal statementOrPortal, string name, bool async)
     {
 
@@ -81,6 +82,7 @@ partial class EDBConnector
         }
     }
 
+	// EnterpriseDB Team
     internal Task WriteExecuteOut(int maxRows, bool async)
     {
         // Note: non-empty portal currently not supported
@@ -185,11 +187,8 @@ partial class EDBConnector
             WriteBuffer.WriteInt16((short)EDBParameter.NetParamDirectionToEDBParamDirection(_parameters[i].Direction));
         }
     }
-    /*
-     * EnterpriseDB Team
-     * 
-     *
-     */
+    
+	// EnterpriseDB Team
     internal async Task WriteBindOut(
        List<EDBParameter> inputParameters,
        EDBParameterCollection parameters,

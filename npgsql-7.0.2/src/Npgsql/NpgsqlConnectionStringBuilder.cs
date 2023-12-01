@@ -1283,6 +1283,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
             SetValue(nameof(LoadTableComposites), value);
         }
     }
+	// EnterpriseDB
     /// <summary>
     /// Property specifying whether connection is with PGPOOL or EPAS.
     /// Default is false which means EPAS.
@@ -1303,6 +1304,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     }
     bool _isPgPoolConnection;
 
+	// EnterpriseDB
     /// <summary>
     /// Property specifying sync time in case connection is made with PGPOOL.
     /// No need to se this property when connecting with EPAS.
@@ -1324,6 +1326,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     int _pgPoolSyncTime;
     bool _loadTableComposites;
 
+	// EnterpriseDB
     /// <summary>
     /// /// A compatibility mode for special PostgreSQL server types.
     /// Load table composite type definitions, and not just free-standing composite types.
@@ -1838,7 +1841,7 @@ public enum ServerCompatibilityMode
     ///<summary>
     ///
     /// </summary>
-    LoadCompositeTypes,
+    LoadCompositeTypes, // EnterpriseDB
 }
 
 /// <summary>

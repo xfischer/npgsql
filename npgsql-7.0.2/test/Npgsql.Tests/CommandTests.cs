@@ -844,7 +844,7 @@ public class CommandTests : MultiplexingTestBase
 
     [Test]
     [TestCase(CommandBehavior.Default)]
-    //[TestCase(CommandBehavior.SequentialAccess)]
+	[TestCase(CommandBehavior.SequentialAccess, Ignore ="EDB")]
     public async Task Statement_mapped_output_parameters(CommandBehavior behavior)
     {
         using var conn = await OpenConnectionAsync();
@@ -947,7 +947,7 @@ $$ LANGUAGE plpgsql;";
 
     [Test]
     [TestCase(CommandBehavior.Default)]
-    //[TestCase(CommandBehavior.SequentialAccess)]
+    [TestCase(CommandBehavior.SequentialAccess, Ignore ="EDB")]
     public async Task Input_and_output_parameters(CommandBehavior behavior)
     {
         using var conn = await OpenConnectionAsync();

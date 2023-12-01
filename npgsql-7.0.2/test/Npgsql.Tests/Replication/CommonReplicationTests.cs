@@ -250,7 +250,7 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
                 var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
                 Assert.That(await replicationEnumerator.MoveNextAsync(), Is.True);
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
                 await Task.Delay(new TimeSpan(ticks: (long)(walSenderTimeout.Ticks * 1.1)), CancellationToken.None);
 #else
                 await Task.Delay(walSenderTimeout * 1.1, CancellationToken.None);
@@ -472,7 +472,7 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
                 await using var replicationEnumerator = StartReplication(rc, slotName, info.XLogPos, streamingCts.Token).GetAsyncEnumerator(streamingCts.Token);
 
                 var replicationMessageTask = replicationEnumerator.MoveNextAsync();
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
                 streamingCts.CancelAfter(new TimeSpan(rc.WalReceiverTimeout.Ticks * 2L));
 #else
                 streamingCts.CancelAfter(rc.WalReceiverTimeout * 2);

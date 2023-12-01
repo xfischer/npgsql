@@ -386,7 +386,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-          [Test, Ignore("")]
+        [Test, Ignore("EDB")]
+        //[Test]
         public async Task SupportPRIORInTargetListForCONNECTBYQueries()
         {
             await using var conn = await OpenConnectionAsync();

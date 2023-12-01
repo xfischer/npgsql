@@ -102,7 +102,8 @@ public class DependencyInjectionTests
         Assert.That(connection3, Is.Not.SameAs(connection1));
     }
 
-    [Test, Ignore("")]
+    //[Test, Ignore("")]
+    [Test]
     public async Task LoggerFactory_is_picked_up_from_ServiceCollection()
     {
         var listLoggerProvider = new ListLoggerProvider();

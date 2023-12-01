@@ -159,7 +159,7 @@ public sealed partial class EDBConnector : IDisposable
     internal PreparedStatementManager PreparedStatementManager { get; }
 
     // EnterpriseDB Team : added support for non redwood dialect (read from PostGres connection parameters)
-    SqlQueryParser _sqlQueryParser = null;
+    SqlQueryParser? _sqlQueryParser = null;
     internal SqlQueryParser SqlQueryParser
     {
         get
@@ -328,8 +328,7 @@ public sealed partial class EDBConnector : IDisposable
     byte[]? _resetWithoutDeallocateMessage;
 
     int _resetWithoutDeallocateResponseCount;
-    public bool _isScaler = false;
-    public bool _hasRefCursor = false;
+    public bool _isScaler = false; // EnterpriseDB: set to true transiently when reading data 
 
     // Backend
     readonly CommandCompleteMessage _commandCompleteMessage = new();
@@ -542,7 +541,7 @@ public sealed partial class EDBConnector : IDisposable
                     .ContinueWith(t =>
                     {
                         // Note that we *must* observe the exception if the task is faulted.
-                        ConnectionLogger.LogError(t.Exception!, "Exception bubbled out of multiplexing read loop", Id);
+                        ConnectionLogger.LogError(t.Exception!, "Exception bubbled out of multiplexing read loop ({id})", Id);
                     }, TaskContinuationOptions.OnlyOnFaulted);
             }
 
@@ -911,7 +910,7 @@ public sealed partial class EDBConnector : IDisposable
 
                         var sslProtocols = SslProtocols.None;
                         // On .NET Framework SslProtocols.None can be disabled, see #3718
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB Team
                         sslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
 #endif
 
@@ -1129,7 +1128,7 @@ public sealed partial class EDBConnector : IDisposable
                 ? Settings.TcpKeepAliveInterval
                 : Settings.TcpKeepAliveTime;
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NETFRAMEWORK // EnterpriseDB 
             var timeMilliseconds = timeSeconds * 1000;
             var intervalMilliseconds = intervalSeconds * 1000;
 
@@ -1225,7 +1224,7 @@ public sealed partial class EDBConnector : IDisposable
                 }
             }
 
-            ConnectionLogger.LogTrace("Exiting multiplexing read loop", Id);
+            ConnectionLogger.LogTrace("Exiting multiplexing read loop ({id})", Id);
         }
         catch (Exception e)
         {
@@ -1260,7 +1259,7 @@ public sealed partial class EDBConnector : IDisposable
             // "Return" the connector to the pool to for cleanup (e.g. update total connector count)
             DataSource.Return(this);
 
-            ConnectionLogger.LogError(e, "Exception in multiplexing read loop", Id);
+            ConnectionLogger.LogError(e, "Exception in multiplexing read loop ({id})", Id);
         }
 
         Debug.Assert(CommandsInFlightCount == 0);
@@ -1285,7 +1284,7 @@ public sealed partial class EDBConnector : IDisposable
 
     #region Backend message processing
 
-    internal ValueTask<IBackendMessage> ReadMessage(bool async, DataRowLoadingMode dataRowLoadingMode = DataRowLoadingMode.NonSequential, bool checkDataAvailable = true)
+    internal ValueTask<IBackendMessage> ReadMessage(bool async, DataRowLoadingMode dataRowLoadingMode = DataRowLoadingMode.NonSequential, bool checkDataAvailable = true)  // EnterpriseDB Team
         => ReadMessage(async, dataRowLoadingMode, readingNotifications: false, checkDataAvailable)!;
 
     internal ValueTask<IBackendMessage?> ReadMessageWithNotifications(bool async)
@@ -1295,10 +1294,11 @@ public sealed partial class EDBConnector : IDisposable
         bool async,
         DataRowLoadingMode dataRowLoadingMode,
         bool readingNotifications,
-        bool checkDataAvailable = false)
+        bool checkDataAvailable = false) // EnterpriseDB Team
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-        //Specific condition for connection with PGPOOL.
+        // EnterpriseDB 
+		//Specific condition for connection with PGPOOL.
         //In case of EPAS, all data is received in single package for each message.
         //PgPool sends multiple packets for same message.
         if (Connection != null && Connection.Settings != null && Connection.Settings.IsPgPoolConnection)
@@ -1351,7 +1351,7 @@ public sealed partial class EDBConnector : IDisposable
             bool async,
             DataRowLoadingMode dataRowLoadingMode,
             bool readingNotifications,
-            bool checkDataAvailable = false,
+            bool checkDataAvailable = false, // EnterpriseDB 
             bool isReadingPrependedMessage = false)
         {
             // First read the responses of any prepended messages.
@@ -1572,6 +1572,7 @@ public sealed partial class EDBConnector : IDisposable
             return ParseCompleteMessage.Instance;
         case BackendMessageCode.ParameterDescription:
             _parameterDescriptionMessage.Load(buf);
+			// EnterpriseDB 
             var typeNames = _parameterDescriptionMessage.TypeOIDs.Select(oid => DatabaseInfo.ByOID.TryGetValue(oid, out var typeName) ? typeName.ToString() : "?");
             LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParameterDescription : {string.Join(",", typeNames)}");
             return _parameterDescriptionMessage;
@@ -1685,7 +1686,7 @@ public sealed partial class EDBConnector : IDisposable
 
     internal Task Rollback(bool async, CancellationToken cancellationToken = default)
     {
-        ConnectionLogger.LogDebug("Rolling back transaction", Id);
+        ConnectionLogger.LogDebug("Rolling back transaction ({id})", Id);
         return ExecuteInternalCommand(PregeneratedMessages.RollbackTransaction, async, cancellationToken);
     }
 
@@ -1920,7 +1921,7 @@ public sealed partial class EDBConnector : IDisposable
                 var socketException = e.InnerException as SocketException;
                 if (socketException == null || socketException.SocketErrorCode != SocketError.ConnectionReset)
                 {
-                    ConnectionLogger.LogDebug(e, "Exception caught while attempting to cancel command", Id);
+                    ConnectionLogger.LogDebug(e, "Exception caught while attempting to cancel command ({id})", Id);
                     return false;
                 }
             }
@@ -2035,7 +2036,7 @@ public sealed partial class EDBConnector : IDisposable
                 }
                 catch (Exception e)
                 {
-                    CopyLogger.LogWarning(e, "Error while cancelling COPY on connector close", Id);
+                    CopyLogger.LogWarning(e, "Error while cancelling COPY on connector close ({id})", Id);
                 }
             }
 
@@ -2048,7 +2049,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch (Exception e)
             {
-                CopyLogger.LogWarning(e, "Error while disposing cancelled COPY on connector close", Id);
+                CopyLogger.LogWarning(e, "Error while disposing cancelled COPY on connector close ({id})", Id);
             }
         }
     }
@@ -2073,7 +2074,7 @@ public sealed partial class EDBConnector : IDisposable
                 }
                 catch (Exception e)
                 {
-                    ConnectionLogger.LogError(e, "Exception while closing connector", Id);
+                    ConnectionLogger.LogError(e, "Exception while closing connector ({id})", Id);
                     Debug.Assert(IsBroken);
                 }
             }
@@ -2221,7 +2222,7 @@ public sealed partial class EDBConnector : IDisposable
                 // (see Open)
             }
 
-            ConnectionLogger.LogTrace("Cleaning up connector", Id);
+            ConnectionLogger.LogTrace("Cleaning up connector ({id})", Id);
             Cleanup();
 
             if (_isKeepAliveEnabled)
@@ -2648,7 +2649,7 @@ public sealed partial class EDBConnector : IDisposable
             }
             catch (Exception e2)
             {
-                ConnectionLogger.LogError(e2, "Further exception while breaking connector on keepalive failure", Id);
+                ConnectionLogger.LogError(e2, "Further exception while breaking connector on keepalive failure ({id})", Id);
             }
         }
         finally

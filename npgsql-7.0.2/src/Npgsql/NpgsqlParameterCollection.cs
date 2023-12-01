@@ -30,25 +30,19 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
     private int return_index = -1;
     internal bool _hasReturnParam = false;
 
-    /* EnterpriseDB Team */
-    /// <summary>
-    /// 
-    /// </summary>
+    // EnterpriseDB Team>
     public bool HasReturnParam
     {
         get { return _hasReturnParam; }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
+   // EnterpriseDB Team
     public int ReturnIndex
     {
         get { return return_index; }
     }
-    /// <summary>
-    /// 
-    /// </summary>
+
+    // EnterpriseDB Team
     public EDBParameter ReturnParam
     {
         get { return return_param; }

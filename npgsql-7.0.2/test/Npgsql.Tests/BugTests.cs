@@ -132,7 +132,7 @@ public class BugTests : TestBase
             .FlushAsync();
         var ex = Assert.ThrowsAsync<EDBException>(async () =>
         {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB
             using var importer = await conn.BeginTextImportAsync($"COPY SomeTable (field_text, field_int4) FROM STDIN");
 #else
             await using var importer = await conn.BeginTextImportAsync($"COPY SomeTable (field_text, field_int4) FROM STDIN");

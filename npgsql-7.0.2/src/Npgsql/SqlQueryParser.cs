@@ -9,7 +9,7 @@ sealed class SqlQueryParser
 {
     readonly Dictionary<string, int> _paramIndexMap = new();
     readonly StringBuilder _rewrittenSql = new();
-    string? sqlString;
+    string? sqlString; // EnterpriseDB Team
     readonly bool supportsRedwoodDialect; // EnterpriseDB Team
 
     // EnterpriseDB Team
@@ -87,7 +87,7 @@ sealed class SqlQueryParser
             sql = command.CommandText;
             parameters = command.Parameters;
             batchCommands = command.InternalBatchCommands;
-            if (command?.InternalConnection?.Connector?.CommandLogger != null)
+            if (command?.InternalConnection?.Connector?.CommandLogger != null) // EnterpriseDB Team
             {
                 LogMessages.TryEDBTrace(command?.InternalConnection?.Connector!.CommandLogger!, $"ParseRawQuery. Command has {batchCommands.Count} item(s)");
             }
@@ -113,7 +113,7 @@ sealed class SqlQueryParser
         var currTokenBeg = 0;
         var blockCommentLevel = 0;
         var parenthesisLevel = 0;
-        sqlString = sql.ToString();
+        sqlString = sql.ToString(); // EnterpriseDB Team
 
         var temp = sql.ToString().ToUpper();//EnterpriseDB Team
         if (ContainsSPLStartingKeyword(temp))
@@ -184,6 +184,7 @@ sealed class SqlQueryParser
                     variableDeclare++;
                 }
             }
+			// ^^^ EnterpriseDB Team
             switch (ch)
             {
             case '/':
@@ -231,8 +232,8 @@ sealed class SqlQueryParser
                 {
                     break;
                 }
-            case 'x':
-            case 'X':
+            case 'x': //EnterpriseDB Team
+            case 'X': //EnterpriseDB Team
                 if (!IsLetter(lastChar))
                     goto EscapedStart;
                 break;
@@ -539,7 +540,7 @@ sealed class SqlQueryParser
         goto Finish;
 
         SemiColon:
-        if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0))//EnterpriseDB Team
+        if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0)) //EnterpriseDB Team
         {
             currCharOfs++;
             //      ch = sql[currCharOfs];
@@ -581,9 +582,9 @@ sealed class SqlQueryParser
 
             statementIndex++;
             isProcedure = false;
-            if (sqlString != null)
+            if (sqlString != null) //EnterpriseDB Team
             {
-                temp = sqlString.ToUpper();//EnterpriseDB Team
+                temp = sqlString.ToUpper();
                 if (ContainsSPLStartingKeyword(temp))
                     isProcedure = true;
             }
@@ -620,6 +621,7 @@ sealed class SqlQueryParser
         }
     }
 
+	//EnterpriseDB Team
     private bool ContainsSPLStartingKeyword(string temp)
     {
         // abort if postgres

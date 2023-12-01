@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.Tests;
 
 public class StoredProcedureTests : TestBase
 {
-    [Test, EDBExplicit("Works in community"),]
+    [Test, EDBExplicit("Works in community")]
     [TestCase(true, false)]
     [TestCase(false, true)]
     [TestCase(true, true)]
@@ -91,7 +91,7 @@ END$$");
         Assert.That(reader[1], Is.EqualTo(9));
     }
 
-    [Test, EDBExplicit("Works in community"),]
+    [Test, EDBExplicit("Works in community")]
     [TestCase(true, false)]
     [TestCase(false, true)]
     [TestCase(true, true)]
@@ -137,7 +137,7 @@ END$$");
     {
         
         await using var conn = await OpenConnectionAsync();
-        TestUtil.EnsureEDBAdvancedServer(conn);
+        TestUtil.EnsureEDBAdvancedServer(conn); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Stored procedure OUT parameters are only support starting with version 14");
         var sproc = await GetTempProcedureName(conn);
@@ -170,7 +170,7 @@ $$ LANGUAGE plpgsql");
         Assert.That(command.Parameters[2].ParameterName, Is.EqualTo("param3"));
         command.Parameters[0].Value = 5;
         command.Parameters[2].Value = 4;
-	command.Prepare();
+		command.Prepare(); // EnterpriseDB
         await command.ExecuteNonQueryAsync();
         Assert.That(command.Parameters[0].Value, Is.EqualTo(5));
         Assert.That(command.Parameters[1].Value, Is.EqualTo("sometext"));
@@ -181,7 +181,7 @@ $$ LANGUAGE plpgsql");
     public async Task DeriveParameters_procedure_in_only()
     {
         await using var conn = await OpenConnectionAsync();
-        TestUtil.EnsureEDBAdvancedServer(conn);
+        TestUtil.EnsureEDBAdvancedServer(conn); // EnterpriseDB
         var sproc = await GetTempProcedureName(conn);
 
         await conn.ExecuteNonQueryAsync($@"CREATE PROCEDURE {sproc}(IN param1 INT, IN param2 INT) AS '' LANGUAGE sql");

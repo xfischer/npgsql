@@ -316,7 +316,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 if (_statements[StatementIndex].AppendErrorBarrier ?? Command.EnableErrorBarriers)
                     Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async), Connector);
                 return false;
-            case BackendMessageCode.ReadyForQuery: // EntepriseDB Team EC-2716
+            case BackendMessageCode.ReadyForQuery: // EnterpriseDB Team EC-2716
                 ProcessMessage(msg);
                 return false;
 
@@ -469,7 +469,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                     }
 
-                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async, checkDataAvailable: true), Connector);
+                    Expect<ParseCompleteMessage>(await Connector.ReadMessage(async, checkDataAvailable: true), Connector); // EnterpriseDB (additional param)
 
                     if (statement.IsPreparing)
                     {
@@ -549,9 +549,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 else
                 {
                     msg = await ReadMessage(async); // ZK: Connector._isCallableStmt == true
-                    if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
+                    if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure)
                         msg = await ReadMessage(async);
-                    if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure && Connector._isScaler == true && Connector._hasRefCursor == false)
+                    if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure)
                         msg = await ReadMessage(async);
 
                     //   ProcessMessage(msg);
@@ -579,7 +579,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.NoData:
                 case BackendMessageCode.RowDescription:
                     State = ReaderState.InResult;
-                    if (Command.CommandType == CommandType.StoredProcedure && (Command.Parameters.HasOutputParameters || Command.Parameters._hasReturnParam || Connector._isScaler))//EnterpriseDB Team
+                    if (Command.CommandType == CommandType.StoredProcedure && (
+                        Command.Parameters.HasOutputParameters
+                        || Command.Parameters._hasReturnParam
+                        || Connector._isScaler))//EnterpriseDB Team
                     {
                         await PopulateOutputParameters(async);
                     }
@@ -673,7 +676,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
     }
 
-    void PopulateNonPreparedOutputParameters()
+    void PopulateNonPreparedOutputParameters() // EnterpriseDB (renamed)
     {
         // The first row in a stored procedure command that has output parameters needs to be traversed twice -
         // once for populating the output parameters and once for the actual result set traversal. So in this
@@ -719,7 +722,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         PosInColumn = 0;
     }
 
-    async Task PopulateOutputParameters(bool async)
+    async Task PopulateOutputParameters(bool async) // EnterpriseDB (renamed)
     {
         // The first row in a stored procedure command that has output parameters needs to be traversed twice -
         // once for populating the output parameters and once for the actual result set traversal. So in this
@@ -1211,7 +1214,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             State = ReaderState.BetweenResults;
             return;
 
-        case BackendMessageCode.ReadyForQuery:
+        case BackendMessageCode.ReadyForQuery: // EnterpriseDB
             State = ReaderState.Consumed;
             return;
 
@@ -1220,7 +1223,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
     }
 
-    internal void ProcessDataRowMessage(DataRowMessage msg)
+    internal void ProcessDataRowMessage(DataRowMessage msg)  // EnterpriseDB (internal)
     {
         Connector.State = ConnectorState.Fetching;
 
@@ -1269,7 +1272,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
     }
 
-    internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow)
+    internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow) // EnterpriseDB
     {
         if (Command.CommandType == CommandType.StoredProcedure)
         {
@@ -1424,7 +1427,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         {
             try
             {
-                if (Command.CommandType != CommandType.StoredProcedure)
+                if (Command.CommandType != CommandType.StoredProcedure) // EnterpriseDB (check added)
                 {
                     if (!(_isSchemaOnly
                         ? await NextResultSchemaOnly(async, isConsuming: true)
@@ -1535,7 +1538,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <summary>
     /// Releases the resources used by the <see cref="EDBDataReader"/>.
     /// </summary>
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
     public ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()
@@ -1580,7 +1583,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <summary>
     /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
     /// </summary>
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
     public Task CloseAsync()
 #else
     public override Task CloseAsync()
@@ -1681,7 +1684,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 catch (Exception e)
                 {
                     // TODO: think of a better way to handle exceptions, see #1323 and #3163
-                    _commandLogger.LogDebug(e, "Exception caught while sending the request", Connector.Id);
+                    _commandLogger.LogDebug(e, "Exception caught while sending the request ({id})", Connector.Id);
                 }
             }
         }
@@ -2427,13 +2430,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         return result;
     }
 
-    internal async Task SeekToColumnStart(int column, bool async)
+	// EnterpriseDB
+    internal async Task SeekToColumnStart(int column, bool async) 
     {
         await SeekToColumnNew(column, async);
         if (PosInColumn != 0)
             await SeekInColumn(0, async);
     }
 
+	// EnterpriseDB
     internal Task SeekToColumnNew(int column, bool async)
     {
         CheckColumnIndex(column);
@@ -2449,6 +2454,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         return Task.CompletedTask;
     }
+	
+	// EnterpriseDB
     internal void CheckColumnIndex(int column)
     {
         if (column < 0 || column >= _columns.Count)
@@ -2853,10 +2860,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             await Buffer.Ensure(4, async);
             var len = Buffer.ReadInt32();
             if (len != -1)
-                await Buffer.Skip(len, async, checkDataAvailable:true);
+                await Buffer.Skip(len, async, checkDataAvailable:true); // EnterpriseDB (additional param)
         }
 
-        await Buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true);
+        await Buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true); // EnterpriseDB (additional param)
         ColumnLen = Buffer.ReadInt32();
         PosInColumn = 0;
         _column = column;

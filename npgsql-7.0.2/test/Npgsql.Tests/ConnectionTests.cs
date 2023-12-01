@@ -21,7 +21,7 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class ConnectionTests : MultiplexingTestBase
 {
     [Test, Description("Makes sure the connection goes through the proper state lifecycle")]
@@ -199,8 +199,7 @@ public class ConnectionTests : MultiplexingTestBase
     {
         var connString = new EDBConnectionStringBuilder(ConnectionString)
         {
-            Username = "unknown",
-            Pooling = false
+            Username = "unknown", Pooling = false
         }.ToString();
         using var conn = new EDBConnection(connString);
         Assert.That(conn.Open, Throws.Exception
@@ -670,7 +669,7 @@ public class ConnectionTests : MultiplexingTestBase
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/703")]
     public async Task No_database_defaults_to_username()
     {
-        using var tempCon = OpenConnection();
+        using var tempCon = OpenConnection(); // EnterpriseDB
         TestUtil.EnsurePostgres(tempCon);
 
         var csb = new EDBConnectionStringBuilder(ConnectionString) { Database = null };
@@ -1234,7 +1233,7 @@ CREATE TABLE record ()");
         }
     }
 
-#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1
+#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     [Test, Timeout(10000), IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
     [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]

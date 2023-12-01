@@ -4,7 +4,7 @@ using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
-[NonParallelizable]
+[NonParallelizable] // EnterpriseDB
 public class DomainTests : MultiplexingTestBase
 {
     [Test, Description("Resolves a domain type handler via the different pathways")]

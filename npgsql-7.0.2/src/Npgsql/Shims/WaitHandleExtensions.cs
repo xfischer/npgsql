@@ -1,4 +1,4 @@
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
 using System.Threading.Tasks;
 
 // ReSharper disable once CheckNamespace

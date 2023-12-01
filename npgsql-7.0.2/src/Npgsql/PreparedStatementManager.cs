@@ -12,7 +12,7 @@ sealed class PreparedStatementManager
     internal int MaxAutoPrepared { get; }
     internal int UsagesBeforePrepare { get; }
 
-    private HashSet<DateTime> _assignedDates = new();
+    private HashSet<DateTime> _assignedDates = new(); // EnterpriseDB Team
     internal Dictionary<string, PreparedStatement> BySql { get; } = new();
     internal PreparedStatement?[] AutoPrepared { get; }
 
@@ -28,7 +28,7 @@ sealed class PreparedStatementManager
     internal string NextPreparedStatementName() => "_p" + (++_preparedStatementIndex);
     ulong _preparedStatementIndex;
 
-    internal readonly ILogger _commandLogger;
+    internal readonly ILogger _commandLogger; // EnterpriseDB Team (internal)
 
     internal const int CandidateCount = 100;
 
@@ -148,7 +148,7 @@ sealed class PreparedStatementManager
             if (!pStatement.DoParametersMatch(batchCommand.PositionalParameters))
                 return null;
             // Prevent this statement from being replaced within this batch
-            SetLastUsed(pStatement, DateTime.MaxValue);
+            SetLastUsed(pStatement, DateTime.MaxValue); // EnterpriseDB Team (SetLastUsed)
             return pStatement;
 
         case PreparedState.BeingUnprepared:
@@ -164,7 +164,7 @@ sealed class PreparedStatementManager
         {
             // Statement still hasn't passed the usage threshold, no automatic preparation.
             // Return null for unprepared execution.
-            SetLastUsed(pStatement, DateTime.UtcNow);
+            SetLastUsed(pStatement, DateTime.UtcNow); // EnterpriseDB Team (SetLastUsed)
             return null;
         }
 
@@ -246,7 +246,7 @@ sealed class PreparedStatementManager
 
 
         // Make sure this statement isn't replaced by a later statement in the same batch.
-        SetLastUsed(pStatement, DateTime.MaxValue);
+        SetLastUsed(pStatement, DateTime.MaxValue); // EnterpriseDB Team (SetLastUsed)
 
         // Note that the parameter types are only set at the moment of preparation - in the candidate phase
         // there's no differentiation between overloaded statements, which are a pretty rare case, saving
@@ -273,7 +273,7 @@ sealed class PreparedStatementManager
 
     internal void ClearAll()
     {
-        _assignedDates.Clear();
+        _assignedDates.Clear(); // EnterpriseDB Team (SetLastUsed)
         BySql.Clear();
         NumPrepared = 0;
         _preparedStatementIndex = 0;
