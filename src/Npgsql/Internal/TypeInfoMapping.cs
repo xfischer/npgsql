@@ -186,7 +186,7 @@ public sealed class TypeInfoMappingCollection
         => TryGetMapping(type, dataTypeName, out var info) ? info : throw new InvalidOperationException($"Could not find mapping for {type} <-> {dataTypeName}");
 
     // Helper to eliminate generic display class duplication.
-    static TypeInfoFactory CreateComposedFactory(Type mappingType, TypeInfoMapping innerMapping, Func<TypeInfoMapping, PgTypeInfo, PgConverter> mapper, bool copyPreferredFormat = false, bool supportsWriting = true)
+    static TypeInfoFactory CreateComposedFactory(Type mappingType, TypeInfoMapping innerMapping, Func<TypeInfoMapping, PgTypeInfo, PgConverter> mapper, bool copyPreferredFormat = false, bool? supportsReading = null, bool? supportsWriting = null)
         => (options, mapping, dataTypeNameMatch) =>
         {
             var resolvedInnerMapping = innerMapping;
@@ -197,8 +197,8 @@ public sealed class TypeInfoMappingCollection
             var converter = mapper(mapping, innerInfo);
             var preferredFormat = copyPreferredFormat ? innerInfo.PreferredFormat : null;
             var unboxedType = ComputeUnboxedType(defaultType: mappingType, converter.TypeToConvert, mapping.Type);
-            var readingSupported = innerInfo.SupportsReading && PgTypeInfo.GetDefaultSupportsReading(converter.TypeToConvert, unboxedType);
-            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
+            var readingSupported = innerInfo.SupportsReading && (supportsReading ?? PgTypeInfo.GetDefaultSupportsReading(converter.TypeToConvert, unboxedType));
+            var writingSupported = innerInfo.SupportsWriting && (supportsWriting ?? true);
 
             return new PgTypeInfo(options, converter, options.GetCanonicalTypeId(new DataTypeName(mapping.DataTypeName)), unboxedType)
             {
@@ -209,7 +209,7 @@ public sealed class TypeInfoMappingCollection
         };
 
     // Helper to eliminate generic display class duplication.
-    static TypeInfoFactory CreateComposedFactory(Type mappingType, TypeInfoMapping innerMapping, Func<TypeInfoMapping, PgResolverTypeInfo, PgConverterResolver> mapper, bool copyPreferredFormat = false, bool supportsWriting = true)
+    static TypeInfoFactory CreateComposedFactory(Type mappingType, TypeInfoMapping innerMapping, Func<TypeInfoMapping, PgResolverTypeInfo, PgConverterResolver> mapper, bool copyPreferredFormat = false, bool? supportsReading = null, bool? supportsWriting = null)
         => (options, mapping, dataTypeNameMatch) =>
         {
             var resolvedInnerMapping = innerMapping;
@@ -220,8 +220,8 @@ public sealed class TypeInfoMappingCollection
             var resolver = mapper(mapping, innerInfo);
             var preferredFormat = copyPreferredFormat ? innerInfo.PreferredFormat : null;
             var unboxedType = ComputeUnboxedType(defaultType: mappingType, resolver.TypeToConvert, mapping.Type);
-            var readingSupported = innerInfo.SupportsReading && PgTypeInfo.GetDefaultSupportsReading(resolver.TypeToConvert, unboxedType);
-            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
+            var readingSupported = innerInfo.SupportsReading && (supportsReading ?? PgTypeInfo.GetDefaultSupportsReading(resolver.TypeToConvert, unboxedType));
+            var writingSupported = innerInfo.SupportsWriting && (supportsWriting ?? true);
             // We include the data type name if the inner info did so as well.
             // This way we can rely on its logic around resolvedDataTypeName, including when it ignores that flag.
             PgTypeId? pgTypeId = innerInfo.PgTypeId is not null
@@ -344,7 +344,7 @@ public sealed class TypeInfoMappingCollection
 
         void AddArrayType(TypeInfoMapping elementMapping, Type type, Func<TypeInfoMapping, PgTypeInfo, PgConverter> converter, Func<Type?, bool>? typeMatchPredicate = null, bool suppressObjectMapping = false)
         {
-            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter))
+            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter, supportsReading: true))
             {
                 MatchRequirement = elementMapping.MatchRequirement,
                 TypeMatchPredicate = typeMatchPredicate
@@ -384,7 +384,7 @@ public sealed class TypeInfoMappingCollection
 
         void AddResolverArrayType(TypeInfoMapping elementMapping, Type type, Func<TypeInfoMapping, PgResolverTypeInfo, PgConverterResolver> converter, Func<Type?, bool>? typeMatchPredicate = null, bool suppressObjectMapping = false)
         {
-            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter))
+            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter, supportsReading: true))
             {
                 MatchRequirement = elementMapping.MatchRequirement,
                 TypeMatchPredicate = typeMatchPredicate
@@ -476,12 +476,12 @@ public sealed class TypeInfoMappingCollection
         Func<Type?, bool>? typeMatchPredicate, Func<Type?, bool>? nullableTypeMatchPredicate, bool suppressObjectMapping)
     {
         var arrayDataTypeName = GetArrayDataTypeName(elementMapping.DataTypeName);
-        var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter))
+        var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter, supportsReading: true))
         {
             MatchRequirement = elementMapping.MatchRequirement,
             TypeMatchPredicate = typeMatchPredicate
         };
-        var nullableArrayMapping = new TypeInfoMapping(nullableType, arrayDataTypeName, CreateComposedFactory(nullableType, nullableElementMapping, nullableConverter))
+        var nullableArrayMapping = new TypeInfoMapping(nullableType, arrayDataTypeName, CreateComposedFactory(nullableType, nullableElementMapping, nullableConverter, supportsReading: true))
         {
             MatchRequirement = arrayMapping.MatchRequirement,
             TypeMatchPredicate = nullableTypeMatchPredicate
@@ -594,12 +594,12 @@ public sealed class TypeInfoMappingCollection
         {
             var arrayDataTypeName = GetArrayDataTypeName(elementMapping.DataTypeName);
 
-            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter))
+            var arrayMapping = new TypeInfoMapping(type, arrayDataTypeName, CreateComposedFactory(type, elementMapping, converter, supportsReading: true))
             {
                 MatchRequirement = elementMapping.MatchRequirement,
                 TypeMatchPredicate = typeMatchPredicate
             };
-            var nullableArrayMapping = new TypeInfoMapping(nullableType, arrayDataTypeName, CreateComposedFactory(nullableType, nullableElementMapping, nullableConverter))
+            var nullableArrayMapping = new TypeInfoMapping(nullableType, arrayDataTypeName, CreateComposedFactory(nullableType, nullableElementMapping, nullableConverter, supportsReading: true))
             {
                 MatchRequirement = elementMapping.MatchRequirement,
                 TypeMatchPredicate = nullableTypeMatchPredicate
@@ -647,7 +647,7 @@ public sealed class TypeInfoMappingCollection
         {
             var arrayDataTypeName = GetArrayDataTypeName(elementMapping.DataTypeName);
             var mapping = new TypeInfoMapping(type, arrayDataTypeName,
-                CreateComposedFactory(typeof(Array), elementMapping, converter, supportsWriting: false))
+                CreateComposedFactory(typeof(Array), elementMapping, converter, supportsReading: true, supportsWriting: false))
             {
                 MatchRequirement = elementMapping.MatchRequirement,
                 TypeMatchPredicate = typeMatchPredicate
