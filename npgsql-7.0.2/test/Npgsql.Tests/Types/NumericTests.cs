@@ -8,7 +8,6 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
-[NonParallelizable] // EnterpriseDB
 public class NumericTests : MultiplexingTestBase
 {
     static readonly object[] ReadWriteCases = new[]

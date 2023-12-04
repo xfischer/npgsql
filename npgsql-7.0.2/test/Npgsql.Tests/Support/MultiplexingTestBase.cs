@@ -5,7 +5,6 @@ namespace EnterpriseDB.EDBClient.Tests;
 
 [TestFixture(MultiplexingMode.NonMultiplexing)]
 [TestFixture(MultiplexingMode.Multiplexing)]
-[NonParallelizable] // EnterpriseDB
 public abstract class MultiplexingTestBase : TestBase
 {
     protected bool IsMultiplexing => MultiplexingMode == MultiplexingMode.Multiplexing;

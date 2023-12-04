@@ -336,7 +336,7 @@ public sealed partial class EDBConnector : IDisposable
     readonly ParameterDescriptionMessage _parameterDescriptionMessage = new();
     readonly DataRowMessage _dataRowMessage = new();
     readonly RowDescriptionMessage _rowDescriptionMessage = new();
-    readonly DataRowMessage _outParamDataRowMessage = new();
+    readonly DataRowMessage _outParamDataRowMessage = new(); // EnterpriseDB Team
 
     // Since COPY is rarely used, allocate these lazily
     CopyInResponseMessage? _copyInResponseMessage;

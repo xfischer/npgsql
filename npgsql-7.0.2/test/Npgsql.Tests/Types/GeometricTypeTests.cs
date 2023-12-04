@@ -10,7 +10,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-geometric.html
 /// </remarks>
-[NonParallelizable] // EnterpriseDB
 class GeometricTypeTests : MultiplexingTestBase
 {
     [Test]

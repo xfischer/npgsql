@@ -13,7 +13,6 @@ namespace EnterpriseDB.EDBClient.Tests;
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.Default)]
 [TestFixture(MultiplexingMode.NonMultiplexing, CommandBehavior.SequentialAccess)]
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.SequentialAccess)]
-[NonParallelizable] // EnterpriseDB
 public class BatchTests : MultiplexingTestBase
 {
     #region Parameters

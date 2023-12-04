@@ -13,6 +13,8 @@ public sealed class EDBCommandTests : CommandTestBase<EDBDbFactoryFixture>
     // EDB completely ignores DbCommand.Transaction.
     public override void ExecuteReader_throws_when_transaction_required() {}
     public override void ExecuteReader_throws_when_transaction_mismatched() {}
+
+    // EnterpriseDB
     public override void ExecuteReader_throws_when_reader_open() { }
 
 }

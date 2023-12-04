@@ -10,6 +10,6 @@ public sealed class EDBConnectionTests : ConnectionTestBase<EDBDbFactoryFixture>
     {
     }
 
+    // EnterpriseDB
     public override Task OpenAsync_is_canceled() { return Task.CompletedTask; }
-
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;

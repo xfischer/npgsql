@@ -21,7 +21,7 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
-[NonParallelizable] // EnterpriseDB
+
 public class ConnectionTests : MultiplexingTestBase
 {
     [Test, Description("Makes sure the connection goes through the proper state lifecycle")]

@@ -14,7 +14,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-character.html
 /// </remarks>
-[NonParallelizable] // EnterpriseDB
 public class TextTests : MultiplexingTestBase
 {
     [Test]

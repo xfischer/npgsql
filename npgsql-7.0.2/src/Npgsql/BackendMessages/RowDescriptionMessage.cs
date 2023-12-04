@@ -21,7 +21,7 @@ namespace EnterpriseDB.EDBClient.BackendMessages;
 /// </remarks>
 sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescription>
 {
-    public FieldDescription?[] _fields;
+    public FieldDescription?[] _fields; // EnterpriseDB changed scope to public
     readonly Dictionary<string, int> _nameIndex;
     Dictionary<string, int>? _insensitiveIndex;
 

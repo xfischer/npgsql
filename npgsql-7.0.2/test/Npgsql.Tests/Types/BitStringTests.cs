@@ -13,7 +13,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-bit.html
 /// </remarks>
-[NonParallelizable] // EnterpriseDB
 public class BitStringTests : MultiplexingTestBase
 {
     [Test]

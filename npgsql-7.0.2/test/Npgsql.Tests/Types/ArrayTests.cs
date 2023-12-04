@@ -9,7 +9,6 @@ using EnterpriseDB.EDBClient.Internal.TypeHandlers;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
-using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
@@ -19,7 +18,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/arrays.html
 /// </remarks>
-[NonParallelizable] // EnterpriseDB
 public class ArrayTests : MultiplexingTestBase
 {
     [Test, Description("Resolves an array type handler via the different pathways")]

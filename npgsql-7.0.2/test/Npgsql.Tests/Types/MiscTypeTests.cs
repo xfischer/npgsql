@@ -2,7 +2,6 @@
 using System.Data;
 using System.Threading.Tasks;
 using EDBTypes;
-using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
@@ -10,7 +9,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <summary>
 /// Tests on PostgreSQL types which don't fit elsewhere
 /// </summary>
-[NonParallelizable] // EnterpriseDB
 class MiscTypeTests : MultiplexingTestBase
 {
     [Test]

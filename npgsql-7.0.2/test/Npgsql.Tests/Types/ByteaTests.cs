@@ -15,7 +15,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// https://www.postgresql.org/docs/current/static/datatype-binary.html
 /// </summary>
 
-[NonParallelizable] // EnterpriseDB
 public class ByteaTests : MultiplexingTestBase
 {
     [Test]
