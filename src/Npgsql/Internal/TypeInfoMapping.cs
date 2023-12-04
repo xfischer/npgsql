@@ -740,6 +740,9 @@ public static class TypeInfoMappingHelpers
     internal static PostgresType GetPgType(this TypeInfoMapping mapping, PgSerializerOptions options)
         => options.DatabaseInfo.GetPostgresType(new DataTypeName(mapping.DataTypeName));
 
+    public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverter converter)
+        => mapping.CreateInfo(options, converter, preferredFormat: null, supportsReading: null, supportsWriting: null);
+
     [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 8.0", error: true)]
     public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverter converter, DataFormat? preferredFormat, bool supportsWriting)
         => mapping.CreateInfo(options, converter, preferredFormat, supportsReading: null, supportsWriting: supportsWriting);
@@ -751,6 +754,9 @@ public static class TypeInfoMappingHelpers
             SupportsReading = supportsReading ?? PgTypeInfo.GetDefaultSupportsReading(mapping.Type, unboxedType: null),
             SupportsWriting = supportsWriting ?? true
         };
+
+    public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverterResolver resolver)
+        => mapping.CreateInfo(options, resolver, includeDataTypeName: true, preferredFormat: null, supportsReading: null, supportsWriting: null);
 
     [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 8.0", error: true)]
     public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverterResolver resolver, bool includeDataTypeName, DataFormat? preferredFormat, bool supportsWriting)

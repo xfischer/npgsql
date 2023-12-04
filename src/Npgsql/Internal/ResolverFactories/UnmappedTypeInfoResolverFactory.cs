@@ -94,7 +94,7 @@ sealed partial class UnmappedTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 (options, mapping, _) => mapping.CreateInfo(options,
                     (PgConverter)Activator.CreateInstance(typeof(RangeConverter<>).MakeGenericType(subInfo.Type),
                         subInfo.GetResolution().Converter)!,
-                    preferredFormat: subInfo.PreferredFormat, supportsWriting: subInfo.SupportsWriting),
+                    preferredFormat: subInfo.PreferredFormat, supportsReading: null, supportsWriting: subInfo.SupportsWriting),
                 mapping => mapping with { MatchRequirement = MatchRequirement.Single });
         }
     }
@@ -146,7 +146,7 @@ sealed partial class UnmappedTypeInfoResolverFactory : PgTypeInfoResolverFactory
             return CreateCollection().AddMapping(type, dataTypeName,
                 (options, mapping, _) => mapping.CreateInfo(options,
                     (PgConverter)Activator.CreateInstance(typeof(MultirangeConverter<,>).MakeGenericType(type, subInfo.Type), subInfo.GetResolution().Converter)!,
-                    preferredFormat: subInfo.PreferredFormat, supportsWriting: subInfo.SupportsWriting),
+                    preferredFormat: subInfo.PreferredFormat, supportsReading: null, supportsWriting: subInfo.SupportsWriting),
                 mapping => mapping with { MatchRequirement = MatchRequirement.Single });
         }
     }

@@ -86,10 +86,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Text,
-                static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Text,
-                static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Alternative text types
@@ -113,10 +113,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                     mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
                 //Special mappings, these have no corresponding array mapping.
                 mappings.AddType<TextReader>(dataTypeName,
-                    static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                    static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                     MatchRequirement.DataTypeName);
                 mappings.AddStructType<GetChars>(dataTypeName,
-                    static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                    static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                     MatchRequirement.DataTypeName);
             }
 
@@ -137,10 +137,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Jsonb,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonbVersion, new TextReaderTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonbVersion, new TextReaderTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Jsonb,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonbVersion, new GetCharsTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonbVersion, new GetCharsTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Jsonpath
@@ -149,10 +149,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<string>(jsonpathVersion, new StringTextConverter(options.TextEncoding))), isDefault: true);
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Jsonpath,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonpathVersion, new TextReaderTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonpathVersion, new TextReaderTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Jsonpath,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonpathVersion, new GetCharsTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonpathVersion, new GetCharsTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsReading: null, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Bytea
