@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -195,12 +196,14 @@ public sealed class TypeInfoMappingCollection
             var innerInfo = innerMapping.Factory(options, resolvedInnerMapping, dataTypeNameMatch);
             var converter = mapper(mapping, innerInfo);
             var preferredFormat = copyPreferredFormat ? innerInfo.PreferredFormat : null;
-            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
             var unboxedType = ComputeUnboxedType(defaultType: mappingType, converter.TypeToConvert, mapping.Type);
+            var readingSupported = innerInfo.SupportsReading && PgTypeInfo.GetDefaultSupportsReading(converter.TypeToConvert, unboxedType);
+            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
 
             return new PgTypeInfo(options, converter, options.GetCanonicalTypeId(new DataTypeName(mapping.DataTypeName)), unboxedType)
             {
                 PreferredFormat = preferredFormat,
+                SupportsReading = readingSupported,
                 SupportsWriting = writingSupported
             };
         };
@@ -216,8 +219,9 @@ public sealed class TypeInfoMappingCollection
             var innerInfo = (PgResolverTypeInfo)innerMapping.Factory(options, resolvedInnerMapping, dataTypeNameMatch);
             var resolver = mapper(mapping, innerInfo);
             var preferredFormat = copyPreferredFormat ? innerInfo.PreferredFormat : null;
-            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
             var unboxedType = ComputeUnboxedType(defaultType: mappingType, resolver.TypeToConvert, mapping.Type);
+            var readingSupported = innerInfo.SupportsReading && PgTypeInfo.GetDefaultSupportsReading(resolver.TypeToConvert, unboxedType);
+            var writingSupported = supportsWriting && innerInfo.SupportsWriting;
             // We include the data type name if the inner info did so as well.
             // This way we can rely on its logic around resolvedDataTypeName, including when it ignores that flag.
             PgTypeId? pgTypeId = innerInfo.PgTypeId is not null
@@ -226,6 +230,7 @@ public sealed class TypeInfoMappingCollection
             return new PgResolverTypeInfo(options, resolver, pgTypeId, unboxedType)
             {
                 PreferredFormat = preferredFormat,
+                SupportsReading = readingSupported,
                 SupportsWriting = writingSupported
             };
         };
@@ -735,17 +740,18 @@ public static class TypeInfoMappingHelpers
     internal static PostgresType GetPgType(this TypeInfoMapping mapping, PgSerializerOptions options)
         => options.DatabaseInfo.GetPostgresType(new DataTypeName(mapping.DataTypeName));
 
-    public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverter converter, DataFormat? preferredFormat = null, bool supportsWriting = true)
+    public static PgTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverter converter, DataFormat? preferredFormat = null, bool? supportsReading = null, bool? supportsWriting = null)
         => new(options, converter, new DataTypeName(mapping.DataTypeName))
         {
             PreferredFormat = preferredFormat,
-            SupportsWriting = supportsWriting
+            SupportsReading = supportsReading ?? PgTypeInfo.GetDefaultSupportsReading(mapping.Type, unboxedType: null),
+            SupportsWriting = supportsWriting ?? true
         };
-
-    public static PgResolverTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverterResolver resolver, bool includeDataTypeName = true, DataFormat? preferredFormat = null, bool supportsWriting = true)
+    public static PgResolverTypeInfo CreateInfo(this TypeInfoMapping mapping, PgSerializerOptions options, PgConverterResolver resolver, bool includeDataTypeName = true, DataFormat? preferredFormat = null, bool? supportsReading = null, bool? supportsWriting = null)
         => new(options, resolver, includeDataTypeName ? new DataTypeName(mapping.DataTypeName) : null)
         {
             PreferredFormat = preferredFormat,
-            SupportsWriting = supportsWriting
+            SupportsReading = supportsReading ?? PgTypeInfo.GetDefaultSupportsReading(mapping.Type, unboxedType: null),
+            SupportsWriting = supportsWriting ?? true
         };
 }

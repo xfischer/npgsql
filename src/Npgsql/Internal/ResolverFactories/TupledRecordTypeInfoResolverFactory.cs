@@ -23,9 +23,9 @@ sealed class TupledRecordTypeInfoResolverFactory : PgTypeInfoResolverFactory
         public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
             => Mappings.Find(type, dataTypeName, options);
 
-        // Stand-in type, type match predicate does the actual work.
         static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings)
         {
+            // Stand-in type, type match predicate does the actual work.
             mappings.AddType<Tuple<object>>(DataTypeNames.Record, Factory,
                 mapping => mapping with
                 {
@@ -34,6 +34,7 @@ sealed class TupledRecordTypeInfoResolverFactory : PgTypeInfoResolverFactory
                                                  && type.FullName.StartsWith("System.Tuple", StringComparison.Ordinal)
                 });
 
+            // Stand-in type, type match predicate does the actual work.
             mappings.AddStructType<ValueTuple<object>>(DataTypeNames.Record, Factory,
                     mapping => mapping with
                     {

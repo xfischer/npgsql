@@ -16,6 +16,8 @@ static class AdoSerializerHelpers
         try
         {
             typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfo(postgresType) : options.GetTypeInfo(type, postgresType);
+            if (typeInfo is { SupportsReading: false })
+                typeInfo = null;
         }
         catch (Exception ex)
         {
@@ -38,6 +40,8 @@ static class AdoSerializerHelpers
         try
         {
             typeInfo = type is null ? options.GetDefaultTypeInfo(pgTypeId!.Value) : options.GetTypeInfo(type, pgTypeId);
+            if (typeInfo is { SupportsWriting: false })
+                typeInfo = null;
         }
         catch (Exception ex)
         {
