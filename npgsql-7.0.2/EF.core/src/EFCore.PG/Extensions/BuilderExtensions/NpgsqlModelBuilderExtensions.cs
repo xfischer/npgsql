@@ -1,6 +1,6 @@
-﻿using EnterpriseDB.EDBClient.NameTranslation;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
+﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
+using EnterpriseDB.EDBClient.NameTranslation;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.EntityFrameworkCore;
