@@ -65,7 +65,7 @@ jobs:
         id: set-project-name-and-version
         if: github.event_name != 'workflow_dispatch'
         run: |
-          echo "PROJECT_NAME=$${{ github.event.repository.name }}" >> "$GITHUB_ENV"
+          echo "PROJECT_NAME=${{ github.event.repository.name }}" >> "$GITHUB_ENV"
           echo "PROJECT_VERSION=${{ github.ref_name }}" >> "$GITHUB_ENV"
 
       - name: Get short hash
