@@ -70,7 +70,7 @@ jobs:
 
       - name: Get short hash
         shell: bash
-        if: ${{ inputs.scan-mode == 'INTELLEGENT' }}
+        if: ${{ inputs.scan-mode == 'INTELLIGENT' }}
         run: |
           cd source
           echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
