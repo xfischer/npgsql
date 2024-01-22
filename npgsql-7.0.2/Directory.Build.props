@@ -10,7 +10,7 @@
     <SignAssembly>true</SignAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <Copyright>Copyright 2023 © The EDB Development Team</Copyright>
+    <Copyright>Copyright 2024 © The EDB Development Team</Copyright>
     <Company>EDB</Company>
 	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
