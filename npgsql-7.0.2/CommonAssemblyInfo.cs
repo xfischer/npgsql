@@ -16,6 +16,6 @@ using System.Resources;
 [assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
 
 // The following version attributes get rewritten by GitVersion as part of the build
-[assembly: AssemblyVersion("7.0.6.2")]
-[assembly: AssemblyFileVersion("7.0.6.2")]
-[assembly: AssemblyInformationalVersion("7.0.6.2")]
+[assembly: AssemblyVersion("7.0.6.1")]
+[assembly: AssemblyFileVersion("7.0.6.1")]
+[assembly: AssemblyInformationalVersion("7.0.6.1")]
