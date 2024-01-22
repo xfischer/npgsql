@@ -199,7 +199,8 @@ public class ConnectionTests : MultiplexingTestBase
     {
         var connString = new EDBConnectionStringBuilder(ConnectionString)
         {
-            Username = "unknown", Pooling = false
+            Username = "unknown",
+            Pooling = false
         }.ToString();
         using var conn = new EDBConnection(connString);
         Assert.That(conn.Open, Throws.Exception
@@ -229,7 +230,7 @@ public class ConnectionTests : MultiplexingTestBase
         => Assert.Throws<ArgumentException>(() =>
             new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests"));
 
-    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one")]
+    [Test, Timeout(15000), Description("Reuses the same connection instance for a failed connection, then a successful one")]
     public async Task Fail_connect_then_succeed([Values] bool pooling)
     {
         if (IsMultiplexing && !pooling) // Multiplexing doesn't work without pooling

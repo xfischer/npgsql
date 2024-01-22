@@ -154,7 +154,7 @@ public static class TestUtil
         if (longVersion is null)
             return false;
 
-#if NET472
+#if NETFRAMEWORK
         if (!longVersion.Contains(EPASCriteria))
 #else
         if (!longVersion.Contains(EPASCriteria, StringComparison.OrdinalIgnoreCase))
