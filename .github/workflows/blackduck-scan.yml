@@ -9,6 +9,7 @@ on:
     tags:
       - "**"
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - "**"
   schedule:
@@ -34,7 +35,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Checkout source repository Dispatch
+      - name: Checkout source repository for dispatch runs
         id: checkout-source-dispatch
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
