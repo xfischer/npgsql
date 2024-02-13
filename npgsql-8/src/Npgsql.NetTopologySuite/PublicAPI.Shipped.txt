@@ -1,0 +1,3 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.EDBNetTopologySuiteExtensions
+static EnterpriseDB.EDBClient.EDBNetTopologySuiteExtensions.UseNetTopologySuite(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, NetTopologySuite.Geometries.CoordinateSequenceFactory? coordinateSequenceFactory = null, NetTopologySuite.Geometries.PrecisionModel? precisionModel = null, NetTopologySuite.Geometries.Ordinates handleOrdinates = NetTopologySuite.Geometries.Ordinates.None, bool geographyAsDefault = false) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

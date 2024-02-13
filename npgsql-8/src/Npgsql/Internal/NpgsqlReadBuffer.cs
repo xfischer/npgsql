@@ -1,0 +1,931 @@
+﻿using System;
+using System.Buffers;
+using System.Buffers.Binary;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Util;
+using static System.Threading.Timeout;
+
+namespace EnterpriseDB.EDBClient.Internal;
+
+/// <summary>
+/// A buffer used by EDB to read data from the socket efficiently.
+/// Provides methods which decode different values types and tracks the current position.
+/// </summary>
+sealed partial class EDBReadBuffer : IDisposable
+{
+    #region Fields and Properties
+
+#if DEBUG
+    internal static readonly bool BufferBoundsChecks = true;
+#else
+    internal static readonly bool BufferBoundsChecks = Statics.EnableDiagnostics;
+#endif
+
+    public EDBConnection Connection => Connector.Connection!;
+    internal readonly EDBConnector Connector;
+    internal Stream Underlying { get; set; } // EnterpriseDB (private->internal getter)
+    readonly Socket? _underlyingSocket;
+    internal ResettableCancellationTokenSource Cts { get; }
+    readonly MetricsReporter? _metricsReporter;
+
+    TimeSpan _preTranslatedTimeout = TimeSpan.Zero;
+
+    /// <summary>
+    /// Timeout for sync and async reads
+    /// </summary>
+    internal TimeSpan Timeout
+    {
+        get => _preTranslatedTimeout;
+        set
+        {
+            if (_preTranslatedTimeout != value)
+            {
+                _preTranslatedTimeout = value;
+
+                if (value == TimeSpan.Zero)
+                    value = InfiniteTimeSpan;
+                else if (value < TimeSpan.Zero)
+                    value = TimeSpan.Zero;
+
+                Debug.Assert(_underlyingSocket != null);
+
+                _underlyingSocket.ReceiveTimeout = (int)value.TotalMilliseconds;
+                Cts.Timeout = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The total byte length of the buffer.
+    /// </summary>
+    internal int Size { get; }
+
+    internal Encoding TextEncoding { get; }
+
+    /// <summary>
+    /// Same as <see cref="TextEncoding"/>, except that it does not throw an exception if an invalid char is
+    /// encountered (exception fallback), but rather replaces it with a question mark character (replacement
+    /// fallback).
+    /// </summary>
+    internal Encoding RelaxedTextEncoding { get; }
+
+    internal int ReadPosition { get; set; }
+    internal int ReadBytesLeft => FilledBytes - ReadPosition;
+    internal PgReader PgReader { get; }
+
+    long _flushedBytes; // this will always fit at least one message.
+    internal long CumulativeReadPosition
+        // Cast to uint to remove the sign extension (ReadPosition is never negative)
+        => _flushedBytes + (uint)ReadPosition;
+
+    internal byte[] Buffer; // EnterpriseDB (remove readonly)
+    internal int FilledBytes;
+
+    internal ReadOnlySpan<byte> Span => Buffer.AsSpan(ReadPosition, ReadBytesLeft);
+
+    readonly bool _usePool;
+    bool _disposed;
+
+    /// <summary>
+    /// The minimum buffer size possible.
+    /// </summary>
+    internal const int MinimumSize = 4096;
+    internal const int DefaultSize = 8192;
+
+    #endregion
+
+    #region Constructors
+
+    internal EDBReadBuffer(
+        EDBConnector? connector,
+        Stream stream,
+        Socket? socket,
+        int size,
+        Encoding textEncoding,
+        Encoding relaxedTextEncoding,
+        bool usePool = false)
+    {
+        if (size < MinimumSize)
+        {
+            throw new ArgumentOutOfRangeException(nameof(size), size, "Buffer size must be at least " + MinimumSize);
+        }
+
+        Connector = connector!; // TODO: Clean this up
+        Underlying = stream;
+        _underlyingSocket = socket;
+        _metricsReporter = connector?.DataSource.MetricsReporter;
+        Cts = new ResettableCancellationTokenSource();
+        Buffer = usePool ? ArrayPool<byte>.Shared.Rent(size) : new byte[size];
+        Size = Buffer.Length;
+        _usePool = usePool;
+
+        TextEncoding = textEncoding;
+        RelaxedTextEncoding = relaxedTextEncoding;
+        PgReader = new PgReader(this);
+    }
+
+    #endregion
+
+    #region I/O
+
+    // Can't share due to Span vs Memory difference (can't make a memory out of a span).
+    int ReadWithTimeout(Span<byte> buffer)
+    {
+        while (true)
+        {
+            try
+            {
+                var read = Underlying.Read(buffer);
+                _flushedBytes = unchecked(_flushedBytes + read);
+                EDBEventSource.Log.BytesRead(read);
+                return read;
+            }
+            catch (Exception ex)
+            {
+                var connector = Connector;
+                switch (ex)
+                {
+                // Note that mono throws SocketException with the wrong error (see #1330)
+                case IOException e when (e.InnerException as SocketException)?.SocketErrorCode ==
+                                        (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
+                {
+                    var isStreamBroken = false;
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+                    // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
+                    // return garbage if reused. To prevent this, we flow down and break the connection immediately.
+                    // See #4305.
+                    isStreamBroken = connector.IsSecure && ex is IOException;
+#endif
+
+                    // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
+                    // TODO: As an optimization, we can still attempt to send a cancellation request, but after
+                    // that immediately break the connection
+                    if (connector.AttemptPostgresCancellation &&
+                        !connector.PostgresCancellationPerformed &&
+                        connector.PerformPostgresCancellation() &&
+                        !isStreamBroken)
+                    {
+                        // Note that if the cancellation timeout is negative, we flow down and break the
+                        // connection immediately.
+                        var cancellationTimeout = connector.Settings.CancellationTimeout;
+                        if (cancellationTimeout >= 0)
+                        {
+                            if (cancellationTimeout > 0)
+                                Timeout = TimeSpan.FromMilliseconds(cancellationTimeout);
+
+                            continue;
+                        }
+                    }
+
+                    // If we're here, the PostgreSQL cancellation either failed or skipped entirely.
+                    // Break the connection, bubbling up the correct exception type (cancellation or timeout)
+                    throw connector.Break(CreateCancelException(connector));
+                }
+                default:
+                    throw connector.Break(new EDBException("Exception while reading from stream", ex));
+                }
+            }
+        }
+    }
+    async ValueTask<int> ReadWithTimeoutAsync(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        var finalCt = Timeout != TimeSpan.Zero
+            ? Cts.Start(cancellationToken)
+            : Cts.Reset();
+
+        while (true)
+        {
+            try
+            {
+                var read = await Underlying.ReadAsync(buffer, finalCt).ConfigureAwait(false);
+                _flushedBytes = unchecked(_flushedBytes + read);
+                Cts.Stop();
+                EDBEventSource.Log.BytesRead(read);
+                return read;
+            }
+            catch (Exception ex)
+            {
+                var connector = Connector;
+                Cts.Stop();
+                switch (ex)
+                {
+                // Read timeout
+                case OperationCanceledException:
+                // Note that mono throws SocketException with the wrong error (see #1330)
+                case IOException e when (e.InnerException as SocketException)?.SocketErrorCode ==
+                                        (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
+                {
+                    Debug.Assert(ex is OperationCanceledException);
+                    var isStreamBroken = false;
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+                    // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
+                    // return garbage if reused. To prevent this, we flow down and break the connection immediately.
+                    // See #4305.
+                    isStreamBroken = connector.IsSecure && ex is IOException;
+#endif
+                    // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
+                    // TODO: As an optimization, we can still attempt to send a cancellation request, but after
+                    // that immediately break the connection
+                    if (connector.AttemptPostgresCancellation &&
+                        !connector.PostgresCancellationPerformed &&
+                        connector.PerformPostgresCancellation() &&
+                        !isStreamBroken)
+                    {
+                        // Note that if the cancellation timeout is negative, we flow down and break the
+                        // connection immediately.
+                        var cancellationTimeout = connector.Settings.CancellationTimeout;
+                        if (cancellationTimeout >= 0)
+                        {
+                            if (cancellationTimeout > 0)
+                                Timeout = TimeSpan.FromMilliseconds(cancellationTimeout);
+
+                            finalCt = Cts.Start(cancellationToken);
+                            continue;
+                        }
+                    }
+
+                    // If we're here, the PostgreSQL cancellation either failed or skipped entirely.
+                    // Break the connection, bubbling up the correct exception type (cancellation or timeout)
+                    throw connector.Break(CreateCancelException(connector));
+                }
+                default:
+                    throw connector.Break(new EDBException("Exception while reading from stream", ex));
+                }
+            }
+        }
+    }
+
+    static Exception CreateCancelException(EDBConnector connector)
+        => !connector.UserCancellationRequested
+            ? EDBTimeoutException()
+            : connector.PostgresCancellationPerformed
+                ? new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken)
+                : new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
+
+    static Exception EDBTimeoutException() => new EDBException("Exception while reading from stream", TimeoutException());
+
+    static Exception TimeoutException() => new TimeoutException("Timeout during reading attempt");
+
+    internal void Ensure(int count) => Ensure(count, false).GetAwaiter().GetResult();
+
+    public ValueTask Ensure(int count, bool async)
+        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
+
+    public ValueTask EnsureAsync(int count)
+        => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
+
+    /// <summary>
+    /// Ensures that <paramref name="count"/> bytes are available in the buffer, and if
+    /// not, reads from the socket until enough is available.
+    /// </summary>
+    internal ValueTask Ensure(int count, bool async, bool readingNotifications, bool checkDataAvailable) // EnterpriseDB (additionnal param)
+    {
+        return count <= ReadBytesLeft ? new() : EnsureLong(this, count, async, readingNotifications, checkDataAvailable); // EnterpriseDB (additionnal param)
+
+#if NET6_0_OR_GREATER
+        [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+#endif
+        static async ValueTask EnsureLong(
+            EDBReadBuffer buffer,
+            int count,
+            bool async,
+            bool readingNotifications,
+            bool checkDataAvailable) // EnterpriseDB (additionnal param)
+        {
+            Debug.Assert(count <= buffer.Size);
+            Debug.Assert(count > buffer.ReadBytesLeft);
+            count -= buffer.ReadBytesLeft;
+
+            if (buffer.ReadPosition == buffer.FilledBytes)
+            {
+                buffer.ResetPosition();
+            }
+            else if (count > buffer.Size - buffer.FilledBytes)
+            {
+                Array.Copy(buffer.Buffer, buffer.ReadPosition, buffer.Buffer, 0, buffer.ReadBytesLeft);
+                buffer.FilledBytes = buffer.ReadBytesLeft;
+                buffer._flushedBytes = unchecked(buffer._flushedBytes + buffer.ReadPosition);
+                buffer.ReadPosition = 0;
+            }
+
+            var finalCt = async && buffer.Timeout != TimeSpan.Zero
+                ? buffer.Cts.Start()
+                : buffer.Cts.Reset();
+
+            var totalRead = 0;
+            while (count > 0)
+            {
+                try
+                {
+#if NETFRAMEWORK // EnterpriseDB (additionnal param)
+                    if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
+
+                    // In .Net Framework NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
+                    // When there is no data to read, it hangs. The workaround is not wait for available data and check the token
+                    if (readingNotifications || checkDataAvailable || (buffer.Connector?.PostgresCancellationPerformed ?? false))
+                    {
+                        if (buffer.Underlying is NetworkStream networkStream)
+                        {
+                            var numLoops = 0;
+                            var delaysMs = new double[] { 0.1d, 0.2d, 0.5d, 1d, 2d, 5d, 100d }; // Wait a bit more at each iteration
+                            while (!networkStream.DataAvailable && numLoops < delaysMs.Length)
+                            {
+                                var delay = delaysMs[numLoops++];
+
+                                LogMessages.TryEDBTrace(buffer?.Connector?.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{delaysMs.Length}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
+
+                                if (async)
+                                {
+                                    await Task.Delay(TimeSpan.FromMilliseconds(delay), finalCt);
+                                }
+                                else
+                                {
+                                    Thread.Sleep(TimeSpan.FromMilliseconds(delay));
+                                }
+                                
+                                finalCt.ThrowIfCancellationRequested();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure [direct read]. (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
+                    }
+#endif
+                    var toRead = buffer.Size - buffer.FilledBytes;
+                    int read = 0;
+                    try
+                    {
+                        read = async
+                        ? await buffer.Underlying.ReadAsync(buffer.Buffer.AsMemory(buffer.FilledBytes, toRead), finalCt).ConfigureAwait(false)
+                        : buffer.Underlying.Read(buffer.Buffer, buffer.FilledBytes, toRead);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessages.TryEDBTrace(buffer?.Connector?.ConnectionLogger!, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
+                        throw;
+                    }
+
+
+                    if (read == 0)
+                        throw new EndOfStreamException();
+                    count -= read;
+                    buffer.FilledBytes += read;
+                    totalRead += read;
+
+                    // Most of the time, it should be fine to reset cancellation token source, so we can use it again
+                    // It's still possible for cancellation token to cancel between reading and resetting (although highly improbable)
+                    // In this case, we consider it as timed out and fail with OperationCancelledException on next ReadAsync
+                    // Or we consider it not timed out if we have already read everything (count == 0)
+                    // In which case we reinitialize it on the next call to EnsureLong()
+                    if (async && count > 0)
+                        buffer.Cts.RestartTimeoutWithoutReset();
+                }
+                catch (Exception e)
+                {
+                    var connector = buffer.Connector;
+
+                    // Stopping twice (in case the previous Stop() call succeeded) doesn't hurt.
+                    // Not stopping will cause an assertion failure in debug mode when we call Start() the next time.
+                    // We can't stop in a finally block because Connector.Break() will dispose the buffer and the contained
+                    // _timeoutCts
+                    buffer.Cts.Stop();
+
+                    switch (e)
+                    {
+                    // Read timeout
+                    case OperationCanceledException:
+                    // Note that mono throws SocketException with the wrong error (see #1330)
+                    case IOException when (e.InnerException as SocketException)?.SocketErrorCode ==
+                                            (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
+                    {
+                        Debug.Assert(e is OperationCanceledException ? async : !async);
+
+                        var isStreamBroken = false;
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+                        // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
+                        // return garbage if reused. To prevent this, we flow down and break the connection immediately.
+                        // See #4305.
+                        isStreamBroken = connector.IsSecure && e is IOException;
+#endif
+                        // When reading notifications (Wait), just throw TimeoutException or
+                        // OperationCanceledException immediately.
+                        // Nothing to cancel, and no breaking of the connection.
+                        if (readingNotifications && !isStreamBroken)
+                            throw CreateException(connector);
+
+                        // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
+                        // TODO: As an optimization, we can still attempt to send a cancellation request, but after
+                        // that immediately break the connection
+                        if (connector.AttemptPostgresCancellation &&
+                            !connector.PostgresCancellationPerformed &&
+                            connector.PerformPostgresCancellation() &&
+                            !isStreamBroken)
+                        {
+                            // Note that if the cancellation timeout is negative, we flow down and break the
+                            // connection immediately.
+                            var cancellationTimeout = connector.Settings.CancellationTimeout;
+                            if (cancellationTimeout >= 0)
+                            {
+                                if (cancellationTimeout > 0)
+                                    buffer.Timeout = TimeSpan.FromMilliseconds(cancellationTimeout);
+
+                                if (async)
+                                    finalCt = buffer.Cts.Start();
+
+                                continue;
+                            }
+                        }
+
+                        // If we're here, the PostgreSQL cancellation either failed or skipped entirely.
+                        // Break the connection, bubbling up the correct exception type (cancellation or timeout)
+                        throw connector.Break(CreateException(connector));
+
+                        static Exception CreateException(EDBConnector connector)
+#if DEBUG // EnterpriseDB 
+                        {
+                            if (connector.UserCancellationRequested)
+                            {
+                                if (connector.PostgresCancellationPerformed)
+                                    return new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken);
+                                else
+                                    return new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
+                            }
+                            else
+                            {
+                                return EDBTimeoutException();
+                            }
+                        }
+#else
+                            => !connector.UserCancellationRequested
+                                ? EDBTimeoutException()
+                                : connector.PostgresCancellationPerformed
+                                    ? new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken)
+                                    : new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
+#endif
+                    }
+
+                    default:
+                        throw connector.Break(new EDBException("Exception while reading from stream", e));
+                    }
+                }
+            }
+
+            buffer.Cts.Stop();
+            EDBEventSource.Log.BytesRead(totalRead);
+            buffer._metricsReporter?.ReportBytesRead(totalRead);
+
+            static Exception EDBTimeoutException() => new EDBException("Exception while reading from stream", TimeoutException());
+
+            static Exception TimeoutException() => new TimeoutException("Timeout during reading attempt");
+        }
+    }
+
+    internal ValueTask ReadMore(bool async) => Ensure(ReadBytesLeft + 1, async, readingNotifications: false, checkDataAvailable: true); // EnterpriseDB 
+
+    internal EDBReadBuffer AllocateOversize(int count)
+    {
+        Debug.Assert(count > Size);
+        var tempBuf = new EDBReadBuffer(Connector, Underlying, _underlyingSocket, count, TextEncoding, RelaxedTextEncoding, usePool: true);
+        if (_underlyingSocket != null)
+            tempBuf.Timeout = Timeout;
+        CopyTo(tempBuf);
+        ResetPosition();
+        return tempBuf;
+    }
+
+    /// <summary>
+    /// Does not perform any I/O - assuming that the bytes to be skipped are in the memory buffer.
+    /// </summary>
+    internal void Skip(int len)
+    {
+        Debug.Assert(ReadBytesLeft >= len);
+        ReadPosition += len;
+    }
+
+    /// <summary>
+    /// Skip a given number of bytes.
+    /// </summary>
+    public async Task Skip(int len, bool async, bool checkDataAvailable = false) // EnterpriseDB (additional param)
+    {
+        Debug.Assert(len >= 0);
+
+        if (len > ReadBytesLeft)
+        {
+            len -= ReadBytesLeft;
+            while (len > Size)
+            {
+                ResetPosition();
+                await Ensure(Size, async, readingNotifications: false, checkDataAvailable).ConfigureAwait(false); // EnterpriseDB (additional param)
+                len -= Size;
+            }
+            ResetPosition();
+            await Ensure(len, async, readingNotifications: false, checkDataAvailable).ConfigureAwait(false); // EnterpriseDB (additional param)
+        }
+
+        ReadPosition += len;
+    }
+
+    #endregion
+
+    #region Read Simple
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public byte ReadByte()
+    {
+        CheckBounds(sizeof(byte));
+        var result = Buffer[ReadPosition];
+        ReadPosition += sizeof(byte);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public short ReadInt16()
+    {
+        CheckBounds(sizeof(short));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<short>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<short>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(short);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort ReadUInt16()
+    {
+        CheckBounds(sizeof(ushort));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ushort>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<ushort>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(ushort);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int ReadInt32()
+    {
+        CheckBounds(sizeof(int));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<int>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(int);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint ReadUInt32()
+    {
+        CheckBounds(sizeof(uint));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<uint>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<uint>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(uint);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long ReadInt64()
+    {
+        CheckBounds(sizeof(long));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<long>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<long>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(long);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ulong ReadUInt64()
+    {
+        CheckBounds(sizeof(ulong));
+        var result = BitConverter.IsLittleEndian
+            ? BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ulong>(ref Buffer[ReadPosition]))
+            : Unsafe.ReadUnaligned<ulong>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(ulong);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public float ReadSingle()
+    {
+        CheckBounds(sizeof(float));
+        float result;
+        if (BitConverter.IsLittleEndian)
+        {
+            var value = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref Buffer[ReadPosition]));
+            result = Unsafe.As<int, float>(ref value);
+        }
+        else
+            result = Unsafe.ReadUnaligned<float>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(float);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public double ReadDouble()
+    {
+        CheckBounds(sizeof(double));
+        double result;
+        if (BitConverter.IsLittleEndian)
+        {
+            var value = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<long>(ref Buffer[ReadPosition]));
+            result = Unsafe.As<long, double>(ref value);
+        }
+        else
+            result = Unsafe.ReadUnaligned<double>(ref Buffer[ReadPosition]);
+        ReadPosition += sizeof(double);
+        return result;
+    }
+
+    void CheckBounds(int count)
+    {
+        if (BufferBoundsChecks)
+            Core(count);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void Core(int count)
+        {
+            if (count > ReadBytesLeft)
+                ThrowHelper.ThrowInvalidOperationException("There is not enough data left in the buffer.");
+        }
+    }
+
+    public string ReadString(int byteLen)
+    {
+        Debug.Assert(byteLen <= ReadBytesLeft);
+        var result = TextEncoding.GetString(Buffer, ReadPosition, byteLen);
+        ReadPosition += byteLen;
+        return result;
+    }
+
+    public void ReadBytes(Span<byte> output)
+    {
+        Debug.Assert(output.Length <= ReadBytesLeft);
+        new Span<byte>(Buffer, ReadPosition, output.Length).CopyTo(output);
+        ReadPosition += output.Length;
+    }
+
+    public void ReadBytes(byte[] output, int outputOffset, int len)
+        => ReadBytes(new Span<byte>(output, outputOffset, len));
+
+    public ReadOnlyMemory<byte> ReadMemory(int len)
+    {
+        Debug.Assert(len <= ReadBytesLeft);
+        var memory = new ReadOnlyMemory<byte>(Buffer, ReadPosition, len);
+        ReadPosition += len;
+        return memory;
+    }
+
+    #endregion
+
+    #region Read Complex
+
+    public int Read(bool commandScoped, Span<byte> output)
+    {
+        var readFromBuffer = Math.Min(ReadBytesLeft, output.Length);
+        if (readFromBuffer > 0)
+        {
+            Buffer.AsSpan(ReadPosition, readFromBuffer).CopyTo(output);
+            ReadPosition += readFromBuffer;
+            return readFromBuffer;
+        }
+
+        // Only reset if we'll be able to read data, this is to support zero-byte reads.
+        if (output.Length > 0)
+        {
+            Debug.Assert(ReadBytesLeft == 0);
+            ResetPosition();
+        }
+
+        if (commandScoped)
+            return ReadWithTimeout(output);
+
+        try
+        {
+            var read = Underlying.Read(output);
+            _flushedBytes = unchecked(_flushedBytes + read);
+            EDBEventSource.Log.BytesRead(read);
+            return read;
+        }
+        catch (Exception e)
+        {
+            LogMessages.TryEDBTrace(Connector.ConnectionLogger, $"Readbuffer Read error : {e.Message}");
+            throw Connector.Break(new EDBException("Exception while reading from stream", e));
+        }
+    }
+
+	// EnterpriseDB
+    /// <summary>
+    /// Seeks within the current in-memory data. Does not read any data from the underlying.
+    /// </summary>
+    /// <param name="offset"></param>
+    /// <param name="origin"></param>
+    internal void Seek(int offset, SeekOrigin origin)
+    {
+        int absoluteOffset;
+        switch (origin)
+        {
+        case SeekOrigin.Begin:
+            absoluteOffset = offset;
+            break;
+        case SeekOrigin.Current:
+            absoluteOffset = ReadPosition + offset;
+            break;
+        case SeekOrigin.End:
+            throw new NotImplementedException();
+        default:
+            throw new ArgumentOutOfRangeException(nameof(origin));
+        }
+        Debug.Assert(absoluteOffset >= 0 && absoluteOffset <= FilledBytes);
+
+        ReadPosition = absoluteOffset;
+    }
+	
+    public ValueTask<int> ReadAsync(bool commandScoped, Memory<byte> output, CancellationToken cancellationToken = default)
+    {
+        var readFromBuffer = Math.Min(ReadBytesLeft, output.Length);
+        if (readFromBuffer > 0)
+        {
+            Buffer.AsSpan(ReadPosition, readFromBuffer).CopyTo(output.Span);
+            ReadPosition += readFromBuffer;
+            return new ValueTask<int>(readFromBuffer);
+        }
+
+        return ReadAsyncLong(this, commandScoped, output, cancellationToken);
+
+        static async ValueTask<int> ReadAsyncLong(EDBReadBuffer buffer, bool commandScoped, Memory<byte> output, CancellationToken cancellationToken)
+        {
+            // Only reset if we'll be able to read data, this is to support zero-byte reads.
+            if (output.Length > 0)
+            {
+                Debug.Assert(buffer.ReadBytesLeft == 0);
+                buffer.ResetPosition();
+            }
+
+            if (commandScoped)
+                return await buffer.ReadWithTimeoutAsync(output, cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                var read = await buffer.Underlying.ReadAsync(output, cancellationToken).ConfigureAwait(false);
+                buffer._flushedBytes = unchecked(buffer._flushedBytes + read);
+                EDBEventSource.Log.BytesRead(read);
+                return read;
+            }
+            catch (Exception e)
+            {
+                LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ReadAsyncLong error : {e.Message}");
+                throw buffer.Connector.Break(new EDBException("Exception while reading from stream", e));
+            }
+        }
+    }
+
+    ColumnStream? _lastStream;
+    public ColumnStream CreateStream(int len, bool canSeek)
+    {
+        if (_lastStream is not { IsDisposed: true })
+            _lastStream = new ColumnStream(Connector);
+        _lastStream.Init(len, canSeek, !Connector.LongRunningConnection);
+        return _lastStream;
+    }
+
+    /// <summary>
+    /// Seeks the first null terminator (\0) and returns the string up to it. The buffer must already
+    /// contain the entire string and its terminator.
+    /// </summary>
+    public string ReadNullTerminatedString()
+        => ReadNullTerminatedString(TextEncoding, async: false).GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Seeks the first null terminator (\0) and returns the string up to it. The buffer must already
+    /// contain the entire string and its terminator. If any character could not be decoded, a question
+    /// mark character is returned instead of throwing an exception.
+    /// </summary>
+    public string ReadNullTerminatedStringRelaxed()
+        => ReadNullTerminatedString(RelaxedTextEncoding, async: false).GetAwaiter().GetResult();
+
+    public ValueTask<string> ReadNullTerminatedString(bool async, CancellationToken cancellationToken = default)
+        => ReadNullTerminatedString(TextEncoding, async, cancellationToken);
+
+    /// <summary>
+    /// Seeks the first null terminator (\0) and returns the string up to it. Reads additional data from the network if a null
+    /// terminator isn't found in the buffered data.
+    /// </summary>
+    public ValueTask<string> ReadNullTerminatedString(Encoding encoding, bool async, CancellationToken cancellationToken = default)
+    {
+        var index = Span.IndexOf((byte)0);
+        if (index >= 0)
+        {
+            var result = new ValueTask<string>(encoding.GetString(Buffer, ReadPosition, index));
+            ReadPosition += index + 1;
+            return result;
+        }
+
+        return ReadLong(encoding, async);
+
+        async ValueTask<string> ReadLong(Encoding encoding, bool async)
+        {
+            var chunkSize = FilledBytes - ReadPosition;
+            var tempBuf = ArrayPool<byte>.Shared.Rent(chunkSize + 1024);
+
+            try
+            {
+                bool foundTerminator;
+                var byteLen = chunkSize;
+                Array.Copy(Buffer, ReadPosition, tempBuf, 0, chunkSize);
+                ReadPosition += chunkSize;
+
+                do
+                {
+                    await ReadMore(async).ConfigureAwait(false);
+                    Debug.Assert(ReadPosition == 0);
+
+                    foundTerminator = false;
+                    int i;
+                    for (i = 0; i < FilledBytes; i++)
+                    {
+                        if (Buffer[i] == 0)
+                        {
+                            foundTerminator = true;
+                            break;
+                        }
+                    }
+
+                    if (byteLen + i > tempBuf.Length)
+                    {
+                        var newTempBuf = ArrayPool<byte>.Shared.Rent(
+                            foundTerminator ? byteLen + i : byteLen + i + 1024);
+
+                        Array.Copy(tempBuf, 0, newTempBuf, 0, byteLen);
+                        ArrayPool<byte>.Shared.Return(tempBuf);
+                        tempBuf = newTempBuf;
+                    }
+
+                    Array.Copy(Buffer, 0, tempBuf, byteLen, i);
+                    byteLen += i;
+                    ReadPosition = i;
+                } while (!foundTerminator);
+
+                ReadPosition++;
+                return encoding.GetString(tempBuf, 0, byteLen);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(tempBuf);
+            }
+        }
+    }
+
+    public ReadOnlySpan<byte> GetNullTerminatedBytes()
+    {
+        var i = Span.IndexOf((byte)0);
+        Debug.Assert(i >= 0);
+        var result = new ReadOnlySpan<byte>(Buffer, ReadPosition, i);
+        ReadPosition += i + 1;
+        return result;
+    }
+
+    #endregion
+
+    #region Dispose
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        if (_usePool)
+            ArrayPool<byte>.Shared.Return(Buffer);
+
+        Cts.Dispose();
+        _disposed = true;
+    }
+
+    #endregion
+
+    #region Misc
+
+    void ResetPosition()
+    {
+        _flushedBytes = unchecked(_flushedBytes + FilledBytes);
+        ReadPosition = 0;
+        FilledBytes = 0;
+    }
+
+    internal void ResetFlushedBytes() => _flushedBytes = 0;
+
+    internal void CopyTo(EDBReadBuffer other)
+    {
+        Debug.Assert(other.Size - other.FilledBytes >= ReadBytesLeft);
+        Array.Copy(Buffer, ReadPosition, other.Buffer, other.FilledBytes, ReadBytesLeft);
+        other.FilledBytes += ReadBytesLeft;
+    }
+
+    #endregion
+}

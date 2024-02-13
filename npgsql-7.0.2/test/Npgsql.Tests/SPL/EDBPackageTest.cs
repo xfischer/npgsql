@@ -348,9 +348,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         private static List<string> getResultSetData(EDBDataReader rs)
         {
             var list = new List<string>();
+            var columnSchema = rs.GetColumnSchema();
             while (rs.Read())
             {
-                var columns = rs.GetColumnSchema().Count;
+                var columns = columnSchema.Count;
                 var str = new StringBuilder();
                 for (var i = 0; i < columns; i++)
                 {

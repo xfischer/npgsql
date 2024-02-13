@@ -1,0 +1,19 @@
+using System;
+using EnterpriseDB.EDBClient.Internal.Postgres;
+
+namespace EnterpriseDB.EDBClient.Internal;
+
+/// <summary>
+/// An EDB resolver for type info. Used by EDB to read and write values to PostgreSQL.
+/// </summary>
+public interface IPgTypeInfoResolver
+{
+    /// <summary>
+    /// Resolve a type info for a given type and data type name, at least one value will be non-null.
+    /// </summary>
+    /// <param name="type">The clr type being requested.</param>
+    /// <param name="dataTypeName">The postgres type being requested.</param>
+    /// <param name="options">Used for configuration state and EDB .NET Connector type info or PostgreSQL type catalog lookups.</param>
+    /// <returns>A result, or null if there was no match.</returns>
+    PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options);
+}

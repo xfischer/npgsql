@@ -135,6 +135,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con = OpenConnection();
 
+            Cleanup();
+
             //Table
             string tableString = "CREATE TABLE account(\n" +
                                  "username VARCHAR(250),\n" +
@@ -174,20 +176,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            //Drop Procedure
-            CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
-
-            //Drop table.
-            TestUtil.dropTable(con, "account");
-
-            //Drop type.
-            using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
-            {
-                dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
-                dropTypeCommand.ExecuteNonQuery();
-            }
+            Cleanup();
 
             TestUtil.closeDB(con);
+        }
+
+        private void Cleanup()
+        {
+            try
+            {
+                //Drop Procedure
+                CreateDropProcedure("DROP PROCEDURE TEST_PROC_TYPE_ARRAY");
+
+                //Drop table.
+                TestUtil.dropTable(con, "account");
+
+                //Drop type.
+                using (EDBCommand? dropTypeCommand = new EDBCommand("", con))
+                {
+                    dropTypeCommand.CommandText = "DROP TYPE TEST_TYPE";
+                    dropTypeCommand.ExecuteNonQuery();
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void CreateDropProcedure(string procString)

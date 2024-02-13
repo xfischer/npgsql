@@ -1003,7 +1003,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         case CommandType.StoredProcedure:
 			//EnterpriseDB Team (different implementation)
             var inputList = parameters.Where(p => p.IsInputDirection).ToList();
-            var numInput = _parameters.Count(p => p.IsInputDirection);//EnterpriseDB Team
             var sb = new StringBuilder();
             string parameterName;
             var parseCommand = CommandText;

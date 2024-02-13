@@ -1,0 +1,177 @@
+﻿#nullable enable
+const Npgsql.PostgresErrorCodes.IdleSessionTimeout = "57P05" -> string!
+EnterpriseDB.EDBClient.ChannelBinding
+EnterpriseDB.EDBClient.ChannelBinding.Disable = 0 -> EnterpriseDB.EDBClient.ChannelBinding
+EnterpriseDB.EDBClient.ChannelBinding.Prefer = 1 -> EnterpriseDB.EDBClient.ChannelBinding
+EnterpriseDB.EDBClient.ChannelBinding.Require = 2 -> EnterpriseDB.EDBClient.ChannelBinding
+EnterpriseDB.EDBClient.NpgsqlBatch.CreateBatchCommand() -> EnterpriseDB.EDBClient.NpgsqlBatchCommand!
+EnterpriseDB.EDBClient.NpgsqlConnectionStringBuilder.ChannelBinding.get -> EnterpriseDB.EDBClient.ChannelBinding
+EnterpriseDB.EDBClient.NpgsqlConnectionStringBuilder.ChannelBinding.set -> void
+EnterpriseDB.EDBClient.NpgsqlBinaryImporter.WriteRow(params object?[]! values) -> void
+EnterpriseDB.EDBClient.NpgsqlBinaryImporter.WriteRowAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken), params object?[]! values) -> System.Threading.Tasks.Task!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.AddTypeInfoResolverFactory(EnterpriseDB.EDBClient.Internal.PgTypeInfoResolverFactory! factory) -> void
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.ConfigureJsonOptions(System.Text.Json.JsonSerializerOptions! serializerOptions) -> EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.EnableDynamicJson(System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null) -> EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.EnableRecordsAsTuples() -> EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.EnableUnmappedTypes() -> EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.INpgsqlNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.INpgsqlTypeMapper!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.Name.get -> string?
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.Name.set -> void
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.UnmapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.INpgsqlNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.UsePasswordProvider(System.Func<EnterpriseDB.EDBClient.NpgsqlConnectionStringBuilder!, string!>? passwordProvider, System.Func<EnterpriseDB.EDBClient.NpgsqlConnectionStringBuilder!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<string!>>? passwordProviderAsync) -> EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder!
+EnterpriseDB.EDBClient.NpgsqlDataSourceBuilder.UseRootCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2? rootCertificate) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseRootCertificateCallback(System.Func<System.Security.Cryptography.X509Certificates.X509Certificate2!>? rootCertificateCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.AddTypeInfoResolverFactory(EnterpriseDB.EDBClient.Internal.PgTypeInfoResolverFactory! factory) -> void
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.Build() -> EnterpriseDB.EDBClient.EDBDataSource!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.BuildMultiHost() -> EnterpriseDB.EDBClient.EDBMultiHostDataSource!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConfigureJsonOptions(System.Text.Json.JsonSerializerOptions! serializerOptions) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConnectionString.get -> string!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConnectionStringBuilder.get -> EnterpriseDB.EDBClient.EDBConnectionStringBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.DefaultNameTranslator.get -> EnterpriseDB.EDBClient.IEDBNameTranslator!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.DefaultNameTranslator.set -> void
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableArrays() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableDynamicJson(System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableExtraConversions() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableFullTextSearch() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableIntegratedSecurity() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableLTree() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableMultiranges() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableParameterLogging(bool parameterLoggingEnabled = true) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableRanges() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableRecords() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableRecordsAsTuples() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableTransportSecurity() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableUnmappedTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.Name.get -> string?
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.Name.set -> void
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EDBSlimDataSourceBuilder(string? connectionString = null) -> void
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UnmapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UnmapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UnmapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UnmapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseClientCertificate(System.Security.Cryptography.X509Certificates.X509Certificate? clientCertificate) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseClientCertificates(System.Security.Cryptography.X509Certificates.X509CertificateCollection? clientCertificates) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseClientCertificatesCallback(System.Action<System.Security.Cryptography.X509Certificates.X509CertificateCollection!>? clientCertificatesCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseLoggerFactory(Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UsePasswordProvider(System.Func<EnterpriseDB.EDBClient.EDBConnectionStringBuilder!, string!>? passwordProvider, System.Func<EnterpriseDB.EDBClient.EDBConnectionStringBuilder!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<string!>>? passwordProviderAsync) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UsePeriodicPasswordProvider(System.Func<EnterpriseDB.EDBClient.EDBConnectionStringBuilder!, System.Threading.CancellationToken, System.Threading.Tasks.ValueTask<string!>>? passwordProvider, System.TimeSpan successRefreshInterval, System.TimeSpan failureRefreshInterval) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UsePhysicalConnectionInitializer(System.Action<EnterpriseDB.EDBClient.EDBConnection!>? connectionInitializer, System.Func<EnterpriseDB.EDBClient.EDBConnection!, System.Threading.Tasks.Task!>? connectionInitializerAsync) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseRootCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2? rootCertificate) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseRootCertificateCallback(System.Func<System.Security.Cryptography.X509Certificates.X509Certificate2!>? rootCertificateCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseUserCertificateValidationCallback(System.Net.Security.RemoteCertificateValidationCallback! userCertificateValidationCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.PostgresTypes.PostgresArrayType.PostgresArrayType(string! ns, string! name, uint oid, EnterpriseDB.EDBClient.PostgresTypes.PostgresType! elementPostgresType) -> void
+EnterpriseDB.EDBClient.PostgresTypes.PostgresBaseType.PostgresBaseType(string! ns, string! name, uint oid) -> void
+EnterpriseDB.EDBClient.Replication.PhysicalReplicationConnection.StartReplication(EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot? slot, EDBTypes.EDBLogSequenceNumber walLocation, System.Threading.CancellationToken cancellationToken, uint timeline = 0) -> System.Collections.Generic.IAsyncEnumerable<EnterpriseDB.EDBClient.Replication.XLogDataMessage!>!
+EnterpriseDB.EDBClient.Replication.PhysicalReplicationConnection.StartReplication(EDBTypes.EDBLogSequenceNumber walLocation, System.Threading.CancellationToken cancellationToken, uint timeline = 0) -> System.Collections.Generic.IAsyncEnumerable<EnterpriseDB.EDBClient.Replication.XLogDataMessage!>!
+EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot.PhysicalReplicationSlot(string! slotName, EDBTypes.EDBLogSequenceNumber? restartLsn = null, uint? restartTimeline = null) -> void
+EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot.RestartTimeline.get -> uint?
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.AddTypeInfoResolverFactory(EnterpriseDB.EDBClient.Internal.PgTypeInfoResolverFactory! factory) -> void
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.ConfigureJsonOptions(System.Text.Json.JsonSerializerOptions! serializerOptions) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.EnableDynamicJson(System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.EnableRecordsAsTuples() -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.EnableUnmappedTypes() -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.UnmapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> bool
+EnterpriseDB.EDBClient.TypeMapping.UserTypeMapping
+EnterpriseDB.EDBClient.TypeMapping.UserTypeMapping.ClrType.get -> System.Type!
+EnterpriseDB.EDBClient.TypeMapping.UserTypeMapping.PgTypeName.get -> string!
+EDBTypes.EDBCidr
+EDBTypes.EDBCidr.Address.get -> System.Net.IPAddress!
+EDBTypes.EDBCidr.Deconstruct(out System.Net.IPAddress! address, out byte netmask) -> void
+EDBTypes.EDBCidr.Netmask.get -> byte
+EDBTypes.EDBCidr.EDBCidr() -> void
+EDBTypes.EDBCidr.EDBCidr(string! addr) -> void
+EDBTypes.EDBCidr.EDBCidr(System.Net.IPAddress! address, byte netmask) -> void
+EDBTypes.EDBInet.Deconstruct(out System.Net.IPAddress! address, out byte netmask) -> void
+EDBTypes.EDBInet.EDBInet(System.Net.IPAddress! address, byte netmask) -> void
+EDBTypes.EDBInet.Netmask.get -> byte
+EDBTypes.EDBTsQueryFollowedBy.Distance.get -> short
+EDBTypes.EDBTsQueryFollowedBy.EDBTsQueryFollowedBy(EDBTypes.EDBTsQuery! left, short distance, EDBTypes.EDBTsQuery! right) -> void
+override EnterpriseDB.EDBClient.EDBBatch.Dispose() -> void
+*REMOVED*static EDBTypes.EDBBox.Parse(string! s) -> EDBTypes.EDBBox
+*REMOVED*static EDBTypes.EDBCircle.Parse(string! s) -> EDBTypes.EDBCircle
+*REMOVED*static EDBTypes.EDBLine.Parse(string! s) -> EDBTypes.EDBLine
+*REMOVED*static EDBTypes.EDBLSeg.Parse(string! s) -> EDBTypes.EDBLSeg
+*REMOVED*static EDBTypes.EDBPath.Parse(string! s) -> EDBTypes.EDBPath
+*REMOVED*static EDBTypes.EDBPoint.Parse(string! s) -> EDBTypes.EDBPoint
+*REMOVED*static EDBTypes.EDBPolygon.Parse(string! s) -> EDBTypes.EDBPolygon
+*REMOVED*EDBTypes.EDBDbType.TimestampTZ = 26 -> EDBTypes.EDBDbType
+*REMOVED*EDBTypes.EDBDbType.TimeTZ = 31 -> EDBTypes.EDBDbType
+*REMOVED*EDBTypes.EDBInet.Deconstruct(out System.Net.IPAddress! address, out int netmask) -> void
+*REMOVED*EDBTypes.EDBInet.EDBInet(System.Net.IPAddress! address, int netmask) -> void
+*REMOVED*EDBTypes.EDBInet.Address.set -> void
+*REMOVED*EDBTypes.EDBInet.Equals(EDBTypes.EDBInet other) -> bool
+*REMOVED*EDBTypes.EDBInet.Netmask.get -> int
+*REMOVED*EDBTypes.EDBInet.Netmask.set -> void
+*REMOVED*EDBTypes.EDBTsQueryFollowedBy.Distance.get -> int
+*REMOVED*EDBTypes.EDBTsQueryFollowedBy.EDBTsQueryFollowedBy(EDBTypes.EDBTsQuery! left, int distance, EDBTypes.EDBTsQuery! right) -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBBinaryImporter.WriteRow(params object![]! values) -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBBinaryImporter.WriteRowAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken), params object![]! values) -> System.Threading.Tasks.Task!
+*REMOVED*override EnterpriseDB.EDBClient.EDBDataReader.GetProviderSpecificFieldType(int ordinal) -> System.Type!
+*REMOVED*override EnterpriseDB.EDBClient.EDBDataReader.GetProviderSpecificValue(int ordinal) -> object!
+*REMOVED*override EnterpriseDB.EDBClient.EDBDataReader.GetProviderSpecificValues(object![]! values) -> int
+*REMOVED*override EnterpriseDB.EDBClient.EDBNestedDataReader.GetProviderSpecificFieldType(int ordinal) -> System.Type!
+*REMOVED*override EnterpriseDB.EDBClient.EDBNestedDataReader.GetProviderSpecificValue(int ordinal) -> object!
+*REMOVED*override EnterpriseDB.EDBClient.EDBNestedDataReader.GetProviderSpecificValues(object![]! values) -> int
+*REMOVED*override EDBTypes.EDBInet.Equals(object? obj) -> bool
+*REMOVED*override EDBTypes.EDBInet.GetHashCode() -> int
+*REMOVED*EnterpriseDB.EDBClient.Replication.PhysicalReplicationConnection.StartReplication(EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot? slot, EDBTypes.EDBLogSequenceNumber walLocation, System.Threading.CancellationToken cancellationToken, ulong timeline = 0) -> System.Collections.Generic.IAsyncEnumerable<EnterpriseDB.EDBClient.Replication.XLogDataMessage!>!
+*REMOVED*EnterpriseDB.EDBClient.Replication.PhysicalReplicationConnection.StartReplication(EDBTypes.EDBLogSequenceNumber walLocation, System.Threading.CancellationToken cancellationToken, ulong timeline = 0) -> System.Collections.Generic.IAsyncEnumerable<EnterpriseDB.EDBClient.Replication.XLogDataMessage!>!
+*REMOVED*EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot.PhysicalReplicationSlot(string! slotName, EDBTypes.EDBLogSequenceNumber? restartLsn = null, ulong? restartTimeline = null) -> void
+*REMOVED*EnterpriseDB.EDBClient.Replication.PhysicalReplicationSlot.RestartTimeline.get -> ulong?
+override EnterpriseDB.EDBClient.EDBBatchCommand.CanCreateParameter.get -> bool
+override EnterpriseDB.EDBClient.EDBBatchCommand.CreateParameter() -> EnterpriseDB.EDBClient.EDBParameter!
+override EDBTypes.EDBCidr.ToString() -> string!
+*REMOVED*static EDBTypes.EDBInet.operator !=(EDBTypes.EDBInet x, EDBTypes.EDBInet y) -> bool
+*REMOVED*static EDBTypes.EDBInet.operator ==(EDBTypes.EDBInet x, EDBTypes.EDBInet y) -> bool
+*REMOVED*static EDBTypes.EDBInet.ToIPAddress(EDBTypes.EDBInet inet) -> System.Net.IPAddress!
+*REMOVED*static EDBTypes.EDBInet.ToEDBInet(System.Net.IPAddress? ip) -> EDBTypes.EDBInet
+*REMOVED*EnterpriseDB.EDBClient.EDBDataSourceBuilder.AddTypeResolverFactory(EnterpriseDB.EDBClient.Internal.TypeHandling.TypeHandlerResolverFactory! resolverFactory) -> void
+static EDBTypes.EDBCidr.explicit operator System.Net.IPAddress!(EDBTypes.EDBCidr cidr) -> System.Net.IPAddress!
+static EDBTypes.EDBCidr.implicit operator EDBTypes.EDBInet(EDBTypes.EDBCidr cidr) -> EDBTypes.EDBInet
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.IntegratedSecurity.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.BackendTimeouts.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.BackendTimeouts.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ClientCertificate.get -> string?
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ClientCertificate.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ClientCertificateKey.get -> string?
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ClientCertificateKey.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ContinuousProcessing.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ContinuousProcessing.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ConvertInfinityDateTime.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.ConvertInfinityDateTime.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.EntityAdminDatabase.get -> string?
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.EntityAdminDatabase.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.EntityTemplateDatabase.get -> string?
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.EntityTemplateDatabase.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IncludeErrorDetails.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IncludeErrorDetails.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IntegratedSecurity.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IntegratedSecurity.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.PreloadReader.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.PreloadReader.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UseExtendedTypes.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UseExtendedTypes.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UsePerfCounters.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UsePerfCounters.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UseSslStream.get -> bool
+*REMOVED*EnterpriseDB.EDBClient.EDBConnectionStringBuilder.UseSslStream.set -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBNotificationEventArgs.AdditionalInformation.get -> string!
+*REMOVED*EnterpriseDB.EDBClient.EDBNotificationEventArgs.Condition.get -> string!
+*REMOVED*EnterpriseDB.EDBClient.EDBParameter.ConvertedValue.get -> object?
+*REMOVED*EnterpriseDB.EDBClient.EDBParameter.ConvertedValue.set -> void
+*REMOVED*EnterpriseDB.EDBClient.PostgresException.Code.get -> string!
+*REMOVED*EnterpriseDB.EDBClient.PostgresNotice.Code.get -> string!
+*REMOVED*EnterpriseDB.EDBClient.PostgresTypes.PostgresArrayType.PostgresArrayType(string! ns, string! internalName, uint oid, EnterpriseDB.EDBClient.PostgresTypes.PostgresType! elementPostgresType) -> void
+*REMOVED*EnterpriseDB.EDBClient.PostgresTypes.PostgresBaseType.PostgresBaseType(string! ns, string! internalName, uint oid) -> void
+*REMOVED*EnterpriseDB.EDBClient.PostgresTypes.PostgresType.PostgresType(string! ns, string! name, string! internalName, uint oid) -> void
+*REMOVED*EnterpriseDB.EDBClient.PostgresTypes.PostgresType.PostgresType(string! ns, string! name, uint oid) -> void
+*REMOVED*EnterpriseDB.EDBClient.Replication.PgOutput.Messages.DeleteMessage.RelationId.get -> uint
+*REMOVED*EnterpriseDB.EDBClient.Replication.PgOutput.Messages.InsertMessage.RelationId.get -> uint
+*REMOVED*EnterpriseDB.EDBClient.Replication.PgOutput.Messages.UpdateMessage.RelationId.get -> uint
+*REMOVED*EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.AddTypeResolverFactory(EnterpriseDB.EDBClient.Internal.TypeHandling.TypeHandlerResolverFactory! resolverFactory) -> void

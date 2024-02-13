@@ -947,7 +947,7 @@ $$ LANGUAGE plpgsql;";
 
     [Test]
     [TestCase(CommandBehavior.Default)]
-    [TestCase(CommandBehavior.SequentialAccess, Ignore ="EDB")]
+    [TestCase(CommandBehavior.SequentialAccess, Ignore ="EDB : Does not work in Sequential Access")]
     public async Task Input_and_output_parameters(CommandBehavior behavior)
     {
         using var conn = await OpenConnectionAsync();

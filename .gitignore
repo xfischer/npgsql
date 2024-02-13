@@ -17,3 +17,5 @@ artifacts/
 .vs
 *InternalTrace*.log
 **/TestResults
+edb-rebrand-c/x64
+*/x64

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "edb_rebrand": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\dev\\repos\\npgsql_community_private\\src\\Npgsql.GeoJSON\\PublicAPI.Unshipped.txt"
+    }
+  }
+}
