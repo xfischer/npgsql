@@ -43,6 +43,7 @@ namespace EDBSample
 
         }
 
+
         static async Task Sample()
         {
 
@@ -141,6 +142,60 @@ namespace EDBSample
 
                 await Prepared_command.ExecuteNonQueryAsync();
                 Console.WriteLine("Record Updated...");
+
+                //Close the connection
+                await conn.CloseAsync();
+            }
+
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.ToString());
+            }
+        }
+
+        static async Task EC_2716_ExecuteReaderAsync()
+        {
+
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
+                await using var dataSource = dataSourceBuilder.Build();
+
+                await using var conn = await dataSource.OpenConnectionAsync();
+
+               
+                //procedure call example
+                try
+                {
+                    await using var callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn);
+                    callable_command.CommandType = CommandType.StoredProcedure;
+                    callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
+                    callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+                    callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
+                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    await callable_command.PrepareAsync();
+
+                    callable_command.Parameters[0].Value = 20;
+                    callable_command.Parameters[1].Value = 7369;
+
+                    await using var reader = await callable_command.ExecuteReaderAsync();
+                    var fc = reader.FieldCount;
+                    for (var i = 0; i < (fc + 1); i++)
+                        Console.WriteLine("RESULT[" + i + "]=" + Convert.ToString(callable_command.Parameters[i].Value));
+                    reader.Close();
+                }
+                catch (EDBException exp)
+                {
+                    if (exp.ErrorCode.Equals("01403"))
+                        Console.WriteLine("No data found");
+                    else if (exp.ErrorCode.Equals("01422"))
+                        Console.WriteLine("More than one rows were returned by the query");
+                    else
+                        Console.WriteLine("There was an error Calling the procedure. \nRoot Cause:\n");
+                    Console.WriteLine(exp.Message.ToString());
+                }
 
                 //Close the connection
                 await conn.CloseAsync();
