@@ -21,7 +21,9 @@ public class IntervalMultirangeMapping : NpgsqlTypeMapping
     /// </summary>
     public IntervalMultirangeMapping(Type clrType, IntervalRangeMapping intervalRangeMapping)
         : base("tstzmultirange", clrType, EDBDbType.TimestampTzMultirange)
-        => _intervalRangeMapping = intervalRangeMapping;
+    {
+        _intervalRangeMapping = intervalRangeMapping;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -31,7 +33,9 @@ public class IntervalMultirangeMapping : NpgsqlTypeMapping
     /// </summary>
     protected IntervalMultirangeMapping(RelationalTypeMappingParameters parameters, IntervalRangeMapping intervalRangeMapping)
         : base(parameters, EDBDbType.DateMultirange)
-        => _intervalRangeMapping = intervalRangeMapping;
+    {
+        _intervalRangeMapping = intervalRangeMapping;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -48,17 +52,8 @@ public class IntervalMultirangeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new IntervalMultirangeMapping(Parameters.WithStoreTypeAndSize(storeType, size), _intervalRangeMapping);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new IntervalMultirangeMapping(Parameters.WithComposedConverter(converter), _intervalRangeMapping);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -124,17 +124,20 @@ public class PostgresEnum
     /// <summary>
     /// The <see cref="Annotatable"/> that stores the enum.
     /// </summary>
-    public virtual Annotatable Annotatable => (Annotatable)_annotatable;
+    public virtual Annotatable Annotatable
+        => (Annotatable)_annotatable;
 
     /// <summary>
     /// The enum schema or null to represent the default schema.
     /// </summary>
-    public virtual string? Schema => GetData().Schema;
+    public virtual string? Schema
+        => GetData().Schema;
 
     /// <summary>
     /// The enum name.
     /// </summary>
-    public virtual string Name => GetData().Name!;
+    public virtual string Name
+        => GetData().Name!;
 
     /// <summary>
     /// The enum labels.

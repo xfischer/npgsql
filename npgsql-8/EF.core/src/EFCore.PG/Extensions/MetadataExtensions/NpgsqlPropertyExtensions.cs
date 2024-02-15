@@ -125,7 +125,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="schema">The schema to use.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static string? SetHiLoSequenceSchema(
-        this IConventionProperty property, string? schema, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        string? schema,
+        bool fromDataAnnotation = false)
     {
         property.SetOrRemoveAnnotation(
             NpgsqlAnnotationNames.HiLoSequenceSchema,
@@ -150,7 +152,7 @@ public static class NpgsqlPropertyExtensions
     /// <returns> The sequence to use, or <see langword="null" /> if no sequence exists in the model. </returns>
     public static IReadOnlySequence? FindHiLoSequence(this IReadOnlyProperty property)
     {
-        var model = property.DeclaringEntityType.Model;
+        var model = property.DeclaringType.Model;
 
         var sequenceName = property.GetHiLoSequenceName()
             ?? model.GetHiLoSequenceName();
@@ -169,7 +171,7 @@ public static class NpgsqlPropertyExtensions
     /// <returns> The sequence to use, or <see langword="null" /> if no sequence exists in the model. </returns>
     public static IReadOnlySequence? FindHiLoSequence(this IReadOnlyProperty property, in StoreObjectIdentifier storeObject)
     {
-        var model = property.DeclaringEntityType.Model;
+        var model = property.DeclaringType.Model;
 
         var sequenceName = property.GetHiLoSequenceName(storeObject)
             ?? model.GetHiLoSequenceName();
@@ -352,7 +354,7 @@ public static class NpgsqlPropertyExtensions
     /// <returns>The sequence to use, or <see langword="null" /> if no sequence exists in the model.</returns>
     public static IReadOnlySequence? FindSequence(this IReadOnlyProperty property)
     {
-        var model = property.DeclaringEntityType.Model;
+        var model = property.DeclaringType.Model;
 
         var sequenceName = property.GetSequenceName()
             ?? model.GetSequenceNameSuffix();
@@ -371,7 +373,7 @@ public static class NpgsqlPropertyExtensions
     /// <returns>The sequence to use, or <see langword="null" /> if no sequence exists in the model.</returns>
     public static IReadOnlySequence? FindSequence(this IReadOnlyProperty property, in StoreObjectIdentifier storeObject)
     {
-        var model = property.DeclaringEntityType.Model;
+        var model = property.DeclaringType.Model;
 
         var sequenceName = property.GetSequenceName(storeObject)
             ?? model.GetSequenceNameSuffix();
@@ -458,7 +460,7 @@ public static class NpgsqlPropertyExtensions
 
         var annotation = property.FindAnnotation(NpgsqlAnnotationNames.ValueGenerationStrategy);
         if (annotation?.Value != null
-            && StoreObjectIdentifier.Create(property.DeclaringEntityType, storeObject.StoreObjectType) == storeObject)
+            && StoreObjectIdentifier.Create(property.DeclaringType, storeObject.StoreObjectType) == storeObject)
         {
             return (NpgsqlValueGenerationStrategy)annotation.Value;
         }
@@ -489,11 +491,12 @@ public static class NpgsqlPropertyExtensions
             || property.GetDefaultValueSql(storeObject) != null
             || property.GetComputedColumnSql(storeObject) != null
             || property.GetContainingForeignKeys()
-                .Any(fk =>
-                    !fk.IsBaseLinking()
-                    || (StoreObjectIdentifier.Create(fk.PrincipalEntityType, StoreObjectType.Table)
-                        is StoreObjectIdentifier principal
-                        && fk.GetConstraintName(table, principal) != null)))
+                .Any(
+                    fk =>
+                        !fk.IsBaseLinking()
+                        || (StoreObjectIdentifier.Create(fk.PrincipalEntityType, StoreObjectType.Table)
+                                is StoreObjectIdentifier principal
+                            && fk.GetConstraintName(table, principal) != null)))
         {
             return NpgsqlValueGenerationStrategy.None;
         }
@@ -525,7 +528,7 @@ public static class NpgsqlPropertyExtensions
 
     private static NpgsqlValueGenerationStrategy GetDefaultValueGenerationStrategy(IReadOnlyProperty property)
     {
-        var modelStrategy = property.DeclaringEntityType.Model.GetValueGenerationStrategy();
+        var modelStrategy = property.DeclaringType.Model.GetValueGenerationStrategy();
 
         switch (modelStrategy)
         {
@@ -550,7 +553,7 @@ public static class NpgsqlPropertyExtensions
         in StoreObjectIdentifier storeObject,
         ITypeMappingSource? typeMappingSource)
     {
-        var modelStrategy = property.DeclaringEntityType.Model.GetValueGenerationStrategy();
+        var modelStrategy = property.DeclaringType.Model.GetValueGenerationStrategy();
 
         switch (modelStrategy)
         {
@@ -565,7 +568,7 @@ public static class NpgsqlPropertyExtensions
             case NpgsqlValueGenerationStrategy.IdentityByDefaultColumn:
                 return !IsCompatibleWithValueGeneration(property, storeObject, typeMappingSource)
                     ? NpgsqlValueGenerationStrategy.None
-                    : property.DeclaringEntityType.GetMappingStrategy() == RelationalAnnotationNames.TpcMappingStrategy
+                    : property.DeclaringType.GetMappingStrategy() == RelationalAnnotationNames.TpcMappingStrategy
                         ? NpgsqlValueGenerationStrategy.Sequence
                         : modelStrategy.Value;
 
@@ -584,7 +587,8 @@ public static class NpgsqlPropertyExtensions
     /// <param name="property">The property.</param>
     /// <param name="value">The strategy to use.</param>
     public static void SetValueGenerationStrategy(
-        this IMutableProperty property, NpgsqlValueGenerationStrategy? value)
+        this IMutableProperty property,
+        NpgsqlValueGenerationStrategy? value)
     {
         CheckValueGenerationStrategy(property, value);
 
@@ -682,7 +686,7 @@ public static class NpgsqlPropertyExtensions
             {
                 throw new ArgumentException(
                     NpgsqlStrings.IdentityBadType(
-                        property.Name, property.DeclaringEntityType.DisplayName(), propertyType.ShortDisplayName()));
+                        property.Name, property.DeclaringType.DisplayName(), propertyType.ShortDisplayName()));
             }
             
             if (value is NpgsqlValueGenerationStrategy.SerialColumn or NpgsqlValueGenerationStrategy.SequenceHiLo
@@ -690,7 +694,7 @@ public static class NpgsqlPropertyExtensions
             {
                 throw new ArgumentException(
                     NpgsqlStrings.SequenceBadType(
-                        property.Name, property.DeclaringEntityType.DisplayName(), propertyType.ShortDisplayName()));
+                        property.Name, property.DeclaringType.DisplayName(), propertyType.ShortDisplayName()));
             }
         }
     }
@@ -784,7 +788,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="startValue">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static long? SetIdentityStartValue(
-        this IConventionProperty property, long? startValue, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        long? startValue,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.StartValue = startValue;
@@ -828,7 +834,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="incrementBy">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static long? SetIdentityIncrementBy(
-        this IConventionProperty property, long? incrementBy, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        long? incrementBy,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.IncrementBy = incrementBy ?? 1;
@@ -872,7 +880,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="minValue">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static long? SetIdentityMinValue(
-        this IConventionProperty property, long? minValue, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        long? minValue,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.MinValue = minValue;
@@ -916,7 +926,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="maxValue">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static long? SetIdentityMaxValue(
-        this IConventionProperty property, long? maxValue, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        long? maxValue,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.MaxValue = maxValue;
@@ -960,7 +972,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="cyclic">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static bool? SetIdentityIsCyclic(
-        this IConventionProperty property, bool? cyclic, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        bool? cyclic,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.IsCyclic = cyclic ?? false;
@@ -1005,7 +1019,9 @@ public static class NpgsqlPropertyExtensions
     /// <param name="numbersToCache">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static long? SetIdentityNumbersToCache(
-        this IConventionProperty property, long? numbersToCache, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        long? numbersToCache,
+        bool fromDataAnnotation = false)
     {
         var options = IdentitySequenceOptionsData.Get(property);
         options.NumbersToCache = numbersToCache ?? 1;
@@ -1096,7 +1112,9 @@ public static class NpgsqlPropertyExtensions
     /// </para>
     /// </param>
     public static string SetTsVectorConfig(
-        this IConventionProperty property, string config, bool fromDataAnnotation = false)
+        this IConventionProperty property,
+        string config,
+        bool fromDataAnnotation = false)
     {
         Check.NullButNotEmpty(config, nameof(config));
 
@@ -1179,7 +1197,7 @@ public static class NpgsqlPropertyExtensions
     [Obsolete("Use EF Core's standard model bulk configuration API")]
     public static string? GetDefaultCollation(this IReadOnlyProperty property)
         => property.FindTypeMapping() is StringTypeMapping
-            ? property.DeclaringEntityType.Model.GetDefaultColumnCollation()
+            ? property.DeclaringType.Model.GetDefaultColumnCollation()
             : null;
 
     #endregion Collation

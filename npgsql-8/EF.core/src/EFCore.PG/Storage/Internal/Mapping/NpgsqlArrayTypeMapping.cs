@@ -1,6 +1,10 @@
 ﻿using System.Collections;
+using System.Data;
 using System.Data.Common;
 using System.Text;
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
@@ -14,20 +18,71 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
 {
     /// <summary>
-    /// The relational type mapping used to initialize the array mapping.
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual RelationalTypeMapping ElementMapping { get; }
+    protected NpgsqlArrayTypeMapping(RelationalTypeMappingParameters parameters)
+        : base(parameters)
+    {
+    }
 
     /// <summary>
-    /// The database type used by Npgsql.
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public override RelationalTypeMapping ElementTypeMapping
+    {
+        get
+        {
+            var elementTypeMapping = base.ElementTypeMapping;
+            Check.DebugAssert(
+                elementTypeMapping is not null,
+                "NpgsqlArrayTypeMapping without an element type mapping");
+            Check.DebugAssert(
+                elementTypeMapping is RelationalTypeMapping,
+                "NpgsqlArrayTypeMapping with a non-relational element type mapping");
+            return (RelationalTypeMapping)elementTypeMapping;
+        }
+    }
+}
+
+/// <summary>
+///     Type mapping for PostgreSQL arrays.
+/// </summary>
+/// <remarks>
+///     See: https://www.postgresql.org/docs/current/static/arrays.html
+/// </remarks>
+public class NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement> : NpgsqlArrayTypeMapping
+{
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public static NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement> Default { get; }
+        = new();
+
+    /// <summary>
+    ///     The database type used by Npgsql.
     /// </summary>
     public virtual EDBDbType? EDBDbType { get; }
 
     /// <summary>
-    /// Whether the array's element is nullable. This is required since <see cref="Type"/> and <see cref="ElementMapping"/> do not
-    /// contain nullable reference type information.
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsElementNullable { get; }
+    [UsedImplicitly]
+    public NpgsqlArrayTypeMapping(RelationalTypeMapping elementTypeMapping)
+        : this(elementTypeMapping.StoreType + "[]", elementTypeMapping)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -35,28 +90,118 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected NpgsqlArrayTypeMapping(
-        RelationalTypeMappingParameters parameters, RelationalTypeMapping elementMapping, bool isElementNullable)
+    [UsedImplicitly]
+    public NpgsqlArrayTypeMapping(string storeType, RelationalTypeMapping elementTypeMapping)
+        : this(CreateParameters(storeType, elementTypeMapping))
+    {
+        Check.DebugAssert(storeType.EndsWith("[]", StringComparison.Ordinal), "NpgsqlArrayTypeMapping created for a non-array store type");
+    }
+
+    private static RelationalTypeMappingParameters CreateParameters(string storeType, RelationalTypeMapping elementMapping)
+    {
+        ValueConverter? converter = null;
+
+        // We do GetElementType for multidimensional arrays - these don't implement generic IEnumerable<>
+        var elementType = typeof(TCollection).TryGetElementType(typeof(IEnumerable<>)) ?? typeof(TCollection).GetElementType();
+
+        Check.DebugAssert(elementType is not null, "modelElementType cannot be null");
+
+        if (elementMapping.Converter is { } elementConverter)
+        {
+            var providerElementType = elementConverter.ProviderClrType;
+
+            // Nullability has been unwrapped on the element converter's provider CLR type, so add it back here if needed
+            if (elementType.IsNullableValueType())
+            {
+                providerElementType = providerElementType.MakeNullable();
+            }
+
+            converter = (ValueConverter)Activator.CreateInstance(
+                typeof(NpgsqlArrayConverter<,,>).MakeGenericType(
+                    typeof(TCollection), typeof(TConcreteCollection), providerElementType.MakeArrayType()),
+                elementConverter)!;
+        }
+        else if (typeof(TCollection) != typeof(TConcreteCollection))
+        {
+            converter = (ValueConverter)Activator.CreateInstance(
+                typeof(NpgsqlArrayConverter<,,>).MakeGenericType(
+                    typeof(TCollection), typeof(TConcreteCollection), elementType.MakeArrayType()))!;
+        }
+
+#pragma warning disable EF1001
+        var comparer = typeof(TCollection).IsArray && typeof(TCollection).GetArrayRank() > 1
+            ? null // TODO: Value comparer for multidimensional arrays
+            : (ValueComparer?)Activator.CreateInstance(
+                elementType.IsNullableValueType()
+                    ? typeof(NullableValueTypeListComparer<>).MakeGenericType(elementType.UnwrapNullableType())
+                    : elementMapping.Comparer.Type.IsAssignableFrom(elementType)
+                        ? typeof(ListComparer<>).MakeGenericType(elementType)
+                        : typeof(ObjectListComparer<>).MakeGenericType(elementType),
+                elementMapping.Comparer.ToNullableComparer(elementType)!);
+#pragma warning restore EF1001
+
+        var elementJsonReaderWriter = elementMapping.JsonValueReaderWriter;
+        if (elementJsonReaderWriter is not null && elementJsonReaderWriter.ValueType != typeof(TElement).UnwrapNullableType())
+        {
+            throw new InvalidOperationException(
+                $"When '{elementJsonReaderWriter.ValueType}', '{typeof(TElement).UnwrapNullableType()}' building an array mapping, the JsonValueReaderWriter for element mapping '{elementMapping.GetType().Name}' is incorrect ('{elementMapping.JsonValueReaderWriter?.GetType().Name ?? "<null>"}').");
+        }
+
+        // If there's no JsonValueReaderWriter on the element, we also don't set one on its array (this is for rare edge cases such as
+        // NpgsqlRowValueTypeMapping).
+        // TODO: Also, we don't (yet) support JSON serialization of multidimensional arrays.
+        var collectionJsonReaderWriter =
+            elementJsonReaderWriter is null || typeof(TCollection).IsArray && typeof(TCollection).GetArrayRank() > 1
+                ? null
+                : (JsonValueReaderWriter?)Activator.CreateInstance(
+                    (elementType.IsNullableValueType()
+                        ? typeof(JsonNullableStructCollectionReaderWriter<,,>)
+                        : typeof(JsonCollectionReaderWriter<,,>))
+                    .MakeGenericType(typeof(TCollection), typeof(TConcreteCollection), elementType.UnwrapNullableType()),
+                    elementJsonReaderWriter);
+
+        return new RelationalTypeMappingParameters(
+            new CoreTypeMappingParameters(
+                typeof(TCollection), converter, comparer, elementMapping: elementMapping,
+                jsonValueReaderWriter: collectionJsonReaderWriter),
+            storeType);
+    }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    protected NpgsqlArrayTypeMapping(RelationalTypeMappingParameters parameters)
         : base(parameters)
     {
-        ElementMapping = elementMapping;
-        IsElementNullable = isElementNullable;
+        var clrType = parameters.CoreParameters.ClrType;
+
+        if (clrType.TryGetElementType(typeof(IEnumerable<>)) == null && clrType.GetElementType() == null)
+        {
+            throw new ArgumentException($"CLR type '{parameters.CoreParameters.ClrType}' isn't an IEnumerable");
+        }
 
         // If the element mapping has an EDBDbType or DbType, set our own EDBDbType as an array of that.
         // Otherwise let the ADO.NET layer infer the PostgreSQL type. We can't always let it infer, otherwise
         // when given a byte[] it will infer byte (but we want smallint[])
-        EDBDbType = EDBTypes.EDBDbType.Array |
-            (elementMapping is INpgsqlTypeMapping elementNpgsqlTypeMapping
-                ? elementNpgsqlTypeMapping.EDBDbType
-                : elementMapping.DbType.HasValue
-                    ? new EDBParameter { DbType = elementMapping.DbType.Value }.EDBDbType
-                    : default(EDBDbType?));
+        EDBDbType = EDBTypes.EDBDbType.Array
+            | (ElementTypeMapping is INpgsqlTypeMapping elementNpgsqlTypeMapping
+                ? elementNpgsqlTypeMapping.NpgsqlDbType
+                : ElementTypeMapping.DbType.HasValue
+                    ? new EDBParameter { DbType = ElementTypeMapping.DbType.Value }.NpgsqlDbType
+                    : default(NpgsqlDbType?));
     }
 
-    /// <summary>
-    /// Returns a copy of this type mapping with <see cref="IsElementNullable"/> set to <see langword="false"/>.
-    /// </summary>
-    public abstract NpgsqlArrayTypeMapping MakeNonNullable();
+    // This constructor exists only to support the static Default property above, which is necessary to allow code generation for compiled
+    // models. The constructor creates a completely blank type mapping, which will get cloned with all the correct details.
+    private NpgsqlArrayTypeMapping()
+        : base(new RelationalTypeMappingParameters(
+            new CoreTypeMappingParameters(typeof(TCollection), elementMapping: NullMapping),
+            "int[]"))
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -64,32 +209,33 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
+    public override DbParameter CreateParameter(
+        DbCommand command,
+        string name,
+        object? value,
+        bool? nullable = null,
+        ParameterDirection direction = ParameterDirection.Input)
     {
-        // When the mapping is cloned to apply a value converter, we need to also apply that value converter to the element, otherwise
-        // we end up with an array mapping over a converter-less element mapping. This is important in some inference situations.
-        // If the array converter was properly set up, it's a INpgsqlArrayConverter with a reference to its element's converter.
-        // Just clone the element's mapping with that (same with the null converter case).
-        if (converter is INpgsqlArrayConverter or null)
+        // In queries which compose non-server-correlated LINQ operators over an array parameter (e.g. Where(b => ids.Skip(1)...) we
+        // get an enumerable parameter value that isn't an array/list - but those aren't supported at the Npgsql ADO level.
+        // Detect this here and evaluate the enumerable to get a fully materialized List.
+        // TODO: Make Npgsql support IList<> instead of only arrays and List<>
+        if (value is not null && !value.GetType().IsArrayOrGenericList())
         {
-            return Clone(
-                Parameters.WithComposedConverter(converter),
-                (RelationalTypeMapping)ElementMapping.Clone(converter is INpgsqlArrayConverter arrayConverter
-                    ? arrayConverter.ElementConverter
-                    : null));
+            switch (value)
+            {
+                case IEnumerable<TElement> elements:
+                    value = elements.ToList();
+                    break;
+
+                case IEnumerable elements:
+                    value = elements.Cast<TElement>().ToList();
+                    break;
+            }
         }
 
-        throw new NotSupportedException(
-            $"Value converters for array or List properties must be configured via {nameof(NpgsqlPropertyBuilderExtensions.HasPostgresArrayConversion)}.");
+        return base.CreateParameter(command, name, value, nullable, direction);
     }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    protected abstract RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters, RelationalTypeMapping elementMapping);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -99,36 +245,17 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
     {
-        var elementMapping = ElementMapping;
+        Check.DebugAssert(
+            parameters.CoreParameters.ClrType == typeof(TCollection), "NpgsqlArrayTypeMapping.Clone attempting to change ClrType");
+        Check.DebugAssert(
+            parameters.CoreParameters.ElementTypeMapping is not null, "NpgsqlArrayTypeMapping.Clone without an element type mapping");
+        Check.DebugAssert(
+            parameters.CoreParameters.ElementTypeMapping.ClrType == typeof(TElement).UnwrapNullableType(),
+            "NpgsqlArrayTypeMapping.Clone attempting to change element ClrType");
 
-        // Apply precision, scale and size to the element mapping, not to the array
-        if (parameters.Size is not null)
-        {
-            elementMapping = elementMapping.Clone(elementMapping.StoreType, parameters.Size);
-            parameters = Parameters.WithStoreTypeAndSize(elementMapping.StoreType, size: null);
-        }
-
-        if (parameters.Precision is not null || parameters.Scale is not null)
-        {
-            elementMapping = elementMapping.Clone(parameters.Precision, parameters.Scale);
-            parameters = Parameters.WithPrecision(null).WithScale(null);
-        }
-
-        parameters = parameters.WithStoreTypeAndSize(elementMapping.StoreType + "[]", size: null);
-
-        return Clone(parameters, elementMapping);
+        return new NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement>(parameters);
     }
 
-    /// <summary>
-    /// Returns a type mapping identical to this one, but over the other CLR array type. That is, convert a CLR array mapping to a List
-    /// mapping and vice versa.
-    /// </summary>
-    public abstract NpgsqlArrayTypeMapping FlipArrayListClrType(Type newType);
-
-    // The array-to-array mapping needs to know how to generate an SQL literal for a List<>, and
-    // the list-to-array mapping needs to know how to generate an SQL literal for an array.
-    // This is because in cases such as ctx.SomeListColumn.SequenceEquals(new[] { 1, 2, 3}), the list mapping
-    // from the left side gets applied to the right side.
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -137,11 +264,9 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
     {
-        var type = value.GetType();
-
-        if (!type.IsArray && !type.IsGenericList())
+        if (value is not IEnumerable enumerable)
         {
-            throw new ArgumentException("Parameter must be an array or List<>", nameof(value));
+            throw new ArgumentException($"'{value.GetType().Name}' must be an IEnumerable", nameof(value));
         }
 
         if (value is Array array && array.Rank != 1)
@@ -149,21 +274,26 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
             throw new NotSupportedException("Multidimensional array literals aren't supported");
         }
 
-        var list = (IList)value;
-
         var sb = new StringBuilder();
         sb.Append("ARRAY[");
-        for (var i = 0; i < list.Count; i++)
+
+        var isFirst = true;
+        foreach (var element in enumerable)
         {
-            sb.Append(ElementMapping.GenerateProviderValueSqlLiteral(list[i]));
-            if (i < list.Count - 1)
+            if (isFirst)
+            {
+                isFirst = false;
+            }
+            else
             {
                 sb.Append(",");
             }
+
+            sb.Append(ElementTypeMapping.GenerateProviderValueSqlLiteral(element));
         }
 
         sb.Append("]::");
-        sb.Append(ElementMapping.StoreType);
+        sb.Append(ElementTypeMapping.StoreType);
         sb.Append("[]");
         return sb.ToString();
     }
@@ -176,67 +306,15 @@ public abstract class NpgsqlArrayTypeMapping : RelationalTypeMapping
     /// </summary>
     protected override void ConfigureParameter(DbParameter parameter)
     {
-        var npgsqlParameter = parameter as EDBParameter;
-        if (npgsqlParameter is null)
+        if (parameter is not EDBParameter npgsqlParameter)
         {
-            throw new ArgumentException($"Npgsql-specific type mapping {GetType()} being used with non-Npgsql parameter type {parameter.GetType().Name}");
+            throw new ArgumentException(
+                $"Npgsql-specific type mapping {GetType()} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }
 
-        base.ConfigureParameter(parameter);
-
-        if (EDBDbType.HasValue)
+        if (NpgsqlDbType.HasValue)
         {
             npgsqlParameter.EDBDbType = EDBDbType.Value;
         }
-    }
-
-    // isElementNullable is provided for reference-type properties by decoding NRT information from the property, since that's not
-    // available on the CLR type. Note, however, that because of value conversion we may get a discrepancy between the model property's
-    // nullability and the provider types' (e.g. array of nullable reference property value-converted to array of non-nullable value
-    // type).
-    private protected static bool CalculateElementNullability(Type elementType, bool? isElementNullable)
-        => elementType.IsValueType
-            ? elementType.IsNullableType()
-            : isElementNullable ?? true;
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    protected class NullableEqualityComparer<T> : IEqualityComparer<T?>
-        where T : struct
-    {
-        private readonly IEqualityComparer<T> _underlyingComparer;
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        public NullableEqualityComparer(IEqualityComparer<T> underlyingComparer)
-            => _underlyingComparer = underlyingComparer;
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        public bool Equals(T? x, T? y)
-            => x is null
-                ? y is null
-                : y.HasValue && _underlyingComparer.Equals(x.Value, y.Value);
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        public int GetHashCode(T? obj)
-            => obj is null ? 0 : _underlyingComparer.GetHashCode(obj.Value);
     }
 }

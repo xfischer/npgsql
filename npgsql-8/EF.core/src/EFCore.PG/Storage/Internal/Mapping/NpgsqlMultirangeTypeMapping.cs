@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Data.Common;
 using System.Text;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
@@ -9,14 +10,13 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 /// <remarks>
 /// See: https://www.postgresql.org/docs/current/static/rangetypes.html
 /// </remarks>
-public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
+public class NpgsqlMultirangeTypeMapping : RelationalTypeMapping
 {
-    private readonly ISqlGenerationHelper _sqlGenerationHelper;
-
     /// <summary>
     /// The relational type mapping of the ranges contained in this multirange.
     /// </summary>
-    public virtual NpgsqlRangeTypeMapping RangeMapping { get; }
+    public virtual NpgsqlRangeTypeMapping RangeMapping
+        => (NpgsqlRangeTypeMapping)ElementTypeMapping!;
 
     /// <summary>
     /// The relational type mapping of the values contained in this multirange.
@@ -24,40 +24,25 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     public virtual RelationalTypeMapping SubtypeMapping { get; }
 
     /// <summary>
-    /// Constructs an instance of the <see cref="NpgsqlRangeTypeMapping"/> class.
+    ///     The database type used by Npgsql.
     /// </summary>
-    /// <param name="storeType">The database type to map</param>
-    /// <param name="clrType">The CLR type to map.</param>
-    /// <param name="rangeMapping">The type mapping of the ranges contained in this multirange.</param>
-    /// <param name="sqlGenerationHelper">The SQL generation helper to delimit the store name.</param>
-    public NpgsqlMultirangeTypeMapping(
-        string storeType,
-        Type clrType,
-        NpgsqlRangeTypeMapping rangeMapping,
-        ISqlGenerationHelper sqlGenerationHelper)
-        : this(storeType, storeTypeSchema: null, clrType, rangeMapping, sqlGenerationHelper) {}
+    public virtual EDBDbType EDBDbType { get; }
 
     /// <summary>
-    /// Constructs an instance of the <see cref="NpgsqlRangeTypeMapping"/> class.
+    ///     Constructs an instance of the <see cref="NpgsqlRangeTypeMapping" /> class.
     /// </summary>
     /// <param name="storeType">The database type to map</param>
-    /// <param name="storeTypeSchema">The schema of the type.</param>
     /// <param name="clrType">The CLR type to map.</param>
     /// <param name="rangeMapping">The type mapping of the ranges contained in this multirange.</param>
-    /// <param name="sqlGenerationHelper">The SQL generation helper to delimit the store name.</param>
-    public NpgsqlMultirangeTypeMapping(
-        string storeType,
-        string? storeTypeSchema,
-        Type clrType,
-        NpgsqlRangeTypeMapping rangeMapping,
-        ISqlGenerationHelper sqlGenerationHelper)
+    public NpgsqlMultirangeTypeMapping(string storeType, Type clrType, NpgsqlRangeTypeMapping rangeMapping)
+        // TODO: Need to do comparer, converter
         : base(
-            sqlGenerationHelper.DelimitIdentifier(storeType, storeTypeSchema), clrType,
-            GenerateEDBDbType(rangeMapping.SubtypeMapping))
+            new RelationalTypeMappingParameters(
+                new CoreTypeMappingParameters(clrType, elementMapping: rangeMapping),
+                storeType))
     {
-        RangeMapping = rangeMapping;
         SubtypeMapping = rangeMapping.SubtypeMapping;
-        _sqlGenerationHelper = sqlGenerationHelper;
+        EDBDbType = GenerateEDBDbType(rangeMapping.SubtypeMapping);
     }
 
     /// <summary>
@@ -68,14 +53,13 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected NpgsqlMultirangeTypeMapping(
         RelationalTypeMappingParameters parameters,
-        EDBDbType npgsqlDbType,
-        NpgsqlRangeTypeMapping rangeMapping,
-        ISqlGenerationHelper sqlGenerationHelper)
-        : base(parameters, npgsqlDbType)
+        EDBDbType npgsqlDbType)
+        : base(parameters)
     {
-        RangeMapping = rangeMapping;
+        var rangeMapping = (NpgsqlRangeTypeMapping)parameters.CoreParameters.ElementTypeMapping!;
+
         SubtypeMapping = rangeMapping.SubtypeMapping;
-        _sqlGenerationHelper = sqlGenerationHelper;
+        EDBDbType = npgsqlDbType;
     }
 
     /// <summary>
@@ -85,7 +69,7 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlMultirangeTypeMapping(parameters, EDBDbType, RangeMapping, _sqlGenerationHelper);
+        => new NpgsqlMultirangeTypeMapping(parameters, EDBDbType);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -161,5 +145,22 @@ public class NpgsqlMultirangeTypeMapping : NpgsqlTypeMapping
         }
 
         throw new InvalidCastException();
+    }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    protected override void ConfigureParameter(DbParameter parameter)
+    {
+        if (parameter is not EDBParameter npgsqlParameter)
+        {
+            throw new ArgumentException(
+                $"Npgsql-specific type mapping {GetType()} being used with non-Npgsql parameter type {parameter.GetType().Name}");
+        }
+
+        npgsqlParameter.EDBDbType = EDBDbType;
     }
 }

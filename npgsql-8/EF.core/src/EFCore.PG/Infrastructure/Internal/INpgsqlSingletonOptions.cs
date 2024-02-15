@@ -15,7 +15,7 @@ public interface INpgsqlSingletonOptions : ISingletonOptions
     /// <summary>
     ///     The backend version to target, but returns <see langword="null" /> unless the user explicitly specified a version.
     /// </summary>
-    Version? PostgresVersionWithoutDefault { get; }
+    bool IsPostgresVersionSet { get; }
 
     /// <summary>
     ///     Whether to target Redshift.

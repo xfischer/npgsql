@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using NodaTime.Text;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
@@ -28,7 +30,18 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public TimestampTzOffsetDateTimeMapping() : base("timestamp with time zone", typeof(OffsetDateTime), EDBDbType.TimestampTz) {}
+    public static TimestampTzOffsetDateTimeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public TimestampTzOffsetDateTimeMapping()
+        : base("timestamp with time zone", typeof(OffsetDateTime), EDBDbType.TimestampTz, JsonOffsetDateTimeReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -37,7 +50,9 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected TimestampTzOffsetDateTimeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.TimestampTz) {}
+        : base(parameters, EDBDbType.TimestampTz)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -54,17 +69,8 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new TimestampTzOffsetDateTimeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new TimestampTzOffsetDateTimeMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -82,7 +88,7 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
-        => $"TIMESTAMPTZ '{GenerateLiteralCore(value)}'";
+        => $"TIMESTAMPTZ '{Format((OffsetDateTime)value)}'";
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -91,10 +97,10 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateEmbeddedNonNullSqlLiteral(object value)
-        => $@"""{GenerateLiteralCore(value)}""";
+        => $@"""{Format((OffsetDateTime)value)}""";
 
-    private string GenerateLiteralCore(object value)
-        => OffsetDateTimePattern.ExtendedIso.Format((OffsetDateTime)value);
+    private static string Format(OffsetDateTime offsetDateTime)
+        => OffsetDateTimePattern.ExtendedIso.Format(offsetDateTime);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -107,10 +113,22 @@ public class TimestampTzOffsetDateTimeMapping : NpgsqlTypeMapping
         var offsetDateTime = (OffsetDateTime)value;
         var offsetSeconds = offsetDateTime.Offset.Seconds;
 
-        return Expression.New(Constructor,
+        return Expression.New(
+            Constructor,
             TimestampLocalDateTimeMapping.GenerateCodeLiteral(offsetDateTime.LocalDateTime),
             offsetSeconds % 3600 == 0
                 ? ConstantCall(OffsetFromHoursMethod, offsetSeconds / 3600)
                 : ConstantCall(OffsetFromSecondsMethod, offsetSeconds));
+    }
+
+    private sealed class JsonOffsetDateTimeReaderWriter : JsonValueReaderWriter<OffsetDateTime>
+    {
+        public static JsonOffsetDateTimeReaderWriter Instance { get; } = new();
+
+        public override OffsetDateTime FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+            => OffsetDateTimePattern.ExtendedIso.Parse(manager.CurrentReader.GetString()!).GetValueOrThrow();
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, OffsetDateTime value)
+            => writer.WriteStringValue(Format(value));
     }
 }

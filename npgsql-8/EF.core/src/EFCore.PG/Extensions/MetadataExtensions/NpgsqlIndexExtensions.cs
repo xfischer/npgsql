@@ -283,7 +283,9 @@ public static class NpgsqlIndexExtensions
     /// <param name="createdConcurrently">The value to set.</param>
     /// <param name="fromDataAnnotation">Indicates whether the configuration was specified using a data annotation.</param>
     public static bool? SetIsCreatedConcurrently(
-        this IConventionIndex index, bool? createdConcurrently, bool fromDataAnnotation = false)
+        this IConventionIndex index,
+        bool? createdConcurrently,
+        bool fromDataAnnotation = false)
     {
         index.SetOrRemoveAnnotation(NpgsqlAnnotationNames.CreatedConcurrently, createdConcurrently, fromDataAnnotation);
 
@@ -417,6 +419,66 @@ public static class NpgsqlIndexExtensions
         => index.FindAnnotation(NpgsqlAnnotationNames.TsVectorConfig)?.GetConfigurationSource();
 
     #endregion ToTsVector
+
+    #region Storage parameters
+
+    /// <summary>
+    ///     Gets all storage parameters for the index.
+    /// </summary>
+    public static Dictionary<string, object?> GetStorageParameters(this IReadOnlyIndex index)
+        => index.GetAnnotations()
+            .Where(a => a.Name.StartsWith(NpgsqlAnnotationNames.StorageParameterPrefix, StringComparison.Ordinal))
+            .ToDictionary(
+                a => a.Name.Substring(NpgsqlAnnotationNames.StorageParameterPrefix.Length),
+                a => a.Value);
+
+    /// <summary>
+    ///     Gets a storage parameter for the index.
+    /// </summary>
+    public static string? GetStorageParameter(this IIndex index, string parameterName)
+    {
+        Check.NotEmpty(parameterName, nameof(parameterName));
+
+        return (string?)index[NpgsqlAnnotationNames.StorageParameterPrefix + parameterName];
+    }
+
+    /// <summary>
+    ///     Sets a storage parameter on the index.
+    /// </summary>
+    public static void SetStorageParameter(this IMutableIndex index, string parameterName, object? parameterValue)
+    {
+        Check.NotEmpty(parameterName, nameof(parameterName));
+
+        index.SetOrRemoveAnnotation(NpgsqlAnnotationNames.StorageParameterPrefix + parameterName, parameterValue);
+    }
+
+    /// <summary>
+    ///     Sets a storage parameter on the index.
+    /// </summary>
+    public static object SetStorageParameter(
+        this IConventionIndex index,
+        string parameterName,
+        object? parameterValue,
+        bool fromDataAnnotation = false)
+    {
+        Check.NotEmpty(parameterName, nameof(parameterName));
+
+        index.SetOrRemoveAnnotation(NpgsqlAnnotationNames.StorageParameterPrefix + parameterName, parameterValue, fromDataAnnotation);
+
+        return parameterName;
+    }
+
+    /// <summary>
+    ///     Gets the configuration source for a storage parameter for the table mapped to the entity type.
+    /// </summary>
+    public static ConfigurationSource? GetStorageParameterConfigurationSource(this IConventionIndex index, string parameterName)
+    {
+        Check.NotEmpty(parameterName, nameof(parameterName));
+
+        return index.FindAnnotation(NpgsqlAnnotationNames.StorageParameterPrefix + parameterName)?.GetConfigurationSource();
+    }
+
+    #endregion Storage parameters
 
     #region Sort order (legacy)
 

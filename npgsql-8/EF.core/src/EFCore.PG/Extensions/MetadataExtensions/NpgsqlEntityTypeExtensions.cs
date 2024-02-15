@@ -19,8 +19,7 @@ public static class NpgsqlEntityTypeExtensions
             .Where(a => a.Name.StartsWith(NpgsqlAnnotationNames.StorageParameterPrefix, StringComparison.Ordinal))
             .ToDictionary(
                 a => a.Name.Substring(NpgsqlAnnotationNames.StorageParameterPrefix.Length),
-                a => a.Value
-            );
+                a => a.Value);
 
     /// <summary>
     ///     Gets a table storage parameter for the table mapped to the entity type.
@@ -35,10 +34,7 @@ public static class NpgsqlEntityTypeExtensions
     /// <summary>
     ///     Sets a table storage parameter for the table mapped to the entity type.
     /// </summary>
-    public static void SetStorageParameter(
-        this IMutableEntityType entityType,
-        string parameterName,
-        object? parameterValue)
+    public static void SetStorageParameter(this IMutableEntityType entityType, string parameterName, object? parameterValue)
     {
         Check.NotEmpty(parameterName, nameof(parameterName));
 

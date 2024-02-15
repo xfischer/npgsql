@@ -4,11 +4,20 @@ using System.Text.Json;
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
-/// A mapping for an arbitrary user POCO to PostgreSQL jsonb or json.
-/// For mapping to .NET string, see <see cref="NpgsqlStringTypeMapping"/>.
+///     Supports the older Npgsql-specific JSON mapping, allowing mapping json/jsonb to text, to e.g.
+///     <see cref="JsonElement" /> (weakly-typed mapping) or to arbitrary POCOs (but without them being modeled).
+///     For the standard EF JSON support, which relies on owned entity modeling, see <see cref="NpgsqlOwnedJsonTypeMapping" />.
 /// </summary>
 public class NpgsqlJsonTypeMapping : NpgsqlTypeMapping
 {
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public static NpgsqlJsonTypeMapping Default { get; } = new("jsonb", typeof(JsonElement));
+
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -41,7 +50,8 @@ public class NpgsqlJsonTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsJsonb => StoreType == "jsonb";
+    public virtual bool IsJsonb
+        => StoreType == "jsonb";
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

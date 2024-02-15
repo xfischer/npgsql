@@ -154,17 +154,20 @@ public class PostgresExtension
     /// <summary>
     /// The <see cref="Annotatable"/> that stores the extension.
     /// </summary>
-    public virtual Annotatable Annotatable => (Annotatable)_annotatable;
+    public virtual Annotatable Annotatable
+        => (Annotatable)_annotatable;
 
     /// <summary>
     /// The extension schema or null to represent the default schema.
     /// </summary>
-    public virtual string? Schema => GetData().Schema;
+    public virtual string? Schema
+        => GetData().Schema;
 
     /// <summary>
     /// The extension name.
     /// </summary>
-    public virtual string Name => GetData().Name!;
+    public virtual string Name
+        => GetData().Name!;
 
     /// <summary>
     /// The extension version.
@@ -192,7 +195,7 @@ public class PostgresExtension
         }
 
         // TODO: Can't actually use schema and name...they might not be set when this is first called.
-        var schemaNameValue = value.Split(',').Select(x => x.Trim()).Select(x => x == "" || x == "''" ? null : x).ToArray();
+        var schemaNameValue = value.Split(',').Select(x => x.Trim()).Select(x => x is "" or "''" ? null : x).ToArray();
         var schemaAndName = annotation.Name.Substring(NpgsqlAnnotationNames.PostgresExtensionPrefix.Length).Split('.');
         switch (schemaAndName.Length)
         {

@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 
-#nullable enable
-
 namespace Microsoft.EntityFrameworkCore.Utilities;
 
 [DebuggerStepThrough]
@@ -24,7 +22,8 @@ internal static class Check
 
     [ContractAnnotation("value:null => halt")]
     public static IReadOnlyList<T> NotEmpty<T>(
-        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        [NotNull] IReadOnlyList<T>? value,
+        [InvokerParameterName] string parameterName)
     {
         NotNull(value, parameterName);
 
@@ -72,8 +71,7 @@ internal static class Check
         IReadOnlyCollection<T>? value,
         [InvokerParameterName] string parameterName)
     {
-        if (!ReferenceEquals(value, null)
-            && (value.Count == 0))
+        if (value is { Count: 0 })
         {
             NotEmpty(parameterName, nameof(parameterName));
 
@@ -84,7 +82,8 @@ internal static class Check
     }
 
     public static IReadOnlyList<T> HasNoNulls<T>(
-        [NotNull] IReadOnlyList<T>? value, [InvokerParameterName] string parameterName)
+        [NotNull] IReadOnlyList<T>? value,
+        [InvokerParameterName] string parameterName)
         where T : class
     {
         NotNull(value, parameterName);
@@ -123,4 +122,9 @@ internal static class Check
             throw new Exception($"Check.DebugAssert failed: {message}");
         }
     }
+
+    [Conditional("DEBUG")]
+    [DoesNotReturn]
+    public static void DebugFail(string message)
+        => throw new Exception($"Check.DebugFail failed: {message}");
 }

@@ -47,7 +47,9 @@ public class NpgsqlRowValueTranslator : IMethodCallTranslator
     /// Initializes a new instance of the <see cref="NpgsqlRowValueTranslator"/> class.
     /// </summary>
     public NpgsqlRowValueTranslator(NpgsqlSqlExpressionFactory sqlExpressionFactory)
-        => _sqlExpressionFactory = sqlExpressionFactory;
+    {
+        _sqlExpressionFactory = sqlExpressionFactory;
+    }
 
     /// <inheritdoc />
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(ValueType))] // For ValueTuple.Create
@@ -58,9 +60,9 @@ public class NpgsqlRowValueTranslator : IMethodCallTranslator
         IDiagnosticsLogger<DbLoggerCategory.Query> logger)
     {
         // Translate ValueTuple.Create
-        if (method.DeclaringType == typeof(ValueTuple) && method.IsStatic && method.Name == nameof(ValueTuple.Create))
+        if (method.DeclaringType == typeof(ValueTuple) && method is { IsStatic: true, Name: nameof(ValueTuple.Create) })
         {
-            return new PostgresRowValueExpression(arguments, method.ReturnType);
+            return new PgRowValueExpression(arguments, method.ReturnType);
         }
 
         // Translate EF.Functions.GreaterThan and other comparisons
@@ -69,13 +71,13 @@ public class NpgsqlRowValueTranslator : IMethodCallTranslator
             return null;
         }
 
-        var leftCount = arguments[1] is PostgresRowValueExpression leftRowValue
+        var leftCount = arguments[1] is PgRowValueExpression leftRowValue
             ? leftRowValue.Values.Count
             : arguments[1] is SqlConstantExpression { Value : ITuple leftTuple }
                 ? (int?)leftTuple.Length
                 : null;
 
-        var rightCount = arguments[2] is PostgresRowValueExpression rightRowValue
+        var rightCount = arguments[2] is PgRowValueExpression rightRowValue
             ? rightRowValue.Values.Count
             : arguments[2] is SqlConstantExpression { Value : ITuple rightTuple }
                 ? (int?)rightTuple.Length

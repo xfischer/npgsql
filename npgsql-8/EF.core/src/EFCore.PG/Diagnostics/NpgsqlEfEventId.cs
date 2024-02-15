@@ -1,4 +1,5 @@
 // ReSharper disable once CheckNamespace
+
 namespace Microsoft.EntityFrameworkCore.Diagnostics;
 
 /// <summary>
@@ -21,6 +22,7 @@ public static class NpgsqlEfEventId
         // Model validation events
         // Scaffolding events
         ColumnFound = CoreEventId.ProviderDesignBaseId,
+
         //ColumnNotNamedWarning,
         //ColumnSkipped,
         //ForeignKeyColumnMissingWarning,
@@ -28,6 +30,7 @@ public static class NpgsqlEfEventId
         //ForeignKeyColumnsNotMappedWarning,
         //ForeignKeyNotNamedWarning,
         ForeignKeyReferencesMissingPrincipalTableWarning,
+
         //IndexColumnFound,
         //IndexColumnNotNamedWarning,
         //IndexColumnSkipped,
@@ -37,8 +40,10 @@ public static class NpgsqlEfEventId
         MissingSchemaWarning,
         MissingTableWarning,
         SequenceFound,
+
         //SequenceNotNamedWarning,
         TableFound,
+
         //TableSkipped,
         //ForeignKeyTableMissingWarning,
         PrimaryKeyFound,
@@ -54,7 +59,9 @@ public static class NpgsqlEfEventId
     }
 
     private static readonly string ScaffoldingPrefix = DbLoggerCategory.Scaffolding.Name + ".";
-    private static EventId MakeScaffoldingId(Id id) => new((int)id, ScaffoldingPrefix + id);
+
+    private static EventId MakeScaffoldingId(Id id)
+        => new((int)id, ScaffoldingPrefix + id);
 
     /// <summary>
     ///   <para>
@@ -104,7 +111,8 @@ public static class NpgsqlEfEventId
     ///     This event is in the <see cref="DbLoggerCategory.Scaffolding" /> category.
     ///   </para>
     /// </summary>
-    public static readonly EventId ForeignKeyReferencesMissingPrincipalTableWarning = MakeScaffoldingId(Id.ForeignKeyReferencesMissingPrincipalTableWarning);
+    public static readonly EventId ForeignKeyReferencesMissingPrincipalTableWarning =
+        MakeScaffoldingId(Id.ForeignKeyReferencesMissingPrincipalTableWarning);
 
     /// <summary>
     ///   <para>
@@ -214,5 +222,6 @@ public static class NpgsqlEfEventId
     ///     This event is in the <see cref="DbLoggerCategory.Scaffolding" /> category.
     ///   </para>
     /// </summary>
-    public static readonly EventId UnsupportedColumnConstraintSkippedWarning = MakeScaffoldingId(Id.UnsupportedConstraintIndexSkippedWarning);
+    public static readonly EventId UnsupportedColumnConstraintSkippedWarning =
+        MakeScaffoldingId(Id.UnsupportedConstraintIndexSkippedWarning);
 }

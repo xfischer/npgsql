@@ -19,7 +19,9 @@ public class NpgsqlCodeGenerator : ProviderCodeGenerator
     /// </summary>
     /// <param name="dependencies">The dependencies.</param>
     public NpgsqlCodeGenerator(ProviderCodeGeneratorDependencies dependencies)
-        : base(dependencies) {}
+        : base(dependencies)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -21,7 +21,7 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static readonly Version DefaultPostgresVersion = new(12, 0);
+    public static readonly Version DefaultPostgresVersion = new(14, 0);
 
     /// <summary>
     /// The backend version to target.
@@ -32,8 +32,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     /// <summary>
     /// The backend version to target, but returns <see langword="null" /> unless the user explicitly specified a version.
     /// </summary>
-    public virtual Version? PostgresVersionWithoutDefault
-        => _postgresVersion;
+    public virtual bool IsPostgresVersionSet
+        => _postgresVersion is not null;
 
     /// <summary>
     ///     The <see cref="DbDataSource" />, or <see langword="null" /> if a connection string or <see cref="DbConnection" /> was used
@@ -54,7 +54,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     /// <summary>
     /// The list of range mappings specified by the user.
     /// </summary>
-    public virtual IReadOnlyList<UserRangeDefinition> UserRangeDefinitions => _userRangeDefinitions;
+    public virtual IReadOnlyList<UserRangeDefinition> UserRangeDefinitions
+        => _userRangeDefinitions;
 
     /// <summary>
     /// The specified <see cref="ProvideClientCertificatesCallback"/>.
@@ -82,14 +83,17 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     /// Initializes an instance of <see cref="NpgsqlOptionsExtension"/> with the default settings.
     /// </summary>
     public NpgsqlOptionsExtension()
-        => _userRangeDefinitions = new List<UserRangeDefinition>();
+    {
+        _userRangeDefinitions = new List<UserRangeDefinition>();
+    }
 
     // NB: When adding new options, make sure to update the copy ctor below.
     /// <summary>
     /// Initializes an instance of <see cref="NpgsqlOptionsExtension"/> by copying the specified instance.
     /// </summary>
     /// <param name="copyFrom">The instance to copy.</param>
-    public NpgsqlOptionsExtension(NpgsqlOptionsExtension copyFrom) : base(copyFrom)
+    public NpgsqlOptionsExtension(NpgsqlOptionsExtension copyFrom)
+        : base(copyFrom)
     {
         DataSource = copyFrom.DataSource;
         AdminDatabase = copyFrom.AdminDatabase;
@@ -110,7 +114,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override int? MinBatchSize => base.MinBatchSize ?? 2;
+    public override int? MinBatchSize
+        => base.MinBatchSize ?? 2;
 
     /// <summary>
     ///     Creates a new instance with all options the same as for this instance, but with the given option changed.
@@ -242,12 +247,25 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         var dataSource = DataSource
             ?? options.FindExtension<CoreOptionsExtension>()?.ApplicationServiceProvider?.GetService<EDBDataSource>();
 
-        if (dataSource is not null
-            && (ProvideClientCertificatesCallback is not null
-                || RemoteCertificateValidationCallback is not null
-                || ProvidePasswordCallback is not null))
+        if (dataSource is not null)
         {
-            throw new InvalidOperationException();
+            if (ProvideClientCertificatesCallback is not null)
+            {
+                throw new InvalidOperationException(
+                    "When passing an NpgsqlDataSource to UseNpgsql(), call 'ProvideClientCertificatesCallback' on NpgsqlDataSourceBuilder rather than in UseNpgsql().");
+            }
+
+            if (RemoteCertificateValidationCallback is not null)
+            {
+                throw new InvalidOperationException(
+                    "When passing an NpgsqlDataSource to UseNpgsql(), call 'RemoteCertificateValidationCallback' on NpgsqlDataSourceBuilder rather than in UseNpgsql().");
+            }
+
+            if (ProvidePasswordCallback is not null)
+            {
+                throw new InvalidOperationException(
+                    "When passing an NpgsqlDataSource to UseNpgsql(), 'ProviderPasswordCallback' cannot be used in UseNpgsql(). See https://www.npgsql.org/doc/security.html for configuring passwords and token rotation on NpgsqlDataSourceBuilder.");
+            }
         }
 
         if (UseRedshift && _postgresVersion is not null)
@@ -304,7 +322,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     #region Infrastructure
 
     /// <inheritdoc />
-    protected override RelationalOptionsExtension Clone() => new NpgsqlOptionsExtension(this);
+    protected override RelationalOptionsExtension Clone()
+        => new NpgsqlOptionsExtension(this);
 
     /// <inheritdoc />
     public override void ApplyServices(IServiceCollection services)
@@ -324,9 +343,11 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         {
         }
 
-        private new NpgsqlOptionsExtension Extension => (NpgsqlOptionsExtension)base.Extension;
+        private new NpgsqlOptionsExtension Extension
+            => (NpgsqlOptionsExtension)base.Extension;
 
-        public override bool IsDatabaseProvider => true;
+        public override bool IsDatabaseProvider
+            => true;
 
         public override string LogFragment
         {
@@ -468,7 +489,11 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
 
             foreach (var rangeDefinition in Extension._userRangeDefinitions)
             {
-                debugInfo["EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL:" + nameof(NpgsqlDbContextOptionsBuilder.MapRange) + ":" + rangeDefinition.SubtypeClrType.Name]
+                debugInfo[
+                        "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL:"
+                        + nameof(NpgsqlDbContextOptionsBuilder.MapRange)
+                        + ":"
+                        + rangeDefinition.SubtypeClrType.Name]
                     = rangeDefinition.GetHashCode().ToString(CultureInfo.InvariantCulture);
             }
         }

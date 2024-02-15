@@ -1,4 +1,3 @@
-using System.Data.Common;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
@@ -11,7 +10,6 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
 
@@ -60,11 +58,12 @@ public static class NpgsqlServiceCollectionExtensions
     {
         Check.NotNull(serviceCollection, nameof(serviceCollection));
 
-        return serviceCollection.AddDbContext<TContext>((_, options) =>
-        {
-            optionsAction?.Invoke(options);
-            options.UseNpgsql(connectionString, npgsqlOptionsAction);
-        });
+        return serviceCollection.AddDbContext<TContext>(
+            (_, options) =>
+            {
+                optionsAction?.Invoke(options);
+                options.UseNpgsql(connectionString, npgsqlOptionsAction);
+            });
     }
 
     /// <summary>
@@ -96,6 +95,7 @@ public static class NpgsqlServiceCollectionExtensions
             .TryAdd<ISqlGenerationHelper, NpgsqlSqlGenerationHelper>()
             .TryAdd<IRelationalAnnotationProvider, NpgsqlAnnotationProvider>()
             .TryAdd<IModelValidator, NpgsqlModelValidator>()
+            .TryAdd<IMigrator, NpgsqlMigrator>()
             .TryAdd<IProviderConventionSetBuilder, NpgsqlConventionSetBuilder>()
             .TryAdd<IUpdateSqlGenerator, NpgsqlUpdateSqlGenerator>()
             .TryAdd<IModificationCommandFactory, NpgsqlModificationCommandFactory>()
@@ -114,11 +114,11 @@ public static class NpgsqlServiceCollectionExtensions
             .TryAdd<IEvaluatableExpressionFilter, NpgsqlEvaluatableExpressionFilter>()
             .TryAdd<IQuerySqlGeneratorFactory, NpgsqlQuerySqlGeneratorFactory>()
             .TryAdd<IRelationalSqlTranslatingExpressionVisitorFactory, NpgsqlSqlTranslatingExpressionVisitorFactory>()
+            .TryAdd<IQueryTranslationPreprocessorFactory, NpgsqlQueryTranslationPreprocessorFactory>()
             .TryAdd<IQueryTranslationPostprocessorFactory, NpgsqlQueryTranslationPostprocessorFactory>()
             .TryAdd<IRelationalParameterBasedSqlProcessorFactory, EDBParameterBasedSqlProcessorFactory>()
             .TryAdd<ISqlExpressionFactory, NpgsqlSqlExpressionFactory>()
             .TryAdd<ISingletonOptions, INpgsqlSingletonOptions>(p => p.GetRequiredService<INpgsqlSingletonOptions>())
-            .TryAdd<IValueConverterSelector, NpgsqlValueConverterSelector>()
             .TryAdd<IQueryCompilationContextFactory, NpgsqlQueryCompilationContextFactory>()
             .TryAddProviderSpecificServices(
                 b => b

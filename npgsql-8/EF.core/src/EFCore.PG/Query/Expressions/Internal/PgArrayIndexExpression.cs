@@ -1,34 +1,41 @@
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
-/// An SQL expression that represents an indexing into a PostgreSQL array.
+///     An SQL expression that represents an indexing into a PostgreSQL array.
 /// </summary>
 /// <remarks>
-/// <see cref="SqlBinaryExpression"/> specifically disallows having an <see cref="SqlBinaryExpression.OperatorType"/>
-/// of value <see cref="ExpressionType.ArrayIndex"/> as arrays are a PostgreSQL-only feature.
+///     <see cref="SqlBinaryExpression" /> specifically disallows having an <see cref="SqlBinaryExpression.OperatorType" />
+///     of value <see cref="ExpressionType.ArrayIndex" /> as arrays are a PostgreSQL-only feature.
 /// </remarks>
-public class PostgresArrayIndexExpression : SqlExpression, IEquatable<PostgresArrayIndexExpression>
+public class PgArrayIndexExpression : SqlExpression, IEquatable<PgArrayIndexExpression>
 {
     /// <summary>
-    /// The array being indexed.
+    ///     The array being indexed.
     /// </summary>
     public virtual SqlExpression Array { get; }
 
     /// <summary>
-    /// The index in the array.
+    ///     The index in the array.
     /// </summary>
     public virtual SqlExpression Index { get; }
 
     /// <summary>
-    ///     Creates a new instance of the <see cref="PostgresArrayIndexExpression" /> class.
+    ///     Whether the expression is nullable.
+    /// </summary>
+    public virtual bool IsNullable { get; }
+
+    /// <summary>
+    ///     Creates a new instance of the <see cref="PgArrayIndexExpression" /> class.
     /// </summary>
     /// <param name="array">The array tp index into.</param>
     /// <param name="index">An position in the array to index into.</param>
+    /// <param name="nullable">Whether the expression is nullable.</param>
     /// <param name="type">The <see cref="Type" /> of the expression.</param>
     /// <param name="typeMapping">The <see cref="RelationalTypeMapping" /> associated with the expression.</param>
-    public PostgresArrayIndexExpression(
+    public PgArrayIndexExpression(
         SqlExpression array,
         SqlExpression index,
+        bool nullable,
         Type type,
         RelationalTypeMapping? typeMapping)
         : base(type.UnwrapNullableType(), typeMapping)
@@ -53,6 +60,7 @@ public class PostgresArrayIndexExpression : SqlExpression, IEquatable<PostgresAr
 
         Array = array;
         Index = index;
+        IsNullable = nullable;
     }
 
     /// <summary>
@@ -62,28 +70,31 @@ public class PostgresArrayIndexExpression : SqlExpression, IEquatable<PostgresAr
     /// <param name="array">The <see cref="Array" /> property of the result.</param>
     /// <param name="index">The <see cref="Index" /> property of the result.</param>
     /// <returns>This expression if no children changed, or an expression with the updated children.</returns>
-    public virtual PostgresArrayIndexExpression Update(SqlExpression array, SqlExpression index)
+    public virtual PgArrayIndexExpression Update(SqlExpression array, SqlExpression index)
         => array == Array && index == Index
             ? this
-            : new PostgresArrayIndexExpression(array, index, Type, TypeMapping);
+            : new PgArrayIndexExpression(array, index, IsNullable, Type, TypeMapping);
 
     /// <inheritdoc />
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => Update((SqlExpression)visitor.Visit(Array), (SqlExpression)visitor.Visit(Index));
 
     /// <inheritdoc />
-    public virtual bool Equals(PostgresArrayIndexExpression? other)
-        => ReferenceEquals(this, other) ||
-            other is not null &&
-            base.Equals(other) &&
-            Array.Equals(other.Array) &&
-            Index.Equals(other.Index);
+    public virtual bool Equals(PgArrayIndexExpression? other)
+        => ReferenceEquals(this, other)
+            || other is not null
+            && base.Equals(other)
+            && Array.Equals(other.Array)
+            && Index.Equals(other.Index)
+            && IsNullable == other.IsNullable;
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is PostgresArrayIndexExpression e && Equals(e);
+    public override bool Equals(object? obj)
+        => obj is PgArrayIndexExpression e && Equals(e);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(base.GetHashCode(), Array, Index);
+    public override int GetHashCode()
+        => HashCode.Combine(base.GetHashCode(), Array, Index, IsNullable);
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -95,5 +106,6 @@ public class PostgresArrayIndexExpression : SqlExpression, IEquatable<PostgresAr
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{Array}[{Index}]";
+    public override string ToString()
+        => $"{Array}[{Index}]";
 }

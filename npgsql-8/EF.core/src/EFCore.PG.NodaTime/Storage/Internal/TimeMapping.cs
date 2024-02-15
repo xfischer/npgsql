@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using NodaTime.Text;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
@@ -20,7 +22,8 @@ public class TimeMapping : NpgsqlTypeMapping
         typeof(LocalTime).GetConstructor(new[] { typeof(int), typeof(int), typeof(int) })!;
 
     private static readonly MethodInfo FromHourMinuteSecondNanosecondMethod =
-        typeof(LocalTime).GetMethod(nameof(LocalTime.FromHourMinuteSecondNanosecond),
+        typeof(LocalTime).GetMethod(
+            nameof(LocalTime.FromHourMinuteSecondNanosecond),
             new[] { typeof(int), typeof(int), typeof(int), typeof(long) })!;
 
     /// <summary>
@@ -29,7 +32,18 @@ public class TimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public TimeMapping() : base("time", typeof(LocalTime), EDBDbType.Time) {}
+    public static TimeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public TimeMapping()
+        : base("time", typeof(LocalTime), EDBDbType.Time, JsonLocalTimeReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -38,7 +52,9 @@ public class TimeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected TimeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Time) {}
+        : base(parameters, EDBDbType.Time)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -55,17 +71,8 @@ public class TimeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new TimeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new TimeMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -108,5 +115,16 @@ public class TimeMapping : NpgsqlTypeMapping
             : time.Second != 0
                 ? ConstantNew(ConstructorWithSeconds, time.Hour, time.Minute, time.Second)
                 : ConstantNew(ConstructorWithMinutes, time.Hour, time.Minute);
+    }
+
+    private sealed class JsonLocalTimeReaderWriter : JsonValueReaderWriter<LocalTime>
+    {
+        public static JsonLocalTimeReaderWriter Instance { get; } = new();
+
+        public override LocalTime FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+            => LocalTimePattern.ExtendedIso.Parse(manager.CurrentReader.GetString()!).GetValueOrThrow();
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, LocalTime value)
+            => writer.WriteStringValue(LocalTimePattern.ExtendedIso.Format(value));
     }
 }

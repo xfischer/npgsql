@@ -1,48 +1,49 @@
-﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
-/// Represents a PostgreSQL array ALL expression.
+///     Represents a PostgreSQL array ALL expression.
 /// </summary>
 /// <remarks>
-/// See https://www.postgresql.org/docs/current/static/functions-comparisons.html
+///     See https://www.postgresql.org/docs/current/static/functions-comparisons.html
 /// </remarks>
-public class PostgresAllExpression : SqlExpression, IEquatable<PostgresAllExpression>
+public class PgAllExpression : SqlExpression, IEquatable<PgAllExpression>
 {
     /// <inheritdoc />
-    public override Type Type => typeof(bool);
+    public override Type Type
+        => typeof(bool);
 
     /// <summary>
-    /// The value to test against the <see cref="Array"/>.
+    ///     The value to test against the <see cref="Array" />.
     /// </summary>
     public virtual SqlExpression Item { get; }
 
     /// <summary>
-    /// The array of values or patterns to test for the <see cref="Item"/>.
+    ///     The array of values or patterns to test for the <see cref="Item" />.
     /// </summary>
     public virtual SqlExpression Array { get; }
 
     /// <summary>
-    /// The operator.
+    ///     The operator.
     /// </summary>
-    public virtual PostgresAllOperatorType OperatorType { get; }
+    public virtual PgAllOperatorType OperatorType { get; }
 
     /// <summary>
-    /// Constructs a <see cref="PostgresAllExpression"/>.
+    ///     Constructs a <see cref="PgAllExpression" />.
     /// </summary>
     /// <param name="operatorType">The operator symbol to the array expression.</param>
     /// <param name="item">The value to find.</param>
     /// <param name="array">The array to search.</param>
     /// <param name="typeMapping">The type mapping for the expression.</param>
-    public PostgresAllExpression(
+    public PgAllExpression(
         SqlExpression item,
         SqlExpression array,
-        PostgresAllOperatorType operatorType,
+        PgAllOperatorType operatorType,
         RelationalTypeMapping? typeMapping)
         : base(typeof(bool), typeMapping)
     {
-        if (!(array.Type.IsArrayOrGenericList() || array is SqlConstantExpression { Value: null }))
+        if (array.Type.TryGetElementType(typeof(IEnumerable<>)) is null)
         {
-            throw new ArgumentException("Array expression must be of type array or List<>", nameof(array));
+            throw new ArgumentException("Array expression must be an IEnumerable", nameof(array));
         }
 
         Item = item;
@@ -57,9 +58,9 @@ public class PostgresAllExpression : SqlExpression, IEquatable<PostgresAllExpres
     /// <param name="item">The <see cref="Item" /> property of the result.</param>
     /// <param name="array">The <see cref="Array" /> property of the result.</param>
     /// <returns>This expression if no children changed, or an expression with the updated children.</returns>
-    public virtual PostgresAllExpression Update(SqlExpression item, SqlExpression array)
+    public virtual PgAllExpression Update(SqlExpression item, SqlExpression array)
         => item != Item || array != Array
-            ? new PostgresAllExpression(item, array, OperatorType, TypeMapping)
+            ? new PgAllExpression(item, array, OperatorType, TypeMapping)
             : this;
 
     /// <inheritdoc />
@@ -67,16 +68,17 @@ public class PostgresAllExpression : SqlExpression, IEquatable<PostgresAllExpres
         => Update((SqlExpression)visitor.Visit(Item), (SqlExpression)visitor.Visit(Array));
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is PostgresAllExpression e && Equals(e);
+    public override bool Equals(object? obj)
+        => obj is PgAllExpression e && Equals(e);
 
     /// <inheritdoc />
-    public virtual bool Equals(PostgresAllExpression? other)
-        => ReferenceEquals(this, other) ||
-            other is not null &&
-            base.Equals(other) &&
-            Item.Equals(other.Item) &&
-            Array.Equals(other.Array) &&
-            OperatorType.Equals(other.OperatorType);
+    public virtual bool Equals(PgAllExpression? other)
+        => ReferenceEquals(this, other)
+            || other is not null
+            && base.Equals(other)
+            && Item.Equals(other.Item)
+            && Array.Equals(other.Array)
+            && OperatorType.Equals(other.OperatorType);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -88,32 +90,34 @@ public class PostgresAllExpression : SqlExpression, IEquatable<PostgresAllExpres
         expressionPrinter.Visit(Item);
         expressionPrinter
             .Append(" ")
-            .Append(OperatorType switch
-            {
-                PostgresAllOperatorType.Like     => "LIKE",
-                PostgresAllOperatorType.ILike    => "ILIKE",
+            .Append(
+                OperatorType switch
+                {
+                    PgAllOperatorType.Like => "LIKE",
+                    PgAllOperatorType.ILike => "ILIKE",
 
-                _ => throw new ArgumentOutOfRangeException($"Unhandled operator type: {OperatorType}")
-            })
+                    _ => throw new ArgumentOutOfRangeException($"Unhandled operator type: {OperatorType}")
+                })
             .Append(" ALL(");
         expressionPrinter.Visit(Array);
         expressionPrinter.Append(")");
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{Item} {OperatorType} ALL({Array})";
+    public override string ToString()
+        => $"{Item} {OperatorType} ALL({Array})";
 }
 
 /// <summary>
-/// Determines the operator type for a <see cref="PostgresAllExpression" />.
+///     Determines the operator type for a <see cref="PgAllExpression" />.
 /// </summary>
-public enum PostgresAllOperatorType
+public enum PgAllOperatorType
 {
     /// <summary>
     ///     Represents a PostgreSQL LIKE ALL operator.
     /// </summary>
     Like,
-    
+
     /// <summary>
     ///     Represents a PostgreSQL ILIKE ALL operator.
     /// </summary>

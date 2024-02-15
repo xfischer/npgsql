@@ -55,7 +55,12 @@ public static class NpgsqlFuzzyStringMatchDbFunctionsExtensions
     /// See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
     /// </remarks>
     public static int FuzzyStringMatchLevenshtein(
-        this DbFunctions _, string source, string target, int insertionCost, int deletionCost, int substitutionCost)
+        this DbFunctions _,
+        string source,
+        string target,
+        int insertionCost,
+        int deletionCost,
+        int substitutionCost)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(FuzzyStringMatchLevenshtein)));
 
     /// <summary>
@@ -82,7 +87,12 @@ public static class NpgsqlFuzzyStringMatchDbFunctionsExtensions
     /// See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
     /// </remarks>
     public static int FuzzyStringMatchLevenshteinLessEqual(
-        this DbFunctions _, string source, string target, int insertionCost, int deletionCost, int substitutionCost,
+        this DbFunctions _,
+        string source,
+        string target,
+        int insertionCost,
+        int deletionCost,
+        int substitutionCost,
         int maximumDistance)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(FuzzyStringMatchLevenshteinLessEqual)));
 

@@ -27,7 +27,9 @@ public class NpgsqlModelValidator : RelationalModelValidator
         RelationalModelValidatorDependencies relationalDependencies,
         INpgsqlSingletonOptions npgsqlSingletonOptions)
         : base(dependencies, relationalDependencies)
-        => _postgresVersion = npgsqlSingletonOptions.PostgresVersion;
+    {
+        _postgresVersion = npgsqlSingletonOptions.PostgresVersion;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -59,10 +61,10 @@ public class NpgsqlModelValidator : RelationalModelValidator
         if (strategy is NpgsqlValueGenerationStrategy.IdentityAlwaysColumn or NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
         {
             throw new InvalidOperationException(
-                $"'{strategy}' requires PostgreSQL 10.0 or later. " +
-                "If you're using an older version, set PostgreSQL compatibility mode by calling " +
-                $"'optionsBuilder.{nameof(NpgsqlDbContextOptionsBuilder.SetPostgresVersion)}()' in your model's OnConfiguring. " +
-                "See the docs for more info.");
+                $"'{strategy}' requires PostgreSQL 10.0 or later. "
+                + "If you're using an older version, set PostgreSQL compatibility mode by calling "
+                + $"'optionsBuilder.{nameof(NpgsqlDbContextOptionsBuilder.SetPostgresVersion)}()' in your model's OnConfiguring. "
+                + "See the docs for more info.");
         }
 
         foreach (var property in model.GetEntityTypes().SelectMany(e => e.GetProperties()))
@@ -73,7 +75,7 @@ public class NpgsqlModelValidator : RelationalModelValidator
                 or NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
             {
                 throw new InvalidOperationException(
-                    $"{property.DeclaringEntityType}.{property.Name}: '{propertyStrategy}' requires PostgreSQL 10.0 or later.");
+                    $"{property.DeclaringType}.{property.Name}: '{propertyStrategy}' requires PostgreSQL 10.0 or later.");
             }
         }
     }
@@ -179,30 +181,18 @@ public class NpgsqlModelValidator : RelationalModelValidator
 
             if (sproc.ResultColumns.Any())
             {
-                throw new InvalidOperationException(NpgsqlStrings.StoredProcedureResultColumnsNotSupported(
-                    entityType.DisplayName(),
-                    storeObjectIdentifier.DisplayName()));
+                throw new InvalidOperationException(
+                    NpgsqlStrings.StoredProcedureResultColumnsNotSupported(
+                        entityType.DisplayName(),
+                        storeObjectIdentifier.DisplayName()));
             }
 
             if (sproc.IsRowsAffectedReturned)
             {
-                throw new InvalidOperationException(NpgsqlStrings.StoredProcedureReturnValueNotSupported(
-                    entityType.DisplayName(),
-                    storeObjectIdentifier.DisplayName()));
-            }
-        }
-    }
-
-    /// <inheritdoc />
-    protected override void ValidateJsonEntities(
-        IModel model,
-        IDiagnosticsLogger<DbLoggerCategory.Model.Validation> logger)
-    {
-        foreach (var entityType in model.GetEntityTypes())
-        {
-            if (entityType.IsMappedToJson())
-            {
-                throw new InvalidOperationException(NpgsqlStrings.Ef7JsonMappingNotSupported);
+                throw new InvalidOperationException(
+                    NpgsqlStrings.StoredProcedureReturnValueNotSupported(
+                        entityType.DisplayName(),
+                        storeObjectIdentifier.DisplayName()));
             }
         }
     }
@@ -221,9 +211,9 @@ public class NpgsqlModelValidator : RelationalModelValidator
         {
             throw new InvalidOperationException(
                 NpgsqlStrings.DuplicateColumnCompressionMethodMismatch(
-                    duplicateProperty.DeclaringEntityType.DisplayName(),
+                    duplicateProperty.DeclaringType.DisplayName(),
                     duplicateProperty.Name,
-                    property.DeclaringEntityType.DisplayName(),
+                    property.DeclaringType.DisplayName(),
                     property.Name,
                     columnName,
                     storeObject.DisplayName()));

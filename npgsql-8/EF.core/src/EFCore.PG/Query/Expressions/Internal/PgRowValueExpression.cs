@@ -1,6 +1,3 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
 using System.Runtime.CompilerServices;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
@@ -12,15 +9,15 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expression
 ///     See the <see href="https://www.postgresql.org/docs/current/sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS">PostgreSQL docs</see>
 ///     for more information.
 /// </remarks>
-public class PostgresRowValueExpression : SqlExpression, IEquatable<PostgresRowValueExpression>
+public class PgRowValueExpression : SqlExpression, IEquatable<PgRowValueExpression>
 {
     /// <summary>
-    /// The values of this PostgreSQL row value expression.
+    ///     The values of this PostgreSQL row value expression.
     /// </summary>
     public virtual IReadOnlyList<SqlExpression> Values { get; }
 
     /// <inheritdoc />
-    public PostgresRowValueExpression(IReadOnlyList<SqlExpression> values, Type type, RelationalTypeMapping? typeMapping = null)
+    public PgRowValueExpression(IReadOnlyList<SqlExpression> values, Type type, RelationalTypeMapping? typeMapping = null)
         : base(type, typeMapping)
     {
         Check.NotNull(values, nameof(values));
@@ -55,17 +52,17 @@ public class PostgresRowValueExpression : SqlExpression, IEquatable<PostgresRowV
             }
         }
 
-        return newRowValues is null ? this : new PostgresRowValueExpression(newRowValues, Type);
+        return newRowValues is null ? this : new PgRowValueExpression(newRowValues, Type);
     }
 
     /// <summary>
     ///     Creates a new expression that is like this one, but using the supplied children. If all of the children are the same, it will
     ///     return this expression.
     /// </summary>
-    public virtual PostgresRowValueExpression Update(IReadOnlyList<SqlExpression> values)
+    public virtual PgRowValueExpression Update(IReadOnlyList<SqlExpression> values)
         => values.Count == Values.Count && values.Zip(Values, (x, y) => (x, y)).All(tup => tup.x == tup.y)
             ? this
-            : new PostgresRowValueExpression(values, Type);
+            : new PgRowValueExpression(values, Type);
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -88,10 +85,10 @@ public class PostgresRowValueExpression : SqlExpression, IEquatable<PostgresRowV
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
-        => obj is PostgresRowValueExpression other && Equals(other);
+        => obj is PgRowValueExpression other && Equals(other);
 
     /// <inheritdoc />
-    public virtual bool Equals(PostgresRowValueExpression? other)
+    public virtual bool Equals(PgRowValueExpression? other)
     {
         if (other is null || !base.Equals(other) || other.Values.Count != Values.Count)
         {

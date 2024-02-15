@@ -3,7 +3,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expression
 /// <summary>
 ///     An SQL expression that represents a PostgreSQL DELETE operation.
 /// </summary>
-public sealed class PostgresDeleteExpression : Expression, IPrintableExpression
+public sealed class PgDeleteExpression : Expression, IPrintableExpression
 {
     /// <summary>
     ///     The tables that rows are to be deleted from.
@@ -26,14 +26,16 @@ public sealed class PostgresDeleteExpression : Expression, IPrintableExpression
     public ISet<string> Tags { get; }
 
     /// <summary>
-    ///     Creates a new instance of the <see cref="PostgresDeleteExpression" /> class.
+    ///     Creates a new instance of the <see cref="PgDeleteExpression" /> class.
     /// </summary>
-    public PostgresDeleteExpression(
+    public PgDeleteExpression(
         TableExpression table,
         IReadOnlyList<TableExpressionBase> fromItems,
         SqlExpression? predicate,
         ISet<string> tags)
-        => (Table, FromItems, Predicate, Tags) = (table, fromItems, predicate, tags);
+    {
+        (Table, FromItems, Predicate, Tags) = (table, fromItems, predicate, tags);
+    }
 
     /// <inheritdoc />
     public override Type Type
@@ -54,10 +56,10 @@ public sealed class PostgresDeleteExpression : Expression, IPrintableExpression
     ///     return this expression.
     /// </summary>
     /// <param name="predicate">The <see cref="Predicate" /> property of the result.</param>
-    public PostgresDeleteExpression Update(SqlExpression? predicate)
+    public PgDeleteExpression Update(SqlExpression? predicate)
         => predicate == Predicate
             ? this
-            : new PostgresDeleteExpression(Table, FromItems, predicate, Tags);
+            : new PgDeleteExpression(Table, FromItems, predicate, Tags);
 
     /// <inheritdoc />
     public void Print(ExpressionPrinter expressionPrinter)
@@ -94,14 +96,15 @@ public sealed class PostgresDeleteExpression : Expression, IPrintableExpression
     public override bool Equals(object? obj)
         => obj != null
             && (ReferenceEquals(this, obj)
-                || obj is PostgresDeleteExpression pgDeleteExpression
+                || obj is PgDeleteExpression pgDeleteExpression
                 && Equals(pgDeleteExpression));
 
-    private bool Equals(PostgresDeleteExpression pgDeleteExpression)
+    private bool Equals(PgDeleteExpression pgDeleteExpression)
         => Table == pgDeleteExpression.Table
             && FromItems.SequenceEqual(pgDeleteExpression.FromItems)
             && (Predicate is null ? pgDeleteExpression.Predicate is null : Predicate.Equals(pgDeleteExpression.Predicate));
 
     /// <inheritdoc />
-    public override int GetHashCode() => Table.GetHashCode();
+    public override int GetHashCode()
+        => Table.GetHashCode();
 }

@@ -179,15 +179,16 @@ public class IdentitySequenceOptionsData : IEquatable<IdentitySequenceOptionsDat
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public virtual bool Equals(IdentitySequenceOptionsData? other)
-        => !(other is null) && (
-            ReferenceEquals(this, other) ||
-            StartValue == other.StartValue &&
-            IncrementBy == other.IncrementBy &&
-            MinValue == other.MinValue &&
-            MaxValue == other.MaxValue &&
-            IsCyclic == other.IsCyclic &&
-            NumbersToCache == other.NumbersToCache
-        );
+        => !(other is null)
+            && (
+                ReferenceEquals(this, other)
+                || StartValue == other.StartValue
+                && IncrementBy == other.IncrementBy
+                && MinValue == other.MinValue
+                && MaxValue == other.MaxValue
+                && IsCyclic == other.IsCyclic
+                && NumbersToCache == other.NumbersToCache
+            );
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -1,13 +1,13 @@
-﻿#pragma warning disable 8632
+#pragma warning disable 8632
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 
 /// <summary>
-/// Represents a SQL function call expression, supporting PostgreSQL's named parameter notation
-/// (e.g. make_interval(weeks => 2) and non-comma parameter separators (e.g. position(substring in string)).
+///     Represents a SQL function call expression, supporting PostgreSQL's named parameter notation
+///     (e.g. make_interval(weeks => 2) and non-comma parameter separators (e.g. position(substring in string)).
 /// </summary>
 [DebuggerDisplay("{" + nameof(ToString) + "()}")]
-public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<PostgresFunctionExpression>
+public class PgFunctionExpression : SqlFunctionExpression, IEquatable<PgFunctionExpression>
 {
     /// <inheritdoc />
     public new virtual IReadOnlyList<SqlExpression> Arguments
@@ -18,37 +18,37 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
         => base.ArgumentsPropagateNullability!;
 
     /// <summary>
-    /// For aggregate methods, contains whether to apply distinct.
+    ///     For aggregate methods, contains whether to apply distinct.
     /// </summary>
     public virtual bool IsAggregateDistinct { get; }
 
     /// <summary>
-    /// For aggregate methods, contains the predicate to be applied (generated as the SQL FILTER clause).
+    ///     For aggregate methods, contains the predicate to be applied (generated as the SQL FILTER clause).
     /// </summary>
     public virtual SqlExpression? AggregatePredicate { get; }
 
     /// <summary>
-    /// For aggregate methods, contains the orderings to be applied.
+    ///     For aggregate methods, contains the orderings to be applied.
     /// </summary>
     public virtual IReadOnlyList<OrderingExpression> AggregateOrderings { get; }
 
     /// <summary>
-    /// List of argument names, corresponding position-wise to arguments in <see cref="SqlFunctionExpression.Arguments"/>.
-    /// Unnamed (positional) arguments must come first, so this list must contain possible nulls, followed by
-    /// non-nulls.
+    ///     List of argument names, corresponding position-wise to arguments in <see cref="SqlFunctionExpression.Arguments" />.
+    ///     Unnamed (positional) arguments must come first, so this list must contain possible nulls, followed by
+    ///     non-nulls.
     /// </summary>
     public virtual IReadOnlyList<string?> ArgumentNames { get; }
 
     /// <summary>
-    /// List of non-comma separators between argument separators, in the order in which they appear between
-    /// the arguments. <c>null</c> as well as positions beyond the end of the list mean regular commas.
+    ///     List of non-comma separators between argument separators, in the order in which they appear between
+    ///     the arguments. <c>null</c> as well as positions beyond the end of the list mean regular commas.
     /// </summary>
     public virtual IReadOnlyList<string?> ArgumentSeparators { get; }
 
     /// <summary>
-    ///     Creates an instance of <see cref="PostgresFunctionExpression" /> with named arguments.
+    ///     Creates an instance of <see cref="PgFunctionExpression" /> with named arguments.
     /// </summary>
-    public static PostgresFunctionExpression CreateWithNamedArguments(
+    public static PgFunctionExpression CreateWithNamedArguments(
         string name,
         IEnumerable<SqlExpression> arguments,
         IEnumerable<string?> argumentNames,
@@ -61,16 +61,16 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
         Check.NotNull(arguments, nameof(arguments));
         Check.NotNull(argumentNames, nameof(argumentNames));
 
-        return new PostgresFunctionExpression(
+        return new PgFunctionExpression(
             name, arguments, argumentNames, argumentSeparators: null,
             aggregateDistinct: false, aggregatePredicate: null, aggregateOrderings: Array.Empty<OrderingExpression>(),
             nullable: nullable, argumentsPropagateNullability: argumentsPropagateNullability, type: type, typeMapping: typeMapping);
     }
 
     /// <summary>
-    ///     Creates an instance of <see cref="PostgresFunctionExpression" /> with argument separators.
+    ///     Creates an instance of <see cref="PgFunctionExpression" /> with argument separators.
     /// </summary>
-    public static PostgresFunctionExpression CreateWithArgumentSeparators(
+    public static PgFunctionExpression CreateWithArgumentSeparators(
         string name,
         IEnumerable<SqlExpression> arguments,
         IEnumerable<string?> argumentSeparators,
@@ -83,16 +83,16 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
         Check.NotNull(arguments, nameof(arguments));
         Check.NotNull(argumentSeparators, nameof(argumentSeparators));
 
-        return new PostgresFunctionExpression(
+        return new PgFunctionExpression(
             name, arguments, argumentNames: null, argumentSeparators: argumentSeparators,
             aggregateDistinct: false, aggregatePredicate: null, aggregateOrderings: Array.Empty<OrderingExpression>(),
             nullable: nullable, argumentsPropagateNullability: argumentsPropagateNullability, type: type, typeMapping: typeMapping);
     }
 
     /// <summary>
-    ///     Creates a new instance of <see cref="PostgresFunctionExpression" />.
+    ///     Creates a new instance of <see cref="PgFunctionExpression" />.
     /// </summary>
-    public PostgresFunctionExpression(
+    public PgFunctionExpression(
         string name,
         IEnumerable<SqlExpression> arguments,
         IEnumerable<string?>? argumentNames,
@@ -183,7 +183,7 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
         }
 
         return changed
-            ? new PostgresFunctionExpression(
+            ? new PgFunctionExpression(
                 Name, visitedArguments ?? Arguments, ArgumentNames, ArgumentSeparators,
                 IsAggregateDistinct,
                 visitedAggregatePredicate ?? AggregatePredicate,
@@ -194,7 +194,7 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
 
     /// <inheritdoc />
     public override SqlFunctionExpression ApplyTypeMapping(RelationalTypeMapping? typeMapping)
-        => new PostgresFunctionExpression(
+        => new PgFunctionExpression(
             Name,
             Arguments,
             ArgumentNames,
@@ -216,7 +216,7 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
         }
 
         return !arguments.SequenceEqual(Arguments)
-            ? new PostgresFunctionExpression(
+            ? new PgFunctionExpression(
                 Name, arguments, ArgumentNames, ArgumentSeparators,
                 IsAggregateDistinct,
                 AggregatePredicate,
@@ -229,19 +229,17 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
     ///     Creates a new expression that is like this one, but using the supplied children. If all of the children are the same, it will
     ///     return this expression.
     /// </summary>
-    public virtual PostgresFunctionExpression UpdateAggregateComponents(
+    public virtual PgFunctionExpression UpdateAggregateComponents(
         SqlExpression? predicate,
         IReadOnlyList<OrderingExpression> orderings)
-    {
-        return predicate != AggregatePredicate || orderings != AggregateOrderings
-            ? new PostgresFunctionExpression(
+        => predicate != AggregatePredicate || orderings != AggregateOrderings
+            ? new PgFunctionExpression(
                 Name, Arguments, ArgumentNames, ArgumentSeparators,
                 IsAggregateDistinct,
                 predicate,
                 orderings,
                 IsNullable, ArgumentsPropagateNullability, Type, TypeMapping)
             : this;
-    }
 
     /// <inheritdoc />
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -287,10 +285,10 @@ public class PostgresFunctionExpression : SqlFunctionExpression, IEquatable<Post
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
-        => obj is PostgresFunctionExpression pgFunction && Equals(pgFunction);
+        => obj is PgFunctionExpression pgFunction && Equals(pgFunction);
 
     /// <inheritdoc />
-    public virtual bool Equals(PostgresFunctionExpression? other)
+    public virtual bool Equals(PgFunctionExpression? other)
         => ReferenceEquals(this, other)
             || other is not null
             && base.Equals(other)

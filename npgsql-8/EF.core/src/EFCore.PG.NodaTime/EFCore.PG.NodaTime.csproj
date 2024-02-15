@@ -2,7 +2,8 @@
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFramework>
 
     <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
     <Description>NodaTime support plugin for PostgreSQL/EDB .NET Connector Entity Framework Core provider.</Description>

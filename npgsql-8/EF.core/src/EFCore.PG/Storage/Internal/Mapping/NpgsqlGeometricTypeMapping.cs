@@ -17,7 +17,18 @@ public class EDBPointTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBPointTypeMapping() : base("point", typeof(EDBPoint), EDBDbType.Point) {}
+    public static EDBPointTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBPointTypeMapping()
+        : base("point", typeof(EDBPoint), EDBDbType.Point)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,7 +37,9 @@ public class EDBPointTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBPointTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Point) {}
+        : base(parameters, EDBDbType.Point)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -79,7 +92,18 @@ public class EDBLineTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBLineTypeMapping() : base("line", typeof(EDBLine), EDBDbType.Line) {}
+    public static EDBLineTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBLineTypeMapping()
+        : base("line", typeof(EDBLine), EDBDbType.Line)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -88,7 +112,9 @@ public class EDBLineTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBLineTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Line) {}
+        : base(parameters, EDBDbType.Line)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -146,7 +172,18 @@ public class EDBLineSegmentTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBLineSegmentTypeMapping() : base("lseg", typeof(EDBLSeg), EDBDbType.LSeg) {}
+    public static EDBLineSegmentTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBLineSegmentTypeMapping()
+        : base("lseg", typeof(EDBLSeg), EDBDbType.LSeg)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -155,7 +192,9 @@ public class EDBLineSegmentTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBLineSegmentTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.LSeg) {}
+        : base(parameters, EDBDbType.LSeg)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -211,7 +250,18 @@ public class EDBBoxTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBBoxTypeMapping() : base("box", typeof(EDBBox), EDBDbType.Box) {}
+    public static EDBBoxTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBBoxTypeMapping()
+        : base("box", typeof(EDBBox), EDBDbType.Box)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -220,7 +270,9 @@ public class EDBBoxTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBBoxTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Box) {}
+        : base(parameters, EDBDbType.Box)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -276,7 +328,18 @@ public class EDBPathTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBPathTypeMapping() : base("path", typeof(EDBPath), EDBDbType.Path) {}
+    public static EDBPathTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBPathTypeMapping()
+        : base("path", typeof(EDBPath), EDBDbType.Path)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -285,7 +348,9 @@ public class EDBPathTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBPathTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Path) {}
+        : base(parameters, EDBDbType.Path)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -336,10 +401,12 @@ public class EDBPathTypeMapping : NpgsqlTypeMapping
         var path = (EDBPath)value;
         return Expression.New(
             Constructor,
-            Expression.NewArrayInit(typeof(EDBPoint),
-                path.Select(p => Expression.New(
-                    PointConstructor,
-                    Expression.Constant(p.X), Expression.Constant(p.Y)))),
+            Expression.NewArrayInit(
+                typeof(EDBPoint),
+                path.Select(
+                    p => Expression.New(
+                        PointConstructor,
+                        Expression.Constant(p.X), Expression.Constant(p.Y)))),
             Expression.Constant(path.Open));
     }
 
@@ -364,7 +431,18 @@ public class EDBPolygonTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBPolygonTypeMapping() : base("polygon", typeof(EDBPolygon), EDBDbType.Polygon) {}
+    public static EDBPolygonTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBPolygonTypeMapping()
+        : base("polygon", typeof(EDBPolygon), EDBDbType.Polygon)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -373,7 +451,9 @@ public class EDBPolygonTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBPolygonTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Polygon) {}
+        : base(parameters, EDBDbType.Polygon)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -422,10 +502,12 @@ public class EDBPolygonTypeMapping : NpgsqlTypeMapping
         var polygon = (EDBPolygon)value;
         return Expression.New(
             Constructor,
-            Expression.NewArrayInit(typeof(EDBPoint),
-                polygon.Select(p => Expression.New(
-                    PointConstructor,
-                    Expression.Constant(p.X), Expression.Constant(p.Y)))));
+            Expression.NewArrayInit(
+                typeof(EDBPoint),
+                polygon.Select(
+                    p => Expression.New(
+                        PointConstructor,
+                        Expression.Constant(p.X), Expression.Constant(p.Y)))));
     }
 
     private static readonly ConstructorInfo Constructor =
@@ -449,7 +531,18 @@ public class EDBCircleTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public EDBCircleTypeMapping() : base("circle", typeof(EDBCircle), EDBDbType.Circle) {}
+    public static EDBCircleTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public EDBCircleTypeMapping()
+        : base("circle", typeof(EDBCircle), EDBDbType.Circle)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -458,7 +551,9 @@ public class EDBCircleTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected EDBCircleTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Circle) {}
+        : base(parameters, EDBDbType.Circle)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

@@ -1,4 +1,5 @@
-﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+﻿using Microsoft.EntityFrameworkCore.Design.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Design.Internal;
 
@@ -21,7 +22,10 @@ public class NpgsqlDesignTimeServices : IDesignTimeServices
         Check.NotNull(serviceCollection, nameof(serviceCollection));
 
         serviceCollection.AddEntityFrameworkNpgsql();
+#pragma warning disable EF1001 // Internal EF Core API usage.
         new EntityFrameworkRelationalDesignServicesBuilder(serviceCollection)
+            .TryAdd<ICSharpRuntimeAnnotationCodeGenerator, NpgsqlCSharpRuntimeAnnotationCodeGenerator>()
+#pragma warning restore EF1001 // Internal EF Core API usage.
             .TryAdd<IAnnotationCodeGenerator, NpgsqlAnnotationCodeGenerator>()
             .TryAdd<IDatabaseModelFactory, NpgsqlDatabaseModelFactory>()
             .TryAdd<IProviderConfigurationCodeGenerator, NpgsqlCodeGenerator>()

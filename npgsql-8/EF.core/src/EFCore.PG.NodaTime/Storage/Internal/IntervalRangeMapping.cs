@@ -27,6 +27,14 @@ public class IntervalRangeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    public static IntervalRangeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     public IntervalRangeMapping()
         : base("tstzrange", typeof(Interval), EDBDbType.TimestampTzRange)
     {
@@ -58,17 +66,8 @@ public class IntervalRangeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new IntervalRangeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new IntervalRangeMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -118,7 +117,7 @@ public class IntervalRangeMapping : NpgsqlTypeMapping
     {
         var interval = (Interval)value;
 
-        return interval.HasStart && interval.HasEnd
+        return interval is { HasStart: true, HasEnd: true }
             ? Expression.New(
                 _constructor,
                 TimestampTzInstantMapping.GenerateCodeLiteral(interval.Start),

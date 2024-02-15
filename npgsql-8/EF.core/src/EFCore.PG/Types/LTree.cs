@@ -13,7 +13,10 @@ public readonly struct LTree : IEquatable<LTree>
     /// Constructs a new instance of <see cref="LTree"/>.
     /// </summary>
     /// <param name="value">The string value for the ltree.</param>
-    public LTree(string value) => _value = value;
+    public LTree(string value)
+    {
+        _value = value;
+    }
 
     /// <summary>
     /// Returns whether this ltree is an ancestor of <paramref name="other"/> (or equal).
@@ -133,25 +136,30 @@ public readonly struct LTree : IEquatable<LTree>
     /// <summary>
     ///     Converts an <see cref="LTree" /> type to a string.
     /// </summary>
-    public static implicit operator LTree(string value) => new(value);
-    
+    public static implicit operator LTree(string value)
+        => new(value);
+
     /// <summary>
     ///     Converts a string to an <see cref="LTree" /> type.
     /// </summary>
-    public static implicit operator string(LTree ltree) => ltree._value;
+    public static implicit operator string(LTree ltree)
+        => ltree._value;
 
     /// <summary>
     ///     Compares two <see cref="LTree" /> instances for equality.
     /// </summary>
-    public static bool operator ==(LTree x, LTree y) => x._value == y._value;
-    
+    public static bool operator ==(LTree x, LTree y)
+        => x._value == y._value;
+
     /// <summary>
     ///     Compares two <see cref="LTree" /> instances for inequality.
     /// </summary>
-    public static bool operator !=(LTree x, LTree y) => x._value != y._value;
+    public static bool operator !=(LTree x, LTree y)
+        => x._value != y._value;
 
     /// <inheritdocs />
-    public bool Equals(LTree other) => _value == other._value;
+    public bool Equals(LTree other)
+        => _value == other._value;
 
     /// <inheritdocs />
     public override bool Equals(object? obj)
