@@ -6,7 +6,9 @@ public class ArrayQueryData : ISetSource
     public IReadOnlyList<ArrayContainerEntity> ContainerEntities { get; }
 
     public ArrayQueryData()
-        => (ArrayEntities, ContainerEntities) = (CreateArrayEntities(), CreateContainerEntities());
+    {
+        (ArrayEntities, ContainerEntities) = (CreateArrayEntities(), CreateContainerEntities());
+    }
 
     public IQueryable<TEntity> Set<TEntity>()
         where TEntity : class
@@ -33,13 +35,23 @@ public class ArrayQueryData : ISetSource
                 IntArray = new[] { 3, 4 },
                 IntList = new List<int> { 3, 4 },
                 NullableIntArray = new int?[] { 3, 4, null },
-                NullableIntList = new List<int?> { 3, 4, null },
+                NullableIntList = new List<int?>
+                {
+                    3,
+                    4,
+                    null
+                },
                 Bytea = new byte[] { 3, 4 },
                 ByteArray = new byte[] { 3, 4 },
                 StringArray = new[] { "3", "4" },
                 NullableStringArray = new[] { "3", "4", null },
                 StringList = new List<string> { "3", "4" },
-                NullableStringList = new List<string> { "3", "4", null},
+                NullableStringList = new List<string>
+                {
+                    "3",
+                    "4",
+                    null
+                },
                 NullableText = "foo",
                 NonNullableText = "foo",
                 Varchar10 = "foo",
@@ -50,21 +62,46 @@ public class ArrayQueryData : ISetSource
                 NullableEnumConvertedToStringWithNonNullableLambda = SomeEnum.One,
                 ValueConvertedArray = new[] { SomeEnum.Eight, SomeEnum.Nine },
                 ValueConvertedList = new List<SomeEnum> { SomeEnum.Eight, SomeEnum.Nine },
+                IList = new[] { 8, 9 },
                 Byte = 10
             },
             new()
             {
                 Id = 2,
                 IntArray = new[] { 5, 6, 7, 8 },
-                IntList = new List<int> { 5, 6, 7, 8 },
+                IntList = new List<int>
+                {
+                    5,
+                    6,
+                    7,
+                    8
+                },
                 NullableIntArray = new int?[] { 5, 6, 7, 8 },
-                NullableIntList = new List<int?> { 5, 6, 7, 8 },
+                NullableIntList = new List<int?>
+                {
+                    5,
+                    6,
+                    7,
+                    8
+                },
                 Bytea = new byte[] { 5, 6, 7, 8 },
                 ByteArray = new byte[] { 5, 6, 7, 8 },
                 StringArray = new[] { "5", "6", "7", "8" },
                 NullableStringArray = new[] { "5", "6", "7", "8" },
-                StringList = new List<string> { "5", "6", "7", "8" },
-                NullableStringList = new List<string> { "5", "6", "7", "8" },
+                StringList = new List<string>
+                {
+                    "5",
+                    "6",
+                    "7",
+                    "8"
+                },
+                NullableStringList = new List<string>
+                {
+                    "5",
+                    "6",
+                    "7",
+                    "8"
+                },
                 NullableText = "bar",
                 NonNullableText = "bar",
                 Varchar10 = "bar",
@@ -75,17 +112,11 @@ public class ArrayQueryData : ISetSource
                 NullableEnumConvertedToStringWithNonNullableLambda = SomeEnum.Two,
                 ValueConvertedArray = new[] { SomeEnum.Nine, SomeEnum.Ten },
                 ValueConvertedList = new List<SomeEnum> { SomeEnum.Nine, SomeEnum.Ten },
+                IList = new[] { 9, 10 },
                 Byte = 20
             }
         };
 
     public static IReadOnlyList<ArrayContainerEntity> CreateContainerEntities()
-        => new[]
-        {
-            new ArrayContainerEntity
-            {
-                Id = 1,
-                ArrayEntities = CreateArrayEntities().ToList()
-            }
-        };
+        => new[] { new ArrayContainerEntity { Id = 1, ArrayEntities = CreateArrayEntities().ToList() } };
 }

@@ -4,10 +4,11 @@ public class TPTFiltersInheritanceQuerySqlServerTest : TPTFiltersInheritanceQuer
 {
     // ReSharper disable once UnusedParameter.Local
     public TPTFiltersInheritanceQuerySqlServerTest(
-        TPTFiltersInheritanceQuerySqlServerFixture fixture, ITestOutputHelper testOutputHelper)
+        TPTFiltersInheritanceQuerySqlServerFixture fixture,
+        ITestOutputHelper testOutputHelper)
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 }

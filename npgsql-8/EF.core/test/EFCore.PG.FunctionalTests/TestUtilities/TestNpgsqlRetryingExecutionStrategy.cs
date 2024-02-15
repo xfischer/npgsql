@@ -4,10 +4,7 @@ public class TestNpgsqlRetryingExecutionStrategy : NpgsqlRetryingExecutionStrate
 {
     private const bool ErrorNumberDebugMode = false;
 
-    private static readonly string[] AdditionalSqlStates =
-    {
-        "XX000"
-    };
+    private static readonly string[] AdditionalSqlStates = { "XX000" };
 
     public TestNpgsqlRetryingExecutionStrategy()
         : base(
@@ -43,16 +40,14 @@ public class TestNpgsqlRetryingExecutionStrategy : NpgsqlRetryingExecutionStrate
         }
 
 #pragma warning disable 162
-        if (ErrorNumberDebugMode &&
-            exception is PostgresException postgresException)
+        if (ErrorNumberDebugMode && exception is PostgresException postgresException)
         {
             var message = $"Didn't retry on {postgresException.SqlState}";
             throw new InvalidOperationException(message, exception);
         }
 #pragma warning restore 162
 
-        return exception is InvalidOperationException invalidOperationException
-            && invalidOperationException.Message == "Internal .Net Framework Data Provider error 6.";
+        return exception is InvalidOperationException { Message: "Internal .Net Framework Data Provider error 6." };
     }
 
     public new virtual TimeSpan? GetNextDelay(Exception lastException)

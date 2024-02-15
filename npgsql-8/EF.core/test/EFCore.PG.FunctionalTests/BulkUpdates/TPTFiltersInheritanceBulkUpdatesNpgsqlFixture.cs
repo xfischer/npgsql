@@ -2,5 +2,6 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.BulkUpdates;
 
 public class TPTFiltersInheritanceBulkUpdatesNpgsqlFixture : TPTInheritanceBulkUpdatesNpgsqlFixture
 {
-    protected override bool EnableFilters => true;
+    public override bool EnableFilters
+        => true;
 }

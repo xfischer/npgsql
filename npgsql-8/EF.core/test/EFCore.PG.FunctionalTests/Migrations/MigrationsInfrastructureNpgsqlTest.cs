@@ -8,7 +8,9 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
         : MigrationsInfrastructureTestBase<MigrationsInfrastructureNpgsqlTest.MigrationsInfrastructureNpgsqlFixture>
     {
         public MigrationsInfrastructureNpgsqlTest(MigrationsInfrastructureNpgsqlFixture fixture)
-            : base(fixture) {}
+            : base(fixture)
+        {
+        }
 
         public override void Can_get_active_provider()
         {
@@ -20,7 +22,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
         [ConditionalFact]
         public async Task Empty_Migration_Creates_Database()
         {
-            using var context = new BloggingContext(
+            await using var context = new BloggingContext(
                 Fixture.TestStore.AddProviderOptions(
                     new DbContextOptionsBuilder().EnableServiceProviderCaching(false)).Options);
 
@@ -76,51 +78,57 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
                 modelBuilder
                     .HasAnnotation("ProductVersion", "2.2.4-servicing-10062")
                     .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                    .HasAnnotation("Npgsql:ValueGenerationStrategy",
+                    .HasAnnotation(
+                        "Npgsql:ValueGenerationStrategy",
                         NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                modelBuilder.Entity("ModelSnapshot22.Blog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy",
-                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                modelBuilder.Entity(
+                    "ModelSnapshot22.Blog", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasAnnotation(
+                                "Npgsql:ValueGenerationStrategy",
+                                NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<string>("Name");
+                        b.Property<string>("Name");
 
-                    b.HasKey("Id");
+                        b.HasKey("Id");
 
-                    b.ToTable("Blogs");
-                });
+                        b.ToTable("Blogs");
+                    });
 
-                modelBuilder.Entity("ModelSnapshot22.Post", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy",
-                            NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                modelBuilder.Entity(
+                    "ModelSnapshot22.Post", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasAnnotation(
+                                "Npgsql:ValueGenerationStrategy",
+                                NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("BlogId");
+                        b.Property<int?>("BlogId");
 
-                    b.Property<string>("Content");
+                        b.Property<string>("Content");
 
-                    b.Property<DateTime>("EditDate");
+                        b.Property<DateTime>("EditDate");
 
-                    b.Property<string>("Title");
+                        b.Property<string>("Title");
 
-                    b.HasKey("Id");
+                        b.HasKey("Id");
 
-                    b.HasIndex("BlogId");
+                        b.HasIndex("BlogId");
 
-                    b.ToTable("Post");
-                });
+                        b.ToTable("Post");
+                    });
 
-                modelBuilder.Entity("ModelSnapshot22.Post", b =>
-                {
-                    b.HasOne("ModelSnapshot22.Blog", "Blog")
-                        .WithMany("Posts")
-                        .HasForeignKey("BlogId");
-                });
+                modelBuilder.Entity(
+                    "ModelSnapshot22.Post", b =>
+                    {
+                        b.HasOne("ModelSnapshot22.Blog", "Blog")
+                            .WithMany("Posts")
+                            .HasForeignKey("BlogId");
+                    });
 #pragma warning restore 612, 618
             }
         }
@@ -142,19 +150,27 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
 
         public class MigrationsInfrastructureNpgsqlFixture : MigrationsInfrastructureFixtureBase
         {
-            protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+            protected override ITestStoreFactory TestStoreFactory
+                => NpgsqlTestStoreFactory.Instance;
 
             public override MigrationsContext CreateContext()
             {
                 var options = AddOptions(
                         new DbContextOptionsBuilder()
-                            .UseNpgsql(TestStore.ConnectionString, b => b.ApplyConfiguration()
-                                .CommandTimeout(NpgsqlTestStore.CommandTimeout)
-                                .ReverseNullOrdering()))
-                    .UseInternalServiceProvider(ServiceProvider)
+                            .UseNpgsql(
+                                TestStore.ConnectionString, b => b.ApplyConfiguration()
+                                    .CommandTimeout(NpgsqlTestStore.CommandTimeout)
+                                    .SetPostgresVersion(TestEnvironment.PostgresVersion)
+                                    .ReverseNullOrdering()))
+                    .UseInternalServiceProvider(CreateServiceProvider())
                     .Options;
                 return new MigrationsContext(options);
             }
+
+            private static IServiceProvider CreateServiceProvider()
+                => new ServiceCollection()
+                    .AddEntityFrameworkNpgsql()
+                    .BuildServiceProvider();
         }
     }
 }

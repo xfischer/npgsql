@@ -20,11 +20,11 @@ public class NavigationTest : IClassFixture<NavigationTestFixture>
         var entityType = model.GetEntityTypes().First();
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ToDependent: LoverReverse ToPrincipal: Lover ClientSetNull",
+            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ClientSetNull ToDependent: LoverReverse ToPrincipal: Lover",
             entityType.GetForeignKeys().First().ToString());
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ToDependent: Siblings ToPrincipal: SiblingReverse ClientSetNull",
+            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ClientSetNull ToDependent: Siblings ToPrincipal: SiblingReverse",
             entityType.GetForeignKeys().Skip(1).First().ToString());
     }
 
@@ -44,17 +44,20 @@ public class NavigationTest : IClassFixture<NavigationTestFixture>
         var entityType = model.GetEntityTypes().First();
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ToDependent: LoverReverse ToPrincipal: Lover ClientSetNull",
+            "ForeignKey: GoTPerson {'LoverId'} -> GoTPerson {'Id'} Unique ClientSetNull ToDependent: LoverReverse ToPrincipal: Lover",
             entityType.GetForeignKeys().First().ToString());
 
         Assert.Equal(
-            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ToDependent: Siblings ToPrincipal: SiblingReverse ClientSetNull",
+            "ForeignKey: GoTPerson {'SiblingReverseId'} -> GoTPerson {'Id'} ClientSetNull ToDependent: Siblings ToPrincipal: SiblingReverse",
             entityType.GetForeignKeys().Skip(1).First().ToString());
     }
 
     private readonly NavigationTestFixture _fixture;
 
-    public NavigationTest(NavigationTestFixture fixture) => _fixture = fixture;
+    public NavigationTest(NavigationTestFixture fixture)
+    {
+        _fixture = fixture;
+    }
 }
 
 public class GoTPerson
@@ -78,7 +81,8 @@ public class GoTContext : DbContext
     public DbSet<GoTPerson> People { get; set; }
     public Func<ModelBuilder, int> ConfigAction { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) => ConfigAction.Invoke(modelBuilder);
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+        => ConfigAction.Invoke(modelBuilder);
 }
 
 public class NavigationTestFixture
@@ -91,10 +95,7 @@ public class NavigationTestFixture
             .AddEntityFrameworkNpgsql()
             .BuildServiceProvider();
 
-        var connStrBuilder = new EDBConnectionStringBuilder(TestEnvironment.DefaultConnection)
-        {
-            Database = "StateManagerBug"
-        };
+        var connStrBuilder = new EDBConnectionStringBuilder(TestEnvironment.DefaultConnection) { Database = "StateManagerBug" };
 
         _options = new DbContextOptionsBuilder()
             .UseNpgsql(connStrBuilder.ConnectionString)
@@ -102,5 +103,6 @@ public class NavigationTestFixture
             .Options;
     }
 
-    public virtual GoTContext CreateContext() => new(_options);
+    public virtual GoTContext CreateContext()
+        => new(_options);
 }

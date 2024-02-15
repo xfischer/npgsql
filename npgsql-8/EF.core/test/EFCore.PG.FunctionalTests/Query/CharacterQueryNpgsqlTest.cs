@@ -11,7 +11,7 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     #region Tests
@@ -121,7 +121,7 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
             Assert.Equal("12345 ", entity.Character6);
 
             // Trailing whitespace is ignored when querying.
-            var fromLocal = ctx.CharacterTestEntities.Single(x => x.Character6 == "12345" && x.Character6 == "12345 ");
+            var fromLocal = ctx.CharacterTestEntities.Single(x => x.Character6 == "12345");
 
             // And since we queried the same context, we received the same object.
             Assert.Equal(entity, fromLocal);
@@ -155,9 +155,14 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
     /// </summary>
     public class CharacterQueryNpgsqlFixture : SharedStoreFixtureBase<CharacterContext>
     {
-        protected override string StoreName => "CharacterQueryNpgsqlTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+        protected override string StoreName
+            => "CharacterQueryNpgsqlTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
 
         /// <summary>
         /// Clears the entities in the context.
@@ -181,7 +186,8 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
         public string Character6 { get; set; }
     }
 
-    public class CharacterContext : PoolableDbContext{
+    public class CharacterContext : PoolableDbContext
+    {
         public DbSet<CharacterTestEntity> CharacterTestEntities { get; set; }
 
         /// <summary>
@@ -190,7 +196,10 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
         /// <param name="options">
         /// The options to be used for configuration.
         /// </param>
-        public CharacterContext(DbContextOptions options) : base(options) {}
+        public CharacterContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         /// <inheritdoc />
         protected override void OnModelCreating(ModelBuilder builder)
@@ -207,14 +216,16 @@ public class CharacterQueryNpgsqlTest : IClassFixture<CharacterQueryNpgsqlTest.C
 
     #region Helpers
 
-    protected CharacterContext CreateContext() => Fixture.CreateContext();
+    protected CharacterContext CreateContext()
+        => Fixture.CreateContext();
 
     // ReSharper disable once UnusedMember.Global
     /// <summary>
     /// Asserts that the SQL fragment appears in the logs.
     /// </summary>
     /// <param name="sql">The SQL statement or fragment to search for in the logs.</param>
-    public void AssertContainsSql(string sql) => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
+    public void AssertContainsSql(string sql)
+        => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
 
     #endregion
 }

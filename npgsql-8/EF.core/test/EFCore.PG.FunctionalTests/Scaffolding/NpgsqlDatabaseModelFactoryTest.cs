@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 // ReSharper disable InconsistentNaming
 // ReSharper disable StringLiteralTypo
@@ -32,7 +31,7 @@ public class NpgsqlDatabaseModelFactoryTest : IClassFixture<NpgsqlDatabaseModelF
         var supportsDataType = TestEnvironment.PostgresVersion >= new Version(10, 0);
 
         Test(
-$"""
+            $"""
 CREATE SEQUENCE "DefaultFacetsSequence";
 
 CREATE SEQUENCE db2."CustomFacetsSequence"
@@ -67,7 +66,7 @@ CREATE SEQUENCE db2."CustomFacetsSequence"
                 Assert.Equal(-3, customSequence.MinValue);
                 Assert.Equal(8, customSequence.MaxValue);
             },
-"""
+            """
 DROP SEQUENCE "DefaultFacetsSequence";
 DROP SEQUENCE db2."CustomFacetsSequence"
 """);
@@ -77,7 +76,7 @@ DROP SEQUENCE db2."CustomFacetsSequence"
     [MinimumPostgresVersion(11, 0)]
     public void Sequence_min_max_start_values_are_null_if_default()
         => Test(
-"""
+            """
 CREATE SEQUENCE "SmallIntSequence" AS smallint;
 CREATE SEQUENCE "IntSequence" AS int;
 CREATE SEQUENCE "BigIntSequence" AS bigint;
@@ -95,7 +94,7 @@ CREATE SEQUENCE "BigIntSequence" AS bigint;
                         Assert.Null(s.MaxValue);
                     });
             },
-"""
+            """
 DROP SEQUENCE "SmallIntSequence";
 DROP SEQUENCE "IntSequence";
 DROP SEQUENCE "BigIntSequence";
@@ -104,7 +103,7 @@ DROP SEQUENCE "BigIntSequence";
     [Fact]
     public void Filter_sequences_based_on_schema()
         => Test(
-"""
+            """
 CREATE SEQUENCE "Sequence";
 CREATE SEQUENCE db2."Sequence"
 """,
@@ -118,7 +117,7 @@ CREATE SEQUENCE db2."Sequence"
                 Assert.Equal("Sequence", sequence.Name);
                 Assert.Equal("bigint", sequence.StoreType);
             },
-"""
+            """
 DROP SEQUENCE "Sequence";
 DROP SEQUENCE db2."Sequence";
 """);
@@ -142,7 +141,7 @@ DROP SEQUENCE db2."Sequence";
     [Fact]
     public void Create_tables()
         => Test(
-"""
+            """
 CREATE TABLE "Everest" (id int);
 CREATE TABLE "Denali" (id int);
 """,
@@ -163,7 +162,7 @@ CREATE TABLE "Denali" (id int);
                         Assert.Equal("Everest", e.Name);
                     });
             },
-"""
+            """
 DROP TABLE "Everest";
 DROP TABLE "Denali";
 """);
@@ -175,7 +174,7 @@ DROP TABLE "Denali";
     [Fact]
     public void Filter_schemas()
         => Test(
-"""
+            """
 CREATE TABLE db2."K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
 """,
@@ -187,10 +186,10 @@ CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "Kilimanjaro";
 DROP TABLE db2."K2";
 """);
@@ -198,7 +197,7 @@ DROP TABLE db2."K2";
     [Fact]
     public void Filter_tables()
         => Test(
-"""
+            """
 CREATE TABLE "K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B), FOREIGN KEY (B) REFERENCES "K2" (A));
 """,
@@ -210,10 +209,10 @@ CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B), FOREIGN KEY (B) REFER
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "Kilimanjaro";
 DROP TABLE "K2";
 """);
@@ -221,7 +220,7 @@ DROP TABLE "K2";
     [Fact]
     public void Filter_tables_with_qualified_name()
         => Test(
-"""
+            """
 CREATE TABLE "K.2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
 """,
@@ -233,10 +232,10 @@ CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K.2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "Kilimanjaro";
 DROP TABLE "K.2";
 """);
@@ -244,7 +243,7 @@ DROP TABLE "K.2";
     [Fact]
     public void Filter_tables_with_schema_qualified_name1()
         => Test(
-"""
+            """
 CREATE TABLE public."K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE db2."K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
@@ -257,10 +256,10 @@ CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "Kilimanjaro";
 DROP TABLE "K2";
 DROP TABLE db2."K2";
@@ -269,7 +268,7 @@ DROP TABLE db2."K2";
     [Fact]
     public void Filter_tables_with_schema_qualified_name2()
         => Test(
-"""
+            """
 CREATE TABLE "K.2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "db.2"."K.2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "db.2"."Kilimanjaro" (Id int, B varchar, UNIQUE (B));
@@ -282,10 +281,10 @@ CREATE TABLE "db.2"."Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K.2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "db.2"."Kilimanjaro";
 DROP TABLE "K.2";
 DROP TABLE "db.2"."K.2";
@@ -294,7 +293,7 @@ DROP TABLE "db.2"."K.2";
     [Fact]
     public void Filter_tables_with_schema_qualified_name3()
         => Test(
-"""
+            """
 CREATE TABLE "K.2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "db2"."K.2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
@@ -307,10 +306,10 @@ CREATE TABLE "Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K.2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "Kilimanjaro";
 DROP TABLE "K.2";
 DROP TABLE db2."K.2";
@@ -319,7 +318,7 @@ DROP TABLE db2."K.2";
     [Fact]
     public void Filter_tables_with_schema_qualified_name4()
         => Test(
-"""
+            """
 CREATE TABLE "K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "db.2"."K2" (Id int, A varchar, UNIQUE (A));
 CREATE TABLE "db.2"."Kilimanjaro" (Id int, B varchar, UNIQUE (B));
@@ -332,10 +331,10 @@ CREATE TABLE "db.2"."Kilimanjaro" (Id int, B varchar, UNIQUE (B));
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Equal("K2", table.Name);
                 Assert.Equal(2, table.Columns.Count);
-                Assert.Equal(1, table.UniqueConstraints.Count);
+                Assert.Single(table.UniqueConstraints);
                 Assert.Empty(table.ForeignKeys);
             },
-"""
+            """
 DROP TABLE "db.2"."Kilimanjaro";
 DROP TABLE "K2";
 DROP TABLE "db.2"."K2";
@@ -344,7 +343,7 @@ DROP TABLE "db.2"."K2";
     [Fact]
     public void Complex_filtering_validation()
         => Test(
-"""
+            """
 CREATE SEQUENCE public."Sequence";
 CREATE SEQUENCE "db2"."Sequence";
 
@@ -381,7 +380,14 @@ CREATE TABLE "db2"."DependentTable" (
     FOREIGN KEY ("ForeignKeyId1", "ForeignKeyId2") REFERENCES "db2"."PrincipalTable"("UC1", "UC2") ON DELETE CASCADE
 );
 """,
-            new[] { @"""db.2"".""QuotedTableName""", @"""db.2"".SimpleTableName", @"public.""Table.With.Dot""", @"public.""SimpleTableName""", @"""JustTableName""" },
+            new[]
+            {
+                @"""db.2"".""QuotedTableName""",
+                @"""db.2"".SimpleTableName",
+                @"public.""Table.With.Dot""",
+                @"public.""SimpleTableName""",
+                @"""JustTableName"""
+            },
             new[] { "db2" },
             dbModel =>
             {
@@ -414,7 +420,7 @@ CREATE TABLE "db2"."DependentTable" (
                 // ReSharper disable once PossibleNullReferenceException
                 Assert.Single(dependentTable.ForeignKeys);
             },
-"""
+            """
 DROP SEQUENCE public."Sequence";
 DROP SEQUENCE db2."Sequence";
 
@@ -443,7 +449,7 @@ DROP TABLE db2."PrincipalTable";
     [Fact]
     public void Create_columns()
         => Test(
-"""
+            """
 CREATE TABLE "Blogs" (
     "Id" int,
     "Name" text NOT NULL
@@ -470,9 +476,8 @@ CREATE TABLE "Blogs" (
 
     [Fact]
     public void Create_view_columns()
-    {
-        Test(
-"""
+        => Test(
+            """
 CREATE VIEW "BlogsView" AS SELECT 100::int AS "Id", ''::text AS "Name";
 """,
             Enumerable.Empty<string>(),
@@ -494,13 +499,11 @@ CREATE VIEW "BlogsView" AS SELECT 100::int AS "Id", ''::text AS "Name";
                 Assert.Single(table.Columns.Where(c => c.Name == "Name"));
             },
             @"DROP VIEW ""BlogsView"";");
-    }
 
     [Fact]
     public void Create_materialized_view_columns()
-    {
-        Test(
-"""
+        => Test(
+            """
 CREATE MATERIALIZED VIEW "BlogsView" AS SELECT 100::int AS "Id", ''::text AS "Name";
 """,
             Enumerable.Empty<string>(),
@@ -522,12 +525,11 @@ CREATE MATERIALIZED VIEW "BlogsView" AS SELECT 100::int AS "Id", ''::text AS "Na
                 Assert.Single(table.Columns.Where(c => c.Name == "Name"));
             },
             @"DROP MATERIALIZED VIEW ""BlogsView"";");
-    }
 
     [Fact]
     public void Create_primary_key()
         => Test(
-"""
+            """
 CREATE TABLE "PrimaryKeyTable" ("Id" int PRIMARY KEY);
 """,
             Enumerable.Empty<string>(),
@@ -546,7 +548,7 @@ CREATE TABLE "PrimaryKeyTable" ("Id" int PRIMARY KEY);
     [Fact]
     public void Create_unique_constraints()
         => Test(
-"""
+            """
 CREATE TABLE "UniqueConstraint" (
     "Id" int,
     "Name" int Unique,
@@ -581,7 +583,7 @@ CREATE INDEX "IX_INDEX" on "UniqueConstraint" ("IndexProperty");
     [Fact]
     public void Create_indexes()
         => Test(
-"""
+            """
 CREATE TABLE "IndexTable" (
     "Id" int,
     "Name" int,
@@ -616,7 +618,7 @@ CREATE INDEX "IX_INDEX" on "IndexTable" ("IndexProperty");
     [Fact]
     public void Create_foreign_keys()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id" int PRIMARY KEY
 );
@@ -658,7 +660,7 @@ CREATE TABLE "SecondDependent" (
                 Assert.Equal(new List<string> { "Id" }, secondFk.PrincipalColumns.Select(ic => ic.Name).ToList());
                 Assert.Equal(ReferentialAction.NoAction, secondFk.OnDelete);
             },
-"""
+            """
 DROP TABLE "SecondDependent";
 DROP TABLE "FirstDependent";
 DROP TABLE "PrincipalTable";
@@ -672,14 +674,14 @@ DROP TABLE "PrincipalTable";
     public void Column_with_domain_assigns_underlying_store_type()
     {
         Fixture.TestStore.ExecuteNonQuery(
-"""
+            """
 CREATE DOMAIN public.text_domain AS text;
 CREATE DOMAIN db2.text_domain AS int;
 CREATE DOMAIN public.char_domain AS char(3);
 """);
 
         Test(
-"""
+            """
 CREATE TABLE domains (
     id int,
     text_domain public.text_domain NULL,
@@ -699,7 +701,7 @@ CREATE TABLE domains (
                 var nonDomainColumn = Assert.Single(dbModel.Tables.Single().Columns.Where(c => c.Name == "id"));
                 Assert.Equal("integer", nonDomainColumn?.StoreType);
             },
-"""
+            """
 DROP TABLE domains;
 DROP DOMAIN public.text_domain;
 DROP DOMAIN public.char_domain;
@@ -711,7 +713,7 @@ DROP DOMAIN db2.text_domain;
     [Fact]
     public void Decimal_numeric_types_have_precision_scale()
         => Test(
-"""
+            """
 CREATE TABLE "NumericColumns" (
     "Id" int,
     "numericColumn" numeric NOT NULL,
@@ -734,7 +736,7 @@ CREATE TABLE "NumericColumns" (
     [Fact]
     public void Specific_max_length_are_add_to_store_type()
         => Test(
-"""
+            """
 CREATE TABLE "LengthColumns" (
     "Id" int,
     "char10Column" char(10) NULL,
@@ -763,7 +765,7 @@ CREATE TABLE "LengthColumns" (
     [Fact]
     public void Datetime_types_have_precision_if_non_null_scale()
         => Test(
-"""
+            """
 CREATE TABLE "LengthColumns" (
     "Id" int,
     "time1Column" time(1) NULL,
@@ -790,7 +792,7 @@ CREATE TABLE "LengthColumns" (
     [Fact]
     public void Store_types_without_any_facets()
         => Test(
-"""
+            """
 CREATE TABLE "NoFacetTypes" (
     "Id" int,
     "boolColumn" bool,
@@ -877,7 +879,7 @@ CREATE TABLE "DefaultValues" (
     [MinimumPostgresVersion(12, 0)]
     public void Computed_values_are_stored()
         => Test(
-"""
+            """
 CREATE TABLE "ComputedValues" (
     "Id" int,
     "A" int NOT NULL,
@@ -948,7 +950,7 @@ CREATE TABLE "DefaultValues" (
                     columns,
                     t => Assert.Null(t.DefaultValueSql));
             },
-"""
+            """
 DROP TABLE "DefaultValues";
 DROP DOMAIN "decimalDomain";
 """);
@@ -957,7 +959,7 @@ DROP DOMAIN "decimalDomain";
     [Fact]
     public void ValueGenerated_is_set_for_default_and_serial_column()
         => Test(
-"""
+            """
 CREATE TABLE "ValueGeneratedProperties" (
     "Id" SERIAL,
     "NoValueGenerationColumn" text,
@@ -980,7 +982,7 @@ CREATE TABLE "ValueGeneratedProperties" (
     [MinimumPostgresVersion(10, 0)]
     public void ValueGenerated_is_set_for_identity_column()
         => Test(
-"""
+            """
 CREATE TABLE "ValueGeneratedProperties" (
     "Id1" INT GENERATED ALWAYS AS IDENTITY,
     "Id2" INT GENERATED BY DEFAULT AS IDENTITY
@@ -1001,7 +1003,7 @@ CREATE TABLE "ValueGeneratedProperties" (
     [MinimumPostgresVersion(12, 0)]
     public void ValueGenerated_is_set_for_computed_column()
         => Test(
-"""
+            """
 CREATE TABLE "ValueGeneratedProperties" (
     "Id" INT GENERATED ALWAYS AS IDENTITY,
     "A" int NOT NULL,
@@ -1022,7 +1024,7 @@ CREATE TABLE "ValueGeneratedProperties" (
     [Fact]
     public void Column_nullability_is_set()
         => Test(
-"""
+            """
 CREATE TABLE "NullableColumns" (
     "Id" int,
     "NullableInt" int NULL,
@@ -1043,7 +1045,7 @@ CREATE TABLE "NullableColumns" (
     [Fact]
     public void Column_nullability_is_set_with_domain()
         => Test(
-"""
+            """
 CREATE DOMAIN non_nullable_int AS int NOT NULL;
 
 CREATE TABLE "NullableColumnsDomain" (
@@ -1061,7 +1063,7 @@ CREATE TABLE "NullableColumnsDomain" (
                 Assert.False(columns.Single(c => c.Name == "NullableInt").IsNullable);
                 Assert.False(columns.Single(c => c.Name == "NonNullString").IsNullable);
             },
-"""
+            """
 DROP TABLE "NullableColumnsDomain";
 DROP DOMAIN non_nullable_int;
 """);
@@ -1069,7 +1071,7 @@ DROP DOMAIN non_nullable_int;
     [Fact]
     public void System_columns_are_not_created()
         => Test(
-"""
+            """
 CREATE TABLE "SystemColumnsTable"
 (
      "Id" int NOT NULL PRIMARY KEY
@@ -1077,12 +1079,7 @@ CREATE TABLE "SystemColumnsTable"
 """,
             Enumerable.Empty<string>(),
             Enumerable.Empty<string>(),
-            dbModel =>
-            {
-                var columns = dbModel.Tables.Single().Columns;
-
-                Assert.Equal(1, columns.Count);
-            },
+            dbModel => Assert.Single(dbModel.Tables.Single().Columns),
             @"DROP TABLE ""SystemColumnsTable""");
 
     #endregion
@@ -1092,7 +1089,7 @@ CREATE TABLE "SystemColumnsTable"
     [Fact]
     public void Create_composite_primary_key()
         => Test(
-"""
+            """
 CREATE TABLE "CompositePrimaryKeyTable" (
     "Id1" int,
     "Id2" int,
@@ -1114,7 +1111,7 @@ CREATE TABLE "CompositePrimaryKeyTable" (
     [Fact]
     public void Set_primary_key_name_from_index()
         => Test(
-"""
+            """
 CREATE TABLE "PrimaryKeyName" (
     "Id1" int,
     "Id2" int,
@@ -1141,7 +1138,7 @@ CREATE TABLE "PrimaryKeyName" (
     [Fact]
     public void Create_composite_unique_constraint()
         => Test(
-"""
+            """
 CREATE TABLE "CompositeUniqueConstraintTable" (
     "Id1" int,
     "Id2" int,
@@ -1165,7 +1162,7 @@ CREATE TABLE "CompositeUniqueConstraintTable" (
     [Fact]
     public void Set_unique_constraint_name_from_index()
         => Test(
-"""
+            """
 CREATE TABLE "UniqueConstraintName" (
     "Id1" int,
     "Id2" int,
@@ -1195,7 +1192,7 @@ CREATE TABLE "UniqueConstraintName" (
     [Fact]
     public void Create_composite_index()
         => Test(
-"""
+            """
 CREATE TABLE "CompositeIndexTable" (
     "Id1" int,
     "Id2" int
@@ -1220,7 +1217,7 @@ CREATE INDEX "IX_COMPOSITE" ON "CompositeIndexTable" ( "Id2", "Id1" );
     [Fact]
     public void Set_unique_true_for_unique_index()
         => Test(
-"""
+            """
 CREATE TABLE "UniqueIndexTable" (
     "Id1" int,
     "Id2" int
@@ -1247,7 +1244,7 @@ CREATE UNIQUE INDEX "IX_UNIQUE" ON "UniqueIndexTable" ( "Id2" );
     [Fact]
     public void Set_filter_for_filtered_index()
         => Test(
-"""
+            """
 CREATE TABLE "FilteredIndexTable" (
     "Id1" int,
     "Id2" int NULL
@@ -1277,7 +1274,7 @@ CREATE UNIQUE INDEX "IX_UNIQUE" ON "FilteredIndexTable" ( "Id2" ) WHERE "Id2" > 
     [Fact]
     public void Create_composite_foreign_key()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id1" int,
     "Id2" int,
@@ -1306,7 +1303,7 @@ CREATE TABLE "DependentTable" (
                 Assert.Equal(new List<string> { "Id1", "Id2" }, fk.PrincipalColumns.Select(ic => ic.Name).ToList());
                 Assert.Equal(ReferentialAction.Cascade, fk.OnDelete);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "PrincipalTable";
 """);
@@ -1314,7 +1311,7 @@ DROP TABLE "PrincipalTable";
     [Fact]
     public void Create_multiple_foreign_key_in_same_table()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id" int PRIMARY KEY
 );
@@ -1361,7 +1358,7 @@ CREATE TABLE "DependentTable" (
                 Assert.Equal(new List<string> { "Id" }, anotherPrincipalFk.PrincipalColumns.Select(ic => ic.Name).ToList());
                 Assert.Equal(ReferentialAction.Cascade, anotherPrincipalFk.OnDelete);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "AnotherPrincipalTable";
 DROP TABLE "PrincipalTable";
@@ -1370,7 +1367,7 @@ DROP TABLE "PrincipalTable";
     [Fact]
     public void Create_foreign_key_referencing_unique_constraint()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id1" int,
     "Id2" int UNIQUE
@@ -1397,7 +1394,7 @@ CREATE TABLE "DependentTable" (
                 Assert.Equal(new List<string> { "Id2" }, fk.PrincipalColumns.Select(ic => ic.Name).ToList());
                 Assert.Equal(ReferentialAction.Cascade, fk.OnDelete);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "PrincipalTable";
 """);
@@ -1405,7 +1402,7 @@ DROP TABLE "PrincipalTable";
     [Fact]
     public void Set_name_for_foreign_key()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id" int PRIMARY KEY
 );
@@ -1433,7 +1430,7 @@ CREATE TABLE "DependentTable" (
                 // ReSharper disable once StringLiteralTypo
                 Assert.Equal("MYFK", fk.Name);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "PrincipalTable";
 """);
@@ -1441,7 +1438,7 @@ DROP TABLE "PrincipalTable";
     [Fact]
     public void Set_referential_action_for_foreign_key()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id" int PRIMARY KEY
 );
@@ -1475,13 +1472,21 @@ CREATE TABLE "DependentTable" (
                     Assert.Equal(new List<string> { "Id" }, fk.PrincipalColumns.Select(ic => ic.Name).ToList());
                 }
 
-                Assert.Equal(ReferentialAction.SetNull,    table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeySetNullId").OnDelete);
-                Assert.Equal(ReferentialAction.Cascade,    table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyCascadeId").OnDelete);
-                Assert.Equal(ReferentialAction.NoAction,   table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyNoActionId").OnDelete);
-                Assert.Equal(ReferentialAction.Restrict,   table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyRestrictId").OnDelete);
-                Assert.Equal(ReferentialAction.SetDefault, table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeySetDefaultId").OnDelete);
+                Assert.Equal(
+                    ReferentialAction.SetNull, table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeySetNullId").OnDelete);
+                Assert.Equal(
+                    ReferentialAction.Cascade, table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyCascadeId").OnDelete);
+                Assert.Equal(
+                    ReferentialAction.NoAction,
+                    table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyNoActionId").OnDelete);
+                Assert.Equal(
+                    ReferentialAction.Restrict,
+                    table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeyRestrictId").OnDelete);
+                Assert.Equal(
+                    ReferentialAction.SetDefault,
+                    table.ForeignKeys.Single(fk => fk.Columns.Single().Name == "ForeignKeySetDefaultId").OnDelete);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "PrincipalTable";
 """);
@@ -1493,7 +1498,7 @@ DROP TABLE "PrincipalTable";
     [Fact]
     public void Warn_missing_schema()
         => Test(
-"""
+            """
 CREATE TABLE "Blank" ("Id" int)
 """,
             Enumerable.Empty<string>(),
@@ -1505,14 +1510,15 @@ CREATE TABLE "Blank" ("Id" int)
                 var (_, Id, Message, _, _) = Assert.Single(Fixture.ListLoggerFactory.Log.Where(t => t.Level == LogLevel.Warning));
 
                 Assert.Equal(NpgsqlResources.LogMissingSchema(new TestLogger<NpgsqlLoggingDefinitions>()).EventId, Id);
-                Assert.Equal(NpgsqlResources.LogMissingSchema(new TestLogger<NpgsqlLoggingDefinitions>()).GenerateMessage("MySchema"), Message);
+                Assert.Equal(
+                    NpgsqlResources.LogMissingSchema(new TestLogger<NpgsqlLoggingDefinitions>()).GenerateMessage("MySchema"), Message);
             },
             @"DROP TABLE ""Blank""");
 
     [Fact]
     public void Warn_missing_table()
         => Test(
-"""
+            """
 CREATE TABLE "Blank" ("Id" int)
 """,
             new[] { "MyTable" },
@@ -1524,14 +1530,15 @@ CREATE TABLE "Blank" ("Id" int)
                 var (_, Id, Message, _, _) = Assert.Single(Fixture.ListLoggerFactory.Log.Where(t => t.Level == LogLevel.Warning));
 
                 Assert.Equal(NpgsqlResources.LogMissingTable(new TestLogger<NpgsqlLoggingDefinitions>()).EventId, Id);
-                Assert.Equal(NpgsqlResources.LogMissingTable(new TestLogger<NpgsqlLoggingDefinitions>()).GenerateMessage("MyTable"), Message);
+                Assert.Equal(
+                    NpgsqlResources.LogMissingTable(new TestLogger<NpgsqlLoggingDefinitions>()).GenerateMessage("MyTable"), Message);
             },
             @"DROP TABLE ""Blank""");
 
     [Fact]
     public void Warn_missing_principal_table_for_foreign_key()
         => Test(
-"""
+            """
 CREATE TABLE "PrincipalTable" (
     "Id" int PRIMARY KEY
 );
@@ -1553,7 +1560,7 @@ CREATE TABLE "DependentTable" (
                     NpgsqlResources.LogPrincipalTableNotInSelectionSet(new TestLogger<NpgsqlLoggingDefinitions>()).GenerateMessage(
                         "MYFK", "public.DependentTable", "public.PrincipalTable"), Message);
             },
-"""
+            """
 DROP TABLE "DependentTable";
 DROP TABLE "PrincipalTable";
 """);
@@ -1563,9 +1570,9 @@ DROP TABLE "PrincipalTable";
     #region PostgreSQL-specific
 
     [Fact]
-    public void SequenceSerial() =>
-        Test(
-"""
+    public void SequenceSerial()
+        => Test(
+            """
 CREATE TABLE serial_sequence (id serial PRIMARY KEY);
 CREATE TABLE "SerialSequence" ("Id" serial PRIMARY KEY);
 CREATE SCHEMA my_schema;
@@ -1584,19 +1591,21 @@ CREATE TABLE my_schema."SerialSequenceInSchema" ("Id" serial PRIMARY KEY);
                 {
                     Assert.Equal(ValueGenerated.OnAdd, column.ValueGenerated);
                     Assert.Null(column.DefaultValueSql);
-                    Assert.Equal(NpgsqlValueGenerationStrategy.SerialColumn, (NpgsqlValueGenerationStrategy)column[NpgsqlAnnotationNames.ValueGenerationStrategy]);
+                    Assert.Equal(
+                        NpgsqlValueGenerationStrategy.SerialColumn,
+                        (NpgsqlValueGenerationStrategy)column[NpgsqlAnnotationNames.ValueGenerationStrategy]);
                 }
             },
-"""
+            """
 DROP TABLE serial_sequence;
 DROP TABLE "SerialSequence";
 DROP SCHEMA my_schema CASCADE
 """);
 
     [Fact]
-    public void SequenceNonSerial() =>
-        Test(
-"""
+    public void SequenceNonSerial()
+        => Test(
+            """
 CREATE SEQUENCE "SomeSequence";
 CREATE TABLE "NonSerialSequence" ("Id" integer PRIMARY KEY DEFAULT nextval('"SomeSequence"'))
 """,
@@ -1613,7 +1622,7 @@ CREATE TABLE "NonSerialSequence" ("Id" integer PRIMARY KEY DEFAULT nextval('"Som
 
                 Assert.Single(dbModel.Sequences.Where(s => s.Name == "SomeSequence"));
             },
-"""
+            """
 DROP TABLE "NonSerialSequence";
 DROP SEQUENCE "SomeSequence";
 """);
@@ -1622,7 +1631,7 @@ DROP SEQUENCE "SomeSequence";
     [MinimumPostgresVersion(10, 0)]
     public void Identity()
         => Test(
-"""
+            """
 CREATE TABLE identity (
     id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     a int GENERATED ALWAYS AS IDENTITY,
@@ -1636,17 +1645,23 @@ CREATE TABLE identity (
                 var idIdentityAlways = dbModel.Tables.Single().Columns.Single(c => c.Name == "id");
                 Assert.Equal(ValueGenerated.OnAdd, idIdentityAlways.ValueGenerated);
                 Assert.Null(idIdentityAlways.DefaultValueSql);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityAlwaysColumn, (NpgsqlValueGenerationStrategy)idIdentityAlways[NpgsqlAnnotationNames.ValueGenerationStrategy]);
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityAlwaysColumn,
+                    (NpgsqlValueGenerationStrategy)idIdentityAlways[NpgsqlAnnotationNames.ValueGenerationStrategy]);
 
                 var identityAlways = dbModel.Tables.Single().Columns.Single(c => c.Name == "a");
                 Assert.Equal(ValueGenerated.OnAdd, identityAlways.ValueGenerated);
                 Assert.Null(identityAlways.DefaultValueSql);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityAlwaysColumn, (NpgsqlValueGenerationStrategy)identityAlways[NpgsqlAnnotationNames.ValueGenerationStrategy]);
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityAlwaysColumn,
+                    (NpgsqlValueGenerationStrategy)identityAlways[NpgsqlAnnotationNames.ValueGenerationStrategy]);
 
                 var identityByDefault = dbModel.Tables.Single().Columns.Single(c => c.Name == "b");
                 Assert.Equal(ValueGenerated.OnAdd, identityByDefault.ValueGenerated);
                 Assert.Null(identityByDefault.DefaultValueSql);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn, (NpgsqlValueGenerationStrategy)identityByDefault[NpgsqlAnnotationNames.ValueGenerationStrategy]);
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+                    (NpgsqlValueGenerationStrategy)identityByDefault[NpgsqlAnnotationNames.ValueGenerationStrategy]);
             },
             "DROP TABLE identity");
 
@@ -1654,7 +1669,7 @@ CREATE TABLE identity (
     [MinimumPostgresVersion(10, 0)]
     public void Identity_with_sequence_options_all()
         => Test(
-"""
+            """
 CREATE TABLE identity (
     with_options int GENERATED BY DEFAULT AS IDENTITY (START WITH 5 INCREMENT BY 2 MINVALUE 3 MAXVALUE 2000 CYCLE CACHE 10),
     without_options int GENERATED BY DEFAULT AS IDENTITY,
@@ -1667,42 +1682,47 @@ CREATE TABLE identity (
             dbModel =>
             {
                 var withOptions = dbModel.Tables.Single().Columns.Single(c => c.Name == "with_options");
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn, (NpgsqlValueGenerationStrategy)withOptions[NpgsqlAnnotationNames.ValueGenerationStrategy]);
-                Assert.Equal(new IdentitySequenceOptionsData
-                {
-                    StartValue = 5,
-                    MinValue = 3,
-                    MaxValue = 2000,
-                    IncrementBy = 2,
-                    IsCyclic = true,
-                    NumbersToCache = 10
-                }.Serialize(), withOptions[NpgsqlAnnotationNames.IdentityOptions]);
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+                    (NpgsqlValueGenerationStrategy)withOptions[NpgsqlAnnotationNames.ValueGenerationStrategy]);
+                Assert.Equal(
+                    new IdentitySequenceOptionsData
+                    {
+                        StartValue = 5,
+                        MinValue = 3,
+                        MaxValue = 2000,
+                        IncrementBy = 2,
+                        IsCyclic = true,
+                        NumbersToCache = 10
+                    }.Serialize(), withOptions[NpgsqlAnnotationNames.IdentityOptions]);
 
                 var withoutOptions = dbModel.Tables.Single().Columns.Single(c => c.Name == "without_options");
                 Assert.Equal("integer", withOptions.StoreType);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
                     (NpgsqlValueGenerationStrategy)withoutOptions[NpgsqlAnnotationNames.ValueGenerationStrategy]);
                 Assert.Null(withoutOptions[NpgsqlAnnotationNames.IdentityOptions]);
 
                 var bigintWithoutOptions = dbModel.Tables.Single().Columns.Single(c => c.Name == "bigint_without_options");
                 Assert.Equal("bigint", bigintWithoutOptions.StoreType);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
                     (NpgsqlValueGenerationStrategy)bigintWithoutOptions[NpgsqlAnnotationNames.ValueGenerationStrategy]);
                 Assert.Null(bigintWithoutOptions[NpgsqlAnnotationNames.IdentityOptions]);
 
                 var smallintWithoutOptions = dbModel.Tables.Single().Columns.Single(c => c.Name == "smallint_without_options");
                 Assert.Equal("smallint", smallintWithoutOptions.StoreType);
-                Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+                Assert.Equal(
+                    NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
                     (NpgsqlValueGenerationStrategy)smallintWithoutOptions[NpgsqlAnnotationNames.ValueGenerationStrategy]);
                 Assert.Null(smallintWithoutOptions[NpgsqlAnnotationNames.IdentityOptions]);
             },
             "DROP TABLE identity");
 
-
     [Fact]
     public void Column_collation_is_set()
         => Test(
-"""
+            """
 CREATE TABLE columns_with_collation (
     id int,
     default_collation TEXT,
@@ -1722,19 +1742,17 @@ CREATE TABLE columns_with_collation (
 
     [ConditionalFact]
     public void Default_database_collation_is_not_scaffolded()
-    {
-        Test(
+        => Test(
             @"-- Empty database",
             Enumerable.Empty<string>(),
             Enumerable.Empty<string>(),
             dbModel => Assert.Null(dbModel.Collation),
             @"");
-    }
 
     [Fact]
     public void Index_method()
         => Test(
-"""
+            """
 CREATE TABLE "IndexMethod" (a int, b int);
 CREATE INDEX ix_a ON "IndexMethod" USING hash (a);
 CREATE INDEX ix_b ON "IndexMethod" (b);
@@ -1763,7 +1781,7 @@ CREATE INDEX ix_b ON "IndexMethod" (b);
     [Fact]
     public void Index_operators()
         => Test(
-"""
+            """
 CREATE TABLE "IndexOperators" (a text, b text);
 CREATE INDEX ix_with ON "IndexOperators" (a, b varchar_pattern_ops);
 CREATE INDEX ix_without ON "IndexOperators" (a, b);
@@ -1785,7 +1803,7 @@ CREATE INDEX ix_without ON "IndexOperators" (a, b);
     [Fact]
     public void Index_collation()
         => Test(
-"""
+            """
 CREATE TABLE "IndexCollation" (a text, b text);
 CREATE INDEX ix_with ON "IndexCollation" (a, b COLLATE "POSIX");
 CREATE INDEX ix_without ON "IndexCollation" (a, b);
@@ -1812,7 +1830,7 @@ CREATE INDEX ix_without ON "IndexCollation" (a, b);
     [InlineData("btree", new[] { false, true })]
     public void Index_IsDescending(string method, bool[] expected)
         => Test(
-"""
+            """
 CREATE TABLE "IndexSortOrder" (a text, b text, c tsvector);
 CREATE INDEX ix_gin ON "IndexSortOrder" USING gin (c);
 CREATE INDEX ix_gist ON "IndexSortOrder" USING gist (c);
@@ -1839,7 +1857,7 @@ CREATE INDEX ix_without ON "IndexSortOrder" (a, b);
     [Fact]
     public void Index_null_sort_order()
         => Test(
-"""
+            """
 CREATE TABLE "IndexNullSortOrder" (a text, b text);
 CREATE INDEX ix_with ON "IndexNullSortOrder" (a NULLS FIRST, b DESC NULLS LAST);
 CREATE INDEX ix_without ON "IndexNullSortOrder" (a, b);
@@ -1851,7 +1869,9 @@ CREATE INDEX ix_without ON "IndexNullSortOrder" (a, b);
                 var table = dbModel.Tables.Single();
 
                 var indexWith = table.Indexes.Single(i => i.Name == "ix_with");
-                Assert.Equal(new[] { NullSortOrder.NullsFirst, NullSortOrder.NullsLast }, indexWith.FindAnnotation(NpgsqlAnnotationNames.IndexNullSortOrder).Value);
+                Assert.Equal(
+                    new[] { NullSortOrder.NullsFirst, NullSortOrder.NullsLast },
+                    indexWith.FindAnnotation(NpgsqlAnnotationNames.IndexNullSortOrder).Value);
 
                 var indexWithout = table.Indexes.Single(i => i.Name == "ix_without");
                 Assert.Null(indexWithout.FindAnnotation(NpgsqlAnnotationNames.IndexNullSortOrder));
@@ -1862,7 +1882,7 @@ CREATE INDEX ix_without ON "IndexNullSortOrder" (a, b);
     [MinimumPostgresVersion(11, 0)]
     public void Index_covering()
         => Test(
-"""
+            """
 CREATE TABLE "IndexCovering" (a text, b text, c text);
 CREATE INDEX ix_with ON "IndexCovering" (a) INCLUDE (b, c);
 CREATE INDEX ix_without ON "IndexCovering" (a, b, c);
@@ -1882,7 +1902,6 @@ CREATE INDEX ix_without ON "IndexCovering" (a, b, c);
                 var indexWithout = table.Indexes.Single(i => i.Name == "ix_without");
                 Assert.Equal(new[] { "a", "b", "c" }, indexWithout.Columns.Select(i => i.Name).ToArray());
                 Assert.Null(indexWithout.FindAnnotation(NpgsqlAnnotationNames.IndexInclude));
-
             },
             @"DROP TABLE ""IndexCovering""");
 
@@ -1890,7 +1909,7 @@ CREATE INDEX ix_without ON "IndexCovering" (a, b, c);
     [MinimumPostgresVersion(15, 0)]
     public void Index_are_nulls_distinct()
         => Test(
-"""
+            """
 CREATE TABLE "IndexNullsDistinct" (a text);
 CREATE INDEX "IX_NullsDistinct" ON "IndexNullsDistinct" (a);
 CREATE INDEX "IX_NullsNotDistinct" ON "IndexNullsDistinct" (a) NULLS NOT DISTINCT;
@@ -1913,7 +1932,7 @@ CREATE INDEX "IX_NullsNotDistinct" ON "IndexNullsDistinct" (a) NULLS NOT DISTINC
     [Fact]
     public void Comments()
         => Test(
-"""
+            """
 CREATE TABLE comment (a int);
 COMMENT ON TABLE comment IS 'table comment';
 COMMENT ON COLUMN comment.a IS 'column comment'
@@ -1932,7 +1951,7 @@ COMMENT ON COLUMN comment.a IS 'column comment'
     [MinimumPostgresVersion(11, 0)]
     public void Sequence_types()
         => Test(
-"""
+            """
 CREATE SEQUENCE "SmallIntSequence" AS smallint;
 CREATE SEQUENCE "IntSequence" AS int;
 CREATE SEQUENCE "BigIntSequence" AS bigint;
@@ -1948,7 +1967,7 @@ CREATE SEQUENCE "BigIntSequence" AS bigint;
                 var bigSequence = dbModel.Sequences.Single(s => s.Name == "BigIntSequence");
                 Assert.Equal("bigint", bigSequence.StoreType);
             },
-"""
+            """
 DROP SEQUENCE "SmallIntSequence";
 DROP SEQUENCE "IntSequence";
 DROP SEQUENCE "BigIntSequence";
@@ -1957,7 +1976,7 @@ DROP SEQUENCE "BigIntSequence";
     [Fact]
     public void Dropped_columns()
         => Test(
-"""
+            """
 CREATE TABLE foo (id int PRIMARY KEY);
 ALTER TABLE foo DROP COLUMN id;
 ALTER TABLE foo ADD COLUMN id2 int PRIMARY KEY;
@@ -1973,7 +1992,7 @@ ALTER TABLE foo ADD COLUMN id2 int PRIMARY KEY;
     [Fact]
     public void Postgres_extensions()
         => Test(
-"""
+            """
 CREATE EXTENSION hstore;
 CREATE EXTENSION pgcrypto SCHEMA db2;
 """,
@@ -1982,7 +2001,8 @@ CREATE EXTENSION pgcrypto SCHEMA db2;
             dbModel =>
             {
                 var extensions = dbModel.GetPostgresExtensions();
-                Assert.Collection(extensions.OrderBy(e => e.Name),
+                Assert.Collection(
+                    extensions.OrderBy(e => e.Name),
                     e =>
                     {
                         Assert.Equal("hstore", e.Name);
@@ -1999,7 +2019,7 @@ CREATE EXTENSION pgcrypto SCHEMA db2;
     [Fact]
     public void Enums()
         => Test(
-"""
+            """
 CREATE TYPE mood AS ENUM ('happy', 'sad');
 CREATE TYPE db2.mood AS ENUM ('excited', 'depressed');
 CREATE TABLE foo (mood mood UNIQUE);
@@ -2028,7 +2048,7 @@ CREATE TABLE foo (mood mood UNIQUE);
                 Assert.Empty(table.UniqueConstraints);
                 Assert.Empty(table.Indexes);
             },
-"""
+            """
 DROP TABLE foo;
 DROP TYPE mood;
 DROP TYPE db2.mood;
@@ -2037,19 +2057,16 @@ DROP TYPE db2.mood;
     [Fact]
     public void Bug453()
         => Test(
-"""
+            """
 CREATE TYPE mood AS ENUM ('happy', 'sad');
 CREATE TABLE foo (mood mood, some_num int UNIQUE);
 CREATE TABLE bar (foreign_key int REFERENCES foo(some_num));
 """,
             Enumerable.Empty<string>(),
             Enumerable.Empty<string>(),
-            dbModel =>
-            {
-                // Enum columns are left out of the model for now (a warning is logged).
-                Assert.Equal(1, dbModel.Tables.Single(t => t.Name == "foo").Columns.Count);
-            },
-"""
+            // Enum columns are left out of the model for now (a warning is logged).
+            dbModel => Assert.Single(dbModel.Tables.Single(t => t.Name == "foo").Columns),
+            """
 DROP TABLE bar;
 DROP TABLE foo;
 DROP TYPE mood;
@@ -2057,9 +2074,8 @@ DROP TYPE mood;
 
     [Fact]
     public void Column_default_type_names_are_scaffolded()
-    {
-        Test(
-"""
+        => Test(
+            """
 CREATE TABLE column_types (
     smallint smallint,
     integer integer,
@@ -2100,6 +2116,7 @@ CREATE TABLE column_types (
                 var typeMappingSource = new NpgsqlTypeMappingSource(
                     new TypeMappingSourceDependencies(
                         new ValueConverterSelector(new ValueConverterSelectorDependencies()),
+                        new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
                         Array.Empty<ITypeMappingSourcePlugin>()
                     ),
                     new RelationalTypeMappingSourceDependencies(Array.Empty<IRelationalTypeMappingSourcePlugin>()),
@@ -2116,7 +2133,6 @@ CREATE TABLE column_types (
                 }
             },
             "DROP TABLE column_types");
-    }
 
     [ConditionalFact]
     [RequiresPostgis]
@@ -2133,7 +2149,12 @@ CREATE TABLE column_types (
 
     #endregion
 
-    private void Test(string createSql, IEnumerable<string> tables, IEnumerable<string> schemas, Action<DatabaseModel> asserter, string cleanupSql)
+    private void Test(
+        string createSql,
+        IEnumerable<string> tables,
+        IEnumerable<string> schemas,
+        Action<DatabaseModel> asserter,
+        string cleanupSql)
     {
         Fixture.TestStore.ExecuteNonQuery(createSql);
 
@@ -2165,8 +2186,12 @@ CREATE TABLE column_types (
     public class NpgsqlDatabaseModelFixture : SharedStoreFixtureBase<PoolableDbContext>
     {
         protected override string StoreName { get; } = nameof(NpgsqlDatabaseModelFactoryTest);
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public new NpgsqlTestStore TestStore => (NpgsqlTestStore)base.TestStore;
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public new NpgsqlTestStore TestStore
+            => (NpgsqlTestStore)base.TestStore;
 
         public override async Task InitializeAsync()
         {

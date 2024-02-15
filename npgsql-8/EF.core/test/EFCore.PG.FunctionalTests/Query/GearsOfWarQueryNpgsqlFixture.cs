@@ -5,10 +5,21 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class GearsOfWarQueryNpgsqlFixture : GearsOfWarQueryRelationalFixture
 {
-    protected override string StoreName => "GearsOfWarQueryTest";
-    protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+    protected override string StoreName
+        => "GearsOfWarQueryTest";
+
+    protected override ITestStoreFactory TestStoreFactory
+        => NpgsqlTestStoreFactory.Instance;
 
     private GearsOfWarData _expectedData;
+
+    static GearsOfWarQueryNpgsqlFixture()
+    {
+        // TODO: Switch to using NpgsqlDataSource
+#pragma warning disable CS0618 // Type or member is obsolete
+        EDBConnection.GlobalTypeMapper.EnableRecordsAsTuples();
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
     {
@@ -57,8 +68,6 @@ public class GearsOfWarQueryNpgsqlFixture : GearsOfWarQueryRelationalFixture
 
         foreach (var mission in missions)
         {
-            // var newThing = new DateTimeOffset(orig.Ticks - (orig.Ticks % (TimeSpan.TicksPerMillisecond / 1000)), TimeSpan.Zero);
-
             mission.Timeline = new DateTimeOffset(
                 mission.Timeline.Ticks - (mission.Timeline.Ticks % (TimeSpan.TicksPerMillisecond / 1000)), TimeSpan.Zero);
         }

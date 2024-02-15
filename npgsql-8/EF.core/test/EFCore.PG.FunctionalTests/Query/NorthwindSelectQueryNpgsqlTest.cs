@@ -7,7 +7,7 @@ public class NorthwindSelectQueryNpgsqlTest : NorthwindSelectQueryRelationalTest
         : base(fixture)
     {
         ClearLog();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     public override async Task Select_datetime_DayOfWeek_component(bool async)
@@ -15,7 +15,7 @@ public class NorthwindSelectQueryNpgsqlTest : NorthwindSelectQueryRelationalTest
         await base.Select_datetime_DayOfWeek_component(async);
 
         AssertSql(
-"""
+            """
 SELECT floor(date_part('dow', o."OrderDate"))::int
 FROM "Orders" AS o
 """);

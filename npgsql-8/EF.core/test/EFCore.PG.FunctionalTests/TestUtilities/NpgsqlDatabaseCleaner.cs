@@ -12,7 +12,9 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
     private readonly NpgsqlSqlGenerationHelper _sqlGenerationHelper;
 
     public NpgsqlDatabaseCleaner()
-        => _sqlGenerationHelper = new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies());
+    {
+        _sqlGenerationHelper = new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies());
+    }
 
     protected override IDatabaseModelFactory CreateDatabaseModelFactory(ILoggerFactory loggerFactory)
         => new NpgsqlDatabaseModelFactory(
@@ -187,14 +189,16 @@ FROM pg_collation coll
         // Some extensions create tables (e.g. PostGIS), so we must drop them first.
         => databaseModel.GetPostgresExtensions()
             .Select(e => _sqlGenerationHelper.DelimitIdentifier(e.Name, e.Schema))
-            .Aggregate(new StringBuilder(),
+            .Aggregate(
+                new StringBuilder(),
                 (builder, s) => builder.Append("DROP EXTENSION ").Append(s).Append(";"),
                 builder => builder.ToString());
 
     protected override string BuildCustomEndingSql(DatabaseModel databaseModel)
         => databaseModel.GetPostgresEnums()
             .Select(e => _sqlGenerationHelper.DelimitIdentifier(e.Name, e.Schema))
-            .Aggregate(new StringBuilder(),
+            .Aggregate(
+                new StringBuilder(),
                 (builder, s) => builder.Append("DROP TYPE ").Append(s).Append(" CASCADE;"),
                 builder => builder.ToString());
 }

@@ -13,7 +13,7 @@ public class JsonDomQueryTest : IClassFixture<JsonDomQueryTest.JsonDomQueryFixtu
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     [Theory]
@@ -51,11 +51,15 @@ public class JsonDomQueryTest : IClassFixture<JsonDomQueryTest.JsonDomQueryFixtu
     {
         using var ctx = CreateContext();
 
-        Assert.Empty(ctx.JsonbEntities.Where(e => e.CustomerDocument == JsonDocument.Parse(@"
+        Assert.Empty(
+            ctx.JsonbEntities.Where(
+                e => e.CustomerDocument
+                    == JsonDocument.Parse(
+                        @"
 { ""Name"": ""Test customer"", ""Age"": 80 }", default)));
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
 WHERE j."CustomerDocument" = '{"Name":"Test customer","Age":80}'
@@ -73,7 +77,7 @@ WHERE j."CustomerDocument" = '{"Name":"Test customer","Age":80}'
         Assert.Equal(actual, expected);
 
         AssertSql(
-"""
+            """
 @__p_0='1'
 
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
@@ -82,7 +86,7 @@ WHERE j."Id" = @__p_0
 LIMIT 1
 """,
             //
-"""
+            """
 @__expected_0='System.Text.Json.JsonDocument' (DbType = Object)
 
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
@@ -103,7 +107,7 @@ LIMIT 2
         Assert.Equal(actual, expected);
 
         AssertSql(
-"""
+            """
 @__p_0='1'
 
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
@@ -112,7 +116,7 @@ WHERE j."Id" = @__p_0
 LIMIT 1
 """,
             //
-"""
+            """
 @__expected_0='{"ID": "00000000-0000-0000-0000-000000000000", "Age": 25, "Name": "Joe", "IsVip": false, "Orders": [{"Price": 99.5, "ShippingAddress": "Some address 1"}, {"Price": 23, "ShippingAddress": "Some address 2"}], "Statistics": {"Nested": {"IntList": [3, 4], "IntArray": [3, 4], "SomeProperty": 10, "SomeNullableInt": 20, "SomeNullableGuid": "d5f2685d-e5c4-47e5-97aa-d0266154eb2d"}, "Visits": 4, "Purchases": 3}, "VariousTypes": {"Bool": "false", "Int16": 8, "Int32": 8, "Int64": 8, "String": "foo", "Decimal": 10, "DateTime": "2020-01-01T10:30:45", "DateTimeOffset": "2020-01-01T10:30:45+02:00"}}' (DbType = Object)
 
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
@@ -132,10 +136,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE j."CustomerDocument"->>'Name' = 'Joe'
+WHERE j."CustomerDocument" ->> 'Name' = 'Joe'
 LIMIT 2
 """);
     }
@@ -150,10 +154,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE j."CustomerElement"->>'Name' = 'Joe'
+WHERE j."CustomerElement" ->> 'Name' = 'Joe'
 LIMIT 2
 """);
     }
@@ -168,10 +172,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonEntities" AS j
-WHERE j."CustomerElement"->>'Name' = 'Joe'
+WHERE j."CustomerElement" ->> 'Name' = 'Joe'
 LIMIT 2
 """);
     }
@@ -186,10 +190,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"->>'Age' AS integer) < 30
+WHERE CAST(j."CustomerElement" ->> 'Age' AS integer) < 30
 LIMIT 2
 """);
     }
@@ -204,10 +208,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"->>'ID' AS uuid) = '00000000-0000-0000-0000-000000000000'
+WHERE CAST(j."CustomerElement" ->> 'ID' AS uuid) = '00000000-0000-0000-0000-000000000000'
 LIMIT 2
 """);
     }
@@ -222,10 +226,10 @@ LIMIT 2
         Assert.Equal("Moe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"->>'IsVip' AS boolean)
+WHERE CAST(j."CustomerElement" ->> 'IsVip' AS boolean)
 LIMIT 2
 """);
     }
@@ -240,10 +244,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>'{Statistics,Visits}' AS bigint) = 4
+WHERE CAST(j."CustomerElement" #>> '{Statistics,Visits}' AS bigint) = 4
 LIMIT 2
 """);
     }
@@ -253,15 +257,15 @@ LIMIT 2
     {
         using var ctx = CreateContext();
 
-        var x = ctx.JsonbEntities.Single(e => e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("SomeProperty").GetInt32() == 10);
-
+        var x = ctx.JsonbEntities.Single(
+            e => e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("SomeProperty").GetInt32() == 10);
 
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>'{Statistics,Nested,SomeProperty}' AS integer) = 10
+WHERE CAST(j."CustomerElement" #>> '{Statistics,Nested,SomeProperty}' AS integer) = 10
 LIMIT 2
 """);
     }
@@ -276,10 +280,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>'{Orders,0,Price}' AS numeric) = 99.5
+WHERE CAST(j."CustomerElement" #>> '{Orders,0,Price}' AS numeric) = 99.5
 LIMIT 2
 """);
     }
@@ -289,16 +293,17 @@ LIMIT 2
     {
         using var ctx = CreateContext();
 
-        var x = ctx.JsonbEntities.Single(e =>
-            e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("IntArray")[1].GetInt32() == 4);
+        var x = ctx.JsonbEntities.Single(
+            e =>
+                e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("IntArray")[1].GetInt32() == 4);
 
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>'{Statistics,Nested,IntArray,1}' AS integer) = 4
+WHERE CAST(j."CustomerElement" #>> '{Statistics,Nested,IntArray,1}' AS integer) = 4
 LIMIT 2
 """);
     }
@@ -309,18 +314,19 @@ LIMIT 2
         using var ctx = CreateContext();
 
         var i = 1;
-        var x = ctx.JsonbEntities.Single(e =>
-            e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("IntArray")[i].GetInt32() == 4);
+        var x = ctx.JsonbEntities.Single(
+            e =>
+                e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("IntArray")[i].GetInt32() == 4);
 
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 @__i_0='1'
 
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>ARRAY['Statistics','Nested','IntArray',@__i_0]::text[] AS integer) = 4
+WHERE CAST(j."CustomerElement" #>> ARRAY['Statistics','Nested','IntArray',@__i_0]::text[] AS integer) = 4
 LIMIT 2
 """);
     }
@@ -335,10 +341,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE jsonb_array_length(j."CustomerElement"->'Orders') = 2
+WHERE jsonb_array_length(j."CustomerElement" -> 'Orders') = 2
 LIMIT 2
 """);
     }
@@ -353,10 +359,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonEntities" AS j
-WHERE json_array_length(j."CustomerElement"->'Orders') = 2
+WHERE json_array_length(j."CustomerElement" -> 'Orders') = 2
 LIMIT 2
 """);
     }
@@ -371,10 +377,10 @@ LIMIT 2
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE (j."CustomerElement"->>'Name' IS NOT NULL) AND (j."CustomerElement"->>'Name' LIKE 'J%')
+WHERE j."CustomerElement" ->> 'Name' LIKE 'J%'
 LIMIT 2
 """);
     }
@@ -384,17 +390,18 @@ LIMIT 2
     {
         using var ctx = CreateContext();
 
-        var x = ctx.JsonbEntities.Single(e =>
-            e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("SomeNullableGuid").GetGuid()
-            == Guid.Parse("d5f2685d-e5c4-47e5-97aa-d0266154eb2d"));
+        var x = ctx.JsonbEntities.Single(
+            e =>
+                e.CustomerElement.GetProperty("Statistics").GetProperty("Nested").GetProperty("SomeNullableGuid").GetGuid()
+                == Guid.Parse("d5f2685d-e5c4-47e5-97aa-d0266154eb2d"));
 
         Assert.Equal("Joe", x.CustomerElement.GetProperty("Name").GetString());
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE CAST(j."CustomerElement"#>>'{Statistics,Nested,SomeNullableGuid}' AS uuid) = 'd5f2685d-e5c4-47e5-97aa-d0266154eb2d'
+WHERE CAST(j."CustomerElement" #>> '{Statistics,Nested,SomeNullableGuid}' AS uuid) = 'd5f2685d-e5c4-47e5-97aa-d0266154eb2d'
 LIMIT 2
 """);
     }
@@ -407,10 +414,10 @@ LIMIT 2
         _ = ctx.JsonbEntities.Single(e => e.CustomerElement.GetString() == "foo");
 
         AssertSql(
-"""
+            """
 SELECT j."Id", j."CustomerDocument", j."CustomerElement"
 FROM "JsonbEntities" AS j
-WHERE j."CustomerElement"#>>'{}' = 'foo'
+WHERE j."CustomerElement" #>> '{}' = 'foo'
 LIMIT 2
 """);
     }
@@ -422,12 +429,13 @@ LIMIT 2
     {
         using var ctx = CreateContext();
         var element = JsonDocument.Parse(@"{""Name"": ""Joe"", ""Age"": 25}").RootElement;
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonContains(e.CustomerElement, element));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonContains(e.CustomerElement, element));
 
         Assert.Equal(1, count);
         AssertSql(
-"""
+            """
 @__element_1='{"Name": "Joe", "Age": 25}' (DbType = Object)
 
 SELECT count(*)::int
@@ -440,12 +448,13 @@ WHERE j."CustomerElement" @> @__element_1
     public void JsonContains_with_string()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonContains(e.CustomerElement, @"{""Name"": ""Joe"", ""Age"": 25}"));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonContains(e.CustomerElement, @"{""Name"": ""Joe"", ""Age"": 25}"));
 
         Assert.Equal(1, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
 WHERE j."CustomerElement" @> '{"Name": "Joe", "Age": 25}'
@@ -457,12 +466,13 @@ WHERE j."CustomerElement" @> '{"Name": "Joe", "Age": 25}'
     {
         using var ctx = CreateContext();
         var element = JsonDocument.Parse(@"{""Name"": ""Joe"", ""Age"": 25}").RootElement;
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonContained(element, e.CustomerElement));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonContained(element, e.CustomerElement));
 
         Assert.Equal(1, count);
         AssertSql(
-"""
+            """
 @__element_1='{"Name": "Joe", "Age": 25}' (DbType = Object)
 
 SELECT count(*)::int
@@ -475,12 +485,13 @@ WHERE @__element_1 <@ j."CustomerElement"
     public void JsonContained_with_string()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonContained(@"{""Name"": ""Joe"", ""Age"": 25}", e.CustomerElement));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonContained(@"{""Name"": ""Joe"", ""Age"": 25}", e.CustomerElement));
 
         // Assert.Equal(1, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
 WHERE '{"Name": "Joe", "Age": 25}' <@ j."CustomerElement"
@@ -491,15 +502,16 @@ WHERE '{"Name": "Joe", "Age": 25}' <@ j."CustomerElement"
     public void JsonExists()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonExists(e.CustomerElement.GetProperty("Statistics"), "Visits"));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonExists(e.CustomerElement.GetProperty("Statistics"), "Visits"));
 
         Assert.Equal(2, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
-WHERE j."CustomerElement"->'Statistics' ? 'Visits'
+WHERE j."CustomerElement" -> 'Statistics' ? 'Visits'
 """);
     }
 
@@ -507,15 +519,16 @@ WHERE j."CustomerElement"->'Statistics' ? 'Visits'
     public void JsonExistAny()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonExistAny(e.CustomerElement.GetProperty("Statistics"), "foo", "Visits"));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonExistAny(e.CustomerElement.GetProperty("Statistics"), "foo", "Visits"));
 
         Assert.Equal(2, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
-WHERE j."CustomerElement"->'Statistics' ?| ARRAY['foo','Visits']::text[]
+WHERE j."CustomerElement" -> 'Statistics' ?| ARRAY['foo','Visits']::text[]
 """);
     }
 
@@ -523,15 +536,16 @@ WHERE j."CustomerElement"->'Statistics' ?| ARRAY['foo','Visits']::text[]
     public void JsonExistAll()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonExistAll(e.CustomerElement.GetProperty("Statistics"), "foo", "Visits"));
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonExistAll(e.CustomerElement.GetProperty("Statistics"), "foo", "Visits"));
 
         Assert.Equal(0, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
-WHERE j."CustomerElement"->'Statistics' ?& ARRAY['foo','Visits']::text[]
+WHERE j."CustomerElement" -> 'Statistics' ?& ARRAY['foo','Visits']::text[]
 """);
     }
 
@@ -539,15 +553,16 @@ WHERE j."CustomerElement"->'Statistics' ?& ARRAY['foo','Visits']::text[]
     public void JsonTypeof()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonbEntities.Count(e =>
-            EF.Functions.JsonTypeof(e.CustomerElement.GetProperty("Statistics").GetProperty("Visits")) == "number");
+        var count = ctx.JsonbEntities.Count(
+            e =>
+                EF.Functions.JsonTypeof(e.CustomerElement.GetProperty("Statistics").GetProperty("Visits")) == "number");
 
         Assert.Equal(2, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonbEntities" AS j
-WHERE jsonb_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
+WHERE jsonb_typeof(j."CustomerElement" #> '{Statistics,Visits}') = 'number'
 """);
     }
 
@@ -555,15 +570,16 @@ WHERE jsonb_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
     public void JsonTypeof_json()
     {
         using var ctx = CreateContext();
-        var count = ctx.JsonEntities.Count(e =>
-            EF.Functions.JsonTypeof(e.CustomerElement.GetProperty("Statistics").GetProperty("Visits")) == "number");
+        var count = ctx.JsonEntities.Count(
+            e =>
+                EF.Functions.JsonTypeof(e.CustomerElement.GetProperty("Statistics").GetProperty("Visits")) == "number");
 
         Assert.Equal(2, count);
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "JsonEntities" AS j
-WHERE json_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
+WHERE json_typeof(j."CustomerElement" #> '{Statistics,Visits}') = 'number'
 """);
     }
 
@@ -571,7 +587,8 @@ WHERE json_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
 
     #region Support
 
-    protected JsonDomQueryContext CreateContext() => Fixture.CreateContext();
+    protected JsonDomQueryContext CreateContext()
+        => Fixture.CreateContext();
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
@@ -581,105 +598,145 @@ WHERE json_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
         public DbSet<JsonbEntity> JsonbEntities { get; set; }
         public DbSet<JsonEntity> JsonEntities { get; set; }
 
-        public JsonDomQueryContext(DbContextOptions options) : base(options) {}
+        public JsonDomQueryContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         public static void Seed(JsonDomQueryContext context)
         {
             var (customer1, customer2, customer3) = (CreateCustomer1(), CreateCustomer2(), CreateCustomer3());
 
             context.JsonbEntities.AddRange(
-                new JsonbEntity { Id = 1, CustomerDocument = customer1, CustomerElement = customer1.RootElement },
-                new JsonbEntity { Id = 2, CustomerDocument = customer2, CustomerElement = customer2.RootElement },
-                new JsonbEntity { Id = 3, CustomerDocument = customer3, CustomerElement = customer3.RootElement });
+                new JsonbEntity
+                {
+                    Id = 1,
+                    CustomerDocument = customer1,
+                    CustomerElement = customer1.RootElement
+                },
+                new JsonbEntity
+                {
+                    Id = 2,
+                    CustomerDocument = customer2,
+                    CustomerElement = customer2.RootElement
+                },
+                new JsonbEntity
+                {
+                    Id = 3,
+                    CustomerDocument = customer3,
+                    CustomerElement = customer3.RootElement
+                });
             context.JsonEntities.AddRange(
-                new JsonEntity { Id = 1, CustomerDocument = customer1, CustomerElement = customer1.RootElement },
-                new JsonEntity { Id = 2, CustomerDocument = customer2, CustomerElement = customer2.RootElement },
-                new JsonEntity { Id = 3, CustomerDocument = customer3, CustomerElement = customer3.RootElement });
+                new JsonEntity
+                {
+                    Id = 1,
+                    CustomerDocument = customer1,
+                    CustomerElement = customer1.RootElement
+                },
+                new JsonEntity
+                {
+                    Id = 2,
+                    CustomerDocument = customer2,
+                    CustomerElement = customer2.RootElement
+                },
+                new JsonEntity
+                {
+                    Id = 3,
+                    CustomerDocument = customer3,
+                    CustomerElement = customer3.RootElement
+                });
             context.SaveChanges();
 
-            static JsonDocument CreateCustomer1() => JsonDocument.Parse(@"
-                {
-                    ""Name"": ""Joe"",
-                    ""Age"": 25,
-                    ""ID"": ""00000000-0000-0000-0000-000000000000"",
-                    ""IsVip"": false,
-                    ""Statistics"":
-                    {
-                        ""Visits"": 4,
-                        ""Purchases"": 3,
-                        ""Nested"":
-                        {
-                            ""SomeProperty"": 10,
-                            ""SomeNullableInt"": 20,
-                            ""SomeNullableGuid"": ""d5f2685d-e5c4-47e5-97aa-d0266154eb2d"",
-                            ""IntArray"": [3, 4],
-                            ""IntList"": [3, 4]
-                        }
-                    },
-                    ""Orders"":
-                    [
-                        {
-                            ""Price"": 99.5,
-                            ""ShippingAddress"": ""Some address 1""
-                        },
-                        {
-                            ""Price"": 23,
-                            ""ShippingAddress"": ""Some address 2""
-                        }
-                    ],
-                    ""VariousTypes"":
-                    {
-                        ""String"": ""foo"",
-                        ""Int16"": 8,
-                        ""Int32"": 8,
-                        ""Int64"": 8,
-                        ""Bool"": ""false"",
-                        ""Decimal"": 10,
-                        ""DateTime"": ""2020-01-01T10:30:45"",
-                        ""DateTimeOffset"": ""2020-01-01T10:30:45+02:00""
-                    }
-                }");
+            static JsonDocument CreateCustomer1()
+                => JsonDocument.Parse(
+                    """
+{
+    "Name": "Joe",
+    "Age": 25,
+    "ID": "00000000-0000-0000-0000-000000000000",
+    "IsVip": false,
+    "Statistics":
+    {
+        "Visits": 4,
+        "Purchases": 3,
+        "Nested":
+        {
+            "SomeProperty": 10,
+            "SomeNullableInt": 20,
+            "SomeNullableGuid": "d5f2685d-e5c4-47e5-97aa-d0266154eb2d",
+            "IntArray": [3, 4],
+            "IntList": [3, 4]
+        }
+    },
+    "Orders":
+    [
+        {
+            "Price": 99.5,
+            "ShippingAddress": "Some address 1"
+        },
+        {
+            "Price": 23,
+            "ShippingAddress": "Some address 2"
+        }
+    ],
+    "VariousTypes":
+    {
+        "String": "foo",
+        "Int16": 8,
+        "Int32": 8,
+        "Int64": 8,
+        "Bool": "false",
+        "Decimal": 10,
+        "DateTime": "2020-01-01T10:30:45",
+        "DateTimeOffset": "2020-01-01T10:30:45+02:00"
+    }
+}
+""");
 
-            static JsonDocument CreateCustomer2() => JsonDocument.Parse(@"
-                {
-                    ""Name"": ""Moe"",
-                    ""Age"": 35,
-                    ""ID"": ""3272b593-bfe2-4ecf-81ae-4242b0632465"",
-                    ""IsVip"": true,
-                    ""Statistics"":
-                    {
-                        ""Visits"": 20,
-                        ""Purchases"": 25,
-                        ""Nested"":
-                        {
-                            ""SomeProperty"": 20,
-                            ""SomeNullableInt"": null,
-                            ""SomeNullableGuid"": null,
-                            ""IntArray"": [5, 6, 7],
-                            ""IntArray"": [5, 6, 7]
-                        }
-                    },
-                    ""Orders"":
-                    [
-                        {
-                            ""Price"": 5,
-                            ""ShippingAddress"": ""Moe's address""
-                        }
-                    ],
-                    ""VariousTypes"":
-                    {
-                        ""String"": ""bar"",
-                        ""Int16"": 9,
-                        ""Int32"": 9,
-                        ""Int64"": 9,
-                        ""Bool"": ""true"",
-                        ""Decimal"": 20.3,
-                        ""DateTime"": ""1990-03-03T17:10:15"",
-                        ""DateTimeOffset"": ""1990-03-03 17:10:15+10:00""
-                    }
-                }");
+            static JsonDocument CreateCustomer2()
+                => JsonDocument.Parse(
+                    """
+{
+    "Name": "Moe",
+    "Age": 35,
+    "ID": "3272b593-bfe2-4ecf-81ae-4242b0632465",
+    "IsVip": true,
+    "Statistics":
+    {
+        "Visits": 20,
+        "Purchases": 25,
+        "Nested":
+        {
+            "SomeProperty": 20,
+            "SomeNullableInt": null,
+            "SomeNullableGuid": null,
+            "IntArray": [5, 6, 7],
+            "IntArray": [5, 6, 7]
+        }
+    },
+    "Orders":
+    [
+        {
+            "Price": 5,
+            "ShippingAddress": "Moe's address"
+        }
+    ],
+    "VariousTypes":
+    {
+        "String": "bar",
+        "Int16": 9,
+        "Int32": 9,
+        "Int64": 9,
+        "Bool": "true",
+        "Decimal": 20.3,
+        "DateTime": "1990-03-03T17:10:15",
+        "DateTimeOffset": "1990-03-03 17:10:15+10:00"
+    }
+}
+""");
 
-            static JsonDocument CreateCustomer3() => JsonDocument.Parse(@"""foo""");
+            static JsonDocument CreateCustomer3()
+                => JsonDocument.Parse(@"""foo""");
         }
     }
 
@@ -697,16 +754,24 @@ WHERE json_typeof(j."CustomerElement"#>'{Statistics,Visits}') = 'number'
 
         [Column(TypeName = "json")]
         public JsonDocument CustomerDocument { get; set; }
+
         [Column(TypeName = "json")]
         public JsonElement CustomerElement { get; set; }
     }
 
     public class JsonDomQueryFixture : SharedStoreFixtureBase<JsonDomQueryContext>
     {
-        protected override string StoreName => "JsonDomQueryTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
-        protected override void Seed(JsonDomQueryContext context) => JsonDomQueryContext.Seed(context);
+        protected override string StoreName
+            => "JsonDomQueryTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
+
+        protected override void Seed(JsonDomQueryContext context)
+            => JsonDomQueryContext.Seed(context);
     }
 
     #endregion

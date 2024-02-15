@@ -1,10 +1,9 @@
-using Microsoft.EntityFrameworkCore.BulkUpdates;
-using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
+﻿using Microsoft.EntityFrameworkCore.TestModels.InheritanceModel;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.BulkUpdates;
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class InheritanceBulkUpdatesNpgsqlFixture : InheritanceBulkUpdatesRelationalFixture
+public class TPHInheritanceQueryNpgsqlFixture : TPHInheritanceQueryFixture
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;

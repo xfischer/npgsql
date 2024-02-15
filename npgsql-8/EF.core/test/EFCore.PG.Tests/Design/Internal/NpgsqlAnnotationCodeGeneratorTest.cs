@@ -1,4 +1,5 @@
-﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
+﻿using Microsoft.EntityFrameworkCore.Storage.Json;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
@@ -39,7 +40,7 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(property, property.GetAnnotations().ToDictionary(a => a.Name, a => a))
             .Single();
         Assert.Equal(nameof(NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn), result.Method);
-        Assert.Equal(0, result.Arguments.Count);
+        Assert.Empty(result.Arguments);
 
         property = entity.GetProperties().Single(p => p.Name == "IdentityAlways");
         annotations = property.GetAnnotations().ToDictionary(a => a.Name, a => a);
@@ -47,7 +48,7 @@ public class NpgsqlAnnotationCodeGeneratorTest
         Assert.Contains(annotations, kv => kv.Key == NpgsqlAnnotationNames.ValueGenerationStrategy);
         result = generator.GenerateFluentApiCalls(property, annotations).Single();
         Assert.Equal(nameof(NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn), result.Method);
-        Assert.Equal(0, result.Arguments.Count);
+        Assert.Empty(result.Arguments);
 
         property = entity.GetProperties().Single(p => p.Name == "Serial");
         annotations = property.GetAnnotations().ToDictionary(a => a.Name, a => a);
@@ -56,7 +57,7 @@ public class NpgsqlAnnotationCodeGeneratorTest
         result = generator.GenerateFluentApiCalls(property, property.GetAnnotations().ToDictionary(a => a.Name, a => a))
             .Single();
         Assert.Equal(nameof(NpgsqlPropertyBuilderExtensions.UseSerialColumn), result.Method);
-        Assert.Equal(0, result.Arguments.Count);
+        Assert.Empty(result.Arguments);
 
         property = entity.GetProperties().Single(p => p.Name == "None");
         annotations = property.GetAnnotations().ToDictionary(a => a.Name, a => a);
@@ -65,7 +66,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         result = generator.GenerateFluentApiCalls(property, property.GetAnnotations().ToDictionary(a => a.Name, a => a))
             .Single();
         Assert.Equal(nameof(PropertyBuilder.HasAnnotation), result.Method);
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             a => Assert.Equal(NpgsqlAnnotationNames.ValueGenerationStrategy, a),
             a => Assert.Equal(NpgsqlValueGenerationStrategy.None, a));
     }
@@ -241,7 +243,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresExtension));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             schema => Assert.Equal("some_schema", schema),
             name => Assert.Equal("postgis", name));
     }
@@ -279,7 +282,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresEnum));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             name => Assert.Equal("some_enum", name),
             labels => Assert.Equal(enumLabels, labels));
     }
@@ -298,7 +302,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresEnum));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             schema => Assert.Equal("some_schema", schema),
             name => Assert.Equal("some_enum", name),
             labels => Assert.Equal(enumLabels, labels));
@@ -318,7 +323,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresEnum));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             name => Assert.Equal("some_enum", name),
             labels => Assert.Equal(enumLabels, labels));
     }
@@ -340,7 +346,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresRange));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             name => Assert.Equal("some_range", name),
             subtype => Assert.Equal("some_subtype", subtype));
     }
@@ -358,7 +365,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresRange));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             schema => Assert.Equal("some_schema", schema),
             name => Assert.Equal("some_range", name),
             subtype => Assert.Equal("some_subtype", subtype),
@@ -367,7 +375,6 @@ public class NpgsqlAnnotationCodeGeneratorTest
             collation => Assert.Null(collation),
             subtypeDiff => Assert.Null(subtypeDiff));
     }
-
 
     [ConditionalFact]
     public void Range_with_null_schema()
@@ -382,7 +389,8 @@ public class NpgsqlAnnotationCodeGeneratorTest
         var result = generator.GenerateFluentApiCalls(model, annotations)
             .Single(c => c.Method == nameof(NpgsqlModelBuilderExtensions.HasPostgresRange));
 
-        Assert.Collection(result.Arguments,
+        Assert.Collection(
+            result.Arguments,
             name => Assert.Equal("some_range", name),
             subtype => Assert.Equal("some_subtype", subtype));
     }
@@ -390,13 +398,15 @@ public class NpgsqlAnnotationCodeGeneratorTest
     #endregion Range
 
     private NpgsqlAnnotationCodeGenerator CreateGenerator()
-        => new(new AnnotationCodeGeneratorDependencies(
-            new NpgsqlTypeMappingSource(
-                new TypeMappingSourceDependencies(
-                    new ValueConverterSelector(new ValueConverterSelectorDependencies()),
-                    Array.Empty<ITypeMappingSourcePlugin>()
-                ),
-                new RelationalTypeMappingSourceDependencies(Array.Empty<IRelationalTypeMappingSourcePlugin>()),
-                new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
-                new NpgsqlSingletonOptions())));
+        => new(
+            new AnnotationCodeGeneratorDependencies(
+                new NpgsqlTypeMappingSource(
+                    new TypeMappingSourceDependencies(
+                        new ValueConverterSelector(new ValueConverterSelectorDependencies()),
+                        new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
+                        Array.Empty<ITypeMappingSourcePlugin>()
+                    ),
+                    new RelationalTypeMappingSourceDependencies(Array.Empty<IRelationalTypeMappingSourcePlugin>()),
+                    new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
+                    new NpgsqlSingletonOptions())));
 }

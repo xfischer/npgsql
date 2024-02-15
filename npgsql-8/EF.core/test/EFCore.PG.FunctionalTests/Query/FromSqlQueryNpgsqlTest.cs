@@ -20,7 +20,8 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    public override async Task FromSqlInterpolated_queryable_multiple_composed_with_parameters_and_closure_parameters_interpolated(bool async)
+    public override async Task FromSqlInterpolated_queryable_multiple_composed_with_parameters_and_closure_parameters_interpolated(
+        bool async)
     {
         // We default to mapping DateTime to 'timestamp with time zone', but here we need to send `timestamp without time zone` to match
         // the database data.
@@ -28,7 +29,7 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
         var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var query
             = from c in context.Set<Customer>().FromSqlRaw(
                   NormalizeDelimitersInRawString("SELECT * FROM [Customers] WHERE [City] = {0}"), city)
@@ -74,7 +75,7 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
         var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var query
             = from c in context.Set<Customer>().FromSqlRaw(
                   NormalizeDelimitersInRawString("SELECT * FROM [Customers] WHERE [City] = {0}"), city)
@@ -118,7 +119,7 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
         var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var query = from c in context.Set<Customer>().FromSqlRaw(
                         NormalizeDelimitersInRawString("SELECT * FROM [Customers] WHERE [City] = {0}"), city)
                     from o in context.Set<Order>().FromSqlRaw(
@@ -161,7 +162,7 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
         var startDate = new EDBParameter { Value = new DateTime(1997, 1, 1), EDBDbType = EDBDbType.Timestamp };
         var endDate = new EDBParameter { Value = new DateTime(1998, 1, 1), EDBDbType = EDBDbType.Timestamp };
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var query = from c in context.Set<Customer>().FromSqlRaw(NormalizeDelimitersInRawString("SELECT * FROM [Customers]"))
                     from o in context.Set<Order>().FromSqlRaw(
                         NormalizeDelimitersInRawString("SELECT * FROM [Orders] WHERE [OrderDate] BETWEEN {0} AND {1}"),
@@ -178,9 +179,5 @@ public class FromSqlQueryNpgsqlTest : FromSqlQueryTestBase<NorthwindQueryNpgsqlF
     }
 
     protected override DbParameter CreateDbParameter(string name, object value)
-        => new EDBParameter
-        {
-            ParameterName = name,
-            Value = value
-        };
+        => new EDBParameter { ParameterName = name, Value = value };
 }

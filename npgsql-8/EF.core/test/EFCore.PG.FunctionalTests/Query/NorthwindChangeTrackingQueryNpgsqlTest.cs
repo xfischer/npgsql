@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Northwind;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
@@ -6,15 +7,16 @@ public class NorthwindChangeTrackingQueryNpgsqlTest : NorthwindChangeTrackingQue
 {
     // ReSharper disable once UnusedParameter.Local
     public NorthwindChangeTrackingQueryNpgsqlTest(
-        NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture, ITestOutputHelper testOutputHelper)
+        NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     protected override NorthwindContext CreateNoTrackingContext()
-        => new NorthwindRelationalContext(
+        => new NorthwindNpgsqlContext(
             new DbContextOptionsBuilder(Fixture.CreateOptions())
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options);
 }

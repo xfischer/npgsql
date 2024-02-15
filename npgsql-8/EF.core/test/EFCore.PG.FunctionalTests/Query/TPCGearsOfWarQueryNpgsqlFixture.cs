@@ -5,10 +5,18 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class TPCGearsOfWarQueryNpgsqlFixture : TPCGearsOfWarQueryRelationalFixture
 {
+    static TPCGearsOfWarQueryNpgsqlFixture()
+    {
+        // TODO: Switch to using NpgsqlDataSource
+#pragma warning disable CS0618 // Type or member is obsolete
+        EDBConnection.GlobalTypeMapper.EnableRecordsAsTuples();
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
+    protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
     {
         base.OnModelCreating(modelBuilder, context);
 
@@ -39,11 +47,9 @@ public class TPCGearsOfWarQueryNpgsqlFixture : TPCGearsOfWarQueryRelationalFixtu
     }
 
     protected override void Seed(GearsOfWarContext context)
-    {
         // GearsOfWarData contains DateTimeOffsets with various offsets, which we don't support. Change these to UTC.
         // Also chop sub-microsecond precision which PostgreSQL does not support.
-        SeedForNpgsql(context);
-    }
+        => SeedForNpgsql(context);
 
     public static void SeedForNpgsql(GearsOfWarContext context)
     {
