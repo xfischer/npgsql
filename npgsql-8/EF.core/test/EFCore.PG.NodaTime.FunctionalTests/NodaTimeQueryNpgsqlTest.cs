@@ -18,8 +18,7 @@ public class NodaTimeQueryNpgsqlTest : QueryTestBase<NodaTimeQueryNpgsqlTest.Nod
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate < new LocalDate(2018, 4, 21)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate < new LocalDate(2018, 4, 21)));
 
         AssertSql(
 """
@@ -38,14 +37,13 @@ WHERE n."LocalDate" < DATE '2018-04-21'
         // Note: requires some special type inference logic because we're adding things of different types
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate + Period.FromMonths(1) > t.LocalDate),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate + Period.FromMonths(1) > t.LocalDate));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (n."LocalDate" + INTERVAL 'P1M') > n."LocalDate"
+WHERE n."LocalDate" + INTERVAL 'P1M' > n."LocalDate"
 """);
     }
 
@@ -55,14 +53,13 @@ WHERE (n."LocalDate" + INTERVAL 'P1M') > n."LocalDate"
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant + Duration.FromDays(1) - t.Instant == Duration.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant + Duration.FromDays(1) - t.Instant == Duration.FromDays(1)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE ((n."Instant" + INTERVAL '1 00:00:00') - n."Instant") = INTERVAL '1 00:00:00'
+WHERE (n."Instant" + INTERVAL '1 00:00:00') - n."Instant" = INTERVAL '1 00:00:00'
 """);
     }
 
@@ -72,14 +69,13 @@ WHERE ((n."Instant" + INTERVAL '1 00:00:00') - n."Instant") = INTERVAL '1 00:00:
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime + Period.FromDays(1) - t.LocalDateTime == Period.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime + Period.FromDays(1) - t.LocalDateTime == Period.FromDays(1)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE ((n."LocalDateTime" + INTERVAL 'P1D') - n."LocalDateTime") = INTERVAL 'P1D'
+WHERE (n."LocalDateTime" + INTERVAL 'P1D') - n."LocalDateTime" = INTERVAL 'P1D'
 """);
     }
 
@@ -89,14 +85,13 @@ WHERE ((n."LocalDateTime" + INTERVAL 'P1D') - n."LocalDateTime") = INTERVAL 'P1D
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime + Duration.FromDays(1) - t.ZonedDateTime == Duration.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime + Duration.FromDays(1) - t.ZonedDateTime == Duration.FromDays(1)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE ((n."ZonedDateTime" + INTERVAL '1 00:00:00') - n."ZonedDateTime") = INTERVAL '1 00:00:00'
+WHERE (n."ZonedDateTime" + INTERVAL '1 00:00:00') - n."ZonedDateTime" = INTERVAL '1 00:00:00'
 """);
     }
 
@@ -106,8 +101,7 @@ WHERE ((n."ZonedDateTime" + INTERVAL '1 00:00:00') - n."ZonedDateTime") = INTERV
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - t.LocalDate == Period.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - t.LocalDate == Period.FromDays(1)));
 
         AssertSql(
 """
@@ -124,8 +118,7 @@ WHERE make_interval(days => n."LocalDate2" - n."LocalDate") = INTERVAL 'P1D'
         var date = new LocalDate(2018, 4, 20);
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - date == Period.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - date == Period.FromDays(1)));
 
         AssertSql(
 """
@@ -144,8 +137,7 @@ WHERE make_interval(days => n."LocalDate2" - @__date_0) = INTERVAL 'P1D'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - new LocalDate(2018, 4, 20) == Period.FromDays(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate2 - new LocalDate(2018, 4, 20) == Period.FromDays(1)));
 
         AssertSql(
 """
@@ -161,14 +153,13 @@ WHERE make_interval(days => n."LocalDate2" - DATE '2018-04-20') = INTERVAL 'P1D'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime + Period.FromHours(1) - t.LocalTime == Period.FromHours(1)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime + Period.FromHours(1) - t.LocalTime == Period.FromHours(1)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE ((n."LocalTime" + INTERVAL 'PT1H') - n."LocalTime") = INTERVAL 'PT1H'
+WHERE (n."LocalTime" + INTERVAL 'PT1H') - n."LocalTime" = INTERVAL 'PT1H'
 """);
     }
 
@@ -182,8 +173,7 @@ WHERE ((n."LocalTime" + INTERVAL 'PT1H') - n."LocalTime") = INTERVAL 'PT1H'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Year == 2018),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Year == 2018));
 
         AssertSql(
 """
@@ -199,8 +189,7 @@ WHERE date_part('year', n."LocalDateTime")::int = 2018
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Month == 4),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Month == 4));
 
         AssertSql(
 """
@@ -216,8 +205,7 @@ WHERE date_part('month', n."LocalDateTime")::int = 4
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.DayOfYear == 110),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.DayOfYear == 110));
 
         AssertSql(
 """
@@ -233,8 +221,7 @@ WHERE date_part('doy', n."LocalDateTime")::int = 110
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Day == 20),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Day == 20));
 
         AssertSql(
 """
@@ -250,8 +237,7 @@ WHERE date_part('day', n."LocalDateTime")::int = 20
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Hour == 10),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Hour == 10));
 
         AssertSql(
 """
@@ -267,8 +253,7 @@ WHERE date_part('hour', n."LocalDateTime")::int = 10
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Minute == 31),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Minute == 31));
 
         AssertSql(
 """
@@ -284,8 +269,7 @@ WHERE date_part('minute', n."LocalDateTime")::int = 31
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Second == 33),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Second == 33));
 
         AssertSql(
 """
@@ -302,8 +286,7 @@ WHERE floor(date_part('second', n."LocalDateTime"))::int = 33
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Date == new LocalDate(2018, 4, 20)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.Date == new LocalDate(2018, 4, 20)));
 
         AssertSql(
 """
@@ -315,19 +298,34 @@ WHERE n."LocalDateTime"::date = DATE '2018-04-20'
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
+    public async Task LocalDateTime_Time(bool async)
+    {
+        await AssertQuery(
+            async,
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.TimeOfDay == new LocalTime(10, 31, 33, 666)));
+
+        AssertSql(
+            """
+SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
+FROM "NodaTimeTypes" AS n
+WHERE n."LocalDateTime"::time = TIME '10:31:33.666'
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
     public async Task LocalDateTime_DayOfWeek(bool async)
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.DayOfWeek == IsoDayOfWeek.Friday),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDateTime.DayOfWeek == IsoDayOfWeek.Friday));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE CASE
-    WHEN floor(date_part('dow', n."LocalDateTime"))::int = 0 THEN 7
+WHERE CASE floor(date_part('dow', n."LocalDateTime"))::int
+    WHEN 0 THEN 7
     ELSE floor(date_part('dow', n."LocalDateTime"))::int
 END = 5
 """);
@@ -341,8 +339,7 @@ END = 5
             async,
             ss => ss.Set<NodaTimeTypes>().Where(
                 t => t.LocalDateTime.InZoneLeniently(DateTimeZoneProviders.Tzdb["Europe/Berlin"]).ToInstant()
-                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()),
-            entryCount: 1);
+                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()));
 
         AssertSql(
 """
@@ -350,7 +347,7 @@ END = 5
 
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (n."LocalDateTime" AT TIME ZONE 'Europe/Berlin') = @__ToInstant_0
+WHERE n."LocalDateTime" AT TIME ZONE 'Europe/Berlin' = @__ToInstant_0
 """);
     }
 
@@ -362,8 +359,7 @@ WHERE (n."LocalDateTime" AT TIME ZONE 'Europe/Berlin') = @__ToInstant_0
             async,
             ss => ss.Set<NodaTimeTypes>().Where(
                 t => t.LocalDateTime.InZoneLeniently(DateTimeZoneProviders.Tzdb[t.TimeZoneId]).ToInstant()
-                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()),
-            entryCount: 1);
+                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()));
 
         AssertSql(
 """
@@ -371,7 +367,7 @@ WHERE (n."LocalDateTime" AT TIME ZONE 'Europe/Berlin') = @__ToInstant_0
 
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (n."LocalDateTime" AT TIME ZONE n."TimeZoneId") = @__ToInstant_0
+WHERE n."LocalDateTime" AT TIME ZONE n."TimeZoneId" = @__ToInstant_0
 """);
     }
 
@@ -403,8 +399,7 @@ LIMIT 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Year == 2018),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Year == 2018));
 
         AssertSql(
 """
@@ -420,8 +415,7 @@ WHERE date_part('year', n."LocalDate")::int = 2018
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Month == 4),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Month == 4));
 
         AssertSql(
 """
@@ -437,8 +431,7 @@ WHERE date_part('month', n."LocalDate")::int = 4
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.DayOfYear == 110),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.DayOfYear == 110));
 
         AssertSql(
 """
@@ -454,8 +447,7 @@ WHERE date_part('doy', n."LocalDate")::int = 110
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Day == 20),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalDate.Day == 20));
 
         AssertSql(
 """
@@ -492,8 +484,7 @@ LIMIT 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Hour == 10),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Hour == 10));
 
         AssertSql(
 """
@@ -509,8 +500,7 @@ WHERE date_part('hour', n."LocalTime")::int = 10
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Minute == 31),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Minute == 31));
 
         AssertSql(
 """
@@ -526,8 +516,7 @@ WHERE date_part('minute', n."LocalTime")::int = 31
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Second == 33),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.LocalTime.Second == 33));
 
         AssertSql(
 """
@@ -547,8 +536,7 @@ WHERE floor(date_part('second', n."LocalTime"))::int = 33
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Years == 2018),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Years == 2018));
 
         AssertSql(
 """
@@ -564,8 +552,7 @@ WHERE date_part('year', n."Period")::int = 2018
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Months == 4),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Months == 4));
 
         AssertSql(
 """
@@ -581,8 +568,7 @@ WHERE date_part('month', n."Period")::int = 4
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Days == 20),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Days == 20));
 
         AssertSql(
 """
@@ -598,8 +584,7 @@ WHERE date_part('day', n."Period")::int = 20
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Hours == 10),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Hours == 10));
 
         AssertSql(
 """
@@ -615,8 +600,7 @@ WHERE date_part('hour', n."Period")::int = 10
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Minutes == 31),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Minutes == 31));
 
         AssertSql(
 """
@@ -632,8 +616,7 @@ WHERE date_part('minute', n."Period")::int = 31
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Seconds == 23),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Period.Seconds == 23));
 
         AssertSql(
 """
@@ -686,8 +669,7 @@ WHERE floor(date_part('second', n."Period"))::int = 23
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromYears(t.Id).Years == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromYears(t.Id).Years == 1));
 
         AssertSql(
 """
@@ -703,8 +685,7 @@ WHERE date_part('year', make_interval(years => n."Id"))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMonths(t.Id).Months == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMonths(t.Id).Months == 1));
 
         AssertSql(
 """
@@ -721,8 +702,7 @@ WHERE date_part('month', make_interval(months => n."Id"))::int = 1
         await AssertQuery(
             async,
             ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromWeeks(t.Id).Days == 7),
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromWeeks(t.Id).Normalize().Days == 7),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromWeeks(t.Id).Normalize().Days == 7));
 
         AssertSql(
 """
@@ -738,8 +718,7 @@ WHERE date_part('day', make_interval(weeks => n."Id"))::int = 7
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromDays(t.Id).Days == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromDays(t.Id).Days == 1));
 
         AssertSql(
 """
@@ -755,8 +734,7 @@ WHERE date_part('day', make_interval(days => n."Id"))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromHours(t.Id).Hours == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromHours(t.Id).Hours == 1));
 
         AssertSql(
 """
@@ -772,8 +750,7 @@ WHERE date_part('hour', make_interval(hours => n."Id"))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromHours(t.Long).Hours == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromHours(t.Long).Hours == 1));
 
         AssertSql(
 """
@@ -789,8 +766,7 @@ WHERE date_part('hour', make_interval(hours => n."Long"::int))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMinutes(t.Id).Minutes == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMinutes(t.Id).Minutes == 1));
 
         AssertSql(
 """
@@ -806,8 +782,7 @@ WHERE date_part('minute', make_interval(mins => n."Id"))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMinutes(t.Long).Minutes == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromMinutes(t.Long).Minutes == 1));
 
         AssertSql(
 """
@@ -823,8 +798,7 @@ WHERE date_part('minute', make_interval(mins => n."Long"::int))::int = 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromSeconds(t.Id).Seconds == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromSeconds(t.Id).Seconds == 1));
 
         AssertSql(
 """
@@ -840,8 +814,7 @@ WHERE floor(date_part('second', make_interval(secs => n."Id"::bigint::double pre
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromSeconds(t.Long).Seconds == 1),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => Period.FromSeconds(t.Long).Seconds == 1));
 
         AssertSql(
 """
@@ -882,7 +855,7 @@ WHERE floor(date_part('second', make_interval(secs => n."Long"::double precision
     [MemberData(nameof(IsAsyncData))]
     public async Task GroupBy_Property_Select_Sum_over_Period(bool async)
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         // Note: Unlike Duration, Period can't be converted to total ticks (because its absolute time varies).
         var query = ctx.Set<NodaTimeTypes>()
@@ -905,7 +878,7 @@ GROUP BY n."Id"
     [MemberData(nameof(IsAsyncData))]
     public async Task GroupBy_Property_Select_Average_over_Period(bool async)
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         // Note: Unlike Duration, Period can't be converted to total ticks (because its absolute time varies).
         var query = ctx.Set<NodaTimeTypes>()
@@ -934,14 +907,13 @@ GROUP BY n."Id"
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalDays > 27),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalDays > 27));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (date_part('epoch', n."Duration") / 86400.0) > 27.0
+WHERE date_part('epoch', n."Duration") / 86400.0 > 27.0
 """);
     }
 
@@ -951,14 +923,13 @@ WHERE (date_part('epoch', n."Duration") / 86400.0) > 27.0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalHours < 700),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalHours < 700));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (date_part('epoch', n."Duration") / 3600.0) < 700.0
+WHERE date_part('epoch', n."Duration") / 3600.0 < 700.0
 """);
     }
 
@@ -968,14 +939,13 @@ WHERE (date_part('epoch', n."Duration") / 3600.0) < 700.0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalMinutes < 40000),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalMinutes < 40000));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (date_part('epoch', n."Duration") / 60.0) < 40000.0
+WHERE date_part('epoch', n."Duration") / 60.0 < 40000.0
 """);
     }
 
@@ -985,11 +955,10 @@ WHERE (date_part('epoch', n."Duration") / 60.0) < 40000.0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalSeconds == 2365448.02),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalSeconds == 2365448.02));
 
         AssertSql(
-"""
+            """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
 WHERE date_part('epoch', n."Duration") = 2365448.02
@@ -1002,14 +971,13 @@ WHERE date_part('epoch', n."Duration") = 2365448.02
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalMilliseconds == 2365448020),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.TotalMilliseconds == 2365448020));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (date_part('epoch', n."Duration") / 0.001) = 2365448020.0
+WHERE date_part('epoch', n."Duration") / 0.001 = 2365448020.0
 """);
     }
 
@@ -1019,8 +987,7 @@ WHERE (date_part('epoch', n."Duration") / 0.001) = 2365448020.0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Days == 27),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Days == 27));
 
         AssertSql(
 """
@@ -1036,8 +1003,7 @@ WHERE date_part('day', n."Duration")::int = 27
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Hours == 9),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Hours == 9));
 
         AssertSql(
 """
@@ -1053,8 +1019,7 @@ WHERE date_part('hour', n."Duration")::int = 9
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Minutes == 4),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Minutes == 4));
 
         AssertSql(
 """
@@ -1070,8 +1035,7 @@ WHERE date_part('minute', n."Duration")::int = 4
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Seconds == 8),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Duration.Seconds == 8));
 
         AssertSql(
 """
@@ -1133,8 +1097,8 @@ GROUP BY n."Id"
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.Start == new LocalDateTime(2018, 4, 20, 10, 31, 33, 666).InUtc().ToInstant()),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>()
+                .Where(t => t.Interval.Start == new LocalDateTime(2018, 4, 20, 10, 31, 33, 666).InUtc().ToInstant()));
 
         AssertSql(
 """
@@ -1150,8 +1114,7 @@ WHERE lower(n."Interval") = TIMESTAMPTZ '2018-04-20T10:31:33.666Z'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.End == new LocalDateTime(2018, 4, 25, 10, 31, 33, 666).InUtc().ToInstant()),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.End == new LocalDateTime(2018, 4, 25, 10, 31, 33, 666).InUtc().ToInstant()));
 
         AssertSql(
 """
@@ -1167,8 +1130,7 @@ WHERE upper(n."Interval") = TIMESTAMPTZ '2018-04-25T10:31:33.666Z'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.HasStart),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.HasStart));
 
         AssertSql(
 """
@@ -1184,8 +1146,7 @@ WHERE NOT (lower_inf(n."Interval"))
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.HasEnd),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.HasEnd));
 
         AssertSql(
 """
@@ -1201,14 +1162,13 @@ WHERE NOT (upper_inf(n."Interval"))
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.Duration == Duration.FromDays(5)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Interval.Duration == Duration.FromDays(5)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (upper(n."Interval") - lower(n."Interval")) = INTERVAL '5 00:00:00'
+WHERE upper(n."Interval") - lower(n."Interval") = INTERVAL '5 00:00:00'
 """);
     }
 
@@ -1222,8 +1182,7 @@ WHERE (upper(n."Interval") - lower(n."Interval")) = INTERVAL '5 00:00:00'
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => interval.Contains(t.Instant)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => interval.Contains(t.Instant)));
 
         AssertSql(
 """
@@ -1240,7 +1199,7 @@ WHERE @__interval_0 @> n."Instant"
     [MemberData(nameof(IsAsyncData))]
     public async Task Interval_RangeAgg(bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var query = context.NodaTimeTypes
             .GroupBy(x => true)
@@ -1270,7 +1229,7 @@ LIMIT 2
     [MemberData(nameof(IsAsyncData))]
     public async Task Interval_Intersect_aggregate(bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var query = context.NodaTimeTypes
             .GroupBy(x => true)
@@ -1305,14 +1264,13 @@ LIMIT 2
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Length == 5),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Length == 5));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (upper(n."DateInterval") - lower(n."DateInterval")) = 5
+WHERE upper(n."DateInterval") - lower(n."DateInterval") = 5
 """);
     }
 
@@ -1322,8 +1280,7 @@ WHERE (upper(n."DateInterval") - lower(n."DateInterval")) = 5
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Start == new LocalDate(2018, 4, 20)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Start == new LocalDate(2018, 4, 20)));
 
         AssertSql(
 """
@@ -1339,14 +1296,28 @@ WHERE lower(n."DateInterval") = DATE '2018-04-20'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.End == new LocalDate(2018, 4, 24)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.End == new LocalDate(2018, 4, 24)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (upper(n."DateInterval") - INTERVAL 'P1D') = DATE '2018-04-24'
+WHERE CAST(upper(n."DateInterval") - INTERVAL 'P1D' AS date) = DATE '2018-04-24'
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public async Task DateInterval_End_Select(bool async)
+    {
+        await AssertQuery(
+            async,
+            ss => ss.Set<NodaTimeTypes>().Select(t => t.DateInterval.End));
+
+        AssertSql(
+            """
+SELECT CAST(upper(n."DateInterval") - INTERVAL 'P1D' AS date)
+FROM "NodaTimeTypes" AS n
 """);
     }
 
@@ -1354,12 +1325,11 @@ WHERE (upper(n."DateInterval") - INTERVAL 'P1D') = DATE '2018-04-24'
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_Contains_LocalDate(bool async)
     {
-        var dateInterval = new DateInterval(new(2018, 01, 01), new(2020, 12, 25));
+        var dateInterval = new DateInterval(new LocalDate(2018, 01, 01), new LocalDate(2020, 12, 25));
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => dateInterval.Contains(t.LocalDate)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => dateInterval.Contains(t.LocalDate)));
 
         AssertSql(
 """
@@ -1375,12 +1345,11 @@ WHERE @__dateInterval_0 @> n."LocalDate"
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_Contains_DateInterval(bool async)
     {
-        var dateInterval = new DateInterval(new(2018, 4, 22), new(2018, 4, 24));
+        var dateInterval = new DateInterval(new LocalDate(2018, 4, 22), new LocalDate(2018, 4, 24));
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Contains(dateInterval)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Contains(dateInterval)));
 
         AssertSql(
 """
@@ -1396,12 +1365,12 @@ WHERE n."DateInterval" @> @__dateInterval_0
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_Intersection(bool async)
     {
-        var dateInterval = new DateInterval(new(2018, 4, 22), new(2018, 4, 26));
+        var dateInterval = new DateInterval(new LocalDate(2018, 4, 22), new LocalDate(2018, 4, 26));
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Intersection(dateInterval) == new DateInterval(new(2018, 4, 22), new(2018, 4, 24))),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.DateInterval.Intersection(dateInterval) == new DateInterval(new LocalDate(2018, 4, 22), new LocalDate(2018, 4, 24))));
 
         AssertSql(
 """
@@ -1417,12 +1386,12 @@ WHERE n."DateInterval" * @__dateInterval_0 = '[2018-04-22,2018-04-24]'::daterang
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_Union(bool async)
     {
-        var dateInterval = new DateInterval(new(2018, 4, 22), new(2018, 4, 26));
+        var dateInterval = new DateInterval(new LocalDate(2018, 4, 22), new LocalDate(2018, 4, 26));
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.DateInterval.Union(dateInterval) == new DateInterval(new(2018, 4, 20), new(2018, 4, 26))),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.DateInterval.Union(dateInterval) == new DateInterval(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 26))));
 
         AssertSql(
 """
@@ -1439,7 +1408,7 @@ WHERE n."DateInterval" + @__dateInterval_0 = '[2018-04-20,2018-04-26]'::daterang
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_RangeAgg(bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var query = context.NodaTimeTypes
             .GroupBy(x => true)
@@ -1449,10 +1418,10 @@ WHERE n."DateInterval" + @__dateInterval_0 = '[2018-04-20,2018-04-26]'::daterang
             ? await query.SingleAsync()
             : query.Single();
 
-        Assert.Equal(new DateInterval[] { new(new(2018, 4, 20), new(2018, 4, 24)) }, union);
+        Assert.Equal(new DateInterval[] { new(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 24)) }, union);
 
         AssertSql(
-"""
+            """
 SELECT range_agg(t."DateInterval")
 FROM (
     SELECT n."DateInterval", TRUE AS "Key"
@@ -1468,7 +1437,7 @@ LIMIT 2
     [MemberData(nameof(IsAsyncData))]
     public async Task DateInterval_Intersect_aggregate(bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var query = context.NodaTimeTypes
             .GroupBy(x => true)
@@ -1478,7 +1447,7 @@ LIMIT 2
             ? await query.SingleAsync()
             : query.Single();
 
-        Assert.Equal(new(new(2018, 4, 20), new(2018, 4, 24)), intersection);
+        Assert.Equal(new DateInterval(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 24)), intersection);
 
         AssertSql(
 """
@@ -1500,12 +1469,11 @@ LIMIT 2
     [MemberData(nameof(IsAsyncData))]
     public async Task DateRange_Contains(bool async)
     {
-        var dateRange = new DateInterval(new(2018, 01, 01), new(2020, 12, 26));
+        var dateRange = new DateInterval(new LocalDate(2018, 01, 01), new LocalDate(2020, 12, 26));
 
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => dateRange.Contains(t.LocalDate)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => dateRange.Contains(t.LocalDate)));
 
         AssertSql(
 """
@@ -1527,8 +1495,9 @@ WHERE @__dateRange_0 @> n."LocalDate"
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.InUtc() == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 10, 31, 33, 666), DateTimeZone.Utc, Offset.Zero)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.Instant.InUtc()
+                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 10, 31, 33, 666), DateTimeZone.Utc, Offset.Zero)));
 
         AssertSql(
 """
@@ -1542,19 +1511,19 @@ WHERE n."Instant" = @__p_0
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
-    public async Task Instance_InZone_LocalDateTime(bool async)
+    public async Task Instance_InZone_constant_LocalDateTime(bool async)
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.InZone(DateTimeZoneProviders.Tzdb["Europe/Berlin"]).LocalDateTime
-                == new LocalDateTime(2018, 4, 20, 12, 31, 33, 666)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.Instant.InZone(DateTimeZoneProviders.Tzdb["Europe/Berlin"]).LocalDateTime
+                    == new LocalDateTime(2018, 4, 20, 12, 31, 33, 666)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (n."Instant" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '2018-04-20T12:31:33.666'
+WHERE n."Instant" AT TIME ZONE 'Europe/Berlin' = TIMESTAMP '2018-04-20T12:31:33.666'
 """);
     }
 
@@ -1565,22 +1534,44 @@ WHERE (n."Instant" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '2018-04-20T12:31:3
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.InZone(DateTimeZoneProviders.Tzdb["Europe/Berlin"]).Date
-                == new LocalDate(2018, 4, 20)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.Instant.InZone(DateTimeZoneProviders.Tzdb["Europe/Berlin"]).Date
+                    == new LocalDate(2018, 4, 20)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE CAST((n."Instant" AT TIME ZONE 'Europe/Berlin') AS date) = DATE '2018-04-20'
+WHERE CAST(n."Instant" AT TIME ZONE 'Europe/Berlin' AS date) = DATE '2018-04-20'
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public async Task Instance_InZone_parameter_LocalDateTime(bool async)
+    {
+        var timeZone = DateTimeZoneProviders.Tzdb["Europe/Berlin"];
+
+        await AssertQuery(
+            async,
+            ss => ss.Set<NodaTimeTypes>().Where(
+                t => t.Instant.InZone(timeZone).LocalDateTime
+                    == new LocalDateTime(2018, 4, 20, 12, 31, 33, 666)));
+
+        AssertSql(
+            """
+@__timeZone_0='Europe/Berlin'
+
+SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
+FROM "NodaTimeTypes" AS n
+WHERE n."Instant" AT TIME ZONE @__timeZone_0 = TIMESTAMP '2018-04-20T12:31:33.666'
 """);
     }
 
     [ConditionalFact]
     public async Task Instance_InZone_without_LocalDateTime_fails()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => ctx.Set<NodaTimeTypes>().Where(t => t.Instant.InZone(DateTimeZoneProviders.Tzdb["Europe/Berlin"]) == default)
@@ -1593,14 +1584,14 @@ WHERE CAST((n."Instant" AT TIME ZONE 'Europe/Berlin') AS date) = DATE '2018-04-2
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.ToDateTimeUtc() == new DateTime(2018, 4, 20, 10, 31, 33, 666, DateTimeKind.Utc)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>()
+                .Where(t => t.Instant.ToDateTimeUtc() == new DateTime(2018, 4, 20, 10, 31, 33, 666, DateTimeKind.Utc)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE n."Instant"::timestamptz = TIMESTAMPTZ '2018-04-20 10:31:33.666Z'
+WHERE n."Instant"::timestamptz = TIMESTAMPTZ '2018-04-20T10:31:33.666Z'
 """);
     }
 
@@ -1610,8 +1601,7 @@ WHERE n."Instant"::timestamptz = TIMESTAMPTZ '2018-04-20 10:31:33.666Z'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant < SystemClock.Instance.GetCurrentInstant()),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant < SystemClock.Instance.GetCurrentInstant()));
 
         AssertSql(
 """
@@ -1625,7 +1615,8 @@ WHERE n."Instant" < NOW()
     public async Task Instant_Distance()
     {
         await using var context = CreateContext();
-        var closest = await context.NodaTimeTypes.OrderBy(t => EF.Functions.Distance(t.Instant, new LocalDateTime(2018, 4, 1, 0, 0, 0).InUtc().ToInstant())).FirstAsync();
+        var closest = await context.NodaTimeTypes
+            .OrderBy(t => EF.Functions.Distance(t.Instant, new LocalDateTime(2018, 4, 1, 0, 0, 0).InUtc().ToInstant())).FirstAsync();
 
         Assert.Equal(1, closest.Id);
 
@@ -1648,8 +1639,7 @@ LIMIT 1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Year == 2018),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Year == 2018));
 
         AssertSql(
 """
@@ -1665,8 +1655,7 @@ WHERE date_part('year', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 2018
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Month == 4),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Month == 4));
 
         AssertSql(
 """
@@ -1682,8 +1671,7 @@ WHERE date_part('month', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 4
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.DayOfYear == 110),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.DayOfYear == 110));
 
         AssertSql(
 """
@@ -1699,8 +1687,7 @@ WHERE date_part('doy', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 110
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Day == 20),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Day == 20));
 
         AssertSql(
 """
@@ -1717,8 +1704,7 @@ WHERE date_part('day', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 20
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Hour == 10),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Hour == 10));
 
         AssertSql(
 """
@@ -1735,8 +1721,7 @@ WHERE date_part('hour', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 10
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Minute == 31),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Minute == 31));
 
         AssertSql(
 """
@@ -1752,8 +1737,7 @@ WHERE date_part('minute', n."ZonedDateTime" AT TIME ZONE 'UTC')::int = 31
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Second == 33),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Second == 33));
 
         AssertSql(
 """
@@ -1770,14 +1754,13 @@ WHERE floor(date_part('second', n."ZonedDateTime" AT TIME ZONE 'UTC'))::int = 33
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Date == new LocalDate(2018, 4, 20)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.Date == new LocalDate(2018, 4, 20)));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE CAST((n."ZonedDateTime" AT TIME ZONE 'UTC') AS date) = DATE '2018-04-20'
+WHERE CAST(n."ZonedDateTime" AT TIME ZONE 'UTC' AS date) = DATE '2018-04-20'
 """);
     }
 
@@ -1787,15 +1770,14 @@ WHERE CAST((n."ZonedDateTime" AT TIME ZONE 'UTC') AS date) = DATE '2018-04-20'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.DayOfWeek == IsoDayOfWeek.Friday),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.ZonedDateTime.DayOfWeek == IsoDayOfWeek.Friday));
 
         AssertSql(
 """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE CASE
-    WHEN floor(date_part('dow', n."ZonedDateTime" AT TIME ZONE 'UTC'))::int = 0 THEN 7
+WHERE CASE floor(date_part('dow', n."ZonedDateTime" AT TIME ZONE 'UTC'))::int
+    WHEN 0 THEN 7
     ELSE floor(date_part('dow', n."ZonedDateTime" AT TIME ZONE 'UTC'))::int
 END = 5
 """);
@@ -1807,14 +1789,13 @@ END = 5
     {
         await AssertQuery(
             async,
-            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.InUtc().LocalDateTime == new LocalDateTime(2018, 4, 20, 10, 31, 33, 666)),
-            entryCount: 1);
+            ss => ss.Set<NodaTimeTypes>().Where(t => t.Instant.InUtc().LocalDateTime == new LocalDateTime(2018, 4, 20, 10, 31, 33, 666)));
 
         AssertSql(
-"""
+            """
 SELECT n."Id", n."DateInterval", n."Duration", n."Instant", n."InstantRange", n."Interval", n."LocalDate", n."LocalDate2", n."LocalDateRange", n."LocalDateTime", n."LocalTime", n."Long", n."OffsetTime", n."Period", n."TimeZoneId", n."ZonedDateTime"
 FROM "NodaTimeTypes" AS n
-WHERE (n."Instant" AT TIME ZONE 'UTC') = TIMESTAMP '2018-04-20T10:31:33.666'
+WHERE n."Instant" AT TIME ZONE 'UTC' = TIMESTAMP '2018-04-20T10:31:33.666'
 """);
     }
 
@@ -1826,8 +1807,7 @@ WHERE (n."Instant" AT TIME ZONE 'UTC') = TIMESTAMP '2018-04-20T10:31:33.666'
             async,
             ss => ss.Set<NodaTimeTypes>().Where(
                 t => t.ZonedDateTime.ToInstant()
-                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 10, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()),
-            entryCount: 1);
+                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 10, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()));
 
         AssertSql(
 """
@@ -1844,7 +1824,10 @@ WHERE n."ZonedDateTime" = @__ToInstant_0
     {
         await using var context = CreateContext();
         var closest = await context.NodaTimeTypes
-            .OrderBy(t => EF.Functions.Distance(t.ZonedDateTime, new ZonedDateTime(new LocalDateTime(2018, 4, 1, 0, 0, 0), DateTimeZone.Utc, Offset.Zero))).FirstAsync();
+            .OrderBy(
+                t => EF.Functions.Distance(
+                    t.ZonedDateTime,
+                    new ZonedDateTime(new LocalDateTime(2018, 4, 1, 0, 0, 0), DateTimeZone.Utc, Offset.Zero))).FirstAsync();
 
         Assert.Equal(1, closest.Id);
 
@@ -1866,16 +1849,23 @@ LIMIT 1
     private NodaTimeContext CreateContext()
         => Fixture.CreateContext();
 
-    private static readonly Period _defaultPeriod = Period.FromYears(2018) + Period.FromMonths(4) + Period.FromDays(20) +
-        Period.FromHours(10) + Period.FromMinutes(31) + Period.FromSeconds(23) +
-        Period.FromMilliseconds(666);
+    private static readonly Period _defaultPeriod = Period.FromYears(2018)
+        + Period.FromMonths(4)
+        + Period.FromDays(20)
+        + Period.FromHours(10)
+        + Period.FromMinutes(31)
+        + Period.FromSeconds(23)
+        + Period.FromMilliseconds(666);
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
     public class NodaTimeContext : PoolableDbContext
     {
-        public NodaTimeContext(DbContextOptions<NodaTimeContext> options) : base(options) {}
+        public NodaTimeContext(DbContextOptions<NodaTimeContext> options)
+            : base(options)
+        {
+        }
 
         // ReSharper disable once MemberHidesStaticFromOuterClass
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
@@ -1919,7 +1909,8 @@ LIMIT 1
 
     public class NodaTimeQueryNpgsqlFixture : SharedStoreFixtureBase<NodaTimeContext>, IQueryFixtureBase
     {
-        protected override string StoreName => "NodaTimeTest";
+        protected override string StoreName
+            => "NodaTimeTest";
 
 #pragma warning disable CS0618 // GlobalTypeMapper is obsolete
         public NodaTimeQueryNpgsqlFixture()
@@ -1934,7 +1925,8 @@ LIMIT 1
         protected override ITestStoreFactory TestStoreFactory
             => NpgsqlTestStoreFactory.WithConnectionStringOptions("-c TimeZone=Europe/Berlin");
 
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
 
         private NodaTimeData _expectedData;
 
@@ -1994,12 +1986,14 @@ LIMIT 1
             }.ToDictionary(e => e.Key, e => (object)e.Value);
     }
 
-    protected class NodaTimeData : ISetSource
+    private class NodaTimeData : ISetSource
     {
-        public IReadOnlyList<NodaTimeTypes> NodaTimeTypes { get; }
+        private IReadOnlyList<NodaTimeTypes> NodaTimeTypes { get; }
 
         public NodaTimeData()
-            => NodaTimeTypes = CreateNodaTimeTypes();
+        {
+            NodaTimeTypes = CreateNodaTimeTypes();
+        }
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class
@@ -2037,10 +2031,10 @@ LIMIT 1
                     OffsetTime = new OffsetTime(new LocalTime(10, 31, 33, 666), Offset.Zero),
                     Period = _defaultPeriod,
                     Duration = duration,
-                    DateInterval = new(localDateTime.Date, localDateTime.Date.PlusDays(4)), // inclusive
+                    DateInterval = new DateInterval(localDateTime.Date, localDateTime.Date.PlusDays(4)), // inclusive
                     LocalDateRange = new EDBRange<LocalDate>(localDateTime.Date, localDateTime.Date.PlusDays(5)), // exclusive
-                    Interval = new(instant, instant + Duration.FromDays(5)),
-                    InstantRange = new(instant, true, instant + Duration.FromDays(5), false),
+                    Interval = new Interval(instant, instant + Duration.FromDays(5)),
+                    InstantRange = new EDBRange<Instant>(instant, true, instant + Duration.FromDays(5), false),
                     Long = 1,
                     TimeZoneId = "Europe/Berlin"
                 }

@@ -13,7 +13,7 @@ public class BuiltInDataTypesNpgsqlTest : BuiltInDataTypesTestBase<BuiltInDataTy
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     [Fact]
@@ -116,12 +116,15 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
                     EDBRangeAsRange = new EDBRange<int>(4, true, 8, false),
 
                     IntArrayAsIntArray= new[] { 2, 3 },
-                    PhysicalAddressArrayAsMacaddrArray= new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
+                    PhysicalAddressArrayAsMacaddrArray =
+                        new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
 
                     UintAsXid = (uint)int.MaxValue + 1,
 
+#pragma warning disable CS0618 // Full-text search client-parsing is obsolete
                     SearchQuery = EDBTsQuery.Parse("a & b"),
                     SearchVector = EDBTsVector.Parse("a b"),
+#pragma warning restore CS0618
                     RankingNormalization = NpgsqlTsRankingNormalization.DivideByLength,
                     Regconfig = 12724,
 
@@ -238,7 +241,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.EnumAsVarchar == param27));
 
             var param28 = PhysicalAddress.Parse("08-00-2B-01-02-03");
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.PhysicalAddressAsMacaddr.Equals(param28)));
+            Assert.Same(
+                entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.PhysicalAddressAsMacaddr.Equals(param28)));
 
             // PostgreSQL doesn't support equality comparison on point
             // EDBPoint? param29 = new EDBPoint(5.2, 3.3);
@@ -256,7 +260,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.DictionaryAsHstore == param32));
 
             var param33 = ImmutableDictionary<string, string>.Empty.Add("c", "d");
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.ImmutableDictionaryAsHstore == param33));
+            Assert.Same(
+                entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.ImmutableDictionaryAsHstore == param33));
 
             var param34 = new EDBRange<int>(4, true, 8, false);
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.EDBRangeAsRange == param34));
@@ -265,17 +270,21 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.IntArrayAsIntArray == param35));
 
             var param36 = new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") };
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.PhysicalAddressArrayAsMacaddrArray == param36));
+            Assert.Same(
+                entity,
+                context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.PhysicalAddressArrayAsMacaddrArray == param36));
 
             // ReSharper disable once ConvertToConstant.Local
             var param37 = (uint)int.MaxValue + 1;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.UintAsXid == param37));
 
+#pragma warning disable CS0618 // Full-text search client-parsing is obsolete
             var param38 = EDBTsQuery.Parse("a & b");
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.SearchQuery == param38));
 
             var param39 = EDBTsVector.Parse("a b");
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 999 && e.SearchVector == param39));
+#pragma warning restore CS0618
 
             // ReSharper disable once ConvertToConstant.Local
             var param40 = NpgsqlTsRankingNormalization.DivideByLength;
@@ -298,10 +307,7 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         using (var context = CreateContext())
         {
             context.Set<MappedNullableDataTypes>().Add(
-                new MappedNullableDataTypes
-                {
-                    Int = 911,
-                });
+                new MappedNullableDataTypes { Int = 911, });
 
             Assert.Equal(1, context.SaveChanges());
         }
@@ -428,7 +434,8 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.DictionaryAsHstore == param32));
 
             ImmutableDictionary<string, string> param33 = null;
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.ImmutableDictionaryAsHstore == param33));
+            Assert.Same(
+                entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.ImmutableDictionaryAsHstore == param33));
 
             EDBRange<int>? param34 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.EDBRangeAsRange == param34));
@@ -437,7 +444,9 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.IntArrayAsIntArray == param35));
 
             PhysicalAddress[] param36 = null;
-            Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.PhysicalAddressArrayAsMacaddrArray== param36));
+            Assert.Same(
+                entity,
+                context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.PhysicalAddressArrayAsMacaddrArray == param36));
 
             uint? param37 = null;
             Assert.Same(entity, context.Set<MappedNullableDataTypes>().Single(e => e.Int == 911 && e.UintAsXid == param37));
@@ -583,12 +592,16 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         Assert.Equal(new EDBRange<int>(4, true, 8, false), entity.EDBRangeAsRange);
 
         Assert.Equal(new[] { 2, 3 }, entity.IntArrayAsIntArray);
-        Assert.Equal(new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") }, entity.PhysicalAddressArrayAsMacaddrArray);
+        Assert.Equal(
+            new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
+            entity.PhysicalAddressArrayAsMacaddrArray);
 
         Assert.Equal((uint)int.MaxValue + 1, entity.UintAsXid);
 
+#pragma warning disable CS0618 // Full-text search client-parsing is obsolete
         Assert.Equal(EDBTsQuery.Parse("a & b").ToString(), entity.SearchQuery.ToString());
         Assert.Equal(EDBTsVector.Parse("a b").ToString(), entity.SearchVector.ToString());
+#pragma warning restore CS0618
         Assert.Equal(NpgsqlTsRankingNormalization.DivideByLength, entity.RankingNormalization);
     }
 
@@ -604,22 +617,18 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             UShortAsSmallint = ushort.MaxValue,
             UintAsBigint = uint.MaxValue,
             UShortAsInt = ushort.MaxValue,
-
             BoolAsBoolean = true,
-
             DecimalAsMoney = 81.1m,
             Decimal = 101.7m,
             DecimalAsNumeric = 103.9m,
             FloatAsReal = 84.4f,
             DoubleAsDoublePrecision = 85.5,
-
             DateTimeAsTimestamp = new DateTime(2015, 1, 2, 10, 11, 12),
             DateTimeAsTimestamptz = new DateTime(2016, 1, 2, 11, 11, 12, DateTimeKind.Utc),
             DateTimeAsDate = new DateTime(2015, 1, 2, 0, 0, 0),
             TimeSpanAsTime = new TimeSpan(11, 15, 12),
             DateTimeOffsetAsTimetz = new DateTimeOffset(1, 1, 1, 12, 0, 0, TimeSpan.FromHours(2)),
             TimeSpanAsInterval = new TimeSpan(11, 15, 12),
-
             StringAsText = "Gumball Rules!",
             StringAsVarchar = "Gumball Rules OK",
             // TODO: enable here (and above) after https://github.com/aspnet/EntityFrameworkCore/issues/14159 is fixed
@@ -627,12 +636,9 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             CharAsText = 'g',
             CharAsVarchar = 'h',
             BytesAsBytea = new byte[] { 86 },
-
             GuidAsUuid = new Guid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
-
             EnumAsText = StringEnum16.Value4,
             EnumAsVarchar = StringEnumU16.Value4,
-
             PhysicalAddressAsMacaddr = PhysicalAddress.Parse("08-00-2B-01-02-03"),
             EDBPointAsPoint = new EDBPoint(5.2, 3.3),
             StringAsJsonb = @"{""a"": ""b""}",
@@ -641,15 +647,15 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
             EDBRangeAsRange = new EDBRange<int>(4, true, 8, false),
 
             IntArrayAsIntArray = new[] { 2, 3 },
-            PhysicalAddressArrayAsMacaddrArray = new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
-
+            PhysicalAddressArrayAsMacaddrArray =
+                new[] { PhysicalAddress.Parse("08-00-2B-01-02-03"), PhysicalAddress.Parse("08-00-2B-01-02-04") },
             UintAsXid = (uint)int.MaxValue + 1,
-
+#pragma warning disable CS0618 // Full-text search client-parsing is obsolete
             SearchQuery = EDBTsQuery.Parse("a & b"),
             SearchVector = EDBTsVector.Parse("a b"),
+#pragma warning restore CS0618
             RankingNormalization = NpgsqlTsRankingNormalization.DivideByLength,
             Regconfig = 12724,
-
             Mood = Mood.Sad
         };
 
@@ -739,10 +745,7 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
         using (var context = CreateContext())
         {
             context.Set<BuiltInNullableDataTypes>().Add(
-                new BuiltInNullableDataTypes
-                {
-                    Id = 711
-                });
+                new BuiltInNullableDataTypes { Id = 711 });
 
             Assert.Equal(1, context.SaveChanges());
         }
@@ -964,33 +967,45 @@ FROM "MappedDataTypes" AS m
 
     public class BuiltInDataTypesNpgsqlFixture : BuiltInDataTypesFixtureBase
     {
-        public override bool StrictEquality => false;
+        public override bool StrictEquality
+            => false;
 
-        public override bool SupportsAnsi => false;
+        public override bool SupportsAnsi
+            => false;
 
-        public override bool SupportsUnicodeToAnsiConversion => false;
+        public override bool SupportsUnicodeToAnsiConversion
+            => false;
 
-        public override bool SupportsLargeStringComparisons => true;
+        public override bool SupportsLargeStringComparisons
+            => true;
 
-        public override bool SupportsDecimalComparisons => true;
+        public override bool SupportsDecimalComparisons
+            => true;
 
-        public override bool PreservesDateTimeKind => false;
+        public override bool PreservesDateTimeKind
+            => false;
 
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
 
         protected override bool ShouldLogCategory(string logCategory)
             => logCategory == DbLoggerCategory.Query.Name;
 
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ServiceProvider.GetRequiredService<ILoggerFactory>();
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ServiceProvider.GetRequiredService<ILoggerFactory>();
+
+        static BuiltInDataTypesNpgsqlFixture()
+        {
+#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
+            EDBConnection.GlobalTypeMapper.MapEnum<Mood>();
+#pragma warning restore CS0618
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {
             base.OnModelCreating(modelBuilder, context);
 
             // TODO: Switch to using data source
-#pragma warning disable CS0618 // EDBConnection.GlobalTypeMapper is obsolete
-            EDBConnection.GlobalTypeMapper.MapEnum<Mood>();
-#pragma warning restore CS0618
             ((NpgsqlTypeMappingSource)context.GetService<ITypeMappingSource>()).LoadUserDefinedTypeMappings(
                 context.GetService<ISqlGenerationHelper>(), dataSource: null);
 
@@ -1034,35 +1049,37 @@ FROM "MappedDataTypes" AS m
             nonNullableBackedDataTypes[nameof(NonNullableBackedDataTypes.DateTimeOffset)]
                 = new DateTimeOffset(new DateTime(), TimeSpan.Zero);
 
-            modelBuilder.Entity<BuiltInDataTypes>(b =>
-            {
-                b.Ignore(dt => dt.TestUnsignedInt16);
-                b.Ignore(dt => dt.TestUnsignedInt32);
-                b.Ignore(dt => dt.TestUnsignedInt64);
-                b.Ignore(dt => dt.TestCharacter);
-                b.Ignore(dt => dt.TestSignedByte);
-                b.Ignore(dt => dt.TestDateTimeOffset);
-                b.Ignore(dt => dt.TestByte);
-                //b.Ignore(dt => dt.EnumU16);
-                //b.Ignore(dt => dt.EnumU32);
-                //b.Ignore(dt => dt.EnumU64);
-                //b.Ignore(dt => dt.EnumS8);
-            });
+            modelBuilder.Entity<BuiltInDataTypes>(
+                b =>
+                {
+                    b.Ignore(dt => dt.TestUnsignedInt16);
+                    b.Ignore(dt => dt.TestUnsignedInt32);
+                    b.Ignore(dt => dt.TestUnsignedInt64);
+                    b.Ignore(dt => dt.TestCharacter);
+                    b.Ignore(dt => dt.TestSignedByte);
+                    b.Ignore(dt => dt.TestDateTimeOffset);
+                    b.Ignore(dt => dt.TestByte);
+                    //b.Ignore(dt => dt.EnumU16);
+                    //b.Ignore(dt => dt.EnumU32);
+                    //b.Ignore(dt => dt.EnumU64);
+                    //b.Ignore(dt => dt.EnumS8);
+                });
 
-            modelBuilder.Entity<BuiltInNullableDataTypes>(b =>
-            {
-                b.Ignore(dt => dt.TestNullableUnsignedInt16);
-                b.Ignore(dt => dt.TestNullableUnsignedInt32);
-                b.Ignore(dt => dt.TestNullableUnsignedInt64);
-                b.Ignore(dt => dt.TestNullableCharacter);
-                b.Ignore(dt => dt.TestNullableSignedByte);
-                b.Ignore(dt => dt.TestNullableDateTimeOffset);
-                b.Ignore(dt => dt.TestNullableByte);
-                //b.Ignore(dt => dt.EnumU16);
-                //b.Ignore(dt => dt.EnumU32);
-                //b.Ignore(dt => dt.EnumU64);
-                //b.Ignore(dt => dt.EnumS8);
-            });
+            modelBuilder.Entity<BuiltInNullableDataTypes>(
+                b =>
+                {
+                    b.Ignore(dt => dt.TestNullableUnsignedInt16);
+                    b.Ignore(dt => dt.TestNullableUnsignedInt32);
+                    b.Ignore(dt => dt.TestNullableUnsignedInt64);
+                    b.Ignore(dt => dt.TestNullableCharacter);
+                    b.Ignore(dt => dt.TestNullableSignedByte);
+                    b.Ignore(dt => dt.TestNullableDateTimeOffset);
+                    b.Ignore(dt => dt.TestNullableByte);
+                    //b.Ignore(dt => dt.EnumU16);
+                    //b.Ignore(dt => dt.EnumU32);
+                    //b.Ignore(dt => dt.EnumU64);
+                    //b.Ignore(dt => dt.EnumS8);
+                });
 
             modelBuilder.Entity<MappedDataTypes>(
                 b =>
@@ -1101,9 +1118,11 @@ FROM "MappedDataTypes" AS m
             modelBuilder.Entity<MappedNullableDataTypes>().Property(x => x.Regconfig).HasColumnType("regconfig");
         }
 
-        public override bool SupportsBinaryKeys => true;
+        public override bool SupportsBinaryKeys
+            => true;
 
-        public override DateTime DefaultDateTime => new();
+        public override DateTime DefaultDateTime
+            => new();
     }
 
     protected enum StringEnum16 : short

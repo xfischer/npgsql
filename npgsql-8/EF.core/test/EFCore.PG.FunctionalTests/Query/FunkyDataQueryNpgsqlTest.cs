@@ -35,6 +35,9 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
             ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName != null && c.FirstName.StartsWith(param)));
     }
 
+    private void AssertSql(params string[] expected)
+        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
+
     public class FunkyDataQueryNpgsqlFixture : FunkyDataQueryFixtureBase
     {
         private FunkyDataData _expectedData;

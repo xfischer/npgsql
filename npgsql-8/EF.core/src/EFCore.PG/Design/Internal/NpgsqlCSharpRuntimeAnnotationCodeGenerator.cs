@@ -49,6 +49,7 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
         var npgsqlDbTypeBasedDefaultInstance = typeMapping switch
         {
             NpgsqlStringTypeMapping => NpgsqlStringTypeMapping.Default,
+            NpgsqlUIntTypeMapping => NpgsqlUIntTypeMapping.Default,
             NpgsqlULongTypeMapping => NpgsqlULongTypeMapping.Default,
             // NpgsqlMultirangeTypeMapping => NpgsqlMultirangeTypeMapping.Default,
             _ => (INpgsqlTypeMapping?)null
@@ -56,9 +57,9 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
 
         if (npgsqlDbTypeBasedDefaultInstance is not null)
         {
-            var npgsqlDbType = ((INpgsqlTypeMapping)typeMapping).NpgsqlDbType;
+            var npgsqlDbType = ((INpgsqlTypeMapping)typeMapping).EDBDbType;
 
-            if (npgsqlDbType != npgsqlDbTypeBasedDefaultInstance.NpgsqlDbType)
+            if (npgsqlDbType != npgsqlDbTypeBasedDefaultInstance.EDBDbType)
             {
                 mainBuilder.AppendLine(";");
 
@@ -66,9 +67,9 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
                     $"{parameters.TargetName}.TypeMapping = (({typeMapping.GetType().Name}){parameters.TargetName}.TypeMapping).Clone(npgsqlDbType: ");
 
                 mainBuilder
-                    .Append(nameof(NpgsqlTypes))
+                    .Append(nameof(EDBTypes))
                     .Append(".")
-                    .Append(nameof(NpgsqlDbType))
+                    .Append(nameof(EDBDbType))
                     .Append(".")
                     .Append(npgsqlDbType.ToString());
 
@@ -83,7 +84,7 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
         {
 #pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
             case NpgsqlEnumTypeMapping enumTypeMapping:
-                if (enumTypeMapping.NameTranslator != NpgsqlConnection.GlobalTypeMapper.DefaultNameTranslator)
+                if (enumTypeMapping.NameTranslator != EDBConnection.GlobalTypeMapper.DefaultNameTranslator)
                 {
                     throw new NotSupportedException(
                         "Mapped enums are only supported in the compiled model if they use the default name translator");
@@ -95,7 +96,7 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
             {
                 var defaultInstance = NpgsqlRangeTypeMapping.Default;
 
-                var npgsqlDbTypeDifferent = rangeTypeMapping.NpgsqlDbType != defaultInstance.NpgsqlDbType;
+                var npgsqlDbTypeDifferent = rangeTypeMapping.EDBDbType != defaultInstance.EDBDbType;
                 var subtypeTypeMappingIsDifferent = rangeTypeMapping.SubtypeMapping != defaultInstance.SubtypeMapping;
 
                 if (npgsqlDbTypeDifferent || subtypeTypeMappingIsDifferent)
@@ -108,11 +109,11 @@ public class NpgsqlCSharpRuntimeAnnotationCodeGenerator : RelationalCSharpRuntim
 
                     mainBuilder
                         .Append("npgsqlDbType: ")
-                        .Append(nameof(NpgsqlTypes))
+                        .Append(nameof(EDBTypes))
                         .Append(".")
-                        .Append(nameof(NpgsqlDbType))
+                        .Append(nameof(EDBDbType))
                         .Append(".")
-                        .Append(rangeTypeMapping.NpgsqlDbType.ToString())
+                        .Append(rangeTypeMapping.EDBDbType.ToString())
                         .AppendLine(",");
 
                     mainBuilder.Append("subtypeTypeMapping: ");

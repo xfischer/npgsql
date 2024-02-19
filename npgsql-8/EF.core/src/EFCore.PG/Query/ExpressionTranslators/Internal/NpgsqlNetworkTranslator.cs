@@ -92,7 +92,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.LessThan,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.LessThanOrEqual)
@@ -100,7 +100,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.LessThanOrEqual,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.GreaterThanOrEqual)
@@ -108,7 +108,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.GreaterThanOrEqual,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.GreaterThan)
@@ -116,7 +116,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.GreaterThan,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.ContainedBy)
@@ -136,7 +136,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                 => new SqlUnaryExpression(
                     ExpressionType.Not,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.BitwiseAnd)
@@ -144,7 +144,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.And,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.BitwiseOr)
@@ -152,7 +152,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.Or,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.Add)
@@ -160,7 +160,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.Add,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.Subtract) when arguments[2].Type == typeof(long)
@@ -168,7 +168,7 @@ public class NpgsqlNetworkTranslator : IMethodCallTranslator
                     ExpressionType.Subtract,
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[2]),
-                    typeof(NpgsqlInet),
+                    typeof(EDBInet),
                     _inetMapping),
 
             nameof(NpgsqlNetworkDbFunctionsExtensions.Subtract)

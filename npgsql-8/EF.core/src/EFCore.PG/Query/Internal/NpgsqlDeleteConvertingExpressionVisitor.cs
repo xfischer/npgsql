@@ -3,7 +3,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expressions.In
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 
 /// <summary>
-///     Converts the relational <see cref="NonQueryExpression" /> into a PG-specific <see cref="PostgresDeleteExpression" />, which
+///     Converts the relational <see cref="NonQueryExpression" /> into a PG-specific <see cref="PgDeleteExpression" />, which
 ///     precisely models a DELETE statement in PostgreSQL. This is done to handle the PG-specific USING syntax for table joining.
 /// </summary>
 public class NpgsqlDeleteConvertingExpressionVisitor : ExpressionVisitor

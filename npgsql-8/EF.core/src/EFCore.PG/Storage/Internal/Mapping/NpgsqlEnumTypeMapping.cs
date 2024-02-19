@@ -79,7 +79,7 @@ public class NpgsqlEnumTypeMapping : RelationalTypeMapping
         : base("some_enum", typeof(int))
     {
 #pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        NameTranslator = NpgsqlConnection.GlobalTypeMapper.DefaultNameTranslator;
+        NameTranslator = EDBConnection.GlobalTypeMapper.DefaultNameTranslator;
 #pragma warning restore CS0618
         _members = null!;
     }

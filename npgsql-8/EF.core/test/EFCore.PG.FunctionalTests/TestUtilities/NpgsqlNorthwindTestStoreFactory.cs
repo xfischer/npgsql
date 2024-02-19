@@ -10,8 +10,8 @@ public class NpgsqlNorthwindTestStoreFactory : NpgsqlTestStoreFactory
     {
         // TODO: Switch to using NpgsqlDataSource
 #pragma warning disable CS0618 // Type or member is obsolete
-        NpgsqlConnection.GlobalTypeMapper.EnableDynamicJson();
-        NpgsqlConnection.GlobalTypeMapper.EnableRecordsAsTuples();
+        EDBConnection.GlobalTypeMapper.EnableDynamicJson();
+        EDBConnection.GlobalTypeMapper.EnableRecordsAsTuples();
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

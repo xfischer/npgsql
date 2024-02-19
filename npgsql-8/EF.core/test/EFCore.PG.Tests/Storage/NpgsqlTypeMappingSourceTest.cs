@@ -1,47 +1,55 @@
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using NetTopologySuite.Geometries;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage;
 
 public class NpgsqlTypeMappingSourceTest
 {
     [Theory]
-    [InlineData("integer", typeof(int), null, false)]
-    [InlineData("integer[]", typeof(int[]), null, false)]
-    [InlineData("int", typeof(int), null, false)]
-    [InlineData("int[]", typeof(int[]), null, false)]
-    [InlineData("numeric", typeof(decimal), null, false)]
-    [InlineData("text", typeof(string), null, false)]
-    [InlineData("TEXT", typeof(string), null, false)]
-    [InlineData("character(8)", typeof(string), 8, true)]
-    [InlineData("char(8)", typeof(string), 8, true)]
-    [InlineData("character(1)", typeof(char), 1, true)]
-    [InlineData("char(1)", typeof(char), 1, true)]
-    [InlineData("character", typeof(char), null, true)]
-    [InlineData("character varying(8)", typeof(string), 8, false)]
-    [InlineData("varchar(8)", typeof(string), 8, false)]
-    [InlineData("varchar", typeof(string), null, false)]
-    [InlineData("timestamp with time zone", typeof(DateTime), null, false)]
-    [InlineData("dummy", typeof(DummyType), null, false)]
-    [InlineData("int4range", typeof(EDBRange<int>), null, false)]
-    [InlineData("floatrange", typeof(EDBRange<float>), null, false)]
-    [InlineData("dummyrange", typeof(EDBRange<DummyType>), null, false)]
-    [InlineData("int4multirange", typeof(EDBRange<int>[]), null, false)]
-    [InlineData("geometry", typeof(Geometry), null, false)]
-    [InlineData("geometry(Polygon)", typeof(Polygon), null, false)]
-    [InlineData("geography(Point, 4326)", typeof(Point), null, false)]
-    [InlineData("geometry(pointz, 4326)", typeof(Point), null, false)]
-    [InlineData("geography(LineStringZM)", typeof(LineString), null, false)]
-    [InlineData("geometry(POLYGONM)", typeof(Polygon), null, false)]
-    public void By_StoreType(string typeName, Type type, int? size, bool fixedLength)
+    [InlineData("integer", typeof(int), null, null, null, false)]
+    [InlineData("integer[]", typeof(List<int>), null, null, null, false)]
+    [InlineData("int", typeof(int), null, null, null, false)]
+    [InlineData("int[]", typeof(List<int>), null, null, null, false)]
+    [InlineData("numeric", typeof(decimal), null, null, null, false)]
+    [InlineData("numeric(10,2)", typeof(decimal), null, 10, 2, false)]
+    [InlineData("text", typeof(string), null, null, null, false)]
+    [InlineData("TEXT", typeof(string), null, null, null, false)]
+    [InlineData("character(8)", typeof(string), 8, null, null, true)]
+    [InlineData("char(8)", typeof(string), 8, null, null, true)]
+    [InlineData("character(1)", typeof(char), 1, null, null, true)]
+    [InlineData("char(1)", typeof(char), 1, null, null, true)]
+    [InlineData("character", typeof(char), null, null, null, true)]
+    [InlineData("character varying(8)", typeof(string), 8, null, null, false)]
+    [InlineData("varchar(8)", typeof(string), 8, null, null, false)]
+    [InlineData("varchar", typeof(string), null, null, null, false)]
+    [InlineData("timestamp with time zone", typeof(DateTime), null, null, null, false)]
+    [InlineData("dummy", typeof(DummyType), null, null, null, false)]
+    [InlineData("int4range", typeof(EDBRange<int>), null, null, null, false)]
+    [InlineData("floatrange", typeof(EDBRange<float>), null, null, null, false)]
+    [InlineData("dummyrange", typeof(EDBRange<DummyType>), null, null, null, false)]
+    [InlineData("int4multirange", typeof(List<EDBRange<int>>), null, null, null, false)]
+    [InlineData("geometry", typeof(Geometry), null, null, null, false)]
+    [InlineData("geometry(Polygon)", typeof(Polygon), null, null, null, false)]
+    [InlineData("geography(Point, 4326)", typeof(Point), null, null, null, false)]
+    [InlineData("geometry(pointz, 4326)", typeof(Point), null, null, null, false)]
+    [InlineData("geography(LineStringZM)", typeof(LineString), null, null, null, false)]
+    [InlineData("geometry(POLYGONM)", typeof(Polygon), null, null, null, false)]
+    [InlineData("xid", typeof(uint), null, null, null, false)]
+    [InlineData("xid8", typeof(ulong), null, null, null, false)]
+    public void By_StoreType(string typeName, Type type, int? size, int? precision, int? scale, bool fixedLength)
     {
         var mapping = CreateTypeMappingSource().FindMapping(typeName);
 
+        Assert.NotNull(mapping);
         Assert.Same(type, mapping.ClrType);
         Assert.Equal(size, mapping.Size);
+        Assert.Equal(precision, mapping.Precision);
+        Assert.Equal(scale, mapping.Scale);
         Assert.False(mapping.IsUnicode);
         Assert.Equal(fixedLength, mapping.IsFixedLength);
         Assert.Equal(typeName, mapping.StoreType);
@@ -61,12 +69,12 @@ public class NpgsqlTypeMappingSourceTest
     {
         var mapping = CreateTypeMappingSource().FindMapping("varchar(32)[]");
 
-        var arrayMapping = Assert.IsType<NpgsqlArrayArrayTypeMapping>(mapping);
-        Assert.Same(typeof(string[]), arrayMapping.ClrType);
+        var arrayMapping = Assert.IsAssignableFrom<NpgsqlArrayTypeMapping>(mapping);
+        Assert.Same(typeof(List<string>), arrayMapping.ClrType);
         Assert.Equal("varchar(32)[]", arrayMapping.StoreType);
         Assert.Null(arrayMapping.Size);
 
-        var elementMapping = arrayMapping.ElementMapping;
+        var elementMapping = arrayMapping.ElementTypeMapping;
         Assert.Same(typeof(string), elementMapping.ClrType);
         Assert.Equal("varchar(32)", elementMapping.StoreType);
         Assert.Equal(32, elementMapping.Size);
@@ -84,11 +92,12 @@ public class NpgsqlTypeMappingSourceTest
     [Fact]
     public void Timestamp_without_time_zone_Array_5()
     {
-        var arrayMapping = Assert.IsType<NpgsqlArrayArrayTypeMapping>(CreateTypeMappingSource().FindMapping("timestamp(5) without time zone[]"));
-        Assert.Same(typeof(DateTime[]), arrayMapping.ClrType);
+        var arrayMapping =
+            Assert.IsAssignableFrom<NpgsqlArrayTypeMapping>(CreateTypeMappingSource().FindMapping("timestamp(5) without time zone[]"));
+        Assert.Same(typeof(List<DateTime>), arrayMapping.ClrType);
         Assert.Equal("timestamp(5) without time zone[]", arrayMapping.StoreType);
 
-        var elementMapping = arrayMapping.ElementMapping;
+        var elementMapping = arrayMapping.ElementTypeMapping;
         Assert.Same(typeof(DateTime), elementMapping.ClrType);
         Assert.Equal("timestamp(5) without time zone", elementMapping.StoreType);
     }
@@ -114,18 +123,36 @@ public class NpgsqlTypeMappingSourceTest
 
     [Theory]
     [InlineData(typeof(decimal), "numeric(5)")]
-    [InlineData(typeof(decimal[]), "numeric(5)[]")]
     [InlineData(typeof(DateTime), "timestamp(5) with time zone")]
-    [InlineData(typeof(DateTime[]), "timestamp(5) with time zone[]")]
     [InlineData(typeof(TimeSpan), "interval(5)")]
-    [InlineData(typeof(TimeSpan[]), "interval(5)[]")]
     [InlineData(typeof(int), "integer")]
-    [InlineData(typeof(int[]), "integer[]")]
     public void By_ClrType_and_precision(Type clrType, string expectedStoreType)
     {
         var mapping = CreateTypeMappingSource().FindMapping(clrType, null, precision: 5);
         Assert.Equal(expectedStoreType, mapping.StoreType);
         Assert.Same(clrType, mapping.ClrType);
+    }
+
+    [Theory]
+    [InlineData(typeof(decimal[]), "numeric(5)[]")]
+    [InlineData(typeof(DateTime[]), "timestamp(5) with time zone[]")]
+    [InlineData(typeof(TimeSpan[]), "interval(5)[]")]
+    [InlineData(typeof(int[]), "integer[]")]
+    public void By_ClrType_and_element_precision(Type clrType, string expectedStoreType)
+    {
+        var model = CreateEmptyModel();
+        var arrayMapping = CreateTypeMappingSource().FindMapping(
+            clrType, model,
+            CreateTypeMappingSource().FindMapping(clrType.GetElementType()!, null, precision: 5)!);
+
+        Assert.Equal(expectedStoreType, arrayMapping.StoreType);
+        Assert.Same(clrType, arrayMapping.ClrType);
+        Assert.Null(arrayMapping.Precision);
+
+        var elementMapping = Assert.IsAssignableFrom<RelationalTypeMapping>(arrayMapping.ElementTypeMapping);
+        Assert.Equal(5, elementMapping.Precision);
+        Assert.Equal(expectedStoreType[..^2], elementMapping.StoreType);
+        Assert.Same(clrType.GetElementType(), elementMapping.ClrType);
     }
 
     [Theory]
@@ -141,6 +168,8 @@ public class NpgsqlTypeMappingSourceTest
     [InlineData("dummyrange", typeof(EDBRange<DummyType>))]
     [InlineData("geometry", typeof(Geometry))]
     [InlineData("geometry(Point, 4326)", typeof(Geometry))]
+    [InlineData("xid", typeof(uint))]
+    [InlineData("xid8", typeof(ulong))]
     public void By_StoreType_with_ClrType(string storeType, Type clrType)
     {
         var mapping = CreateTypeMappingSource().FindMapping(clrType, storeType);
@@ -198,7 +227,7 @@ public class NpgsqlTypeMappingSourceTest
 
     [Fact]
     public void Array_over_type_mapping_with_value_converter_by_store_type()
-        => Array_over_type_mapping_with_value_converter(CreateTypeMappingSource().FindMapping("ltree[]"), typeof(LTree[]));
+        => Array_over_type_mapping_with_value_converter(CreateTypeMappingSource().FindMapping("ltree[]"), typeof(List<LTree>));
 
     private void Array_over_type_mapping_with_value_converter(CoreTypeMapping mapping, Type expectedType)
     {
@@ -206,7 +235,7 @@ public class NpgsqlTypeMappingSourceTest
         Assert.Equal("ltree[]", arrayMapping.StoreType);
         Assert.Same(expectedType, arrayMapping.ClrType);
 
-        var elementMapping = arrayMapping.ElementMapping;
+        var elementMapping = arrayMapping.ElementTypeMapping;
         Assert.NotNull(elementMapping);
         Assert.Equal("ltree", elementMapping.StoreType);
         Assert.Same(typeof(LTree), elementMapping.ClrType);
@@ -216,7 +245,8 @@ public class NpgsqlTypeMappingSourceTest
         Assert.Same(expectedType, arrayConverter.ModelClrType);
         Assert.Same(typeof(string[]), arrayConverter.ProviderClrType);
 
-        Assert.Collection((string[])arrayConverter.ConvertToProvider(
+        Assert.Collection(
+            (ICollection<string>)arrayConverter.ConvertToProvider(
                 expectedType.IsArray
                     ? new LTree[] { new("foo"), new("bar") }
                     : new List<LTree> { new("foo"), new("bar") }),
@@ -227,8 +257,8 @@ public class NpgsqlTypeMappingSourceTest
     [Fact]
     public void Multirange_by_clr_type_across_pg_versions()
     {
-        var mapping14 = CreateTypeMappingSource(postgresVersion: new(14, 0)).FindMapping(typeof(EDBRange<int>[]))!;
-        var mapping13 = CreateTypeMappingSource(postgresVersion: new(13, 0)).FindMapping(typeof(EDBRange<int>[]))!;
+        var mapping14 = CreateTypeMappingSource(postgresVersion: new Version(14, 0)).FindMapping(typeof(EDBRange<int>[]))!;
+        var mapping13 = CreateTypeMappingSource(postgresVersion: new Version(13, 0)).FindMapping(typeof(EDBRange<int>[]))!;
         var mappingDefault = CreateTypeMappingSource().FindMapping(typeof(EDBRange<int>[]))!;
 
         Assert.Equal("int4multirange", mapping14.StoreType);
@@ -245,11 +275,11 @@ public class NpgsqlTypeMappingSourceTest
     [Fact]
     public void Multirange_by_store_type_across_pg_versions()
     {
-        var mapping14 = CreateTypeMappingSource(postgresVersion: new(14, 0)).FindMapping("int4multirange")!;
-        var mapping13 = CreateTypeMappingSource(postgresVersion: new(13, 0)).FindMapping("int4multirange");
+        var mapping14 = CreateTypeMappingSource(postgresVersion: new Version(14, 0)).FindMapping("int4multirange")!;
+        var mapping13 = CreateTypeMappingSource(postgresVersion: new Version(13, 0)).FindMapping("int4multirange");
         var mappingDefault = CreateTypeMappingSource().FindMapping("int4multirange")!;
 
-        Assert.Same(typeof(EDBRange<int>[]), mapping14.ClrType);
+        Assert.Same(typeof(List<EDBRange<int>>), mapping14.ClrType);
         Assert.Null(mapping13);
 
         // See #2351 - we didn't put multiranges behind a version opt-in in 6.0, although the default PG version is still 12; this causes
@@ -257,7 +287,7 @@ public class NpgsqlTypeMappingSourceTest
         // Changing this in a patch would break people already using 6.0 with PG14, so multiranges are on by default unless users explicitly
         // specify < 14.
         // Once 14 is made the default version, this stuff can be removed.
-        Assert.Same(typeof(EDBRange<int>[]), mappingDefault.ClrType);
+        Assert.Same(typeof(List<EDBRange<int>>), mappingDefault.ClrType);
     }
 
     #region Support
@@ -277,9 +307,11 @@ public class NpgsqlTypeMappingSourceTest
         return new NpgsqlTypeMappingSource(
             new TypeMappingSourceDependencies(
                 new ValueConverterSelector(new ValueConverterSelectorDependencies()),
+                new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
                 Array.Empty<ITypeMappingSourcePlugin>()),
             new RelationalTypeMappingSourceDependencies(
-                new IRelationalTypeMappingSourcePlugin[] {
+                new IRelationalTypeMappingSourcePlugin[]
+                {
                     new NpgsqlNetTopologySuiteTypeMappingSourcePlugin(new NpgsqlNetTopologySuiteOptions()),
                     new DummyTypeMappingSourcePlugin()
                 }),
@@ -298,26 +330,42 @@ public class NpgsqlTypeMappingSourceTest
                     ? _dummyMapping
                     : null;
 
-        private DummyMapping _dummyMapping = new();
+        private readonly DummyMapping _dummyMapping = new();
 
         private class DummyMapping : RelationalTypeMapping
         {
-            // TODO: The DbType is a hack, we currently require of range subtype mapping that they other expose an EDBDbType
-            // or a DbType (from which EDBDbType is computed), since RangeTypeMapping sends an EDBDbType.
-            // This means we currently don't support ranges over types without EDBDbType, which are accessible via
-            // EDBParameter.DataTypeName
-            public DummyMapping() : base("dummy", typeof(DummyType), System.Data.DbType.Guid) {}
+            // TODO: The DbType is a hack, we currently require of range subtype mapping that they other expose an NpgsqlDbType
+            // or a DbType (from which NpgsqlDbType is computed), since RangeTypeMapping sends an NpgsqlDbType.
+            // This means we currently don't support ranges over types without NpgsqlDbType, which are accessible via
+            // NpgsqlParameter.DataTypeName
+            public DummyMapping()
+                : base("dummy", typeof(DummyType), System.Data.DbType.Guid)
+            {
+            }
 
-            private DummyMapping(RelationalTypeMappingParameters parameters) : base(parameters) {}
+            private DummyMapping(RelationalTypeMappingParameters parameters)
+                : base(parameters)
+            {
+            }
 
             protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
                 => new DummyMapping(parameters);
         }
     }
 
-    private class DummyType {}
+    private class DummyType
+    {
+    }
 
-    private class UnknownType {}
+    private class UnknownType
+    {
+    }
+
+    protected IModel CreateEmptyModel()
+        => CreateModelBuilder().Model.FinalizeModel();
+
+    protected ModelBuilder CreateModelBuilder(Action<ModelConfigurationBuilder> configureConventions = null)
+        => NpgsqlTestHelpers.Instance.CreateConventionBuilder(configureConventions: configureConventions);
 
     #endregion Support
 }

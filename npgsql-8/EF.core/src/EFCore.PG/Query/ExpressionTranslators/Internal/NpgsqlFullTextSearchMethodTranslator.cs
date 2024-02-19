@@ -249,7 +249,7 @@ public class NpgsqlFullTextSearchMethodTranslator : IMethodCallTranslator
                         arguments,
                         nullable: true,
                         argumentsPropagateNullability: TrueArrays[2],
-                        typeof(NpgsqlTsQuery),
+                        typeof(EDBTsQuery),
                         _tsQueryMapping),
 
                 nameof(NpgsqlFullTextSearchLinqExtensions.Rewrite) when arguments.Count == 3

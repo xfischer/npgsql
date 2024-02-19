@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Update.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;

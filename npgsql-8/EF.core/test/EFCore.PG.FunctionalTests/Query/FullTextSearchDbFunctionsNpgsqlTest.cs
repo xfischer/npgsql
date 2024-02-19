@@ -117,7 +117,7 @@ LIMIT 1
     public void TsQueryParse_converted_to_cast()
     {
         using var context = CreateContext();
-        var tsquery = context.Customers.Select(c => NpgsqlTsQuery.Parse("a & b")).First();
+        var tsquery = context.Customers.Select(c => EDBTsQuery.Parse("a & b")).First();
 
         Assert.NotNull(tsquery);
         AssertSql(

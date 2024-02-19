@@ -11,7 +11,8 @@ public class TableSplittingNpgsqlTest : TableSplittingTestBase
     {
     }
 
-    protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+    protected override ITestStoreFactory TestStoreFactory
+        => NpgsqlTestStoreFactory.Instance;
 
     public override async Task ExecuteUpdate_works_for_table_sharing(bool async)
     {

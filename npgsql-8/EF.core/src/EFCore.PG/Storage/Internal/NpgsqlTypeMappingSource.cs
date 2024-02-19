@@ -112,8 +112,8 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     // Network address types
     private readonly NpgsqlMacaddrTypeMapping _macaddr = NpgsqlMacaddrTypeMapping.Default;
     private readonly NpgsqlMacaddr8TypeMapping _macaddr8 = NpgsqlMacaddr8TypeMapping.Default;
-    private readonly NpgsqlInetTypeMapping _inetAsIPAddress = NpgsqlInetTypeMapping.Default;
-    private readonly NpgsqlInetTypeMapping _inetAsNpgsqlInet = new(typeof(EDBInet));
+    private readonly EDBInetTypeMapping _inetAsIPAddress = EDBInetTypeMapping.Default;
+    private readonly EDBInetTypeMapping _inetAsNpgsqlInet = new(typeof(EDBInet));
     private readonly NpgsqlCidrTypeMapping _cidr = NpgsqlCidrTypeMapping.Default;
 
     // Built-in geometric types
@@ -370,7 +370,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         List<HackyEnumTypeMapping>? adoEnumMappings = null;
 
         if (dataSource is not null
-            && typeof(NpgsqlDataSource).GetField("_hackyEnumTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance) is
+            && typeof(EDBDataSource).GetField("_hackyEnumTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance) is
                 { } dataSourceTypeMappingsFieldInfo
             && dataSourceTypeMappingsFieldInfo.GetValue(dataSource) is List<HackyEnumTypeMapping> dataSourceEnumMappings)
         {
@@ -379,10 +379,10 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             adoEnumMappings = dataSourceEnumMappings;
         }
 #pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        else if (NpgsqlConnection.GlobalTypeMapper.GetType().GetProperty(
+        else if (EDBConnection.GlobalTypeMapper.GetType().GetProperty(
                          "HackyEnumTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance)
                      is PropertyInfo globalEnumTypeMappingsProperty
-                 && globalEnumTypeMappingsProperty.GetValue(NpgsqlConnection.GlobalTypeMapper) is List<HackyEnumTypeMapping>
+                 && globalEnumTypeMappingsProperty.GetValue(EDBConnection.GlobalTypeMapper) is List<HackyEnumTypeMapping>
                      globalEnumMappings)
         {
             adoEnumMappings = globalEnumMappings;
@@ -913,6 +913,26 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             };
 
             return rangeStoreType is null ? null : FindMapping(containerClrType, rangeStoreType);
+        }
+
+        // If this containment of a range within a multirange, just flow down to the general collection mapping logic; multiranges are
+        // handled just like normal collections over ranges (since they can be unnested).
+        // However, we also support containment of the base type (e.g. int) directly in its multirange (e.g. int4range). A multirange
+        // is *not* a collection over the base type, so handle that specific case here.
+        if (containerClrType.IsMultirange() && !containeeTypeMapping.ClrType.IsRange())
+        {
+            var multirangeStoreType = containeeTypeMapping.StoreType switch
+            {
+                "int" or "integer" => "int4multirange",
+                "bigint" => "int8multirange",
+                "decimal" or "numeric" => "nummultirange",
+                "date" => "datemultirange",
+                "timestamp" or "timestamp without time zone" => "tsmultirange",
+                "timestamptz" or "timestamp with time zone" => "tstzmultirange",
+                _ => null
+            };
+
+            return !_supportsMultiranges || multirangeStoreType is null ? null : FindMapping(containerClrType, multirangeStoreType);
         }
 
         // Then, try to find the mapping with the containee mapping as the element type mapping.

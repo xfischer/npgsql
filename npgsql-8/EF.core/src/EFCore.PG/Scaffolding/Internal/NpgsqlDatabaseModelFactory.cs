@@ -172,7 +172,7 @@ SELECT datcollate
 FROM pg_database
 WHERE datname=current_database() AND datcollate <> (SELECT datcollate FROM pg_database WHERE datname='template1')
 """;
-        using var command = new NpgsqlCommand(commandText, connection);
+        using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
         if (reader.Read())
         {

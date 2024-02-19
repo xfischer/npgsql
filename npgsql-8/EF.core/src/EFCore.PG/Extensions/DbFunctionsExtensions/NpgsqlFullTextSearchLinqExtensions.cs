@@ -96,7 +96,7 @@ public static class NpgsqlFullTextSearchLinqExtensions
     ///     The <paramref name="select" /> must yield two columns of tsquery type.
     ///     http://www.postgresql.org/docs/current/static/textsearch-features.html#TEXTSEARCH-MANIPULATE-TSQUERY
     /// </summary>
-    public static NpgsqlTsQuery Rewrite(this EDBTsQuery query, string select)
+    public static EDBTsQuery Rewrite(this EDBTsQuery query, string select)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(EDBTsQuery) + "." + nameof(Rewrite)));
 
     /// <summary>
@@ -240,9 +240,9 @@ public static class NpgsqlFullTextSearchLinqExtensions
     public static float Rank(
         this EDBTsVector vector,
         float[] weights,
-        NpgsqlTsQuery query,
+        EDBTsQuery query,
         NpgsqlTsRankingNormalization normalization)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(NpgsqlTsVector) + "." + nameof(Rank)));
+        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(EDBTsVector) + "." + nameof(Rank)));
 
     /// <summary>
     /// Calculates the rank of <paramref name="vector" /> for <paramref name="query" /> using the cover
@@ -279,6 +279,6 @@ public static class NpgsqlFullTextSearchLinqExtensions
         this EDBTsVector vector,
         float[] weights,
         EDBTsQuery query,
-        EDBTsRankingNormalization normalization)
-        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(NpgsqlTsVector) + "." + nameof(RankCoverDensity)));
+        NpgsqlTsRankingNormalization normalization)
+        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(EDBTsVector) + "." + nameof(RankCoverDensity)));
 }

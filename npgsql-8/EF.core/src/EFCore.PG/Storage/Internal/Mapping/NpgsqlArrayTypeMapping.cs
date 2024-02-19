@@ -144,7 +144,7 @@ public class NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement> 
         if (elementJsonReaderWriter is not null && elementJsonReaderWriter.ValueType != typeof(TElement).UnwrapNullableType())
         {
             throw new InvalidOperationException(
-                $"When '{elementJsonReaderWriter.ValueType}', '{typeof(TElement).UnwrapNullableType()}' building an array mapping, the JsonValueReaderWriter for element mapping '{elementMapping.GetType().Name}' is incorrect ('{elementMapping.JsonValueReaderWriter?.GetType().Name ?? "<null>"}').");
+                $"When building an array mapping over '{typeof(TElement).Name}', the JsonValueReaderWriter for element mapping '{elementMapping.GetType().Name}' is incorrect ('{elementMapping.JsonValueReaderWriter?.GetType().Name ?? "<null>"}' instead of '{typeof(TElement).UnwrapNullableType()}').");
         }
 
         // If there's no JsonValueReaderWriter on the element, we also don't set one on its array (this is for rare edge cases such as
@@ -188,10 +188,10 @@ public class NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement> 
         // when given a byte[] it will infer byte (but we want smallint[])
         EDBDbType = EDBTypes.EDBDbType.Array
             | (ElementTypeMapping is INpgsqlTypeMapping elementNpgsqlTypeMapping
-                ? elementNpgsqlTypeMapping.NpgsqlDbType
+                ? elementNpgsqlTypeMapping.EDBDbType
                 : ElementTypeMapping.DbType.HasValue
-                    ? new EDBParameter { DbType = ElementTypeMapping.DbType.Value }.NpgsqlDbType
-                    : default(NpgsqlDbType?));
+                    ? new EDBParameter { DbType = ElementTypeMapping.DbType.Value }.EDBDbType
+                    : default(EDBDbType?));
     }
 
     // This constructor exists only to support the static Default property above, which is necessary to allow code generation for compiled
@@ -312,7 +312,7 @@ public class NpgsqlArrayTypeMapping<TCollection, TConcreteCollection, TElement> 
                 $"Npgsql-specific type mapping {GetType()} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }
 
-        if (NpgsqlDbType.HasValue)
+        if (EDBDbType.HasValue)
         {
             npgsqlParameter.EDBDbType = EDBDbType.Value;
         }

@@ -613,7 +613,7 @@ LIMIT 2
         {
             // TODO: Switch to using NpgsqlDataSource
 #pragma warning disable CS0618 // Type or member is obsolete
-            NpgsqlConnection.GlobalTypeMapper.EnableUnmappedTypes();
+            EDBConnection.GlobalTypeMapper.EnableUnmappedTypes();
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
@@ -61,26 +62,33 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
         private static readonly NpgsqlTypeMappingSource Mapper = new(
             new TypeMappingSourceDependencies(
                 new ValueConverterSelector(new ValueConverterSelectorDependencies()),
+                new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
                 Array.Empty<ITypeMappingSourcePlugin>()),
             new RelationalTypeMappingSourceDependencies(
-                new IRelationalTypeMappingSourcePlugin[] {
-                    new NpgsqlNodaTimeTypeMappingSourcePlugin(new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()))
+                new IRelationalTypeMappingSourcePlugin[]
+                {
+                    new NpgsqlNodaTimeTypeMappingSourcePlugin(
+                        new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()))
                 }),
             new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
             new NpgsqlSingletonOptions()
         );
 
-        private static RelationalTypeMapping GetMapping(string storeType) => Mapper.FindMapping(storeType);
+        private static RelationalTypeMapping GetMapping(string storeType)
+            => Mapper.FindMapping(storeType);
 
-        private static RelationalTypeMapping GetMapping(Type clrType) => Mapper.FindMapping(clrType);
+        private static RelationalTypeMapping GetMapping(Type clrType)
+            => Mapper.FindMapping(clrType);
 
         private static RelationalTypeMapping GetMapping(Type clrType, string storeType)
             => Mapper.FindMapping(clrType, storeType);
 
-        class LegacyNpgsqlNodaTimeTypeMappingFixture : IDisposable
+        private class LegacyNpgsqlNodaTimeTypeMappingFixture : IDisposable
         {
             public LegacyNpgsqlNodaTimeTypeMappingFixture()
-                => NpgsqlNodaTimeTypeMappingSourcePlugin.LegacyTimestampBehavior = true;
+            {
+                NpgsqlNodaTimeTypeMappingSourcePlugin.LegacyTimestampBehavior = true;
+            }
 
             public void Dispose()
                 => NpgsqlNodaTimeTypeMappingSourcePlugin.LegacyTimestampBehavior = false;
@@ -90,7 +98,9 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
     }
 
     [CollectionDefinition("LegacyNodaTimeTest", DisableParallelization = true)]
-    public class EventSourceTestCollection {}
+    public class EventSourceTestCollection
+    {
+    }
 }
 
 #endif

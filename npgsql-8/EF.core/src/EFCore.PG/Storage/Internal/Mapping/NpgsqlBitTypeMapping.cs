@@ -24,7 +24,7 @@ public class NpgsqlBitTypeMapping : NpgsqlTypeMapping
     ///     Constructs an instance of the <see cref="NpgsqlBitTypeMapping" /> class.
     /// </summary>
     public NpgsqlBitTypeMapping()
-        : base("bit", typeof(BitArray), NpgsqlDbType.Bit, jsonValueReaderWriter: JsonBitArrayReaderWriter.Instance)
+        : base("bit", typeof(BitArray), EDBDbType.Bit, jsonValueReaderWriter: JsonBitArrayReaderWriter.Instance)
     {
     }
 

@@ -473,11 +473,11 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
                 binaryExpression.OperatorType switch
                 {
                     PgExpressionType.Contains
-                        when binaryExpression.Left.TypeMapping is NpgsqlInetTypeMapping or NpgsqlCidrTypeMapping
+                        when binaryExpression.Left.TypeMapping is EDBInetTypeMapping or NpgsqlCidrTypeMapping
                         => ">>",
 
                     PgExpressionType.ContainedBy
-                        when binaryExpression.Left.TypeMapping is NpgsqlInetTypeMapping or NpgsqlCidrTypeMapping
+                        when binaryExpression.Left.TypeMapping is EDBInetTypeMapping or NpgsqlCidrTypeMapping
                         => "<<",
 
                     PgExpressionType.Contains => "@>",
@@ -760,6 +760,11 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
     /// </summary>
     protected override void GenerateValues(ValuesExpression valuesExpression)
     {
+        if (valuesExpression.RowValues.Count == 0)
+        {
+            throw new InvalidOperationException(RelationalStrings.EmptyCollectionNotSupportedAsInlineQueryRoot);
+        }
+
         // PostgreSQL supports providing the names of columns projected out of VALUES: (VALUES (1, 3), (2, 4)) AS x(a, b).
         // But since other databases sometimes don't, the default relational implementation is complex, involving a SELECT for the first row
         // and a UNION All on the rest. Override to do the nice simple thing.
@@ -996,7 +1001,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
     }
 
     /// <summary>
-    /// Visits the children of an <see cref="PostgresILikeExpression"/>.
+    /// Visits the children of an <see cref="PgILikeExpression"/>.
     /// </summary>
     /// <param name="likeExpression">The expression.</param>
     /// <returns>
@@ -1236,7 +1241,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
     }
 
     /// <summary>
-    /// Visits the children of a <see cref="PostgresUnknownBinaryExpression"/>.
+    /// Visits the children of a <see cref="PgUnknownBinaryExpression"/>.
     /// </summary>
     /// <param name="unknownBinaryExpression">The expression.</param>
     /// <returns>
@@ -1283,7 +1288,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
     }
 
     /// <summary>
-    /// Visits the children of a <see cref="PostgresFunctionExpression"/>.
+    /// Visits the children of a <see cref="PgFunctionExpression"/>.
     /// </summary>
     /// <param name="e">The expression.</param>
     /// <returns>
@@ -1401,7 +1406,7 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
 
                         // If both operators have the same precedence, add parentheses unless they're the same operator, and
                         // that operator is associative (e.g. a + b + c)
-                        0 => outerExpression is not PgBinaryExpression outerBinary
+                        _ => outerExpression is not PgBinaryExpression outerBinary
                             || outerBinary.OperatorType != innerBinary.OperatorType
                             || !isOuterAssociative
                             // Arithmetic operators on floating points aren't associative, because of rounding errors.
@@ -1415,6 +1420,9 @@ public class NpgsqlQuerySqlGenerator : QuerySqlGenerator
                 // Otherwise always parenthesize for safety
                 return true;
             }
+
+            case PgUnknownBinaryExpression:
+                return true;
 
             default:
                 return base.RequiresParentheses(outerExpression, innerExpression);

@@ -16,7 +16,9 @@ public class StoreGeneratedNpgsqlTest
     public class StoreGeneratedNpgsqlFixture : StoreGeneratedFixtureBase
     {
         protected override string StoreName { get; } = "StoreGeneratedTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
 
         public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
             => builder
@@ -85,11 +87,21 @@ public class StoreGeneratedNpgsqlTest
 
             // In StoreGeneratedSqlServerTest the following are defined with HasComputedValueSql, but that's
             // not supported by PostgreSQL
-            modelBuilder.Entity<WithBackingFields>(b =>
-            {
-                b.Property(e => e.NullableAsNonNullable).HasDefaultValueSql("1");
-                b.Property(e => e.NonNullableAsNullable).HasDefaultValueSql("1");
-            });
+            modelBuilder.Entity<WithBackingFields>(
+                b =>
+                {
+                    b.Property(e => e.NullableAsNonNullable).HasDefaultValueSql("1");
+                    b.Property(e => e.NonNullableAsNullable).HasDefaultValueSql("1");
+                });
+
+            modelBuilder.Entity<WithNoBackingFields>(
+                b =>
+                {
+                    b.Property(e => e.TrueDefault).HasDefaultValue(true);
+                    b.Property(e => e.NonZeroDefault).HasDefaultValue(-1);
+                    b.Property(e => e.FalseDefault).HasDefaultValue(false);
+                    b.Property(e => e.ZeroDefault).HasDefaultValue(0);
+                });
 
             modelBuilder.Entity<WithNullableBackingFields>(
                 b =>

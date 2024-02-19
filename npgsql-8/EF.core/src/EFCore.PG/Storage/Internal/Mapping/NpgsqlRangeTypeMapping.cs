@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 /// <remarks>
 /// See: https://www.postgresql.org/docs/current/static/rangetypes.html
 /// </remarks>
-public class EDBRangeTypeMapping : NpgsqlTypeMapping
+public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
 {
     private PropertyInfo? _isEmptyProperty;
     private PropertyInfo? _lowerProperty;
@@ -30,7 +30,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static EDBRangeTypeMapping Default { get; } = new();
+    public static NpgsqlRangeTypeMapping Default { get; } = new();
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
@@ -45,14 +45,14 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
     private string? PgDataTypeName { get; init; }
 
     /// <summary>
-    ///     Constructs an instance of the <see cref="EDBRangeTypeMapping" /> class for a built-in range type which has a
+    ///     Constructs an instance of the <see cref="NpgsqlRangeTypeMapping" /> class for a built-in range type which has a
     ///     <see cref="EDBDbType" /> defined.
     /// </summary>
     /// <param name="rangeStoreType">The database type to map</param>
     /// <param name="rangeClrType">The CLR type to map.</param>
     /// <param name="rangeEDBDbType">The <see cref="EDBDbType" /> of the built-in range.</param>
     /// <param name="subtypeMapping">The type mapping for the range subtype.</param>
-    public static EDBRangeTypeMapping CreatBuiltInRangeMapping(
+    public static NpgsqlRangeTypeMapping CreatBuiltInRangeMapping(
         string rangeStoreType,
         Type rangeClrType,
         EDBDbType rangeEDBDbType,
@@ -60,14 +60,14 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
         => new(rangeStoreType, rangeClrType, rangeEDBDbType, subtypeMapping);
 
     /// <summary>
-    ///     Constructs an instance of the <see cref="EDBRangeTypeMapping" /> class for a user-defined range type which doesn't have a
+    ///     Constructs an instance of the <see cref="NpgsqlRangeTypeMapping" /> class for a user-defined range type which doesn't have a
     ///     <see cref="EDBDbType" /> defined.
     /// </summary>
     /// <param name="quotedRangeStoreType">The database type to map, quoted.</param>
     /// <param name="unquotedRangeStoreType">The database type to map, unquoted.</param>
     /// <param name="rangeClrType">The CLR type to map.</param>
     /// <param name="subtypeMapping">The type mapping for the range subtype.</param>
-    public static EDBRangeTypeMapping CreatUserDefinedRangeMapping(
+    public static NpgsqlRangeTypeMapping CreatUserDefinedRangeMapping(
         string quotedRangeStoreType,
         string unquotedRangeStoreType,
         Type rangeClrType,
@@ -77,7 +77,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
             PgDataTypeName = unquotedRangeStoreType
         };
 
-    private EDBRangeTypeMapping(
+    private NpgsqlRangeTypeMapping(
         string rangeStoreType,
         Type rangeClrType,
         EDBDbType rangeEDBDbType,
@@ -93,7 +93,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected EDBRangeTypeMapping(
+    protected NpgsqlRangeTypeMapping(
         RelationalTypeMappingParameters parameters,
         EDBDbType npgsqlDbType,
         RelationalTypeMapping subtypeMapping)
@@ -104,7 +104,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
 
     // This constructor exists only to support the static Default property above, which is necessary to allow code generation for compiled
     // models. The constructor creates a completely blank type mapping, which will get cloned with all the correct details.
-    private EDBRangeTypeMapping()
+    private NpgsqlRangeTypeMapping()
         : this("int4range", typeof(EDBRange<int>), EDBDbType.IntegerRange, subtypeMapping: null!)
     {
     }
@@ -118,7 +118,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </remarks>
-    public virtual EDBRangeTypeMapping Clone(EDBDbType npgsqlDbType, RelationalTypeMapping subtypeTypeMapping)
+    public virtual NpgsqlRangeTypeMapping Clone(EDBDbType npgsqlDbType, RelationalTypeMapping subtypeTypeMapping)
         => new(Parameters, npgsqlDbType, subtypeTypeMapping);
 
     /// <summary>
@@ -128,7 +128,7 @@ public class EDBRangeTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new EDBRangeTypeMapping(parameters, EDBDbType, SubtypeMapping);
+        => new NpgsqlRangeTypeMapping(parameters, EDBDbType, SubtypeMapping);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

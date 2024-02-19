@@ -47,5 +47,5 @@ public class NpgsqlULongTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlULongTypeMapping(parameters, NpgsqlDbType);
+        => new NpgsqlULongTypeMapping(parameters, EDBDbType);
 }

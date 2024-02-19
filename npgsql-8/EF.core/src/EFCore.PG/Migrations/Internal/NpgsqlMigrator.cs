@@ -76,7 +76,7 @@ public class NpgsqlMigrator : Migrator
             .OfType<AlterDatabaseOperation>()
             .Any(o => o.GetPostgresExtensions().Any() || o.GetPostgresEnums().Any() || o.GetPostgresRanges().Any());
 
-        if (reloadTypes && _connection.DbConnection is NpgsqlConnection npgsqlConnection)
+        if (reloadTypes && _connection.DbConnection is EDBConnection npgsqlConnection)
         {
             npgsqlConnection.Open();
             try
@@ -123,7 +123,7 @@ public class NpgsqlMigrator : Migrator
             .OfType<AlterDatabaseOperation>()
             .Any(o => o.GetPostgresExtensions().Any() || o.GetPostgresEnums().Any() || o.GetPostgresRanges().Any());
 
-        if (reloadTypes && _connection.DbConnection is NpgsqlConnection npgsqlConnection)
+        if (reloadTypes && _connection.DbConnection is EDBConnection npgsqlConnection)
         {
             await npgsqlConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
             try

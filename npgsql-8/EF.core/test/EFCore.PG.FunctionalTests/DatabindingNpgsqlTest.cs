@@ -1,8 +1,8 @@
 ﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class DatabindingNpgsqlTest : DatabindingTestBase<F1BytesNpgsqlFixture>
+public class DataBindingNpgsqlTest : DataBindingTestBase<F1BytesNpgsqlFixture>
 {
-    public DatabindingNpgsqlTest(F1BytesNpgsqlFixture fixture)
+    public DataBindingNpgsqlTest(F1BytesNpgsqlFixture fixture)
         : base(fixture)
     {
     }

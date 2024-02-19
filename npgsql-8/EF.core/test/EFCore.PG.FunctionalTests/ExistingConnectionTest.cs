@@ -20,14 +20,14 @@ public class ExistingConnectionTest
             .AddEntityFrameworkNpgsql()
             .BuildServiceProvider();
 
-        using (var store = NpgsqlTestStore.GetNorthwindStore())
+        await using (var store = NpgsqlTestStore.GetNorthwindStore())
         {
             store.CloseConnection();
 
             var openCount = 0;
             var closeCount = 0;
 
-            using (var connection = new EDBConnection(store.ConnectionString))
+            await using (var connection = new EDBConnection(store.ConnectionString))
             {
                 if (openConnection)
                 {
@@ -46,7 +46,7 @@ public class ExistingConnectionTest
                     }
                 };
 
-                using (var context = new NorthwindContext(serviceProvider, connection))
+                await using (var context = new NorthwindContext(serviceProvider, connection))
                 {
                     Assert.Equal(91, await context.Customers.CountAsync());
                 }
@@ -87,11 +87,12 @@ public class ExistingConnectionTest
                 .UseInternalServiceProvider(_serviceProvider);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-            => modelBuilder.Entity<Customer>(b =>
-            {
-                b.HasKey(c => c.CustomerId);
-                b.ToTable("Customers");
-            });
+            => modelBuilder.Entity<Customer>(
+                b =>
+                {
+                    b.HasKey(c => c.CustomerId);
+                    RelationalEntityTypeBuilderExtensions.ToTable((EntityTypeBuilder)b, "Customers");
+                });
     }
 
     // ReSharper disable once ClassNeverInstantiated.Local

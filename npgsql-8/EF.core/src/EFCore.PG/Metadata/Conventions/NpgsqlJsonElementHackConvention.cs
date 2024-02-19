@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 

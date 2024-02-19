@@ -161,7 +161,7 @@ public class ValueConvertersEndToEndNpgsqlTest
     [ConditionalFact]
     public async Task Can_insert_and_read_back_with_value_converted_array()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var entity = new ValueConvertedArrayEntity { Values = new IntWrapper[] { new(8), new(9) } };
         ctx.Add(entity);
@@ -197,16 +197,11 @@ public class ValueConvertersEndToEndNpgsqlTest
 
             // Add some Npgsql-specific value conversion scenarios
             modelBuilder.Entity<ValueConvertedArrayEntity>()
-                .Property(x => x.Values)
-                .HasPostgresArrayConversion(
-                    f => f.Value,
-                    w => new IntWrapper(w))
-                .Metadata
-                .SetValueComparer(new ValueComparer<IntWrapper[]>(
-                    (arr1, arr2) => arr1.SequenceEqual(arr2),
-                    arr => arr.Aggregate(0, (arr, v) => HashCode.Combine(arr, v.GetHashCode())),
-                    arr => arr.ToArray()));
+                .PrimitiveCollection(x => x.Values)
+                .ElementType(e => e.HasConversion(typeof(IntWrapperConverter)));
         }
+
+        private class IntWrapperConverter() : ValueConverter<IntWrapper, int>(iw => iw.Value, i => new IntWrapper(i));
     }
 
 #nullable enable
@@ -231,7 +226,7 @@ public class ValueConvertersEndToEndNpgsqlTest
         public override bool Equals(object? obj)
             => obj is IntWrapper other && Equals(other);
 
-        public override int GetHashCode() => Value.GetHashCode();
+        public override int GetHashCode()
+            => Value.GetHashCode();
     }
-#nullable disable
 }

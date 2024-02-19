@@ -693,7 +693,7 @@ WHERE m."ContactName" LIKE '%z%'
 #pragma warning restore xUnit1026
 
     protected override DbParameter CreateDbParameter(string name, object value)
-        => new NpgsqlParameter { ParameterName = name, Value = value };
+        => new EDBParameter { ParameterName = name, Value = value };
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);

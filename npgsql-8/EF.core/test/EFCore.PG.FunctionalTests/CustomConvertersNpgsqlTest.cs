@@ -25,31 +25,38 @@ public class CustomConvertersNpgsqlTest : CustomConvertersTestBase<CustomConvert
     public override void Can_query_using_any_data_type_nullable_shadow() {}
 
     public override void Value_conversion_on_enum_collection_contains()
-    {
-        Assert.Contains(
+        => Assert.Contains(
             CoreStrings.TranslationFailed("").Substring(47),
             Assert.Throws<InvalidOperationException>(() => base.Value_conversion_on_enum_collection_contains()).Message);
-    }
 
     public class CustomConvertersNpgsqlFixture : CustomConvertersFixtureBase
     {
-        public override bool StrictEquality => true;
+        public override bool StrictEquality
+            => true;
 
-        public override bool SupportsAnsi => false;
+        public override bool SupportsAnsi
+            => false;
 
-        public override bool SupportsUnicodeToAnsiConversion => true;
+        public override bool SupportsUnicodeToAnsiConversion
+            => true;
 
-        public override bool SupportsLargeStringComparisons => true;
+        public override bool SupportsLargeStringComparisons
+            => true;
 
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
 
-        public override bool SupportsBinaryKeys => true;
+        public override bool SupportsBinaryKeys
+            => true;
 
-        public override bool SupportsDecimalComparisons => true;
+        public override bool SupportsDecimalComparisons
+            => true;
 
-        public override DateTime DefaultDateTime => new();
+        public override DateTime DefaultDateTime
+            => new();
 
-        public override bool PreservesDateTimeKind => false;
+        public override bool PreservesDateTimeKind
+            => false;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {

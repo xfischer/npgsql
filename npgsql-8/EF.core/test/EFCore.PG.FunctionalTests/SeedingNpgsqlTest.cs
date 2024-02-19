@@ -4,7 +4,8 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 public class SeedingNpgsqlTest : SeedingTestBase
 {
-    protected override TestStore TestStore => NpgsqlTestStore.Create("SeedingTest");
+    protected override TestStore TestStore
+        => NpgsqlTestStore.Create("SeedingTest");
 
     protected override SeedingContext CreateContextWithEmptyDatabase(string testId)
         => new SeedingNpgsqlContext(testId);

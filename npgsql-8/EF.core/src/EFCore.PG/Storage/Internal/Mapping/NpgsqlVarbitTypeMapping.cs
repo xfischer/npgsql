@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Json;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Json;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 

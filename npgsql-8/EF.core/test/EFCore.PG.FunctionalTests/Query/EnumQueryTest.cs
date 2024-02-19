@@ -306,10 +306,10 @@ WHERE s."UnmappedByteEnum" = ANY (@__values_0)
         static EnumFixture()
         {
 #pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<MappedEnum>("test.mapped_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<InferredEnum>("test.inferred_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<ByteEnum>("test.byte_enum");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<SchemaQualifiedEnum>("test.schema_qualified_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<MappedEnum>("test.mapped_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<InferredEnum>("test.inferred_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<ByteEnum>("test.byte_enum");
+            EDBConnection.GlobalTypeMapper.MapEnum<SchemaQualifiedEnum>("test.schema_qualified_enum");
 #pragma warning restore CS0618
         }
 

@@ -1,6 +1,6 @@
 using System.Data;
 using System.Text;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update.Internal;
 

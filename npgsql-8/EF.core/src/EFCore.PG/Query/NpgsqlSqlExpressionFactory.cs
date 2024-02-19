@@ -34,7 +34,7 @@ public class NpgsqlSqlExpressionFactory : SqlExpressionFactory
     #region Expression factory methods
 
     /// <summary>
-    ///     Creates a new <see cref="PostgresRegexMatchExpression" />, corresponding to the PostgreSQL-specific <c>~</c> operator.
+    ///     Creates a new <see cref="PgRegexMatchExpression" />, corresponding to the PostgreSQL-specific <c>~</c> operator.
     /// </summary>
     public virtual PgRegexMatchExpression RegexMatch(
         SqlExpression match,
@@ -43,7 +43,7 @@ public class NpgsqlSqlExpressionFactory : SqlExpressionFactory
         => (PgRegexMatchExpression)ApplyDefaultTypeMapping(new PgRegexMatchExpression(match, pattern, options, null));
 
     /// <summary>
-    ///     Creates a new <see cref="PostgresAnyExpression" />, corresponding to the PostgreSQL-specific <c>= ANY</c> operator.
+    ///     Creates a new <see cref="PgAnyExpression" />, corresponding to the PostgreSQL-specific <c>= ANY</c> operator.
     /// </summary>
     public virtual PgAnyExpression Any(
         SqlExpression item,
@@ -52,7 +52,7 @@ public class NpgsqlSqlExpressionFactory : SqlExpressionFactory
         => (PgAnyExpression)ApplyDefaultTypeMapping(new PgAnyExpression(item, array, operatorType, null));
 
     /// <summary>
-    ///     Creates a new <see cref="PostgresAllExpression" />, corresponding to the PostgreSQL-specific <c>LIKE ALL</c> operator.
+    ///     Creates a new <see cref="PgAllExpression" />, corresponding to the PostgreSQL-specific <c>LIKE ALL</c> operator.
     /// </summary>
     public virtual PgAllExpression All(
         SqlExpression item,
@@ -61,7 +61,7 @@ public class NpgsqlSqlExpressionFactory : SqlExpressionFactory
         => (PgAllExpression)ApplyDefaultTypeMapping(new PgAllExpression(item, array, operatorType, null));
 
     /// <summary>
-    ///     Creates a new <see cref="PostgresArrayIndexExpression" />, corresponding to the PostgreSQL-specific array subscripting operator.
+    ///     Creates a new <see cref="PgArrayIndexExpression" />, corresponding to the PostgreSQL-specific array subscripting operator.
     /// </summary>
     public virtual PgArrayIndexExpression ArrayIndex(
         SqlExpression array,

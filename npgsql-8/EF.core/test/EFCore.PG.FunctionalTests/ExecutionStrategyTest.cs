@@ -185,11 +185,12 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     }
 
     private async Task Test_commit_failure_async(
-        bool realFailure, Func<TestNpgsqlRetryingExecutionStrategy, ExecutionStrategyContext, Task> execute)
+        bool realFailure,
+        Func<TestNpgsqlRetryingExecutionStrategy, ExecutionStrategyContext, Task> execute)
     {
         CleanContext();
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
@@ -218,7 +219,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             Assert.Equal(realFailure ? 3 : 2, connection.OpenCount);
         }
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             Assert.Equal(1, await context.Products.CountAsync());
         }
@@ -264,11 +265,14 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     [ConditionalTheory]
     [MemberData(nameof(DataGenerator.GetBoolCombinations), 4, MemberType = typeof(DataGenerator))]
     public async Task Retries_SaveChanges_on_execution_failure(
-        bool realFailure, bool externalStrategy, bool openConnection, bool async)
+        bool realFailure,
+        bool externalStrategy,
+        bool openConnection,
+        bool async)
     {
         CleanContext();
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
@@ -357,7 +361,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
         }
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             Assert.Equal(2, context.Products.Count());
         }
@@ -369,7 +373,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     {
         CleanContext();
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             context.Products.Add(new Product());
             context.Products.Add(new Product());
@@ -377,7 +381,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             context.SaveChanges();
         }
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
@@ -425,7 +429,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     {
         CleanContext();
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             context.Products.Add(new Product());
             context.Products.Add(new Product());
@@ -433,7 +437,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
             context.SaveChanges();
         }
 
-        using (var context = CreateContext())
+        await using (var context = CreateContext())
         {
             var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
@@ -489,7 +493,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     [MemberData(nameof(DataGenerator.GetBoolCombinations), 2, MemberType = typeof(DataGenerator))]
     public async Task Retries_OpenConnection_on_execution_failure(bool externalStrategy, bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
         connection.OpenFailures.Enqueue(new bool?[] { true });
@@ -542,7 +546,7 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
     [InlineData(true)]
     public async Task Retries_BeginTransaction_on_execution_failure(bool async)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var connection = (TestEDBConnection)context.GetService<INpgsqlRelationalConnection>();
 
         connection.OpenFailures.Enqueue(new bool?[] { true });
@@ -634,11 +638,20 @@ public class ExecutionStrategyTest : IClassFixture<ExecutionStrategyTest.Executi
 
     public class ExecutionStrategyFixture : SharedStoreFixtureBase<DbContext>
     {
-        protected override bool UsePooling => false;
+        protected override bool UsePooling
+            => false;
+
         protected override string StoreName { get; } = nameof(ExecutionStrategyTest);
-        public new RelationalTestStore TestStore => (RelationalTestStore)base.TestStore;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+
+        public new RelationalTestStore TestStore
+            => (RelationalTestStore)base.TestStore;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
         protected override Type ContextType { get; } = typeof(ExecutionStrategyContext);
 
         protected override IServiceCollection AddServices(IServiceCollection serviceCollection)
