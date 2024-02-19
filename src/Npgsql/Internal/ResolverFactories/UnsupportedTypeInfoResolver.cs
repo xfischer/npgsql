@@ -17,10 +17,7 @@ sealed class UnsupportedTypeInfoResolver<TBuilder> : IPgTypeInfoResolver
         FullTextSearchTypeInfoResolverFactory.ThrowIfUnsupported<TBuilder>(type, dataTypeName, options);
         LTreeTypeInfoResolverFactory.ThrowIfUnsupported<TBuilder>(type, dataTypeName, options);
 
-        // The compiler can't see that these method(s) are completely safe, other methods force the attributes on the type(s).
-#pragma warning disable IL3050, IL2026
-        JsonDynamicTypeInfoResolverFactory.ThrowIfUnsupported<TBuilder>(type, dataTypeName, options);
-#pragma warning restore IL3050, IL2026
+        JsonDynamicTypeInfoResolverFactory.Support.ThrowIfUnsupported<TBuilder>(type, dataTypeName);
 
         switch (dataTypeName is null ? null : options.DatabaseInfo.GetPostgresType(dataTypeName.GetValueOrDefault()))
         {
@@ -65,7 +62,7 @@ sealed class UnsupportedTypeInfoResolver<TBuilder> : IPgTypeInfoResolver
                 throw new NotSupportedException("Writing is not supported for jagged collections, use a multidimensional array instead.");
 
             if (typeof(IEnumerable).IsAssignableFrom(type) && !typeof(IList).IsAssignableFrom(type) && type != typeof(string) && (dataTypeName is null || dataTypeName.Value.IsArray))
-                throw new NotSupportedException("Writing is not supported for IEnumerable parameters, use an array or List instead.");
+                throw new NotSupportedException("Writing is not supported for IEnumerable parameters, use an array or some implementation of IList<T> instead.");
         }
 
         return null;
