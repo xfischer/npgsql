@@ -897,6 +897,76 @@ LANGUAGE 'plpgsql'");
         var ts = dr.GetTimeSpan(0);
     }
 
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5439")]
+    public async Task SequentialBufferedSeek()
+    {
+        await using var conn = await OpenConnectionAsync();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """select v.i, jsonb_build_object(), current_timestamp + make_interval(0, 0, 0, 0, 0, 0, v.i), null::jsonb, '{"value": 42}'::jsonb from generate_series(1, 1000) as v(i)""";
+        var rdr = await cmd.ExecuteReaderAsync(Behavior);
+        while (await rdr.ReadAsync()) {
+            var v1 = rdr[0];
+            var v2 = rdr[1];
+            //_ = rdr[2]; // uncomment line for successful execution
+            var v3 = rdr[3];
+            var v4 = rdr[4];
+        }
+    }
+
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5430")]
+    public async Task SequentialBufferedSeekLong()
+    {
+        await using var conn = await OpenConnectionAsync();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """select v.i, repeat('1', 10), repeat('2', 10), repeat('3', 10), repeat('4', 10), 1, 2 from generate_series(1, 1000) as v(i)""";
+        var rdr = await cmd.ExecuteReaderAsync(Behavior);
+        while (await rdr.ReadAsync())
+        {
+            _ = rdr[0];
+            _ = rdr[1];
+            //_ = rdr[2];
+            //_ = rdr[3];
+            //_ = rdr[4];
+            //_ = rdr[5]; // uncomment lines for successful execution
+            _ = rdr[6];
+        }
+    }
+
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5430")]
+    public async Task SequentialBufferedSeekReread()
+    {
+        await using var conn = await OpenConnectionAsync();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """select v.i, repeat('1', 10), repeat('2', 10), repeat('3', 10), repeat('4', 10), 1, NULL from generate_series(1, 1000) as v(i)""";
+        var rdr = await cmd.ExecuteReaderAsync(Behavior);
+        while (await rdr.ReadAsync())
+        {
+            _ = rdr[0];
+            _ = rdr[1];
+            //_ = rdr[2];
+            //_ = rdr[3];
+            //_ = rdr[4];
+            //_ = rdr[5]; // uncomment lines for successful execution
+            _ = rdr.IsDBNull(6);
+            _ = rdr[6];
+            Assert.True(rdr.IsDBNull(6));
+        }
+    }
+
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5484")]
+    public async Task GetFieldValueAsync_AsyncRead()
+    {
+        await using var conn = await OpenConnectionAsync();
+        using var cmd = conn.CreateCommand();
+        var expected = new string('a', conn.Settings.ReadBufferSize + 1);
+        cmd.CommandText = $"""select repeat('a', {conn.Settings.ReadBufferSize+1}) from generate_series(1, 1000)""";
+        var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+        while (await reader.ReadAsync())
+        {
+            Assert.AreEqual(expected, await reader.GetFieldValueAsync<object>(0));
+        }
+    }
+
     [Test]
     public async Task Close_connection_in_middle_of_row()
     {
@@ -1748,7 +1818,39 @@ LANGUAGE plpgsql VOLATILE";
 
     #endregion GetChars / GetTextReader
 
-    [Test, Description("Tests that everything goes well when a type handler generates a EDBSafeReadException")]
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5450")]
+    public async Task EndRead_StreamActive([Values]bool async)
+    {
+        if (IsMultiplexing)
+            return;
+
+        const int columnLength = 1;
+
+        await using var conn = await OpenConnectionAsync();
+        var buffer = conn.Connector!.ReadBuffer;
+        buffer.FilledBytes += columnLength;
+        var reader = buffer.PgReader;
+        reader.Init(columnLength, DataFormat.Binary, resumable: false);
+        if (async)
+            await reader.StartReadAsync(Size.Unknown, CancellationToken.None);
+        else
+            reader.StartRead(Size.Unknown);
+
+#if !NETFRAMEWORK
+        await
+#endif
+        using (var _ = reader.GetStream())
+        {
+            if (async)
+                Assert.DoesNotThrowAsync(async () => await reader.EndReadAsync());
+            else
+                Assert.DoesNotThrow(() => reader.EndRead());
+        }
+
+        reader.Commit(resuming: false);
+    }
+
+    [Test, Description("Tests that everything goes well when a type handler generates a NpgsqlSafeReadException")]
     public async Task SafeReadException()
     {
         var dataSourceBuilder = CreateDataSourceBuilder();

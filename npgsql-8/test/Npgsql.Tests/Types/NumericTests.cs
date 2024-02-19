@@ -196,5 +196,24 @@ public class NumericTests : MultiplexingTestBase
         Assert.That(rdr.GetFieldValue<BigInteger>(1), Is.EqualTo(num));
     }
 
+    [Test]
+    public async Task NumericZero_WithScale()
+    {
+        // Scale should not be lost when dealing with 0
+        using var conn = await OpenConnectionAsync();
+        using var cmd = new EDBCommand("SELECT @p", conn);
+        var param = new EDBParameter("p", DbType.Decimal, 10, null, ParameterDirection.Input, false, 10, 2, DataRowVersion.Default, 0.00M);
+        cmd.Parameters.Add(param);
+        using var rdr = await cmd.ExecuteReaderAsync();
+        await rdr.ReadAsync();
+        var value = rdr.GetFieldValue<decimal>(0);
+
+#if NET7_0_OR_GREATER
+        Assert.That(value.Scale, Is.EqualTo(2));
+#else
+        Assert.That(value.ToString(System.Globalization.CultureInfo.InvariantCulture), Is.EqualTo(0.00M.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+#endif
+    }
+
     public NumericTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
 }

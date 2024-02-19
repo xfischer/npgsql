@@ -35,8 +35,38 @@ class GeometricTypeTests : MultiplexingTestBase
             skipArrayCheck: true); // Uses semicolon instead of comma as separator
 
         await AssertType(
+            new EDBBox(top: -10, right: 0, bottom: -20, left: -10),
+            "(0,-10),(-10,-20)",
+            "box",
+            EDBDbType.Box,
+            skipArrayCheck: true); // Uses semicolon instead of comma as separator
+
+        await AssertType(
             new EDBBox(top: 1, right: 2, bottom: 3, left: 4),
             "(4,3),(2,1)",
+            "box",
+            EDBDbType.Box,
+            skipArrayCheck: true); // Uses semicolon instead of comma as separator
+
+        var swapped = new EDBBox(top: -20, right: -10, bottom: -10, left: 0);
+
+        await AssertType(
+            swapped,
+            "(0,-10),(-10,-20)",
+            "box",
+            EDBDbType.Box,
+            skipArrayCheck: true); // Uses semicolon instead of comma as separator
+
+        await AssertType(
+            swapped with { UpperRight = new EDBPoint(-20,-10) },
+            "(-10,-10),(-20,-20)",
+            "box",
+            EDBDbType.Box,
+            skipArrayCheck: true); // Uses semicolon instead of comma as separator
+
+        await AssertType(
+            swapped with { LowerLeft = new EDBPoint(10, 10) },
+            "(10,10),(0,-10)",
             "box",
             EDBDbType.Box,
             skipArrayCheck: true); // Uses semicolon instead of comma as separator
@@ -45,25 +75,33 @@ class GeometricTypeTests : MultiplexingTestBase
     [Test]
     public async Task Box_array()
     {
-        var boxarr = await AssertType(
-            new[]
-            {
-                new EDBBox(top: 3, right: 4, bottom: 1, left: 2),
-                new EDBBox(top: 5, right: 6, bottom: 3, left: 4),
-            },
-            "{(4,3),(2,1);(6,5),(4,3)}",
-            "box[]",
-            EDBDbType.Box | EDBDbType.Array);
+        var data = new[]
+        {
+            new EDBBox(top: 3, right: 4, bottom: 1, left: 2),
+            new EDBBox(top: 5, right: 6, bottom: 3, left: 4),
+            new EDBBox(top: -10, right: 0, bottom: -20, left: -10)
+        };
 
         await AssertType(
-            new[]
-            {
-                new EDBBox(top: 1, right: 2, bottom: 3, left: 4),
-                new EDBBox(top: 3, right: 4, bottom: 5, left: 6)
-            },
-            "{(4,3),(2,1);(6,5),(4,3)}",
+            data,
+            "{(4,3),(2,1);(6,5),(4,3);(0,-10),(-10,-20)}",
             "box[]",
-            EDBDbType.Box | EDBDbType.Array);
+            EDBDbType.Box | EDBDbType.Array
+            );
+
+        var swappedData = new[]
+        {
+            new EDBBox(top: 1, right: 2, bottom: 3, left: 4),
+            new EDBBox(top: 3, right: 4, bottom: 5, left: 6),
+            new EDBBox(top: -20, right: -10, bottom: -10, left: 0)
+        };
+
+        await AssertType(
+            swappedData,
+            "{(4,3),(2,1);(6,5),(4,3);(0,-10),(-10,-20)}",
+            "box[]",
+            EDBDbType.Box | EDBDbType.Array
+            );
     }
 
     [Test]

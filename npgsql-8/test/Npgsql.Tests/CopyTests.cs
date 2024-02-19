@@ -510,6 +510,141 @@ INSERT INTO {table} (field_text, field_int4) VALUES ('HELLO', 8)");
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
 
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5457")]
+    public async Task MixedOperations()
+    {
+        if (IsMultiplexing)
+            Assert.Ignore("Multiplexing: fails");
+        using var conn = await OpenConnectionAsync();
+
+        using var reader = conn.BeginBinaryExport("""
+            COPY (values ('foo', 1), ('bar', null), (null, 2)) TO STDOUT BINARY
+            """);
+        while(reader.StartRow() != -1)
+        {
+            string? col1 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col1 = reader.Read<string>();
+            int? col2 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col2 = reader.Read<int>();
+        }
+    }
+
+    [Test]
+    public async Task ReadMoreColumnsThanExist()
+    {
+        if (IsMultiplexing)
+            Assert.Ignore("Multiplexing: fails");
+        using var conn = await OpenConnectionAsync();
+
+        using var reader = conn.BeginBinaryExport("""
+            COPY (values ('foo', 1), ('bar', null), (null, 2)) TO STDOUT BINARY
+            """);
+        while(reader.StartRow() != -1)
+        {
+            string? col1 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col1 = reader.Read<string>();
+            int? col2 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col2 = reader.Read<int>();
+
+            Assert.Throws<InvalidOperationException>(() => _ = reader.IsNull);
+        }
+    }
+
+    [Test]
+    public async Task ReadZeroSizedColumns()
+    {
+        if (IsMultiplexing)
+            Assert.Ignore("Multiplexing: fails");
+        using var conn = await OpenConnectionAsync();
+
+        using var reader = conn.BeginBinaryExport("""
+            COPY (values (1, '', ''), (2, null, ''), (3, '', null)) TO STDOUT BINARY
+            """);
+        while(reader.StartRow() != -1)
+        {
+            int? col1 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col1 = reader.Read<int>();
+
+            string? col2 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col2 = reader.Read<string>();
+
+            string? col3 = null;
+            if (reader.IsNull)
+                reader.Skip();
+            else
+                col3 = reader.Read<string>();
+        }
+    }
+
+    [Test]
+    public async Task ReadConverterResolverType()
+    {
+        if (IsMultiplexing)
+            Assert.Ignore("Multiplexing: fails");
+        using var conn = await OpenConnectionAsync();
+
+        using (var reader = conn.BeginBinaryExport("""
+                   COPY (values (NOW()), (NULL)) TO STDOUT BINARY
+                   """))
+        {
+            while (reader.StartRow() != -1)
+            {
+                DateTime? col1 = null;
+                if (reader.IsNull)
+                    reader.Skip();
+                else
+                    col1 = reader.Read<DateTime>();
+            }
+        }
+
+        using (var reader = conn.BeginBinaryExport("""
+                   COPY (values (NOW()), (NULL)) TO STDOUT BINARY
+                   """))
+        {
+            while (reader.StartRow() != -1)
+            {
+                DateTimeOffset? col1 = null;
+                if (reader.IsNull)
+                    reader.Skip();
+                else
+                    col1 = reader.Read<DateTimeOffset>();
+            }
+        }
+    }
+
+    [Test]
+    public async Task StreamingRead()
+    {
+        if (IsMultiplexing)
+            Assert.Ignore("Multiplexing: fails");
+        using var conn = await OpenConnectionAsync();
+
+        var str = new string('a', PgReader.MaxPreparedTextReaderSize + 1);
+        var reader = conn.BeginBinaryExport($"""COPY (values ('{str}')) TO STDOUT BINARY""");
+        while (reader.StartRow() != -1)
+        {
+            using var _ = reader.Read<TextReader>(EDBDbType.Text);
+        }
+    }
+
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2330")]
     public async Task Wrong_format_binary_export()
     {

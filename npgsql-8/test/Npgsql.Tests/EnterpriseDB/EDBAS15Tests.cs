@@ -333,8 +333,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 var obj1 = (ct1)callProc.Parameters[0].Value;
-                Assert.AreEqual(10, obj1.x);
-                Assert.AreEqual(20, obj1.y);
+                Assert.AreEqual(10, obj1!.x);
+                Assert.AreEqual(20, obj1!.y);
 
                 var obj2 = (ct3)callProc.Parameters[1].Value;
                 Assert.AreEqual("ten", obj2.x);

@@ -213,6 +213,10 @@ class RangeTests : MultiplexingTestBase
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
+        exception = await AssertTypeUnsupportedRead("""["bar","foo"]""", rangeType);
+        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
+
         exception = await AssertTypeUnsupportedRead<EDBRange<string>>("""["bar","foo"]""", rangeType);
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));

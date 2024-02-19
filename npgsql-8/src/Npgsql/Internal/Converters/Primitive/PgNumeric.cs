@@ -366,7 +366,7 @@ readonly struct PgNumeric
             var digitScale = (weight + 1 - digitCount) * NumericBaseLog10;
             var scaleDifference = scale < 0 ? digitScale : digitScale + scale;
 
-            var digit = digitCount == 0 ? 0 : digits[digitCount - 1];
+            var digit = digits[digitCount - 1];
             if (digitCount == MaxDecimalNumericDigits)
             {
                 // On the max group we adjust the base based on the scale difference, to prevent overflow for valid values.

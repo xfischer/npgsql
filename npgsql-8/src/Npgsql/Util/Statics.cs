@@ -9,19 +9,18 @@ namespace EnterpriseDB.EDBClient.Util;
 
 static class Statics
 {
+    internal static readonly bool EnableAssertions;
 #if DEBUG
-    internal static bool EnableDiagnostics;
     internal static bool LegacyTimestampBehavior;
     internal static bool DisableDateTimeInfinityConversions;
 #else
-    internal static readonly bool EnableDiagnostics;
     internal static readonly bool LegacyTimestampBehavior;
     internal static readonly bool DisableDateTimeInfinityConversions;
 #endif
 
     static Statics()
     {
-        EnableDiagnostics = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableDiagnostics", out var enabled) && enabled;
+        EnableAssertions = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableAssertions", out var enabled) && enabled;
         LegacyTimestampBehavior = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableLegacyTimestampBehavior", out enabled) && enabled;
         DisableDateTimeInfinityConversions = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.DisableDateTimeInfinityConversions", out enabled) && enabled;
     }

@@ -224,6 +224,11 @@ public struct EDBBox : IEquatable<EDBBox>
 
     public static bool operator ==(EDBBox x, EDBBox y) => x.Equals(y);
     public static bool operator !=(EDBBox x, EDBBox y) => !(x == y);
+    public override string ToString()
+        => string.Format(CultureInfo.InvariantCulture, "{0},{1}", UpperRight, LowerLeft);
+		
+	public override int GetHashCode()
+        => HashCode.Combine(Top, Right, Bottom, LowerLeft);
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
     static readonly Regex Regex = new(@"\((-?\d+.?\d*),(-?\d+.?\d*)\),\((-?\d+.?\d*),(-?\d+.?\d*)\)");
@@ -248,12 +253,6 @@ public struct EDBBox : IEquatable<EDBBox>
         if (_upperRight.Y < _lowerLeft.Y)
             (_upperRight.Y, _lowerLeft.Y) = (_lowerLeft.Y, _upperRight.Y);
     }
-
-    public override string ToString()
-        => string.Format(CultureInfo.InvariantCulture, "{0},{1}", UpperRight, LowerLeft);
-
-    public override int GetHashCode()
-        => HashCode.Combine(Top, Right, Bottom, LowerLeft);
 }
 
 /// <summary>

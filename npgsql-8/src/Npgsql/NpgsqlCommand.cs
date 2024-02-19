@@ -208,8 +208,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         get => _timeout ?? (InternalConnection?.CommandTimeout ?? DefaultTimeout);
         set
         {
-            if (value < 0)
-            {
+            if (value < 0) {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "CommandTimeout can't be less than zero.");
             }
 
@@ -683,10 +682,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
 
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
+                batchCommand.ConnectorPreparedOn = connector;
             }
 
             if (logger.IsEnabled(LogLevel.Debug) && needToPrepare)
                 LogMessages.PreparingCommandExplicitly(logger, string.Join("; ", CommandTexts()), connector.Id);
+
             IEnumerable<string> CommandTexts()
             {
                 foreach (var c in InternalBatchCommands)
@@ -829,6 +830,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         Debug.Assert(connection is not null);
         if (connection.Settings.Multiplexing)
             throw new NotSupportedException("Explicit preparation not supported with multiplexing");
+
         var forall = true;
         foreach (var statement in InternalBatchCommands)
             if (statement.IsPrepared)
@@ -1749,6 +1751,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 Debug.Assert(_connector is null && conn is not null);
                 conn.Close();
             }
+
             throw;
         }
     }
@@ -1810,9 +1813,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         if (IsCacheable && InternalConnection is not null && InternalConnection.CachedCommand is null)
         {
-            // TODO: Optimize EDBParameterCollection to recycle EDBParameter instances as well
-            // TODO: Statements isn't cleared/recycled, leaving this for now, since it'll be replaced by the new batching API
-
             Reset();
             InternalConnection.CachedCommand = this;
             return;

@@ -24,7 +24,7 @@ sealed partial class EDBReadBuffer : IDisposable
 #if DEBUG
     internal static readonly bool BufferBoundsChecks = true;
 #else
-    internal static readonly bool BufferBoundsChecks = Statics.EnableDiagnostics;
+    internal static readonly bool BufferBoundsChecks = Statics.EnableAssertions;
 #endif
 
     public EDBConnection Connection => Connector.Connection!;
@@ -133,6 +133,12 @@ sealed partial class EDBReadBuffer : IDisposable
     #endregion
 
     #region I/O
+
+    public ValueTask Ensure(int count, bool async)
+        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
+
+    public ValueTask EnsureAsync(int count)
+        => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
 
     // Can't share due to Span vs Memory difference (can't make a memory out of a span).
     int ReadWithTimeout(Span<byte> buffer)
@@ -271,14 +277,6 @@ sealed partial class EDBReadBuffer : IDisposable
     static Exception EDBTimeoutException() => new EDBException("Exception while reading from stream", TimeoutException());
 
     static Exception TimeoutException() => new TimeoutException("Timeout during reading attempt");
-
-    internal void Ensure(int count) => Ensure(count, false).GetAwaiter().GetResult();
-
-    public ValueTask Ensure(int count, bool async)
-        => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
-
-    public ValueTask EnsureAsync(int count)
-        => Ensure(count, async: true, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
 
     /// <summary>
     /// Ensures that <paramref name="count"/> bytes are available in the buffer, and if

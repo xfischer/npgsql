@@ -94,7 +94,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <summary>
     /// The default TCP/IP port for PostgreSQL.
     /// </summary>
-    public const int DefaultPort = 5444; 
+    public const int DefaultPort = 5444; // EnterpriseDB : default EPAS port
 
     /// <summary>
     /// Maximum value for connection timeout.

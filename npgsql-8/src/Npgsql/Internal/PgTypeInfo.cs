@@ -150,7 +150,7 @@ public class PgTypeInfo
             return true;
         case PgResolverTypeInfo resolverInfo:
             var resolution = resolverInfo.GetResolution(field);
-            if (!HasCachedInfo(resolution.Converter)
+            if (HasCachedInfo(resolution.Converter)
                     ? !CachedCanConvert(format, out bufferRequirements)
                     : !resolution.Converter.CanConvert(format, out bufferRequirements))
             {
@@ -197,7 +197,7 @@ public class PgTypeInfo
     // Bind for writing.
     // Note: this api is not called BindAsObject as the semantics are extended, DBNull is a NULL value for all object values.
     /// When result is null or DBNull, the value was interpreted to be a SQL NULL.
-    internal PgConverterInfo? BindObject(PgConverter converter, object? value, out Size size, out object? writeState, out DataFormat format, DataFormat? formatPreference = null, bool isOutputParameter = false)
+    internal PgConverterInfo? BindObject(PgConverter converter, object? value, out Size size, out object? writeState, out DataFormat format, DataFormat? formatPreference = null, bool isOutputParameter = false) // EnterpriseDB: added isOutputParameter
     {
         // Basically exists to catch cases like object[] resolving a polymorphic read converter, better to fail during binding than writing.
         if (!SupportsWriting)
@@ -207,6 +207,7 @@ public class PgTypeInfo
 
         // Given SQL values are effectively a union of T | NULL we support DBNull.Value to signify a NULL value for all types except DBNull in this api.
         writeState = null;
+		// EnterpriseDB: added isOutputParameter
         if (isOutputParameter || value is DBNull && Type != typeof(DBNull) || converter.GetSizeOrDbNullAsObject(format, bufferRequirements.Write, value, ref writeState) is not { } sizeOrDbNull)
         {
             size = default;
@@ -276,8 +277,8 @@ public sealed class PgResolverTypeInfo : PgTypeInfo
     public PgConverterResolution GetResolution(Field field)
         => _converterResolver.GetInternal(this, field);
 
-    public PgConverterResolution GetDefaultResolution(PgTypeId? pgTypeId)
-        => _converterResolver.GetDefaultInternal(ValidateResolution, Options.PortableTypeIds, pgTypeId ?? PgTypeId);
+    public PgConverterResolution GetDefaultResolution(PgTypeId? expectedPgTypeId)
+        => _converterResolver.GetDefaultInternal(ValidateResolution, Options.PortableTypeIds, expectedPgTypeId ?? PgTypeId);
 
     public PgConverterResolver GetConverterResolver() => _converterResolver;
 }

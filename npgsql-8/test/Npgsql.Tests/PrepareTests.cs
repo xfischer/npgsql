@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.BackendMessages;
+using EnterpriseDB.EDBClient.Internal.Postgres;
+using EnterpriseDB.EDBClient.Tests.Support;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
@@ -13,6 +16,8 @@ namespace EnterpriseDB.EDBClient.Tests;
 
 public class PrepareTests: TestBase
 {
+    static uint Int4Oid => PostgresMinimalDatabaseInfo.DefaultTypeCatalog.GetOid(DataTypeNames.Int4).Value;
+
     [Test]
     public void Basic()
     {
@@ -773,6 +778,127 @@ public class PrepareTests: TestBase
 #endif
         await cmd.PrepareAsync();
         await cmd.UnprepareAsync();
+    }
+
+    [Test]
+    public async Task Explicitly_prepared_batch_sends_prepared_queries()
+    {
+        await using var postmaster = PgPostmasterMock.Start(ConnectionString);
+        await using var dataSource = CreateDataSource(postmaster.ConnectionString);
+
+        await using var conn = await dataSource.OpenConnectionAsync();
+        var server = await postmaster.WaitForServerConnection();
+
+        await using var batch = new EDBBatch(conn)
+        {
+            BatchCommands = { new("SELECT 1"), new("SELECT 2") }
+        };
+
+        var prepareTask = batch.PrepareAsync();
+
+        await server.ExpectMessages(
+            FrontendMessageCode.Parse, FrontendMessageCode.Describe,
+            FrontendMessageCode.Parse, FrontendMessageCode.Describe,
+            FrontendMessageCode.Sync);
+
+        await server
+            .WriteParseComplete()
+            .WriteParameterDescription(new FieldDescription(Int4Oid))
+            .WriteRowDescription(new FieldDescription(Int4Oid))
+            .WriteParseComplete()
+            .WriteParameterDescription(new FieldDescription(Int4Oid))
+            .WriteRowDescription(new FieldDescription(Int4Oid))
+            .WriteReadyForQuery()
+            .FlushAsync();
+
+        await prepareTask;
+
+        for (var i = 0; i < 2; i++)
+            await ExecutePreparedBatch(batch, server);
+
+        async Task ExecutePreparedBatch(EDBBatch batch, PgServerMock server)
+        {
+            var executeBatchTask = batch.ExecuteNonQueryAsync();
+
+            await server.ExpectMessages(
+                FrontendMessageCode.Bind, FrontendMessageCode.Execute,
+                FrontendMessageCode.Bind, FrontendMessageCode.Execute,
+                FrontendMessageCode.Sync);
+
+            await server
+                .WriteBindComplete()
+                .WriteCommandComplete()
+                .WriteBindComplete()
+                .WriteCommandComplete()
+                .WriteReadyForQuery()
+                .FlushAsync();
+
+            await executeBatchTask;
+        }
+    }
+
+    [Test]
+    public async Task Auto_prepared_batch_sends_prepared_queries()
+    {
+        var csb = new EDBConnectionStringBuilder(ConnectionString)
+        {
+            AutoPrepareMinUsages = 1,
+            MaxAutoPrepare = 10
+        };
+        await using var postmaster = PgPostmasterMock.Start(csb.ConnectionString);
+        await using var dataSource = CreateDataSource(postmaster.ConnectionString);
+
+        await using var conn = await dataSource.OpenConnectionAsync();
+        var server = await postmaster.WaitForServerConnection();
+
+        await using var batch = new EDBBatch(conn)
+        {
+            BatchCommands = { new("SELECT 1"), new("SELECT 2") }
+        };
+
+        var firstBatchExecuteTask = batch.ExecuteNonQueryAsync();
+
+        await server.ExpectMessages(
+            FrontendMessageCode.Parse, FrontendMessageCode.Bind, FrontendMessageCode.Describe, FrontendMessageCode.Execute,
+            FrontendMessageCode.Parse, FrontendMessageCode.Bind, FrontendMessageCode.Describe, FrontendMessageCode.Execute,
+            FrontendMessageCode.Sync);
+
+        await server
+            .WriteParseComplete()
+            .WriteBindComplete()
+            .WriteRowDescription(new FieldDescription(Int4Oid))
+            .WriteCommandComplete()
+            .WriteParseComplete()
+            .WriteBindComplete()
+            .WriteRowDescription(new FieldDescription(Int4Oid))
+            .WriteCommandComplete()
+            .WriteReadyForQuery()
+            .FlushAsync();
+
+        await firstBatchExecuteTask;
+
+        for (var i = 0; i < 2; i++)
+            await ExecutePreparedBatch(batch, server);
+
+        async Task ExecutePreparedBatch(EDBBatch batch, PgServerMock server)
+        {
+            var executeBatchTask = batch.ExecuteNonQueryAsync();
+
+            await server.ExpectMessages(
+                FrontendMessageCode.Bind, FrontendMessageCode.Execute,
+                FrontendMessageCode.Bind, FrontendMessageCode.Execute,
+                FrontendMessageCode.Sync);
+
+            await server
+                .WriteBindComplete()
+                .WriteCommandComplete()
+                .WriteBindComplete()
+                .WriteCommandComplete()
+                .WriteReadyForQuery()
+                .FlushAsync();
+
+            await executeBatchTask;
+        }
     }
 
     EDBConnection OpenConnectionAndUnprepare()

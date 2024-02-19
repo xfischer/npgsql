@@ -35,7 +35,7 @@ public sealed class EDBBinaryExporter : ICancelable
     /// <summary>
     /// The number of columns, as returned from the backend in the CopyInResponse.
     /// </summary>
-    internal int NumColumns { get; private set; }
+    int NumColumns { get; set; }
 
     PgConverterInfo[] _columnInfoCache;
 
@@ -140,15 +140,19 @@ public sealed class EDBBinaryExporter : ICancelable
 
     async ValueTask<int> StartRow(bool async, CancellationToken cancellationToken = default)
     {
-
-        CheckDisposed();
+        ThrowIfDisposed();
         if (_isConsumed)
             return -1;
 
         using var registration = _connector.StartNestedCancellableOperation(cancellationToken);
 
+        // Consume and advance any active column.
         if (_column >= 0)
-            await Commit(async, resumableOp: false).ConfigureAwait(false);
+        {
+            await Commit(async).ConfigureAwait(false);
+            _column++;
+        }
+
         // The very first row (i.e. _column == -1) is included in the header's CopyData message.
         // Otherwise we need to read in a new CopyData row (the docs specify that there's a CopyData
         // message per row).
@@ -208,29 +212,6 @@ public sealed class EDBBinaryExporter : ICancelable
     ValueTask<T> Read<T>(bool async, CancellationToken cancellationToken = default)
         => Read<T>(async, null, cancellationToken);
 
-    PgConverterInfo CreateConverterInfo(Type type, EDBDbType? npgsqlDbType = null)
-    {
-        var options = _connector.SerializerOptions;
-        PgTypeId? pgTypeId = null;
-        if (npgsqlDbType.HasValue)
-        {
-            pgTypeId = npgsqlDbType.Value.ToDataTypeName() is { } name
-                ? options.GetCanonicalTypeId(name)
-                // Handle plugin types via lookup.
-                : GetRepresentationalOrDefault(npgsqlDbType.Value.ToUnqualifiedDataTypeNameOrThrow());
-        }
-        var info = options.GetTypeInfo(type, pgTypeId)
-                   ?? throw new NotSupportedException($"Reading is not supported for type '{type}'{(npgsqlDbType is null ? "" : $" and EDBDbType '{npgsqlDbType}'")}");
-        // Binary export has no type info so we only do caller-directed interpretation of data.
-        return info.Bind(new Field("?", info.PgTypeId!.Value, -1), DataFormat.Binary);
-
-        PgTypeId GetRepresentationalOrDefault(string dataTypeName)
-        {
-            var type = options.DatabaseInfo.GetPostgresType(dataTypeName);
-            return options.ToCanonicalTypeId(type.GetRepresentationalType());
-        }
-    }
-
     /// <summary>
     /// Reads the current column, returns its value according to <paramref name="type"/> and
     /// moves ahead to the next column.
@@ -267,59 +248,56 @@ public sealed class EDBBinaryExporter : ICancelable
 
     async ValueTask<T> Read<T>(bool async, EDBDbType? type, CancellationToken cancellationToken)
     {
-        CheckDisposed();
-        if (_column is BeforeRow)
-            ThrowHelper.ThrowInvalidOperationException("Not reading a row");
+        ThrowIfNotOnRow();
 
         using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
 
-        // Allow one more read if the field is a db null.
-        // We cannot allow endless rereads otherwise it becomes quite unclear when a column advance happens.
-        if (PgReader is { Initialized: true, Resumable: true, FieldSize: -1 })
+        if (!IsInitializedAndAtStart)
+            await MoveNextColumn(async, resumableOp: false).ConfigureAwait(false);
+
+        try
         {
-            await Commit(async, resumableOp: false).ConfigureAwait(false);
-            return DbNullOrThrow();
-        }
-
-        // We must commit the current column before reading the next one unless it was an IsNull call.
-        PgConverterInfo info;
-        bool asObject;
-        if (!PgReader.Initialized || !PgReader.Resumable || PgReader.CurrentRemaining != PgReader.FieldSize)
-        {
-            await Commit(async, resumableOp: false).ConfigureAwait(false);
-            info = GetInfo(type, out asObject);
-
-            // We need to get info after potential I/O as we don't know beforehand at what column we're at.
-            var columnLen = await ReadColumnLenIfNeeded(async, resumableOp: false).ConfigureAwait(false);
-            if (_column == NumColumns)
-                ThrowHelper.ThrowInvalidOperationException("No more columns left in the current row");
-
-            if (columnLen is -1)
+            var reader = PgReader;
+            if (reader.FieldSize is -1)
                 return DbNullOrThrow();
 
-        }
-        else
-            info = GetInfo(type, out asObject);
+            var info = GetInfo(type, out var asObject);
 
-        T result;
-        if (async)
-        {
-            await PgReader.StartReadAsync(info.BufferRequirement, cancellationToken).ConfigureAwait(false);
-            result = asObject
-                ? (T)await info.Converter.ReadAsObjectAsync(PgReader, cancellationToken).ConfigureAwait(false)
-                : await info.GetConverter<T>().ReadAsync(PgReader, cancellationToken).ConfigureAwait(false);
-            await PgReader.EndReadAsync().ConfigureAwait(false);
+            T result;
+            if (async)
+            {
+                await reader.StartReadAsync(info.BufferRequirement, cancellationToken).ConfigureAwait(false);
+                result = asObject
+                    ? (T)await info.Converter.ReadAsObjectAsync(reader, cancellationToken).ConfigureAwait(false)
+                    : await info.GetConverter<T>().ReadAsync(reader, cancellationToken).ConfigureAwait(false);
+                await reader.EndReadAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                reader.StartRead(info.BufferRequirement);
+                result = asObject
+                    ? (T)info.Converter.ReadAsObject(reader)
+                    : info.GetConverter<T>().Read(reader);
+                reader.EndRead();
+            }
+
+            return result;
         }
-        else
+        finally
         {
-            PgReader.StartRead(info.BufferRequirement);
-            result = asObject
-                ? (T)info.Converter.ReadAsObject(PgReader)
-                : info.GetConverter<T>().Read(PgReader);
-            PgReader.EndRead();
+            // Don't delay committing the current column, just do it immediately (as opposed to on the next action: Read, IsNull, Skip).
+            // Zero length columns would otherwise create an edge-case where we'd have to immediately commit as we won't know whether we're at the end.
+            // To guarantee the commit happens in that case we would still need this try finally, at which point it's just better to be consistent.
+            await Commit(async).ConfigureAwait(false);
         }
 
-        return result;
+        static T DbNullOrThrow()
+        {
+            // When T is a Nullable<T>, we support returning null
+            if (default(T) is null && typeof(T).IsValueType)
+                return default!;
+            throw new InvalidCastException("Column is null");
+        }
 
         PgConverterInfo GetInfo(EDBDbType? type, out bool asObject)
         {
@@ -329,12 +307,29 @@ public sealed class EDBBinaryExporter : ICancelable
             return converterInfo;
         }
 
-        T DbNullOrThrow()
+        PgConverterInfo CreateConverterInfo(Type type, EDBDbType? npgsqlDbType = null)
         {
-            // When T is a Nullable<T>, we support returning null
-            if (default(T) is null && typeof(T).IsValueType)
-                return default!;
-            throw new InvalidCastException("Column is null");
+            var options = _connector.SerializerOptions;
+            PgTypeId? pgTypeId = null;
+            if (npgsqlDbType.HasValue)
+            {
+                pgTypeId = npgsqlDbType.Value.ToDataTypeName() is { } name
+                    ? options.GetCanonicalTypeId(name)
+                    // Handle plugin types via lookup.
+                    : GetRepresentationalOrDefault(npgsqlDbType.Value.ToUnqualifiedDataTypeNameOrThrow());
+            }
+            var info = options.GetTypeInfo(type, pgTypeId)
+                       ?? throw new NotSupportedException($"Reading is not supported for type '{type}'{(npgsqlDbType is null ? "" : $" and EDBDbType '{npgsqlDbType}'")}");
+
+            // Binary export has no type info so we only do caller-directed interpretation of data.
+            return info.Bind(new Field("?",
+                info.PgTypeId ?? ((PgResolverTypeInfo)info).GetDefaultResolution(null).PgTypeId, -1), DataFormat.Binary);
+
+            PgTypeId GetRepresentationalOrDefault(string dataTypeName)
+            {
+                var type = options.DatabaseInfo.GetPostgresType(dataTypeName);
+                return options.ToCanonicalTypeId(type.GetRepresentationalType());
+            }
         }
     }
 
@@ -345,8 +340,11 @@ public sealed class EDBBinaryExporter : ICancelable
     {
         get
         {
-            Commit(async: false, resumableOp: true);
-            return ReadColumnLenIfNeeded(async: false, resumableOp: true).GetAwaiter().GetResult() is -1;
+            ThrowIfNotOnRow();
+            if (!IsInitializedAndAtStart)
+                return MoveNextColumn(async: false, resumableOp: true).GetAwaiter().GetResult() is -1;
+
+            return PgReader.FieldSize is - 1;
         }
     }
 
@@ -363,46 +361,55 @@ public sealed class EDBBinaryExporter : ICancelable
 
     async Task Skip(bool async, CancellationToken cancellationToken = default)
     {
-        CheckDisposed();
+        ThrowIfNotOnRow();
 
         using var registration = _connector.StartNestedCancellableOperation(cancellationToken);
 
-        // We allow IsNull to have been called before skip.
-        if (PgReader.Initialized && PgReader is not { Resumable: true, FieldSize: -1 })
-            await Commit(async, resumableOp: false).ConfigureAwait(false);
-        await ReadColumnLenIfNeeded(async, resumableOp: false).ConfigureAwait(false);
-        await PgReader.Consume(async, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (!IsInitializedAndAtStart)
+            await MoveNextColumn(async, resumableOp: false).ConfigureAwait(false);
+
+        await Commit(async).ConfigureAwait(false);
     }
 
     #endregion
 
     #region Utilities
 
-    ValueTask Commit(bool async, bool resumableOp)
+    bool IsInitializedAndAtStart => PgReader.Initialized && (PgReader.FieldSize is -1 || PgReader.FieldOffset is 0);
+
+    ValueTask Commit(bool async)
     {
-        var resuming = PgReader is { Initialized: true, Resumable: true } && resumableOp;
-        if (!resuming)
-            _column++;
-
         if (async)
-            return PgReader.CommitAsync(resuming);
+            return PgReader.CommitAsync(resuming: false);
 
-        PgReader.Commit(resuming);
+        PgReader.Commit(resuming: false);
         return new();
     }
 
-    async ValueTask<int> ReadColumnLenIfNeeded(bool async, bool resumableOp)
+    async ValueTask<int> MoveNextColumn(bool async, bool resumableOp)
     {
-        if (PgReader is { Initialized: true, Resumable: true, FieldSize: -1 })
-            return -1;
+        if (async)
+            await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
+        else
+            PgReader.Commit(resuming: false);
 
+        if (_column + 1 == NumColumns)
+            ThrowHelper.ThrowInvalidOperationException("No more columns left in the current row");
+        _column++;
         await _buf.Ensure(4, async).ConfigureAwait(false);
         var columnLen = _buf.ReadInt32();
         PgReader.Init(columnLen, DataFormat.Binary, resumableOp);
         return PgReader.FieldSize;
     }
 
-    void CheckDisposed()
+    void ThrowIfNotOnRow()
+    {
+        ThrowIfDisposed();
+        if (_column is BeforeRow)
+            ThrowHelper.ThrowInvalidOperationException("Not reading a row");
+    }
+
+    void ThrowIfDisposed()
     {
         if (_isDisposed)
             ThrowHelper.ThrowObjectDisposedException(nameof(EDBBinaryExporter), "The COPY operation has already ended.");
@@ -451,6 +458,7 @@ public sealed class EDBBinaryExporter : ICancelable
             try
             {
                 using var registration = _connector.StartNestedCancellableOperation(attemptPgCancellation: false);
+                // Be sure to commit the reader.
                 if (async)
                      await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
                 else

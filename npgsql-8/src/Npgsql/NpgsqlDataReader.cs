@@ -2491,10 +2491,13 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         Debug.Assert(ordinal != currentColumn);
         if (ordinal > currentColumn)
         {
-            for (; currentColumn < ordinal - 1; currentColumn++)
+            // Written as a while to be able to increment _column directly after reading into it.
+            while (_column < ordinal - 1)
             {
                 columnLength = buffer.ReadInt32();
-                if (columnLength is not -1)
+                _column++;
+                Debug.Assert(columnLength >= -1);
+                if (columnLength > 0)
                     buffer.Skip(columnLength);
             }
             columnLength = buffer.ReadInt32();
@@ -2532,7 +2535,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             for (var lastColumnRead = _columns.Count; ordinal >= lastColumnRead; lastColumnRead++)
             {
                 (Buffer.ReadPosition, var lastLen) = _columns[lastColumnRead - 1];
-                if (lastLen is not -1)
+                if (lastLen > 0)
                     buffer.Skip(lastLen);
                 var len = Buffer.ReadInt32();
                 _columns.Add((Buffer.ReadPosition, len));
@@ -2558,9 +2561,16 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var committed = false;
         if (!PgReader.CommitHasIO(reread))
         {
+            var columnLength = PgReader.FieldSize;
             PgReader.Commit(reread);
             committed = true;
-            if (TrySeekBuffered(ordinal, out var columnLength))
+            if (reread)
+            {
+                PgReader.Init(columnLength, dataFormat, columnLength is -1 || resumableOp);
+                return new(columnLength);
+            }
+
+            if (TrySeekBuffered(ordinal, out columnLength))
             {
                 PgReader.Init(columnLength, dataFormat, columnLength is -1 || resumableOp);
                 return new(columnLength);
@@ -2575,12 +2585,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
         }
 
-        return Core(async, !committed, ordinal, dataFormat, resumableOp);
+        return Core(async, reread, !committed, ordinal, dataFormat, resumableOp);
 
 #if NET6_0_OR_GREATER
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
-        async ValueTask<int> Core(bool async, bool commit, int ordinal, DataFormat dataFormat, bool resumableOp)
+        async ValueTask<int> Core(bool async, bool reread, bool commit, int ordinal, DataFormat dataFormat, bool resumableOp)
         {
             if (commit)
             {
@@ -2591,24 +2601,28 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     PgReader.Commit(reread);
             }
 
-            if (ordinal == _column)
+            if (reread)
             {
                 PgReader.Init(PgReader.FieldSize, dataFormat, PgReader.FieldSize is -1 || resumableOp);
                 return PgReader.FieldSize;
             }
 
             // Seek to the requested column
+            int columnLength;
             var buffer = Buffer;
-            for (; _column < ordinal - 1; _column++)
+            // Written as a while to be able to increment _column directly after reading into it.
+            while (_column < ordinal - 1)
             {
                 await buffer.Ensure(4, async).ConfigureAwait(false);
-                var len = buffer.ReadInt32();
-                if (len != -1)
-                    await buffer.Skip(len, async, checkDataAvailable: true).ConfigureAwait(false); // EnterpriseDB (additional param)
+                columnLength = buffer.ReadInt32();
+                _column++;
+                Debug.Assert(columnLength >= -1);
+                if (columnLength > 0)
+                    await buffer.Skip(columnLength, async, checkDataAvailable: true).ConfigureAwait(false); // EnterpriseDB (additional param)
             }
 
-            await buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true).ConfigureAwait(false); // EnterpriseDB (additional param)
-            var columnLength = buffer.ReadInt32();
+            await buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true).ConfigureAwait(false);  // EnterpriseDB (additional params)
+            columnLength = buffer.ReadInt32();
             _column = ordinal;
 
             PgReader.Init(columnLength, dataFormat, resumableOp);
@@ -2617,20 +2631,20 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         bool TrySeekBuffered(int ordinal, out int columnLength)
         {
-            if (ordinal == _column)
-            {
-                columnLength = PgReader.FieldSize;
-                return true;
-            }
-
             // Skip over unwanted fields
             columnLength = -1;
             var buffer = Buffer;
-            for (; _column < ordinal - 1; _column++)
+            // Written as a while to be able to increment _column directly after reading into it.
+            while (_column < ordinal - 1)
             {
                 if (buffer.ReadBytesLeft < 4)
+                {
+                    columnLength = -1;
                     return false;
+                }
                 columnLength = buffer.ReadInt32();
+                _column++;
+                Debug.Assert(columnLength >= -1);
                 if (columnLength > 0)
                 {
                     if (buffer.ReadBytesLeft < columnLength)
@@ -2657,7 +2671,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     Task ConsumeRow(bool async)
     {
-        Debug.Assert(State == ReaderState.InResult || State == ReaderState.BeforeResult);
+        Debug.Assert(State is ReaderState.InResult or ReaderState.BeforeResult);
 
         if (!_canConsumeRowNonSequentially)
             return ConsumeRowSequential(async);
@@ -2672,13 +2686,18 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
             else
                 PgReader.Commit(resuming: false);
+
             // Skip over the remaining columns in the row
-            for (; _column < ColumnCount - 1; _column++)
+            var buffer = Buffer;
+            // Written as a while to be able to increment _column directly after reading into it.
+            while (_column < ColumnCount - 1)
             {
-                await Buffer.Ensure(4, async).ConfigureAwait(false);
-                var len = Buffer.ReadInt32();
-                if (len != -1)
-                    await Buffer.Skip(len, async).ConfigureAwait(false);
+                await buffer.Ensure(4, async).ConfigureAwait(false);
+                var columnLength = buffer.ReadInt32();
+                _column++;
+                Debug.Assert(columnLength >= -1);
+                if (columnLength > 0)
+                    await buffer.Skip(columnLength, async).ConfigureAwait(false);
             }
         }
     }

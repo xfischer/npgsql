@@ -12,6 +12,9 @@ namespace EnterpriseDB.EDBClient.Internal;
 
 public class PgReader
 {
+    // We don't want to add a ton of memory pressure for large strings.
+    internal const int MaxPreparedTextReaderSize = 1024 * 64;
+
     readonly EDBReadBuffer _buffer;
 
     bool _resumable;
@@ -62,7 +65,7 @@ public class PgReader
     public ValueMetadata Current => new() { Size = CurrentSize, Format = _fieldFormat, BufferRequirement = CurrentBufferRequirement };
     public int CurrentRemaining => HasCurrent ? _currentSize - CurrentOffset : FieldRemaining;
 
-    Size CurrentBufferRequirement => HasCurrent ? _currentBufferRequirement : _fieldBufferRequirement;
+    internal Size CurrentBufferRequirement => HasCurrent ? _currentBufferRequirement : _fieldBufferRequirement;
     int CurrentOffset => FieldOffset - _currentStartPos;
 
     internal bool IsAtStart => FieldOffset is 0;
@@ -210,11 +213,8 @@ public class PgReader
 
     async ValueTask<TextReader> GetTextReader(bool async, Encoding encoding, CancellationToken cancellationToken)
     {
-        // We don't want to add a ton of memory pressure for large strings.
-        const int maxPreparedSize = 1024 * 64;
-
         _requiresCleanup = true;
-        if (CurrentRemaining > _buffer.ReadBytesLeft || CurrentRemaining > maxPreparedSize)
+        if (CurrentRemaining > _buffer.ReadBytesLeft || CurrentRemaining > MaxPreparedTextReaderSize)
             return new StreamReader(GetColumnStream(), encoding, detectEncodingFromByteOrderMarks: false);
 
         if (_preparedTextReader is { IsDisposed: false })
@@ -363,7 +363,7 @@ public class PgReader
     /// <returns>The stream length, if any</returns>
     async ValueTask DisposeUserActiveStream(bool async)
     {
-        if (_userActiveStream is { IsDisposed: false })
+        if (StreamActive)
         {
             if (async)
                 await _userActiveStream.DisposeAsync().ConfigureAwait(false);
@@ -476,7 +476,7 @@ public class PgReader
 
     internal void EndRead()
     {
-        if (_resumable)
+        if (_resumable || StreamActive)
             return;
 
         // If it was upper bound we should consume.
@@ -494,7 +494,7 @@ public class PgReader
 
     internal ValueTask EndReadAsync()
     {
-        if (_resumable)
+        if (_resumable || StreamActive)
             return new();
 
         // If it was upper bound we should consume.
@@ -560,9 +560,11 @@ public class PgReader
     public void Consume(int? count = null) => Consume(async: false, count).GetAwaiter().GetResult();
     public ValueTask ConsumeAsync(int? count = null, CancellationToken cancellationToken = default) => Consume(async: true, count, cancellationToken);
 
+    [MemberNotNullWhen(true, nameof(_userActiveStream))]
+    bool StreamActive => _userActiveStream is { IsDisposed: false };
     internal void ThrowIfStreamActive()
     {
-        if (_userActiveStream is { IsDisposed: false})
+        if (StreamActive)
             ThrowHelper.ThrowInvalidOperationException("A stream is already open for this reader");
     }
 
@@ -612,7 +614,7 @@ public class PgReader
             // Shut down any streaming and pooling going on on the column.
             if (_requiresCleanup)
             {
-                if (_userActiveStream is { IsDisposed: false })
+                if (StreamActive)
                     DisposeUserActiveStream(async: false).GetAwaiter().GetResult();
 
                 if (_pooledArray is not null)
@@ -693,7 +695,7 @@ public class PgReader
             // Shut down any streaming and pooling going on on the column.
             if (_requiresCleanup)
             {
-                if (_userActiveStream is { IsDisposed: false })
+                if (StreamActive)
                     await DisposeUserActiveStream(async: true).ConfigureAwait(false);
 
                 if (_pooledArray is not null)

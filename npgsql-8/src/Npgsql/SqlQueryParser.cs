@@ -9,7 +9,7 @@ sealed class SqlQueryParser
 {
     static EDBParameterCollection EmptyParameters { get; } = new();
 
-    readonly Dictionary<string, int> _paramIndexMap = new();
+    readonly Dictionary<string, int> _paramIndexMap = new(StringComparer.OrdinalIgnoreCase);
     readonly StringBuilder _rewrittenSql = new();
     string? sqlString; // EnterpriseDB Team
     readonly bool supportsRedwoodDialect; // EnterpriseDB Team

@@ -91,12 +91,12 @@ public sealed class EDBParameter<T> : EDBParameter
     }
 
     // We ignore allowNullReference, it's just there to control the base implementation.
-    private protected override void BindCore(bool allowNullReference = false, bool isOutputParameter = false)
+    private protected override void BindCore(bool allowNullReference = false, bool isOutputParameter = false) // EnterpriseDB isOutputParameter
     {
         if (_asObject)
         {
             // If we're object typed we should not support null.
-            base.BindCore(typeof(T) != typeof(object), isOutputParameter);
+            base.BindCore(typeof(T) != typeof(object), isOutputParameter);  // EnterpriseDB isOutputParameter
             return;
         }
 

@@ -22,6 +22,31 @@ public class LegacyDateTimeTests : TestBase
             DbType.DateTime);
 
     [Test]
+    public async Task Timestamp_read_as_Unspecified_DateTime()
+    {
+        await using var command = DataSource.CreateCommand("SELECT '2020-03-01T10:30:00'::timestamp");
+        var dateTime = (DateTime)(await command.ExecuteScalarAsync())!;
+        Assert.That(dateTime.Kind, Is.EqualTo(DateTimeKind.Unspecified));
+    }
+
+    [Test]
+    public async Task Timestamptz_negative_infinity()
+    {
+        var dto = await AssertType(DateTimeOffset.MinValue, "-infinity", "timestamp with time zone", EDBDbType.TimestampTz,
+            DbType.DateTimeOffset, isDefaultForReading: false);
+        Assert.That(dto.Offset, Is.EqualTo(TimeSpan.Zero));
+    }
+
+    [Test]
+    public async Task Timestamptz_infinity()
+    {
+        var dto = await AssertType(
+            DateTimeOffset.MaxValue, "infinity", "timestamp with time zone", EDBDbType.TimestampTz, DbType.DateTimeOffset,
+            isDefaultForReading: false);
+        Assert.That(dto.Offset, Is.EqualTo(TimeSpan.Zero));
+    }
+
+    [Test]
     [TestCase(DateTimeKind.Utc, TestName = "Timestamptz_write_utc_DateTime_does_not_convert")]
     [TestCase(DateTimeKind.Unspecified, TestName = "Timestamptz_write_unspecified_DateTime_does_not_convert")]
     public Task Timestamptz_write_utc_DateTime_does_not_convert(DateTimeKind kind)

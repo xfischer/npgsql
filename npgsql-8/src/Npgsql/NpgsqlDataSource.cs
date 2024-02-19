@@ -31,7 +31,7 @@ public abstract class EDBDataSource : DbDataSource
     internal EDBDataSourceConfiguration Configuration { get; }
     internal EDBLoggingConfiguration LoggingConfiguration { get; }
 
-    readonly IPgTypeInfoResolver _resolver;
+    readonly PgTypeInfoResolverChain _resolverChain;
     internal PgSerializerOptions SerializerOptions { get; private set; } = null!; // Initialized at bootstrapping
 
     /// <summary>
@@ -117,8 +117,7 @@ public abstract class EDBDataSource : DbDataSource
 
         Debug.Assert(_passwordProvider is null || _passwordProviderAsync is not null);
 
-        // TODO probably want this on the options so it can devirt unconditionally.
-        _resolver = new TypeInfoResolverChain(resolverChain);
+        _resolverChain = resolverChain;
         _password = settings.Password;
 
         if (_periodicPasswordSuccessRefreshInterval != default)
@@ -249,7 +248,7 @@ public abstract class EDBDataSource : DbDataSource
                 new(PostgresMinimalDatabaseInfo.DefaultTypeCatalog)
                 {
                     TextEncoding = connector.TextEncoding,
-                    TypeInfoResolver = AdoTypeInfoResolverFactory.Instance.CreateResolver()
+                    TypeInfoResolver = AdoTypeInfoResolverFactory.Instance.CreateResolver(),
                 };
 
             EDBDatabaseInfo databaseInfo;
@@ -259,13 +258,13 @@ public abstract class EDBDataSource : DbDataSource
 
             connector.DatabaseInfo = DatabaseInfo = databaseInfo;
             connector.SerializerOptions = SerializerOptions =
-                new(databaseInfo, CreateTimeZoneProvider(connector.Timezone))
+                new(databaseInfo, _resolverChain, CreateTimeZoneProvider(connector.Timezone))
                 {
                     ArrayNullabilityMode = Settings.ArrayNullabilityMode,
                     EnableDateTimeInfinityConversions = !Statics.DisableDateTimeInfinityConversions,
                     TextEncoding = connector.TextEncoding,
-                    TypeInfoResolver = _resolver,
-                    DefaultNameTranslator = _defaultNameTranslator
+                    DefaultNameTranslator = _defaultNameTranslator,
+
                 };
 
             IsBootstrapped = true;
@@ -475,7 +474,7 @@ public abstract class EDBDataSource : DbDataSource
 
         _periodicPasswordProviderTimer?.Dispose();
         _setupMappingsSemaphore.Dispose();
-        MetricsReporter.Dispose(); // TODO: This is probably too early, dispose only when all connections have been closed?
+        MetricsReporter.Dispose();
 
         Clear();
     }
@@ -510,6 +509,7 @@ public abstract class EDBDataSource : DbDataSource
         }
 
         _setupMappingsSemaphore.Dispose();
+        MetricsReporter.Dispose();
 
         // TODO: async Clear, #4499
         Clear();

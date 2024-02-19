@@ -139,7 +139,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     {
                         deqMsg = queueListen.Dequeue();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         txn.Rollback();
                         throw;
@@ -155,7 +155,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                         // via Map
                         var obj2 = new MyXML();
+#pragma warning disable CS0618 // Type or member is obsolete
                         queueListen.Map<MyXML>(deqMsg.Payload, obj2);
+#pragma warning restore CS0618 // Type or member is obsolete
 
                         Assert.AreEqual(obj2.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
                         txn.Commit();
