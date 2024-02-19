@@ -1,4 +1,4 @@
-EDB is the open source .NET data provider for PostgreSQL. It allows you to connect and interact with PostgreSQL server using .NET.
+The EDB .NET Connector is .NET data provider for PostgreSQL. It allows you to connect and interact with PostgreSQL server using .NET.
 
 ## Quickstart
 
@@ -28,17 +28,14 @@ while (await reader.ReadAsync())
 
 ## Key features
 
-* High-performance PostgreSQL driver. Regularly figures in the top contenders on the [TechEmpower Web Framework Benchmarks](https://www.techempower.com/benchmarks/).
-* Full support of most PostgreSQL types, including advanced ones such as arrays, enums, ranges, multiranges, composites, JSON, PostGIS and others.
-* Highly-efficient bulk import/export API.
-* Failover, load balancing and general multi-host support.
+* Full support of EnterpriseDB Postgres Advanced Server.
 * Great integration with Entity Framework Core via [EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL](https://www.nuget.org/packages/EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL). 
 
-For the full documentation, please visit [the EDB website](https://www.npgsql.org).
+For the full documentation, please visit [the EDB website](https://www.enterprisedb.com/docs/net_connector/latest/).
 
 ## Related packages
 
 * The Entity Framework Core provider that works with this provider is [EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL](https://www.nuget.org/packages/EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL).
-* Spatial plugin to work with PostgreSQL PostGIS: [Npgsql.NetTopologySuite](https://www.nuget.org/packages/Npgsql.NetTopologySuite)
-* NodaTime plugin to use better date/time types with PostgreSQL: [Npgsql.NodaTime](https://www.nuget.org/packages/Npgsql.NodaTime)
-* OpenTelemetry support can be set up with [Npgsql.OpenTelemetry](https://www.nuget.org/packages/Npgsql.OpenTelemetry)
+* Spatial plugin to work with PostgreSQL PostGIS: [EnterpriseDB.EDBClient.NetTopologySuite](https://www.nuget.org/packages/EnterpriseDB.EDBClient.NetTopologySuite)
+* NodaTime plugin to use better date/time types with PostgreSQL: [EnterpriseDB.EDBClient.NodaTime](https://www.nuget.org/packages/EnterpriseDB.EDBClient.NodaTime)
+* OpenTelemetry support can be set up with [EnterpriseDB.EDBClient.OpenTelemetry](https://www.nuget.org/packages/EnterpriseDB.EDBClient.OpenTelemetry)

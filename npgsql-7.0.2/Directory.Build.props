@@ -15,10 +15,11 @@
 	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbols>false</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
 	<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	<PublishRepositoryUrl>false</PublishRepositoryUrl>
 	  
     <PackageIcon>edb-dotnet.png</PackageIcon>
     <NoWarn>$(NoWarn);NETSDK1138</NoWarn> <!-- The target framework is out of support  -->
