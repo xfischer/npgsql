@@ -121,17 +121,20 @@ public class PostgresRange
     /// <summary>
     /// The <see cref="Annotatable"/> that stores the range.
     /// </summary>
-    public virtual Annotatable Annotatable => (Annotatable)_annotatable;
+    public virtual Annotatable Annotatable
+        => (Annotatable)_annotatable;
 
     /// <summary>
     /// The range schema or null to represent the default schema.
     /// </summary>
-    public virtual string? Schema => GetData().Schema;
+    public virtual string? Schema
+        => GetData().Schema;
 
     /// <summary>
     /// The range name.
     /// </summary>
-    public virtual string Name => GetData().Name!;
+    public virtual string Name
+        => GetData().Name!;
 
     /// <summary>
     /// The subtype of the range.
@@ -178,14 +181,21 @@ public class PostgresRange
         set => SetData(subtypeDiff: value);
     }
 
-    private (string? Schema, string? Name, string? Subtype, string? CanonicalFunction, string? SubtypeOpClass, string? Collation, string? SubtypeDiff) GetData()
+    private (string? Schema, string? Name, string? Subtype, string? CanonicalFunction, string? SubtypeOpClass, string? Collation, string?
+        SubtypeDiff) GetData()
         => Deserialize(Annotatable.FindAnnotation(_annotationName)!);
 
-    private void SetData(string? subtype = null, string? canonicalFunction = null, string? subtypeOpClass = null, string? collation = null, string? subtypeDiff = null)
+    private void SetData(
+        string? subtype = null,
+        string? canonicalFunction = null,
+        string? subtypeOpClass = null,
+        string? collation = null,
+        string? subtypeDiff = null)
         => Annotatable[_annotationName] =
             $"{subtype ?? Subtype},{canonicalFunction ?? CanonicalFunction},{subtypeOpClass ?? SubtypeOpClass},{collation ?? Collation},{subtypeDiff ?? SubtypeDiff}";
 
-    private static (string? Schema, string? Name, string? Subtype, string? CanonicalFunction, string? SubtypeOpClass, string? Collation, string? SubtypeDiff)
+    private static (string? Schema, string? Name, string? Subtype, string? CanonicalFunction, string? SubtypeOpClass, string? Collation,
+        string? SubtypeDiff)
         Deserialize(IAnnotation? annotation)
     {
         if (annotation is null || !(annotation.Value is string value) || string.IsNullOrEmpty(value))

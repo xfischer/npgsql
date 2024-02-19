@@ -24,6 +24,14 @@ public class DateIntervalRangeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    public static DateIntervalRangeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     public DateIntervalRangeMapping()
         : base("daterange", typeof(DateInterval), EDBDbType.DateRange)
     {
@@ -55,17 +63,8 @@ public class DateIntervalRangeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new DateIntervalRangeMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new DateIntervalRangeMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -99,8 +98,10 @@ public class DateIntervalRangeMapping : NpgsqlTypeMapping
         var (start, end) = (DateInterval)value;
         return Expression.New(
             _constructorWithDates,
-            Expression.New(_localDateConstructor, Expression.Constant(start.Year), Expression.Constant(start.Month), Expression.Constant(start.Day)),
-            Expression.New(_localDateConstructor, Expression.Constant(end.Year), Expression.Constant(end.Month), Expression.Constant(end.Day))
+            Expression.New(
+                _localDateConstructor, Expression.Constant(start.Year), Expression.Constant(start.Month), Expression.Constant(start.Day)),
+            Expression.New(
+                _localDateConstructor, Expression.Constant(end.Year), Expression.Constant(end.Month), Expression.Constant(end.Day))
         );
     }
 }

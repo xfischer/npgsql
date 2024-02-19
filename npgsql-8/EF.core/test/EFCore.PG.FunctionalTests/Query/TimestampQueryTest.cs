@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 // The EF Core specification test suite has:
 //
@@ -19,7 +18,7 @@ public class TimestampQueryTest : QueryTestBase<TimestampQueryTest.TimestampQuer
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     #region Basic mapping
@@ -57,31 +56,31 @@ public class TimestampQueryTest : QueryTestBase<TimestampQueryTest.TimestampQuer
     [ConditionalFact]
     public async Task Cannot_insert_utc_datetime_into_timestamp()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        ctx.Entities.Add(new() { TimestampDateTime = DateTime.UtcNow });
+        ctx.Entities.Add(new Entity { TimestampDateTime = DateTime.UtcNow });
         var exception = await Assert.ThrowsAsync<DbUpdateException>(() => ctx.SaveChangesAsync());
-        Assert.IsType<InvalidCastException>(exception.InnerException);
+        Assert.IsType<ArgumentException>(exception.InnerException);
     }
 
     [ConditionalFact]
     public async Task Cannot_insert_unspecified_datetime_into_timestamptz()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        ctx.Entities.Add(new() { TimestamptzDateTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified) });
+        ctx.Entities.Add(new Entity { TimestamptzDateTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified) });
         var exception = await Assert.ThrowsAsync<DbUpdateException>(() => ctx.SaveChangesAsync());
-        Assert.IsType<InvalidCastException>(exception.InnerException);
+        Assert.IsType<ArgumentException>(exception.InnerException);
     }
 
     [ConditionalFact]
     public async Task Cannot_insert_local_datetime_into_timestamptz()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        ctx.Entities.Add(new() { TimestamptzDateTime = DateTime.Now });
+        ctx.Entities.Add(new Entity { TimestamptzDateTime = DateTime.Now });
         var exception = await Assert.ThrowsAsync<DbUpdateException>(() => ctx.SaveChangesAsync());
-        Assert.IsType<InvalidCastException>(exception.InnerException);
+        Assert.IsType<ArgumentException>(exception.InnerException);
     }
 
     #endregion Basic mapping
@@ -95,14 +94,13 @@ public class TimestampQueryTest : QueryTestBase<TimestampQueryTest.TimestampQuer
         // Note that we're in the Europe/Berlin timezone (see NpgsqlTestStore below)
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Local)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Local)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE e."TimestampDateTime" = TIMESTAMP '1998-04-12 15:26:38'
+WHERE e."TimestampDateTime" = TIMESTAMP '1998-04-12T15:26:38'
 """);
     }
 
@@ -114,12 +112,12 @@ WHERE e."TimestampDateTime" = TIMESTAMP '1998-04-12 15:26:38'
 
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == dateTime),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == dateTime));
 
         // The string representation of our local DateTime is generated with the local time zone (by the EF Core test infra),
         // so we can't assert on it.
-        Assert.Contains("""
+        Assert.Contains(
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
 WHERE e."TimestampDateTime" = @__dateTime_0
@@ -137,11 +135,10 @@ WHERE e."TimestampDateTime" = @__dateTime_0
 
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == dateTime),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime == dateTime));
 
         AssertSql(
-"""
+            """
 @__dateTime_0='1998-04-12T15:26:38.0000000'
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
@@ -153,9 +150,9 @@ WHERE e."TimestampDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamp_column_to_utc_DateTime_literal()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestampDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc))
                 .ToListAsync());
     }
@@ -163,11 +160,11 @@ WHERE e."TimestampDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamp_column_to_utc_DateTime_parameter()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var dateTime = new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc);
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestampDateTime == dateTime)
                 .ToListAsync());
     }
@@ -178,14 +175,13 @@ WHERE e."TimestampDateTime" = @__dateTime_0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE e."TimestamptzDateTime" = TIMESTAMPTZ '1998-04-12 13:26:38Z'
+WHERE e."TimestamptzDateTime" = TIMESTAMPTZ '1998-04-12T13:26:38Z'
 """);
     }
 
@@ -197,11 +193,10 @@ WHERE e."TimestamptzDateTime" = TIMESTAMPTZ '1998-04-12 13:26:38Z'
 
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime == dateTime),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime == dateTime));
 
         AssertSql(
-"""
+            """
 @__dateTime_0='1998-04-12T13:26:38.0000000Z' (DbType = DateTime)
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
@@ -213,9 +208,9 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamptz_column_to_local_DateTime_literal()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestamptzDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Local))
                 .ToListAsync());
     }
@@ -223,11 +218,11 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamptz_column_to_local_DateTime_parameter()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var dateTime = new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Local);
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestamptzDateTime == dateTime)
                 .ToListAsync());
     }
@@ -235,9 +230,9 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamptz_column_to_unspecified_DateTime_literal()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestamptzDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified))
                 .ToListAsync());
     }
@@ -245,11 +240,11 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamptz_column_to_unspecified_DateTime_parameter()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var dateTime = new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified);
 
-        await Assert.ThrowsAsync<InvalidCastException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => ctx.Entities.Where(e => e.TimestamptzDateTime == dateTime)
                 .ToListAsync());
     }
@@ -257,7 +252,7 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Cannot_compare_timestamptz_column_to_timestamp_column()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         await Assert.ThrowsAsync<NotSupportedException>(
             () => ctx.Entities.Where(e => e.TimestamptzDateTime == e.TimestampDateTime)
@@ -267,7 +262,7 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
     [ConditionalFact]
     public async Task Compare_timestamptz_column_to_timestamp_column_with_ToUniversalTime()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         // We can't use AssertQuery since the local (expected) evaluation is dependent on the machine's timezone, which is out of
         // our control.
@@ -278,7 +273,7 @@ WHERE e."TimestamptzDateTime" = @__dateTime_0
         Assert.Equal(1, count);
 
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "Entities" AS e
 WHERE e."TimestamptzDateTime" = e."TimestampDateTime"::timestamptz
@@ -288,7 +283,7 @@ WHERE e."TimestamptzDateTime" = e."TimestampDateTime"::timestamptz
     [ConditionalFact]
     public async Task Compare_timestamptz_column_to_timestamp_column_with_ToLocalTime()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         // We can't use AssertQuery since the local (expected) evaluation is dependent on the machine's timezone, which is out of
         // our control.
@@ -299,7 +294,7 @@ WHERE e."TimestamptzDateTime" = e."TimestampDateTime"::timestamptz
         Assert.Equal(1, count);
 
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "Entities" AS e
 WHERE e."TimestamptzDateTime"::timestamp = e."TimestampDateTime"
@@ -318,11 +313,10 @@ WHERE e."TimestamptzDateTime"::timestamp = e."TimestampDateTime"
 
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(c => DateTime.Now != myDatetime),
-            entryCount: 2);
+            ss => ss.Set<Entity>().Where(c => DateTime.Now != myDatetime));
 
         AssertSql(
-"""
+            """
 @__myDatetime_0='2015-04-10T00:00:00.0000000'
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
@@ -339,11 +333,10 @@ WHERE now()::timestamp <> @__myDatetime_0
 
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(c => DateTime.UtcNow != myDatetime),
-            entryCount: 2);
+            ss => ss.Set<Entity>().Where(c => DateTime.UtcNow != myDatetime));
 
         AssertSql(
-"""
+            """
 @__myDatetime_0='2015-04-10T00:00:00.0000000Z' (DbType = DateTime)
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
@@ -363,14 +356,13 @@ WHERE now() <> @__myDatetime_0
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime.Date == new DateTime(1998, 4, 12, 0, 0, 0, DateTimeKind.Utc)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestamptzDateTime.Date == new DateTime(1998, 4, 12, 0, 0, 0, DateTimeKind.Utc)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE date_trunc('day', e."TimestamptzDateTime", 'UTC') = TIMESTAMPTZ '1998-04-12 00:00:00Z'
+WHERE date_trunc('day', e."TimestamptzDateTime", 'UTC') = TIMESTAMPTZ '1998-04-12T00:00:00Z'
 """);
     }
 
@@ -380,14 +372,13 @@ WHERE date_trunc('day', e."TimestamptzDateTime", 'UTC') = TIMESTAMPTZ '1998-04-1
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime.Date == new DateTime(1998, 4, 12, 0, 0, 0, DateTimeKind.Local)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(e => e.TimestampDateTime.Date == new DateTime(1998, 4, 12, 0, 0, 0, DateTimeKind.Local)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE date_trunc('day', e."TimestampDateTime") = TIMESTAMP '1998-04-12 00:00:00'
+WHERE date_trunc('day', e."TimestampDateTime") = TIMESTAMP '1998-04-12T00:00:00'
 """);
     }
 
@@ -403,14 +394,13 @@ WHERE date_trunc('day', e."TimestampDateTime") = TIMESTAMP '1998-04-12 00:00:00'
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => e.TimestampDateTimeOffset.DateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)),
-            entryCount: 1);
+                e => e.TimestampDateTimeOffset.DateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (e."TimestampDateTimeOffset" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 13:26:38'
+WHERE e."TimestampDateTimeOffset" AT TIME ZONE 'UTC' = TIMESTAMP '1998-04-12T13:26:38'
 """);
     }
 
@@ -423,14 +413,13 @@ WHERE (e."TimestampDateTimeOffset" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 1
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => e.TimestampDateTimeOffset.UtcDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc)),
-            entryCount: 1);
+                e => e.TimestampDateTimeOffset.UtcDateTime == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE e."TimestampDateTimeOffset" = TIMESTAMPTZ '1998-04-12 13:26:38Z'
+WHERE e."TimestampDateTimeOffset" = TIMESTAMPTZ '1998-04-12T13:26:38Z'
 """);
     }
 
@@ -450,10 +439,10 @@ WHERE e."TimestampDateTimeOffset" = TIMESTAMPTZ '1998-04-12 13:26:38Z'
         Assert.Equal(1, count);
 
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "Entities" AS e
-WHERE e."TimestampDateTimeOffset"::timestamp = TIMESTAMP '1998-04-12 15:26:38'
+WHERE e."TimestampDateTimeOffset"::timestamp = TIMESTAMP '1998-04-12T15:26:38'
 """);
     }
 
@@ -466,7 +455,7 @@ WHERE e."TimestampDateTimeOffset"::timestamp = TIMESTAMP '1998-04-12 15:26:38'
             ss => ss.Set<Entity>().Select(e => new { e.TimestampDateTimeOffset.Date }));
 
         AssertSql(
-"""
+            """
 SELECT date_trunc('day', e."TimestampDateTimeOffset" AT TIME ZONE 'UTC') AS "Date"
 FROM "Entities" AS e
 """);
@@ -491,14 +480,16 @@ FROM "Entities" AS e
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e =>
-                new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1) == new DateTime(1998, 4, 12)));
+            ss => ss.Set<Entity>().Where(
+                e =>
+                    new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1) == new DateTime(1998, 4, 12)),
+            assertEmpty: true);
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE make_date(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1) = TIMESTAMP '1998-04-12 00:00:00'
+WHERE make_date(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1) = TIMESTAMP '1998-04-12T00:00:00'
 """);
     }
 
@@ -508,14 +499,16 @@ WHERE make_date(date_part('year', e."TimestampDateTime")::int, date_part('month'
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e =>
-                new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1, 0, 0, 0) == new DateTime(1998, 4, 12)));
+            ss => ss.Set<Entity>().Where(
+                e =>
+                    new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1, 0, 0, 0) == new DateTime(1998, 4, 12)),
+            assertEmpty: true);
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1, 0, 0, 0::double precision) = TIMESTAMP '1998-04-12 00:00:00'
+WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1, 0, 0, 0::double precision) = TIMESTAMP '1998-04-12T00:00:00'
 """);
     }
 
@@ -525,14 +518,17 @@ WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('m
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e =>
-                new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1, 0, 0, 0, DateTimeKind.Local) == new DateTime(1996, 9, 11)));
+            ss => ss.Set<Entity>().Where(
+                e =>
+                    new DateTime(e.TimestampDateTime.Year, e.TimestampDateTime.Month, 1, 0, 0, 0, DateTimeKind.Local)
+                    == new DateTime(1996, 9, 11)),
+            assertEmpty: true);
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1, 0, 0, 0::double precision) = TIMESTAMP '1996-09-11 00:00:00'
+WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('month', e."TimestampDateTime")::int, 1, 0, 0, 0::double precision) = TIMESTAMP '1996-09-11T00:00:00'
 """);
     }
 
@@ -545,14 +541,13 @@ WHERE make_timestamp(date_part('year', e."TimestampDateTime")::int, date_part('m
             ss => ss.Set<Entity>().Where(
                 o =>
                     new DateTime(o.TimestamptzDateTime.Year, o.TimestamptzDateTime.Month, 1, 0, 0, 0, DateTimeKind.Utc)
-                    == new DateTime(1998, 4, 1, 0, 0, 0, DateTimeKind.Utc)),
-            entryCount: 1);
+                    == new DateTime(1998, 4, 1, 0, 0, 0, DateTimeKind.Utc)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE make_timestamptz(date_part('year', e."TimestamptzDateTime")::int, date_part('month', e."TimestamptzDateTime")::int, 1, 0, 0, 0::double precision, 'UTC') = TIMESTAMPTZ '1998-04-01 00:00:00Z'
+WHERE make_timestamptz(date_part('year', e."TimestamptzDateTime" AT TIME ZONE 'UTC')::int, date_part('month', e."TimestamptzDateTime" AT TIME ZONE 'UTC')::int, 1, 0, 0, 0::double precision, 'UTC') = TIMESTAMPTZ '1998-04-01T00:00:00Z'
 """);
     }
 
@@ -566,14 +561,15 @@ WHERE make_timestamptz(date_part('year', e."TimestamptzDateTime")::int, date_par
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => DateTime.SpecifyKind(e.TimestampDateTime, DateTimeKind.Utc) == new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Utc)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(
+                e => DateTime.SpecifyKind(e.TimestampDateTime, DateTimeKind.Utc)
+                    == new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Utc)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (e."TimestampDateTime" AT TIME ZONE 'UTC') = TIMESTAMPTZ '1998-04-12 15:26:38Z'
+WHERE e."TimestampDateTime" AT TIME ZONE 'UTC' = TIMESTAMPTZ '1998-04-12T15:26:38Z'
 """);
     }
 
@@ -583,14 +579,15 @@ WHERE (e."TimestampDateTime" AT TIME ZONE 'UTC') = TIMESTAMPTZ '1998-04-12 15:26
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => DateTime.SpecifyKind(e.TimestamptzDateTime, DateTimeKind.Unspecified) == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(
+                e => DateTime.SpecifyKind(e.TimestamptzDateTime, DateTimeKind.Unspecified)
+                    == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (e."TimestamptzDateTime" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 13:26:38'
+WHERE e."TimestamptzDateTime" AT TIME ZONE 'UTC' = TIMESTAMP '1998-04-12T13:26:38'
 """);
     }
 
@@ -600,21 +597,22 @@ WHERE (e."TimestamptzDateTime" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 13:26
     {
         await AssertQuery(
             async,
-            ss => ss.Set<Entity>().Where(e => DateTime.SpecifyKind(e.TimestamptzDateTime, DateTimeKind.Local) == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)),
-            entryCount: 1);
+            ss => ss.Set<Entity>().Where(
+                e => DateTime.SpecifyKind(e.TimestamptzDateTime, DateTimeKind.Local)
+                    == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Unspecified)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (e."TimestamptzDateTime" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 13:26:38'
+WHERE e."TimestamptzDateTime" AT TIME ZONE 'UTC' = TIMESTAMP '1998-04-12T13:26:38'
 """);
     }
 
     [ConditionalFact]
     public async Task DateTime_SpecifyKind_with_parameter_kind_throws()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var kind = DateTimeKind.Local;
 
@@ -636,21 +634,20 @@ WHERE (e."TimestamptzDateTime" AT TIME ZONE 'UTC') = TIMESTAMP '1998-04-12 13:26
             async,
             ss => ss.Set<Entity>().Where(
                 c => TimeZoneInfo.ConvertTimeBySystemTimeZoneId(c.TimestamptzDateTime, "Europe/Berlin")
-                    == new DateTime(1998, 4, 12, 15, 26, 38)),
-            entryCount: 1);
+                    == new DateTime(1998, 4, 12, 15, 26, 38)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (e."TimestamptzDateTime" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '1998-04-12 15:26:38'
+WHERE e."TimestamptzDateTime" AT TIME ZONE 'Europe/Berlin' = TIMESTAMP '1998-04-12T15:26:38'
 """);
     }
 
     [ConditionalFact]
     public virtual async Task Where_ConvertTimeBySystemTimeZoneId_fails_on_DateTime_timestamp_column()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => ctx.Set<Entity>().Where(
@@ -663,7 +660,7 @@ WHERE (e."TimestamptzDateTime" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '1998-0
     {
         // We can't use AssertQuery since the local (expected) evaluation is dependent on the machine's timezone, which is out of
         // our control.
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         var count = await ctx.Set<Entity>()
             .Where(e => TimeZoneInfo.ConvertTimeToUtc(e.TimestampDateTime) == new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc))
@@ -672,17 +669,17 @@ WHERE (e."TimestamptzDateTime" AT TIME ZONE 'Europe/Berlin') = TIMESTAMP '1998-0
         Assert.Equal(1, count);
 
         AssertSql(
-"""
+            """
 SELECT count(*)::int
 FROM "Entities" AS e
-WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12 13:26:38Z'
+WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12T13:26:38Z'
 """);
     }
 
     [ConditionalFact]
     public virtual async Task Where_ConvertTimeToUtc_fails_on_DateTime_timestamptz_column()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => ctx.Set<Entity>().Where(
@@ -709,8 +706,7 @@ WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12 13:26:38Z'
             await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => e.TimestamptzDateTime.ToLocalTime().Date == new DateTime(1998, 4, 12)),
-            entryCount: 1);
+                e => e.TimestamptzDateTime.ToLocalTime().Date == new DateTime(1998, 4, 12)));
 
             AssertSql(
 """
@@ -724,14 +720,13 @@ WHERE date_trunc('day', e."TimestamptzDateTime"::timestamp) = TIMESTAMP '1998-04
             await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => DateOnly.FromDateTime(e.TimestamptzDateTime) == new DateOnly(1998, 4, 12)),
-            entryCount: 1);
+                e => DateOnly.FromDateTime(e.TimestamptzDateTime) == new DateOnly(1998, 4, 12)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04-12'
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS date) = DATE '1998-04-12'
 """);
         }
 
@@ -744,13 +739,12 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) = DATE '1998-04
     public virtual async Task DateOnly_FromDateTime_with_timestamp(bool async)
     {
         await AssertQuery(
-           async,
-           ss => ss.Set<Entity>().Where(
-               e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)),
-           entryCount: 1);
+            async,
+            ss => ss.Set<Entity>().Where(
+                e => DateOnly.FromDateTime(e.TimestampDateTime) == new DateOnly(1998, 4, 12)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
 WHERE e."TimestampDateTime"::date = DATE '1998-04-12'
@@ -768,14 +762,14 @@ WHERE e."TimestampDateTime"::date = DATE '1998-04-12'
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => DateOnly.FromDateTime(e.TimestamptzDateTime).ToDateTime(new TimeOnly(15, 26, 38)) == new DateTime(1998, 4, 12, 15, 26, 38)),
-            entryCount: 1);
+                e => DateOnly.FromDateTime(e.TimestamptzDateTime).ToDateTime(new TimeOnly(15, 26, 38))
+                    == new DateTime(1998, 4, 12, 15, 26, 38)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE (CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) + TIME '15:26:38') = TIMESTAMP '1998-04-12 15:26:38'
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS date) + TIME '15:26:38' = TIMESTAMP '1998-04-12T15:26:38'
 """);
     }
 
@@ -790,11 +784,10 @@ WHERE (CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS date) + TIME '15:26:
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => TimeOnly.FromDateTime(e.TimestampDateTime) == new TimeOnly(15, 26, 38)),
-            entryCount: 1);
+                e => TimeOnly.FromDateTime(e.TimestampDateTime) == new TimeOnly(15, 26, 38)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
 WHERE e."TimestampDateTime"::time without time zone = TIME '15:26:38'
@@ -808,14 +801,13 @@ WHERE e."TimestampDateTime"::time without time zone = TIME '15:26:38'
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => TimeOnly.FromDateTime(e.TimestamptzDateTime) == new TimeOnly(13, 26, 38)),
-            entryCount: 1);
+                e => TimeOnly.FromDateTime(e.TimestamptzDateTime) == new TimeOnly(13, 26, 38)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zone) = TIME '13:26:38'
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone) = TIME '13:26:38'
 """);
     }
 
@@ -826,14 +818,13 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => TimeOnly.FromDateTime(e.TimestamptzDateTime) == new TimeOnly(13, 26, 38)),
-            entryCount: 1);
+                e => TimeOnly.FromDateTime(e.TimestamptzDateTime) == new TimeOnly(13, 26, 38)));
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
 FROM "Entities" AS e
-WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zone) = TIME '13:26:38'
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone) = TIME '13:26:38'
 """);
     }
 
@@ -847,7 +838,7 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         // This scenario requires that the provider correctly infer the range's type mapping from the subtype's
         using var ctx = CreateContext();
 
-        var range = new EDBRange<DateTime>(new(1998, 4, 12), new (1998, 4, 13));
+        var range = new EDBRange<DateTime>(new DateTime(1998, 4, 12), new DateTime(1998, 4, 13));
 
         var id = ctx.Entities.Single(e => range.Contains(e.TimestampDateTime)).Id;
         Assert.Equal(1, id);
@@ -867,7 +858,10 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
     {
         public DbSet<Entity> Entities { get; set; }
 
-        public TimestampQueryContext(DbContextOptions options) : base(options) {}
+        public TimestampQueryContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         public static void Seed(TimestampQueryContext context)
         {
@@ -881,13 +875,17 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         public int Id { get; set; }
 
         public DateTime TimestamptzDateTime { get; set; }
+
         [Column(TypeName = "timestamp without time zone")]
         public DateTime TimestampDateTime { get; set; }
+
         public DateTimeOffset TimestampDateTimeOffset { get; set; }
 
         public DateTime[] TimestamptzDateTimeArray { get; set; }
+
         [Column(TypeName = "timestamp without time zone[]")]
         public DateTime[] TimestampDateTimeArray { get; set; }
+
         public DateTimeOffset[] TimestampDateTimeOffsetArray { get; set; }
 
         public EDBRange<DateTime> TimestamptzDateTimeRange { get; set; }
@@ -895,11 +893,10 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         public EDBRange<DateTime> TimestampDateTimeRange { get; set; }
     }
 
-#nullable restore
-
     public class TimestampQueryFixture : SharedStoreFixtureBase<TimestampQueryContext>, IQueryFixtureBase
     {
-        protected override string StoreName => "TimestampQueryTest";
+        protected override string StoreName
+            => "TimestampQueryTest";
 
         // Set the PostgreSQL TimeZone parameter to something local, to ensure that operations which take TimeZone into account
         // don't depend on the database's time zone, and also that operations which shouldn't take TimeZone into account indeed
@@ -907,11 +904,13 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         protected override ITestStoreFactory TestStoreFactory
             => NpgsqlTestStoreFactory.WithConnectionStringOptions("-c TimeZone=Europe/Berlin");
 
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
 
         private TimestampData _expectedData;
 
-        protected override void Seed(TimestampQueryContext context) => TimestampQueryContext.Seed(context);
+        protected override void Seed(TimestampQueryContext context)
+            => TimestampQueryContext.Seed(context);
 
         public Func<DbContext> GetContextCreator()
             => CreateContext;
@@ -958,7 +957,9 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
         public IReadOnlyList<Entity> Entities { get; }
 
         public TimestampData()
-            => Entities = CreateEntities();
+        {
+            Entities = CreateEntities();
+        }
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class
@@ -980,20 +981,17 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
 
             var utcDateTimeArray1 = new[]
             {
-                new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc),
-                new DateTime(1998, 4, 12, 17, 26, 38, DateTimeKind.Utc)
+                new DateTime(1998, 4, 12, 13, 26, 38, DateTimeKind.Utc), new DateTime(1998, 4, 12, 17, 26, 38, DateTimeKind.Utc)
             };
 
             var localDateTimeArray1 = new[]
             {
-                new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Local),
-                new DateTime(1998, 4, 13, 15, 26, 38, DateTimeKind.Local)
+                new DateTime(1998, 4, 12, 15, 26, 38, DateTimeKind.Local), new DateTime(1998, 4, 13, 15, 26, 38, DateTimeKind.Local)
             };
 
             var utcDateTimeArray2 = new[]
             {
-                new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc),
-                new DateTime(2015, 1, 28, 8, 45, 12, 345, DateTimeKind.Utc)
+                new DateTime(2015, 1, 27, 8, 45, 12, 345, DateTimeKind.Utc), new DateTime(2015, 1, 28, 8, 45, 12, 345, DateTimeKind.Utc)
             };
 
             var localDateTimeArray2 = new[]
@@ -1013,15 +1011,12 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
                 new()
                 {
                     Id = 1,
-
                     TimestamptzDateTime = utcDateTime1,
                     TimestampDateTime = localDateTime1,
                     TimestampDateTimeOffset = new DateTimeOffset(utcDateTime1),
-
                     TimestamptzDateTimeArray = utcDateTimeArray1,
                     TimestampDateTimeArray = localDateTimeArray1,
                     TimestampDateTimeOffsetArray = new DateTimeOffset[] { new(utcDateTimeArray1[0]), new(utcDateTimeArray1[1]) },
-
                     TimestamptzDateTimeRange = utcDateTimeRange1,
                     TimestampDateTimeRange = localDateTimeRange1,
                 },
@@ -1031,11 +1026,9 @@ WHERE CAST((e."TimestamptzDateTime" AT TIME ZONE 'UTC') AS time without time zon
                     TimestamptzDateTime = utcDateTime2,
                     TimestampDateTime = unspecifiedDateTime2,
                     TimestampDateTimeOffset = new DateTimeOffset(utcDateTime2),
-
                     TimestamptzDateTimeArray = utcDateTimeArray2,
                     TimestampDateTimeArray = localDateTimeArray2,
                     TimestampDateTimeOffsetArray = new DateTimeOffset[] { new(utcDateTimeArray2[0]), new(utcDateTimeArray2[1]) },
-
                     TimestamptzDateTimeRange = utcDateTimeRange2,
                     TimestampDateTimeRange = localDateTimeRange2,
                 }

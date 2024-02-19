@@ -1,4 +1,6 @@
-﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
+﻿using Microsoft.EntityFrameworkCore.Storage.Json;
+
+namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -6,7 +8,7 @@
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-public class NpgsqlUintTypeMapping : NpgsqlTypeMapping
+public class NpgsqlUIntTypeMapping : NpgsqlTypeMapping
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -14,8 +16,10 @@ public class NpgsqlUintTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlUintTypeMapping(string storeType, EDBDbType npgsqlDbType)
-        : base(storeType, typeof(uint), npgsqlDbType) {}
+    public NpgsqlUIntTypeMapping(string storeType, EDBDbType npgsqlDbType)
+        : base(storeType, typeof(uint), npgsqlDbType, JsonUInt32ReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -23,8 +27,10 @@ public class NpgsqlUintTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected NpgsqlUintTypeMapping(RelationalTypeMappingParameters parameters, EDBDbType npgsqlDbType)
-        : base(parameters, npgsqlDbType) {}
+    protected NpgsqlUIntTypeMapping(RelationalTypeMappingParameters parameters, EDBDbType npgsqlDbType)
+        : base(parameters, npgsqlDbType)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -33,5 +39,5 @@ public class NpgsqlUintTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlUintTypeMapping(parameters, EDBDbType);
+        => new NpgsqlUIntTypeMapping(parameters, NpgsqlDbType);
 }

@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -16,8 +18,20 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    public static NpgsqlPgLsnTypeMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     public NpgsqlPgLsnTypeMapping()
-        : base("pg_lsn", typeof(EDBLogSequenceNumber), EDBDbType.PgLsn) {}
+        : base(
+            "pg_lsn", typeof(NpgsqlLogSequenceNumber), EDBDbType.PgLsn,
+            jsonValueReaderWriter: JsonLogSequenceNumberReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,7 +40,9 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlPgLsnTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.PgLsn) {}
+        : base(parameters, EDBDbType.PgLsn)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -66,4 +82,19 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
 
     private static readonly ConstructorInfo Constructor =
         typeof(EDBLogSequenceNumber).GetConstructor(new[] { typeof(ulong) })!;
+
+    private sealed class JsonLogSequenceNumberReaderWriter : JsonValueReaderWriter<EDBLogSequenceNumber>
+    {
+        public static JsonLogSequenceNumberReaderWriter Instance { get; } = new();
+
+        private JsonLogSequenceNumberReaderWriter()
+        {
+        }
+
+        public override EDBLogSequenceNumber FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+            => EDBLogSequenceNumber.Parse(manager.CurrentReader.GetString()!);
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, EDBLogSequenceNumber value)
+            => writer.WriteStringValue(value.ToString());
+    }
 }

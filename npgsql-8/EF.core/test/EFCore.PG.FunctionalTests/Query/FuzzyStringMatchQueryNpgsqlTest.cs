@@ -18,7 +18,7 @@ public class FuzzyStringMatchQueryNpgsqlTest : IClassFixture<FuzzyStringMatchQue
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     #region FunctionTests
@@ -131,10 +131,17 @@ public class FuzzyStringMatchQueryNpgsqlTest : IClassFixture<FuzzyStringMatchQue
     /// </summary>
     public class FuzzyStringMatchQueryNpgsqlFixture : SharedStoreFixtureBase<FuzzyStringMatchContext>
     {
-        protected override string StoreName => "FuzzyStringMatchQueryTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
-        protected override void Seed(FuzzyStringMatchContext context) => FuzzyStringMatchContext.Seed(context);
+        protected override string StoreName
+            => "FuzzyStringMatchQueryTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
+
+        protected override void Seed(FuzzyStringMatchContext context)
+            => FuzzyStringMatchContext.Seed(context);
     }
 
     /// <summary>
@@ -171,7 +178,10 @@ public class FuzzyStringMatchQueryNpgsqlTest : IClassFixture<FuzzyStringMatchQue
         /// <param name="options">
         /// The options to be used for configuration.
         /// </param>
-        public FuzzyStringMatchContext(DbContextOptions options) : base(options) {}
+        public FuzzyStringMatchContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -186,12 +196,9 @@ public class FuzzyStringMatchQueryNpgsqlTest : IClassFixture<FuzzyStringMatchQue
             {
                 var text = "Some text " + i;
                 context.FuzzyStringMatchTestEntities.Add(
-                    new FuzzyStringMatchTestEntity
-                    {
-                        Id = i,
-                        Text = text
-                    });
+                    new FuzzyStringMatchTestEntity { Id = i, Text = text });
             }
+
             context.SaveChanges();
         }
     }
@@ -200,15 +207,18 @@ public class FuzzyStringMatchQueryNpgsqlTest : IClassFixture<FuzzyStringMatchQue
 
     #region Helpers
 
-    protected FuzzyStringMatchContext CreateContext() => Fixture.CreateContext();
+    protected FuzzyStringMatchContext CreateContext()
+        => Fixture.CreateContext();
 
-    private void AssertSql(params string[] expected) => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
+    private void AssertSql(params string[] expected)
+        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
     /// <summary>
     /// Asserts that the SQL fragment appears in the logs.
     /// </summary>
     /// <param name="sql">The SQL statement or fragment to search for in the logs.</param>
-    private void AssertContainsSql(string sql) => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
+    private void AssertContainsSql(string sql)
+        => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
 
     #endregion
 }

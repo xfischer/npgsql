@@ -35,7 +35,33 @@ public static class NpgsqlDbFunctionsExtensions
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(ILike)));
 
     /// <summary>
-    /// Reverses a string by calling PostgreSQL <c>reverse()</c>.
+    ///     Splits <paramref name="value" /> at occurrences of delimiter and forms the resulting fields into a text array.
+    /// </summary>
+    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
+    /// <param name="value">The string to be split.</param>
+    /// <param name="delimiter">
+    ///     If <c>null</c>, each character in the string will become a separate element in the array.
+    ///     If an empty string, the string is treated as a single field.
+    /// </param>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static string[] StringToArray(this DbFunctions _, string value, string delimiter)
+        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(StringToArray)));
+
+    /// <summary>
+    ///     Splits <paramref name="value" /> at occurrences of delimiter and forms the resulting fields into a text array.
+    /// </summary>
+    /// <param name="_">The <see cref="DbFunctions" /> instance.</param>
+    /// <param name="value">The string to be split.</param>
+    /// <param name="delimiter">
+    ///     If <c>null</c>, each character in the string will become a separate element in the array.
+    ///     If an empty string, the string is treated as a single field.
+    /// </param>
+    /// <param name="nullString">Fields matching this value string are replaced by <c>null</c>.</param>
+    public static string[] StringToArray(this DbFunctions _, string value, string delimiter, string nullString)
+        => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(StringToArray)));
+
+    /// <summary>
+    ///     Reverses a string by calling PostgreSQL <c>reverse()</c>.
     /// </summary>
     /// <param name="_">The <see cref="DbFunctions"/> instance.</param>
     /// <param name="value">The string that is to be reversed.</param>
@@ -49,8 +75,9 @@ public static class NpgsqlDbFunctionsExtensions
     /// </summary>
     /// <remarks>
     ///     For more information on row value comparisons, see
-    ///     <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">the PostgreSQL documentation
-    ///     </see>.
+    ///     <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">
+    ///         the PostgreSQL documentation.
+    ///     </see>
     /// </remarks>
     public static bool GreaterThan(this DbFunctions _, ITuple a, ITuple b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(GreaterThan)));
@@ -59,9 +86,10 @@ public static class NpgsqlDbFunctionsExtensions
     /// Returns whether the row value represented by <paramref name="a" /> is less than the row value represented by <paramref name="b" />.
     /// </summary>
     /// <remarks>
-    /// For more information on row value comparisons, see
-    /// <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">the PostgreSQL documentation
-    /// </see>.
+    ///     For more information on row value comparisons, see
+    ///     <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">
+    ///         the PostgreSQL documentation.
+    ///     </see>
     /// </remarks>
     public static bool LessThan(this DbFunctions _, ITuple a, ITuple b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(LessThan)));
@@ -71,9 +99,10 @@ public static class NpgsqlDbFunctionsExtensions
     /// <paramref name="b" />.
     /// </summary>
     /// <remarks>
-    /// For more information on row value comparisons, see
-    /// <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">the PostgreSQL documentation
-    /// </see>.
+    ///     For more information on row value comparisons, see
+    ///     <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">
+    ///         the PostgreSQL documentation.
+    ///     </see>
     /// </remarks>
     public static bool GreaterThanOrEqual(this DbFunctions _, ITuple a, ITuple b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(GreaterThanOrEqual)));
@@ -83,9 +112,10 @@ public static class NpgsqlDbFunctionsExtensions
     /// <paramref name="b" />.
     /// </summary>
     /// <remarks>
-    /// For more information on row value comparisons, see
-    /// <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">the PostgreSQL documentation
-    /// </see>.
+    ///     For more information on row value comparisons, see
+    ///     <see href="https://www.postgresql.org/docs/current/functions-comparisons.html#ROW-WISE-COMPARISON">
+    ///         the PostgreSQL documentation.
+    ///     </see>
     /// </remarks>
     public static bool LessThanOrEqual(this DbFunctions _, ITuple a, ITuple b)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(LessThanOrEqual)));

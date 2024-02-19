@@ -14,7 +14,9 @@ public class NpgsqlDbContextOptionsBuilder
     /// </summary>
     /// <param name="optionsBuilder"> The core options builder.</param>
     public NpgsqlDbContextOptionsBuilder(DbContextOptionsBuilder optionsBuilder)
-        : base(optionsBuilder) {}
+        : base(optionsBuilder)
+    {
+    }
 
     /// <summary>
     /// Connect to this database for administrative operations (creating/dropping databases).

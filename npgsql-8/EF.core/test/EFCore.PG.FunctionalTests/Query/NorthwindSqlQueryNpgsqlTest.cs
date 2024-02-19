@@ -1,6 +1,3 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
 using System.Data.Common;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
@@ -18,7 +15,7 @@ public class NorthwindSqlQueryNpgsqlTest : NorthwindSqlQueryTestBase<NorthwindQu
         await base.SqlQueryRaw_over_int(async);
 
         AssertSql(
-"""
+            """
 SELECT "ProductID" FROM "Products"
 """);
     }
@@ -28,15 +25,15 @@ SELECT "ProductID" FROM "Products"
         await base.SqlQuery_composed_Contains(async);
 
         AssertSql(
-"""
+            """
 SELECT o."OrderID", o."CustomerID", o."EmployeeID", o."OrderDate"
 FROM "Orders" AS o
-WHERE EXISTS (
-    SELECT 1
+WHERE o."OrderID" IN (
+    SELECT t."Value"
     FROM (
         SELECT "ProductID" AS "Value" FROM "Products"
     ) AS t
-    WHERE t."Value"::int = o."OrderID")
+)
 """);
     }
 
@@ -45,7 +42,7 @@ WHERE EXISTS (
         await base.SqlQuery_composed_Join(async);
 
         AssertSql(
-"""
+            """
 SELECT o."OrderID", o."CustomerID", o."EmployeeID", o."OrderDate", t."Value"::int AS p
 FROM "Orders" AS o
 INNER JOIN (
@@ -59,7 +56,7 @@ INNER JOIN (
         await base.SqlQuery_over_int_with_parameter(async);
 
         AssertSql(
-"""
+            """
 p0='10'
 
 SELECT "ProductID" FROM "Products" WHERE "ProductID" = @p0

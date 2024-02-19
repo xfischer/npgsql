@@ -62,7 +62,7 @@ public class NpgsqlDatabaseCreator : RelationalDatabaseCreator
                 Dependencies.MigrationCommandExecutor
                     .ExecuteNonQuery(CreateCreateOperations(), masterConnection);
             }
-            catch (PostgresException e) when (e.SqlState == "23505" && e.ConstraintName == "pg_database_datname_index")
+            catch (PostgresException e) when (e is { SqlState: "23505", ConstraintName: "pg_database_datname_index" })
             {
                 // This occurs when two connections are trying to create the same database concurrently
                 // (happens in the tests). Simply ignore the error.
@@ -82,7 +82,8 @@ public class NpgsqlDatabaseCreator : RelationalDatabaseCreator
     /// </summary>
     public override async Task CreateAsync(CancellationToken cancellationToken = default)
     {
-        using (var masterConnection = _connection.CreateAdminConnection())
+        var masterConnection = _connection.CreateAdminConnection();
+        await using (masterConnection.ConfigureAwait(false))
         {
             try
             {
@@ -90,7 +91,7 @@ public class NpgsqlDatabaseCreator : RelationalDatabaseCreator
                     .ExecuteNonQueryAsync(CreateCreateOperations(), masterConnection, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (PostgresException e) when (e.SqlState == "23505" && e.ConstraintName == "pg_database_datname_index")
+            catch (PostgresException e) when (e is { SqlState: "23505", ConstraintName: "pg_database_datname_index" })
             {
                 // This occurs when two connections are trying to create the same database concurrently
                 // (happens in the tests). Simply ignore the error.
@@ -143,7 +144,8 @@ public class NpgsqlDatabaseCreator : RelationalDatabaseCreator
     // EnterpriseDB Team : replaced ns.nspname NOT IN ('pg_catalog', 'information_schema') by ns.nspname IN ('public')
     private IRelationalCommand CreateHasTablesCommand()
         => _rawSqlCommandBuilder
-            .Build(@"
+            .Build(
+                """
 SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
 FROM pg_class AS cls
 JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
@@ -161,7 +163,8 @@ WHERE
                 ) AND
                 objid=cls.oid AND
                 deptype IN ('e', 'x')
-        )");
+        )
+""");
 
     private IReadOnlyList<MigrationCommand> CreateCreateOperations()
     {
@@ -204,11 +207,7 @@ WHERE
         // attempt to reuse a pooled connection, which may be broken (this happened in the tests).
         // If Pooling is off, but Multiplexing is on - EDBConnectionStringBuilder.Validate will throw,
         // so we turn off Multiplexing as well.
-        var unpooledCsb = new EDBConnectionStringBuilder(_connection.ConnectionString)
-        {
-            Pooling = false,
-            Multiplexing = false
-        };
+        var unpooledCsb = new EDBConnectionStringBuilder(_connection.ConnectionString) { Pooling = false, Multiplexing = false };
 
         using var _ = new TransactionScope(TransactionScopeOption.Suppress, TransactionScopeAsyncFlowOption.Enabled);
         var unpooledRelationalConnection = _connection.CloneWith(unpooledCsb.ToString());
@@ -237,16 +236,12 @@ WHERE
         }
         catch (EDBException e) when (
             // This can happen when Npgsql attempts to connect to multiple hosts
-            e.InnerException is AggregateException ae &&
-            ae.InnerExceptions.Any(ie => ie is PostgresException pe && IsDoesNotExist(pe)))
+            e.InnerException is AggregateException ae && ae.InnerExceptions.Any(ie => ie is PostgresException pe && IsDoesNotExist(pe)))
         {
             return false;
         }
         catch (EDBException e) when (
-            e.InnerException is IOException &&
-            e.InnerException.InnerException is SocketException socketException &&
-            socketException.SocketErrorCode == SocketError.ConnectionReset
-        )
+            e.InnerException is IOException { InnerException: SocketException { SocketErrorCode: SocketError.ConnectionReset } })
         {
             // Pretty awful hack around #104
             return false;
@@ -267,7 +262,8 @@ WHERE
     }
 
     // Login failed is thrown when database does not exist (See Issue #776)
-    private static bool IsDoesNotExist(PostgresException exception) => exception.SqlState == "3D000";
+    private static bool IsDoesNotExist(PostgresException exception)
+        => exception.SqlState == "3D000";
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -296,7 +292,8 @@ WHERE
     {
         ClearAllPools();
 
-        using (var masterConnection = _connection.CreateAdminConnection())
+        var masterConnection = _connection.CreateAdminConnection();
+        await using (masterConnection)
         {
             await Dependencies.MigrationCommandExecutor
                 .ExecuteNonQueryAsync(CreateDropCommands(), masterConnection, cancellationToken)
@@ -319,33 +316,30 @@ WHERE
         // If a PostgreSQL extension, enum or range was added, we want Npgsql to reload all types at the ADO.NET level.
         var reloadTypes =
             operations.OfType<AlterDatabaseOperation>()
-                .Any(o =>
-                    o.GetPostgresExtensions().Any() ||
-                    o.GetPostgresEnums().Any() ||
-                    o.GetPostgresRanges().Any());
+                .Any(
+                    o =>
+                        o.GetPostgresExtensions().Any() || o.GetPostgresEnums().Any() || o.GetPostgresRanges().Any());
 
         try
         {
             Dependencies.MigrationCommandExecutor.ExecuteNonQuery(commands, _connection);
         }
-        catch (PostgresException e) when (
-            e.SqlState == "23505" && e.ConstraintName == "pg_type_typname_nsp_index"
-        )
+        catch (PostgresException e) when (e is { SqlState: "23505", ConstraintName: "pg_type_typname_nsp_index" })
         {
             // This occurs when two connections are trying to create the same database concurrently
             // (happens in the tests). Simply ignore the error.
         }
 
-        if (reloadTypes)
+        if (reloadTypes && _connection.DbConnection is EDBConnection npgsqlConnection)
         {
-            _connection.Open();
+            npgsqlConnection.Open();
             try
             {
-                ((EDBConnection)_connection.DbConnection).ReloadTypes();
+                npgsqlConnection.ReloadTypes();
             }
             catch
             {
-                _connection.Close();
+                npgsqlConnection.Close();
             }
         }
     }
@@ -362,38 +356,32 @@ WHERE
         var operations = Dependencies.ModelDiffer.GetDifferences(null, designTimeModel.GetRelationalModel());
         var commands = Dependencies.MigrationsSqlGenerator.Generate(operations, designTimeModel);
 
-        // If a PostgreSQL extension, enum or range was added, we want Npgsql to reload all types at the ADO.NET level.
-        var reloadTypes =
-            operations.OfType<AlterDatabaseOperation>()
-                .Any(o =>
-                    o.GetPostgresExtensions().Any() ||
-                    o.GetPostgresEnums().Any() ||
-                    o.GetPostgresRanges().Any());
-
         try
         {
             await Dependencies.MigrationCommandExecutor.ExecuteNonQueryAsync(commands, _connection, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (PostgresException e) when (
-            e.SqlState == "23505" && e.ConstraintName == "pg_type_typname_nsp_index"
-        )
+        catch (PostgresException e) when (e is { SqlState: "23505", ConstraintName: "pg_type_typname_nsp_index" })
         {
             // This occurs when two connections are trying to create the same database concurrently
             // (happens in the tests). Simply ignore the error.
         }
 
-        if (reloadTypes)
+        // If a PostgreSQL extension, enum or range was added, we want Npgsql to reload all types at the ADO.NET level.
+        var reloadTypes = operations
+            .OfType<AlterDatabaseOperation>()
+            .Any(o => o.GetPostgresExtensions().Any() || o.GetPostgresEnums().Any() || o.GetPostgresRanges().Any());
+
+        if (reloadTypes && _connection.DbConnection is EDBConnection npgsqlConnection)
         {
-            await _connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await npgsqlConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                // TODO: Not async
-                ((EDBConnection)_connection.DbConnection).ReloadTypes();
+                await npgsqlConnection.ReloadTypesAsync().ConfigureAwait(false);
             }
             catch
             {
-                _connection.Close();
+                await npgsqlConnection.CloseAsync().ConfigureAwait(false);
             }
         }
     }
@@ -411,9 +399,11 @@ WHERE
     }
 
     // Clear connection pools in case there are active connections that are pooled
-    private static void ClearAllPools() => EDBConnection.ClearAllPools();
+    private static void ClearAllPools()
+        => EDBConnection.ClearAllPools();
 
     // Clear connection pool for the database connection since after the 'create database' call, a previously
     // invalid connection may now be valid.
-    private void ClearPool() => EDBConnection.ClearPool((EDBConnection)_connection.DbConnection);
+    private void ClearPool()
+        => EDBConnection.ClearPool((EDBConnection)_connection.DbConnection);
 }

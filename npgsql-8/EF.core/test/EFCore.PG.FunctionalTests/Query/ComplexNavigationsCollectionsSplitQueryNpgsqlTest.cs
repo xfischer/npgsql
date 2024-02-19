@@ -1,6 +1,7 @@
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class ComplexNavigationsCollectionsSplitQueryNpgsqlTest : ComplexNavigationsCollectionsSplitQueryRelationalTestBase<ComplexNavigationsQueryNpgsqlFixture>
+public class ComplexNavigationsCollectionsSplitQueryNpgsqlTest : ComplexNavigationsCollectionsSplitQueryRelationalTestBase<
+    ComplexNavigationsQueryNpgsqlFixture>
 {
     public ComplexNavigationsCollectionsSplitQueryNpgsqlTest(
         ComplexNavigationsQueryNpgsqlFixture fixture,
@@ -8,6 +9,6 @@ public class ComplexNavigationsCollectionsSplitQueryNpgsqlTest : ComplexNavigati
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 }

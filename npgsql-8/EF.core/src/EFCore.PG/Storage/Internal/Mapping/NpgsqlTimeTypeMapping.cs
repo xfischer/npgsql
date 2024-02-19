@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -16,7 +17,26 @@ public class NpgsqlTimeTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlTimeTypeMapping(Type clrType) : base("time without time zone", clrType, EDBDbType.Time) {}
+    public static NpgsqlTimeTypeMapping Default { get; } = new(typeof(TimeOnly));
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public NpgsqlTimeTypeMapping(Type clrType)
+        : base(
+            "time without time zone",
+            clrType,
+            EDBDbType.Time,
+            clrType == typeof(TimeOnly)
+                ? JsonTimeOnlyReaderWriter.Instance
+                : clrType == typeof(TimeSpan)
+                    ? JsonTimeSpanReaderWriter.Instance
+                    : throw new ArgumentException("clrType must be TimeOnly or TimeSpan", nameof(clrType)))
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -25,7 +45,9 @@ public class NpgsqlTimeTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlTimeTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Time) {}
+        : base(parameters, EDBDbType.Time)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

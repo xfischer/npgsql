@@ -19,7 +19,7 @@ public class MathQueryTest : IClassFixture<MathQueryTest.MathQueryNpgsqlFixture>
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     #region GREATEST
@@ -301,9 +301,14 @@ public class MathQueryTest : IClassFixture<MathQueryTest.MathQueryNpgsqlFixture>
     /// </summary>
     public class MathQueryNpgsqlFixture : SharedStoreFixtureBase<MathContext>
     {
-        protected override string StoreName => "MathQueryTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+        protected override string StoreName
+            => "MathQueryTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
     }
 
     /// <summary>
@@ -336,21 +341,25 @@ public class MathQueryTest : IClassFixture<MathQueryTest.MathQueryNpgsqlFixture>
         public DbSet<MathTestEntity> MathTestEntities { get; set; }
 
         /// <inheritdoc />
-        public MathContext(DbContextOptions options) : base(options) {}
+        public MathContext(DbContextOptions options)
+            : base(options)
+        {
+        }
     }
 
     #endregion
 
     #region Helpers
 
-    protected MathContext CreateContext() => Fixture.CreateContext();
+    protected MathContext CreateContext()
+        => Fixture.CreateContext();
 
     /// <summary>
     /// Asserts that the SQL fragment appears in the logs.
     /// </summary>
     /// <param name="sql">The SQL statement or fragment to search for in the logs.</param>
-    public void AssertContainsSql(string sql) =>
-        Assert.Contains(
+    public void AssertContainsSql(string sql)
+        => Assert.Contains(
             sql.Replace(Environment.NewLine, " ").Remove('\r').Remove('\n'),
             Fixture.TestSqlLoggerFactory.Sql.Replace(Environment.NewLine, " ").Remove('\r').Remove('\n'));
 

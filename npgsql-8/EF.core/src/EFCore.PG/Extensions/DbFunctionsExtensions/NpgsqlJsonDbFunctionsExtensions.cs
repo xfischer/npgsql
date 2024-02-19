@@ -25,7 +25,9 @@ public static class NpgsqlJsonDbFunctionsExtensions
     /// See https://www.postgresql.org/docs/current/functions-json.html.
     /// </remarks>
     public static bool JsonContains(
-        this DbFunctions _, object json, object contained)
+        this DbFunctions _,
+        object json,
+        object contained)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(JsonContains)));
 
     /// <summary>
@@ -44,7 +46,9 @@ public static class NpgsqlJsonDbFunctionsExtensions
     /// See https://www.postgresql.org/docs/current/functions-json.html.
     /// </remarks>
     public static bool JsonContained(
-        this DbFunctions _, object contained, object json)
+        this DbFunctions _,
+        object contained,
+        object json)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(JsonContained)));
 
     /// <summary>

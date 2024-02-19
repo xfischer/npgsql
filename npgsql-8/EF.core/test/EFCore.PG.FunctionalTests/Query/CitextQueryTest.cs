@@ -15,7 +15,7 @@ public class CitextQueryTest : IClassFixture<CitextQueryTest.CitextQueryFixture>
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     [Fact]
@@ -26,10 +26,10 @@ public class CitextQueryTest : IClassFixture<CitextQueryTest.CitextQueryFixture>
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE (s."CaseInsensitiveText" IS NOT NULL) AND (s."CaseInsensitiveText" LIKE 'some%')
+WHERE s."CaseInsensitiveText" LIKE 'some%'
 LIMIT 2
 """);
     }
@@ -43,13 +43,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
-@__param_0='some'
-@__param_0_1='some'
+            """
+@__param_0_rewritten='some%'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE @__param_0 = '' OR ((s."CaseInsensitiveText" IS NOT NULL) AND (s."CaseInsensitiveText" LIKE @__param_0_1 || '%' ESCAPE '') AND left(s."CaseInsensitiveText", length(@__param_0_1))::citext = @__param_0_1::citext)
+WHERE s."CaseInsensitiveText" LIKE @__param_0_rewritten ESCAPE '\'
 LIMIT 2
 """);
     }
@@ -63,12 +62,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='SomeTextWithExtraStuff'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE s."CaseInsensitiveText" = '' OR ((s."CaseInsensitiveText" IS NOT NULL) AND (@__param_0 LIKE s."CaseInsensitiveText" || '%' ESCAPE '') AND left(@__param_0, length(s."CaseInsensitiveText"))::citext = s."CaseInsensitiveText"::citext)
+WHERE s."CaseInsensitiveText" IS NOT NULL AND left(@__param_0, length(s."CaseInsensitiveText"))::citext = s."CaseInsensitiveText"
 LIMIT 2
 """);
     }
@@ -81,10 +80,10 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE (s."CaseInsensitiveText" IS NOT NULL) AND (s."CaseInsensitiveText" LIKE '%sometext')
+WHERE s."CaseInsensitiveText" LIKE '%sometext'
 LIMIT 2
 """);
     }
@@ -98,13 +97,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
-@__param_0='sometext'
-@__param_0_1='sometext'
+            """
+@__param_0_rewritten='%sometext'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE @__param_0 = '' OR ((s."CaseInsensitiveText" IS NOT NULL) AND right(s."CaseInsensitiveText", length(@__param_0_1))::citext = @__param_0_1::citext)
+WHERE s."CaseInsensitiveText" LIKE @__param_0_rewritten ESCAPE '\'
 LIMIT 2
 """);
     }
@@ -118,12 +116,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='ExtraStuffThenSomeText'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE s."CaseInsensitiveText" = '' OR ((s."CaseInsensitiveText" IS NOT NULL) AND right(@__param_0, length(s."CaseInsensitiveText"))::citext = s."CaseInsensitiveText"::citext)
+WHERE s."CaseInsensitiveText" IS NOT NULL AND right(@__param_0, length(s."CaseInsensitiveText"))::citext = s."CaseInsensitiveText"
 LIMIT 2
 """);
     }
@@ -136,10 +134,10 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE strpos(s."CaseInsensitiveText", 'ometex') > 0
+WHERE s."CaseInsensitiveText" LIKE '%ometex%'
 LIMIT 2
 """);
     }
@@ -153,12 +151,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
-@__param_0='ometex'
+            """
+@__param_0_rewritten='%ometex%'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE @__param_0 = '' OR strpos(s."CaseInsensitiveText", @__param_0) > 0
+WHERE s."CaseInsensitiveText" LIKE @__param_0_rewritten ESCAPE '\'
 LIMIT 2
 """);
     }
@@ -172,12 +170,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='ExtraSometextExtra'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE s."CaseInsensitiveText" = '' OR strpos(@__param_0, s."CaseInsensitiveText") > 0
+WHERE s."CaseInsensitiveText" IS NOT NULL AND strpos(@__param_0, s."CaseInsensitiveText") > 0
 LIMIT 2
 """);
     }
@@ -190,10 +188,10 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE (strpos(s."CaseInsensitiveText", 'ometex') - 1) = 1
+WHERE strpos(s."CaseInsensitiveText", 'ometex') - 1 = 1
 LIMIT 2
 """);
     }
@@ -207,12 +205,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='ometex'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE (strpos(s."CaseInsensitiveText", @__param_0) - 1) = 1
+WHERE strpos(s."CaseInsensitiveText", @__param_0) - 1 = 1
 LIMIT 2
 """);
     }
@@ -226,12 +224,12 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='ExtraSometextExtra'
 
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
-WHERE (strpos(@__param_0, s."CaseInsensitiveText") - 1) = 5
+WHERE strpos(@__param_0, s."CaseInsensitiveText") - 1 = 5
 LIMIT 2
 """);
     }
@@ -244,7 +242,7 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 SELECT s."Id", s."CaseInsensitiveText"
 FROM "SomeEntities" AS s
 WHERE replace(s."CaseInsensitiveText", 'Te', 'Ne') = 'SomeNext'
@@ -261,7 +259,7 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='Te'
 
 SELECT s."Id", s."CaseInsensitiveText"
@@ -280,7 +278,7 @@ LIMIT 2
 
         Assert.Equal(1, result.Id);
         AssertSql(
-"""
+            """
 @__param_0='ExtraSometextExtra'
 
 SELECT s."Id", s."CaseInsensitiveText"
@@ -290,7 +288,8 @@ LIMIT 2
 """);
     }
 
-    protected CitextQueryContext CreateContext() => Fixture.CreateContext();
+    protected CitextQueryContext CreateContext()
+        => Fixture.CreateContext();
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
@@ -299,7 +298,10 @@ LIMIT 2
     {
         public DbSet<SomeArrayEntity> SomeEntities { get; set; }
 
-        public CitextQueryContext(DbContextOptions options) : base(options) {}
+        public CitextQueryContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         public static void Seed(CitextQueryContext context)
         {
@@ -313,15 +315,23 @@ LIMIT 2
     public class SomeArrayEntity
     {
         public int Id { get; set; }
+
         [Column(TypeName = "citext")]
         public string CaseInsensitiveText { get; set; }
     }
 
     public class CitextQueryFixture : SharedStoreFixtureBase<CitextQueryContext>
     {
-        protected override string StoreName => "CitextQueryTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
-        protected override void Seed(CitextQueryContext context) => CitextQueryContext.Seed(context);
+        protected override string StoreName
+            => "CitextQueryTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
+
+        protected override void Seed(CitextQueryContext context)
+            => CitextQueryContext.Seed(context);
     }
 }

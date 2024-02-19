@@ -70,6 +70,10 @@ public class NpgsqlMathTranslator : IMethodCallTranslator
 
         { typeof(Math).GetRuntimeMethod(nameof(Math.Tan), new[] { typeof(double) })!, "tan" },
         { typeof(MathF).GetRuntimeMethod(nameof(MathF.Tan), new[] { typeof(float) })!, "tan" },
+        { typeof(double).GetRuntimeMethod(nameof(double.DegreesToRadians), new[] { typeof(double) })!, "radians" },
+        { typeof(float).GetRuntimeMethod(nameof(float.DegreesToRadians), new[] { typeof(float) })!, "radians" },
+        { typeof(double).GetRuntimeMethod(nameof(double.RadiansToDegrees), new[] { typeof(double) })!, "degrees" },
+        { typeof(float).GetRuntimeMethod(nameof(float.RadiansToDegrees), new[] { typeof(float) })!, "degrees" },
 
         // https://www.postgresql.org/docs/current/functions-conditional.html#FUNCTIONS-GREATEST-LEAST
         { typeof(Math).GetRuntimeMethod(nameof(Math.Max), new[] { typeof(decimal), typeof(decimal) })!, "GREATEST" },
@@ -123,15 +127,19 @@ public class NpgsqlMathTranslator : IMethodCallTranslator
 
     private static readonly MethodInfo DoubleIsNanMethodInfo
         = typeof(double).GetRuntimeMethod(nameof(double.IsNaN), new[] { typeof(double) })!;
+
     private static readonly MethodInfo DoubleIsPositiveInfinityMethodInfo
         = typeof(double).GetRuntimeMethod(nameof(double.IsPositiveInfinity), new[] { typeof(double) })!;
+
     private static readonly MethodInfo DoubleIsNegativeInfinityMethodInfo
         = typeof(double).GetRuntimeMethod(nameof(double.IsNegativeInfinity), new[] { typeof(double) })!;
 
     private static readonly MethodInfo FloatIsNanMethodInfo
         = typeof(float).GetRuntimeMethod(nameof(float.IsNaN), new[] { typeof(float) })!;
+
     private static readonly MethodInfo FloatIsPositiveInfinityMethodInfo
         = typeof(float).GetRuntimeMethod(nameof(float.IsPositiveInfinity), new[] { typeof(float) })!;
+
     private static readonly MethodInfo FloatIsNegativeInfinityMethodInfo
         = typeof(float).GetRuntimeMethod(nameof(float.IsNegativeInfinity), new[] { typeof(float) })!;
 
@@ -247,7 +255,9 @@ public class NpgsqlMathTranslator : IMethodCallTranslator
 
         if (method == RoundDecimalTwoParams)
         {
-            return _sqlExpressionFactory.Function("round", new[]
+            return _sqlExpressionFactory.Function(
+                "round",
+                new[]
                 {
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[0]),
                     _sqlExpressionFactory.ApplyDefaultTypeMapping(arguments[1])

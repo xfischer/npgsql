@@ -5,7 +5,10 @@ public class ArrayQueryContext : PoolableDbContext
     public DbSet<ArrayEntity> SomeEntities { get; set; }
     public DbSet<ArrayContainerEntity> SomeEntityContainers { get; set; }
 
-    public ArrayQueryContext(DbContextOptions options) : base(options) {}
+    public ArrayQueryContext(DbContextOptions options)
+        : base(options)
+    {
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.Entity<ArrayEntity>(
@@ -21,19 +24,19 @@ public class ArrayQueryContext : PoolableDbContext
                     .HasConversion(w => -(int)w, v => (SomeEnum)(-v));
 
                 e.Property(ae => ae.EnumConvertedToString)
-                    .HasConversion(w => w.ToString(), v => Enum.Parse<SomeEnum>(v));
+                    .HasConversion(typeof(EnumToStringConverter<SomeEnum>));
 
                 e.Property(ae => ae.NullableEnumConvertedToString)
-                    .HasConversion(w => w.ToString(), v => Enum.Parse<SomeEnum>(v));
+                    .HasConversion(typeof(EnumToStringConverter<SomeEnum>));
 
                 e.Property(ae => ae.NullableEnumConvertedToStringWithNonNullableLambda)
                     .HasConversion(new ValueConverter<SomeEnum, string>(w => w.ToString(), v => Enum.Parse<SomeEnum>(v)));
 
-                e.Property(ae => ae.ValueConvertedArray)
-                    .HasPostgresArrayConversion(w => w.ToString(), v => Enum.Parse<SomeEnum>(v));
+                e.PrimitiveCollection(ae => ae.ValueConvertedArray)
+                    .ElementType(eb => eb.HasConversion(typeof(EnumToStringConverter<SomeEnum>)));
 
-                e.Property(ae => ae.ValueConvertedList)
-                    .HasPostgresArrayConversion(w => w.ToString(), v => Enum.Parse<SomeEnum>(v));
+                e.PrimitiveCollection(ae => ae.ValueConvertedList)
+                    .ElementType(eb => eb.HasConversion(typeof(EnumToStringConverter<SomeEnum>)));
 
                 e.HasIndex(ae => ae.NonNullableText);
             });
@@ -44,11 +47,7 @@ public class ArrayQueryContext : PoolableDbContext
 
         context.SomeEntities.AddRange(arrayEntities);
         context.SomeEntityContainers.Add(
-            new ArrayContainerEntity
-            {
-                Id = 1,
-                ArrayEntities = arrayEntities.ToList()
-            }
+            new ArrayContainerEntity { Id = 1, ArrayEntities = arrayEntities.ToList() }
         );
         context.SaveChanges();
     }

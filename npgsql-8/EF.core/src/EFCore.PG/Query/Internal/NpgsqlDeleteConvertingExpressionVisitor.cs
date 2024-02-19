@@ -93,6 +93,6 @@ public class NpgsqlDeleteConvertingExpressionVisitor : ExpressionVisitor
                 ExpressionType.AndAlso, joinPredicates, selectExpression.Predicate, typeof(bool), joinPredicates.TypeMapping)
         };
 
-        return new PostgresDeleteExpression(deleteExpression.Table, fromItems, predicate, deleteExpression.Tags);
+        return new PgDeleteExpression(deleteExpression.Table, fromItems, predicate, deleteExpression.Tags);
     }
 }

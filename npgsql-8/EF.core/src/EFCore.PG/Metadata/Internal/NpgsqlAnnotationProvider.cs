@@ -35,7 +35,7 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
         }
 
         // Model validation ensures that these facets are the same on all mapped entity types
-        var entityType = table.EntityTypeMappings.First().EntityType;
+        var entityType = (IEntityType)table.EntityTypeMappings.First().TypeBase;
 
         if (entityType.GetIsUnlogged())
         {
@@ -44,7 +44,8 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
 
         if (entityType[CockroachDbAnnotationNames.InterleaveInParent] is not null)
         {
-            yield return new Annotation(CockroachDbAnnotationNames.InterleaveInParent, entityType[CockroachDbAnnotationNames.InterleaveInParent]);
+            yield return new Annotation(
+                CockroachDbAnnotationNames.InterleaveInParent, entityType[CockroachDbAnnotationNames.InterleaveInParent]);
         }
 
         foreach (var storageParamAnnotation in entityType.GetAnnotations()
@@ -70,7 +71,7 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
         var table = StoreObjectIdentifier.Table(column.Table.Name, column.Table.Schema);
         var valueGeneratedProperty = column.PropertyMappings.Where(
                 m => (m.TableMapping.IsSharedTablePrincipal ?? true)
-                    && m.TableMapping.EntityType == m.Property.DeclaringEntityType)
+                    && m.TableMapping.TypeBase == m.Property.DeclaringType)
             .Select(m => m.Property)
             .FirstOrDefault(
                 p => p.GetValueGenerationStrategy(table) switch
@@ -86,8 +87,8 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
             var valueGenerationStrategy = valueGeneratedProperty.GetValueGenerationStrategy();
             yield return new Annotation(NpgsqlAnnotationNames.ValueGenerationStrategy, valueGenerationStrategy);
 
-            if (valueGenerationStrategy == NpgsqlValueGenerationStrategy.IdentityByDefaultColumn ||
-                valueGenerationStrategy == NpgsqlValueGenerationStrategy.IdentityAlwaysColumn)
+            if (valueGenerationStrategy is NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                or NpgsqlValueGenerationStrategy.IdentityAlwaysColumn)
             {
                 if (valueGeneratedProperty[NpgsqlAnnotationNames.IdentityOptions] is string identityOptions)
                 {
@@ -102,8 +103,8 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
         // Note that this mechanism is obsolete, and EF Core's bulk model configuration can be used instead; but we continue to support
         // it for backwards compat.
 #pragma warning disable CS0618
-        if (column.PropertyMappings.All(m => m.Property.GetCollation() is null) &&
-            column.PropertyMappings.Select(m => m.Property.GetDefaultCollation())
+        if (column.PropertyMappings.All(m => m.Property.GetCollation() is null)
+            && column.PropertyMappings.Select(m => m.Property.GetDefaultCollation())
                 .FirstOrDefault(c => c is not null) is { } defaultColumnCollation)
         {
             yield return new Annotation(NpgsqlAnnotationNames.DefaultColumnCollation, defaultColumnCollation);
@@ -125,7 +126,7 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
             yield return new Annotation(
                 NpgsqlAnnotationNames.TsVectorProperties,
                 valueGeneratedProperty.GetTsVectorProperties()!
-                    .Select(p2 => valueGeneratedProperty.DeclaringEntityType.FindProperty(p2)!.GetColumnName(tableIdentifier))
+                    .Select(p2 => valueGeneratedProperty.DeclaringType.FindProperty(p2)!.GetColumnName(tableIdentifier))
                     .ToArray());
         }
 
@@ -198,6 +199,12 @@ public class NpgsqlAnnotationProvider : RelationalAnnotationProvider
         if (modelIndex.GetAreNullsDistinct() is { } nullsDistinct)
         {
             yield return new Annotation(NpgsqlAnnotationNames.NullsDistinct, nullsDistinct);
+        }
+
+        foreach (var storageParamAnnotation in modelIndex.GetAnnotations()
+                     .Where(a => a.Name.StartsWith(NpgsqlAnnotationNames.StorageParameterPrefix, StringComparison.Ordinal)))
+        {
+            yield return storageParamAnnotation;
         }
 
         // Support legacy annotation for index ordering

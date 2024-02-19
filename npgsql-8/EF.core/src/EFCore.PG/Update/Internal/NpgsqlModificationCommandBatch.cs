@@ -26,7 +26,9 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
         ModificationCommandBatchFactoryDependencies dependencies,
         int maxBatchSize)
         : base(dependencies)
-        => MaxBatchSize = maxBatchSize;
+    {
+        MaxBatchSize = maxBatchSize;
+    }
 
     /// <summary>
     ///     The maximum number of <see cref="ModificationCommand"/> instances that can be added to a single batch; defaults to 1000.
@@ -77,7 +79,9 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
         var npgsqlReader = (EDBDataReader)reader.DbDataReader;
 
 #pragma warning disable 618
-        Debug.Assert(npgsqlReader.Statements.Count == ModificationCommands.Count, $"Reader has {npgsqlReader.Statements.Count} statements, expected {ModificationCommands.Count}");
+        Debug.Assert(
+            npgsqlReader.Statements.Count == ModificationCommands.Count,
+            $"Reader has {npgsqlReader.Statements.Count} statements, expected {ModificationCommands.Count}");
 #pragma warning restore 618
 
         var commandIndex = 0;
@@ -109,7 +113,6 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
                             ThrowAggregateUpdateConcurrencyException(reader, commandIndex, 1, 0);
                         }
                     }
-
 
                     if (command.RowsAffectedColumn is { } rowsAffectedColumn)
                     {
@@ -153,7 +156,6 @@ public class NpgsqlModificationCommandBatch : ReaderModificationCommandBatch
                     onResultSet = async
                         ? await npgsqlReader.NextResultAsync(cancellationToken).ConfigureAwait(false)
                         : npgsqlReader.NextResult();
-
                 }
                 else
                 {

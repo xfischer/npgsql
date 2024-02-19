@@ -1,9 +1,11 @@
 ﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class FiltersInheritanceQueryNpgsqlTest : FiltersInheritanceQueryTestBase<FiltersInheritanceQueryNpgsqlFixture>
+public class FiltersInheritanceQueryNpgsqlTest : FiltersInheritanceQueryTestBase<TPHFiltersInheritanceQueryNpgsqlFixture>
 {
     // ReSharper disable once UnusedParameter.Local
-    public FiltersInheritanceQueryNpgsqlTest(FiltersInheritanceQueryNpgsqlFixture fixture, ITestOutputHelper testOutputHelper)
+    public FiltersInheritanceQueryNpgsqlTest(TPHFiltersInheritanceQueryNpgsqlFixture fixture, ITestOutputHelper testOutputHelper)
         : base(fixture)
-        => Fixture.TestSqlLoggerFactory.Clear();
+    {
+        Fixture.TestSqlLoggerFactory.Clear();
+    }
 }

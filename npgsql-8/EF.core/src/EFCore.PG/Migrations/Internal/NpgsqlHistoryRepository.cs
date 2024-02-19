@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
+﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Internal;
 
 /// <summary>
 ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -51,7 +49,8 @@ SELECT EXISTS (
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override bool InterpretExistsResult(object? value) => (bool?)value == true;
+    protected override bool InterpretExistsResult(object? value)
+        => (bool?)value == true;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -71,7 +70,8 @@ SELECT EXISTS (
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override string GetBeginIfNotExistsScript(string migrationId) => $@"
+    public override string GetBeginIfNotExistsScript(string migrationId)
+        => $@"
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM {SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WHERE ""{MigrationIdColumnName}"" = '{migrationId}') THEN";
@@ -82,7 +82,8 @@ BEGIN
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override string GetBeginIfExistsScript(string migrationId) => $@"
+    public override string GetBeginIfExistsScript(string migrationId)
+        => $@"
 DO $EF$
 BEGIN
     IF EXISTS(SELECT 1 FROM {SqlGenerationHelper.DelimitIdentifier(TableName, TableSchema)} WHERE ""{MigrationIdColumnName}"" = '{migrationId}') THEN";
@@ -93,7 +94,7 @@ BEGIN
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override string GetEndIfScript() =>
-        @"    END IF;
+    public override string GetEndIfScript()
+        => @"    END IF;
 END $EF$;";
 }

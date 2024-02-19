@@ -51,61 +51,76 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
     private static readonly MethodInfo SystemClock_GetCurrentInstant =
         typeof(SystemClock).GetRuntimeMethod(nameof(SystemClock.GetCurrentInstant), Type.EmptyTypes)!;
+
     private static readonly MethodInfo Instant_InUtc =
         typeof(Instant).GetRuntimeMethod(nameof(Instant.InUtc), Type.EmptyTypes)!;
+
     private static readonly MethodInfo Instant_InZone =
-        typeof(Instant).GetRuntimeMethod(nameof(Instant.InZone), new[] { typeof(DateTimeZone)})!;
+        typeof(Instant).GetRuntimeMethod(nameof(Instant.InZone), new[] { typeof(DateTimeZone) })!;
+
     private static readonly MethodInfo Instant_ToDateTimeUtc =
         typeof(Instant).GetRuntimeMethod(nameof(Instant.ToDateTimeUtc), Type.EmptyTypes)!;
+
     private static readonly MethodInfo Instant_Distance =
         typeof(NpgsqlNodaTimeDbFunctionsExtensions).GetRuntimeMethod(
             nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance), new[] { typeof(DbFunctions), typeof(Instant), typeof(Instant) })!;
 
     private static readonly MethodInfo ZonedDateTime_ToInstant =
         typeof(ZonedDateTime).GetRuntimeMethod(nameof(ZonedDateTime.ToInstant), Type.EmptyTypes)!;
+
     private static readonly MethodInfo ZonedDateTime_Distance =
         typeof(NpgsqlNodaTimeDbFunctionsExtensions).GetRuntimeMethod(
-            nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance), new[] { typeof(DbFunctions), typeof(ZonedDateTime), typeof(ZonedDateTime) })!;
+            nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance),
+            new[] { typeof(DbFunctions), typeof(ZonedDateTime), typeof(ZonedDateTime) })!;
 
     private static readonly MethodInfo LocalDateTime_InZoneLeniently =
         typeof(LocalDateTime).GetRuntimeMethod(nameof(LocalDateTime.InZoneLeniently), new[] { typeof(DateTimeZone) })!;
+
     private static readonly MethodInfo LocalDateTime_Distance =
         typeof(NpgsqlNodaTimeDbFunctionsExtensions).GetRuntimeMethod(
-            nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance), new[] { typeof(DbFunctions), typeof(LocalDateTime), typeof(LocalDateTime) })!;
+            nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance),
+            new[] { typeof(DbFunctions), typeof(LocalDateTime), typeof(LocalDateTime) })!;
 
     private static readonly MethodInfo LocalDate_Distance =
         typeof(NpgsqlNodaTimeDbFunctionsExtensions).GetRuntimeMethod(
             nameof(NpgsqlNodaTimeDbFunctionsExtensions.Distance), new[] { typeof(DbFunctions), typeof(LocalDate), typeof(LocalDate) })!;
 
-    private static readonly MethodInfo Period_FromYears   = typeof(Period).GetRuntimeMethod(nameof(Period.FromYears),        new[] { typeof(int) })!;
-    private static readonly MethodInfo Period_FromMonths  = typeof(Period).GetRuntimeMethod(nameof(Period.FromMonths),       new[] { typeof(int) })!;
-    private static readonly MethodInfo Period_FromWeeks   = typeof(Period).GetRuntimeMethod(nameof(Period.FromWeeks),        new[] { typeof(int) })!;
-    private static readonly MethodInfo Period_FromDays    = typeof(Period).GetRuntimeMethod(nameof(Period.FromDays),         new[] { typeof(int) })!;
-    private static readonly MethodInfo Period_FromHours   = typeof(Period).GetRuntimeMethod(nameof(Period.FromHours),        new[] { typeof(long) })!;
-    private static readonly MethodInfo Period_FromMinutes = typeof(Period).GetRuntimeMethod(nameof(Period.FromMinutes),      new[] { typeof(long) })!;
-    private static readonly MethodInfo Period_FromSeconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromSeconds),      new[] { typeof(long) })!;
+    private static readonly MethodInfo Period_FromYears = typeof(Period).GetRuntimeMethod(nameof(Period.FromYears), new[] { typeof(int) })!;
+
+    private static readonly MethodInfo Period_FromMonths =
+        typeof(Period).GetRuntimeMethod(nameof(Period.FromMonths), new[] { typeof(int) })!;
+
+    private static readonly MethodInfo Period_FromWeeks = typeof(Period).GetRuntimeMethod(nameof(Period.FromWeeks), new[] { typeof(int) })!;
+    private static readonly MethodInfo Period_FromDays = typeof(Period).GetRuntimeMethod(nameof(Period.FromDays), new[] { typeof(int) })!;
+
+    private static readonly MethodInfo Period_FromHours = typeof(Period).GetRuntimeMethod(
+        nameof(Period.FromHours), new[] { typeof(long) })!;
+
+    private static readonly MethodInfo Period_FromMinutes =
+        typeof(Period).GetRuntimeMethod(nameof(Period.FromMinutes), new[] { typeof(long) })!;
+
+    private static readonly MethodInfo Period_FromSeconds =
+        typeof(Period).GetRuntimeMethod(nameof(Period.FromSeconds), new[] { typeof(long) })!;
 
     private static readonly MethodInfo Interval_Contains
         = typeof(Interval).GetRuntimeMethod(nameof(Interval.Contains), new[] { typeof(Instant) })!;
 
     private static readonly MethodInfo DateInterval_Contains_LocalDate
         = typeof(DateInterval).GetRuntimeMethod(nameof(DateInterval.Contains), new[] { typeof(LocalDate) })!;
+
     private static readonly MethodInfo DateInterval_Contains_DateInterval
         = typeof(DateInterval).GetRuntimeMethod(nameof(DateInterval.Contains), new[] { typeof(DateInterval) })!;
+
     private static readonly MethodInfo DateInterval_Intersection
         = typeof(DateInterval).GetRuntimeMethod(nameof(DateInterval.Intersection), new[] { typeof(DateInterval) })!;
+
     private static readonly MethodInfo DateInterval_Union
         = typeof(DateInterval).GetRuntimeMethod(nameof(DateInterval.Union), new[] { typeof(DateInterval) })!;
 
     private static readonly MethodInfo IDateTimeZoneProvider_get_Item
         = typeof(IDateTimeZoneProvider).GetRuntimeMethod("get_Item", new[] { typeof(string) })!;
 
-    private static readonly bool[][] TrueArrays =
-    {
-        Array.Empty<bool>(),
-        new[] { true },
-        new[] { true, true },
-    };
+    private static readonly bool[][] TrueArrays = { Array.Empty<bool>(), new[] { true }, new[] { true, true }, };
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -203,7 +218,7 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
         if (method == Instant_Distance)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.Distance, arguments[1], arguments[2]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.Distance, arguments[1], arguments[2]);
         }
 
         return null;
@@ -232,7 +247,7 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
         if (method == ZonedDateTime_Distance)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.Distance, arguments[1], arguments[2]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.Distance, arguments[1], arguments[2]);
         }
 
         return null;
@@ -250,7 +265,7 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
         if (method == LocalDateTime_Distance)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.Distance, arguments[1], arguments[2]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.Distance, arguments[1], arguments[2]);
         }
 
         return null;
@@ -263,7 +278,7 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
     {
         if (method == LocalDate_Distance)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.Distance, arguments[1], arguments[2]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.Distance, arguments[1], arguments[2]);
         }
 
         return null;
@@ -318,8 +333,8 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
         return null;
 
-        static PostgresFunctionExpression IntervalPart(string datePart, SqlExpression parameter)
-            => PostgresFunctionExpression.CreateWithNamedArguments(
+        static PgFunctionExpression IntervalPart(string datePart, SqlExpression parameter)
+            => PgFunctionExpression.CreateWithNamedArguments(
                 "make_interval",
                 new[] { parameter },
                 new[] { datePart },
@@ -329,7 +344,7 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
                 typeof(Period),
                 typeMapping: null);
 
-        PostgresFunctionExpression IntervalPartOverBigInt(string datePart, SqlExpression parameter)
+        PgFunctionExpression IntervalPartOverBigInt(string datePart, SqlExpression parameter)
         {
             parameter = _sqlExpressionFactory.ApplyDefaultTypeMapping(parameter);
 
@@ -376,12 +391,12 @@ public class NpgsqlNodaTimeMethodCallTranslator : IMethodCallTranslator
 
         if (method == DateInterval_Intersection)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.RangeIntersect, instance!, arguments[0]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.RangeIntersect, instance!, arguments[0]);
         }
 
         if (method == DateInterval_Union)
         {
-            return _sqlExpressionFactory.MakePostgresBinary(PostgresExpressionType.RangeUnion, instance!, arguments[0]);
+            return _sqlExpressionFactory.MakePostgresBinary(PgExpressionType.RangeUnion, instance!, arguments[0]);
         }
 
         return null;

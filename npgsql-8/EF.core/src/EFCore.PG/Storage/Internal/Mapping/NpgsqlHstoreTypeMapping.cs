@@ -20,6 +20,14 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    public static NpgsqlHstoreTypeMapping Default { get; } = new(typeof(Dictionary<string, string>));
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     public NpgsqlHstoreTypeMapping(Type clrType)
         : base(
             new RelationalTypeMappingParameters(
@@ -36,7 +44,9 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlHstoreTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Hstore) {}
+        : base(parameters, EDBDbType.Hstore)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -59,7 +69,7 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
         foreach (var kv in (IReadOnlyDictionary<string, string?>)value)
         {
             sb.Append('"');
-            sb.Append(kv.Key);   // TODO: Escape
+            sb.Append(kv.Key); // TODO: Escape
             sb.Append("\"=>");
             if (kv.Value is null)
             {
@@ -68,7 +78,7 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
             else
             {
                 sb.Append('"');
-                sb.Append(kv.Value);   // TODO: Escape
+                sb.Append(kv.Value); // TODO: Escape
                 sb.Append("\",");
             }
         }
@@ -95,16 +105,19 @@ public class NpgsqlHstoreTypeMapping : NpgsqlTypeMapping
             return null;
         }
 
-        throw new ArgumentException($"CLR type must be {nameof(Dictionary<string,string>)} or {nameof(ImmutableDictionary<string,string>)}");
+        throw new ArgumentException(
+            $"CLR type must be {nameof(Dictionary<string, string>)} or {nameof(ImmutableDictionary<string, string>)}");
     }
 
     private sealed class HstoreMutableComparer : ValueComparer<Dictionary<string, string>>
     {
-        public HstoreMutableComparer() : base(
-            (a, b) => Compare(a,b),
-            o => o.GetHashCode(),
-            o => new Dictionary<string, string>(o))
-        {}
+        public HstoreMutableComparer()
+            : base(
+                (a, b) => Compare(a, b),
+                o => o.GetHashCode(),
+                o => new Dictionary<string, string>(o))
+        {
+        }
 
         private static bool Compare(Dictionary<string, string>? a, Dictionary<string, string>? b)
         {

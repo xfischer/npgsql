@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -18,9 +19,12 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
     /// <param name="storeType">The database type to map.</param>
     /// <param name="clrType">The CLR type to map.</param>
     /// <param name="npgsqlDbType">The database type used by Npgsql.</param>
-    public NpgsqlTypeMapping(string storeType, Type clrType, EDBDbType npgsqlDbType)
-        : base(storeType, clrType)
-        => EDBDbType = npgsqlDbType;
+    /// <param name="jsonValueReaderWriter">Handles reading and writing JSON values for instances of the mapped type.</param>
+    public NpgsqlTypeMapping(string storeType, Type clrType, EDBDbType npgsqlDbType, JsonValueReaderWriter? jsonValueReaderWriter = null)
+        : base(storeType, clrType, jsonValueReaderWriter: jsonValueReaderWriter)
+    {
+        EDBDbType = npgsqlDbType;
+    }
 
     /// <summary>
     /// Constructs an instance of the <see cref="NpgsqlTypeMapping"/> class.
@@ -29,7 +33,9 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
     /// <param name="npgsqlDbType">The database type of the range subtype.</param>
     protected NpgsqlTypeMapping(RelationalTypeMappingParameters parameters, EDBDbType npgsqlDbType)
         : base(parameters)
-        => EDBDbType = npgsqlDbType;
+    {
+        EDBDbType = npgsqlDbType;
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -41,7 +47,8 @@ public abstract class NpgsqlTypeMapping : RelationalTypeMapping, INpgsqlTypeMapp
     {
         if (parameter is not EDBParameter npgsqlParameter)
         {
-            throw new InvalidOperationException($"Npgsql-specific type mapping {GetType().Name} being used with non-Npgsql parameter type {parameter.GetType().Name}");
+            throw new InvalidOperationException(
+                $"Npgsql-specific type mapping {GetType().Name} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }
 
         base.ConfigureParameter(parameter);

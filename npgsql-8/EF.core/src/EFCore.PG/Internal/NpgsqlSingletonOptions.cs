@@ -21,7 +21,7 @@ public class NpgsqlSingletonOptions : INpgsqlSingletonOptions
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual Version? PostgresVersionWithoutDefault { get; private set; }
+    public virtual bool IsPostgresVersionSet { get; private set; }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -70,16 +70,18 @@ public class NpgsqlSingletonOptions : INpgsqlSingletonOptions
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public NpgsqlSingletonOptions()
-        => UserRangeDefinitions = Array.Empty<UserRangeDefinition>();
+    {
+        UserRangeDefinitions = Array.Empty<UserRangeDefinition>();
+    }
 
     /// <inheritdoc />
     public virtual void Initialize(IDbContextOptions options)
     {
-        var npgsqlOptions = options.FindExtension<NpgsqlOptionsExtension>() ?? new();
-        var coreOptions = options.FindExtension<CoreOptionsExtension>() ?? new();
+        var npgsqlOptions = options.FindExtension<NpgsqlOptionsExtension>() ?? new NpgsqlOptionsExtension();
+        var coreOptions = options.FindExtension<CoreOptionsExtension>() ?? new CoreOptionsExtension();
 
         PostgresVersion = npgsqlOptions.PostgresVersion;
-        PostgresVersionWithoutDefault = npgsqlOptions.PostgresVersionWithoutDefault;
+        IsPostgresVersionSet = npgsqlOptions.IsPostgresVersionSet;
         UseRedshift = npgsqlOptions.UseRedshift;
         ReverseNullOrderingEnabled = npgsqlOptions.ReverseNullOrdering;
         UserRangeDefinitions = npgsqlOptions.UserRangeDefinitions;
@@ -93,8 +95,7 @@ public class NpgsqlSingletonOptions : INpgsqlSingletonOptions
     /// <inheritdoc />
     public virtual void Validate(IDbContextOptions options)
     {
-        var npgsqlOptions = options.FindExtension<NpgsqlOptionsExtension>() ?? new();
-        var coreOptions = options.FindExtension<CoreOptionsExtension>() ?? new();
+        var npgsqlOptions = options.FindExtension<NpgsqlOptionsExtension>() ?? new NpgsqlOptionsExtension();
 
         if (PostgresVersion != npgsqlOptions.PostgresVersion)
         {

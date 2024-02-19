@@ -300,7 +300,9 @@ public static class NpgsqlModelBuilderExtensions
     /// <remarks>
     /// See: https://www.postgresql.org/docs/current/external-extensions.html
     /// </remarks>
-    /// <exception cref="ArgumentNullException"><paramref name="modelBuilder"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="modelBuilder" />
+    /// </exception>
     public static ModelBuilder HasPostgresExtension(
         this ModelBuilder modelBuilder,
         string? schema,
@@ -325,7 +327,9 @@ public static class NpgsqlModelBuilderExtensions
     /// <remarks>
     /// See: https://www.postgresql.org/docs/current/external-extensions.html
     /// </remarks>
-    /// <exception cref="ArgumentNullException"><paramref name="modelBuilder"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="modelBuilder" />
+    /// </exception>
     public static ModelBuilder HasPostgresExtension(
         this ModelBuilder modelBuilder,
         string name)
@@ -343,7 +347,9 @@ public static class NpgsqlModelBuilderExtensions
     /// <remarks>
     /// See: https://www.postgresql.org/docs/current/external-extensions.html
     /// </remarks>
-    /// <exception cref="ArgumentNullException"><paramref name="modelBuilder"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="modelBuilder" />
+    /// </exception>
     public static IConventionModelBuilder? HasPostgresExtension(
         this IConventionModelBuilder modelBuilder,
         string? schema,
@@ -370,7 +376,9 @@ public static class NpgsqlModelBuilderExtensions
     /// <remarks>
     /// See: https://www.postgresql.org/docs/current/external-extensions.html
     /// </remarks>
-    /// <exception cref="ArgumentNullException"><paramref name="modelBuilder"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="modelBuilder" />
+    /// </exception>
     public static IConventionModelBuilder? HasPostgresExtension(
         this IConventionModelBuilder modelBuilder,
         string name,
@@ -461,8 +469,9 @@ public static class NpgsqlModelBuilderExtensions
     /// <param name="schema">The schema in which to create the enum type.</param>
     /// <param name="name">The name of the enum type to create.</param>
     /// <param name="nameTranslator">
-    /// The translator for name and label inference.
-    /// Defaults to <see cref="EDBSnakeCaseNameTranslator"/>.</param>
+    ///     The translator for name and label inference.
+    ///     Defaults to <see cref="EDBSnakeCaseNameTranslator" />.
+    /// </param>
     /// <typeparam name="TEnum"></typeparam>
     /// <returns>
     /// The updated <see cref="ModelBuilder"/>.
@@ -708,15 +717,16 @@ public static class NpgsqlModelBuilderExtensions
     /// collation when creating each column (unless overridden).
     /// </summary>
     /// <remarks>
-    /// <p>
-    /// An alternative is to specify a database collation via <see cref="RelationalModelBuilderExtensions.UseCollation(Microsoft.EntityFrameworkCore.ModelBuilder,string)"/>,
-    /// which will specify the query on <c>CREATE DATABASE</c> instead of for each and every column. However,
-    /// PostgreSQL support is limited for the collations that can be specific via this mechanism; ICU collations -
-    /// which include all case-insensitive collations - are currently unsupported.
-    /// </p>
-    /// <p>
-    /// For more information, see https://www.postgresql.org/docs/current/collation.html.
-    /// </p>
+    ///     <p>
+    ///         An alternative is to specify a database collation via
+    ///         <see cref="RelationalModelBuilderExtensions.UseCollation(Microsoft.EntityFrameworkCore.ModelBuilder,string)" />,
+    ///         which will specify the query on <c>CREATE DATABASE</c> instead of for each and every column. However,
+    ///         PostgreSQL support is limited for the collations that can be specific via this mechanism; ICU collations -
+    ///         which include all case-insensitive collations - are currently unsupported.
+    ///     </p>
+    ///     <p>
+    ///         For more information, see https://www.postgresql.org/docs/current/collation.html.
+    ///     </p>
     /// </remarks>
     /// <param name="modelBuilder">The model builder.</param>
     /// <param name="collation">The collation.</param>
@@ -737,15 +747,16 @@ public static class NpgsqlModelBuilderExtensions
     /// collation when creating each column (unless overridden).
     /// </summary>
     /// <remarks>
-    /// <p>
-    /// An alternative is to specify a database collation via <see cref="RelationalModelBuilderExtensions.UseCollation(Microsoft.EntityFrameworkCore.ModelBuilder,string)"/>,
-    /// which will specify the query on <c>CREATE DATABASE</c> instead of for each and every column. However,
-    /// PostgreSQL support is limited for the collations that can be specific via this mechanism; ICU collations -
-    /// which include all case-insensitive collations - are currently unsupported.
-    /// </p>
-    /// <p>
-    /// For more information, see https://www.postgresql.org/docs/current/collation.html.
-    /// </p>
+    ///     <p>
+    ///         An alternative is to specify a database collation via
+    ///         <see cref="RelationalModelBuilderExtensions.UseCollation(Microsoft.EntityFrameworkCore.ModelBuilder,string)" />,
+    ///         which will specify the query on <c>CREATE DATABASE</c> instead of for each and every column. However,
+    ///         PostgreSQL support is limited for the collations that can be specific via this mechanism; ICU collations -
+    ///         which include all case-insensitive collations - are currently unsupported.
+    ///     </p>
+    ///     <p>
+    ///         For more information, see https://www.postgresql.org/docs/current/collation.html.
+    ///     </p>
     /// </remarks>
     /// <param name="modelBuilder">The model builder.</param>
     /// <param name="collation">The collation.</param>
@@ -790,16 +801,16 @@ public static class NpgsqlModelBuilderExtensions
     #region Helpers
 
     // See: https://github.com/npgsql/npgsql/blob/dev/src/Npgsql/TypeMapping/TypeMapperBase.cs#L132-L138
-    private static string GetTypePgName<TEnum>(IEDBNameTranslator nameTranslator) where TEnum : struct, Enum
-        => typeof(TEnum).GetCustomAttribute<PgNameAttribute>()?.PgName ??
-            nameTranslator.TranslateTypeName(typeof(TEnum).Name);
+    private static string GetTypePgName<TEnum>(IEDBNameTranslator nameTranslator)
+        where TEnum : struct, Enum
+        => typeof(TEnum).GetCustomAttribute<PgNameAttribute>()?.PgName ?? nameTranslator.TranslateTypeName(typeof(TEnum).Name);
 
     // See: https://github.com/npgsql/npgsql/blob/dev/src/Npgsql/TypeHandlers/EnumHandler.cs#L118-L129
-    private static string[] GetMemberPgNames<TEnum>(IEDBNameTranslator nameTranslator) where TEnum : struct, Enum
+    private static string[] GetMemberPgNames<TEnum>(IEDBNameTranslator nameTranslator)
+        where TEnum : struct, Enum
         => typeof(TEnum)
             .GetFields(BindingFlags.Static | BindingFlags.Public)
-            .Select(x => x.GetCustomAttribute<PgNameAttribute>()?.PgName ??
-                nameTranslator.TranslateMemberName(x.Name))
+            .Select(x => x.GetCustomAttribute<PgNameAttribute>()?.PgName ?? nameTranslator.TranslateMemberName(x.Name))
             .ToArray();
 
     #endregion

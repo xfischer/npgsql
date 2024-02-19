@@ -72,7 +72,10 @@ public class NpgsqlRuntimeModelConvention : RelationalRuntimeModelConvention
 
     /// <inheritdoc />
     protected override void ProcessPropertyAnnotations(
-        Dictionary<string, object?> annotations, IProperty property, RuntimeProperty runtimeProperty, bool runtime)
+        Dictionary<string, object?> annotations,
+        IProperty property,
+        RuntimeProperty runtimeProperty,
+        bool runtime)
     {
         base.ProcessPropertyAnnotations(annotations, property, runtimeProperty, runtime);
 
@@ -107,6 +110,12 @@ public class NpgsqlRuntimeModelConvention : RelationalRuntimeModelConvention
             annotations.Remove(NpgsqlAnnotationNames.IndexInclude);
             annotations.Remove(NpgsqlAnnotationNames.CreatedConcurrently);
             annotations.Remove(NpgsqlAnnotationNames.NullsDistinct);
+
+            foreach (var annotationName in annotations.Keys.Where(
+                         k => k.StartsWith(NpgsqlAnnotationNames.StorageParameterPrefix, StringComparison.Ordinal)))
+            {
+                annotations.Remove(annotationName);
+            }
         }
     }
 }

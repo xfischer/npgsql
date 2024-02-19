@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -16,8 +18,26 @@ public class NpgsqlTimestampTzTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    public static NpgsqlTimestampTzTypeMapping Default { get; } = new(typeof(DateTime));
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     public NpgsqlTimestampTzTypeMapping(Type clrType)
-        : base("timestamp with time zone", clrType, EDBDbType.TimestampTz) {}
+        : base(
+            "timestamp with time zone",
+            clrType,
+            EDBDbType.TimestampTz,
+            clrType == typeof(DateTime)
+                ? NpgsqlJsonTimestampTzDateTimeReaderWriter.Instance
+                : clrType == typeof(DateTimeOffset)
+                    ? NpgsqlJsonTimestampTzDateTimeOffsetReaderWriter.Instance
+                    : throw new ArgumentException("clrType must be DateTime or DateTimeOffset", nameof(clrType)))
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,7 +46,9 @@ public class NpgsqlTimestampTzTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected NpgsqlTimestampTzTypeMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.TimestampTz) {}
+        : base(parameters, EDBDbType.TimestampTz)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -53,7 +75,7 @@ public class NpgsqlTimestampTzTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
-        => $"TIMESTAMPTZ '{GenerateLiteralCore(value)}'";
+        => $"TIMESTAMPTZ '{Format(value)}'";
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -62,62 +84,119 @@ public class NpgsqlTimestampTzTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateEmbeddedNonNullSqlLiteral(object value)
-        => @$"""{GenerateLiteralCore(value)}""";
+        => @$"""{Format(value)}""";
 
-    private string GenerateLiteralCore(object value)
-    {
-        switch (value)
+    private static string Format(object value)
+        => value switch
         {
-            case DateTime dateTime:
-                if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
-                {
-                    if (dateTime == DateTime.MinValue)
-                    {
-                        return "-infinity";
-                    }
+            DateTime dateTime => Format(dateTime),
+            DateTimeOffset dateTimeOffset => Format(dateTimeOffset),
+            _ => throw new InvalidCastException(
+                $"Attempted to generate timestamptz literal for type {value.GetType()}, only DateTime and DateTimeOffset are supported")
+        };
 
-                    if (dateTime == DateTime.MaxValue)
-                    {
-                        return "infinity";
-                    }
-                }
+    private static string Format(DateTime dateTime)
+    {
+        if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
+        {
+            if (dateTime == DateTime.MinValue)
+            {
+                return "-infinity";
+            }
 
-                return dateTime.Kind switch
-                {
-                    DateTimeKind.Utc => dateTime.ToString("yyyy-MM-dd HH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + 'Z',
-
-                    DateTimeKind.Unspecified => NpgsqlTypeMappingSource.LegacyTimestampBehavior || dateTime == default
-                        ? dateTime.ToString("yyyy-MM-dd HH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + 'Z'
-                        : throw new InvalidCastException(
-                            $"'timestamp with time zone' literal cannot be generated for {dateTime.Kind} DateTime: a UTC DateTime is required"),
-
-                    DateTimeKind.Local => NpgsqlTypeMappingSource.LegacyTimestampBehavior
-                        ? dateTime.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFzzz", CultureInfo.InvariantCulture)
-                        : throw new InvalidCastException(
-                            $"'timestamp with time zone' literal cannot be generated for {dateTime.Kind} DateTime: a UTC DateTime is required"),
-
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-            case DateTimeOffset dateTimeOffset:
-                if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
-                {
-                    if (dateTimeOffset == DateTimeOffset.MinValue)
-                    {
-                        return "-infinity";
-                    }
-
-                    if (dateTimeOffset == DateTimeOffset.MaxValue)
-                    {
-                        return "infinity";
-                    }
-                }
-
-                return dateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFzzz", CultureInfo.InvariantCulture);
-
-            default:
-                throw new InvalidCastException(
-                    $"Attempted to generate timestamptz literal for type {value.GetType()}, only DateTime and DateTimeOffset are supported");
+            if (dateTime == DateTime.MaxValue)
+            {
+                return "infinity";
+            }
         }
+
+        return dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime.ToString("yyyy-MM-ddTHH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + 'Z',
+
+            DateTimeKind.Unspecified => NpgsqlTypeMappingSource.LegacyTimestampBehavior || dateTime == default
+                ? dateTime.ToString("yyyy-MM-ddTHH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + 'Z'
+                : throw new ArgumentException(
+                    $"'timestamp with time zone' literal cannot be generated for {dateTime.Kind} DateTime: a UTC DateTime is required"),
+
+            DateTimeKind.Local => NpgsqlTypeMappingSource.LegacyTimestampBehavior
+                ? dateTime.ToString("yyyy-MM-ddTHH:mm:ss.FFFFFFzzz", CultureInfo.InvariantCulture)
+                : throw new ArgumentException(
+                    $"'timestamp with time zone' literal cannot be generated for {dateTime.Kind} DateTime: a UTC DateTime is required"),
+
+            _ => throw new UnreachableException()
+        };
+    }
+
+    private static string Format(DateTimeOffset dateTimeOffset)
+    {
+        if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
+        {
+            if (dateTimeOffset == DateTimeOffset.MinValue)
+            {
+                return "-infinity";
+            }
+
+            if (dateTimeOffset == DateTimeOffset.MaxValue)
+            {
+                return "infinity";
+            }
+        }
+
+        return dateTimeOffset.ToString("yyyy-MM-ddTHH:mm:ss.FFFFFFzzz", CultureInfo.InvariantCulture);
+    }
+
+    private sealed class NpgsqlJsonTimestampTzDateTimeReaderWriter : JsonValueReaderWriter<DateTime>
+    {
+        public static NpgsqlJsonTimestampTzDateTimeReaderWriter Instance { get; } = new();
+
+        public override DateTime FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+        {
+            var s = manager.CurrentReader.GetString()!;
+
+            if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
+            {
+                switch (s)
+                {
+                    case "-infinity":
+                        return DateTime.MinValue;
+                    case "infinity":
+                        return DateTime.MaxValue;
+                }
+            }
+
+            // Our JSON string representation ends with Z (UTC), but DateTime.Parse returns a Local timestamp even in that case. Convert
+            // it in order to return a DateTime with Kind UTC.
+            return DateTime.Parse(s, CultureInfo.InvariantCulture).ToUniversalTime();
+        }
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, DateTime value)
+            => writer.WriteStringValue(Format(value));
+    }
+
+    private sealed class NpgsqlJsonTimestampTzDateTimeOffsetReaderWriter : JsonValueReaderWriter<DateTimeOffset>
+    {
+        public static NpgsqlJsonTimestampTzDateTimeOffsetReaderWriter Instance { get; } = new();
+
+        public override DateTimeOffset FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+        {
+            var s = manager.CurrentReader.GetString()!;
+
+            if (!NpgsqlTypeMappingSource.DisableDateTimeInfinityConversions)
+            {
+                switch (s)
+                {
+                    case "-infinity":
+                        return DateTimeOffset.MinValue;
+                    case "infinity":
+                        return DateTimeOffset.MaxValue;
+                }
+            }
+
+            return DateTimeOffset.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, DateTimeOffset value)
+            => writer.WriteStringValue(Format(value));
     }
 }

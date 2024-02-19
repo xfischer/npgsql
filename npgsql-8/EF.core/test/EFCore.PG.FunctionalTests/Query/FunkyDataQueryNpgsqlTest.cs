@@ -10,7 +10,7 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
         : base(fixture)
     {
         Fixture.TestSqlLoggerFactory.Clear();
-        //Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     public override Task String_FirstOrDefault_and_LastOrDefault(bool async)
@@ -21,7 +21,8 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
     public async Task String_starts_with_on_argument_with_escape_constant(bool async)
         => await AssertQuery(
             async,
-            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName.StartsWith("Some\\")));
+            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName.StartsWith("Some\\")),
+            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName != null && c.FirstName.StartsWith("Some\\")));
 
     [ConditionalTheory]
     [MemberData(nameof(IsAsyncData))]
@@ -30,16 +31,19 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
         var param = "Some\\";
         await AssertQuery(
             async,
-            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName.StartsWith(param)));
+            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName.StartsWith(param)),
+            ss => ss.Set<FunkyCustomer>().Where(c => c.FirstName != null && c.FirstName.StartsWith(param)));
     }
 
     public class FunkyDataQueryNpgsqlFixture : FunkyDataQueryFixtureBase
     {
         private FunkyDataData _expectedData;
 
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
 
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
 
         public override FunkyDataContext CreateContext()
         {
@@ -59,7 +63,7 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
                 var mutableCustomersOhYeah = (List<FunkyCustomer>)_expectedData.FunkyCustomers;
 
                 mutableCustomersOhYeah.Add(
-                    new()
+                    new FunkyCustomer
                     {
                         Id = maxId + 1,
                         FirstName = "Some\\Guy",

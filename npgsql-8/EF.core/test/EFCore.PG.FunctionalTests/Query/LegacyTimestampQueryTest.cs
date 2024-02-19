@@ -18,7 +18,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query
         {
             Fixture = fixture;
             Fixture.TestSqlLoggerFactory.Clear();
-            // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+            Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
         }
 
         [ConditionalFact]
@@ -34,7 +34,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query
         [ConditionalFact]
         public virtual async Task Where_datetime_now()
         {
-            using var ctx = CreateContext();
+            await using var ctx = CreateContext();
 
             // Because we can't play around with the LegacyTimestampBehavior flag at the ADO level (different assembly already compile in
             // RELEASE), we need to make the ADO layer happy by sending a UTC DateTime - but it should be the same with non-UTC in legacy.
@@ -43,7 +43,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query
             _ = await ctx.Entities.Where(c => DateTime.Now != myDatetime).ToListAsync();
 
             AssertSql(
-"""
+                """
 @__myDatetime_0='2015-04-10T00:00:00.0000000Z' (DbType = DateTime)
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeOffset", e."TimestamptzDateTime"
@@ -55,19 +55,19 @@ WHERE now() <> @__myDatetime_0
         [ConditionalFact]
         public virtual async Task Where_datetime_utcnow()
         {
-            using var ctx = CreateContext();
+            await using var ctx = CreateContext();
 
             var myDatetime = new DateTime(2015, 4, 10);
 
             _ = await ctx.Entities.Where(c => DateTime.UtcNow != myDatetime).ToListAsync();
 
             AssertSql(
-"""
+                """
 @__myDatetime_0='2015-04-10T00:00:00.0000000'
 
 SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeOffset", e."TimestamptzDateTime"
 FROM "Entities" AS e
-WHERE (now() AT TIME ZONE 'UTC') <> @__myDatetime_0
+WHERE now() AT TIME ZONE 'UTC' <> @__myDatetime_0
 """);
         }
 
@@ -83,26 +83,38 @@ WHERE (now() AT TIME ZONE 'UTC') <> @__myDatetime_0
         {
             public DbSet<Entity> Entities { get; set; }
 
-            public TimestampQueryContext(DbContextOptions options) : base(options) {}
+            public TimestampQueryContext(DbContextOptions options)
+                : base(options)
+            {
+            }
         }
 
         public class Entity
         {
             public int Id { get; set; }
+
             [Column(TypeName = "timestamp with time zone")]
             public DateTime TimestamptzDateTime { get; set; }
+
             public DateTime TimestampDateTime { get; set; }
             public DateTimeOffset TimestampDateTimeOffset { get; set; }
         }
 
         public class LegacyTimestampQueryFixture : SharedStoreFixtureBase<TimestampQueryContext>
         {
-            protected override string StoreName => "TimestampQueryTest";
-            protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-            public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
+            protected override string StoreName
+                => "TimestampQueryTest";
+
+            protected override ITestStoreFactory TestStoreFactory
+                => NpgsqlTestStoreFactory.Instance;
+
+            public TestSqlLoggerFactory TestSqlLoggerFactory
+                => (TestSqlLoggerFactory)ListLoggerFactory;
 
             public LegacyTimestampQueryFixture()
-                => NpgsqlTypeMappingSource.LegacyTimestampBehavior = true;
+            {
+                NpgsqlTypeMappingSource.LegacyTimestampBehavior = true;
+            }
 
             public override void Dispose()
                 => NpgsqlTypeMappingSource.LegacyTimestampBehavior = false;
@@ -137,7 +149,9 @@ WHERE (now() AT TIME ZONE 'UTC') <> @__myDatetime_0
     }
 
     [CollectionDefinition("LegacyTimestampQueryTest", DisableParallelization = true)]
-    public class EventSourceTestCollection {}
+    public class EventSourceTestCollection
+    {
+    }
 }
 
 #endif

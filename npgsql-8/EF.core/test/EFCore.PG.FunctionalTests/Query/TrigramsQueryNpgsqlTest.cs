@@ -18,7 +18,7 @@ public class TrigramsQueryNpgsqlTest : IClassFixture<TrigramsQueryNpgsqlTest.Tri
     {
         Fixture = fixture;
         Fixture.TestSqlLoggerFactory.Clear();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     #region FunctionTests
@@ -191,10 +191,10 @@ public class TrigramsQueryNpgsqlTest : IClassFixture<TrigramsQueryNpgsqlTest.Tri
             .ToArray();
 
         AssertSql(
-"""
+            """
 SELECT t."Id", t."Text"
 FROM "TrigramsTestEntities" AS t
-WHERE ((COALESCE(t."Text", '') || ' ') || COALESCE(t."Text", '')) % 'query'
+WHERE (COALESCE(t."Text", '') || ' ' || COALESCE(t."Text", '')) % 'query'
 """);
     }
 
@@ -207,10 +207,17 @@ WHERE ((COALESCE(t."Text", '') || ' ') || COALESCE(t."Text", '')) % 'query'
     /// </summary>
     public class TrigramsQueryNpgsqlFixture : SharedStoreFixtureBase<TrigramsContext>
     {
-        protected override string StoreName => "TrigramsQueryTest";
-        protected override ITestStoreFactory TestStoreFactory => NpgsqlTestStoreFactory.Instance;
-        public TestSqlLoggerFactory TestSqlLoggerFactory => (TestSqlLoggerFactory)ListLoggerFactory;
-        protected override void Seed(TrigramsContext context) => TrigramsContext.Seed(context);
+        protected override string StoreName
+            => "TrigramsQueryTest";
+
+        protected override ITestStoreFactory TestStoreFactory
+            => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
+
+        protected override void Seed(TrigramsContext context)
+            => TrigramsContext.Seed(context);
     }
 
     /// <summary>
@@ -247,7 +254,10 @@ WHERE ((COALESCE(t."Text", '') || ' ') || COALESCE(t."Text", '')) % 'query'
         /// <param name="options">
         /// The options to be used for configuration.
         /// </param>
-        public TrigramsContext(DbContextOptions options) : base(options) {}
+        public TrigramsContext(DbContextOptions options)
+            : base(options)
+        {
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -262,12 +272,9 @@ WHERE ((COALESCE(t."Text", '') || ' ') || COALESCE(t."Text", '')) % 'query'
             {
                 var text = "Some text " + i;
                 context.TrigramsTestEntities.Add(
-                    new TrigramsTestEntity
-                    {
-                        Id = i,
-                        Text = text
-                    });
+                    new TrigramsTestEntity { Id = i, Text = text });
             }
+
             context.SaveChanges();
         }
     }
@@ -276,15 +283,18 @@ WHERE ((COALESCE(t."Text", '') || ' ') || COALESCE(t."Text", '')) % 'query'
 
     #region Helpers
 
-    protected TrigramsContext CreateContext() => Fixture.CreateContext();
+    protected TrigramsContext CreateContext()
+        => Fixture.CreateContext();
 
-    private void AssertSql(params string[] expected) => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
+    private void AssertSql(params string[] expected)
+        => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
     /// <summary>
     /// Asserts that the SQL fragment appears in the logs.
     /// </summary>
     /// <param name="sql">The SQL statement or fragment to search for in the logs.</param>
-    private void AssertContainsSql(string sql) => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
+    private void AssertContainsSql(string sql)
+        => Assert.Contains(sql, Fixture.TestSqlLoggerFactory.Sql);
 
     #endregion
 }

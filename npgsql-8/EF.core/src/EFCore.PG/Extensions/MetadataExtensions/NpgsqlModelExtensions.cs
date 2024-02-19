@@ -52,7 +52,9 @@ public static class NpgsqlModelExtensions
     /// <param name="name"> The value to set. </param>
     /// <param name="fromDataAnnotation"> Indicates whether the configuration was specified using a data annotation. </param>
     public static string? SetHiLoSequenceName(
-        this IConventionModel model, string? name, bool fromDataAnnotation = false)
+        this IConventionModel model,
+        string? name,
+        bool fromDataAnnotation = false)
     {
         Check.NullButNotEmpty(name, nameof(name));
 
@@ -97,7 +99,9 @@ public static class NpgsqlModelExtensions
     /// <param name="value"> The value to set. </param>
     /// <param name="fromDataAnnotation"> Indicates whether the configuration was specified using a data annotation. </param>
     public static string? SetHiLoSequenceSchema(
-        this IConventionModel model, string? value, bool fromDataAnnotation = false)
+        this IConventionModel model,
+        string? value,
+        bool fromDataAnnotation = false)
     {
         Check.NullButNotEmpty(value, nameof(value));
 

@@ -46,24 +46,31 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
 {
     private static readonly MemberInfo SystemClock_Instance =
         typeof(SystemClock).GetRuntimeProperty(nameof(SystemClock.Instance))!;
+
     private static readonly MemberInfo ZonedDateTime_LocalDateTime =
         typeof(ZonedDateTime).GetRuntimeProperty(nameof(ZonedDateTime.LocalDateTime))!;
 
     private static readonly MemberInfo Interval_Start =
         typeof(Interval).GetRuntimeProperty(nameof(Interval.Start))!;
+
     private static readonly MemberInfo Interval_End =
         typeof(Interval).GetRuntimeProperty(nameof(Interval.End))!;
+
     private static readonly MemberInfo Interval_HasStart =
         typeof(Interval).GetRuntimeProperty(nameof(Interval.HasStart))!;
+
     private static readonly MemberInfo Interval_HasEnd =
         typeof(Interval).GetRuntimeProperty(nameof(Interval.HasEnd))!;
+
     private static readonly MemberInfo Interval_Duration =
         typeof(Interval).GetRuntimeProperty(nameof(Interval.Duration))!;
 
     private static readonly MemberInfo DateInterval_Start =
         typeof(DateInterval).GetRuntimeProperty(nameof(DateInterval.Start))!;
+
     private static readonly MemberInfo DateInterval_End =
         typeof(DateInterval).GetRuntimeProperty(nameof(DateInterval.End))!;
+
     private static readonly MemberInfo DateInterval_Length =
         typeof(DateInterval).GetRuntimeProperty(nameof(DateInterval.Length))!;
 
@@ -93,12 +100,7 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
         _localDateTimeTypeMapping = typeMappingSource.FindMapping(typeof(LocalDateTime))!;
     }
 
-    private static readonly bool[][] TrueArrays =
-    {
-        Array.Empty<bool>(),
-        new[] { true },
-        new[] { true, true }
-    };
+    private static readonly bool[][] TrueArrays = { Array.Empty<bool>(), new[] { true }, new[] { true, true } };
 
     /// <inheritdoc />
     public virtual SqlExpression? Translate(
@@ -130,7 +132,7 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
             || declaringType == typeof(LocalTime)
             || declaringType == typeof(Period))
         {
-            return TranslateDateTime(instance, member, returnType);
+            return TranslateDateTime(instance, member);
         }
 
         if (declaringType == typeof(ZonedDateTime))
@@ -281,75 +283,40 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
                 _dateTypeMapping);
     }
 
-    private SqlExpression? TranslateDateTime(SqlExpression instance, MemberInfo member, Type returnType)
-    {
-        switch (member.Name)
+    private SqlExpression? TranslateDateTime(SqlExpression instance, MemberInfo member)
+        => member.Name switch
         {
-            case "Year":
-            case "Years":
-                return GetDatePartExpression(instance, "year");
+            "Year" or "Years" => GetDatePartExpression(instance, "year"),
+            "Month" or "Months" => GetDatePartExpression(instance, "month"),
+            "DayOfYear" => GetDatePartExpression(instance, "doy"),
+            "Day" or "Days" => GetDatePartExpression(instance, "day"),
+            "Hour" or "Hours" => GetDatePartExpression(instance, "hour"),
+            "Minute" or "Minutes" => GetDatePartExpression(instance, "minute"),
+            "Second" or "Seconds" => GetDatePartExpression(instance, "second", true),
+            "Millisecond" or "Milliseconds" => null, // Too annoying
 
-            case "Month":
-            case "Months":
-                return GetDatePartExpression(instance, "month");
-
-            case "DayOfYear":
-                return GetDatePartExpression(instance, "doy");
-
-            case "Day":
-            case "Days":
-                return GetDatePartExpression(instance, "day");
-
-            case "Hour":
-            case "Hours":
-                return GetDatePartExpression(instance, "hour");
-
-            case "Minute":
-            case "Minutes":
-                return GetDatePartExpression(instance, "minute");
-
-            case "Second":
-            case "Seconds":
-                return GetDatePartExpression(instance, "second", true);
-
-            case "Millisecond":
-            case "Milliseconds":
-                return null; // Too annoying
-
-            case "DayOfWeek":
-                // Unlike DateTime.DayOfWeek, NodaTime's IsoDayOfWeek enum doesn't exactly correspond to PostgreSQL's
-                // values returned by date_part('dow', ...): in NodaTime Sunday is 7 and not 0, which is None.
-                // So we generate a CASE WHEN expression to translate PostgreSQL's 0 to 7.
-                var getValueExpression = GetDatePartExpression(instance, "dow", true);
-                // TODO: Can be simplified once https://github.com/aspnet/EntityFrameworkCore/pull/16726 is in
-                return
-                    _sqlExpressionFactory.Case(
-                        new[]
-                        {
-                            new CaseWhenClause(
-                                _sqlExpressionFactory.Equal(getValueExpression, _sqlExpressionFactory.Constant(0)),
-                                _sqlExpressionFactory.Constant(7))
-                        },
-                        getValueExpression
-                    );
+            // Unlike DateTime.DayOfWeek, NodaTime's IsoDayOfWeek enum doesn't exactly correspond to PostgreSQL's
+            // values returned by date_part('dow', ...): in NodaTime Sunday is 7 and not 0, which is None.
+            // So we generate a CASE WHEN expression to translate PostgreSQL's 0 to 7.
+            "DayOfWeek" when GetDatePartExpression(instance, "dow", true) is var getValueExpression
+                => _sqlExpressionFactory.Case(
+                    getValueExpression,
+                    new[] { new CaseWhenClause(_sqlExpressionFactory.Constant(0), _sqlExpressionFactory.Constant(7)) },
+                    getValueExpression),
 
             // PG allows converting a timestamp directly to date, truncating the time; but given a timestamptz, it performs a time zone
             // conversion (based on TimeZone), which we don't want (so avoid translating except on timestamp).
             // The translation for ZonedDateTime.Date converts to timestamp before ending up here.
-            case "Date" when instance.TypeMapping is TimestampLocalDateTimeMapping:
-                return _sqlExpressionFactory.Convert(instance, typeof(LocalDate), _typeMappingSource.FindMapping(typeof(LocalDate))!);
+            "Date" when instance.TypeMapping is TimestampLocalDateTimeMapping or LegacyTimestampInstantMapping
+                => _sqlExpressionFactory.Convert(instance, typeof(LocalDate), _typeMappingSource.FindMapping(typeof(LocalDate))!),
 
-            case "TimeOfDay":
-                // TODO: Technically possible simply via casting to PG time,
-                // but ExplicitCastExpression only allows casting to PG types that
-                // are default-mapped from CLR types (timespan maps to interval,
-                // which timestamp cannot be cast into)
-                return null;
+            "TimeOfDay" => _sqlExpressionFactory.Convert(
+                instance,
+                typeof(LocalTime),
+                _typeMappingSource.FindMapping(typeof(LocalTime), storeTypeName: "time")),
 
-            default:
-                return null;
-        }
-    }
+            _ => null
+        };
 
     /// <summary>
     /// Constructs the date_part expression.
@@ -410,7 +377,7 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
 
             return member == ZonedDateTime_LocalDateTime
                 ? instance
-                : TranslateDateTime(instance, member, returnType);
+                : TranslateDateTime(instance, member);
         }
 
         // date_part, which is used to extract most components, doesn't have an overload for timestamptz, so passing one directly
@@ -420,6 +387,6 @@ public class NpgsqlNodaTimeMemberTranslator : IMemberTranslator
 
         return member == ZonedDateTime_LocalDateTime
             ? instance
-            : TranslateDateTime(instance, member, returnType);
+            : TranslateDateTime(instance, member);
     }
 }

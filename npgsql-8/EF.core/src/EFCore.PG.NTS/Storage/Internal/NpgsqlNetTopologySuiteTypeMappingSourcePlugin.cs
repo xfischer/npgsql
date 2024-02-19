@@ -42,7 +42,9 @@ public class NpgsqlNetTopologySuiteTypeMappingSourcePlugin : IRelationalTypeMapp
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     public NpgsqlNetTopologySuiteTypeMappingSourcePlugin(INpgsqlNetTopologySuiteOptions options)
-        => _options = Check.NotNull(options, nameof(options));
+    {
+        _options = Check.NotNull(options, nameof(options));
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -57,9 +59,15 @@ public class NpgsqlNetTopologySuiteTypeMappingSourcePlugin : IRelationalTypeMapp
         var storeTypeName = mappingInfo.StoreTypeName;
         var isGeography = _options.IsGeographyDefault;
 
-        if (clrType is not null && !typeof(Geometry).IsAssignableFrom(clrType))
+        if (clrType is not null)
         {
-            return null;
+            if (!clrType.IsAssignableTo(typeof(Geometry)))
+            {
+                return null;
+            }
+
+            // TODO: if store type is null, consider setting it based on the CLR type, i.e. create GEOMETRY(Point) instead of Geometry when
+            // the CLR property is NTS Point.
         }
 
         if (storeTypeName is not null)
@@ -69,18 +77,37 @@ public class NpgsqlNetTopologySuiteTypeMappingSourcePlugin : IRelationalTypeMapp
                 return null;
             }
 
-            if (clrType is null)
-            {
-                clrType = parsedSubtype;
-            }
+            clrType ??= parsedSubtype;
         }
 
-        return clrType is not null || storeTypeName is not null
-            ? (RelationalTypeMapping)Activator.CreateInstance(
-                typeof(NpgsqlGeometryTypeMapping<>).MakeGenericType(clrType ?? typeof(Geometry)),
-                storeTypeName ?? (isGeography ? "geography" : "geometry"),
-                isGeography)!
-            : null;
+        storeTypeName ??= isGeography ? "geography" : "geometry";
+
+        Check.DebugAssert(clrType is not null, "clrType is not null");
+
+        var typeMapping = (RelationalTypeMapping)Activator.CreateInstance(
+            typeof(NpgsqlGeometryTypeMapping<>).MakeGenericType(clrType), storeTypeName, isGeography)!;
+
+        // TODO: for geometry collection support (and why the following is commented out), see #2850.
+
+        // // TODO: Also restrict the element type mapping based on the user-specified store type?
+        // var elementType = clrType == typeof(MultiPoint)
+        //     ? typeof(Point)
+        //     : clrType == typeof(MultiLineString)
+        //         ? typeof(LineString)
+        //         : clrType == typeof(MultiPolygon)
+        //             ? typeof(Polygon)
+        //             : clrType == typeof(GeometryCollection)
+        //                 ? typeof(Geometry)
+        //                 : null;
+        //
+        // if (elementType is not null)
+        // {
+        //     var elementTypeMapping = FindMapping(new() { ClrType = elementType })!;
+        //
+        //     typeMapping = typeMapping.Clone(elementMapping: elementTypeMapping);
+        // }
+
+        return typeMapping;
     }
 
     /// <summary>
@@ -98,7 +125,7 @@ public class NpgsqlNetTopologySuiteTypeMappingSourcePlugin : IRelationalTypeMapp
         storeTypeName = storeTypeName.Trim();
         subtypeName = storeTypeName;
         isGeography = false;
-        clrType = null;
+        clrType = typeof(Geometry);
         srid = -1;
         ordinates = Ordinates.AllOrdinates;
 

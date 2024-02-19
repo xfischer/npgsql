@@ -7,11 +7,12 @@ public class NorthwindSetOperationsQueryNpgsqlTest
 {
     // ReSharper disable once UnusedParameter.Local
     public NorthwindSetOperationsQueryNpgsqlTest(
-        NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture, ITestOutputHelper testOutputHelper)
+        NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture,
+        ITestOutputHelper testOutputHelper)
         : base(fixture)
     {
         ClearLog();
-        // Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     [ConditionalTheory]
@@ -24,7 +25,7 @@ public class NorthwindSetOperationsQueryNpgsqlTest
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID })));
 
         AssertSql(
-"""
+            """
 SELECT NULL AS "OrderID", o."CustomerID"
 FROM "Orders" AS o
 UNION
@@ -44,7 +45,7 @@ FROM "Orders" AS o0
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID })));
 
         AssertSql(
-"""
+            """
 SELECT NULL::int AS "OrderID", o."CustomerID"
 FROM "Orders" AS o
 UNION
@@ -68,7 +69,7 @@ FROM "Orders" AS o1
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID })));
 
         AssertSql(
-"""
+            """
 SELECT NULL::int AS "OrderID", o."CustomerID"
 FROM "Orders" AS o
 UNION
@@ -96,7 +97,7 @@ FROM "Orders" AS o2
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID })));
 
         AssertSql(
-"""
+            """
 SELECT NULL::int AS "OrderID", o."CustomerID"
 FROM "Orders" AS o
 UNION
@@ -123,16 +124,17 @@ FROM "Orders" AS o3
             ss => ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID })
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID }))
                 .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID }))
-                .Where(o => o.CustomerID ==
-                ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID })
-                .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID }))
-                .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID }))
-                .OrderBy(o => o.CustomerID)
-                .First()
-                .CustomerID));
+                .Where(
+                    o => o.CustomerID
+                        == ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID })
+                            .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)null, o.CustomerID }))
+                            .Union(ss.Set<Order>().Select(o => new { OrderID = (int?)o.OrderID, o.CustomerID }))
+                            .OrderBy(o => o.CustomerID)
+                            .First()
+                            .CustomerID));
 
         AssertSql(
-"""
+            """
 SELECT t0."OrderID", t0."CustomerID"
 FROM (
     SELECT NULL::int AS "OrderID", o."CustomerID"
@@ -157,7 +159,7 @@ WHERE t0."CustomerID" = (
         FROM "Orders" AS o4
     ) AS t1
     ORDER BY t1."CustomerID" NULLS FIRST
-    LIMIT 1) OR ((t0."CustomerID" IS NULL) AND ((
+    LIMIT 1) OR (t0."CustomerID" IS NULL AND (
     SELECT t1."CustomerID"
     FROM (
         SELECT NULL::int AS "OrderID", o2."CustomerID"
@@ -170,7 +172,7 @@ WHERE t0."CustomerID" = (
         FROM "Orders" AS o4
     ) AS t1
     ORDER BY t1."CustomerID" NULLS FIRST
-    LIMIT 1) IS NULL))
+    LIMIT 1) IS NULL)
 """);
     }
 

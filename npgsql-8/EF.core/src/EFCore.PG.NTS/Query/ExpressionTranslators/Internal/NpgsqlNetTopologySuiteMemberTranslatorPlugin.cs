@@ -18,10 +18,9 @@ public class NpgsqlNetTopologySuiteMemberTranslatorPlugin : IMemberTranslatorPlu
     public NpgsqlNetTopologySuiteMemberTranslatorPlugin(
         IRelationalTypeMappingSource typeMappingSource,
         ISqlExpressionFactory sqlExpressionFactory)
-        => Translators = new IMemberTranslator[]
-        {
-            new NpgsqlGeometryMemberTranslator(sqlExpressionFactory, typeMappingSource),
-        };
+    {
+        Translators = new IMemberTranslator[] { new NpgsqlGeometryMemberTranslator(sqlExpressionFactory, typeMappingSource), };
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -44,13 +43,7 @@ public class NpgsqlGeometryMemberTranslator : IMemberTranslator
     private readonly IRelationalTypeMappingSource _typeMappingSource;
     private readonly CaseWhenClause[] _ogcGeometryTypeWhenThenList;
 
-    private static readonly bool[][] TrueArrays =
-    {
-        Array.Empty<bool>(),
-        new[] { true },
-        new[] { true, true },
-        new[] { true, true, true }
-    };
+    private static readonly bool[][] TrueArrays = { Array.Empty<bool>(), new[] { true }, new[] { true, true }, new[] { true, true, true } };
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -67,20 +60,33 @@ public class NpgsqlGeometryMemberTranslator : IMemberTranslator
 
         _ogcGeometryTypeWhenThenList = new[]
         {
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_CircularString"),     _sqlExpressionFactory.Constant(OgcGeometryType.CircularString)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_CompoundCurve"),      _sqlExpressionFactory.Constant(OgcGeometryType.CompoundCurve)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_CurvePolygon"),       _sqlExpressionFactory.Constant(OgcGeometryType.CurvePolygon)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_GeometryCollection"), _sqlExpressionFactory.Constant(OgcGeometryType.GeometryCollection)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_LineString"),         _sqlExpressionFactory.Constant(OgcGeometryType.LineString)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_MultiCurve"),         _sqlExpressionFactory.Constant(OgcGeometryType.MultiCurve)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_MultiLineString"),    _sqlExpressionFactory.Constant(OgcGeometryType.MultiLineString)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_MultiPoint"),         _sqlExpressionFactory.Constant(OgcGeometryType.MultiPoint)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_MultiPolygon"),       _sqlExpressionFactory.Constant(OgcGeometryType.MultiPolygon)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_MultiSurface"),       _sqlExpressionFactory.Constant(OgcGeometryType.MultiSurface)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Point"),              _sqlExpressionFactory.Constant(OgcGeometryType.Point)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Polygon"),            _sqlExpressionFactory.Constant(OgcGeometryType.Polygon)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_PolyhedralSurface"),  _sqlExpressionFactory.Constant(OgcGeometryType.PolyhedralSurface)),
-            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Tin"),                _sqlExpressionFactory.Constant(OgcGeometryType.TIN))
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_CircularString"), _sqlExpressionFactory.Constant(OgcGeometryType.CircularString)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_CompoundCurve"), _sqlExpressionFactory.Constant(OgcGeometryType.CompoundCurve)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_CurvePolygon"), _sqlExpressionFactory.Constant(OgcGeometryType.CurvePolygon)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_GeometryCollection"),
+                _sqlExpressionFactory.Constant(OgcGeometryType.GeometryCollection)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_LineString"), _sqlExpressionFactory.Constant(OgcGeometryType.LineString)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_MultiCurve"), _sqlExpressionFactory.Constant(OgcGeometryType.MultiCurve)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_MultiLineString"), _sqlExpressionFactory.Constant(OgcGeometryType.MultiLineString)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_MultiPoint"), _sqlExpressionFactory.Constant(OgcGeometryType.MultiPoint)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_MultiPolygon"), _sqlExpressionFactory.Constant(OgcGeometryType.MultiPolygon)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_MultiSurface"), _sqlExpressionFactory.Constant(OgcGeometryType.MultiSurface)),
+            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Point"), _sqlExpressionFactory.Constant(OgcGeometryType.Point)),
+            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Polygon"), _sqlExpressionFactory.Constant(OgcGeometryType.Polygon)),
+            new CaseWhenClause(
+                _sqlExpressionFactory.Constant("ST_PolyhedralSurface"),
+                _sqlExpressionFactory.Constant(OgcGeometryType.PolyhedralSurface)),
+            new CaseWhenClause(_sqlExpressionFactory.Constant("ST_Tin"), _sqlExpressionFactory.Constant(OgcGeometryType.TIN))
         };
     }
 
@@ -166,7 +172,8 @@ public class NpgsqlGeometryMemberTranslator : IMemberTranslator
         };
 
         SqlFunctionExpression Function(string name, SqlExpression[] arguments, Type returnType, RelationalTypeMapping? typeMapping = null)
-            => _sqlExpressionFactory.Function(name, arguments,
+            => _sqlExpressionFactory.Function(
+                name, arguments,
                 nullable: true, argumentsPropagateNullability: TrueArrays[arguments.Length],
                 returnType, typeMapping);
 

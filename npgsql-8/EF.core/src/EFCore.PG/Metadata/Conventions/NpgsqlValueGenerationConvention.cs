@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
@@ -43,8 +44,7 @@ public class NpgsqlValueGenerationConvention : RelationalValueGenerationConventi
             return;
         }
 
-        if (name == NpgsqlAnnotationNames.TsVectorConfig &&
-            propertyBuilder.Metadata.GetTsVectorConfig() is not null)
+        if (name == NpgsqlAnnotationNames.TsVectorConfig && propertyBuilder.Metadata.GetTsVectorConfig() is not null)
         {
             propertyBuilder.ValueGenerated(ValueGenerated.OnAddOrUpdate);
             return;
@@ -60,6 +60,16 @@ public class NpgsqlValueGenerationConvention : RelationalValueGenerationConventi
     /// <returns>The store value generation strategy to set for the given property.</returns>
     protected override ValueGenerated? GetValueGenerated(IConventionProperty property)
     {
+        // TODO: move to relational?
+        if (property.DeclaringType.IsMappedToJson()
+#pragma warning disable EF1001 // Internal EF Core API usage.
+            && property.IsOrdinalKeyProperty()
+#pragma warning restore EF1001 // Internal EF Core API usage.
+            && (property.DeclaringType as IReadOnlyEntityType)?.FindOwnership()!.IsUnique == false)
+        {
+            return ValueGenerated.OnAdd;
+        }
+
         var declaringTable = property.GetMappedStoreObjects(StoreObjectType.Table).FirstOrDefault();
         if (declaringTable.Name == null)
         {

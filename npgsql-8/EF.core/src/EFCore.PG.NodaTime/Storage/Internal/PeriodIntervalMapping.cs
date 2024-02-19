@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using NodaTime.Text;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
@@ -19,8 +21,12 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     private static readonly MethodInfo FromHours = typeof(Period).GetRuntimeMethod(nameof(Period.FromHours), new[] { typeof(long) })!;
     private static readonly MethodInfo FromMinutes = typeof(Period).GetRuntimeMethod(nameof(Period.FromMinutes), new[] { typeof(long) })!;
     private static readonly MethodInfo FromSeconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromSeconds), new[] { typeof(long) })!;
-    private static readonly MethodInfo FromMilliseconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromMilliseconds), new[] { typeof(long) })!;
-    private static readonly MethodInfo FromNanoseconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromNanoseconds), new[] { typeof(long) })!;
+
+    private static readonly MethodInfo FromMilliseconds = typeof(Period).GetRuntimeMethod(
+        nameof(Period.FromMilliseconds), new[] { typeof(long) })!;
+
+    private static readonly MethodInfo FromNanoseconds = typeof(Period).GetRuntimeMethod(
+        nameof(Period.FromNanoseconds), new[] { typeof(long) })!;
 
     private static readonly PropertyInfo Zero = typeof(Period).GetProperty(nameof(Period.Zero))!;
 
@@ -30,7 +36,18 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public PeriodIntervalMapping() : base("interval", typeof(Period), EDBDbType.Interval) {}
+    public static PeriodIntervalMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public PeriodIntervalMapping()
+        : base("interval", typeof(Period), EDBDbType.Interval, JsonPeriodReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -39,7 +56,9 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected PeriodIntervalMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Interval) {}
+        : base(parameters, EDBDbType.Interval)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -56,17 +75,8 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new PeriodIntervalMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new PeriodIntervalMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -147,6 +157,18 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
 
         return e ?? Expression.MakeMemberAccess(null, Zero);
 
-        void Compose(Expression toAdd) => e = e is null ? toAdd : Expression.Add(e, toAdd);
+        void Compose(Expression toAdd)
+            => e = e is null ? toAdd : Expression.Add(e, toAdd);
+    }
+
+    private sealed class JsonPeriodReaderWriter : JsonValueReaderWriter<Period>
+    {
+        public static JsonPeriodReaderWriter Instance { get; } = new();
+
+        public override Period FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+            => PeriodPattern.NormalizingIso.Parse(manager.CurrentReader.GetString()!).GetValueOrThrow();
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, Period value)
+            => writer.WriteStringValue(PeriodPattern.NormalizingIso.Format(value));
     }
 }

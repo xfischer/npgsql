@@ -146,11 +146,13 @@ public static class NpgsqlEntityTypeBuilderExtensions
     public static bool CanSetStorageParameter(
         this IConventionEntityTypeBuilder entityTypeBuilder,
         string parameterName,
-        object? parameterValue, bool fromDataAnnotation = false)
+        object? parameterValue,
+        bool fromDataAnnotation = false)
     {
         Check.NotNull(entityTypeBuilder, nameof(entityTypeBuilder));
 
-        return entityTypeBuilder.CanSetAnnotation(NpgsqlAnnotationNames.StorageParameterPrefix + parameterName, parameterValue, fromDataAnnotation);
+        return entityTypeBuilder.CanSetAnnotation(
+            NpgsqlAnnotationNames.StorageParameterPrefix + parameterName, parameterValue, fromDataAnnotation);
     }
 
     #endregion Storage parameters
@@ -288,7 +290,8 @@ public static class NpgsqlEntityTypeBuilderExtensions
         Type parentTableType,
         List<string> interleavePrefix)
         where TEntity : class
-        => (EntityTypeBuilder<TEntity>)UseCockroachDbInterleaveInParent((EntityTypeBuilder)entityTypeBuilder, parentTableType, interleavePrefix);
+        => (EntityTypeBuilder<TEntity>)UseCockroachDbInterleaveInParent(
+            (EntityTypeBuilder)entityTypeBuilder, parentTableType, interleavePrefix);
 
     #endregion CockroachDB Interleave-in-parent
 

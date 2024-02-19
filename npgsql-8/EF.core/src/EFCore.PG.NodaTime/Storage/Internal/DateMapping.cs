@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using NodaTime.Text;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using static EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Utilties.Util;
@@ -22,7 +24,18 @@ public class DateMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public DateMapping() : base("date", typeof(LocalDate), EDBDbType.Date) {}
+    public static DateMapping Default { get; } = new();
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    public DateMapping()
+        : base("date", typeof(LocalDate), EDBDbType.Date, JsonLocalDateReaderWriter.Instance)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -31,7 +44,9 @@ public class DateMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected DateMapping(RelationalTypeMappingParameters parameters)
-        : base(parameters, EDBDbType.Date) {}
+        : base(parameters, EDBDbType.Date)
+    {
+    }
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -48,17 +63,8 @@ public class DateMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public override RelationalTypeMapping Clone(string storeType, int? size)
+    public override RelationalTypeMapping WithStoreTypeAndSize(string storeType, int? size)
         => new DateMapping(Parameters.WithStoreTypeAndSize(storeType, size));
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public override CoreTypeMapping Clone(ValueConverter? converter)
-        => new DateMapping(Parameters.WithComposedConverter(converter));
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -76,9 +82,10 @@ public class DateMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateEmbeddedNonNullSqlLiteral(object value)
-    {
-        var date = (LocalDate)value;
+        => FormatLocalDate((LocalDate)value);
 
+    private static string FormatLocalDate(LocalDate date)
+    {
         if (!NpgsqlNodaTimeTypeMappingSourcePlugin.DisableDateTimeInfinityConversions)
         {
             if (date == LocalDate.MinIsoValue)
@@ -105,5 +112,31 @@ public class DateMapping : NpgsqlTypeMapping
     {
         var date = (LocalDate)value;
         return ConstantNew(Constructor, date.Year, date.Month, date.Day);
+    }
+
+    private sealed class JsonLocalDateReaderWriter : JsonValueReaderWriter<LocalDate>
+    {
+        public static JsonLocalDateReaderWriter Instance { get; } = new();
+
+        public override LocalDate FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+        {
+            var s = manager.CurrentReader.GetString()!;
+
+            if (!NpgsqlNodaTimeTypeMappingSourcePlugin.DisableDateTimeInfinityConversions)
+            {
+                switch (s)
+                {
+                    case "-infinity":
+                        return LocalDate.MinIsoValue;
+                    case "infinity":
+                        return LocalDate.MaxIsoValue;
+                }
+            }
+
+            return LocalDatePattern.Iso.Parse(s).GetValueOrThrow();
+        }
+
+        public override void ToJsonTyped(Utf8JsonWriter writer, LocalDate value)
+            => writer.WriteStringValue(FormatLocalDate(value));
     }
 }
