@@ -801,7 +801,7 @@ FROM "JsonEntitiesBasic" AS j
 
         Assert.Contains(
             CoreStrings.QueryUnableToTranslateMethod(
-                "Microsoft.EntityFrameworkCore.Query.JsonQueryTestBase<Npgsql.EntityFrameworkCore.PostgreSQL.Query.JsonQueryNpgsqlTest+JsonQueryNpgsqlFixture>",
+                "Microsoft.EntityFrameworkCore.Query.JsonQueryTestBase<EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.JsonQueryNpgsqlTest+JsonQueryNpgsqlFixture>",
                 "MyMethod"),
             message);
     }
@@ -813,7 +813,7 @@ FROM "JsonEntitiesBasic" AS j
 
         Assert.Contains(
             CoreStrings.QueryUnableToTranslateMethod(
-                "Microsoft.EntityFrameworkCore.Query.JsonQueryTestBase<Npgsql.EntityFrameworkCore.PostgreSQL.Query.JsonQueryNpgsqlTest+JsonQueryNpgsqlFixture>",
+                "Microsoft.EntityFrameworkCore.Query.JsonQueryTestBase<EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.JsonQueryNpgsqlTest+JsonQueryNpgsqlFixture>",
                 "MyMethod"),
             message);
     }
