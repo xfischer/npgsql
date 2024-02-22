@@ -9,6 +9,7 @@
     <PackageTags>epas;advanced server;edb;enterprisedb;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;nodatime;date;time</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Title>EDB .NET Connector - EntityFrameworkCore NodaTime</Title>
   </PropertyGroup>
 
   <ItemGroup>

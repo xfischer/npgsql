@@ -10,11 +10,11 @@
     <SignAssembly>true</SignAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-    <Copyright>Copyright 2024 © The EDB Development Team</Copyright>
-    <Company>EDB</Company>
+    <Copyright>Copyright 2024 © EnterpriseDB</Copyright>
+    <Company>EnterpriseDB</Company>
 	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
     <IncludeSymbols>false</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>

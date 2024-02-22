@@ -7,6 +7,7 @@
         <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
 	    <AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>
+		<Title>EDB .NET Connector - OpenTelemetry</Title>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	</PropertyGroup>
 

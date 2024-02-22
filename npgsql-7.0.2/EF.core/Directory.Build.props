@@ -16,6 +16,9 @@
     <Company>EnterpriseDB</Company>
     <VersionPrefix>7.0.11.2</VersionPrefix>
     <PublishRepositoryUrl>false</PublishRepositoryUrl>
+    <IncludeSymbols>false</IncludeSymbols>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://www.enterprisedb.com/docs/net_connector/latest/</PackageProjectUrl>
     <PackageIcon>edb-dotnet.png</PackageIcon>

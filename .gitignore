@@ -19,3 +19,4 @@ artifacts/
 **/TestResults
 edb-rebrand-c/x64
 */x64
+**/edb_nuget_packages

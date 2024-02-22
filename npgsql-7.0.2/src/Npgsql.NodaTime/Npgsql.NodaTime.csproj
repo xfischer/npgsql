@@ -7,6 +7,7 @@
     <TargetFrameworks>net472;net48;net481;netstandard2.0;net6.0;net7.0</TargetFrameworks>
 	<TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net7.0</TargetFrameworks>
 	<AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
+	<Title>EDB .NET Connector - NodaTime</Title>
 	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 

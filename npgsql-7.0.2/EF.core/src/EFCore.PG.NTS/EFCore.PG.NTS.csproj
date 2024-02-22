@@ -9,6 +9,7 @@
     <PackageTags>epas;advanced server;edb;enterprisedb;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql;spatial;postgis;nts</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Title>EDB .NET Connector - EntityFrameworkCore NetTopologySuite</Title>
   </PropertyGroup>
 
   <ItemGroup>
