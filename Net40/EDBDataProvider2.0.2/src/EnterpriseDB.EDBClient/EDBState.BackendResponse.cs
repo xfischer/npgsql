@@ -122,11 +122,19 @@ namespace EnterpriseDB.EDBClient
                 /* EnterpriseDB Team */
 
                // EDBRowDescription lastRowDescription = null;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 EDBRowDescription lastRowDescription = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 EDBRowDescription rowOutDescription = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 CachingRow returnRow = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 Object returnData = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                int lastParam = 0;
 
                 List<EDBError> errors = new List<EDBError>();
@@ -237,7 +245,9 @@ namespace EnterpriseDB.EDBClient
                                             // For GSSAPI we have to use the supplied hostname
                                             context.SSPI = new SSPIHandler(context.Host, "POSTGRES", true);
                                             ChangeState(context, EDBStartupState.Instance);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                             context.Authenticate(context.SSPI.Continue(null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                                             break;
                                         }
                                         else
@@ -255,7 +265,9 @@ namespace EnterpriseDB.EDBClient
                                             string ipAddressString = ((IPEndPoint)context.Socket.RemoteEndPoint).Address.ToString();
                                             context.SSPI = new SSPIHandler(ipAddressString, "POSTGRES", false);
                                             ChangeState(context, EDBStartupState.Instance);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                             context.Authenticate(context.SSPI.Continue(null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                                             break;
                                         }
                                         else
@@ -336,7 +348,9 @@ namespace EnterpriseDB.EDBClient
                         case BackEndMessageCode.DataRow:
                             if (context.Mediator.Type == CommandType.StoredProcedure)
                             {
+#pragma warning disable CS8604 // Possible null reference argument.
                                 ForwardsOnlyRow dataRow = new ForwardsOnlyRow(new StringRowReaderV3(lastRowDescription, stream));
+#pragma warning restore CS8604 // Possible null reference argument.
                                 CachingRow dataRow1 = new CachingRow(dataRow);
 
                                 if (lastRowDescription[0].TypeOID == 1790)
@@ -366,13 +380,17 @@ namespace EnterpriseDB.EDBClient
                             EDBEventLog.LogMsg(resman, "Log_ProtocalMessage", LogLevel.Debug, "ParamData");
                          //   ForwardsOnlyRow paramDataRow = new ForwardsOnlyRow(new StringRowReaderV3(rowOutDescription, stream));
 
+#pragma warning disable CS8604 // Possible null reference argument.
                             ForwardsOnlyRow paramDataRow = new ForwardsOnlyRow(new StringRowReaderV3(rowOutDescription,stream));
+#pragma warning restore CS8604 // Possible null reference argument.
                            
                             CachingRow outrow = new CachingRow(paramDataRow);
                             if (context.Mediator.Parameters.ReturnIndex != -1)
                             {
                                 context.Mediator.Parameters.Insert(context.Mediator.Parameters.ReturnIndex, context.Mediator.Parameters.ReturnParam);
+#pragma warning disable CS8601 // Possible null reference assignment.
                                 context.Mediator.Parameters[context.Mediator.Parameters.ReturnIndex].Value = returnData;
+#pragma warning restore CS8601 // Possible null reference assignment.
                             }
                             if (rowOutDescription != null)
                             {
@@ -380,7 +398,9 @@ namespace EnterpriseDB.EDBClient
                                 {
                                     mediator.Parameters[rowOutDescription[i].ReturningIndex].Value = outrow[i];
                                 }
+#pragma warning disable CS8604 // Possible null reference argument.
                                 outrow.AddData(returnData);
+#pragma warning restore CS8604 // Possible null reference argument.
                                 outrow.numFields = rowOutDescription.NumFields + 1;
                                 if (lastRowDescription != null)
                                     rowOutDescription.AddReturnData(lastRowDescription[0]);

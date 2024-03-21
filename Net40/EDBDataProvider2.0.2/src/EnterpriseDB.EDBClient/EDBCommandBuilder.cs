@@ -49,7 +49,9 @@ namespace EnterpriseDB.EDBClient
         /// Initializes a new instance of the <see cref="EDBCommandBuilder"/> class.
         /// </summary>
         public EDBCommandBuilder()
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -142,9 +144,15 @@ namespace EnterpriseDB.EDBClient
             // Updated after 0.99.3 to support the optional existence of a name qualifying schema and case insensitivity when the schema ror procedure name do not contain a quote.
             // This fixed an incompatibility with EDBCommand.CheckFunctionReturn(String ReturnType)
             var serverVersion = command.Connector.ServerVersion;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             String query = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string procedureName = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string schemaName = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             string[] fullName = command.CommandText.Split('.');
             if (fullName.Length > 1 && fullName[0].Length > 0)
             {
@@ -175,25 +183,39 @@ namespace EnterpriseDB.EDBClient
                 if (fullName.Length > 1 && !String.IsNullOrEmpty(schemaName))
                 {
                     EDBParameter prm = c.Parameters.Add(new EDBParameter("nspname", EDBDbType.Text));
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     prm.Value = schemaName.Replace("\"", "").Trim();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 string[] names = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 int[] types = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 string[] modes = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                 using (EDBDataReader rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
                 {
                     if (rdr.Read())
                     {
                         if (!rdr.IsDBNull(0))
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                             names = rdr.GetValue(0) as String[];
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                         if (serverVersion >= new Version("8.1.0"))
                         {
                             if (!rdr.IsDBNull(2))
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                                 types = rdr.GetValue(2) as int[];
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                             if (!rdr.IsDBNull(3))
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                                 modes = rdr.GetValue(3) as String[];
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                         }
                         if (types == null)
                         {
@@ -210,7 +232,9 @@ namespace EnterpriseDB.EDBClient
                 for (var i = 0; i < types.Length; i++)
                 {
                     var param = new EDBParameter();
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                     EDBBackendTypeInfo typeInfo = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                     if (!c.Connector.OidToNameMapping.TryGetValue(types[i], out typeInfo))
                         throw new InvalidOperationException(String.Format("Invalid parameter type: {0}", types[i]));
                     param.EDBDbType = typeInfo.EDBDbType;

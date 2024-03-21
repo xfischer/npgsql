@@ -584,7 +584,9 @@ namespace EnterpriseDB.EDBClient
             int currTokenBeg = 0;
             int blockCommentLevel = 0;
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Dictionary<EDBParameter, int> paramOrdinalMap = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             if (prepare)
             {
@@ -671,7 +673,9 @@ namespace EnterpriseDB.EDBClient
                         {
                             if (prepare)
                             {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                                 AppendParameterPlaceHolder(dest, parameter, paramOrdinalMap[parameter]);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                             }
                             else
                             {

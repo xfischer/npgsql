@@ -1,0 +1,100 @@
+\documentclass{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\usepackage{color}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 4_spl_inout_be_execute.pdf -quality 90 -background white -flatten 4_spl_inout_be_execute.png
+
+% EnterpriseDB : Packet datagram for full SPL call
+% current : step 4: Back end messages sent when executing SPL call
+% ie: SPL call sp_test(:param1 IN, param2 OUT)
+
+\begin{document}
+\definecolor{lightcyan}{rgb}{0.84,1,1}
+\definecolor{lightgreen}{rgb}{0.64,1,0.71}
+\definecolor{lightergreen}{rgb}{0.74,1,0.81}
+\definecolor{lightred}{rgb}{1,0.7,0.71}
+\definecolor{edborange}{rgb}{1,0.243,0}
+\definecolor{lightgray}{gray}{0.8}
+\begin{bytefield}[bitheight=8ex]{32}
+ 
+    \\
+    \bitheader{0-31} 
+    \\
+ 
+    \begin{rightwordgroup}{BindComplete}
+        \bitbox{1}[bgcolor=lightcyan]{2} &
+        \bitbox{4}[bgcolor=lightgreen]{length}
+        \bitbox{27}[bgcolor=lightgray]{}
+    \end{rightwordgroup} \\
+
+    \\
+
+    \begin{rightwordgroup}{NoData}
+        \bitbox{1}[bgcolor=lightcyan]{n} &
+        \bitbox{4}[bgcolor=lightgreen]{length}
+        \bitbox{27}[bgcolor=lightgray]{}
+    \end{rightwordgroup} \\
+
+    \\
+    \begin{rightwordgroup}{DescribeOut}
+        \bitbox{1}[bgcolor=edborange]{u} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{2}{\rotatebox{90}{\tiny num fields}} & 
+        \bitbox{25}[bgcolor=lightgray]{}
+
+        \\ 
+
+        \begin{leftwordgroup}{for each param}
+            \wordbox[lrtb]{1}{column name [...]} \\
+            \bitbox{2}{\tiny index} & 
+            \bitbox{4}{\small column \\ \small  oid} &
+            \bitbox{2}[bgcolor=lightergreen]{\tiny length} &
+            \bitbox{4}{\small type modifier} &
+            \bitbox{2}{\rotatebox{90}{\tiny format}} &        
+            \bitbox{18}[bgcolor=lightgray]{} 
+        \end{leftwordgroup}     
+    \end{rightwordgroup} \\
+
+    \\
+
+    \begin{rightwordgroup}{CommandComplete}
+        \bitbox{1}[bgcolor=lightcyan]{C} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &    
+        \bitbox{27}{message [...]}     
+    \end{rightwordgroup} \\
+    
+    \\
+
+    \begin{rightwordgroup}{SendOutTuple}
+        \bitbox{1}[bgcolor=edborange]{v} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{2}{\rotatebox{90}{\tiny num fields}} & 
+        \bitbox{25}[bgcolor=lightgray]{}
+
+        \\ 
+
+        \begin{leftwordgroup}{for each param}
+            \bitbox{4}[bgcolor=lightergreen]{\tiny length} &
+            \bitbox{28}{\small parameter value [...]} 
+        \end{leftwordgroup}     
+    \end{rightwordgroup}
+
+    \\ 
+
+    \\ 
+
+    \begin{rightwordgroup}{Ready for query}
+        \bitbox{1}[bgcolor=lightcyan]{Z} &
+        \bitbox{4}[bgcolor=lightgreen]{length \\ = 5}
+        \bitbox{1}[bgcolor=lightcyan]{\rotatebox{90}{\tiny status}} & 
+        \bitbox{26}[bgcolor=lightgray]{}
+    \end{rightwordgroup}
+
+    \\
+
+    \end{bytefield}
+    
+    
+\end{document}

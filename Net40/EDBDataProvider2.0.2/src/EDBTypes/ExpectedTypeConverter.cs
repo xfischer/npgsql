@@ -44,7 +44,9 @@ namespace EDBTypes
         internal static object ChangeType(object value, Type expectedType)
         {
             if (value == null)
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             Type currentType = value.GetType();
             if (value is DBNull || currentType == expectedType)
                 return value;

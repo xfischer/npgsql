@@ -221,7 +221,9 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         private EDBConnector RequestPooledConnectorInternal(EDBConnection Connection)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBConnector Connector = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             Boolean Shared = false;
 
             // If sharing were implemented, I suppose Shared would be set based
@@ -245,7 +247,9 @@ namespace EnterpriseDB.EDBClient
             try
             {
                 Connector.CurrentReader.Close();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 Connector.CurrentReader = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 ReleaseConnector(Connection, Connector);
             }
             catch
@@ -307,8 +311,12 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         private EDBConnector GetPooledConnector(EDBConnection Connection)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             ConnectorQueue Queue = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBConnector Connector = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             do
             {
@@ -316,13 +324,17 @@ namespace EnterpriseDB.EDBClient
                 {
                     //This means Connector was found to be invalid at the end of the loop
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     lock (Queue)
                     {
                         Queue.Busy.Remove(Connector);
                     }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
                     Connector.Close();
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                     Connector = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                 }
 
                 // We only need to lock all pools when trying to get one pool or create one.
@@ -351,7 +363,9 @@ namespace EnterpriseDB.EDBClient
                         // Check if the connector is still valid.
 
                         Connector = Queue.Available.Dequeue();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         Queue.Busy.Add(Connector, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                 }
 
@@ -364,7 +378,9 @@ namespace EnterpriseDB.EDBClient
                 if (Queue.Available.Count + Queue.Busy.Count < Connection.MaxPoolSize)
                 {
                     Connector = new EDBConnector(Connection);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     Queue.Busy.Add(Connector, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
             }
 
@@ -424,7 +440,9 @@ namespace EnterpriseDB.EDBClient
                 }
             }
 
+#pragma warning disable CS8603 // Possible null reference return.
             return Connector;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         /*

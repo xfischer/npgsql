@@ -76,18 +76,34 @@ namespace EnterpriseDB.EDBClient
                        _separator = DEFAULT_SEPARATOR,
                        _null = DEFAULT_NULL;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] _delimiterBytes = null, _escapeBytes = null, _separatorBytes = null, _nullBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[][] _escapeSequenceBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private String[] _stringsToEscape = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] _sendBuffer = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private int _sendBufferAt = 0, _lastFieldEndAt = 0, _lastRowEndAt = 0, _atField = 0;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="conn"></param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBCopySerializer(EDBConnection conn)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _context = conn.Connector;
         }
@@ -136,9 +152,15 @@ namespace EnterpriseDB.EDBClient
                     throw new EDBException("Do not change delimiter of an active " + this);
                 }
                 _delimiter = value ?? DEFAULT_DELIMITER;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _delimiterBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _stringsToEscape = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _escapeSequenceBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -167,9 +189,15 @@ namespace EnterpriseDB.EDBClient
                     throw new EDBException("Do not change separator of an active " + this);
                 }
                 _separator = value ?? DEFAULT_SEPARATOR;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _separatorBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _stringsToEscape = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _escapeSequenceBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -198,9 +226,15 @@ namespace EnterpriseDB.EDBClient
                     throw new EDBException("Do not change escape symbol of an active " + this);
                 }
                 _escape = value ?? DEFAULT_ESCAPE;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _escapeBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _stringsToEscape = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _escapeSequenceBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -229,9 +263,15 @@ namespace EnterpriseDB.EDBClient
                     throw new EDBException("Do not change null symbol of an active " + this);
                 }
                 _null = value ?? DEFAULT_NULL;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _nullBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _stringsToEscape = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _escapeSequenceBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -530,7 +570,9 @@ namespace EnterpriseDB.EDBClient
             while (bufferedUpto < fieldValue.Length)
             {
                 int escapeAt = fieldValue.Length;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 byte[] escapeSequence = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                 // choose closest instance of strings to escape in fieldValue
                 for (int eachEscapeable = 0; eachEscapeable < StringsToEscape.Length; eachEscapeable++)

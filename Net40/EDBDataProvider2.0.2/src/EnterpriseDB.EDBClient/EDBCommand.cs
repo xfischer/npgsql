@@ -77,11 +77,21 @@ namespace EnterpriseDB.EDBClient
         private Boolean designTimeVisible;
 
         private PrepareStatus prepared = PrepareStatus.NotPrepared;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] preparedCommandText = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBBind bind = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBExecute execute = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBExecuteOut executeOut = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBRowDescription currentRowDescription = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         private Int64 lastInsertedOID = 0;
 
@@ -135,7 +145,11 @@ namespace EnterpriseDB.EDBClient
         /// Initializes a new instance of the <see cref="EnterpriseDB.EDBClient.EDBCommand">EDBCommand</see> class.
         /// </summary>
         public EDBCommand()
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(String.Empty, null, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -144,7 +158,11 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <param name="cmdText">The text of the query.</param>
         public EDBCommand(String cmdText)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(cmdText, null, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -154,7 +172,9 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see> that represents the connection to a PostgreSQL server.</param>
         public EDBCommand(String cmdText, EDBConnection connection)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(cmdText, connection, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -164,7 +184,15 @@ namespace EnterpriseDB.EDBClient
         /// <param name="cmdText">The text of the query.</param>
         /// <param name="connection">A <see cref="EnterpriseDB.EDBClient.EDBConnection">EDBConnection</see> that represents the connection to a PostgreSQL server.</param>
         /// <param name="transaction">The <see cref="EnterpriseDB.EDBClient.EDBTransaction">EDBTransaction</see> in which the <see cref="EnterpriseDB.EDBClient.EDBCommand">EDBCommand</see> executes.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBCommand(String cmdText, EDBConnection connection, EDBTransaction transaction)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
 
@@ -196,7 +224,13 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Used to execute internal commands.
         /// </summary>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         internal EDBCommand(String cmdText, EDBConnector connector, int CommandTimeout = 20)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
 
@@ -331,7 +365,9 @@ namespace EnterpriseDB.EDBClient
                 if (connection != null) {
                     connection.StateChange += OnConnectionStateChange;
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 Transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 if (this.connection != null)
                 {
                     m_Connector = this.connection.Connector;
@@ -441,9 +477,13 @@ namespace EnterpriseDB.EDBClient
 
                 if (this.transaction != null && this.transaction.Connection == null)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     this.transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
+#pragma warning disable CS8603 // Possible null reference return.
                 return this.transaction;
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             set
@@ -617,8 +657,12 @@ namespace EnterpriseDB.EDBClient
                 if (prepared == PrepareStatus.Prepared)
                     ExecuteBlind(m_Connector, "DEALLOCATE " + planName);
             }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             Transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             Connection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             disposed = true;
             base.Dispose(disposing);
         }

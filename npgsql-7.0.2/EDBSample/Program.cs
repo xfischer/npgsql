@@ -4,7 +4,6 @@ global using global::System.Threading.Tasks;
 using EnterpriseDB.EDBClient;
 using Microsoft.Extensions.Logging;
 using System.Data;
-using System.Diagnostics;
 using System.Threading;
 
 namespace EDBSample
@@ -15,7 +14,7 @@ namespace EDBSample
     internal class Program
     {
         //static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
-        static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+        static string connectionString = "port=5443;Server=localhost;Username=enterprisedb;Password=edb;Database=test";
 
         static ILoggerFactory _loggerFactory;
         static ILogger _logger;
@@ -27,11 +26,15 @@ namespace EDBSample
             try
             {
                 _logger.LogDebug("---- Starting");
+                await Sample();
+
                 //await Timeout_async_soft();
                 //Bad_database();
                 //Invalid_constringParams();
                 //await WaitAsync_CancellationSample();
-                await Sample();            
+                //await Sample_EdbDataAdapter();
+                //await Sample_Case101746();
+                //await Sample_FuncOutRetVal();
                 //await EC_2716_ExecuteNonQueryAsync();
                 //await EC_2716_ExecuteReaderAsync();
                 _logger.LogDebug("---- end");
@@ -41,6 +44,231 @@ namespace EDBSample
                 _logger.LogError(e, "Error");
             }
 
+        }
+
+        private static async Task Sample_FuncOutRetVal()
+        {
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
+                await using var dataSource = dataSourceBuilder.Build();
+                await using var conn = await dataSource.OpenConnectionAsync();
+
+
+                /*
+                 CREATE OR REPLACE FUNCTION public.func_test4(
+	                    argnom_gr character varying,
+	                    OUT argout int, 
+	                    INOUT arginout character varying)
+                        RETURNS smallint
+                        LANGUAGE 'edbspl'
+                        COST 100
+                        VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+                    AS $BODY$
+                    BEGIN
+	                    SELECT 'ParamValue',1 INTO arginout, argout;
+	                    --argout:= 1;
+	                    --arginout:= 'ParamValue';
+
+                        RETURN 2;
+                    END
+                    $BODY$;
+
+                    ALTER FUNCTION public.func_test4(character varying, character varying)
+                        OWNER TO enterprisedb;
+
+                 */
+
+
+                //procedure call example
+                try
+                {
+                    // TODO : diagnose with out param specified and unspecifed (both cases)
+
+                    await using var callable_command = new EDBCommand("func_test4(:argnom_gr,:argout, :arginout)", conn);
+                    callable_command.CommandType = CommandType.StoredProcedure;
+                    callable_command.Parameters.AddWithValue("argnom_gr", "test 222");
+                    callable_command.Parameters.Add(new EDBParameter("argout", null) { Direction = ParameterDirection.Output });
+                    callable_command.Parameters.Add(new EDBParameter("arginout", "Test") { Direction = ParameterDirection.InputOutput });
+                    callable_command.Parameters.Add(new EDBParameter("v_ret", null) { Direction = ParameterDirection.ReturnValue });
+
+                    await callable_command.PrepareAsync();
+
+                    await using var reader = await callable_command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        object[] values = new object[reader.FieldCount];
+                        reader.GetValues(values);
+
+                        Console.WriteLine($"RESULT : {values[0].ToString()}");
+                    }
+
+                    reader.Close();
+                }
+                catch (EDBException exp)
+                {
+                    if (exp.ErrorCode.Equals("01403"))
+                        Console.WriteLine("No data found");
+                    else if (exp.ErrorCode.Equals("01422"))
+                        Console.WriteLine("More than one rows were returned by the query");
+                    else
+                        Console.WriteLine("There was an error Calling the procedure. \nRoot Cause:\n");
+                    Console.WriteLine(exp.Message.ToString());
+                }
+                //Close the connection
+                await conn.CloseAsync();
+            }
+
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.ToString());
+            }
+        }
+
+        static async Task Sample_Case101746()
+        {
+
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
+                await using var dataSource = dataSourceBuilder.Build();
+                await using var conn = await dataSource.OpenConnectionAsync();
+
+
+                /*
+                 CREATE OR REPLACE PROCEDURE public.sp_test(p_empno numeric,OUT p_test numeric)
+                LANGUAGE 'edbspl'
+                    SECURITY DEFINER VOLATILE PARALLEL UNSAFE 
+                    COST 100
+                AS $BODY$
+                BEGIN
+                    p_test:=100::numeric;
+                END
+                $BODY$;
+                ALTER PROCEDURE public.sp_test(numeric)
+                    OWNER TO enterprisedb;
+                 */
+
+
+                //procedure call example
+                try
+                {
+                    // TODO : diagnose with out param specified and unspecifed (both cases)
+
+                    await using var callable_command = new EDBCommand("sp_test(:argnom_gr,:argout)", conn);
+                    callable_command.CommandType = CommandType.StoredProcedure;
+                    callable_command.Parameters.AddWithValue("argnom_gr", "test 222");
+                    callable_command.Parameters.Add(new EDBParameter("argout", null) { Direction = ParameterDirection.Output });
+
+                    //await using var callable_command = new EDBCommand("sp_test(:argnom_gr)", conn);
+                    //callable_command.CommandType = CommandType.StoredProcedure;
+                    //callable_command.Parameters.AddWithValue("argnom_gr", "test 222");
+
+                    await callable_command.PrepareAsync();
+
+                    await using var reader = await callable_command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        object[] values = new object[reader.FieldCount];
+                        reader.GetValues(values);
+
+                        Console.WriteLine($"RESULT : {values[0].ToString()}");
+                    }                    
+                    
+                    reader.Close();
+                }
+                catch (EDBException exp)
+                {
+                    if (exp.ErrorCode.Equals("01403"))
+                        Console.WriteLine("No data found");
+                    else if (exp.ErrorCode.Equals("01422"))
+                        Console.WriteLine("More than one rows were returned by the query");
+                    else
+                        Console.WriteLine("There was an error Calling the procedure. \nRoot Cause:\n");
+                    Console.WriteLine(exp.Message.ToString());
+                }
+                //Close the connection
+                await conn.CloseAsync();
+            }
+
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.ToString());
+            }
+        }
+
+        static async Task Sample_EdbDataAdapter()
+        {
+
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
+                await using var dataSource = dataSourceBuilder.Build();
+
+                await using var conn = await dataSource.OpenConnectionAsync();
+
+                //procedure call example
+                try
+                {
+                    await using var callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn);
+                    callable_command.CommandType = CommandType.StoredProcedure;
+                    callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
+                    callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+                    callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
+                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    await callable_command.PrepareAsync();
+
+                    callable_command.Parameters[0].Value = 20;
+                    callable_command.Parameters[1].Value = 7369;
+
+                    await using var result = await callable_command.ExecuteReaderAsync();
+                    if (await result.ReadAsync())
+                    {
+                        var fc = result.FieldCount;
+                        for (var i = 0; i < (fc + 1); i++)
+                            Console.WriteLine("RESULT[" + i + "]=" + Convert.ToString(callable_command.Parameters[i].Value));
+
+                        object[] values = new object[result.FieldCount];
+                        result.GetValues(values);
+                    }
+                    result.Close();
+                }
+                catch (EDBException exp)
+                {
+                    if (exp.ErrorCode.Equals("01403"))
+                        Console.WriteLine("No data found");
+                    else if (exp.ErrorCode.Equals("01422"))
+                        Console.WriteLine("More than one rows were returned by the query");
+                    else
+                        Console.WriteLine("There was an error Calling the procedure. \nRoot Cause:\n");
+                    Console.WriteLine(exp.Message.ToString());
+                }
+
+                //Prepared statement
+                var updateQuery = "update emp set ename = :Name where empno = :ID";
+
+                await using var Prepared_command = new EDBCommand(updateQuery, conn);
+                Prepared_command.CommandType = CommandType.Text;
+                Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
+                Prepared_command.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Text));
+                await Prepared_command.PrepareAsync();
+
+                Prepared_command.Parameters[0].Value = 7369;
+                Prepared_command.Parameters[1].Value = "Mark";
+
+                await Prepared_command.ExecuteNonQueryAsync();
+                Console.WriteLine("Record Updated...");
+
+                //Close the connection
+                await conn.CloseAsync();
+            }
+
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.ToString());
+            }
         }
 
         static async Task Sample()

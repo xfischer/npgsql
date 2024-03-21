@@ -69,7 +69,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Default constructor.
         /// </summary>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBDataAdapter()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
         }
 
@@ -77,7 +81,11 @@ namespace EnterpriseDB.EDBClient
         /// Constructor.
         /// </summary>
         /// <param name="selectCommand"></param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBDataAdapter(EDBCommand selectCommand)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
             SelectCommand = selectCommand;

@@ -74,7 +74,9 @@ namespace EnterpriseDB.EDBClient
         }
 
         internal EDBException(String message)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(message, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 

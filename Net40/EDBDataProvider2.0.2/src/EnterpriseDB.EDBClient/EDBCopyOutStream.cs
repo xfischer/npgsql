@@ -37,7 +37,9 @@ namespace EnterpriseDB.EDBClient
     {
         private EDBConnector _context;
         private long _bytesPassed = 0;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] _buf = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private int _bufOffset = 0;
 
         /// <summary>
@@ -114,9 +116,13 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (_context.Mediator.CopyStream == this)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _context.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _context = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -167,7 +173,9 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (_bufOffset >= _buf.Length)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _buf = null; // whole of our contents fit into request buffer
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
                 _bytesPassed += i;
             }
@@ -212,7 +220,9 @@ namespace EnterpriseDB.EDBClient
                 {
                     result[i] = _buf[_bufOffset + i];
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _buf = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
             return result;
         }

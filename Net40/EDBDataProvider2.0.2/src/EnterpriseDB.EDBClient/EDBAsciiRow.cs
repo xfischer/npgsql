@@ -171,7 +171,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 CurrentStreamer = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 Skip(_rowDesc.NumFields - _currentField - 1);
             }
         }

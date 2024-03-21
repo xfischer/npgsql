@@ -173,7 +173,9 @@ namespace EnterpriseDB.EDBClient
                 if (sspictx_set)
                 {
                     inbuf.pBuffer = IntPtr.Zero;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     InBuffer.pvBuffer = Marshal.AllocHGlobal(authData.Length);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     try
                     {
                     Marshal.Copy(authData, 0, InBuffer.pvBuffer, authData.Length);

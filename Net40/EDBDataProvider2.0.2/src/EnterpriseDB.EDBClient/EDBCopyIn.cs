@@ -56,7 +56,9 @@ namespace EnterpriseDB.EDBClient
         /// Given command is run upon Start(). Data for the requested COPY IN operation can then be written to CopyData stream followed by a call to End() or Cancel().
         /// </summary>
         public EDBCopyIn(EDBCommand cmd, EDBConnection conn)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(cmd, conn, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -177,11 +179,15 @@ namespace EnterpriseDB.EDBClient
                 {
                     if (_context.Mediator.CopyStream == _copyStream)
                     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         _context.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                     if (_disposeCopyStream)
                     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         _copyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                 }
             }
@@ -211,11 +217,15 @@ namespace EnterpriseDB.EDBClient
                 {
                     if (_context.Mediator.CopyStream == _copyStream)
                     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         _context.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                     if (_disposeCopyStream)
                     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         _copyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                 }
             }

@@ -140,8 +140,12 @@ namespace EDBTypes
 
         public static EDBNativeTypeInfo GetNativeTypeInfo(DbType DbType)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBNativeTypeInfo ret = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8603 // Possible null reference return.
             return TryGetNativeTypeInfo(DbType, out ret) ? ret : null;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         private static bool TestTypedEnumerator(Type type, out Type typeOut)
@@ -164,7 +168,9 @@ namespace EDBTypes
                     return true;
                 }
             }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             typeOut = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             return false;
         }
 
@@ -183,8 +189,12 @@ namespace EDBTypes
             // which implements IEnumerable<T> we will use that (currently this is only string, which
             // implements IEnumerable<char>.
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Type elementType = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBNativeTypeInfo elementTypeInfo = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             if (TestTypedEnumerator(type, out elementType) && TryGetNativeTypeInfo(elementType, out elementTypeInfo))
             {
                 typeInfo = EDBNativeTypeInfo.ArrayOf(elementTypeInfo);
@@ -195,8 +205,12 @@ namespace EDBTypes
 
         public static EDBNativeTypeInfo GetNativeTypeInfo(Type Type)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBNativeTypeInfo ret = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8603 // Possible null reference return.
             return TryGetNativeTypeInfo(Type, out ret) ? ret : null;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public static bool DefinedType(Type type)
@@ -262,9 +276,13 @@ namespace EDBTypes
         {
             EDBNativeTypeMapping nativeTypeMapping = new EDBNativeTypeMapping();
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             nativeTypeMapping.AddType("name", EDBDbType.Name, DbType.String, true, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             nativeTypeMapping.AddType("oidvector", EDBDbType.Oidvector, DbType.String, true, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             // Conflicting types should have mapped first the non default mappings.
             // For example, char, varchar and text map to DbType.String. As the most
@@ -272,7 +290,9 @@ namespace EDBTypes
             // to type mapping has the last entry, in this case, text, as the map value
             // for DbType.String.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             nativeTypeMapping.AddType("refcursor", EDBDbType.RefCursor, DbType.String, true, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             nativeTypeMapping.AddType("char", EDBDbType.Char, DbType.String, false,
                                             BasicNativeToBackendTypeConverter.StringToTextText,
@@ -284,7 +304,9 @@ namespace EDBTypes
                                             BasicNativeToBackendTypeConverter.StringToTextText,
                                             BasicNativeToBackendTypeConverter.StringToTextBinary);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             nativeTypeMapping.AddType("varchar2", EDBDbType.Varchar2, DbType.String, true, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             // Dummy type that facilitates non-binary string conversions for types that are treated as
             // text but which are not really text.  Those types cause problems if they are encoded as binary.
@@ -478,38 +500,56 @@ namespace EDBTypes
 
         private static IEnumerable<EDBBackendTypeInfo> TypeInfoList(bool useExtendedTypes, Version compat)
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "oidvector", EDBDbType.Text, DbType.String, typeof (String), null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "unknown", EDBDbType.Text, DbType.String, typeof (String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "refcursor", EDBDbType.RefCursor, DbType.String, typeof (String),  null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "char", EDBDbType.Char, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "bpchar", EDBDbType.Text, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "varchar", EDBDbType.Varchar, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "varchar2", EDBDbType.Varchar2, DbType.String, typeof(String),
                                          null,
                                          BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "text", EDBDbType.Text, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "name", EDBDbType.Name, DbType.String, typeof(String),
                                             null,
                                             BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             yield return
                 new EDBBackendTypeInfo(0, "bytea", EDBDbType.Bytea, DbType.Binary, typeof(Byte[]),
@@ -525,31 +565,45 @@ namespace EDBTypes
                                             BasicBackendToNativeTypeConverter.BooleanTextToBoolean,
                                             BasicBackendToNativeTypeConverter.BooleanBinaryToBoolean);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "int2", EDBDbType.Smallint, DbType.Int16, typeof (Int16),
                                             null,
                                             BasicBackendToNativeTypeConverter.IntBinaryToInt);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "int4", EDBDbType.Integer, DbType.Int32, typeof (Int32),
                                             null,
                                             BasicBackendToNativeTypeConverter.IntBinaryToInt);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "int8", EDBDbType.Bigint, DbType.Int64, typeof (Int64),
                                             null,
                                             BasicBackendToNativeTypeConverter.IntBinaryToInt);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "oid", EDBDbType.Integer, DbType.Int32, typeof (Int32),
                                             null,
                                             BasicBackendToNativeTypeConverter.IntBinaryToInt);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "float4", EDBDbType.Real, DbType.Single, typeof(Single),
                                             null,
                                             BasicBackendToNativeTypeConverter.Float4Float8BinaryToFloatDouble);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "float8", EDBDbType.Double, DbType.Double, typeof(Double),
                                             null,
                                             BasicBackendToNativeTypeConverter.Float4Float8BinaryToFloatDouble);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "numeric", EDBDbType.Numeric, DbType.Decimal, typeof (Decimal), null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             yield return
                 new EDBBackendTypeInfo(0, "inet", EDBDbType.Inet, DbType.Object, typeof (EDBInet),
@@ -595,19 +649,27 @@ namespace EDBTypes
             yield return new EDBBackendTypeInfo(0, "uuid", EDBDbType.Uuid, DbType.Guid, typeof (Guid),
                                             ExtendedBackendToNativeTypeConverter.ToGuid);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "xml", EDBDbType.Xml, DbType.Xml, typeof (String), null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "json", EDBDbType.Json, DbType.Object, typeof(String),
                 null,
                 BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "jsonb", EDBDbType.Jsonb, DbType.Object, typeof(String),
                 null,
                 BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             yield return new EDBBackendTypeInfo(0, "hstore", EDBDbType.Hstore, DbType.Object, typeof(String),
                 null,
                 BasicBackendToNativeTypeConverter.TextBinaryToString);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             if (useExtendedTypes)
             {
@@ -718,7 +780,9 @@ namespace EDBTypes
 
             MappingKey key = new MappingKey(conn);
             // Check the cache for an initial types map.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBBackendTypeMapping oidToNameMapping = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             if(BackendTypeMappingCache.TryGetValue(key, out oidToNameMapping))
                 return oidToNameMapping;
@@ -743,7 +807,9 @@ namespace EDBTypes
             //It is of course wasteful that multiple threads could be creating mappings when only one
             //will be used, but we aim for better overall concurrency at the risk of causing some
             //threads the extra work.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBBackendTypeMapping mappingCheck = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             //First check without acquiring the lock; don't lock if we don't have to.
             if(BackendTypeMappingCache.TryGetValue(key, out mappingCheck))//Another thread built the mapping in the meantime.
                 return mappingCheck;

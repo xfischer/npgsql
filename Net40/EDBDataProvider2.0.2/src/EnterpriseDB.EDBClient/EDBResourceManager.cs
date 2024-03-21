@@ -91,11 +91,15 @@ namespace EnterpriseDB.EDBClient
             private string _txName;
 
             public DurableResourceManager(EDBResourceManager rm, IEDBTransactionCallbacks callbacks)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 : this(rm, callbacks, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             {
             }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public DurableResourceManager(EDBResourceManager rm, IEDBTransactionCallbacks callbacks,
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
                                           CommittableTransaction tx)
             {
                 _rm = rm;

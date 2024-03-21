@@ -40,7 +40,13 @@ namespace EnterpriseDB.EDBClient
 
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBPromotableSinglePhaseNotification(EDBConnection connection)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _connection = connection;
         }
@@ -64,7 +70,9 @@ namespace EnterpriseDB.EDBClient
                     // disconnect and cleanup local transaction
                     _npgsqlTx.Cancel();
                     _npgsqlTx.Dispose();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _npgsqlTx = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
             }
         }
@@ -89,7 +97,9 @@ namespace EnterpriseDB.EDBClient
                     // be handled by a two phase commit.
                     _npgsqlTx.Cancel();
                     _npgsqlTx.Dispose();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _npgsqlTx = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     _connection.PromotableLocalTransactionEnded();
                 }
             }
@@ -114,7 +124,9 @@ namespace EnterpriseDB.EDBClient
             {
                 _npgsqlTx.Rollback();
                 _npgsqlTx.Dispose();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _npgsqlTx = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 singlePhaseEnlistment.Aborted();
                 _connection.PromotableLocalTransactionEnded();
             }
@@ -130,7 +142,9 @@ namespace EnterpriseDB.EDBClient
                     _callbacks.RollbackTransaction();
                     singlePhaseEnlistment.Aborted();
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _callbacks = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
             _inTransaction = false;
         }
@@ -142,7 +156,9 @@ namespace EnterpriseDB.EDBClient
             {
                 _npgsqlTx.Commit();
                 _npgsqlTx.Dispose();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _npgsqlTx = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 singlePhaseEnlistment.Committed();
                 _connection.PromotableLocalTransactionEnded();
             }
@@ -158,7 +174,9 @@ namespace EnterpriseDB.EDBClient
                     _callbacks.CommitTransaction();
                     singlePhaseEnlistment.Committed();
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _callbacks = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
             _inTransaction = false;
         }
@@ -184,7 +202,9 @@ namespace EnterpriseDB.EDBClient
                 // be handled by a two phase commit.
                 _npgsqlTx.Cancel();
                 _npgsqlTx.Dispose();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _npgsqlTx = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 _connection.PromotableLocalTransactionEnded();
             }
             return token;
@@ -192,8 +212,12 @@ namespace EnterpriseDB.EDBClient
 
         #endregion
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static IEDBResourceManager _resourceManager;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private static System.Runtime.Remoting.Lifetime.ClientSponsor _sponser;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         private static IEDBResourceManager CreateResourceManager()
         {

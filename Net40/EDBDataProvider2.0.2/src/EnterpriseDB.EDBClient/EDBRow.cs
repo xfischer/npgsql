@@ -344,12 +344,18 @@ namespace EnterpriseDB.EDBClient
         private Streamer _streamer;
         protected int _currentField = -1;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public RowReader(Stream stream)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _stream = stream;
         }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public RowReader(EDBRowDescription rowDesc, Stream stream)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{
 			_rowDesc = rowDesc;
 			_stream = stream;
@@ -406,7 +412,9 @@ namespace EnterpriseDB.EDBClient
                         throw new InvalidCastException();
                     }
                     ++_currentField;
+#pragma warning disable CS8603 // Possible null reference return.
                     return (CurrentStreamer = new ByteStreamer(Stream, GetNextFieldCount())) as ByteStreamer;
+#pragma warning restore CS8603 // Possible null reference return.
                 }
                 else if (!(CurrentStreamer is Streamer<byte>))
                 {
@@ -414,7 +422,9 @@ namespace EnterpriseDB.EDBClient
                 }
                 else
                 {
+#pragma warning disable CS8603 // Possible null reference return.
                     return CurrentStreamer as ByteStreamer;
+#pragma warning restore CS8603 // Possible null reference return.
                 }
             }
         }
@@ -430,7 +440,9 @@ namespace EnterpriseDB.EDBClient
                         throw new InvalidCastException();
                     }
                     ++_currentField;
+#pragma warning disable CS8603 // Possible null reference return.
                     return (CurrentStreamer = new CharStreamer(Stream, GetNextFieldCount())) as CharStreamer;
+#pragma warning restore CS8603 // Possible null reference return.
                 }
                 else if (!(CurrentStreamer is Streamer<char>))
                 {
@@ -438,7 +450,9 @@ namespace EnterpriseDB.EDBClient
                 }
                 else
                 {
+#pragma warning disable CS8603 // Possible null reference return.
                     return CurrentStreamer as CharStreamer;
+#pragma warning restore CS8603 // Possible null reference return.
                 }
             }
         }

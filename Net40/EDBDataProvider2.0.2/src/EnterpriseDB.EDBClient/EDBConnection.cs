@@ -142,9 +142,13 @@ namespace EnterpriseDB.EDBClient
         private EDBConnectionStringBuilder settings;
 
         // Connector being used for the active connection.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBConnector connector = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBPromotableSinglePhaseNotification promotable = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         // A cached copy of the result of `settings.ConnectionString`
         private string _connectionString;
@@ -182,7 +186,11 @@ namespace EnterpriseDB.EDBClient
         /// and sets the <see cref="EnterpriseDB.EDBClient.EDBConnection.ConnectionString">ConnectionString</see>.
         /// </summary>
         /// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBConnection(String ConnectionString)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "EDBConnection()");
 
@@ -197,7 +205,11 @@ namespace EnterpriseDB.EDBClient
         /// and sets the <see cref="EnterpriseDB.EDBClient.EDBConnection.ConnectionString">ConnectionString</see>.
         /// </summary>
         /// <param name="ConnectionString">The connection used to open the PostgreSQL database.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBConnection(EDBConnectionStringBuilder ConnectionString)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, "EDBConnection()");
 
@@ -696,7 +708,9 @@ namespace EnterpriseDB.EDBClient
             // Mutating the current `settings` object would invalidate the cached instance, so work on a copy instead.
             settings = settings.Clone();
             settings[Keywords.Database] = dbName;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _connectionString = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             Open();
         }
@@ -732,7 +746,9 @@ namespace EnterpriseDB.EDBClient
             _postponingClose = false;
 
             // clear the way for another promotable transaction
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             promotable = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             connector.Notification -= NotificationDelegate;
             connector.Notice -= NoticeDelegate;
@@ -762,7 +778,9 @@ namespace EnterpriseDB.EDBClient
                 Connector.Close();
             }
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             connector = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             this.OnStateChange (new StateChangeEventArgs(ConnectionState.Open, ConnectionState.Closed));
         }
@@ -976,7 +994,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -1006,7 +1026,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -1165,7 +1187,9 @@ namespace EnterpriseDB.EDBClient
         /// <returns>The collection specified.</returns>
         public override DataTable GetSchema(string collectionName)
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             return GetSchema(collectionName, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         /// <summary>

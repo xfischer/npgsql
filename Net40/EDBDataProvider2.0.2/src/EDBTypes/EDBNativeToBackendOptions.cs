@@ -54,7 +54,9 @@ namespace EDBTypes
 
         static NativeToBackendTypeConverterOptions()
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _default = new NativeToBackendTypeConverterOptions(true, false, true, false, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         internal static NativeToBackendTypeConverterOptions Default
@@ -93,7 +95,9 @@ namespace EDBTypes
         /// </summary>
         /// <param name="oidToNameMapping">OID/Name mapping object to use in the new instance.</param>
         /// <returns>A new NativeToBackendTypeConverterOptions object.</returns>
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         internal NativeToBackendTypeConverterOptions Clone(EDBBackendTypeMapping oidToNameMapping = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             return new NativeToBackendTypeConverterOptions(_UseConformantStrings, _Supports_E_StringPrefix, _SupportsHexByteFormat, oidToNameMapping);
         }

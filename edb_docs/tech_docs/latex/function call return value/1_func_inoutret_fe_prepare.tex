@@ -1,0 +1,68 @@
+\documentclass{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\usepackage{color}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 1_spl_inout_fe_prepare.pdf -quality 90 -background white -flatten 1_spl_inout_fe_prepare.png
+
+% EnterpriseDB : Packet datagram for full SPL call
+% current : step 1: Front end messages sent when Preparing an SPL call
+% ie: SPL call sp_test(:param1 IN, param2 OUT)
+
+\begin{document}
+\definecolor{lightcyan}{rgb}{0.84,1,1}
+\definecolor{lightgreen}{rgb}{0.64,1,0.71}
+\definecolor{lightred}{rgb}{1,0.7,0.71}
+\definecolor{edborange}{rgb}{1,0.243,0}
+\definecolor{lightgray}{gray}{0.8}
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    \\
+    \bitheader{0-31} \\
+    
+    \begin{rightwordgroup}{ParseOut}
+        \bitbox{1}[bgcolor=edborange]{O} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{12}{prepared statement name [...] \\ \tiny can be null for unnamed portal} &
+        \bitbox{13}{query text [...]} &
+        \bitbox{2}{\tiny param \\ \tiny count} 
+        
+        \\
+
+    \begin{leftwordgroup}{for each parameter}
+        \bitbox{4}{oid} & 
+        \bitbox{28}[bgcolor=lightgray]{}
+    \end{leftwordgroup}
+
+    \\
+
+    \begin{leftwordgroup}{for each parameter}
+        \bitbox{2}{\rotatebox{90}{\tiny direction}} & 
+        \bitbox{30}[bgcolor=lightgray]{}
+    \end{leftwordgroup}
+    \end{rightwordgroup} \\
+
+    \\
+
+    \begin{rightwordgroup}{Describe \\ (S = statement)}
+        \bitbox{1}[bgcolor=lightcyan]{D} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{1}{S} &
+        \bitbox{26}{prepared statement name [...]}
+    \end{rightwordgroup} \\
+
+    \\
+
+    \begin{rightwordgroup}{Sync}
+        \bitbox{1}[bgcolor=lightcyan]{S} &        
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{27}[bgcolor=lightgray]{}
+    \end{rightwordgroup} 
+    
+    \\
+
+    \end{bytefield}
+    
+    
+\end{document}

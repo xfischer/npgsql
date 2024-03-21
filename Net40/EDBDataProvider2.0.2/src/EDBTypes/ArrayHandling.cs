@@ -105,7 +105,9 @@ namespace EDBTypes
             {
                 byte[] element;
 
+#pragma warning disable CS8604 // Possible null reference argument.
                 element = _elementConverter.ConvertToBackend(item, forExtendedQuery, options, true);
+#pragma warning restore CS8604 // Possible null reference argument.
 
                 array.Write(element, 0, element.Length);
 
@@ -113,11 +115,15 @@ namespace EDBTypes
             }
             else if (item is Array)
             {
+#pragma warning disable CS8604 // Possible null reference argument.
                 return WriteArrayText(TypeInfo, item as Array, array, forExtendedQuery, options);
+#pragma warning restore CS8604 // Possible null reference argument.
             }
             else if (item is IEnumerable)
             {
+#pragma warning disable CS8604 // Possible null reference argument.
                 return WriteEnumeration(TypeInfo, item as IEnumerable, array, forExtendedQuery, options);
+#pragma warning restore CS8604 // Possible null reference argument.
             }
             else
             {//This shouldn't really be reachable.
@@ -479,7 +485,9 @@ namespace EDBTypes
                     object obj = ienum.Current;
                     if (obj is ArrayList)
                     {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                         stk.Push(ienum = (obj as ArrayList).GetEnumerator());
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     }
                     else
                     {
@@ -562,6 +570,9 @@ namespace EDBTypes
             //We then find out the type of that item.
             List<int> dimensions = new List<int>();
             object item = list;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             for (ArrayList itemAsList = item as ArrayList; item is ArrayList; itemAsList = (item = itemAsList[0]) as ArrayList)
             {
                 if (itemAsList != null)
@@ -574,6 +585,9 @@ namespace EDBTypes
                     dimensions.Add(dimension);
                 }
             }
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
             if (dimensions.Count == 1) //1-dimension array so we can just use ArrayList.ToArray()
             {

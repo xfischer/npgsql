@@ -1170,7 +1170,9 @@ namespace EDBTypes
                 case TypeCode.DBNull:
                     return System.DBNull.Value;
                 case TypeCode.Empty:
+#pragma warning disable CS8603 // Possible null reference return.
                     return null;
+#pragma warning restore CS8603 // Possible null reference return.
                 case TypeCode.Int16:
                     return ToInt16();
                 case TypeCode.Int32:

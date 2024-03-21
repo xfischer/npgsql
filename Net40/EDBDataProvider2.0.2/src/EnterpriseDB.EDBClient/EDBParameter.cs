@@ -67,10 +67,16 @@ namespace EnterpriseDB.EDBClient
         private String m_Name = String.Empty;
         private String source_column = String.Empty;
         private DataRowVersion source_version = DataRowVersion.Current;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private Object value = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private Object npgsqlValue = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private Boolean sourceColumnNullMapping;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBParameterCollection collection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
         private Boolean useCast = false;
@@ -82,7 +88,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Initializes a new instance of the <see cref="EnterpriseDB.EDBClient.EDBParameter">EDBParameter</see> class.
         /// </summary>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBParameter()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
             //type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
@@ -102,7 +112,11 @@ namespace EnterpriseDB.EDBClient
         /// This happens when calling this constructor passing an int 0 and the compiler thinks you are passing a value of DbType.
         /// Use <code> Convert.ToInt32(value) </code> for example to have compiler calling the correct constructor.</p>
         /// </remarks>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBParameter(String parameterName, object value)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, parameterName, value);
 
@@ -188,7 +202,11 @@ namespace EnterpriseDB.EDBClient
         /// <param m_Name="parameterType">One of the <see cref="EDBTypes.EDBDbType">EDBDbType</see> values.</param>
         /// <param m_Name="size">The length of the parameter.</param>
         /// <param m_Name="sourceColumn">The m_Name of the source column.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBParameter(String parameterName, EDBDbType parameterType, Int32 size, String sourceColumn)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME, parameterName, parameterType, size, source_column);
 
@@ -228,7 +246,11 @@ namespace EnterpriseDB.EDBClient
         /// <param m_Name="sourceVersion">One of the <see cref="System.Data.DataRowVersion">DataRowVersion</see> values.</param>
         /// <param m_Name="value">An <see cref="System.Object">Object</see> that is the value
         /// of the <see cref="EnterpriseDB.EDBClient.EDBParameter">EDBParameter</see>.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBParameter(String parameterName, EDBDbType parameterType, Int32 size, String sourceColumn,
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
                                ParameterDirection direction, bool isNullable, byte precision, byte scale,
                                DataRowVersion sourceVersion, object value)
         {
@@ -289,7 +311,7 @@ namespace EnterpriseDB.EDBClient
         /// The default value is 0, which indicates that the data provider
         /// sets the precision for <b>Value</b>.</value>
         [Category("Data"), DefaultValue((Byte)0)]
-        public Byte Precision
+        public override Byte Precision
         {
             get
             {
@@ -335,7 +357,7 @@ namespace EnterpriseDB.EDBClient
         /// <value>The number of decimal places to which
         /// <see cref="EnterpriseDB.EDBClient.EDBParameter.Value">Value</see> is resolved. The default is 0.</value>
         [Category("Data"), DefaultValue((Byte)0)]
-        public Byte Scale
+        public override Byte Scale
         {
             get
             {
@@ -628,8 +650,12 @@ namespace EnterpriseDB.EDBClient
                 {
                     // don't really know what to do - leave default and do further exploration
                     // Default type for null values is String.
+#pragma warning disable CS8601 // Possible null reference assignment.
                     this.value = value;
+#pragma warning restore CS8601 // Possible null reference assignment.
+#pragma warning disable CS8601 // Possible null reference assignment.
                     this.npgsqlValue = value;
+#pragma warning restore CS8601 // Possible null reference assignment.
 
                     bound = false;
 
@@ -804,7 +830,9 @@ namespace EnterpriseDB.EDBClient
         public override void ResetDbType()
         {
             //type_info = EDBTypesHelper.GetNativeTypeInfo(typeof(String));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             type_info = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             this.Value = Value;
             bound = false;
         }

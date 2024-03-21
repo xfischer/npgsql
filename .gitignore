@@ -20,3 +20,9 @@ artifacts/
 edb-rebrand-c/x64
 */x64
 **/edb_nuget_packages
+**/latex/**/*.synctex.gz
+**/latex/**/*.aux
+**/latex/**/*.fdb_latexmk
+**/latex/**/*.fls
+**/latex/**/*.log
+**/latex/**/*.pdf

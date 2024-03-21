@@ -17,7 +17,7 @@ partial class EDBConnector
     internal Task WriteDescribe(StatementOrPortal statementOrPortal, string name, bool async, CancellationToken cancellationToken = default)
     {
         Debug.Assert(name.All(c => c < 128));
-        LogMessages.TryEDBTrace(ConnectionLogger, $"FE=> Describe (portal={name})");
+        LogMessages.TryEDBTrace(ConnectionLogger, $"FE=> Describe ({statementOrPortal}={name})");
 
         var len = sizeof(byte) +       // Message code
                   sizeof(int)  +       // Length

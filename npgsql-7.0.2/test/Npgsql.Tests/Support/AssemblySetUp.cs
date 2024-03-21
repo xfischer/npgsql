@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient;
 using EnterpriseDB.EDBClient.Tests;
-using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 using System;
 using System.Threading;

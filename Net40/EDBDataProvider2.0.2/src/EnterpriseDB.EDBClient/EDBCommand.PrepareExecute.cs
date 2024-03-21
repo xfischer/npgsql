@@ -405,7 +405,9 @@ namespace EnterpriseDB.EDBClient
                                         p.Value = "fetch all in \"" + p.Value.ToString() + "\"";
                                         EDBCommand command = new EDBCommand(p.Value.ToString(), Connection);
                                         m_Connector.Mediator.Type = command.CommandType;
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
                                         CommandBehavior cb1 = CommandBehavior.SequentialAccess;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
                                         ForwardsOnlyDataReader rd = (ForwardsOnlyDataReader)command.ExecuteReader(cb);
                                         m_Connector.Mediator.ExecutingRefCursor = true;
                                         p.Value = new CachingDataReader(rd, cb);
@@ -480,7 +482,9 @@ namespace EnterpriseDB.EDBClient
                 EDBDataReader reader =
                     GetReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow))
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return reader.Read() && reader.FieldCount != 0 ? reader.GetValue(0) : null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -489,13 +493,21 @@ namespace EnterpriseDB.EDBClient
             if (prepared == PrepareStatus.Prepared)
             {
                 ExecuteBlind(m_Connector, "DEALLOCATE " + planName);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 bind = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 execute = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 currentRowDescription = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 prepared = PrepareStatus.NeedsPrepare;
             }
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             preparedCommandText = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         /// <summary>
@@ -519,9 +531,15 @@ namespace EnterpriseDB.EDBClient
             // Use the extended query parsing...
             planName = m_Connector.NextPlanName();
             String portalName = "";
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBParse parse = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBParseOut parseOut = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string callableStmtText = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             // reset any responses just before getting new ones
        //     Connector.Mediator.ResetResponses();
@@ -563,16 +581,22 @@ namespace EnterpriseDB.EDBClient
             
             EDBDescribe statementDescribe = new EDBDescribeStatement(planName); //ZK
             IEnumerable<IServerResponseObject> responseEnum;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBRowDescription returnRowDesc = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             
             
             // Write Parse, Describe, and Sync messages to the wire.
             if (CommandType == CommandType.StoredProcedure) {
+#pragma warning disable CS8604 // Possible null reference argument.
                 m_Connector.ParseOut(parseOut);
+#pragma warning restore CS8604 // Possible null reference argument.
             }
  
             else
+#pragma warning disable CS8604 // Possible null reference argument.
                 m_Connector.Parse(parse);
+#pragma warning restore CS8604 // Possible null reference argument.
             
             m_Connector.Describe(statementDescribe); //ZK
             m_Connector.Sync();
@@ -597,7 +621,9 @@ namespace EnterpriseDB.EDBClient
                 }
                 else if (response is IDisposable)
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     (response as IDisposable).Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
             }
 
@@ -633,11 +659,15 @@ namespace EnterpriseDB.EDBClient
             }
 
             // Save the row description for use with all future Executes.
+#pragma warning disable CS8601 // Possible null reference assignment.
             currentRowDescription = returnRowDesc;
+#pragma warning restore CS8601 // Possible null reference assignment.
 
             // The Bind and Execute message objects live through multiple Executes.
             // Only Bind changes at all between Executes, which is done in BindParameters().
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             bind = new EDBBind(portalName, planName, new Int16[Parameters.Count], null, resultFormatCodes);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             execute = new EDBExecute(portalName, 0);
             executeOut = new EDBExecuteOut(portalName, 0);
             prepared = PrepareStatus.Prepared;

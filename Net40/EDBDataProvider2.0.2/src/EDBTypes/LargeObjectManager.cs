@@ -61,7 +61,9 @@ namespace EDBTypes
         /// </summary>
         public static Int32 READWRITE = READ | WRITE;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private LargeObjectManager()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             /*
             * This prevents us being created by mere mortals
@@ -83,7 +85,9 @@ namespace EDBTypes
             // This is an example of Fastpath.addFunctions();
             //
             //String sql;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             StringBuilder sql = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             try
             {
                 sql = new StringBuilder();
@@ -130,7 +134,9 @@ namespace EDBTypes
             }
             finally
             {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 sql = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             }
         }
 

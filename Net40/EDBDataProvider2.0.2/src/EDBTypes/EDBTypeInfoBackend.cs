@@ -77,9 +77,17 @@ namespace EDBTypes
         /// <param name="Type">System type to convert fields of this type to.</param>
         /// <param name="ConvertBackendTextToNative">Data conversion handler for text encoding.</param>
         /// <param name="ConvertBackendBinaryToNative">Data conversion handler for binary data.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBBackendTypeInfo(Int32 OID, String Name, EDBDbType EDBDbType, DbType DbType, Type Type,
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                         ConvertBackendTextToNativeHandler ConvertBackendTextToNative = null,
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                         ConvertBackendBinaryToNativeHandler ConvertBackendBinaryToNative = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             if (Type == null)
             {
@@ -114,7 +122,9 @@ namespace EDBTypes
                                         Type frameworkType,
                                         ConvertProviderTypeToFrameworkTypeHander convertProviderToFramework,
                                         ConvertFrameworkTypeToProviderTypeHander convertFrameworkToProvider)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(OID, Name, EDBDbType, DbType, Type, ConvertBackendTextToNative, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             _frameworkType = frameworkType;
             _convertProviderToFramework = convertProviderToFramework;

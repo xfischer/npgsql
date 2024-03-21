@@ -44,7 +44,9 @@ namespace EnterpriseDB.EDBClient
         private static readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
         private static readonly ResourceManager resman = new ResourceManager(MethodBase.GetCurrentMethod().DeclaringType);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBConnection _conn = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private readonly IsolationLevel _isolation = IsolationLevel.ReadCommitted;
         private bool _disposed = false;
 
@@ -163,8 +165,12 @@ namespace EnterpriseDB.EDBClient
 
             EDBCommand.ExecuteBlind(_conn.Connector, EDBQuery.CommitTransaction);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _conn.Connector.Transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _conn = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         /// <summary>
@@ -182,8 +188,12 @@ namespace EnterpriseDB.EDBClient
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Rollback");
 
             EDBCommand.ExecuteBlindSuppressTimeout(_conn.Connector, EDBQuery.RollbackTransaction);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _conn.Connector.Transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _conn = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         /// <summary>
@@ -251,8 +261,12 @@ namespace EnterpriseDB.EDBClient
 
             if (_conn != null)
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _conn.Connector.Transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _conn = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 

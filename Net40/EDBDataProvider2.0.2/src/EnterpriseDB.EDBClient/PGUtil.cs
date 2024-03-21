@@ -821,12 +821,18 @@ namespace EnterpriseDB.EDBClient
 
         public static implicit operator Version(ServerVersion sv)
         {
+#pragma warning disable CS8603 // Possible null reference return.
             return (object) sv == null ? null : sv._version;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public static implicit operator ServerVersion(Version ver)
         {
+#pragma warning disable CS8603 // Possible null reference return.
+#pragma warning disable CS8604 // Possible null reference argument.
             return (object) ver == null ? null : new ServerVersion(ver.Clone() as Version);
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public static bool operator ==(ServerVersion One, ServerVersion TheOther)
@@ -861,7 +867,9 @@ namespace EnterpriseDB.EDBClient
 
         public bool Equals(ServerVersion other)
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             return other != null && this == other;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         public int CompareTo(ServerVersion other)
@@ -871,17 +879,23 @@ namespace EnterpriseDB.EDBClient
 
         public int CompareTo(object obj)
         {
+#pragma warning disable CS8604 // Possible null reference argument.
             return CompareTo(obj as ServerVersion);
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         public object Clone()
         {
+#pragma warning disable CS8604 // Possible null reference argument.
             return new ServerVersion(_version.Clone() as Version);
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         public override bool Equals(object O)
         {
+#pragma warning disable CS8604 // Possible null reference argument.
             return Equals(O as ServerVersion);
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         public override int GetHashCode()

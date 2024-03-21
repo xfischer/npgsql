@@ -31,7 +31,7 @@ namespace EnterpriseDB.EDBClient;
 /// Reads a forward-only stream of rows from a data source.
 /// </summary>
 #pragma warning disable CA1010
-public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
+public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 #pragma warning restore CA1010
 {
     internal EDBCommand Command { get; private set; } = default!;
@@ -1539,7 +1539,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Releases the resources used by the <see cref="EDBDataReader"/>.
     /// </summary>
 #if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-    public ValueTask DisposeAsync()
+    public virtual ValueTask DisposeAsync()
 #else
     public override ValueTask DisposeAsync()
 #endif
@@ -1584,7 +1584,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
     /// </summary>
 #if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-    public Task CloseAsync()
+    public virtual Task CloseAsync()
 #else
     public override Task CloseAsync()
 #endif
@@ -2377,7 +2377,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <param name="ordinal">The zero-based column ordinal.</param>
     /// <returns>The value of the specified column.</returns>
-    public object GetEDBValue(int ordinal) // // EnterpriseDB Team
+    public virtual object GetEDBValue(int ordinal) // // EnterpriseDB Team
     {
         var fieldDescription = CheckRowAndGetField(ordinal);
 
@@ -2590,12 +2590,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// The returned representation can be used to access various information about the field.
     /// </summary>
     /// <param name="ordinal">The zero-based column index.</param>
-    public PostgresType GetPostgresType(int ordinal) => GetField(ordinal).PostgresType;
+    public virtual PostgresType GetPostgresType(int ordinal) => GetField(ordinal).PostgresType;
 
     /// <summary>
     /// Gets the data type information for the specified field.
     /// This is the PostgreSQL type name (e.g. double precision), not the .NET type
-    /// (see <see cref="GetFieldType"/> for that).
+    /// (see GetFieldValue<see cref="GetFieldType"/> for that).
     /// </summary>
     /// <param name="ordinal">The zero-based column index.</param>
     public override string GetDataTypeName(int ordinal) => GetField(ordinal).TypeDisplayName;
@@ -2608,7 +2608,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// debugging purposes.
     /// </remarks>
     /// <param name="ordinal">The zero-based column index.</param>
-    public uint GetDataTypeOID(int ordinal) => GetField(ordinal).TypeOID;
+    public virtual uint GetDataTypeOID(int ordinal) => GetField(ordinal).TypeOID;
 
     /// <summary>
     /// Gets the data type of the specified column.
@@ -2663,7 +2663,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Returns schema information for the columns in the current resultset.
     /// </summary>
     /// <returns></returns>
-    public ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
+    public virtual ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
         => GetColumnSchema(async: false).GetAwaiter().GetResult();
 
     ReadOnlyCollection<DbColumn> IDbColumnSchemaGenerator.GetColumnSchema()
@@ -2674,9 +2674,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <returns></returns>
 #if NET6_0_OR_GREATER
-    public new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+    public virtual new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #else
-    public Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+    public virtual Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #endif
     {
         using (NoSynchronizationContextScope.Enter())

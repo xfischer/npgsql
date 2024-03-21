@@ -89,10 +89,22 @@ namespace EDBTypes
         /// <param name="BackendTextConvert">Data conversion handler for text encoding.</param>
         /// <param name="BackendBinaryConvert">Data conversion handler for binary data.</param>
         public void AddType(Int32 OID, String Name, EDBDbType EDBDbType, DbType DbType, Type Type,
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                             ConvertBackendTextToNativeHandler BackendTextConvert = null,
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                             ConvertBackendBinaryToNativeHandler BackendBinaryConvert = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8604 // Possible null reference argument.
+#pragma warning disable CS8604 // Possible null reference argument.
             AddType(new EDBBackendTypeInfo(OID, Name, EDBDbType, DbType, Type, BackendTextConvert = null, BackendBinaryConvert = null));
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
 
         /// <summary>
@@ -115,8 +127,12 @@ namespace EDBTypes
         {
             get
             {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 EDBBackendTypeInfo ret = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8603 // Possible null reference return.
                 return TryGetValue(OID, out ret) ? ret : null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -127,8 +143,12 @@ namespace EDBTypes
         {
             get
             {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 EDBBackendTypeInfo ret = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8603 // Possible null reference return.
                 return NameIndex.TryGetValue(Name, out ret) ? ret : null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -203,8 +223,12 @@ namespace EDBTypes
         /// <param name="NativeTextConvert">Data conversion handler for text backend encoding.</param>
         /// <param name="NativeBinaryConvert">Data conversion handler for binary backend encoding (for extended query).</param>
         public void AddType(String Name, EDBDbType EDBDbType, DbType DbType, Boolean Quote,
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                             ConvertNativeToBackendTextHandler NativeTextConvert = null,
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                             ConvertNativeToBackendBinaryHandler NativeBinaryConvert = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             AddType(new EDBNativeTypeInfo(Name, EDBDbType, DbType, Quote, NativeTextConvert, NativeBinaryConvert));
         }

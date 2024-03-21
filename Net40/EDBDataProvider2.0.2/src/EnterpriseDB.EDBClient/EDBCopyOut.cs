@@ -54,7 +54,9 @@ namespace EnterpriseDB.EDBClient
         /// Given command is run upon Start(), after which CopyStream provides data from database as requested in the query.
         /// </summary>
         public EDBCopyOut(EDBCommand cmd, EDBConnection conn)
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             : this(cmd, conn, null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
         }
 
@@ -149,7 +151,9 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         public byte[] Read
         {
+#pragma warning disable CS8603 // Possible null reference return.
             get { return IsActive ? ((EDBCopyOutStream) _copyStream).Read() : null; }
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         /// <summary>
@@ -176,10 +180,14 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (_context.Mediator.CopyStream == _copyStream)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _context.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     if (_disposeCopyStream)
                     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                         _copyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                     }
                 }
             }

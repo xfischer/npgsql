@@ -79,7 +79,9 @@ namespace EDBTypes
                 return elementType;
             }
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBNativeTypeInfo copy = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             ArrayNativeToBackendTypeConverter converter = new ArrayNativeToBackendTypeConverter(elementType);
 
             if (elementType._ConvertNativeToBackendBinary != null)
@@ -122,8 +124,12 @@ namespace EDBTypes
         /// <param name="ConvertNativeToBackendText">Data conversion handler for text backend encoding.</param>
         /// <param name="ConvertNativeToBackendBinary">Data conversion handler for binary backend encoding (for extended queries).</param>
         public EDBNativeTypeInfo(String Name, EDBDbType EDBDbType, DbType DbType, Boolean Quote,
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                     ConvertNativeToBackendTextHandler ConvertNativeToBackendText = null,
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                     ConvertNativeToBackendBinaryHandler ConvertNativeToBackendBinary = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             _Name = Name;
             _CastName = Name.StartsWith("_") ? Name.Substring(1) + "[]" : Name;
@@ -207,7 +213,9 @@ namespace EDBTypes
         /// <param name="forExtendedQuery">Specifies that the value should be formatted for the extended query syntax.</param>
         /// <param name="options">Options to guide serialization.  If null, a default options set is used.</param>
         /// <param name="arrayElement">Specifies that the value should be formatted as an extended query array element.</param>
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         public byte[] ConvertToBackend(Object NativeData, Boolean forExtendedQuery, NativeToBackendTypeConverterOptions options = null, bool arrayElement = false)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         {
             if (options == null)
             {
@@ -289,7 +297,9 @@ namespace EDBTypes
         {
             if ((NativeData == DBNull.Value) || (NativeData == null))
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null; // Extended query expects null values be represented as null.
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             if (! EDBTypesHelper.SuppressBinaryBackendEncoding && _ConvertNativeToBackendBinary != null)
@@ -341,7 +351,9 @@ namespace EDBTypes
 
         private static byte[] QuoteASCIIString(byte[] src, bool forExtendedQuery, bool arrayElement)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             byte[] ret = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             if (arrayElement)
             {

@@ -124,7 +124,9 @@ namespace EnterpriseDB.EDBClient
 
         // Flag for transaction status.
         //        private Boolean                         _inTransaction = false;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBTransaction _transaction = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         private Boolean _supportsSavepoint = false;
 
@@ -196,7 +198,11 @@ namespace EnterpriseDB.EDBClient
         /// <param name="ConnectionString">Connection string.</param>
         /// <param name="Pooled">Pooled</param>
         /// <param name="Shared">Controls whether the connector can be shared.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBConnector(EDBConnectionStringBuilder ConnectionString, bool Pooled, bool Shared)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             this.settings = ConnectionString;
             _connection_state = ConnectionState.Closed;
@@ -541,7 +547,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -571,7 +579,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -783,7 +793,9 @@ namespace EnterpriseDB.EDBClient
         /// Method of the connection pool manager.</remarks>
         internal void Open()
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             ServerVersion = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             // If Connection.ConnectionString specifies a protocol version, we will
             // not try to fall back to version 2 on failure.
 
@@ -880,7 +892,9 @@ namespace EnterpriseDB.EDBClient
                     _connection_state = ConnectionState.Closed;
                     this.CurrentState.Close(this);
                     _serverParameters.Clear();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     ServerVersion = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
             }
             catch
@@ -933,7 +947,9 @@ namespace EnterpriseDB.EDBClient
             {
                 // Kill notification thread.
                 _notificationThread.Abort();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _notificationThread = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
                 // Special case in order to not get problems with thread synchronization.
                 // It will be turned to 0 when synch thread is created.
@@ -979,7 +995,9 @@ namespace EnterpriseDB.EDBClient
                 {
                     _connector.ResumeNotificationThread();
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _connector = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 

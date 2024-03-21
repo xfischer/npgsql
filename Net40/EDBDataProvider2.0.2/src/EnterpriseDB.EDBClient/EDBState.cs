@@ -263,7 +263,9 @@ namespace EnterpriseDB.EDBClient
             catch
             {
             }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             context.Stream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             ChangeState(context, EDBClosedState.Instance);
         }
 
@@ -304,7 +306,9 @@ namespace EnterpriseDB.EDBClient
             {
                 if (response is IDisposable)
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     (response as IDisposable).Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
             }
         }

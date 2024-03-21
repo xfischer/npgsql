@@ -109,9 +109,13 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (_context.Mediator.CopyStream == this)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _context.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _context = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -124,9 +128,15 @@ namespace EnterpriseDB.EDBClient
             if (IsActive)
             {
                 EDBConnector c = _context;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _context = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 c.Mediator.CopyStream = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8604 // Possible null reference argument.
                 c.CurrentState.SendCopyFail(_context, message ?? "Cancel Copy");
+#pragma warning restore CS8604 // Possible null reference argument.
             }
         }
 

@@ -41,7 +41,9 @@ namespace EnterpriseDB.EDBClient
 
     internal class EDBNetworkStream : NetworkStream
     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         EDBConnector mContext = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         public EDBNetworkStream(Socket socket, Boolean owner)
             : base(socket, owner)
@@ -60,7 +62,9 @@ namespace EnterpriseDB.EDBClient
                 if (mContext != null)
                 {
                     mContext.Close();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     mContext = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
             }
 
@@ -113,8 +117,12 @@ namespace EnterpriseDB.EDBClient
                 timeout -= Convert.ToInt32((DateTime.Now - attemptStart).TotalMilliseconds);
 
                 IPAddress[] ips = Dns.EndGetHostAddresses(result);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 Socket socket = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 Exception lastSocketException = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                 // try every ip address of the given hostname, use the first reachable one
                 // make sure not to exceed the caller's timeout expectation by splitting the
@@ -150,17 +158,23 @@ namespace EnterpriseDB.EDBClient
                         lastSocketException = e;
 
                         socket.Close();
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                         socket = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                     }
                 }
 
                 if (socket == null)
                 {
+#pragma warning disable CS8597 // Thrown value may be null.
                     throw lastSocketException;
+#pragma warning restore CS8597 // Thrown value may be null.
                 }
 
                 EDBNetworkStream baseStream = new EDBNetworkStream(socket, true);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 Stream sslStream = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                 // If the PostgreSQL server has SSL connectors enabled Open SslClientStream if (response == 'S') {
                 if (context.SSL || (context.SslMode == SslMode.Require) || (context.SslMode == SslMode.Prefer))

@@ -58,7 +58,9 @@ namespace EnterpriseDB.EDBClient
             // TODO: what happens if this is called from another thread?
             // connections should not be shared across threads while in a transaction
             _connection.Disposed -= new EventHandler(_connection_Disposed);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _connection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         private EDBConnection GetConnection()

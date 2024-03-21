@@ -61,7 +61,11 @@ namespace EnterpriseDB.EDBClient
 
         internal Version EDB205 = new Version("2.0.5");
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         internal EDBDataReader(EDBCommand command, CommandBehavior behavior)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _behavior = behavior;
             _connection = (_command = command).Connection;
@@ -495,7 +499,9 @@ namespace EnterpriseDB.EDBClient
 
         private DataTable GetResultsetSchema()
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             DataTable result = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             if (CurrentDescription != null && CurrentDescription.NumFields > 0)
             {
                 result = new DataTable("SchemaTable");
@@ -526,7 +532,9 @@ namespace EnterpriseDB.EDBClient
                 FillSchemaTable(result);
             }
 
+#pragma warning disable CS8603 // Possible null reference return.
             return result;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         private void FillSchemaTable(DataTable schema)
@@ -536,7 +544,9 @@ namespace EnterpriseDB.EDBClient
             // needs to be null because there is a difference
             // between an empty dictionary and not setting it
             // the default values will be different
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Dictionary<string, Column> columnLookup = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             if ((_behavior & CommandBehavior.KeyInfo) == CommandBehavior.KeyInfo)
             {
@@ -566,7 +576,9 @@ namespace EnterpriseDB.EDBClient
             {
                 DataRow row = schema.NewRow();
 
+#pragma warning disable CS8604 // Possible null reference argument.
                 string baseColumnName = GetBaseColumnName(columnLookup, i);
+#pragma warning restore CS8604 // Possible null reference argument.
 
                 row["ColumnName"] = GetName(i);
                 row["ColumnOrdinal"] = i + 1;
@@ -706,8 +718,12 @@ namespace EnterpriseDB.EDBClient
 
                 using (EDBDataReader dr = c.GetReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
                 {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                     string previousKeyName = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                     string possiblyUniqueColumn = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                     string columnName;
                     string currentKeyName;
                     // loop through adding any column that is primary to the primary key list
@@ -734,7 +750,9 @@ namespace EnterpriseDB.EDBClient
                         }
                         else
                         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                             possiblyUniqueColumn = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
                         }
                         previousKeyName = currentKeyName;
                     }
@@ -757,7 +775,9 @@ namespace EnterpriseDB.EDBClient
             }
 
             string lookupKey = string.Format("{0},{1}", CurrentDescription[FieldIndex].TableOID, CurrentDescription[FieldIndex].ColumnAttributeNumber);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Column col = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             return columnLookup.TryGetValue(lookupKey, out col) ? !col.NotNull : true;
         }
 
@@ -769,7 +789,9 @@ namespace EnterpriseDB.EDBClient
             }
 
             string lookupKey = string.Format("{0},{1}", CurrentDescription[FieldIndex].TableOID, CurrentDescription[FieldIndex].ColumnAttributeNumber);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Column col = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             return columnLookup.TryGetValue(lookupKey, out col) ? col.Name : GetName(FieldIndex);
         }
 
@@ -781,7 +803,9 @@ namespace EnterpriseDB.EDBClient
             }
 
             string lookupKey = string.Format("{0},{1}", CurrentDescription[FieldIndex].TableOID, CurrentDescription[FieldIndex].ColumnAttributeNumber);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             Column col = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             return
                 columnLookup.TryGetValue(lookupKey, out col)
                     ? col.ColumnDefault is string && col.ColumnDefault.ToString().StartsWith("nextval(")
@@ -929,7 +953,9 @@ namespace EnterpriseDB.EDBClient
             // if the loop ended without setting first to false, then there will be no results from the query
             if (first)
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             using (EDBConnection connection = _connection.Clone())
@@ -972,7 +998,9 @@ namespace EnterpriseDB.EDBClient
     {
         private readonly IEnumerator<IServerResponseObject> _dataEnumerator;
         private EDBRowDescription _currentDescription;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBRow _currentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private int? _recordsAffected = null;
         private int? _nextRecordsAffected;
         private long? _lastInsertOID = null;
@@ -985,8 +1013,12 @@ namespace EnterpriseDB.EDBClient
         //a description until it comes when we look for a row or a message, and
         //we may also need test if we may have rows for HasRows before the first call
         //to Read(), so we need to be able to cache one of each.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBRowDescription _pendingDescription = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBRow _pendingRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private readonly bool _preparedStatement;
 
         // Logging related values
@@ -994,7 +1026,9 @@ namespace EnterpriseDB.EDBClient
 
         internal ForwardsOnlyDataReader(IEnumerable<IServerResponseObject> dataEnumeration, CommandBehavior behavior,
                                         EDBCommand command, EDBConnector.NotificationThreadBlock threadBlock,
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                                         bool preparedStatement = false, EDBRowDescription rowDescription = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             : base(command, behavior)
         {
             _dataEnumerator = dataEnumeration.GetEnumerator();
@@ -1069,7 +1103,9 @@ namespace EnterpriseDB.EDBClient
         {
             if (fo == null)
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             else
             {
@@ -1110,39 +1146,53 @@ namespace EnterpriseDB.EDBClient
         {
             try
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 CurrentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 if (_pendingRow != null)
                 {
                     _pendingRow.Dispose();
                 }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _pendingRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 while (_dataEnumerator.MoveNext())
                 {
                     IServerResponseObject respNext = _dataEnumerator.Current;
 
                     if (respNext is RowReader)
                     {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                         RowReader reader = respNext as RowReader;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                         if (cleanup)
                         {
                             // V3 rows can dispose by simply reading MessageLength bytes.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             reader.Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
                             return reader;
                         }
                         else
                         {
+#pragma warning disable CS8604 // Possible null reference argument.
                             return _pendingRow = BuildRow(new ForwardsOnlyRow(reader));
+#pragma warning restore CS8604 // Possible null reference argument.
                         }
                     }
                     else if (respNext is CompletedResponse)
                     {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                         CompletedResponse cr = respNext as CompletedResponse;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                         if (cr.RowsAffected.HasValue)
                         {
                             _nextRecordsAffected = (_nextRecordsAffected ?? 0) + cr.RowsAffected.Value;
                         }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                         _nextInsertOID = cr.LastInsertedOID ?? _nextInsertOID;
                     }
                     else
@@ -1151,7 +1201,9 @@ namespace EnterpriseDB.EDBClient
                     }
                 }
                 CleanUp(true);
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             catch
             {
@@ -1169,7 +1221,9 @@ namespace EnterpriseDB.EDBClient
             if ((_behavior & CommandBehavior.SingleResult) != 0 && CurrentDescription != null)
             {
                 CleanUp(false);
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             EDBRowDescription rd = _pendingDescription;
             while (rd == null)
@@ -1181,13 +1235,19 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (objNext is EDBRow)
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     (objNext as EDBRow).Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 rd = objNext as EDBRowDescription;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             }
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _pendingDescription = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             // If there were records affected before,  keep track of their values.
                         if (_recordsAffected != null)
@@ -1198,7 +1258,9 @@ namespace EnterpriseDB.EDBClient
             _nextRecordsAffected = null;
             _lastInsertOID = _nextInsertOID;
             _nextInsertOID = null;
+#pragma warning disable CS8603 // Possible null reference return.
             return rd;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         private EDBRow CurrentRow
@@ -1218,61 +1280,87 @@ namespace EnterpriseDB.EDBClient
         {
             if (_pendingDescription != null)
             {
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             if (((_behavior & CommandBehavior.SingleRow) != 0 && CurrentRow != null && _pendingDescription == null) ||
                 ((_behavior & CommandBehavior.SchemaOnly) != 0))
             {
                 if (!clearPending)
                 {
+#pragma warning disable CS8603 // Possible null reference return.
                     return null;
+#pragma warning restore CS8603 // Possible null reference return.
                 }
                 //We should only have one row, and we've already had it. Move to end
                 //of recordset.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 CurrentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8601 // Possible null reference assignment.
                 for (object skip = GetNextResponseObject();
                      skip != null && (_pendingDescription = skip as EDBRowDescription) == null;
                      skip = GetNextResponseObject())
                 {
                     if (skip is EDBRow)
                     {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                         (skip as EDBRow).Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     }
                 }
+#pragma warning restore CS8601 // Possible null reference assignment.
 
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             if (_pendingRow != null)
             {
                 EDBRow ret = _pendingRow;
                 if (clearPending)
                 {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     _pendingRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
                 if (!_hasRows)
                 {
                     // when rows are found, store that this result has rows.
                     _hasRows = (ret != null);
                 }
+#pragma warning disable CS8603 // Possible null reference return.
                 return ret;
+#pragma warning restore CS8603 // Possible null reference return.
             }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             CurrentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             object objNext = GetNextResponseObject();
             if (clearPending)
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _pendingRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
             if (objNext is EDBRowDescription)
             {
+#pragma warning disable CS8601 // Possible null reference assignment.
                 _pendingDescription = objNext as EDBRowDescription;
+#pragma warning restore CS8601 // Possible null reference assignment.
+#pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             if (!_hasRows)
             {
                 // when rows are found, store that this result has rows.
                 _hasRows = objNext is EDBRow;
             }
+#pragma warning disable CS8603 // Possible null reference return.
             return objNext as EDBRow;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         internal override void CheckHaveRow()
@@ -1344,7 +1432,9 @@ namespace EnterpriseDB.EDBClient
                 }
                 while (GetNextResponseObject(true) != null);
             }
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _connector.CurrentReader = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             _threadBlock.Dispose();
         }
 
@@ -1383,8 +1473,12 @@ namespace EnterpriseDB.EDBClient
         {
             try
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 CurrentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _currentResultsetSchema = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 _hasRows = false; // set to false and let the reading code determine if the set has rows.
                 return (_currentDescription = GetNextRowDescription()) != null;
             }
@@ -1532,7 +1626,11 @@ namespace EnterpriseDB.EDBClient
         private int _lastRecordsAffected;
         private bool _hasRows;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public CachingDataReader(ForwardsOnlyDataReader reader, CommandBehavior behavior)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             : base(reader._command, behavior)
         {
             do
@@ -1670,7 +1768,9 @@ namespace EnterpriseDB.EDBClient
         {
             if (_results.Count == 0)
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _currentResult = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 // clear HasRows after moving past the end of the results.
                 _hasRows = false;
                 return false;
@@ -1686,7 +1786,9 @@ namespace EnterpriseDB.EDBClient
         {
             if (_currentResult.Count == 0)
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _currentRow = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 return false;
             }
             _currentRow = _currentResult.Dequeue();

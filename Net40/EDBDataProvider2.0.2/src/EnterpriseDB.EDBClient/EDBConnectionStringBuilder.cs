@@ -83,6 +83,7 @@ namespace EnterpriseDB.EDBClient
         private sealed class EDBConnectionStringDisplayNameAttribute : DisplayNameAttribute {
             public EDBConnectionStringDisplayNameAttribute(string resourceName)
                 : base(resourceName) {
+#pragma warning disable CS0168 // Variable is declared but never used
                 try {
                     string value = resman.GetString(resourceName);
                     if (value != null)
@@ -90,12 +91,14 @@ namespace EnterpriseDB.EDBClient
                 }
                 catch (Exception e) {
                 }
+#pragma warning restore CS0168 // Variable is declared but never used
             }
         }
 
         private sealed class EDBConnectionStringDescriptionAttribute : DescriptionAttribute {
             public EDBConnectionStringDescriptionAttribute(string resourceName)
                 : base(resourceName) {
+#pragma warning disable CS0168 // Variable is declared but never used
                 try {
                     string value = resman.GetString(resourceName);
                     if (value != null)
@@ -103,6 +106,7 @@ namespace EnterpriseDB.EDBClient
                 }
                 catch (Exception e) {
                 }
+#pragma warning restore CS0168 // Variable is declared but never used
             }
         }
 
@@ -132,7 +136,9 @@ namespace EnterpriseDB.EDBClient
             /// <param name="t"></param>
             /// <param name="storeInBase"></param>
             /// <param name="nativeToString"></param>
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             internal ValueDescription(Type t, bool storeInBase = true, ValueNativeToString nativeToString = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             {
                 ImplicitDefault = GetImplicitDefault(t);
                 ExplicitDefault = ImplicitDefault;
@@ -148,7 +154,9 @@ namespace EnterpriseDB.EDBClient
             /// <param name="explicitDefault"></param>
             /// <param name="storeInBase"></param>
             /// <param name="nativeToString"></param>
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             internal ValueDescription(IComparable explicitDefault, bool storeInBase = true, ValueNativeToString nativeToString = null)
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             {
                 ImplicitDefault = GetImplicitDefault(explicitDefault.GetType());
                 ExplicitDefault = explicitDefault;
@@ -171,7 +179,9 @@ namespace EnterpriseDB.EDBClient
 
             internal string ConvertNativeToString(object value)
             {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 string asString = value as string;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
                 if (asString != null)
                 {
@@ -235,13 +245,39 @@ namespace EnterpriseDB.EDBClient
             valueDescriptions.Add(Keywords.AlwaysPrepare, new ValueDescription(typeof(bool)));
         }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBConnectionStringBuilder()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _password = new PasswordBytes();
             this.Clear();
         }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBConnectionStringBuilder(string connectionString)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             _password = new PasswordBytes();
             this.originalConnectionString = connectionString;
@@ -314,7 +350,9 @@ namespace EnterpriseDB.EDBClient
 
         private static Boolean ToBoolean(object value)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string text = value as string;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             if (text != null)
             {
@@ -342,7 +380,9 @@ namespace EnterpriseDB.EDBClient
 
         private Boolean ToIntegratedSecurity(object value)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string text = value as string;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             if (text != null)
             {
                 switch (text.ToLowerInvariant())
@@ -425,7 +465,9 @@ namespace EnterpriseDB.EDBClient
 
     #region Integrated security
         class CachedUpn {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public string Upn;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public DateTime ExpiryTimeUtc;
         }
 
@@ -441,8 +483,12 @@ namespace EnterpriseDB.EDBClient
 
             // Gets the current user's username for integrated security purposes
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             CachedUpn cachedUpn = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string upn = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             // Check to see if we already have this UPN cached
             lock (cachedUpns)
@@ -1068,7 +1114,9 @@ namespace EnterpriseDB.EDBClient
                 return true;
             }
             catch (ArgumentException) {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 value = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 return false;
             }
         }
@@ -1094,7 +1142,9 @@ namespace EnterpriseDB.EDBClient
             if (value == null)
             {
                 Remove(keyword);
+#pragma warning disable CS8603 // Possible null reference return.
                 return value;
+#pragma warning restore CS8603 // Possible null reference return.
             }
 
             value = SetValue(key, value);
@@ -1141,8 +1191,12 @@ namespace EnterpriseDB.EDBClient
                     case Keywords.UserName:
                         return this._username = Convert.ToString(value);
                     case Keywords.Password:
+#pragma warning disable CS8601 // Possible null reference assignment.
                         this._password.Password = value as string;
+#pragma warning restore CS8601 // Possible null reference assignment.
+#pragma warning disable CS8603 // Possible null reference return.
                         return value as string;
+#pragma warning restore CS8603 // Possible null reference return.
                     case Keywords.SSL:
                         return this._ssl = ToBoolean(value);
                     case Keywords.SslMode:
@@ -1232,7 +1286,9 @@ namespace EnterpriseDB.EDBClient
                 throw;
             }
 
+#pragma warning disable CS8603 // Possible null reference return.
             return null;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         /// <summary>
@@ -1299,7 +1355,9 @@ namespace EnterpriseDB.EDBClient
                 case Keywords.AlwaysPrepare:
                     return this._always_prepare;
                 default:
+#pragma warning disable CS8603 // Possible null reference return.
                     return null;
+#pragma warning restore CS8603 // Possible null reference return.
 
             }
         }

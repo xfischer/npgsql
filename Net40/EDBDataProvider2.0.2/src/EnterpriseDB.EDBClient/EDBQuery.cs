@@ -35,8 +35,12 @@ namespace EnterpriseDB.EDBClient
     /// </summary>
     internal sealed class EDBQuery : ClientMessage
     {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] commandBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private string commandText = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private readonly byte[] pgCommandBytes;
 
         public static readonly EDBQuery BeginTransRepeatableRead = new EDBQuery("BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;");
@@ -99,7 +103,9 @@ namespace EnterpriseDB.EDBClient
                 if (commandText == null)
                 {
                     commandText = BackendEncoding.UTF8Encoding.GetString(commandBytes);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                     commandBytes = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 }
 
                 PGUtil.LogStringWritten(commandText);

@@ -87,7 +87,11 @@ namespace EnterpriseDB.EDBClient
             private EDBBackendTypeInfo _typeInfo; // everything we know about this field type
             private Int16 _returingIndex;			   //Returning Index : EDB team
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public FieldData(Stream stream, EDBBackendTypeMapping typeMapping, bool IsCallable)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             {
 
                 if (IsCallable == true)
@@ -167,7 +171,7 @@ namespace EnterpriseDB.EDBClient
             public Int16 ReturningIndex
             {
                 get { return _returingIndex; }
-                protected set { _returingIndex = value; }
+                set { _returingIndex = value; }
             }
         }
 

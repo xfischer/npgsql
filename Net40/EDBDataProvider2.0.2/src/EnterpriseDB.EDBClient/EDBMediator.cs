@@ -50,21 +50,29 @@ namespace EnterpriseDB.EDBClient
         }
 
         // Stream for user to exchange COPY data
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private Stream _copyStream;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         // Size of data chunks read from user stream and written to server in COPY IN
         private int _copyBufferSize = 8192;
         // Very temporary holder of data received during COPY OUT
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private byte[] _receivedCopyData;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         // Last command sent.  This is saved for possible later use by EDBException if an error occurs.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private byte[] _sqlSent = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private SQLSentType _sqlSentType = SQLSentType.None;
         internal bool hasRefcursorType = false;
         internal bool _executingRefCursor = false;
    
         /*EnterpriseDB Team */
         private CommandType _type;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public EDBParameterCollection parameters;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private bool _isReader = true;
     
         // The current command timeout on the backend.  This is set via "SET statement_timeout = <milliseconds>".
@@ -151,7 +159,9 @@ namespace EnterpriseDB.EDBClient
             get
             {
                 byte[] result = _receivedCopyData;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 _receivedCopyData = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 return result;
             }
             set { _receivedCopyData = value; }

@@ -36,7 +36,9 @@ namespace EnterpriseDB.EDBClient
     internal sealed class EDBCopyInState : EDBState
     {
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBCopyFormat _copyFormat = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         public EDBCopyInState()
             : base()

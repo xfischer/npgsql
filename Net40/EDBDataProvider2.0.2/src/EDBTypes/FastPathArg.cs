@@ -61,7 +61,9 @@ namespace EDBTypes
         /// Constructs an argument that consists of an integer value.
         /// </summary>
         /// <param name="value">Int value to set.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public FastpathArg(Int32 value)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             type = true;
             this.value = value;
@@ -95,7 +97,9 @@ namespace EDBTypes
         /// Constructs an argument that consists of a String.
         /// </summary>
         /// <param name="s">String to store.</param>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public FastpathArg(String s)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             //this(s.ToCharArray());
         }

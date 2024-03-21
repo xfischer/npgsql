@@ -1599,7 +1599,17 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 TraceReceivedFirstResponse();
 
-                return reader;
+                if (CommandType == CommandType.StoredProcedure && (
+                        Parameters.HasOutputParameters
+                        || Parameters._hasReturnParam
+                        || connector._isScaler))//EnterpriseDB Team
+                {
+                    return new EDBInMemoryDataReader(this, reader);
+                }
+                else
+                {
+                    return reader;
+                }
             }
             else
             {

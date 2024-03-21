@@ -39,7 +39,9 @@ namespace EnterpriseDB.EDBClient
 
         //private readonly String CLASSNAME = MethodBase.GetCurrentMethod().DeclaringType.Name;
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBCopyFormat _copyFormat = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         private EDBCopyOutState()
             : base()
@@ -88,7 +90,9 @@ namespace EnterpriseDB.EDBClient
             {
                 if (obj is IDisposable)
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     (obj as IDisposable).Dispose();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 }
             }
             return context.Mediator.ReceivedCopyData;

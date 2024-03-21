@@ -64,7 +64,9 @@ namespace EnterpriseDB.EDBClient
         private Dictionary<string, int> lookupIgnoreCase;
         
         // EnterpriseDB Team
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         private EDBParameter return_param = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         private int return_index = -1;
       
 
@@ -77,7 +79,11 @@ namespace EnterpriseDB.EDBClient
         /// <summary>
         /// Initializes a new instance of the EDBParameterCollection class.
         /// </summary>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         internal EDBParameterCollection()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, CLASSNAME);
             InvalidateHashLookups();
@@ -89,8 +95,12 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         internal void InvalidateHashLookups()
         {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             lookup = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             lookupIgnoreCase = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         #region EDBParameterCollection Member
@@ -180,7 +190,9 @@ namespace EnterpriseDB.EDBClient
 
                 this.InternalList[index] = value;
                 value.Collection = this;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 oldValue.Collection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
         }
 
@@ -514,12 +526,16 @@ namespace EnterpriseDB.EDBClient
 
             CheckType(oValue);
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             EDBParameter value = oValue as EDBParameter;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             if (value.Collection != null)
             {
                 throw new InvalidOperationException("The parameter already belongs to a collection");
             }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
             value.Collection = this;
             this.InternalList.Insert(index, value);
@@ -551,7 +567,9 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "Remove", oValue);
             CheckType(oValue);
+#pragma warning disable CS8604 // Possible null reference argument.
             Remove(oValue as EDBParameter);
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
 
@@ -590,7 +608,9 @@ namespace EnterpriseDB.EDBClient
             }
             else
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 parameter = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
                 return false;
             }
@@ -605,13 +625,17 @@ namespace EnterpriseDB.EDBClient
             foreach(EDBParameter toRemove in this.InternalList)
             {
                 // clean up the parameter so it can be added to another command if required.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 toRemove.Collection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             }
             
             /* clear return parameter */
             if (this.ReturnParam != null)
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 this.return_param = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 this.return_index = -1;
             }
             this.InternalList.Clear();
@@ -698,7 +722,9 @@ namespace EnterpriseDB.EDBClient
         {
             EDBEventLog.LogMethodEnter(LogLevel.Debug, CLASSNAME, "CopyTo", array, index);
             (InternalList as ICollection).CopyTo(array, index);
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             IRaiseItemChangedEvents x = InternalList as IRaiseItemChangedEvents;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
 
         /// <summary>
@@ -880,7 +906,9 @@ namespace EnterpriseDB.EDBClient
             }
             if(InternalList.Remove(item))
             {
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
                 item.Collection = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 this.InvalidateHashLookups();
                 return true;
             }

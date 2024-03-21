@@ -1,0 +1,29 @@
+\documentclass{standalone}
+\usepackage{bytefield}
+\usepackage{xcolor}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 network.pdf -quality 90 file.png
+
+\begin{document}
+\definecolor{lightcyan}{rgb}{0.84,1,1}
+\definecolor{lightgreen}{rgb}{0.64,1,0.71}
+\definecolor{lightred}{rgb}{1,0.7,0.71}
+\begin{bytefield}[bitwidth=1.1em]{32}
+    \bitheader{0-31} \\
+    \begin{rightwordgroup}{RTP \\ Header}
+    \bitbox{2}{V=2} & \bitbox{1}{P} & \bitbox{1}{X}
+    & \bitbox{4}{CC} & \bitbox{1}{M} & \bitbox{7}{PT}
+    & \bitbox{16}{sequence number} \\
+    \bitbox{32}{timestamp}
+    \end{rightwordgroup} \\
+    \bitbox{32}[bgcolor=lightgreen]{synchronization source (SSRC) identifier} \\
+    \wordbox[tlr]{1}{contributing source (CSRC) identifiers} \\
+    \wordbox[blr]{1}{$\cdots$} \\
+    \begin{rightwordgroup}{RTP \\ Payload}
+    \wordbox[tlr]{3}{MPEG-4 Visual stream (byte aligned)} \\
+    \bitbox[blr]{16}{}
+    & \bitbox{16}{\dots\emph{optional} RTP padding}
+    \end{rightwordgroup}
+\end{bytefield}
+\end{document}

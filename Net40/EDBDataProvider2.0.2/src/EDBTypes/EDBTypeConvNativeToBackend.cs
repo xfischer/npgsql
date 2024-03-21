@@ -560,7 +560,9 @@ namespace EDBTypes
         /// </summary>
         internal static byte[] ToPath(EDBNativeTypeInfo TypeInfo, Object NativeData, Boolean forExtendedQuery, NativeToBackendTypeConverterOptions options, bool arrayElement)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             StringBuilder B = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             try
             {
                 B = new StringBuilder();
@@ -574,7 +576,9 @@ namespace EDBTypes
             }
             finally
             {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 B = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             }
 

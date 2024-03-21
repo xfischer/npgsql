@@ -1,0 +1,58 @@
+\documentclass{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\usepackage{color}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 4_spl_inout_be_execute.pdf -quality 90 -background white -flatten 4_spl_inout_be_execute.png
+
+% EnterpriseDB : Packet datagram for full SPL call
+% current : step 4: Back end messages sent when executing SPL call
+% ie: SPL call sp_test(:param1 IN, param2 OUT)
+
+\begin{document}
+\definecolor{lightcyan}{rgb}{0.84,1,1}
+\definecolor{lightgreen}{rgb}{0.64,1,0.71}
+\definecolor{lightergreen}{rgb}{0.74,1,0.81}
+\definecolor{lightred}{rgb}{1,0.7,0.71}
+\definecolor{edborange}{rgb}{1,0.243,0}
+\definecolor{lightgray}{gray}{0.8}
+\definecolor{white}{gray}{1}
+\begin{bytefield}[bitheight=8ex]{32}
+ % \newline \\ \bitheader{0-31} \\
+ 
+    \begin{leftwordgroup}{Message code identifier}
+        \bitbox{1}[bgcolor=lightcyan]{2}
+        \bitbox{31}[bgcolor=white]{}
+    \end{leftwordgroup} \\
+
+    \\
+
+    \begin{leftwordgroup}{EDB specific \\ message code identifier}
+        \bitbox{1}[bgcolor=edborange]{2}
+        \bitbox{31}[bgcolor=white]{}
+    \end{leftwordgroup} \\
+    
+    \\
+
+    \begin{leftwordgroup}{Message length}
+        \bitbox{4}[bgcolor=lightgreen]{length}
+        \bitbox{28}[bgcolor=white]{}
+    \end{leftwordgroup} \\
+    
+    \\
+
+    \begin{leftwordgroup}{[...] means size is not fixed \\ and could be longer \\ \small (null terminated string)}
+        \wordbox{1}{query text [...]}
+    \end{leftwordgroup} \\
+
+    \\
+
+    \begin{leftwordgroup}{Gray parts are not part of the \\  message, added for clarity}
+        \wordbox{1}[bgcolor=lightgray]{}
+    \end{leftwordgroup} \\
+
+    \end{bytefield}
+    
+    
+\end{document}
