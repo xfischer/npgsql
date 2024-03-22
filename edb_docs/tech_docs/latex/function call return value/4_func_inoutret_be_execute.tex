@@ -31,13 +31,34 @@
 
     \\
 
-    \begin{rightwordgroup}{NoData}
+    \begin{rightwordgroup}{\underline{\small if no return value} \\ NoData}
         \bitbox{1}[bgcolor=lightcyan]{n} &
         \bitbox{4}[bgcolor=lightgreen]{length}
         \bitbox{27}[bgcolor=lightgray]{}
     \end{rightwordgroup} \\
 
     \\
+
+    \begin{rightwordgroup}{\underline{\small if return value} \\ RowDescription}
+        \bitbox{1}[bgcolor=lightcyan]{T} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{2}{\tiny field \\ \tiny count \\ \small = 1} &        
+        \bitbox{25}[bgcolor=lightgray]{} 
+    
+        \\
+
+        \begin{leftwordgroup}{describes \\ return value row}
+            \bitbox{18}{column name [...] = function name}
+            \bitbox{2}{\rotatebox{90}{\small index}} & 
+            \bitbox{4}{\rotatebox{90}{\small oid}} &
+            \bitbox{2}{\rotatebox{90}{\small length}} & 
+            \bitbox{4}{\rotatebox{90}{\parbox{1cm}{\tiny type \\ modifier}}} &
+            \bitbox{2}{\rotatebox{90}{\small format}}
+        \end{leftwordgroup}
+    \end{rightwordgroup} \\
+
+    \\
+
     \begin{rightwordgroup}{DescribeOut}
         \bitbox{1}[bgcolor=edborange]{u} &
         \bitbox{4}[bgcolor=lightgreen]{length} &
@@ -54,6 +75,25 @@
             \bitbox{4}{\small type modifier} &
             \bitbox{2}{\rotatebox{90}{\tiny format}} &        
             \bitbox{18}[bgcolor=lightgray]{} 
+        \end{leftwordgroup}     
+    \end{rightwordgroup} \\
+
+    \\
+    \begin{rightwordgroup}{\underline{\small if return value} \\ DataRow}
+        \bitbox{1}[bgcolor=lightcyan]{D} &
+        \bitbox{4}[bgcolor=lightgreen]{length}
+        \bitbox{2}{\tiny field count}
+        \bitbox{25}[bgcolor=lightgray]{}
+
+        \\ 
+
+        \begin{leftwordgroup}{
+            for each field 
+            \\ \it{- only 1 for a return value}
+            \\ \it{- if = -1, no data sent}
+            }
+            \bitbox{4}[bgcolor=lightergreen]{\tiny length} & 
+            \bitbox{28}{data [...]} 
         \end{leftwordgroup}     
     \end{rightwordgroup} \\
 
