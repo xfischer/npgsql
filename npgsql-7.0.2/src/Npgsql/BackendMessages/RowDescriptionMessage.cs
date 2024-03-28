@@ -41,7 +41,7 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
         if (source._insensitiveIndex?.Count > 0)
             _insensitiveIndex = new Dictionary<string, int>(source._insensitiveIndex);
     }
-
+        
     internal RowDescriptionMessage Load(EDBReadBuffer buf, TypeMapper typeMapper, bool isOutDescription /* EnterpriseDB Team */)
     {
         Array.Clear(_fields, 0, _fields.Length); /* EnterpriseDB Team */
@@ -122,30 +122,23 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
     }
 
     /* EnterpriseDB Team */
-    public void AddReturnData(FieldDescription fd, int count)
+    public void AppendReturnData(FieldDescription fd)
     {
+        if (_nameIndex.ContainsKey(fd.Name))
+            return;
 
-        var fdData = new FieldDescription[count];
-        fdData[count - 1] = fd;
-        _nameIndex.Clear();
-        _nameIndex.Add(fd.Name, count - 1);
-#pragma warning disable CS8602
-
-        for (var i = 0; i < count - 1; i++)
+        if (_fields.Length < Count + 1)
         {
-            fdData[i] = _fields[i] ??= new();
-            if (!_nameIndex.ContainsKey(_fields[i].Name))
-                _nameIndex.Add(_fields[i].Name, i);
+            var oldFields = _fields;
+            _fields = new FieldDescription[Count + 1];
+            Array.Copy(oldFields, _fields, oldFields.Length);
         }
-        _fields = new FieldDescription[count];
-        Count = fdData.Length;
-#pragma warning restore CS8602
+        _fields[Count] = fd;
+        _nameIndex.Add(fd.Name, Count);
 
-
-        for (var i = 0; i < fdData.Length; i++)
-            _fields[i] = (fdData[i]);
-        //  Fields =(FieldDescription) fdData;
+        Count++;
     }
+
     internal static RowDescriptionMessage CreateForReplication(
         TypeMapper typeMapper, uint tableOID, FormatCode formatCode, IReadOnlyList<RelationMessage.Column> columns)
     {
@@ -159,13 +152,13 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
 
             field.Populate(
                 typeMapper,
-                name:                  column.ColumnName,
-                tableOID:              tableOID,
+                name: column.ColumnName,
+                tableOID: tableOID,
                 columnAttributeNumber: checked((short)i),
-                oid:                   column.DataTypeId,
-                typeSize:              0, // TODO: Confirm we don't have this in replication
-                typeModifier:          column.TypeModifier,
-                formatCode:            formatCode
+                oid: column.DataTypeId,
+                typeSize: 0, // TODO: Confirm we don't have this in replication
+                typeModifier: column.TypeModifier,
+                formatCode: formatCode
             );
 
             if (!msg._nameIndex.ContainsKey(field.Name))
@@ -231,7 +224,7 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
         public static readonly InsensitiveComparer Instance = new();
         static readonly CompareInfo CompareInfo = CultureInfo.InvariantCulture.CompareInfo;
 
-        InsensitiveComparer() {}
+        InsensitiveComparer() { }
 
         // We should really have CompareOptions.IgnoreKanaType here, but see
         // https://github.com/dotnet/corefx/issues/12518#issuecomment-389658716
@@ -264,7 +257,7 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
         }
 
         public void Reset() => _pos = -1;
-        public void Dispose() {}
+        public void Dispose() { }
     }
 }
 
@@ -275,10 +268,10 @@ sealed class RowDescriptionMessage : IBackendMessage, IReadOnlyList<FieldDescrip
 public sealed class FieldDescription
 {
 #pragma warning disable CS8618  // Lazy-initialized type
-    internal FieldDescription() {}
+    internal FieldDescription() { }
 
     internal FieldDescription(uint oid)
-        : this("?", 0, 0, oid, 0, 0, FormatCode.Binary) {}
+        : this("?", 0, 0, oid, 0, 0, FormatCode.Binary) { }
 
     internal FieldDescription(
         string name, uint tableOID, short columnAttributeNumber,
@@ -356,7 +349,7 @@ public sealed class FieldDescription
     internal short ReturningIndex { get; set; }
 
     // EnterpriseDB Team
-	///<summary>
+    ///<summary>
     /// is unsupported field 
     /// </summary>
     /// 
@@ -424,7 +417,7 @@ public sealed class FieldDescription
 
     internal FieldDescription Clone()
     {
-        var field =  new FieldDescription(this);
+        var field = new FieldDescription(this);
         field.ResolveHandler();
         return field;
     }

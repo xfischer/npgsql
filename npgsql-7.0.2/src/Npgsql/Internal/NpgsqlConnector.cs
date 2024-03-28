@@ -336,7 +336,6 @@ public sealed partial class EDBConnector : IDisposable
     readonly ParameterDescriptionMessage _parameterDescriptionMessage = new();
     readonly DataRowMessage _dataRowMessage = new();
     readonly RowDescriptionMessage _rowDescriptionMessage = new();
-    readonly DataRowMessage _outParamDataRowMessage = new(); // EnterpriseDB Team
 
     // Since COPY is rarely used, allocate these lazily
     CopyInResponseMessage? _copyInResponseMessage;
@@ -1548,9 +1547,10 @@ public sealed partial class EDBConnector : IDisposable
             if (CurrentReader != null)
             {
                 CurrentReader.ProcessEDBDataRowMessage(buf, false);
-                _outParamDataRowMessage.Load(len);
-                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", _outParamDataRowMessage)}");
-                return _outParamDataRowMessage;
+                var outParamDataRowMessage = new DataRowMessage();
+                outParamDataRowMessage.Load(len);
+                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", outParamDataRowMessage)}");
+                return outParamDataRowMessage;
             }
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             return _commandCompleteMessage.Load(buf, len);

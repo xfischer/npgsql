@@ -11,3 +11,10 @@ The EDB .NET Connector distributed with EDB Postgres Advanced Server provides co
 - Update information stored on an EDB Postgres Advanced Server database.
 
 The EDB .NET Connector functionality is built on the core functionality of the Npgsql open source project. For details, see the [Npgsql User Guide](http://www.npgsql.org/doc/index.html).
+
+## Contributing
+
+Rules :
+
+- Every EDB specific addition should be prefixed with `/* EnterpriseDB : <text> */` for several lines or `// EnterpriseDB`
+- EDB additions should be documented (who / why / how)

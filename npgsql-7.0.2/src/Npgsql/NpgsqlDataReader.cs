@@ -38,12 +38,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     internal EDBConnector Connector { get; }
     EDBConnection? _connection;
     /* Enterprisedb Team */
-    internal IBackendMessage? pendingmsg;
-    internal bool _isReturnRow = true;
     internal bool isOutParamReceived;
-    internal int _InternalreadPosition;
-    internal int _InternalActaullReadPosition;
-    RowDescriptionMessage? _callable_descrition;
 
     /// <summary>
     /// The behavior of the command with which this reader was executed.
@@ -59,7 +54,6 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     internal ReaderState State = ReaderState.Disposed;
 
     internal EDBReadBuffer Buffer = default!;
-    internal EDBReadBuffer? RetRowBuffer;//Enterprisedb Team
 
     /// <summary>
     /// Holds the list of statements being executed by this reader.
@@ -81,7 +75,6 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Used only in non-sequential mode.
     /// </summary>
     internal List<(int Offset, int Length)> _columns = new();
-    internal List<(int Offset, int Length)> _retColumns = new List<(int Offset, int Length)>(); //EnterpriseDB Team
 
     /// <summary>
     /// The index of the column that we're on, i.e. that has already been parsed, is
@@ -588,8 +581,6 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                     return true;
                 case BackendMessageCode.DataRow:
-                    pendingmsg = msg;
-                    break;
                 case BackendMessageCode.CommandComplete:
                     break;
                 default:
@@ -735,6 +726,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var retDataFetched = false;
         var done = false;
         isOutParamReceived = false;
+        RowDescriptionMessage? _callable_description = default!;
         // Temporarily set our state to InResult to allow us to read the values
         State = ReaderState.InResult;
 
@@ -757,18 +749,12 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                         if (Command.Parameters._hasReturnParam && retDataFetched != true)
                         {
-                            //_tempDataRow = (DataRowNonSequentialMessage)msg;
-                            _isReturnRow = false;
                             retDataFetched = true;
                             paramdata = false;
-                            //ConsumeRow(false);
                             continue;
                         }
                         else
                         {
-                            //_outRow = (DataRowNonSequentialMessage)msg;
-                            //_row = _outRow; // _tempDataRow; ZK 
-
                             if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
                             {
                                 done = false;
@@ -783,8 +769,6 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                     else
                     {
-                        //_row = (DataRowNonSequentialMessage)msg;
-                        _isReturnRow = false;
                         done = true;
                         break;
                     }
@@ -800,24 +784,15 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.RowDescription:
                     if (Command.Parameters.Any(p => p.IsOutputDirection))
                     {
-                        _callable_descrition = (RowDescriptionMessage)msg;
+                        _callable_description = (RowDescriptionMessage)msg;
                     }
                     else
                     {
 #pragma warning disable CS8601 // Possible null reference assignment.
-                        _callable_descrition = RowDescription;
+                        _callable_description = RowDescription;
 #pragma warning restore CS8601 // Possible null reference assignment.
                     }
                     continue;
-
-
-
-                //        var description = (RowDescriptionMessage)msg;
-                //   FixupRowDescription(description, _queryIndex == 0);
-                // _queries[_queryIndex].Description = description;
-                //   if ((behavior & CommandBehavior.SchemaOnly) != 0) {
-                //       _queryIndex++;
-                //}
 
                 case BackendMessageCode.BindComplete:
                 case BackendMessageCode.ParameterDescription:
@@ -825,7 +800,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     if (!Command.Parameters.Any(p => p.IsOutputDirection))
                     {
 #pragma warning disable CS8601 // Possible null reference assignment.
-                        _callable_descrition = RowDescription;
+                        _callable_description = RowDescription;
 #pragma warning restore CS8601 // Possible null reference assignment.
                     }
                     continue;
@@ -833,25 +808,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 default:
                     throw new ArgumentOutOfRangeException("Unexpected message type while populating output parameter: " + msg.Code);
                 }
-        }
-        var tmp = new byte[8500];
-        if (Command.CommandType == CommandType.StoredProcedure)
-        {
-            RowDescription = _callable_descrition;
-            if (Command.Parameters._hasReturnParam)
-            {
-                Array.Copy(Buffer.Buffer, tmp, Buffer.Buffer.Length);
-                Command.Parameters.Insert(Command.Parameters.ReturnIndex, Command.Parameters.ReturnParam);
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                RowDescription.AddReturnData((FieldDescription)_callable_descrition[0], Command.Parameters.getOutAndReturnParamCount());
-                Add(RetRowBuffer); // ZK
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-            }
-        }
-
-
-
-
+        }        
 
         if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt 
         {
@@ -882,13 +839,25 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             State = ReaderState.BeforeResult;  // Set the state back
         }
 
-        else
+        else if (Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam)
         {
+            // EnterpriseDB : we now need to fill the out parameter values from _callable_description (RowDescription of OutTuples)
+            // RowDescription contains nothing OR return value at this stage
+            // We need to set the internal RowDescription to _callable_description
+            if (Command.Parameters.HasReturnParam)
+            {
+                Debug.Assert(RowDescription != null);
+                Debug.Assert(RowDescription.Count <= 1, "Row description should contain 0 or 1 return value, not more");
+                _callable_description.AppendReturnData(RowDescription.FirstOrDefault());
+                Command.Parameters.InternalList.Add(Command.Parameters.ReturnParam);
+            }
+            RowDescription = _callable_description;
+            
 
             var pending = new Queue<EDBParameter>();
             var taken = new List<int>();
 
-            foreach (var p in Command.Parameters.Where(p => p.IsOutReturnDirection))
+            foreach (var p in Command.Parameters.Where(p => p.IsOutputDirection))
             {
                 int idx;
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -905,7 +874,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 }
             }
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-            for (var i = 0; pending.Count != 0 && i != RowDescription._fields.Length; ++i)
+            for (var i = 0; pending.Count != 0; ++i)
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             {
                 if (!taken.Contains(i))
@@ -915,141 +884,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     //   Console.WriteLine((string)pending.Dequeue().Value.ToString());
                 }
             }
-
-            if (Command.Parameters._hasReturnParam)
-            {
-                Buffer.Buffer = tmp;
-                Buffer.Seek(_InternalActaullReadPosition, SeekOrigin.Begin);
-                var msg = await Connector.ReadMessage(async);
-                State = ReaderState.Consumed;
-                //     if (msg.Code == BackendMessageCode.CompletedResponse )
-                {
-                    //       _state = ReaderState.Consumed;
-
-                }
-            }
-
-
-
         }
-
-    }
-    /* EnterpriseDB Team */
-    internal void Add(EDBReadBuffer? retRowBuf)
-
-    {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-
-        _InternalActaullReadPosition = Buffer.ReadPosition;
-        //   ReadBuffer buf_new = new ReadBuffer(Buffer.Connector, Buffer.Connector.Connection. + 100, Buffer.TextEncoding);
-        var rd = new EDBReadBuffer(Buffer.Connector, Buffer.Underlying, null, 4096, Buffer.TextEncoding, Buffer.RelaxedTextEncoding);
-        var wt = new EDBWriteBuffer(Buffer.Connector, Buffer.Underlying, null, 4096, Buffer.TextEncoding);
-
-        var buf_new_length = Buffer.Size;// retRow.Buffer.Size - sizeof(Int16);
-
-        //TODO     retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
-
-        retRowBuf.Seek(_InternalreadPosition, SeekOrigin.Begin);
-
-        // ISSUE 1 - Starting Position = Buffer.Seek(0, SeekOrigin.Begin);
-
-        var RetRowNumColumns = (int)retRowBuf.ReadInt16();
-        var OutParamNumColumns = (int)_columns.Count;
-        var TotalNumColumns = OutParamNumColumns + RetRowNumColumns;
-        //NumColumns = TotalNumColumns;
-
-        wt.WriteInt16(TotalNumColumns);
-
-        // Get length of the buffer retRow
-        _column = -1;
-        ColumnLen = -1;
-        PosInColumn = 0;
-
-        // TODO: Recycle message objects rather than recreating for each row
-        //_columnOffsets = new List<int>(TotalNumColumns);
-        var AllColumnOffsets = new List<(int Offset, int Length)>();//EnterpriseDB Team
-
-        for (var i = 0; i < OutParamNumColumns; i++)
-        {
-
-            var wp = wt.WritePosition;
-            Buffer.Seek(_columns[i].Offset, SeekOrigin.Begin);
-            var len = Buffer.ReadInt32();
-            wt.WriteInt32(len);
-            AllColumnOffsets.Add((wp, len));
-            if (len != -1)
-            {
-                var output_data = new byte[len + 1];
-
-                Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
-            }
-        }
-
-        for (var i = 0; i < RetRowNumColumns; i++)
-        {
-            var wp = wt.WritePosition;
-            retRowBuf.Seek(_retColumns[i].Offset, SeekOrigin.Begin);
-            var len = retRowBuf.ReadInt32();
-            AllColumnOffsets.Add((wp, len));
-            wt.WriteInt32(len);
-
-            if (len != -1)
-            {
-                var output_data = new byte[len + 1];
-
-                retRowBuf.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                wt.WriteBytes(output_data, (int)SeekOrigin.Current, len);
-            }
-        }
-
-        //_endOffset = wt.WritePosition;
-        //TODO   buf_new.SetFilledBytes = _endOffset;
-
-        Buffer.Buffer = wt.Buffer;
-
-        _columns = AllColumnOffsets;
-
-        // Both buffers start at 108 bytes
-        // We need to preserve _columnOffsets for outparams
-
-        /*
-                    retRow.Buffer.Seek(retRow._InternalreadPosition, SeekOrigin.Begin);
-
-                    EDBBuffer buf_new = new EDBBuffer(Buffer.Underlying, Buffer.Size + 100, Buffer.TextEncoding);
-                    int buf_new_length = Buffer.Size + 100;// retRow.Buffer.Size - sizeof(Int16);
-
-                    int TotalNumColumns = NumColumns + 1;  // add 1 ret param
-                    //  buf_new = buf_new.EnsureOrAllocateTemp(buf_new_length);
-                    NumColumns = NumColumns + 1;
-
-                    Column = -1;
-                    ColumnLen = -1;
-                    PosInColumn = 0;
-                    // TODO: Recycle message objects rather than recreating for each row
-                    _columnOffsets = new List<int>(TotalNumColumns);
-                    for (var i = 0; i < 1 ; i++)
-                    {
-                        int tmpColumn = retRow.Buffer.ReadInt16();
-                        _columnOffsets.Add(retRow.Buffer.ReadPosition);
-                        var len = retRow.Buffer.ReadInt32();
-                        Buffer.WriteInt32(len);
-
-                        if (len != -1)
-                        {
-                            byte[] output_data = new byte[len+1];
-
-                            retRow.Buffer.ReadBytes(output_data, (int)SeekOrigin.Current, len);
-                            Buffer.WriteBytes(output_data, (int)SeekOrigin.Current, len);
-                        }
-                    }
-                //    Buffer = buf_new;
-        */
-
-
-
-        //check return this;
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
     }
 
@@ -1276,11 +1111,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         if (Command.CommandType == CommandType.StoredProcedure)
         {
-            if (isReturnRow)
-            {
-                _InternalreadPosition = buf.ReadPosition;//EnterpriseDB Team
-            }
-            else
+            if (!isReturnRow)
             {
                 isOutParamReceived = true;
             }
@@ -1288,8 +1119,25 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             var numColumns = buf.ReadInt16();
             if (isReturnRow)
             {
-                RetRowBuffer = buf;
-                _retColumns.Clear();
+                object result = null;
+                var len = buf.ReadInt32();
+                Debug.Assert(RowDescription._fields.Length == 1);
+                var fieldDescription = RowDescription._fields[0];
+                if (fieldDescription._isUnsupportedField) // EnterpriseDB Team
+                {
+#nullable disable
+                    var _textHandler = new TextHandler(fieldDescription.PostgresType, Connector.TextEncoding);
+                    result = _textHandler.Read(buf, len, false, fieldDescription);
+                }
+                else
+                {   // // EnterpriseDB Team : community code
+                    result = _isSequential
+                    ? fieldDescription.Handler.ReadAsObject(buf, len, false, fieldDescription).GetAwaiter().GetResult()
+                    : fieldDescription.Handler.ReadAsObject(buf, len, fieldDescription);
+                }
+
+                Command.Parameters.ReturnParam.Value = result;
+                return;
             }
             else
             {
@@ -1305,19 +1153,16 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             {
                 var pos = buf.ReadPosition;
                 var len = buf.ReadInt32();
-                //_columns.Add(Buffer.ReadPosition, len);
 
-                if (isReturnRow)
-                    _retColumns.Add((pos, len));
-                else
+                if (!isReturnRow)
                     _columns.Add((pos, len));
+
                 if (len != -1)
                 {
 
                     buf.Seek(len, SeekOrigin.Current);
                 }
             }
-            // _endOffset = Buffer.ReadPosition;
         }
 
     }

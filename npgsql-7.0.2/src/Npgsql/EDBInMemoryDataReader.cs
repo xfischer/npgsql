@@ -39,7 +39,8 @@ public sealed class EDBInMemoryDataReader : EDBDataReader
     {
         sourceCommand = command;
         nestedReader = reader;
-        rowDescription = reader.RowDescription.Clone();
+        rowDescription = reader.RowDescription?.Clone();
+        
         paramsByName = new();
 
         parameters = BuildParameters(sourceCommand.Parameters.InternalList, rowDescription);

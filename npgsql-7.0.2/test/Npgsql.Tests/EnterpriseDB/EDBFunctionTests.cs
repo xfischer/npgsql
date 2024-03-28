@@ -246,21 +246,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             try
             {
                 //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
-                var command = new EDBCommand("public.mixArgFunc_test(:param1, :param2, :param3)", con);
+                var command = new EDBCommand("public.mixArgFunc_test(:paramInOut, :paramOut, :paramIn)", con);
 
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramInOut", EDBTypes.EDBDbType.Numeric, 10, "paramInOut", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramOut", EDBTypes.EDBDbType.Numeric, 10, "paramOut", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramIn", EDBTypes.EDBDbType.Numeric, 10, "paramIn", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramRetVal", EDBTypes.EDBDbType.Integer, 4, "paramRetVal", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
                 command.Prepare();
 
-                command.Parameters[0].Value = 10;
-                command.Parameters[1].Value = 15;
-                command.Parameters[2].Value = 25;
-
+                command.Parameters["paramInOut"].Value = 10;
+                command.Parameters["paramIn"].Value = 25;
 
                 EDBDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -269,10 +267,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     reader.GetValues(values);
                 }
 
-                Assert.AreEqual(20, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(25, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(25, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(24, command.Parameters[3].Value.ToString());
+                Assert.AreEqual(20, int.Parse(command.Parameters["paramInOut"].Value.ToString()));
+                Assert.AreEqual(25, int.Parse(command.Parameters["paramOut"].Value.ToString()));
+                Assert.AreEqual(24, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
             }
             catch (EDBException exp)
             {
