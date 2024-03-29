@@ -329,7 +329,6 @@ public sealed partial class EDBConnector
     readonly ParameterDescriptionMessage _parameterDescriptionMessage = new();
     readonly DataRowMessage _dataRowMessage = new();
     readonly RowDescriptionMessage _rowDescriptionMessage = new(connectorOwned: true);
-    readonly DataRowMessage _outParamDataRowMessage = new(); // EnterpriseDB Team
 
     // Since COPY is rarely used, allocate these lazily
     CopyInResponseMessage? _copyInResponseMessage;
@@ -1553,9 +1552,10 @@ public sealed partial class EDBConnector
             if (CurrentReader != null)
             {
                 CurrentReader.ProcessEDBDataRowMessage(buf, false);
-                _outParamDataRowMessage.Load(len);
-                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", _outParamDataRowMessage)}");
-                return _outParamDataRowMessage;
+                var outParamDataRowMessage = new DataRowMessage();
+                outParamDataRowMessage.Load(len);
+                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", outParamDataRowMessage)}");
+                return outParamDataRowMessage;
             }
             return _commandCompleteMessage.Load(buf, len);
         case BackendMessageCode.CommandComplete:

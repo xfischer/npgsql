@@ -476,8 +476,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         string[]? names = null;
         uint[]? types = null;
         char[]? modes = null;
-        bool? hasParams = false; //EnterpriseDB Team
-        string? paramNames = null; //EnterpriseDB Team
 
         using (var rdr = c.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.SingleResult))
         {
@@ -505,7 +503,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         for (var i = 0; i < types.Length; i++)
         {
             var param = new EDBParameter();
-            hasParams = true; //EnterpriseDB Team
 
             var postgresType = serializerOptions.DatabaseInfo.GetPostgresType(types[i]);
             var npgsqlDbType = postgresType.DataTypeName.ToEDBDbType();
@@ -1670,7 +1667,18 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 TraceReceivedFirstResponse();
 
-                return reader;
+                //EnterpriseDB Team
+                if (CommandType == CommandType.StoredProcedure && (
+                        Parameters.HasOutputParameters
+                        || Parameters._hasReturnParam
+                        || Parameters.IsScalar))
+                {
+                    return new EDBInMemoryDataReader(this, reader);
+                }
+                else
+                {
+                    return reader;
+                }
             }
             else
             {

@@ -131,29 +131,21 @@ sealed class RowDescriptionMessage : IBackendMessage
     }
 
     /* EnterpriseDB Team */
-    public void AddReturnData(FieldDescription fd, int count)
+    public void AppendReturnData(FieldDescription fd)
     {
+        if (_nameIndex.ContainsKey(fd.Name))
+            return;
 
-        var fdData = new FieldDescription[count];
-        fdData[count - 1] = fd;
-        _nameIndex.Clear();
-        _nameIndex.Add(fd.Name, count - 1);
-#pragma warning disable CS8602
-
-        for (var i = 0; i < count - 1; i++)
+        if (_fields.Length < Count + 1)
         {
-            fdData[i] = _fields[i] ??= new();
-            if (!_nameIndex.ContainsKey(_fields[i].Name))
-                _nameIndex.Add(_fields[i].Name, i);
+            var oldFields = _fields;
+            _fields = new FieldDescription[Count + 1];
+            Array.Copy(oldFields, _fields, oldFields.Length);
         }
-        _fields = new FieldDescription[count];
-        Count = fdData.Length;
-#pragma warning restore CS8602
+        _fields[Count] = fd;
+        _nameIndex.Add(fd.Name, Count);
 
-
-        for (var i = 0; i < fdData.Length; i++)
-            _fields[i] = (fdData[i]);
-        //  Fields =(FieldDescription) fdData;
+        Count++;
     }
 
     internal static RowDescriptionMessage CreateForReplication(

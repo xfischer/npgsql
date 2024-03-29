@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using Microsoft.Extensions.Logging;
 using EDBTypes;
-using System.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Threading;
 
@@ -25,7 +24,7 @@ static partial class LogMessages
     {
         if (logger is null || logger is NullLogger)
         {
-#if DEBUG
+#if EDB_DIAGNOSTICS
             Console.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
             Debug.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
 #endif

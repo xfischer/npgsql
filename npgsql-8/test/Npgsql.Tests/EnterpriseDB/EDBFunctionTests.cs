@@ -73,7 +73,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			com.CommandText = strSqlFuncThreeInArg;
 			com.ExecuteNonQuery();
 
-		}
+            //	Testing function with args mix and return value
+            var strSqlFuncMixArgsRetVal = """
+                CREATE OR REPLACE FUNCTION mixArgFunc_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                    RETURN int
+                AS
+                BEGIN
+                    b:=c;
+                    a:=a+a;
+                    return b-1;
+                END;
+                """;
+            com.CommandText = strSqlFuncMixArgsRetVal;
+            com.ExecuteNonQuery();
+
+        }
 
 		[TearDown] 
 		public void Dispose()
@@ -81,26 +95,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             // Following extra Close() open sequence will make sure pending transactions are rolled back.
             if (con.State != ConnectionState.Closed)
                 con.Close();
-            //con.Open();
-	    con = OpenConnection();
 
-            var com  = new EDBCommand("",con);
-			com.CommandType = CommandType.Text;
-			
-            com.CommandText = "DROP Function emptyfunction_test;";
-            //com.ExecuteNonQuery();
+            con = OpenConnection();
 
-            com.CommandText = "DROP Function functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
-            //com.ExecuteNonQuery();
+            var com = new EDBCommand("", con);
+            com.CommandType = CommandType.Text;
 
-        ////    com.CommandText = "DROP Function  varcharr( IN NUMERIC);";
-        //    //com.ExecuteNonQuery();
+            com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
+            com.ExecuteNonQuery();
 
-        //    com.CommandText = "DROP Function funcThreeInArg( IN NUMERIC,  IN NUMERIC,  IN NUMERIC)";
-        //    com.ExecuteNonQuery();
+            com.CommandText = "DROP Function IF EXISTS  functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
+            com.ExecuteNonQuery();
 
-			TestUtil.closeDB(con);
-		}
+            com.CommandText = "DROP Function IF EXISTS FunconeInArg_test(IN NUMERIC)";
+            com.ExecuteNonQuery();
+
+            com.CommandText = "DROP Function IF EXISTS funcThreeInArg(IN NUMERIC, IN NUMERIC, IN NUMERIC)";
+            com.ExecuteNonQuery();
+
+            com.CommandText = "DROP Function IF EXISTS mixArgFunc_test(INOUT NUMERIC, OUT NUMERIC, IN NUMERIC)";
+            com.ExecuteNonQuery();
+
+            TestUtil.closeDB(con);
+        }
 
         #endregion
 
@@ -220,6 +237,43 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 				Console.WriteLine(exp.Message); 
 			} 
 		}
+
+        [Test]
+        public void testmixArgRetValFunc()
+        {
+            try
+            {
+                var command = new EDBCommand("public.mixArgFunc_test(:paramInOut, :paramOut, :paramIn)", con);
+
+                command.CommandType = CommandType.StoredProcedure;
+
+                command.Parameters.Add(new EDBParameter("paramInOut", EDBTypes.EDBDbType.Numeric, 10, "paramInOut", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramOut", EDBTypes.EDBDbType.Numeric, 10, "paramOut", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramIn", EDBTypes.EDBDbType.Numeric, 10, "paramIn", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+                command.Parameters.Add(new EDBParameter("paramRetVal", EDBTypes.EDBDbType.Integer, 4, "paramRetVal", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                command.Prepare();
+
+                command.Parameters["paramInOut"].Value = 10;
+                command.Parameters["paramIn"].Value = 25;
+
+                EDBDataReader reader = command.ExecuteReader();
+                Assert.IsTrue(reader.HasRows);
+                while (reader.Read())
+                {
+                    object[] values = new object[reader.FieldCount];
+                    reader.GetValues(values);
+                }
+
+                Assert.AreEqual(20, int.Parse(command.Parameters["paramInOut"].Value.ToString()));
+                Assert.AreEqual(25, int.Parse(command.Parameters["paramOut"].Value.ToString()));
+                Assert.AreEqual(24, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+            }
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.Message);
+            }
+        }
 
         #region Numeric data type
 

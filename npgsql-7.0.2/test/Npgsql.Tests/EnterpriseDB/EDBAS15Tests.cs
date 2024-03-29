@@ -1,13 +1,7 @@
-using System;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
+using System;
 using System.Data;
-using System.Collections.Generic;
-using EnterpriseDB.EDBClient.Tests;
 using System.Threading;
-using System.Collections;
-using System.Reflection.PortableExecutable;
-using static System.Collections.Specialized.BitVector32;
 using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB

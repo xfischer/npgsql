@@ -2,7 +2,6 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
-using System.Reflection.PortableExecutable;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -240,12 +239,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			} 
 		}
 
-        [Test, /*Ignore("Investigate Prompt")*/]
+        [Test]
         public void testmixArgRetValFunc()
         {
             try
             {
-                //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
                 var command = new EDBCommand("public.mixArgFunc_test(:paramInOut, :paramOut, :paramIn)", con);
 
                 command.CommandType = CommandType.StoredProcedure;
@@ -261,6 +259,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.Parameters["paramIn"].Value = 25;
 
                 EDBDataReader reader = command.ExecuteReader();
+                Assert.IsTrue(reader.HasRows);
                 while (reader.Read())
                 {
                     object[] values = new object[reader.FieldCount];

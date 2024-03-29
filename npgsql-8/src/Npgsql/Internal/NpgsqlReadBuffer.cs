@@ -340,7 +340,7 @@ sealed partial class EDBReadBuffer : IDisposable
 
                                 if (async)
                                 {
-                                    await Task.Delay(TimeSpan.FromMilliseconds(delay), finalCt);
+                                    await Task.Delay(TimeSpan.FromMilliseconds(delay), finalCt).ConfigureAwait(false);
                                 }
                                 else
                                 {
