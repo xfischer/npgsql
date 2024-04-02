@@ -230,6 +230,63 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
+        [Test, /*Ignore("Investigate Prompt")*/]
+        public void testThreeInArg_SELECT()
+        {
+            using var con = OpenConnection();
+            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+            var command = new EDBCommand("SELECT * FROM public.funcThreeInArg(:param1, :param2, :param3)", con);
+
+            command.CommandType = CommandType.Text;
+
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+
+            command.Prepare();
+
+            command.Parameters[0].Value = 10;
+            command.Parameters[1].Value = 20;
+            command.Parameters[2].Value = 30;
+
+
+            EDBDataReader result = command.ExecuteReader();
+
+            Assert.IsTrue(result.Read());
+
+            Assert.AreEqual("EnterpriseDB", result[0].ToString());
+
+            Assert.IsFalse(result.Read());
+
+        }
+
+        [Test]
+        public void testThreeInArg_SELECT_Scalar()
+        {
+            using var con = OpenConnection();
+            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+            var command = new EDBCommand("SELECT * FROM public.funcThreeInArg(:param1, :param2, :param3)", con);
+
+            command.CommandType = CommandType.Text;
+
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+
+            command.Prepare();
+
+            command.Parameters[0].Value = 10;
+            command.Parameters[1].Value = 20;
+            command.Parameters[2].Value = 30;
+
+
+            var result = command.ExecuteScalar();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("EnterpriseDB", result.ToString());
+
+        }
+
         [Test]
         public void testmixArgRetValFunc()
         {
