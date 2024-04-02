@@ -134,61 +134,46 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void testfunctionsanity()
         {
-            try
-            {
-                using var con = OpenConnection();
-                var command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            using var con = OpenConnection();
+            var command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
-                command.Prepare();
+            command.Prepare();
 
-                command.Parameters[0].Value = 1;
-                command.Parameters[1].Value = null;
-                command.Parameters[2].Value = 3;
-                command.Parameters[3].Value = null;
+            command.Parameters[0].Value = 1;
+            command.Parameters[1].Value = null;
+            command.Parameters[2].Value = 3;
+            command.Parameters[3].Value = null;
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
-                Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
-
-            }
-            catch (EDBException exp)
-            {
-                Console.WriteLine(exp.Message);
-            }
+            Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
+            Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
         }
 
         /* To verify the sanity of functions without parameters*/
         [Test]//, Ignore("Investigate Prompt")]
         public void testemptyfunction()
         {
-            try
-            {
-                using var con = OpenConnection();
-                var command = new EDBCommand("public.emptyfunction_test", con);
-                command.CommandType = CommandType.StoredProcedure;
+            using var con = OpenConnection();
+            var command = new EDBCommand("public.emptyfunction_test", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
-                command.Prepare();
-                command.ExecuteNonQuery();
-                Assert.AreEqual("EnterpriseDB", command.Parameters[0].Value.ToString());
+            command.Prepare();
+            command.ExecuteNonQuery();
+            Assert.AreEqual("EnterpriseDB", command.Parameters[0].Value.ToString());
 
-            }
-            catch (EDBException exp)
-            {
-                Console.WriteLine(exp.Message);
-            }
         }
 
         /* To verify the sanity of functions with one IN parameters*/
@@ -216,39 +201,33 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, /*Ignore("Investigate Prompt")*/]
         public void testThreeInArg()
         {
-            try
-            {
-                using var con = OpenConnection();
-                //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
-                var command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
+            using var con = OpenConnection();
+            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
+            var command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
 
-                command.CommandType = CommandType.StoredProcedure;
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
-                command.Prepare();
+            command.Prepare();
 
-                command.Parameters[0].Value = 10;
-                command.Parameters[1].Value = 20;
-                command.Parameters[2].Value = 30;
+            command.Parameters[0].Value = 10;
+            command.Parameters[1].Value = 20;
+            command.Parameters[2].Value = 30;
 
 
-                EDBDataReader result = command.ExecuteReader();
-                while (result.Read())
-                { }
+            EDBDataReader result = command.ExecuteReader();
+            while (result.Read())
+            { }
 
-                Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(30, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException exp)
-            {
-                Console.WriteLine(exp.Message);
-            }
+            Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(30, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+
         }
 
         [Test]
@@ -309,43 +288,37 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void testretValFunc_test()
         {
-            try
+            using var con = OpenConnection();
+            var command = new EDBCommand("public.retValFunc_test()", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
+
+            command.Prepare();
+
+            EDBDataReader reader = command.ExecuteReader();
+            Assert.IsTrue(reader.HasRows);
+            Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+
+            Assert.AreEqual(1, reader.FieldCount);
+
+            Assert.IsTrue(reader.Read());
+
+
+            object[] values = new object[reader.FieldCount];
+            reader.GetValues(values);
+
+            int[] expected = [10];
+            for (int i = 0; i < expected.Length; i++)
             {
-                using var con = OpenConnection();
-                var command = new EDBCommand("public.retValFunc_test()", con);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
-
-                command.Prepare();
-
-                EDBDataReader reader = command.ExecuteReader();
-                Assert.IsTrue(reader.HasRows);
-                Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
-
-                Assert.AreEqual(1, reader.FieldCount);
-
-                Assert.IsTrue(reader.Read());
-
-
-                object[] values = new object[reader.FieldCount];
-                reader.GetValues(values);
-
-                int[] expected = [10];
-                for (int i = 0; i < expected.Length; i++)
-                {
-                    Assert.AreEqual(expected[i], values[i]);
-                }
-
-                Assert.IsFalse(reader.Read());
-
-                Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+                Assert.AreEqual(expected[i], values[i]);
             }
-            catch (EDBException exp)
-            {
-                Console.WriteLine(exp.Message);
-            }
+
+            Assert.IsFalse(reader.Read());
+
+            Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+
         }
 
 
@@ -365,29 +338,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithINT(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithINT(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 100));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 40));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 100));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 40));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(100, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(100, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -411,28 +377,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithInt4(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithInt4(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 4000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 4000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -455,28 +414,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithInt8(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithInt8(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Bigint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Bigint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Bigint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Bigint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Bigint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Bigint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Bigint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Bigint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -500,28 +452,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithInteger(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithInteger(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Integer, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Integer, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Integer, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -545,28 +490,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithSmallInt(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithSmallInt(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Smallint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Smallint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Smallint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Smallint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Smallint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Smallint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Smallint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Smallint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -591,28 +529,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithBigint(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithBigint(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Bigint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 100906));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Bigint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 200906));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Bigint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 220905));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Bigint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 180902));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Bigint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 100906));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Bigint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 200906));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Bigint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 220905));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Bigint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 180902));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(100906, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(100906, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(200906, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(101000, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(100906, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(100906, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(200906, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(101000, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -636,28 +567,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithNumeric(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithNumeric(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -681,28 +605,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithNumber(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithNumber(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             ///
@@ -727,28 +644,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithDec(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+            command = new EDBCommand("FunctionWithDec(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -772,28 +682,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithDecimal(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithDecimal(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 10000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 10, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 40000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                Assert.AreEqual(10000, int.Parse(s: command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(10000, int.Parse(s: command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2, int.Parse(s: command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1234, int.Parse(s: command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(10000, int.Parse(s: command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(10000, int.Parse(s: command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2, int.Parse(s: command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1234, int.Parse(s: command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -819,28 +723,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////codef
-            try
-            {
-                command = new EDBCommand("FunctionWithFloat(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, 1.10001));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, -2.2131));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, 4.4009));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithFloat(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, 1.10001));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, -2.2131));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, 4.4009));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
+            command.Prepare();
 
-                Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -863,28 +761,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithDoublePrecision(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, 1.10001));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, -2.2131));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.Output, false, 8, 8, DataRowVersion.Current, 4.4009));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithDoublePrecision(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, 1.10001));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, -2.2131));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 10, "v_out", ParameterDirection.Output, false, 8, 8, DataRowVersion.Current, 4.4009));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
+            command.Prepare();
 
-                Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -907,28 +799,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithReal(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Real, 0, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Real, 0, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Real, 0, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 4.4));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Real, 0, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithReal(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Real, 0, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Real, 0, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Real, 0, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 4.4));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Real, 0, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
+            command.Prepare();
 
-                Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -951,27 +837,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithChar(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Char, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Char, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Char, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Char, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithChar(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Char, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Char, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Char, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Char, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -994,27 +874,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithCharacter(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Char, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Char, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Char, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Char, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithCharacter(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Char, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Char, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Char, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Char, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1037,27 +911,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithCharacterVarying(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithCharacterVarying(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1080,27 +948,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithCharVarying(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithCharVarying(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1123,27 +985,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithCLOB(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithCLOB(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1166,27 +1022,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithLongText1(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 6, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 1, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 6, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithLongText1(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 6, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 1, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 6, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1210,27 +1060,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithLong(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithLong(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1253,27 +1097,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithText(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithText(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1296,27 +1134,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithLongVarchar(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithLongVarchar(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1340,27 +1172,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithLVarchar(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithLVarchar(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1383,27 +1209,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithMediumText(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithMediumText(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1427,27 +1247,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithTinyText(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithTinyText(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Text, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Text, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Text, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Text, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1472,41 +1286,35 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
+
+            command = new EDBCommand("FunctionWithMONEY(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Money, 10, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, 10000m));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Money, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2.0m));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Money, 10, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, 40000m));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Money, 10, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, 100m));
+            command.Prepare();
+
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[0].Value.ToString())));
+            Console.WriteLine(command.Parameters[0].Value.ToString());
+
+            Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[1].Value.ToString())));
+            Console.WriteLine(command.Parameters[1].Value.ToString());
+            var val = command.Parameters[2].Value.ToString();
+            //Not sure which AS version, but it returns ($2.00) for -2.
+            var expected = -2;
+            if (val.StartsWith('(') && val.EndsWith(')'))
             {
-                command = new EDBCommand("FunctionWithMONEY(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Money, 10, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, 10000m));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Money, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, -2.0m));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Money, 10, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, 40000m));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Money, 10, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, 100m));
-                command.Prepare();
-
-                command.ExecuteNonQuery();
-
-                Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[0].Value.ToString())));
-                Console.WriteLine(command.Parameters[0].Value.ToString());
-
-                Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[1].Value.ToString())));
-                Console.WriteLine(command.Parameters[1].Value.ToString());
-                var val = command.Parameters[2].Value.ToString();
-                //Not sure which AS version, but it returns ($2.00) for -2.
-                var expected = -2;
-                if (val.StartsWith('(') && val.EndsWith(')'))
-                {
-                    expected = 2;
-                    val = val.Trim('(', ')', '$');
-                }
-                Assert.AreEqual(expected, (int)(float.Parse(val)));
-                Console.WriteLine(command.Parameters[2].Value.ToString());
-                Assert.AreEqual(1234, (int)(float.Parse(command.Parameters[3].Value.ToString())));
-                Console.WriteLine(command.Parameters[3].Value.ToString());
+                expected = 2;
+                val = val.Trim('(', ')', '$');
             }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(expected, (int)(float.Parse(val)));
+            Console.WriteLine(command.Parameters[2].Value.ToString());
+            Assert.AreEqual(1234, (int)(float.Parse(command.Parameters[3].Value.ToString())));
+            Console.WriteLine(command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1529,28 +1337,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithSmallMoney(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 0, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, 10000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 0, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, -2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 0, "v_out", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, 40000));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 0, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithSmallMoney(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Numeric, 0, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, 10000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Numeric, 0, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, -2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Numeric, 0, "v_out", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, 40000));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 0, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                Assert.AreEqual("10000", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("10000", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("-2", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("1234", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("10000", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("10000", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("-2", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("1234", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1574,27 +1376,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithVarchar(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithVarchar(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1618,27 +1414,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithVarchar2(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithVarchar2(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Varchar, 12, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, "Hashim"));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Varchar, 12, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "EnterpriseDB"));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Varchar, 12, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, "4"));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 12, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, "Hashim"));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1661,29 +1451,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithBoolean(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
+
+            command = new EDBCommand("FunctionWithBoolean(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Boolean, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, true));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Boolean, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, false));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Boolean, 10, "v_out", ParameterDirection.Output, false, 8, 8, DataRowVersion.Current, true));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Boolean, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, true));
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Boolean, 10, "v_in", ParameterDirection.Input, false, 8, 8, DataRowVersion.Current, true));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Boolean, 10, "v_inout", ParameterDirection.InputOutput, false, 8, 8, DataRowVersion.Current, false));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Boolean, 10, "v_out", ParameterDirection.Output, false, 8, 8, DataRowVersion.Current, true));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Boolean, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, true));
+            command.Prepare();
 
-                command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual(true, command.Parameters["v_in"].Value);
-                Assert.AreEqual(true, command.Parameters["v_inout"].Value);
-                Assert.AreEqual(false, command.Parameters["v_out"].Value);
-                Assert.AreEqual(true, command.Parameters["v_ret"].Value);
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual(true, command.Parameters["v_in"].Value);
+            Assert.AreEqual(true, command.Parameters["v_inout"].Value);
+            Assert.AreEqual(false, command.Parameters["v_out"].Value);
+            Assert.AreEqual(true, command.Parameters["v_ret"].Value);
 
             //////////tear down
             command.Dispose();
@@ -1706,28 +1490,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithBit(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Boolean, 0, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, true));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Boolean, 0, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, false));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Boolean, 0, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, true));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Boolean, 0, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, true));
-                command.Prepare();
-                command.ExecuteNonQuery();
+            command = new EDBCommand("FunctionWithBit(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                Assert.AreEqual(true, bool.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual("True", command.Parameters[1].Value.ToString());
-                var p_out = false;
-                Assert.AreEqual(p_out, command.Parameters[2].Value);
-                Assert.AreEqual("True", command.Parameters[3].Value.ToString());
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Boolean, 0, "v_in", ParameterDirection.Input, false, 0, 0, DataRowVersion.Current, true));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Boolean, 0, "v_inout", ParameterDirection.InputOutput, false, 0, 0, DataRowVersion.Current, false));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Boolean, 0, "v_out", ParameterDirection.Output, false, 0, 0, DataRowVersion.Current, true));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Boolean, 0, "v_ret", ParameterDirection.ReturnValue, false, 0, 0, System.Data.DataRowVersion.Current, true));
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(true, bool.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual("True", command.Parameters[1].Value.ToString());
+            var p_out = false;
+            Assert.AreEqual(p_out, command.Parameters[2].Value);
+            Assert.AreEqual("True", command.Parameters[3].Value.ToString());
 
             //////////tear down
             command.Dispose();
@@ -1751,28 +1529,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithSmallFloat(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 0, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 0, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 0, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 4.4));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 0, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithSmallFloat(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Double, 0, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1.1));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Double, 0, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 2.2));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Double, 0, "v_out", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 4.4));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Double, 0, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 8.8));
+            command.Prepare();
 
-                Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -1795,28 +1567,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("FunctionWithTinyInt(:v_in,:v_inout,:v_out)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Smallint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
-                command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Smallint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
-                command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Smallint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Smallint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
+            command = new EDBCommand("FunctionWithTinyInt(:v_in,:v_inout,:v_out)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
+            command.Parameters.Add(new EDBParameter("v_in", EDBTypes.EDBDbType.Smallint, 10, "v_in", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 1000));
+            command.Parameters.Add(new EDBParameter("v_inout", EDBTypes.EDBDbType.Smallint, 10, "v_inout", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 20000));
+            command.Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Smallint, 10, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 400));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Smallint, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
 
-                Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
 
             //////////tear down
             command.Dispose();
@@ -1848,30 +1614,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
             //////////////code
-            try
+
+            command = new EDBCommand("MaxFuncNumeric(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
+            command.CommandType = CommandType.StoredProcedure;
+            for (var i = 0; i < 128; i++)
             {
-                command = new EDBCommand("MaxFuncNumeric(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
-                command.CommandType = CommandType.StoredProcedure;
-                for (var i = 0; i < 128; i++)
-                {
-                    var paramValue = 128 - i;
-                    var paramName = "param" + (i + 1).ToString();
+                var paramValue = 128 - i;
+                var paramName = "param" + (i + 1).ToString();
 
-                    command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Numeric, 10, paramName, ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, paramValue));
-                }
-                command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Numeric, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
-
-                command.Prepare();
-                command.ExecuteNonQuery();
-                for (var i = 0; i < 128; i++)
-                    Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
-                Assert.AreEqual("203", command.Parameters[128].Value.ToString());
-
+                command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Numeric, 10, paramName, ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, paramValue));
             }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Numeric, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
+
+            command.Prepare();
+            command.ExecuteNonQuery();
+            for (var i = 0; i < 128; i++)
+                Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
+            Assert.AreEqual("203", command.Parameters[128].Value.ToString());
+
 
         }
 
@@ -1899,306 +1659,301 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("MaxFuncNumericInOUT(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
-                command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Numeric, 10, "param4", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Numeric, 10, "param5", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Numeric, 10, "param6", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param7", EDBTypes.EDBDbType.Numeric, 10, "param7", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param8", EDBTypes.EDBDbType.Numeric, 10, "param8", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param9", EDBTypes.EDBDbType.Numeric, 10, "param9", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param10", EDBTypes.EDBDbType.Numeric, 10, "param10", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
+            command = new EDBCommand("MaxFuncNumericInOUT(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
+            command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param11", EDBTypes.EDBDbType.Numeric, 10, "param11", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param12", EDBTypes.EDBDbType.Numeric, 10, "param12", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param13", EDBTypes.EDBDbType.Numeric, 10, "param13", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param14", EDBTypes.EDBDbType.Numeric, 10, "param14", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param15", EDBTypes.EDBDbType.Numeric, 10, "param15", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param16", EDBTypes.EDBDbType.Numeric, 10, "param16", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param17", EDBTypes.EDBDbType.Numeric, 10, "param17", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param18", EDBTypes.EDBDbType.Numeric, 10, "param18", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param19", EDBTypes.EDBDbType.Numeric, 10, "param19", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param20", EDBTypes.EDBDbType.Numeric, 10, "param20", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Numeric, 10, "param4", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Numeric, 10, "param5", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Numeric, 10, "param6", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param7", EDBTypes.EDBDbType.Numeric, 10, "param7", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param8", EDBTypes.EDBDbType.Numeric, 10, "param8", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param9", EDBTypes.EDBDbType.Numeric, 10, "param9", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param10", EDBTypes.EDBDbType.Numeric, 10, "param10", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param21", EDBTypes.EDBDbType.Numeric, 10, "param21", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param22", EDBTypes.EDBDbType.Numeric, 10, "param22", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param23", EDBTypes.EDBDbType.Numeric, 10, "param23", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param24", EDBTypes.EDBDbType.Numeric, 10, "param24", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param25", EDBTypes.EDBDbType.Numeric, 10, "param25", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param26", EDBTypes.EDBDbType.Numeric, 10, "param26", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param27", EDBTypes.EDBDbType.Numeric, 10, "param27", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param28", EDBTypes.EDBDbType.Numeric, 10, "param28", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param29", EDBTypes.EDBDbType.Numeric, 10, "param29", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param30", EDBTypes.EDBDbType.Numeric, 10, "param30", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param11", EDBTypes.EDBDbType.Numeric, 10, "param11", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param12", EDBTypes.EDBDbType.Numeric, 10, "param12", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param13", EDBTypes.EDBDbType.Numeric, 10, "param13", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param14", EDBTypes.EDBDbType.Numeric, 10, "param14", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param15", EDBTypes.EDBDbType.Numeric, 10, "param15", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param16", EDBTypes.EDBDbType.Numeric, 10, "param16", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param17", EDBTypes.EDBDbType.Numeric, 10, "param17", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param18", EDBTypes.EDBDbType.Numeric, 10, "param18", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param19", EDBTypes.EDBDbType.Numeric, 10, "param19", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param20", EDBTypes.EDBDbType.Numeric, 10, "param20", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param31", EDBTypes.EDBDbType.Numeric, 10, "param31", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param32", EDBTypes.EDBDbType.Numeric, 10, "param32", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param33", EDBTypes.EDBDbType.Numeric, 10, "param33", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param34", EDBTypes.EDBDbType.Numeric, 10, "param34", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param35", EDBTypes.EDBDbType.Numeric, 10, "param35", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param36", EDBTypes.EDBDbType.Numeric, 10, "param36", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param37", EDBTypes.EDBDbType.Numeric, 10, "param37", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param38", EDBTypes.EDBDbType.Numeric, 10, "param38", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param39", EDBTypes.EDBDbType.Numeric, 10, "param39", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param40", EDBTypes.EDBDbType.Numeric, 10, "param40", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param21", EDBTypes.EDBDbType.Numeric, 10, "param21", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param22", EDBTypes.EDBDbType.Numeric, 10, "param22", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param23", EDBTypes.EDBDbType.Numeric, 10, "param23", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param24", EDBTypes.EDBDbType.Numeric, 10, "param24", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param25", EDBTypes.EDBDbType.Numeric, 10, "param25", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param26", EDBTypes.EDBDbType.Numeric, 10, "param26", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param27", EDBTypes.EDBDbType.Numeric, 10, "param27", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param28", EDBTypes.EDBDbType.Numeric, 10, "param28", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param29", EDBTypes.EDBDbType.Numeric, 10, "param29", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param30", EDBTypes.EDBDbType.Numeric, 10, "param30", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param41", EDBTypes.EDBDbType.Numeric, 10, "param41", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param42", EDBTypes.EDBDbType.Numeric, 10, "param42", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param43", EDBTypes.EDBDbType.Numeric, 10, "param43", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param44", EDBTypes.EDBDbType.Numeric, 10, "param44", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param45", EDBTypes.EDBDbType.Numeric, 10, "param45", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param46", EDBTypes.EDBDbType.Numeric, 10, "param46", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param47", EDBTypes.EDBDbType.Numeric, 10, "param47", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param48", EDBTypes.EDBDbType.Numeric, 10, "param48", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param49", EDBTypes.EDBDbType.Numeric, 10, "param49", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param50", EDBTypes.EDBDbType.Numeric, 10, "param50", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param31", EDBTypes.EDBDbType.Numeric, 10, "param31", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param32", EDBTypes.EDBDbType.Numeric, 10, "param32", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param33", EDBTypes.EDBDbType.Numeric, 10, "param33", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param34", EDBTypes.EDBDbType.Numeric, 10, "param34", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param35", EDBTypes.EDBDbType.Numeric, 10, "param35", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param36", EDBTypes.EDBDbType.Numeric, 10, "param36", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param37", EDBTypes.EDBDbType.Numeric, 10, "param37", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param38", EDBTypes.EDBDbType.Numeric, 10, "param38", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param39", EDBTypes.EDBDbType.Numeric, 10, "param39", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param40", EDBTypes.EDBDbType.Numeric, 10, "param40", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param51", EDBTypes.EDBDbType.Numeric, 10, "param51", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param52", EDBTypes.EDBDbType.Numeric, 10, "param52", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param53", EDBTypes.EDBDbType.Numeric, 10, "param53", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param54", EDBTypes.EDBDbType.Numeric, 10, "param54", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param55", EDBTypes.EDBDbType.Numeric, 10, "param55", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param56", EDBTypes.EDBDbType.Numeric, 10, "param56", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param57", EDBTypes.EDBDbType.Numeric, 10, "param57", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param58", EDBTypes.EDBDbType.Numeric, 10, "param58", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param59", EDBTypes.EDBDbType.Numeric, 10, "param59", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param60", EDBTypes.EDBDbType.Numeric, 10, "param60", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param41", EDBTypes.EDBDbType.Numeric, 10, "param41", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param42", EDBTypes.EDBDbType.Numeric, 10, "param42", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param43", EDBTypes.EDBDbType.Numeric, 10, "param43", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param44", EDBTypes.EDBDbType.Numeric, 10, "param44", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param45", EDBTypes.EDBDbType.Numeric, 10, "param45", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param46", EDBTypes.EDBDbType.Numeric, 10, "param46", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param47", EDBTypes.EDBDbType.Numeric, 10, "param47", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param48", EDBTypes.EDBDbType.Numeric, 10, "param48", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param49", EDBTypes.EDBDbType.Numeric, 10, "param49", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param50", EDBTypes.EDBDbType.Numeric, 10, "param50", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param61", EDBTypes.EDBDbType.Numeric, 10, "param61", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param62", EDBTypes.EDBDbType.Numeric, 10, "param62", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param63", EDBTypes.EDBDbType.Numeric, 10, "param63", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param64", EDBTypes.EDBDbType.Numeric, 10, "param64", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param65", EDBTypes.EDBDbType.Numeric, 10, "param65", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param66", EDBTypes.EDBDbType.Numeric, 10, "param66", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param67", EDBTypes.EDBDbType.Numeric, 10, "param67", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param68", EDBTypes.EDBDbType.Numeric, 10, "param68", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param69", EDBTypes.EDBDbType.Numeric, 10, "param69", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param70", EDBTypes.EDBDbType.Numeric, 10, "param70", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param51", EDBTypes.EDBDbType.Numeric, 10, "param51", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param52", EDBTypes.EDBDbType.Numeric, 10, "param52", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param53", EDBTypes.EDBDbType.Numeric, 10, "param53", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param54", EDBTypes.EDBDbType.Numeric, 10, "param54", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param55", EDBTypes.EDBDbType.Numeric, 10, "param55", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param56", EDBTypes.EDBDbType.Numeric, 10, "param56", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param57", EDBTypes.EDBDbType.Numeric, 10, "param57", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param58", EDBTypes.EDBDbType.Numeric, 10, "param58", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param59", EDBTypes.EDBDbType.Numeric, 10, "param59", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param60", EDBTypes.EDBDbType.Numeric, 10, "param60", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param71", EDBTypes.EDBDbType.Numeric, 10, "param71", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param72", EDBTypes.EDBDbType.Numeric, 10, "param72", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param73", EDBTypes.EDBDbType.Numeric, 10, "param73", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param74", EDBTypes.EDBDbType.Numeric, 10, "param74", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param75", EDBTypes.EDBDbType.Numeric, 10, "param75", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param76", EDBTypes.EDBDbType.Numeric, 10, "param76", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param77", EDBTypes.EDBDbType.Numeric, 10, "param77", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param78", EDBTypes.EDBDbType.Numeric, 10, "param78", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param79", EDBTypes.EDBDbType.Numeric, 10, "param79", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param80", EDBTypes.EDBDbType.Numeric, 10, "param80", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param61", EDBTypes.EDBDbType.Numeric, 10, "param61", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param62", EDBTypes.EDBDbType.Numeric, 10, "param62", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param63", EDBTypes.EDBDbType.Numeric, 10, "param63", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param64", EDBTypes.EDBDbType.Numeric, 10, "param64", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param65", EDBTypes.EDBDbType.Numeric, 10, "param65", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param66", EDBTypes.EDBDbType.Numeric, 10, "param66", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param67", EDBTypes.EDBDbType.Numeric, 10, "param67", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param68", EDBTypes.EDBDbType.Numeric, 10, "param68", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param69", EDBTypes.EDBDbType.Numeric, 10, "param69", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param70", EDBTypes.EDBDbType.Numeric, 10, "param70", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param81", EDBTypes.EDBDbType.Numeric, 10, "param81", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param82", EDBTypes.EDBDbType.Numeric, 10, "param82", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param83", EDBTypes.EDBDbType.Numeric, 10, "param83", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param84", EDBTypes.EDBDbType.Numeric, 10, "param84", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param85", EDBTypes.EDBDbType.Numeric, 10, "param85", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param86", EDBTypes.EDBDbType.Numeric, 10, "param86", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param87", EDBTypes.EDBDbType.Numeric, 10, "param87", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param88", EDBTypes.EDBDbType.Numeric, 10, "param88", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param89", EDBTypes.EDBDbType.Numeric, 10, "param89", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param90", EDBTypes.EDBDbType.Numeric, 10, "param90", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param71", EDBTypes.EDBDbType.Numeric, 10, "param71", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param72", EDBTypes.EDBDbType.Numeric, 10, "param72", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param73", EDBTypes.EDBDbType.Numeric, 10, "param73", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param74", EDBTypes.EDBDbType.Numeric, 10, "param74", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param75", EDBTypes.EDBDbType.Numeric, 10, "param75", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param76", EDBTypes.EDBDbType.Numeric, 10, "param76", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param77", EDBTypes.EDBDbType.Numeric, 10, "param77", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param78", EDBTypes.EDBDbType.Numeric, 10, "param78", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param79", EDBTypes.EDBDbType.Numeric, 10, "param79", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param80", EDBTypes.EDBDbType.Numeric, 10, "param80", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param91", EDBTypes.EDBDbType.Numeric, 10, "param91", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param92", EDBTypes.EDBDbType.Numeric, 10, "param92", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param93", EDBTypes.EDBDbType.Numeric, 10, "param93", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param94", EDBTypes.EDBDbType.Numeric, 10, "param94", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param95", EDBTypes.EDBDbType.Numeric, 10, "param95", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param96", EDBTypes.EDBDbType.Numeric, 10, "param96", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param97", EDBTypes.EDBDbType.Numeric, 10, "param97", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param98", EDBTypes.EDBDbType.Numeric, 10, "param98", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param99", EDBTypes.EDBDbType.Numeric, 10, "param99", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param100", EDBTypes.EDBDbType.Numeric, 10, "param100", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param81", EDBTypes.EDBDbType.Numeric, 10, "param81", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param82", EDBTypes.EDBDbType.Numeric, 10, "param82", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param83", EDBTypes.EDBDbType.Numeric, 10, "param83", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param84", EDBTypes.EDBDbType.Numeric, 10, "param84", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param85", EDBTypes.EDBDbType.Numeric, 10, "param85", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param86", EDBTypes.EDBDbType.Numeric, 10, "param86", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param87", EDBTypes.EDBDbType.Numeric, 10, "param87", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param88", EDBTypes.EDBDbType.Numeric, 10, "param88", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param89", EDBTypes.EDBDbType.Numeric, 10, "param89", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param90", EDBTypes.EDBDbType.Numeric, 10, "param90", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param101", EDBTypes.EDBDbType.Numeric, 10, "param101", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param102", EDBTypes.EDBDbType.Numeric, 10, "param102", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param103", EDBTypes.EDBDbType.Numeric, 10, "param103", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param104", EDBTypes.EDBDbType.Numeric, 10, "param104", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param105", EDBTypes.EDBDbType.Numeric, 10, "param105", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param106", EDBTypes.EDBDbType.Numeric, 10, "param106", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param107", EDBTypes.EDBDbType.Numeric, 10, "param107", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param108", EDBTypes.EDBDbType.Numeric, 10, "param108", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param109", EDBTypes.EDBDbType.Numeric, 10, "param109", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param110", EDBTypes.EDBDbType.Numeric, 10, "param110", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param91", EDBTypes.EDBDbType.Numeric, 10, "param91", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param92", EDBTypes.EDBDbType.Numeric, 10, "param92", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param93", EDBTypes.EDBDbType.Numeric, 10, "param93", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param94", EDBTypes.EDBDbType.Numeric, 10, "param94", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param95", EDBTypes.EDBDbType.Numeric, 10, "param95", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param96", EDBTypes.EDBDbType.Numeric, 10, "param96", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param97", EDBTypes.EDBDbType.Numeric, 10, "param97", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param98", EDBTypes.EDBDbType.Numeric, 10, "param98", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param99", EDBTypes.EDBDbType.Numeric, 10, "param99", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param100", EDBTypes.EDBDbType.Numeric, 10, "param100", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param111", EDBTypes.EDBDbType.Numeric, 10, "param111", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param112", EDBTypes.EDBDbType.Numeric, 10, "param112", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param113", EDBTypes.EDBDbType.Numeric, 10, "param113", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param114", EDBTypes.EDBDbType.Numeric, 10, "param114", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param115", EDBTypes.EDBDbType.Numeric, 10, "param115", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param116", EDBTypes.EDBDbType.Numeric, 10, "param116", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param117", EDBTypes.EDBDbType.Numeric, 10, "param117", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param118", EDBTypes.EDBDbType.Numeric, 10, "param118", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param119", EDBTypes.EDBDbType.Numeric, 10, "param119", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
-                command.Parameters.Add(new EDBParameter("param120", EDBTypes.EDBDbType.Numeric, 10, "param120", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
+            command.Parameters.Add(new EDBParameter("param101", EDBTypes.EDBDbType.Numeric, 10, "param101", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param102", EDBTypes.EDBDbType.Numeric, 10, "param102", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param103", EDBTypes.EDBDbType.Numeric, 10, "param103", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param104", EDBTypes.EDBDbType.Numeric, 10, "param104", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param105", EDBTypes.EDBDbType.Numeric, 10, "param105", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param106", EDBTypes.EDBDbType.Numeric, 10, "param106", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param107", EDBTypes.EDBDbType.Numeric, 10, "param107", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param108", EDBTypes.EDBDbType.Numeric, 10, "param108", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param109", EDBTypes.EDBDbType.Numeric, 10, "param109", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param110", EDBTypes.EDBDbType.Numeric, 10, "param110", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Parameters.Add(new EDBParameter("param121", EDBTypes.EDBDbType.Numeric, 10, "param121", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
-                command.Parameters.Add(new EDBParameter("param122", EDBTypes.EDBDbType.Numeric, 10, "param122", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
-                command.Parameters.Add(new EDBParameter("param123", EDBTypes.EDBDbType.Numeric, 10, "param123", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
-                command.Parameters.Add(new EDBParameter("param124", EDBTypes.EDBDbType.Numeric, 10, "param124", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
-                command.Parameters.Add(new EDBParameter("param125", EDBTypes.EDBDbType.Numeric, 10, "param125", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
-                command.Parameters.Add(new EDBParameter("param126", EDBTypes.EDBDbType.Numeric, 10, "param126", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
-                command.Parameters.Add(new EDBParameter("param127", EDBTypes.EDBDbType.Numeric, 10, "param127", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
-                command.Parameters.Add(new EDBParameter("param128", EDBTypes.EDBDbType.Numeric, 10, "param128", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
-                command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Numeric, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param111", EDBTypes.EDBDbType.Numeric, 10, "param111", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param112", EDBTypes.EDBDbType.Numeric, 10, "param112", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param113", EDBTypes.EDBDbType.Numeric, 10, "param113", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param114", EDBTypes.EDBDbType.Numeric, 10, "param114", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param115", EDBTypes.EDBDbType.Numeric, 10, "param115", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param116", EDBTypes.EDBDbType.Numeric, 10, "param116", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param117", EDBTypes.EDBDbType.Numeric, 10, "param117", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param118", EDBTypes.EDBDbType.Numeric, 10, "param118", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param119", EDBTypes.EDBDbType.Numeric, 10, "param119", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 120));
+            command.Parameters.Add(new EDBParameter("param120", EDBTypes.EDBDbType.Numeric, 10, "param120", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 119));
 
-                command.Prepare();
+            command.Parameters.Add(new EDBParameter("param121", EDBTypes.EDBDbType.Numeric, 10, "param121", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 128));
+            command.Parameters.Add(new EDBParameter("param122", EDBTypes.EDBDbType.Numeric, 10, "param122", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 127));
+            command.Parameters.Add(new EDBParameter("param123", EDBTypes.EDBDbType.Numeric, 10, "param123", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 126));
+            command.Parameters.Add(new EDBParameter("param124", EDBTypes.EDBDbType.Numeric, 10, "param124", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 125));
+            command.Parameters.Add(new EDBParameter("param125", EDBTypes.EDBDbType.Numeric, 10, "param125", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 124));
+            command.Parameters.Add(new EDBParameter("param126", EDBTypes.EDBDbType.Numeric, 10, "param126", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, 123));
+            command.Parameters.Add(new EDBParameter("param127", EDBTypes.EDBDbType.Numeric, 10, "param127", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 122));
+            command.Parameters.Add(new EDBParameter("param128", EDBTypes.EDBDbType.Numeric, 10, "param128", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, 121));
+            command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Numeric, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
 
+            command.Prepare();
 
 
-                command.ExecuteNonQuery();
 
-                Assert.AreEqual("127", command.Parameters[0].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[1].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[2].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[3].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[4].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[5].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[6].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[7].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[8].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[9].Value.ToString());
+            command.ExecuteNonQuery();
 
-                Assert.AreEqual("127", command.Parameters[10].Value.ToString());
-                Assert.AreEqual("127", command.Parameters[11].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[12].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[13].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[14].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[15].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[16].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[17].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[18].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[19].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[0].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[1].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[2].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[3].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[4].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[5].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[6].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[7].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[8].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[9].Value.ToString());
 
-                Assert.AreEqual("128", command.Parameters[20].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[21].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[22].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[23].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[24].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[25].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[26].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[27].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[28].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[29].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[10].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[11].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[12].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[13].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[14].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[15].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[16].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[17].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[18].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[19].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[30].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[31].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[32].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[33].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[34].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[35].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[36].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[37].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[38].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[39].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[20].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[21].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[22].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[23].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[24].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[25].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[26].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[27].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[28].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[29].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[40].Value.ToString());
-                Assert.AreEqual("127", command.Parameters[41].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[42].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[43].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[44].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[45].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[46].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[47].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[48].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[49].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[30].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[31].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[32].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[33].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[34].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[35].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[36].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[37].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[38].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[39].Value.ToString());
 
-                Assert.AreEqual("128", command.Parameters[50].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[51].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[52].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[53].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[54].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[55].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[56].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[57].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[58].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[59].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[40].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[41].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[42].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[43].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[44].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[45].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[46].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[47].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[48].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[49].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[60].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[61].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[62].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[63].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[64].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[65].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[66].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[67].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[68].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[69].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[50].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[51].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[52].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[53].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[54].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[55].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[56].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[57].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[58].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[59].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[70].Value.ToString());
-                Assert.AreEqual("127", command.Parameters[71].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[72].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[73].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[74].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[75].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[76].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[77].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[78].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[79].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[60].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[61].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[62].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[63].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[64].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[65].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[66].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[67].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[68].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[69].Value.ToString());
 
-                Assert.AreEqual("128", command.Parameters[80].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[81].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[82].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[83].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[84].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[85].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[86].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[87].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[88].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[89].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[70].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[71].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[72].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[73].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[74].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[75].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[76].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[77].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[78].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[79].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[90].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[91].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[92].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[93].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[94].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[95].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[96].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[97].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[98].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[99].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[80].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[81].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[82].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[83].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[84].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[85].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[86].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[87].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[88].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[89].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[100].Value.ToString());
-                Assert.AreEqual("127", command.Parameters[101].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[102].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[103].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[104].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[105].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[106].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[107].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[108].Value.ToString());
-                Assert.AreEqual("128", command.Parameters[109].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[90].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[91].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[92].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[93].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[94].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[95].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[96].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[97].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[98].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[99].Value.ToString());
 
-                Assert.AreEqual("128", command.Parameters[110].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[111].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[112].Value.ToString());
-                Assert.AreEqual("125", command.Parameters[113].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[114].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[115].Value.ToString());
-                Assert.AreEqual("122", command.Parameters[116].Value.ToString());
-                Assert.AreEqual("120", command.Parameters[117].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[118].Value.ToString());
-                Assert.AreEqual("119", command.Parameters[119].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[100].Value.ToString());
+            Assert.AreEqual("127", command.Parameters[101].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[102].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[103].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[104].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[105].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[106].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[107].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[108].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[109].Value.ToString());
 
-                Assert.AreEqual("127", command.Parameters[120].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[121].Value.ToString());
-                Assert.AreEqual("126", command.Parameters[122].Value.ToString());
-                Assert.AreEqual("124", command.Parameters[123].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[124].Value.ToString());
-                Assert.AreEqual("123", command.Parameters[125].Value.ToString());
-                Assert.AreEqual("121", command.Parameters[126].Value.ToString());
-                Assert.AreEqual("200", command.Parameters[127].Value.ToString());
-                Assert.AreEqual("300", command.Parameters[128].Value.ToString());
+            Assert.AreEqual("128", command.Parameters[110].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[111].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[112].Value.ToString());
+            Assert.AreEqual("125", command.Parameters[113].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[114].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[115].Value.ToString());
+            Assert.AreEqual("122", command.Parameters[116].Value.ToString());
+            Assert.AreEqual("120", command.Parameters[117].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[118].Value.ToString());
+            Assert.AreEqual("119", command.Parameters[119].Value.ToString());
 
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            Assert.AreEqual("127", command.Parameters[120].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[121].Value.ToString());
+            Assert.AreEqual("126", command.Parameters[122].Value.ToString());
+            Assert.AreEqual("124", command.Parameters[123].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[124].Value.ToString());
+            Assert.AreEqual("123", command.Parameters[125].Value.ToString());
+            Assert.AreEqual("121", command.Parameters[126].Value.ToString());
+            Assert.AreEqual("200", command.Parameters[127].Value.ToString());
+            Assert.AreEqual("300", command.Parameters[128].Value.ToString());
+
+
         }
 
         /*
@@ -2224,30 +1979,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
             //////////////code
-            try
+
+            command = new EDBCommand("MaxFuncText(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
+            command.CommandType = CommandType.StoredProcedure;
+            for (var i = 0; i < 128; i++)
             {
-                command = new EDBCommand("MaxFuncText(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
-                command.CommandType = CommandType.StoredProcedure;
-                for (var i = 0; i < 128; i++)
-                {
-                    var paramValue = 128 - i;
-                    var paramName = "param" + (i + 1).ToString();
-                    command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Text, 10, paramName, ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, paramValue));
-                }
-                command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Text, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
-
-                command.Prepare();
-                command.ExecuteNonQuery();
-
-                for (var i = 0; i < 128; i++)
-                    Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
-                Assert.AreEqual("Hashim", command.Parameters[128].Value.ToString());
-
+                var paramValue = 128 - i;
+                var paramName = "param" + (i + 1).ToString();
+                command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Text, 10, paramName, ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, paramValue));
             }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            command.Parameters.Add(new EDBParameter("param129", EDBTypes.EDBDbType.Text, 10, "param129", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 121));
+
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            for (var i = 0; i < 128; i++)
+                Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
+            Assert.AreEqual("Hashim", command.Parameters[128].Value.ToString());
+
+
         }
 
         /// <summary>
@@ -2274,40 +2024,35 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
             //////////////code
-            try
-            {
-                command = new EDBCommand("MaxFuncTextInOut(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
-                command.CommandType = CommandType.StoredProcedure;
-                for (var i = 0; i < 128; i++)
-                {
-                    var paramValue = i.ToString();
-                    var paramName = "param" + (i + 1).ToString();
-                    ParameterDirection direction = ParameterDirection.Output;
-                    if (i % 3 == 2)
-                        direction = ParameterDirection.InputOutput;
-                    if (i % 3 == 2)
-                        direction = ParameterDirection.Input;
-                    command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Text, 10, paramName, direction, false, 2, 2, DataRowVersion.Current, paramValue));
-                }
-                command.Parameters.Add(new EDBParameter("param128", EDBTypes.EDBDbType.Text, 10, "param128", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, ""));
 
-                command.Prepare();
-                command.ExecuteNonQuery();
-                for (var i = 0; i < 127; i++)
-                {
-                    var expectedValue = (i + 1).ToString();
-                    if (i % 3 == 2)
-                        expectedValue = (i).ToString();
-                    Assert.AreEqual(expectedValue, command.Parameters[i].Value.ToString());
-                }
-                Assert.AreEqual("Hashim", command.Parameters[127].Value.ToString());
-                Assert.AreEqual("Ran Away", command.Parameters[128].Value.ToString());
-
-            }
-            catch (EDBException e)
+            command = new EDBCommand("MaxFuncTextInOut(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
+            command.CommandType = CommandType.StoredProcedure;
+            for (var i = 0; i < 128; i++)
             {
-                throw new Exception(e.ToString());
+                var paramValue = i.ToString();
+                var paramName = "param" + (i + 1).ToString();
+                ParameterDirection direction = ParameterDirection.Output;
+                if (i % 3 == 2)
+                    direction = ParameterDirection.InputOutput;
+                if (i % 3 == 2)
+                    direction = ParameterDirection.Input;
+                command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Text, 10, paramName, direction, false, 2, 2, DataRowVersion.Current, paramValue));
             }
+            command.Parameters.Add(new EDBParameter("param128", EDBTypes.EDBDbType.Text, 10, "param128", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, ""));
+
+            command.Prepare();
+            command.ExecuteNonQuery();
+            for (var i = 0; i < 127; i++)
+            {
+                var expectedValue = (i + 1).ToString();
+                if (i % 3 == 2)
+                    expectedValue = (i).ToString();
+                Assert.AreEqual(expectedValue, command.Parameters[i].Value.ToString());
+            }
+            Assert.AreEqual("Hashim", command.Parameters[127].Value.ToString());
+            Assert.AreEqual("Ran Away", command.Parameters[128].Value.ToString());
+
+
 
         }
 
@@ -2329,8 +2074,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     DateTime v_ret=DateTime.Parse("Sep 21, 2008 10:58:20 PM").ToUniversalTime();
 
                     //////////////code
-                    try
-                    {
+                    
                         command = new EDBCommand("FunctionWithDate(:v_in,:v_inout,:v_out)",con);
                         command.CommandType = CommandType.StoredProcedure;
 
@@ -2373,8 +2117,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     command.ExecuteNonQuery();
 
                     //////////////code
-                    try
-                    {
+                    
                         command = new EDBCommand("FunctionWithBinary(:v_in,:v_inout,:v_out)",con);
                         command.CommandType = CommandType.StoredProcedure;
 
@@ -2419,66 +2162,61 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void TERSE_FUNC_NATIVE_INPUT_TYPES()
         {
             using var con = OpenConnection();
+
+            EDBCommand command;
+            command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            command = new EDBCommand("BEGIN;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
             try
             {
-                EDBCommand command;
-                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-                command.ExecuteNonQuery();
-                command.Dispose();
 
-                command = new EDBCommand("BEGIN;", con);
-
-                command.ExecuteNonQuery();
-                command.Dispose();
-                try
-                {
-
-                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
-                    command.ExecuteNonQuery();
-
-                    command.Dispose();
-
-                }
-                catch (EDBException)
-                {
-                }
-
-                command = new EDBCommand("public.FunconeInArg_test(:param1)", con);
-
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
-                command.Prepare();
-
-                command.Parameters[0].Value = 3;
-
-                EDBDataReader result = command.ExecuteReader();
-
-                while (result.Read())
-                { }
-
-                Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
-
-                Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
-
-                result.Close();
-                command.Dispose();
-
-                command = new EDBCommand("END;", con);
+                command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                 command.ExecuteNonQuery();
 
                 command.Dispose();
 
             }
-            catch (EDBException exp)
+            catch (EDBException)
             {
-                Console.WriteLine(exp.Message);
             }
+
+            command = new EDBCommand("public.FunconeInArg_test(:param1)", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+            command.Prepare();
+
+            command.Parameters[0].Value = 3;
+
+            EDBDataReader result = command.ExecuteReader();
+
+            while (result.Read())
+            { }
+
+            Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
+
+            Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+            result.Close();
+            command.Dispose();
+
+            command = new EDBCommand("END;", con);
+
+            command.ExecuteNonQuery();
+
+            command.Dispose();
+
+
 
         }
 
@@ -2486,63 +2224,58 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void TERSE_FUNC_NATIVE_OUTPUT_TYPES()
         {
             using var con = OpenConnection();
+
+
+            EDBCommand Command;
+            Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+            Command.ExecuteNonQuery();
+            Command.Dispose();
+
+            Command = new EDBCommand("BEGIN;", con);
+            Command.ExecuteNonQuery();
+            Command.Dispose();
+
             try
             {
-
-                EDBCommand Command;
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 Command.ExecuteNonQuery();
                 Command.Dispose();
-
-                Command = new EDBCommand("BEGIN;", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
-                try
-                {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
-
-                Command = new EDBCommand("create or replace function terse_f1( a out integer, b out integer ) return integer is " +
-                                         "begin " +
-                                         "  a := 10; " +
-                                         "  b := 20; " +
-                                         "  return 30; " +
-                                         "end; ", con);
-
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
-                Command = new EDBCommand("terse_f1(:a,:b)", con);
-                Command.CommandType = CommandType.StoredProcedure;
-
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
-                Command.Parameters[0].Direction = ParameterDirection.Output;
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
-                Command.Parameters[1].Direction = ParameterDirection.Output;
-                Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                Command.Prepare();
-
-                Command.ExecuteNonQuery();
-                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
-                // Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
-                Command.Dispose();
-
-                Command = new EDBCommand("END;", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
             }
-            catch (EDBException exp)
+            catch (EDBException)
             {
-                throw new Exception(exp.ToString());
             }
+
+            Command = new EDBCommand("create or replace function terse_f1( a out integer, b out integer ) return integer is " +
+                                     "begin " +
+                                     "  a := 10; " +
+                                     "  b := 20; " +
+                                     "  return 30; " +
+                                     "end; ", con);
+
+            Command.ExecuteNonQuery();
+            Command.Dispose();
+
+            Command = new EDBCommand("terse_f1(:a,:b)", con);
+            Command.CommandType = CommandType.StoredProcedure;
+
+            Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+            Command.Parameters[0].Direction = ParameterDirection.Output;
+            Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+            Command.Parameters[1].Direction = ParameterDirection.Output;
+            Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            Command.Prepare();
+
+            Command.ExecuteNonQuery();
+            Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+            // Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
+            Command.Dispose();
+
+            Command = new EDBCommand("END;", con);
+            Command.ExecuteNonQuery();
+            Command.Dispose();
+
+
 
         }
 
@@ -2551,364 +2284,330 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             using var con = OpenConnection();
 
+
+            EDBCommand command;
+            command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            command = new EDBCommand("BEGIN;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
+
             try
             {
-                EDBCommand command;
-                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 command.ExecuteNonQuery();
                 command.Dispose();
-
-                command = new EDBCommand("BEGIN;", con);
-                command.ExecuteNonQuery();
-                command.Dispose();
-
-                try
-                {
-                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    command.ExecuteNonQuery();
-                    command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
-
-                command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
-                command.Prepare();
-                command.Parameters[0].Value = 1;
-                command.Parameters[1].Value = null;
-                command.Parameters[2].Value = 3;
-                command.Parameters[3].Value = null;
-
-                EDBDataReader result = command.ExecuteReader();
-                while (result.Read())
-                { }
-
-                Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
-                Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
-                Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
-                Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
-                result.Close();
-
-                command.Dispose();
-
-                command = new EDBCommand("END;", con);
-                command.ExecuteNonQuery();
-                command.Dispose();
-
             }
-            catch (EDBException exp)
+            catch (EDBException)
             {
-                Console.WriteLine(exp.Message);
             }
+
+            command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Integer, 10, "param3", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+            command.Prepare();
+            command.Parameters[0].Value = 1;
+            command.Parameters[1].Value = null;
+            command.Parameters[2].Value = 3;
+            command.Parameters[3].Value = null;
+
+            EDBDataReader result = command.ExecuteReader();
+            while (result.Read())
+            { }
+
+            Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
+            Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
+            result.Close();
+
+            command.Dispose();
+
+            command = new EDBCommand("END;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
         }
 
         [Test]
         public void TERSE_FUNC_CURSOR_TYPES()
         {
+
+            using var con = OpenConnection();
+            var com = new EDBCommand("", con);
+            com.CommandType = CommandType.Text;
+
+            var CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+            com.CommandText = CursorTable;
+            com.ExecuteNonQuery();
+
+            CursorTable = "CREATE OR REPLACE Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC IS " +
+                          "BEGIN " +
+                          "  OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; " +
+                          "  return 10; " +
+                          "END;";
+
+            com.CommandText = CursorTable;
+
+            com.ExecuteNonQuery();
+
+            var CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
+            com.CommandText = CursorInsert1;
+            com.ExecuteNonQuery();
+
+            var CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
+            com.CommandText = CursorInsert2;
+            com.ExecuteNonQuery();
+
+            var CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
+            com.CommandText = CursorInsert3;
+            com.ExecuteNonQuery();
+
+            var CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
+            com.CommandText = CursorInsert4;
+            com.ExecuteNonQuery();
+
+            com = new EDBCommand("set edb_stmt_level_tx to on;", con);
+            com.ExecuteNonQuery();
+            com.Dispose();
+
+            EDBTransaction tran = con.BeginTransaction();
             try
             {
-                using var con = OpenConnection();
-                var com = new EDBCommand("", con);
-                com.CommandType = CommandType.Text;
-
-                var CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
-                com.CommandText = CursorTable;
-                com.ExecuteNonQuery();
-
-                CursorTable = "CREATE OR REPLACE Function RefCursorsOUT(Test_RefCursor OUT SYS_REFCURSOR) return NUMERIC IS " +
-                              "BEGIN " +
-                              "  OPEN Test_RefCursor FOR SELECT * FROM TestCursorTable; " +
-                              "  return 10; " +
-                              "END;";
-
-                com.CommandText = CursorTable;
-
-                com.ExecuteNonQuery();
-
-                var CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
-                com.CommandText = CursorInsert1;
-                com.ExecuteNonQuery();
-
-                var CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
-                com.CommandText = CursorInsert2;
-                com.ExecuteNonQuery();
-
-                var CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
-                com.CommandText = CursorInsert3;
-                com.ExecuteNonQuery();
-
-                var CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
-                com.CommandText = CursorInsert4;
-                com.ExecuteNonQuery();
-
-                com = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 com.ExecuteNonQuery();
                 com.Dispose();
-
-                EDBTransaction tran = con.BeginTransaction();
-                try
-                {
-                    com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    com.ExecuteNonQuery();
-                    com.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
-
-                var command = new EDBCommand("RefCursorsOUT(:v_id)", con);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Transaction = tran;
-                command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
-                command.Prepare();
-
-                command.ExecuteNonQuery();
-                var cursorName = command.Parameters[0].Value.ToString();
-
-                command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
-                command.CommandType = CommandType.Text;
-                EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
-
-                cur.Read();
-                Assert.AreEqual(1, cur[0]);
-                Assert.AreEqual(false, cur[1]);
-                Assert.IsInstanceOf(typeof(byte[]), cur[2]);
-                Assert.AreEqual("a", cur[3]);
-                Assert.AreEqual(new DateTime(2006, 1, 1), cur[4]);
-                Assert.AreEqual(1.1, cur[5]);
-                Assert.AreEqual(1, cur[6]);
-                Assert.AreEqual(1, cur[7]);
-                Assert.AreEqual(2.20, cur[8]);
-                Assert.AreEqual(2.2f, cur[9]);
-                Assert.AreEqual(1, cur[10]);
-                Assert.AreEqual("Shehzad", cur[11]);
-                Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
-                Assert.AreEqual("Hashim", cur[13]);
-
-                cur.Read();
-                Assert.AreEqual(2, cur[0]);
-                Assert.AreEqual(true, cur[1]);
-                Assert.IsInstanceOf(typeof(byte[]), cur[2]);
-                Assert.AreEqual("b", cur[3]);
-                Assert.AreEqual(new DateTime(2007, 10, 10), cur[4]);
-                Assert.AreEqual(1.2, cur[5]);
-                Assert.AreEqual(2, cur[6]);
-                Assert.AreEqual(2, cur[7]);
-                Assert.AreEqual(3.30, cur[8]);
-                Assert.AreEqual(3.3f, cur[9]);
-                Assert.AreEqual(2, cur[10]);
-                Assert.AreEqual("EnterpriseDB", cur[11]);
-                Assert.AreEqual(new DateTime(2005, 2, 3), cur[12]);
-                Assert.AreEqual("Great", cur.GetString(13));
-
-                cur.Read();
-                Assert.AreEqual(3, cur[0]);
-                Assert.AreEqual(true, cur[1]);
-                Assert.IsInstanceOf(typeof(byte[]), cur[2]);
-                Assert.AreEqual("c", cur[3]);
-                Assert.AreEqual(new DateTime(2007, 11, 1), cur[4]);
-                Assert.AreEqual(1.3, cur[5]);
-                Assert.AreEqual(3, cur[6]);
-                Assert.AreEqual(3, cur[7]);
-                Assert.AreEqual(2.10, cur[8]);
-                Assert.AreEqual(2.2f, cur[9]);
-                Assert.AreEqual(1, cur[10]);
-                Assert.AreEqual("Islamabad", cur[11]);
-                Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
-                Assert.AreEqual("Sirsyed", cur[13]);
-
-                cur.Read();
-                Assert.AreEqual(4, cur[0]);
-                Assert.AreEqual(false, cur[1]);
-                Assert.IsInstanceOf(typeof(byte[]), cur[2]);
-                Assert.AreEqual("d", cur[3]);
-                Assert.AreEqual(new DateTime(1997, 2, 3), cur[4]);
-                Assert.AreEqual(1.4, cur[5]);
-                Assert.AreEqual(4, cur[6]);
-                Assert.AreEqual(5, cur[7]);
-                Assert.AreEqual(2.20, cur[8]);
-                Assert.AreEqual(2.2f, cur[9]);
-                Assert.AreEqual(1, cur[10]);
-                Assert.AreEqual("Pakistan", cur[11]);
-                Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
-                Assert.AreEqual("Endnews", cur[13]);
-
-                cur.Close();
-
-                tran.Commit();
-
-                com.CommandText = "DROP TABLE TestCursorTable;";
-                com.ExecuteNonQuery();
             }
-            catch (EDBException e)
+            catch (EDBException)
             {
-                throw new Exception(e.ToString());
             }
+
+            var command = new EDBCommand("RefCursorsOUT(:v_id)", con);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Transaction = tran;
+            command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
+            command.Prepare();
+
+            command.ExecuteNonQuery();
+            var cursorName = command.Parameters[0].Value.ToString();
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            cur.Read();
+            Assert.AreEqual(1, cur[0]);
+            Assert.AreEqual(false, cur[1]);
+            Assert.IsInstanceOf(typeof(byte[]), cur[2]);
+            Assert.AreEqual("a", cur[3]);
+            Assert.AreEqual(new DateTime(2006, 1, 1), cur[4]);
+            Assert.AreEqual(1.1, cur[5]);
+            Assert.AreEqual(1, cur[6]);
+            Assert.AreEqual(1, cur[7]);
+            Assert.AreEqual(2.20, cur[8]);
+            Assert.AreEqual(2.2f, cur[9]);
+            Assert.AreEqual(1, cur[10]);
+            Assert.AreEqual("Shehzad", cur[11]);
+            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual("Hashim", cur[13]);
+
+            cur.Read();
+            Assert.AreEqual(2, cur[0]);
+            Assert.AreEqual(true, cur[1]);
+            Assert.IsInstanceOf(typeof(byte[]), cur[2]);
+            Assert.AreEqual("b", cur[3]);
+            Assert.AreEqual(new DateTime(2007, 10, 10), cur[4]);
+            Assert.AreEqual(1.2, cur[5]);
+            Assert.AreEqual(2, cur[6]);
+            Assert.AreEqual(2, cur[7]);
+            Assert.AreEqual(3.30, cur[8]);
+            Assert.AreEqual(3.3f, cur[9]);
+            Assert.AreEqual(2, cur[10]);
+            Assert.AreEqual("EnterpriseDB", cur[11]);
+            Assert.AreEqual(new DateTime(2005, 2, 3), cur[12]);
+            Assert.AreEqual("Great", cur.GetString(13));
+
+            cur.Read();
+            Assert.AreEqual(3, cur[0]);
+            Assert.AreEqual(true, cur[1]);
+            Assert.IsInstanceOf(typeof(byte[]), cur[2]);
+            Assert.AreEqual("c", cur[3]);
+            Assert.AreEqual(new DateTime(2007, 11, 1), cur[4]);
+            Assert.AreEqual(1.3, cur[5]);
+            Assert.AreEqual(3, cur[6]);
+            Assert.AreEqual(3, cur[7]);
+            Assert.AreEqual(2.10, cur[8]);
+            Assert.AreEqual(2.2f, cur[9]);
+            Assert.AreEqual(1, cur[10]);
+            Assert.AreEqual("Islamabad", cur[11]);
+            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual("Sirsyed", cur[13]);
+
+            cur.Read();
+            Assert.AreEqual(4, cur[0]);
+            Assert.AreEqual(false, cur[1]);
+            Assert.IsInstanceOf(typeof(byte[]), cur[2]);
+            Assert.AreEqual("d", cur[3]);
+            Assert.AreEqual(new DateTime(1997, 2, 3), cur[4]);
+            Assert.AreEqual(1.4, cur[5]);
+            Assert.AreEqual(4, cur[6]);
+            Assert.AreEqual(5, cur[7]);
+            Assert.AreEqual(2.20, cur[8]);
+            Assert.AreEqual(2.2f, cur[9]);
+            Assert.AreEqual(1, cur[10]);
+            Assert.AreEqual("Pakistan", cur[11]);
+            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual("Endnews", cur[13]);
+
+            cur.Close();
+
+            tran.Commit();
+
+            com.CommandText = "DROP TABLE TestCursorTable;";
+            com.ExecuteNonQuery();
 
         }
 
-        [Test, /*Ignore("Investigate")*/]
-
-
-
-
-
+        [Test, Ignore("Investigate")]
         public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
         {
             EDBCommand command = null;
+
+            using var con = OpenConnection();
+            command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
+            EDBTransaction tran = con.BeginTransaction();
+
+            command = new EDBCommand("CREATE OR REPLACE function refcur_callee2_func( c_1 OUT numeric, " +
+                                    "                                           c_2 IN OUT refcursor, " +
+                                    "                                           c_3 IN OUT refcursor ) return numeric IS " +
+                                    "BEGIN " +
+                                    "   c_1 := 100; " +
+                                    "   open c_2 for select * from emp; " +
+                                    "   open c_3 for select ename from emp; " +
+                                    "   return c_1; " +
+                                    "END;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
+
             try
             {
-                using var con = OpenConnection();
-                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-
+                command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 command.ExecuteNonQuery();
                 command.Dispose();
-                EDBTransaction tran = con.BeginTransaction();
-
-                command = new EDBCommand("CREATE OR REPLACE function refcur_callee2_func( c_1 OUT numeric, " +
-                                        "                                           c_2 IN OUT refcursor, " +
-                                        "                                           c_3 IN OUT refcursor ) return numeric IS " +
-                                        "BEGIN " +
-                                        "   c_1 := 100; " +
-                                        "   open c_2 for select * from emp; " +
-                                        "   open c_3 for select ename from emp; " +
-                                        "   return c_1; " +
-                                        "END;", con);
-
-                command.ExecuteNonQuery();
-                command.Dispose();
-
-                try
-                {
-                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    command.ExecuteNonQuery();
-                    command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
-                command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);
-                command.CommandType = CommandType.StoredProcedure;
-
-                command.Transaction = tran;
-                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Prepare();
-                command.Parameters[0].Value = 7369;
-                command.ExecuteNonQuery();
-
-
-                Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
-
-                var cursorName1 = command.Parameters[1].Value.ToString();
-                var cursorName2 = command.Parameters[2].Value.ToString();
-
-                command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
-                command.CommandType = CommandType.Text;
-                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
-
-                reader.Read();
-                reader.Read();
-
-                Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
-                Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
-                Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
-                Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
-                Assert.AreEqual("1600", Convert.ToString(reader.GetString(5)));
-                reader.Close();
-
-                command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
-                command.CommandType = CommandType.Text;
-                reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
-
-                reader.Read();
-                Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
-                reader.Close();
-                tran.Commit();
-
             }
-
-            catch (Exception ex)
+            catch (EDBException)
             {
-                Console.WriteLine(ex.Message.ToString());
-                if (command != null)
-                    command.Dispose();
             }
+            command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Transaction = tran;
+            command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Prepare();
+            command.Parameters[0].Value = 7369;
+            command.ExecuteNonQuery();
+
+
+            Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
+
+            var cursorName1 = command.Parameters[1].Value.ToString();
+            var cursorName2 = command.Parameters[2].Value.ToString();
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
+            command.CommandType = CommandType.Text;
+            EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            reader.Read();
+            reader.Read();
+
+            Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
+            Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
+            Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
+            Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
+            Assert.AreEqual("1600", Convert.ToString(reader.GetString(5)));
+            reader.Close();
+
+            command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
+            command.CommandType = CommandType.Text;
+            reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            reader.Read();
+            Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
+            reader.Close();
+            tran.Commit();
+
 
         }
 
         [Test, /*Ignore("Investigate")*/]
         public void TERSE_FUNC_DEFAULT_TYPES()
         {
+
+            using var con = OpenConnection();
+            EDBCommand command;
+            command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            command = new EDBCommand("BEGIN;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            command = new EDBCommand("create or replace function terse_func_defvals( param1 integer, param2 integer default 10 ) return varchar2 is " +
+                                     "begin " +
+                                     "  return 'EnterpriseDB'; " +
+                                     "end;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
+
             try
             {
-                using var con = OpenConnection();
-                EDBCommand command;
-                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 command.ExecuteNonQuery();
                 command.Dispose();
-
-                command = new EDBCommand("BEGIN;", con);
-                command.ExecuteNonQuery();
-                command.Dispose();
-
-                command = new EDBCommand("create or replace function terse_func_defvals( param1 integer, param2 integer default 10 ) return varchar2 is " +
-                                         "begin " +
-                                         "  return 'EnterpriseDB'; " +
-                                         "end;", con);
-
-                command.ExecuteNonQuery();
-                command.Dispose();
-
-                try
-                {
-                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    command.ExecuteNonQuery();
-                    command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
-
-                command = new EDBCommand("terse_func_defvals(:param1)", con);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-                command.Prepare();
-
-                command.Parameters[0].Value = 3;
-                EDBDataReader result = command.ExecuteReader();
-                while (result.Read())
-                { }
-
-                Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
-                Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
-
-                result.Close();
-                command.Dispose();
-
-                command = new EDBCommand("END;", con);
-                command.ExecuteNonQuery();
-                command.Dispose();
-
             }
-            catch (EDBException exp)
+            catch (EDBException)
             {
-                Console.WriteLine(exp.Message);
             }
+
+            command = new EDBCommand("terse_func_defvals(:param1)", con);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+            command.Prepare();
+
+            command.Parameters[0].Value = 3;
+            EDBDataReader result = command.ExecuteReader();
+            while (result.Read())
+            { }
+
+            Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+
+            result.Close();
+            command.Dispose();
+
+            command = new EDBCommand("END;", con);
+            command.ExecuteNonQuery();
+            command.Dispose();
         }
 
         #endregion
