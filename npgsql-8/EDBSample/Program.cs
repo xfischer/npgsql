@@ -4,7 +4,6 @@ global using global::System.Threading.Tasks;
 using EnterpriseDB.EDBClient;
 using Microsoft.Extensions.Logging;
 using System.Data;
-using System.Diagnostics;
 using System.Threading;
 
 namespace EDBSample
@@ -14,24 +13,30 @@ namespace EDBSample
     // environment, easier debugging
     internal class Program
     {
-        //static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
-        static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+        static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
+        //static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
         static ILoggerFactory _loggerFactory;
         static ILogger _logger;
 
         static async Task Main(string[] args)
         {
-            InitLogging();
+            InitLogging(LogLevel.Trace);
 
             try
             {
                 _logger.LogDebug("---- Starting");
+
+
+                await Sample();
+
                 //await Timeout_async_soft();
                 //Bad_database();
                 //Invalid_constringParams();
                 //await WaitAsync_CancellationSample();
-                await Sample();            
+
+                await Sample_BadReaderState();
+
                 //await EC_2716_ExecuteNonQueryAsync();
                 //await EC_2716_ExecuteReaderAsync();
                 _logger.LogDebug("---- end");
@@ -43,7 +48,6 @@ namespace EDBSample
 
         }
 
-
         static async Task Sample()
         {
 
@@ -51,6 +55,39 @@ namespace EDBSample
             {
                 var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                 await using var dataSource = dataSourceBuilder.Build();
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var com = new EDBCommand("", tempCon1);
+                    com.CommandType = CommandType.Text;
+                    var strSqlemptyfunction = "CREATE OR REPLACE Function emptyfunction_test return Varchar\n"
+                    + " IS \n"
+                    + " BEGIN \n"
+                    + "    RETURN 'EnterpriseDB'; \n"
+                    + " END; \n";
+                    com.CommandText = strSqlemptyfunction;
+                    com.ExecuteNonQuery();
+                }
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var command = new EDBCommand("emptyfunction_test", tempCon1);
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                    command.Prepare();
+                    command.ExecuteNonQuery();
+                }
+
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var com = new EDBCommand("", tempCon1);
+                    com.CommandType = CommandType.Text;
+                    com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
+                    com.ExecuteNonQuery();
+                }
 
                 await using var conn = await dataSource.OpenConnectionAsync();
 
@@ -112,9 +149,15 @@ namespace EDBSample
                     callable_command.Parameters[1].Value = 7369;
 
                     await using var result = await callable_command.ExecuteReaderAsync();
-                    var fc = result.FieldCount;
-                    for (var i = 0; i < (fc + 1); i++)
-                        Console.WriteLine("RESULT[" + i + "]=" + Convert.ToString(callable_command.Parameters[i].Value));
+                    for (int i = 0; i < callable_command.Parameters.Count; i++)
+                        Console.WriteLine($"Parameter[\"{callable_command.Parameters[i].ParameterName}\"]={callable_command.Parameters[i].Value}");
+
+                    if (await result.ReadAsync())
+                    {
+                        var fc = result.FieldCount;
+                        for (var i = 0; i < fc; i++)
+                            Console.WriteLine($"RESULT[{i}]={result[i]}");
+                    }
                     result.Close();
                 }
                 catch (EDBException exp)
@@ -153,6 +196,88 @@ namespace EDBSample
             }
         }
 
+        static async Task Sample_BadReaderState()
+        {
+
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
+                await using var dataSource = dataSourceBuilder.Build();
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var com = new EDBCommand("", tempCon1);
+                    com.CommandType = CommandType.Text;
+                    var strSqlemptyfunction = "CREATE OR REPLACE Function emptyfunction_test return Varchar\n"
+                    + " IS \n"
+                    + " BEGIN \n"
+                    + "    RETURN 'EnterpriseDB'; \n"
+                    + " END; \n";
+                    com.CommandText = strSqlemptyfunction;
+                    com.ExecuteNonQuery();
+                }
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var command = new EDBCommand("emptyfunction_test", tempCon1);
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+                    command.Prepare();
+                    command.ExecuteNonQuery();
+                }
+
+
+                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
+                {
+                    var com = new EDBCommand("", tempCon1);
+                    com.CommandType = CommandType.Text;
+                    com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
+                    com.ExecuteNonQuery();
+                }
+
+                await using var conn = await dataSource.OpenConnectionAsync();
+
+                //Simple select statement using EDBCommand object
+                await using var EDBSeletCommand = new EDBCommand("SELECT EMPNO,ENAME,JOB,MGR,HIREDATE FROM EMP", conn);
+                await using var SelectResult = await EDBSeletCommand.ExecuteReaderAsync();
+                while (await SelectResult.ReadAsync())
+                {
+                    Console.WriteLine("Emp No" + " " + SelectResult.GetInt32(0));
+                    Console.WriteLine("Emp Name" + " " + SelectResult.GetString(1));
+                    if (SelectResult.IsDBNull(2) == false)
+                        Console.WriteLine("Job" + " " + SelectResult.GetString(2));
+                    else
+                        Console.WriteLine("Job" + " null ");
+                    if (SelectResult.IsDBNull(3) == false)
+                        Console.WriteLine("Mgr" + " " + SelectResult.GetInt32(3));
+                    else
+                        Console.WriteLine("Mgr" + "null");
+                    if (SelectResult.IsDBNull(4) == false)
+                        Console.WriteLine("Hire Date" + " " + SelectResult.GetDateTime(4));
+                    else
+                        Console.WriteLine("Hire Date" + " null");
+                    Console.WriteLine("---------------------------------");
+                }
+                await SelectResult.CloseAsync();
+
+                //Insert statement using EDBCommand Object
+                await using var EDBInsertCommand = new EDBCommand("INSERT INTO EMP(EMPNO,ENAME) VALUES((SELECT COUNT(EMPNO) FROM EMP),'JACKSON')", conn);
+                EDBInsertCommand.CommandType = CommandType.Text;
+                await EDBInsertCommand.ExecuteScalarAsync();
+                Console.WriteLine("Record inserted");
+
+                //Close the connection
+                await conn.CloseAsync();
+            }
+
+            catch (EDBException exp)
+            {
+                Console.WriteLine(exp.ToString());
+            }
+        }
+
         static async Task EC_2716_ExecuteReaderAsync()
         {
 
@@ -163,7 +288,7 @@ namespace EDBSample
 
                 await using var conn = await dataSource.OpenConnectionAsync();
 
-               
+
                 //procedure call example
                 try
                 {
