@@ -1,3 +1,5 @@
+//#define EDB_DIAGNOSTICS
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -24,9 +26,9 @@ static partial class LogMessages
     {
         if (logger is null || logger is NullLogger)
         {
-#if EDB_DIAGNOSTICS
+#if EDB_DIAGNOSTICS && DEBUG
             Console.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
-            Debug.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
+            System.Diagnostics.Debug.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
 #endif
         }
         else

@@ -208,7 +208,8 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         get => _timeout ?? (InternalConnection?.CommandTimeout ?? DefaultTimeout);
         set
         {
-            if (value < 0) {
+            if (value < 0)
+            {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "CommandTimeout can't be less than zero.");
             }
 
@@ -1025,7 +1026,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 parameters ??= new();
                 _parameters ??= new();
                 var inputList = new List<EDBParameter>(parameters.Count);
-                for(int i = 0; i< parameters.Count; i++)
+                for (int i = 0; i < parameters.Count; i++)
                 {
                     if (parameters[i].IsInputDirection) inputList.Add(parameters[i]);
                 }
@@ -1673,12 +1674,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         || Parameters._hasReturnParam
                         || Parameters.IsScalar))
                 {
-                    return new EDBInMemoryDataReader(this, reader);
+                    reader.MutateToInMemoryReader(this);
                 }
-                else
-                {
-                    return reader;
-                }
+
+                return reader;
+
             }
             else
             {

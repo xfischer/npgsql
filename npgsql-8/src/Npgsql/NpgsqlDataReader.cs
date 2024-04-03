@@ -28,7 +28,7 @@ namespace EnterpriseDB.EDBClient;
 /// Reads a forward-only stream of rows from a data source.
 /// </summary>
 #pragma warning disable CA1010
-public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
+public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 #pragma warning restore CA1010
 {
     static readonly Task<bool> TrueTask = Task.FromResult(true);
@@ -38,7 +38,8 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     internal EDBConnector Connector { get; }
     EDBConnection? _connection;
     /* Enterprisedb Team */
-    internal bool isOutParamReceived;
+    internal bool _isOutParamReceived;
+    private bool _isInMemoryReader = false;
 
     /// <summary>
     /// The behavior of the command with which this reader was executed.
@@ -165,9 +166,6 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         CheckClosedOrDisposed();
 
-        if (!HasRows) // EnterpriseDB team
-            return false;
-
         return TryRead()?.Result ?? Read(false).GetAwaiter().GetResult();
     }
 
@@ -199,6 +197,11 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             State = ReaderState.InResult;
             return TrueTask;
         case ReaderState.InResult:
+            if (_isInMemoryReader) // EnterpriseDB Team
+            {
+                State = ReaderState.BetweenResults;
+                return FalseTask;
+            }
             break;
         default:
             return FalseTask;
@@ -360,6 +363,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             Debug.Assert(State is ReaderState.BetweenResults);
 
             _hasRows = false;
+            _isInMemoryReader = false; // EnterpriseDB Team
 
             var statements = _statements;
             var statementIndex = StatementIndex;
@@ -686,7 +690,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var paramdata = false;
         var retDataFetched = false;
         var done = false;
-        isOutParamReceived = false;
+        _isOutParamReceived = false;
         RowDescriptionMessage? callableDescription = default!;
         // Temporarily set our state to InResult to allow us to read the values
         State = ReaderState.InResult;
@@ -715,7 +719,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                         else
                         {
-                            if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                            if (Command.Parameters.HasOutputParameters && !_isOutParamReceived)
                             {
                                 done = false;
                             }
@@ -733,7 +737,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                 case BackendMessageCode.CommandComplete:
                 case BackendMessageCode.EmptyQueryResponse:
-                    if (Command.Parameters.HasOutputParameters && !isOutParamReceived)
+                    if (Command.Parameters.HasOutputParameters && !_isOutParamReceived)
                     {
                         continue;
                     }
@@ -804,7 +808,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             State = ReaderState.BeforeResult;  // Set the state back
         }
-        else if(Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam)
+        else if (Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam)
         {
             // EnterpriseDB : we now need to fill the out parameter values from _callable_description (RowDescription of OutTuples)
             // RowDescription contains nothing OR return value at this stage
@@ -910,7 +914,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         Buffer.ReadPosition = currentPosition; // Restore position
 
         _column = -1;
-    }    
+    }
 
     /// <summary>
     /// Note that in SchemaOnly mode there are no resultsets, and we read nothing from the backend (all
@@ -1145,15 +1149,15 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (Command.CommandType == CommandType.StoredProcedure)
         {
             if (!isReturnRow)
-            {                
-                isOutParamReceived = true;
+            {
+                _isOutParamReceived = true;
             }
 
             var numColumns = buf.ReadInt16();
             if (isReturnRow)
             {
                 var len = buf.ReadInt32();
-                Debug.Assert(RowDescription._fields.Length == 1);
+                Debug.Assert(RowDescription.Count == 1);
                 var fieldDescription = RowDescription._fields[0];
 
                 var converter = fieldDescription.ObjectOrDefaultInfo.Converter;
@@ -1166,7 +1170,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 buf.PgReader.EndRead();
                 buf.PgReader.Commit(false);
 
-                
+
                 Command.Parameters.ReturnParam.Value = result;
                 return;
             }
@@ -1178,7 +1182,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             _column = -1;
 
             // TODO: One big row with many columns will make the DataRow's _columnOffsets big forever...
-            var initialPosition = buf.ReadPosition;            
+            var initialPosition = buf.ReadPosition;
             for (var i = 0; i < numColumns; i++)
             {
                 var pos = buf.ReadPosition;
@@ -1418,7 +1422,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Releases the resources used by the <see cref="EDBDataReader"/>.
     /// </summary>
 #if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-    public virtual async ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
 #else
     public override async ValueTask DisposeAsync()
 #endif
@@ -1463,7 +1467,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Closes the <see cref="EDBDataReader"/> reader, allowing a new command to be executed.
     /// </summary>
 #if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-    public virtual Task CloseAsync()
+    public Task CloseAsync()
 #else
     public override Task CloseAsync()
 #endif
@@ -2043,6 +2047,9 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The value of the specified column.</returns>
     public override object GetValue(int ordinal)
     {
+        if (_isInMemoryReader) // EnterpriseDB Team
+            return GetValueFromParameters(ordinal);
+
         var field = GetDefaultInfo(ordinal, out var converter, out var bufferRequirement);
         var columnLength =
             _isSequential
@@ -2063,7 +2070,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <param name="ordinal">The zero-based column ordinal.</param>
     /// <returns>The value of the specified column.</returns>
-    public virtual object GetEDBValue(int ordinal) // // EnterpriseDB Team, used only from PopulateOutputParameters
+    public object GetEDBValue(int ordinal) // // EnterpriseDB Team, used only from PopulateOutputParameters
     {
         var field = GetDefaultInfo(ordinal, out var converter, out var bufferRequirement);
 
@@ -2098,7 +2105,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
             throw;
         }
-        
+
 
         return result;
     }
@@ -2187,7 +2194,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// The returned representation can be used to access various information about the field.
     /// </summary>
     /// <param name="ordinal">The zero-based column index.</param>
-    public virtual PostgresType GetPostgresType(int ordinal) => GetField(ordinal).PostgresType;
+    public PostgresType GetPostgresType(int ordinal) => GetField(ordinal).PostgresType;
 
     /// <summary>
     /// Gets the data type information for the specified field.
@@ -2205,7 +2212,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// debugging purposes.
     /// </remarks>
     /// <param name="ordinal">The zero-based column index.</param>
-    public virtual uint GetDataTypeOID(int ordinal) => GetField(ordinal).TypeOID;
+    public uint GetDataTypeOID(int ordinal) => GetField(ordinal).TypeOID;
 
     /// <summary>
     /// Gets the data type of the specified column.
@@ -2229,7 +2236,7 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Returns schema information for the columns in the current resultset.
     /// </summary>
     /// <returns></returns>
-    public virtual ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
+    public ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
         => GetColumnSchema(async: false).GetAwaiter().GetResult();
 
     ReadOnlyCollection<DbColumn> IDbColumnSchemaGenerator.GetColumnSchema()
@@ -2248,9 +2255,9 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <returns></returns>
 #if NET6_0_OR_GREATER
-    public virtual new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+    public new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #else
-    public virtual Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+    public Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #endif
         => GetColumnSchema(async: true, cancellationToken);
 
@@ -2788,6 +2795,41 @@ public class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     }
 
     #endregion
+
+    #region EDB Specific CALL OutTuple / Return value handling
+
+
+    private Dictionary<string, EDBParameter> paramsByName;
+    internal void MutateToInMemoryReader(EDBCommand command)
+    {
+        LogMessages.TryEDBTrace(_commandLogger, "MutateToInMemoryReader");
+
+        paramsByName = new(capacity: command.Parameters.InternalList.Count);
+
+        int i = 0;
+        foreach (var param in command.Parameters.InternalList)
+        {
+            if (!param.IsOutReturnDirection) continue;
+
+            paramsByName[param.ParameterName] = param;
+            RowDescription[i].Name = param.ParameterName;
+
+            i++;
+        }
+
+        _hasRows = true;
+        State = ReaderState.BeforeResult;
+        _isInMemoryReader = true;
+    }
+
+    private object GetValueFromParameters(int ordinal)
+    {
+        var fieldDescription = CheckRowAndGetField(ordinal);
+        return paramsByName[fieldDescription!.Name]!.Value;
+    }
+
+    #endregion
+
 }
 
 enum ReaderState

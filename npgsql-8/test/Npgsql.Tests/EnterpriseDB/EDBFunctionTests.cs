@@ -107,8 +107,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;
 
-            com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
-            com.ExecuteNonQuery();
+            try
+            {
+                com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
+                com.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            
 
             com.CommandText = "DROP Function IF EXISTS  functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
             com.ExecuteNonQuery();
@@ -135,7 +143,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testfunctionsanity()
         {
             using var con = OpenConnection();
-            var command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
+            using var command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 1));
@@ -158,6 +166,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
             Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
             Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
+
+            command.Dispose();
+            con.Close();
+            
         }
 
         /* To verify the sanity of functions without parameters*/
@@ -165,7 +177,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testemptyfunction()
         {
             using var con = OpenConnection();
-            var command = new EDBCommand("public.emptyfunction_test", con);
+            using var command = new EDBCommand("public.emptyfunction_test", con);
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
@@ -339,6 +351,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             reader.Close();
             Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
+
+            command.Dispose();
+            con.Close();
+            con.Dispose();
 
         }
 
@@ -778,6 +794,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var strSql = "CREATE OR REPLACE FUNCTION FunctionWithFloat(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) return FLOAT  IS   BEGIN  p_out:=p_inout; p_inout:=p_in; return -0.999;  END;";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
+            command.Dispose();
 
             //////////////codef
 
@@ -802,6 +819,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command = new EDBCommand("", con);
             command.CommandText = "DROP Function FunctionWithFloat( in FLOAT, inout FLOAT, out FLOAT);";
             command.ExecuteNonQuery();
+            command.Dispose();
         }
 
         /* To verify the sanity of IN, INOUT and OUT parameters in functions with DOUBLE PRECISION datatype */
@@ -816,6 +834,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var strSql = "CREATE OR REPLACE FUNCTION FunctionWithDoublePrecision(p_in in Double Precision,p_inout inout Double Precision,p_out out Double Precision) return Double Precision  IS   BEGIN  p_out:=p_inout; p_inout:=p_in; return -0.999;  END;";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
+            command.Dispose();
 
             //////////////code
 
@@ -840,6 +859,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command = new EDBCommand("", con);
             command.CommandText = "DROP Function FunctionWithDoublePrecision( in Double Precision, inout Double Precision, out Double Precision) ;";
             command.ExecuteNonQuery();
+            command.Dispose();
         }
 
         /* To verify the sanity of IN, INOUT and OUT parameters in functions with REAL datatype */
