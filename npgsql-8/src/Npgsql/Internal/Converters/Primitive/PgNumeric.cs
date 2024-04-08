@@ -220,13 +220,18 @@ readonly struct PgNumeric
         /// <param name="destination">If the destination ends up being too small the builder allocates instead</param>
         public Builder(BigInteger value, Span<short> destination)
         {
-# if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+
+#if NETSTANDARD2_0
             var bits = value.ToByteArray().AsSpan();
             // Detect the presence of a padding byte and slice it away (as we don't have isUnsigned: true overloads on ns2.0).
             if (value.Sign == 1 && bits.Length > 2 && (bits[bits.Length - 2] & 0x80) != 0 && bits[bits.Length - 1] == 0)
                 bits = bits.Slice(0, bits.Length - 1);
             var uintRoundedByteCount = (bits.Length + (sizeof(uint) - 1)) / sizeof(uint) * sizeof(uint);
-# else
+#elif NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+            var absValue = BigInteger.Abs(value);
+            var absByteArray = absValue.ToByteArray().AsSpan();
+            var uintRoundedByteCount = (absByteArray.Length + (sizeof(uint) - 1)) / sizeof(uint) * sizeof(uint);
+#else
             var absValue = BigInteger.Abs(value); // isUnsigned: true fails for negative values.
             var uintRoundedByteCount = (absValue.GetByteCount(isUnsigned: true) + (sizeof(uint) - 1)) / sizeof(uint) * sizeof(uint);
 #endif
@@ -238,8 +243,10 @@ readonly struct PgNumeric
             // Fill the last uint worth of bytes as it may only be partially written to.
             uintRoundedBits.Slice(uintRoundedBits.Length - sizeof(uint)).Fill(0);
 
-#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+#if NETSTANDARD2_0
             bits.CopyTo(uintRoundedBits);
+#elif NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+            absByteArray.Slice(0,Math.Min(absByteArray.Length, uintRoundedBits.Length)).CopyTo(uintRoundedBits);
 #else
             var success = absValue.TryWriteBytes(uintRoundedBits, out _, isUnsigned: true);
             Debug.Assert(success);
