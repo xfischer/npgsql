@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -85,6 +86,20 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.CommandText = strSqlFuncMixArgsRetVal;
             com.ExecuteNonQuery();
 
+            //	Testing function with args mix and return value + one out param null
+            var strSqlFuncMixArgsRetValNull = """
+                CREATE OR REPLACE FUNCTION mixArgFuncNull_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                    RETURN int
+                AS
+                BEGIN
+                    b:=c;
+                    a:=NULL;
+                    return b-1;
+                END;
+                """;
+            com.CommandText = strSqlFuncMixArgsRetValNull;
+            com.ExecuteNonQuery();
+
             //	Testing parameterless function with a return value
             var strretValFunc_test = """
                 CREATE OR REPLACE FUNCTION retValFunc_test()
@@ -128,6 +143,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.ExecuteNonQuery();
 
             com.CommandText = "DROP Function IF EXISTS mixArgFunc_test(INOUT NUMERIC, OUT NUMERIC, IN NUMERIC)";
+            com.ExecuteNonQuery();
+
+            com.CommandText = "DROP Function IF EXISTS mixArgFuncNull_test(INOUT NUMERIC, OUT NUMERIC, IN NUMERIC)";
             com.ExecuteNonQuery();
 
             com.CommandText = "DROP Function IF EXISTS retValFunc_test()";
@@ -355,6 +373,111 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Dispose();
             con.Close();
             con.Dispose();
+
+        }
+
+        [Test]
+        public void TestInMemoryDataReader()
+        {
+
+            using var con = OpenConnection();
+            var command = new EDBCommand("public.mixArgFuncNull_test(:paramInOut, :paramOut, :paramIn)", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("paramInOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.InputOutput });
+            command.Parameters.Add(new EDBParameter("paramOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Output });
+            command.Parameters.Add(new EDBParameter("paramIn", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Input });
+            command.Parameters.Add(new EDBParameter("paramRetVal", 4) { Direction = ParameterDirection.ReturnValue });
+
+            command.Prepare();
+
+            command.Parameters["paramInOut"].Value = 10;
+            command.Parameters["paramIn"].Value = 25;
+
+            EDBDataReader reader = command.ExecuteReader();
+            Assert.IsTrue(reader.HasRows);
+            Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
+            Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
+            Assert.AreEqual(24, command.Parameters["paramRetVal"].Value);
+
+            Assert.AreEqual(3, reader.FieldCount);
+
+            Assert.IsTrue(reader.Read());
+
+            Assert.IsTrue(reader.IsDBNull("paramInOut"));
+
+            object[] values = new object[reader.FieldCount];
+            reader.GetValues(values);
+
+            object[] expected = [DBNull.Value, 25, 24];
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Assert.AreEqual(expected[i], values[i]);
+            }
+
+            Assert.IsFalse(reader.Read());
+
+            reader.Close();
+            Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
+
+            command.Dispose();
+            con.Close();
+            con.Dispose();
+
+        }
+
+        [Test]
+        public async Task TestInMemoryDataReaderAsync()
+        {
+
+            using var con = await OpenConnectionAsync();
+            var command = new EDBCommand("public.mixArgFuncNull_test(:paramInOut, :paramOut, :paramIn)", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("paramInOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.InputOutput });
+            command.Parameters.Add(new EDBParameter("paramOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Output });
+            command.Parameters.Add(new EDBParameter("paramIn", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Input });
+            command.Parameters.Add(new EDBParameter("paramRetVal", 4) { Direction = ParameterDirection.ReturnValue });
+
+            await command.PrepareAsync();
+
+            command.Parameters["paramInOut"].Value = 10;
+            command.Parameters["paramIn"].Value = 25;
+
+            EDBDataReader reader = await command.ExecuteReaderAsync();
+            Assert.IsTrue(reader.HasRows);
+            Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
+            Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
+            Assert.AreEqual(24, command.Parameters["paramRetVal"].Value);
+
+            Assert.AreEqual(3, reader.FieldCount);
+
+            Assert.IsTrue(await reader.ReadAsync());
+
+            Assert.IsTrue(await reader.IsDBNullAsync(0));
+#if !NETFRAMEWORK
+            Assert.IsTrue(await reader.IsDBNullAsync("paramInOut"));
+#endif
+
+            object[] values = new object[reader.FieldCount];
+            reader.GetValues(values);
+
+            object[] expected = [DBNull.Value, 25, 24];
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Assert.AreEqual(expected[i], values[i]);
+            }
+
+            Assert.IsFalse(await reader.ReadAsync());
+
+            await reader.CloseAsync();
+            Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
+
+            await command.DisposeAsync();
+            await con.CloseAsync();
+            await con.DisposeAsync();
 
         }
 

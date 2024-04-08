@@ -99,7 +99,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     internal RowDescriptionMessage? RowDescription;
 
-    int ColumnCount => RowDescription!.Count;
+    int ColumnCount => RowDescription?.Count ?? 0;
 
     /// <summary>
     /// Stores the last converter info resolved by column, to speed up repeated reading.
@@ -2072,6 +2072,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The value of the specified column.</returns>
     public object GetEDBValue(int ordinal) // // EnterpriseDB Team, used only from PopulateOutputParameters
     {
+        if (_isInMemoryReader) // EnterpriseDB Team
+            return GetValueFromParameters(ordinal);
+
         var field = GetDefaultInfo(ordinal, out var converter, out var bufferRequirement);
 
         var columnLength = -1;
@@ -2081,9 +2084,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         if (columnLength == -1)
             return DBNull.Value;
-
-        //if (Command.CommandType == CommandType.StoredProcedure)
-        //    SeekToColumnStart(ordinal, async: false);
 
         object result;
         try
@@ -2105,7 +2105,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
             throw;
         }
-
 
         return result;
     }
@@ -2145,7 +2144,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <param name="ordinal">The zero-based column ordinal.</param>
     /// <returns><b>true</b> if the specified column is equivalent to <see cref="DBNull"/>; otherwise <b>false</b>.</returns>
     public override bool IsDBNull(int ordinal)
-        => SeekToColumn(async: false, ordinal, CheckRowAndGetField(ordinal).DataFormat, resumableOp: true).GetAwaiter().GetResult() is -1;
+        => _isInMemoryReader ? GetValue(ordinal) == DBNull.Value
+        : SeekToColumn(async: false, ordinal, CheckRowAndGetField(ordinal).DataFormat, resumableOp: true).GetAwaiter().GetResult() is -1;
 
     /// <summary>
     /// An asynchronous version of <see cref="IsDBNull(int)"/>, which gets a value that indicates whether the column contains non-existent or missing values.
@@ -2812,7 +2812,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             if (!param.IsOutReturnDirection) continue;
 
             paramsByName[param.ParameterName] = param;
-            RowDescription[i].Name = param.ParameterName;
+            RowDescription!.UpdateFieldName(i, param.ParameterName);
 
             i++;
         }
@@ -2825,7 +2825,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     private object GetValueFromParameters(int ordinal)
     {
         var fieldDescription = CheckRowAndGetField(ordinal);
-        return paramsByName[fieldDescription!.Name]!.Value;
+        return paramsByName![fieldDescription!.Name]!.Value!;
     }
 
     #endregion

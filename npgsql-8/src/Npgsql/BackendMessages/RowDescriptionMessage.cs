@@ -148,6 +148,15 @@ sealed class RowDescriptionMessage : IBackendMessage
         Count++;
     }
 
+    /* EnterpriseDB Team */
+    public void UpdateFieldName(int index, string name)
+    {
+        var oldName = this[index].Name;
+        this[index].Name = name;
+        _nameIndex.Remove(oldName);
+        _nameIndex[name] = index;
+    }
+
     internal static RowDescriptionMessage CreateForReplication(
         PgSerializerOptions options, uint tableOID, DataFormat dataFormat, IReadOnlyList<RelationMessage.Column> columns)
     {
