@@ -151,28 +151,26 @@ sealed class NpgsqlWriteBuffer : IDisposable
                 Underlying.Flush();
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             // Stopping twice (in case the previous Stop() call succeeded) doesn't hurt.
             // Not stopping will cause an assertion failure in debug mode when we call Start() the next time.
             // We can't stop in a finally block because Connector.Break() will dispose the buffer and the contained
             // _timeoutCts
             _timeoutCts.Stop();
-            switch (e)
+            switch (ex)
             {
             // User requested the cancellation
-            case OperationCanceledException _ when (cancellationToken.IsCancellationRequested):
-                throw Connector.Break(e);
+            case OperationCanceledException when cancellationToken.IsCancellationRequested:
+                throw Connector.Break(ex);
             // Read timeout
-            case OperationCanceledException _:
-            // Note that mono throws SocketException with the wrong error (see #1330)
-            case IOException _ when (e.InnerException as SocketException)?.SocketErrorCode ==
-                                    (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
-                Debug.Assert(e is OperationCanceledException ? async : !async);
+            case OperationCanceledException:
+            case IOException { InnerException: SocketException { SocketErrorCode: SocketError.TimedOut } }:
+                Debug.Assert(ex is OperationCanceledException ? async : !async);
                 throw Connector.Break(new NpgsqlException("Exception while writing to stream", new TimeoutException("Timeout during writing attempt")));
             }
 
-            throw Connector.Break(new NpgsqlException("Exception while writing to stream", e));
+            throw Connector.Break(new NpgsqlException("Exception while writing to stream", ex));
         }
         NpgsqlEventSource.Log.BytesWritten(WritePosition);
         _metricsReporter?.ReportBytesWritten(WritePosition);
@@ -304,37 +302,6 @@ sealed class NpgsqlWriteBuffer : IDisposable
         CheckBounds<long>();
         Unsafe.WriteUnaligned(ref Buffer[WritePosition], BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(value) : value);
         WritePosition += sizeof(long);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteUInt64(ulong value)
-    {
-        CheckBounds<ulong>();
-        Unsafe.WriteUnaligned(ref Buffer[WritePosition], BitConverter.IsLittleEndian ? BinaryPrimitives.ReverseEndianness(value) : value);
-        WritePosition += sizeof(ulong);
-    }
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteSingle(float value)
-    {
-        CheckBounds<float>();
-        if (BitConverter.IsLittleEndian)
-            Unsafe.WriteUnaligned(ref Buffer[WritePosition], BinaryPrimitives.ReverseEndianness(Unsafe.As<float, long>(ref value)));
-        else
-            Unsafe.WriteUnaligned(ref Buffer[WritePosition], value);
-        WritePosition += sizeof(float);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteDouble(double value)
-    {
-        CheckBounds<double>();
-        if (BitConverter.IsLittleEndian)
-            Unsafe.WriteUnaligned(ref Buffer[WritePosition], BinaryPrimitives.ReverseEndianness(Unsafe.As<double, long>(ref value)));
-        else
-            Unsafe.WriteUnaligned(ref Buffer[WritePosition], value);
-        WritePosition += sizeof(double);
     }
 
     [Conditional("DEBUG")]

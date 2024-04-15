@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Npgsql.Internal.Postgres;
@@ -7,6 +9,7 @@ using Npgsql.PostgresTypes;
 
 namespace Npgsql.Internal;
 
+[Experimental(NpgsqlDiagnostics.ConvertersExperimental)]
 public sealed class PgSerializerOptions
 {
     /// <summary>
@@ -25,11 +28,13 @@ public sealed class PgSerializerOptions
         _resolverChain = resolverChain ?? new();
         _timeZoneProvider = timeZoneProvider;
         DatabaseInfo = databaseInfo;
-        UnknownPgType = databaseInfo.GetPostgresType("unknown");
+        UnspecifiedDBNullTypeInfo = new(this, new Converters.Internal.VoidConverter(), DataTypeName.Unspecified, unboxedType: typeof(DBNull));
     }
 
-    // Represents the 'unknown' type, which can be used for reading and writing arbitrary text values.
-    public PostgresType UnknownPgType { get; }
+    internal PgTypeInfo UnspecifiedDBNullTypeInfo { get; }
+
+    PostgresType? _textPgType;
+    internal PostgresType TextPgType => _textPgType ??= DatabaseInfo.GetPostgresType(DataTypeNames.Text);
 
     // Used purely for type mapping, where we don't have a full set of types but resolvers might know enough.
     readonly bool _introspectionInstance;
@@ -55,11 +60,15 @@ public sealed class PgSerializerOptions
     public ArrayNullabilityMode ArrayNullabilityMode { get; init; } = ArrayNullabilityMode.Never;
     public INpgsqlNameTranslator DefaultNameTranslator { get; init; } = NpgsqlSnakeCaseNameTranslator.Instance;
 
-    public static Type[] WellKnownTextTypes { get; } = {
-        typeof(string), typeof(char[]), typeof(byte[]),
-        typeof(ArraySegment<char>), typeof(ArraySegment<char>?),
-        typeof(char), typeof(char?)
-    };
+    public static bool IsWellKnownTextType(Type type)
+    {
+        type = type.IsValueType ? Nullable.GetUnderlyingType(type) ?? type : type;
+        return Array.IndexOf([
+            typeof(string), typeof(char),
+            typeof(char[]), typeof(ReadOnlyMemory<char>), typeof(ArraySegment<char>),
+            typeof(byte[]), typeof(ReadOnlyMemory<byte>)
+        ], type) != -1 || typeof(Stream).IsAssignableFrom(type);
+    }
 
     internal bool RangesEnabled => _resolverChain.RangesEnabled;
     internal bool MultirangesEnabled => _resolverChain.MultirangesEnabled;
@@ -72,8 +81,8 @@ public sealed class PgSerializerOptions
     // for.
     PgTypeInfo? GetTypeInfoCore(Type? type, PgTypeId? pgTypeId, bool defaultTypeFallback)
         => PortableTypeIds
-            ? Unsafe.As<TypeInfoCache<DataTypeName>>(_typeInfoCache ??= new TypeInfoCache<DataTypeName>(this)).GetOrAddInfo(type, pgTypeId?.DataTypeName, defaultTypeFallback)
-            : Unsafe.As<TypeInfoCache<Oid>>(_typeInfoCache ??= new TypeInfoCache<Oid>(this)).GetOrAddInfo(type, pgTypeId?.Oid, defaultTypeFallback);
+            ? ((TypeInfoCache<DataTypeName>)(_typeInfoCache ??= new TypeInfoCache<DataTypeName>(this))).GetOrAddInfo(type, pgTypeId?.DataTypeName, defaultTypeFallback)
+            : ((TypeInfoCache<Oid>)(_typeInfoCache ??= new TypeInfoCache<Oid>(this))).GetOrAddInfo(type, pgTypeId?.Oid, defaultTypeFallback);
 
     public PgTypeInfo? GetDefaultTypeInfo(PostgresType pgType)
         => GetTypeInfoCore(null, ToCanonicalTypeId(pgType), false);
