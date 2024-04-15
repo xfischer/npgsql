@@ -33,6 +33,7 @@ ReplacePlaceHolders(){
 	Replace NET50_FRAMEWORK $NET50_FRAMEWORK $filepath
 	Replace NET60_FRAMEWORK $NET60_FRAMEWORK $filepath
 	Replace NET70_FRAMEWORK $NET70_FRAMEWORK $filepath
+	Replace NET80_FRAMEWORK $NET80_FRAMEWORK $filepath
 }
 
 if [[ $OS == *"Msys"* ]]; then

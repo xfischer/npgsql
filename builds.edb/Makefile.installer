@@ -8,8 +8,13 @@ export PKG_STAGING_PATH :=$(PWD)/inst
 ARCHIVE_EXCLUDES:=--exclude=builds.edb** --exclude=*.log*
 
 export PRE_BUILD_STEPS=createSourceArchive 
-export BUILD_COMPONENTS=build-dotnet70
+export BUILD_COMPONENTS=build-dotnet80
 export POST_BUILD_STEPS=copy-samples createBuildArchive
+
+# Build .NET8
+build-dotnet80:
+
+	cmd /c "pkg\\installer\\build-dotnet8.bat $(DOTNET_SOURCE_PATH) $(NET80_FRAMEWORK) Release AnyCPU NET8.0 $(DOTNET_STAGING_PATH)"
 
 # Build .NET7
 build-dotnet70:
