@@ -48,6 +48,8 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0
 copy bin\%RELEASE_CONFIGURATION%\net6.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\net6.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\net6.0\System.Diagnostics.DiagnosticSource.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error
+copy bin\%RELEASE_CONFIGURATION%\net6.0\System.Text.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0
 copy bin\%RELEASE_CONFIGURATION%\netstandard2.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\netstandard2.0 || goto :error
