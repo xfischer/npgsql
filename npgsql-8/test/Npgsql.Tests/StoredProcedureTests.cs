@@ -10,10 +10,10 @@ namespace EnterpriseDB.EDBClient.Tests;
 
 public class StoredProcedureTests : TestBase
 {
-    [Test] //, EDBExplicit("Works in community")]
+    [Test]
     [TestCase(true, false)]
     [TestCase(false, true)]
-    [TestCase(true, true), EDBExplicit("Works in community")]
+    [TestCase(true, true)]
     public async Task With_input_parameters(bool withPositional, bool withNamed)
     {
         var table = await CreateTempTable(DataSource, "foo int, bar int");

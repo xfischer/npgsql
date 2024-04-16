@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//#define EDB_DIAGNOSTICS
+
+using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient;
 using EnterpriseDB.EDBClient.Tests;
 using NUnit.Framework;
@@ -13,7 +15,7 @@ public class AssemblySetUp
     {
         var loggerFactory = LoggerFactory.Create(c => c
             .AddProvider(new NUnitLoggerProvider())
-#if DEBUG
+#if DEBUG || EDB_DIAGNOSTICS
             .AddDebug()
             .SetMinimumLevel(LogLevel.Trace)
 #else

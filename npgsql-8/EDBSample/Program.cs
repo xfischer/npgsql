@@ -35,9 +35,8 @@ namespace EDBSample
                 //Invalid_constringParams();
                 //await WaitAsync_CancellationSample();
 
-                await Sample_BadReaderState();
+                //await Sample_BadReaderState();
 
-                //await EC_2716_ExecuteNonQueryAsync();
                 //await EC_2716_ExecuteReaderAsync();
                 _logger.LogDebug("---- end");
             }
@@ -55,40 +54,6 @@ namespace EDBSample
             {
                 var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                 await using var dataSource = dataSourceBuilder.Build();
-
-                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
-                {
-                    var com = new EDBCommand("", tempCon1);
-                    com.CommandType = CommandType.Text;
-                    var strSqlemptyfunction = "CREATE OR REPLACE Function emptyfunction_test return Varchar\n"
-                    + " IS \n"
-                    + " BEGIN \n"
-                    + "    RETURN 'EnterpriseDB'; \n"
-                    + " END; \n";
-                    com.CommandText = strSqlemptyfunction;
-                    com.ExecuteNonQuery();
-                }
-
-                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
-                {
-                    var command = new EDBCommand("emptyfunction_test", tempCon1);
-                    command.CommandType = CommandType.StoredProcedure;
-
-                    command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
-                    command.Prepare();
-                    command.ExecuteNonQuery();
-                }
-
-
-                await using (var tempCon1 = await dataSource.OpenConnectionAsync())
-                {
-                    var com = new EDBCommand("", tempCon1);
-                    com.CommandType = CommandType.Text;
-                    com.CommandText = "DROP Function IF EXISTS emptyfunction_test;";
-                    com.ExecuteNonQuery();
-                }
-
                 await using var conn = await dataSource.OpenConnectionAsync();
 
                 //Simple select statement using EDBCommand object
@@ -155,8 +120,29 @@ namespace EDBSample
                     if (await result.ReadAsync())
                     {
                         var fc = result.FieldCount;
+
+                        Console.WriteLine("------- Field values ");
                         for (var i = 0; i < fc; i++)
+                        {
                             Console.WriteLine($"RESULT[{i}]={result[i]}");
+                        }
+                        Console.WriteLine("------- Various properties ");
+                        for (var i = 0; i < fc; i++)
+                        {
+                            Console.WriteLine($"-- Field {i}");
+
+                            Console.WriteLine($"GetValue[{i}]={result.GetValue(i)}");
+                            Console.WriteLine($"GetEDBValue[{i}]={result.GetEDBValue(i)}");
+
+                            Console.WriteLine($"GetDataTypeName[{i}]={result.GetDataTypeName(i)}");
+                            Console.WriteLine($"GetDataTypeOID[{i}]={result.GetDataTypeOID(i)}");
+                            Console.WriteLine($"GetFieldType[{i}]={result.GetFieldType(i)}");
+                            Console.WriteLine($"GetName[{i}]={result.GetName(i)}");
+                            var name = result.GetName(i);
+                            Console.WriteLine($"GetOrdinal[{name}]={result.GetOrdinal(name)}");
+                            Console.WriteLine($"GetPostgresType[{i}]={result.GetPostgresType(i)}");
+                            Console.WriteLine($"IsDBNull[{i}]={result.IsDBNull(i)}");
+                        }
                     }
                     result.Close();
                 }

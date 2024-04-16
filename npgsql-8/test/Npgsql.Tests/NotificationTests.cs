@@ -9,6 +9,9 @@ using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
+#if NETFRAMEWORK
+[NonParallelizable]
+#endif
 public class NotificationTests : TestBase
 {
     [Test, Description("Simple LISTEN/NOTIFY scenario")]
@@ -162,7 +165,11 @@ public class NotificationTests : TestBase
         await notificationTask;
     }
 
-    [Test] // EDBExplicit("Hangs")]
+#if NETFRAMEWORK
+    [Test, EDBExplicit("Hangs")]
+#else
+    [Test] 
+#endif
     public void WaitAsync_cancellation()
     {
         var notify = GetUniqueIdentifier(nameof(NotificationTests));

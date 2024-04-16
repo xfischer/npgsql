@@ -160,7 +160,11 @@ class MiscTypeTests : MultiplexingTestBase
     {
         await AssertTypeWrite(new object?[] { (short)4, null, (long)5, 6 }, "{4,NULL,5,6}", "integer[]", EDBDbType.Integer | EDBDbType.Array, isDefault: false);
         await AssertTypeWrite(new object?[] { "text", null, DBNull.Value, "chars".ToCharArray(), 'c' }, "{text,NULL,NULL,chars,c}", "text[]", EDBDbType.Text | EDBDbType.Array, isDefault: false);
+    }
 
+    [Test]
+    public async Task ObjectArrayWithTimeStamp()
+    {
         await using var dataSource = CreateDataSource(b => b.ConnectionStringBuilder.Timezone = "Europe/Berlin");
 
         // EnterpriseDB : DateTime.UnixEpoch not available in NETFRAMEWORK

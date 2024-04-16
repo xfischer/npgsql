@@ -489,7 +489,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        public void UpdateEmpSalTest()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void UpdateEmpSalTest(bool declareReturnValue)
         {
             //call function update_emp_sal in package emp_admin to update
             //salary of given employee
@@ -503,6 +505,12 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2",
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1000));
+
+            if (declareReturnValue)
+            {
+                cstmt.Parameters.Add(new EDBParameter("retVal", EDBTypes.EDBDbType.Numeric, 10, "retVal",
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1000));
+            }
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();

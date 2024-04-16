@@ -26,7 +26,7 @@ static partial class LogMessages
     {
         if (logger is null || logger is NullLogger)
         {
-#if EDB_DIAGNOSTICS && DEBUG
+#if EDB_DIAGNOSTICS
             Console.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
             System.Diagnostics.Debug.WriteLine($"TryEDBTrace: [{Thread.CurrentThread.ManagedThreadId}] {message}");
 #endif

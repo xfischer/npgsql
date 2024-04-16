@@ -402,8 +402,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2634: 42601: missing \";\" at end of SQL statement")]
-    public void ModularizingCursorOperationsTest()
+        [Ignore("EC-2634: 42601: missing \";\" at end of SQL statement (parsed as multiple batches, not a single statement)")]
+        public void ModularizingCursorOperationsTest()
         {
             var sqlStr = "DECLARE\n"
                      + "    gen_refcur      SYS_REFCURSOR;\n"
@@ -442,7 +442,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                         cstmt.CommandType = CommandType.Text;
                         cstmt.ExecuteNonQuery();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Assert.Fail(ex.ToString());
                     }
@@ -460,10 +460,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 conn.Notice -= action;
             }
             mre.Close();
-    }
+        }
 
-    [Test, Timeout(10000)]
-    public void DynamicQueriesTest()
+        [Test, Timeout(10000)]
+        public void DynamicQueriesTest()
         {
             //conn.setAutoCommit(false);                    //JDBC does this.
             EDBTransaction tran = conn.BeginTransaction();   //.NET does this.
@@ -497,10 +497,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             }
             rst.Close();
             tran.Commit();
-    }
+        }
 
         [Test, Timeout(10000)]
-    public void DynamicQueriesWithParametersTest()
+        public void DynamicQueriesWithParametersTest()
         {
             var sqlStr = "dept_query_with_parameters(30, 1500)";
 
@@ -539,10 +539,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 conn.Notice -= action;
             }
             mre.Close();
-    }
+        }
 
         [Test, Timeout(10000)]
-    public void DynamicQueriesFromStringTest()
+        public void DynamicQueriesFromStringTest()
         {
             var sqlStr = "dept_query_from_string(20, 1500)";
 
@@ -581,8 +581,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 conn.Notice -= action;
             }
             mre.Close();
+        }
     }
-}
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 #pragma warning restore CS8602 // Dereference of a possibly null reference.

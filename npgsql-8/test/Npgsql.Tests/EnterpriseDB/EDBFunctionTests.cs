@@ -131,7 +131,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 Console.WriteLine(ex.Message);
             }
-            
+
 
             com.CommandText = "DROP Function IF EXISTS  functionsanity( OUT NUMERIC,  OUT NUMERIC, IN NUMERIC,OUT NUMERIC)";
             com.ExecuteNonQuery();
@@ -187,7 +187,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Dispose();
             con.Close();
-            
+
         }
 
         /* To verify the sanity of functions without parameters*/
@@ -233,7 +233,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             using var con = OpenConnection();
             //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
-            var command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
+            using var command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
 
             command.CommandType = CommandType.StoredProcedure;
 
@@ -249,9 +249,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[2].Value = 30;
 
 
-            EDBDataReader result = command.ExecuteReader();
+            using EDBDataReader result = command.ExecuteReader();
             while (result.Read())
             { }
+            result.Close();
 
             Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
             Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
@@ -515,6 +516,51 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
 
+        }
+
+        // Callable stmt test with return value, no parameter bound, fails
+        [Test, Timeout(6000)]
+        public void testretValFuncNoBindingNonQuery_test()
+        {
+            using var con = OpenConnection();
+            using var command = new EDBCommand("public.retValFunc_test()", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            // this should be added normally, and this works
+            // but if omitted, the command hangs => BUG
+            //command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
+
+            command.Prepare();
+
+            command.ExecuteNonQuery();
+
+        }
+
+        [Test, Timeout(15000)]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void testretValFuncNoBindingReader_test(bool bindValue)
+        {
+            using var con = OpenConnection();
+            using var command = new EDBCommand("public.retValFunc_test()", con);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            // this should be added normally, and this works
+            // but if omitted, the command hangs => BUG
+            if (bindValue)
+            {
+                command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
+            }
+
+            command.Prepare();
+
+            using var reader = command.ExecuteReader();
+            reader.Read();
+            reader.Close();
+
+            command.Dispose();
         }
 
 

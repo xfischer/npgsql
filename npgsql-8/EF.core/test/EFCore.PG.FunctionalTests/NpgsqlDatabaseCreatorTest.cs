@@ -407,6 +407,7 @@ public class NpgsqlDatabaseCreatorCreateTablesTest : NpgsqlDatabaseCreatorTest
             await testDatabase.OpenConnectionAsync();
         }
 
+		// EnterpriseDB (add filters on sys and edb_)
         var tables = (await testDatabase.QueryAsync<string>(
             "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'"))
 			.ToList();
@@ -531,7 +532,7 @@ public class NpgsqlDatabaseCreatorCreateTest : NpgsqlDatabaseCreatorTest
             await testDatabase.OpenConnectionAsync();
         }
 
-        // Enterprise DB
+		// EnterpriseDB (add filters on sys and edb_)
         Assert.Empty(
             await testDatabase.QueryAsync<string>(
                 "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES \r\nWHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'"));

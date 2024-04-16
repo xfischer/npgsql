@@ -41,6 +41,30 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             return 0;
         }
+        private async Task<int> Execute(string query, bool ignoreResult)
+        {
+            try
+            {
+                await using var conn = await OpenConnectionAsync();
+
+                using (var com = new EDBCommand("", conn))
+                {
+                    com.CommandType = CommandType.Text;
+
+                    com.CommandText = query;
+                    return await com.ExecuteNonQueryAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                //In case of drop statement, the object may not exist.
+                //So we do not care about the result.
+                if (!ignoreResult)
+                    Assert.Fail(ex.Message);
+            }
+
+            return 0;
+        }
 
         //Simple select returning single value
         private async Task<object> ExecuteSimpleReader(EDBConnection conn, string query)
@@ -320,17 +344,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable restore
             //Clean
 
-            await Execute(conn, "DROP DATABASE dbtimezonedb1", true);
-            await Execute(conn, "DROP USER dbtimezoneuser1", true);
+            await Execute("DROP DATABASE dbtimezonedb1", true);
+            await Execute("DROP USER dbtimezoneuser1", true);
 
-            await Execute(conn, "CREATE USER dbtimezoneuser1;", false);
-            await Execute(conn, "ALTER USER dbtimezoneuser1 WITH PASSWORD 'edb';", false);
-            await Execute(conn, "CREATE DATABASE dbtimezonedb1 OWNER dbtimezoneuser1;", false);
+            await Execute("CREATE USER dbtimezoneuser1;", false);
+            await Execute("ALTER USER dbtimezoneuser1 WITH PASSWORD 'edb';", false);
+            await Execute("CREATE DATABASE dbtimezonedb1 OWNER dbtimezoneuser1;", false);
 
             var newConnString = string.Format("port={0};Server={1};Username={2};Password={3};Database={4};Timeout=0;Command Timeout=0;SSL Mode=Disable",
                 conn.Port, conn.Host, "dbtimezoneuser1", "edb", "dbtimezonedb1");
 
             await conn.CloseAsync();
+            await conn.DisposeAsync();
 
             await using var conn2 = await OpenConnectionAsync(newConnString);
 

@@ -41,6 +41,7 @@ sealed class RowDescriptionMessage : IBackendMessage
 
     readonly bool _connectorOwned;
     public FieldDescription?[] _fields; // EnterpriseDB changed scope to public
+    private bool _isOutDescription; // EnterpriseDB
     readonly Dictionary<string, int> _nameIndex;
     Dictionary<string, int>? _insensitiveIndex;
     ColumnInfo[]? _lastConverterInfoCache;
@@ -68,6 +69,7 @@ sealed class RowDescriptionMessage : IBackendMessage
         Array.Clear(_fields, 0, _fields.Length); /* EnterpriseDB Team */
         _nameIndex.Clear();
         _insensitiveIndex?.Clear();
+        _isOutDescription = isOutDescription;
 
         var numFields = Count = buf.ReadInt16();
         if (_fields.Length < numFields)
@@ -77,7 +79,7 @@ sealed class RowDescriptionMessage : IBackendMessage
             Array.Copy(oldFields, _fields, oldFields.Length);
         }
 
-        if (isOutDescription != true) /* EnterpriseDB Team */
+        if (!isOutDescription) /* EnterpriseDB Team */
         {
             for (var i = 0; i < numFields; ++i)
             {
@@ -109,7 +111,7 @@ sealed class RowDescriptionMessage : IBackendMessage
                  typoid: buf.ReadUInt32(),
                  typeSize: buf.ReadInt16(),
                  typeModifier: buf.ReadInt32(),
-                 dataFormat: DataFormatUtils.Create(buf.ReadInt16())  
+                 dataFormat: DataFormatUtils.Create(buf.ReadInt16())
                  );
 
                 _fields[i] = field;
@@ -252,7 +254,7 @@ sealed class RowDescriptionMessage : IBackendMessage
         return _insensitiveIndex.TryGetValue(name, out fieldIndex);
     }
 
-    public BackendMessageCode Code => BackendMessageCode.RowDescription;
+    public BackendMessageCode Code => _isOutDescription ? BackendMessageCode.OutDescription : BackendMessageCode.RowDescription; // EnterpriseDB added OutDescription
 
     internal RowDescriptionMessage Clone() => new(this);
 }

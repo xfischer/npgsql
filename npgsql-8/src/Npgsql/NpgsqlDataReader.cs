@@ -424,7 +424,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                         // RowDescription messages are cached on the connector, but if we're auto-preparing, we need to
                         // clone our own copy which will last beyond the lifetime of this invocation.
-                        BackendMessageCode.RowDescription => preparedStatement == null
+                        BackendMessageCode.RowDescription or BackendMessageCode.OutDescription => preparedStatement == null
                             ? (RowDescriptionMessage)msg
                             : ((RowDescriptionMessage)msg).Clone(),
 
@@ -513,7 +513,11 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     msg = await ReadMessage(async).ConfigureAwait(false); // ZK: Connector._isCallableStmt == true
                     if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure)
                         msg = await ReadMessage(async).ConfigureAwait(false);
-                    if (msg.Code == BackendMessageCode.RowDescription && Command.CommandType == CommandType.StoredProcedure)
+                    //if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription) && Command.CommandType == CommandType.StoredProcedure)
+					if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription)
+                        && Command.CommandType == CommandType.StoredProcedure
+                        && (Command.Parameters.HasOutputParameters
+                            || Command.Parameters.HasReturnParam))
                         msg = await ReadMessage(async).ConfigureAwait(false);
 
                     //   ProcessMessage(msg);
@@ -535,6 +539,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     case BackendMessageCode.CommandComplete:
                     case BackendMessageCode.EmptyQueryResponse:
                     case BackendMessageCode.RowDescription:
+                    case BackendMessageCode.OutDescription:
                         break;
                     case BackendMessageCode.NoData:
                         return true;
@@ -547,11 +552,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 {
                 case BackendMessageCode.NoData:
                 case BackendMessageCode.RowDescription:
+                case BackendMessageCode.OutDescription:
                     State = ReaderState.InResult;
-                    if (Command.CommandType == CommandType.StoredProcedure && (
-                        Command.Parameters.HasOutputParameters
-                        || Command.Parameters._hasReturnParam
-                        || Command.Parameters.IsScalar))//EnterpriseDB Team
+					if (Command.CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                     {
                         await PopulateOutputParameters(async).ConfigureAwait(false);
                     }
@@ -743,6 +746,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                     return;
                 case BackendMessageCode.RowDescription:
+                case BackendMessageCode.OutDescription:
                     callableDescription = RowDescription;
                     foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
                     {
@@ -808,26 +812,34 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             State = ReaderState.BeforeResult;  // Set the state back
         }
-        else if (Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam)
+        else if (Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam || Command.Parameters.HasRefCursorParam)
         {
             // EnterpriseDB : we now need to fill the out parameter values from _callable_description (RowDescription of OutTuples)
             // RowDescription contains nothing OR return value at this stage
             // We need to set the internal RowDescription to _callable_description
             if (Command.Parameters.HasReturnParam)
             {
+                if (callableDescription == null)
+                    ThrowHelper.ThrowEDBException("Internal error: a return value could not be set because a row description was expected");
                 Debug.Assert(RowDescription != null);
                 Debug.Assert(RowDescription.Count <= 1, "Row description should contain 0 or 1 return value, not more");
                 callableDescription.AppendReturnData(RowDescription[0]);
                 Command.Parameters.InternalList.Add(Command.Parameters.ReturnParam);
+                RowDescription = callableDescription;
             }
-            RowDescription = callableDescription;
+
+            if (Command.Parameters.HasOutputParameters)
+            {
+                RowDescription = callableDescription;
+            }
 
             var pending = new Queue<EDBParameter>();
             var taken = new List<int>();
+            var refCursorValueSet = Command.Parameters.RefCursorParam?.Value != null;
 
             foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
             {
-                if (p.IsOutputDirection)
+                if (p.IsOutputDirection && !refCursorValueSet)
                 {
                     int idx;
                     if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
@@ -850,7 +862,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 }
             }
 
-            if (Command.Parameters._hasReturnParam)
+            if (Command.Parameters.HasReturnParam)
             {
                 //State = ReaderState.Consumed;
             }
@@ -983,6 +995,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         RowDescription = _statements[StatementIndex].Description = null;
                         break;
                     case BackendMessageCode.RowDescription:
+                    case BackendMessageCode.OutDescription:
                         // We have a resultset
                         RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
                         Command.FixupRowDescription(RowDescription, StatementIndex == 0);
@@ -1144,8 +1157,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
     }
 
-    internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow) // EnterpriseDB
+    internal void ProcessEDBDataRowMessage(EDBReadBuffer buf, bool isReturnRow, bool isParamData = false) // EnterpriseDB
     {
+        LogMessages.TryEDBTrace(_commandLogger, $"ProcessEDBDataRowMessage isReturnRow: {isReturnRow}, isParamData: {isParamData}");
         if (Command.CommandType == CommandType.StoredProcedure)
         {
             if (!isReturnRow)
@@ -1154,9 +1168,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
 
             var numColumns = buf.ReadInt16();
-            if (isReturnRow)
+
+            if (!isParamData)
             {
-                var len = buf.ReadInt32();
+                var colLength = buf.ReadInt32();
                 Debug.Assert(RowDescription.Count == 1);
                 var fieldDescription = RowDescription._fields[0];
 
@@ -1164,21 +1179,40 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 var bufferRequirement = fieldDescription.ObjectOrDefaultInfo.BufferRequirement;
                 var format = fieldDescription.DataFormat;
 
-                buf.PgReader.Init(len, format);
+                buf.PgReader.Init(colLength, format);
                 buf.PgReader.StartRead(bufferRequirement);
                 var result = converter.ReadAsObject(buf.PgReader);
                 buf.PgReader.EndRead();
                 buf.PgReader.Commit(false);
 
+                if (isReturnRow)
+                {
+                    if (Command.Parameters.ReturnParam != null)
+                    {
+                        Command.Parameters.ReturnParam.Value = result;
+                    }
+                    else if (Command.Parameters.RefCursorParam != null)
+                    {
+                        Command.Parameters.RefCursorParam.Value = result;
+                    }
+                    return;
+                }
+            }
 
-                Command.Parameters.ReturnParam.Value = result;
-                return;
-            }
-            else
-            {
+            // The connector's buffer can actually change between DataRows:
+            // If a large DataRow exceeding the connector's current read buffer arrives, and we're
+            // reading in non-sequential mode, a new oversize buffer is allocated. We thus have to
+            // recapture the connector's buffer on each new DataRow.
+            // Note that this can happen even in sequential mode, if the row description message is big
+            // (see #2003)
+            if (!ReferenceEquals(buf, Buffer))
                 Buffer = buf;
-                _columns.Clear();
-            }
+
+            if (!ReferenceEquals(Buffer, Connector.ReadBuffer))
+                Buffer = Connector.ReadBuffer;
+
+            _columns.Clear();
+
             _column = -1;
 
             // TODO: One big row with many columns will make the DataRow's _columnOffsets big forever...

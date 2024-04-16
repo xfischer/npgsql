@@ -613,6 +613,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     switch (msg.Code)
                     {
                     case BackendMessageCode.RowDescription:
+                    case BackendMessageCode.OutDescription:
                     case BackendMessageCode.NoData:
                         break;
                     default:
@@ -746,6 +747,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             switch (msg.Code)
                             {
                             case BackendMessageCode.RowDescription:
+                            case BackendMessageCode.OutDescription:
                                 // Clone the RowDescription for use with the prepared statement (the one we have is reused
                                 // by the connection)
                                 var description = ((RowDescriptionMessage)msg).Clone();
@@ -1374,10 +1376,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     async Task<int> ExecuteNonQuery(bool async, CancellationToken cancellationToken)
     {
-        if (CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
-        {
-            Parameters.IsScalar = true;
-        }
         var reader = await ExecuteReader(async, CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
         try
         {
@@ -1669,10 +1667,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 TraceReceivedFirstResponse();
 
                 //EnterpriseDB Team
-                if (CommandType == CommandType.StoredProcedure && (
-                        Parameters.HasOutputParameters
-                        || Parameters._hasReturnParam
-                        || Parameters.IsScalar))
+                // if (CommandType == CommandType.StoredProcedure && (
+                //         Parameters.HasOutputParameters
+                //         || Parameters._hasReturnParam
+                //         || Parameters.IsNonQuery))
+				if (CommandType == CommandType.StoredProcedure)
                 {
                     reader.MutateToInMemoryReader(this);
                 }

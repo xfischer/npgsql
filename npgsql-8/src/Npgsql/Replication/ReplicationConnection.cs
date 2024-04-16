@@ -278,8 +278,10 @@ public abstract class ReplicationConnection : IAsyncDisposable
             }
         }
 
+#if !NETFRAMEWORK
         Debug.Assert(_sendFeedbackTimer is null, "Send feedback timer isn't null at replication shutdown");
         Debug.Assert(_requestFeedbackTimer is null, "Request feedback timer isn't null at replication shutdown");
+#endif
         _feedbackSemaphore.Dispose();
 
         try

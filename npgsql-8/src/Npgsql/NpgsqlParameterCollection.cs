@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal;
 using EDBTypes;
+using System.CodeDom;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -27,29 +28,40 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
 
     // EnterpriseDB Team
     private EDBParameter return_param = null!;
-    private int return_index = -1;
     internal bool _hasReturnParam = false;
 
     // EnterpriseDB Team>
-    public bool HasReturnParam
+    internal bool HasReturnParam
     {
         get { return _hasReturnParam; }
     }
 
     // EnterpriseDB Team
-    public int ReturnIndex
-    {
-        get { return return_index; }
-    }
-
-    // EnterpriseDB Team
-    public EDBParameter ReturnParam
+    internal EDBParameter ReturnParam
     {
         get { return return_param; }
     }
 
-    // EnterpriseDB Team
-    internal bool IsScalar { get; set; }
+    // EnterpriseDB Team>
+    internal bool HasRefCursorParam
+    {
+        get {
+            return RefCursorParam != null;
+        }
+    }
+
+    internal EDBParameter? RefCursorParam
+    {
+        get
+        {
+            foreach (var param in InternalList)
+            {
+                if (param.EDBDbType == EDBDbType.Refcursor)
+                    return param;
+            }
+            return null;
+        }
+    }
 
     static EDBParameterCollection()
         => TwoPassCompatMode = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableLegacyCaseInsensitiveDbParameters", out var enabled)
@@ -272,7 +284,6 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
         else
         {
             return_param = value;
-            return_index = InternalList.Count;
             _hasReturnParam = true;
         }
         return value;

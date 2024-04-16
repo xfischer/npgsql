@@ -322,7 +322,7 @@ public sealed partial class EDBConnector
     byte[]? _resetWithoutDeallocateMessage;
 
     int _resetWithoutDeallocateResponseCount;
-    
+
     // Backend
     readonly CommandCompleteMessage _commandCompleteMessage = new();
     readonly ReadyForQueryMessage _readyForQueryMessage = new();
@@ -1536,22 +1536,14 @@ public sealed partial class EDBConnector
 
             return rowOutDescriptionMessage;
         case BackendMessageCode.DataRow:
-            try
-            {
-                if (CurrentReader != null && _currentCommand != null && _currentCommand.CommandType == CommandType.StoredProcedure
-                        && !_currentCommand.Parameters._hasReturnParam)
-                    CurrentReader.ProcessEDBDataRowMessage(buf, false);
-                else if (CurrentReader != null)
-                    CurrentReader.ProcessEDBDataRowMessage(buf, true);
-            }
-            catch (Exception)
-            { }
+            if (CurrentReader != null && _currentCommand.CommandType == CommandType.StoredProcedure)
+                CurrentReader.ProcessEDBDataRowMessage(buf, isReturnRow: true, isParamData: false);
             return _dataRowMessage.Load(len);
         /* EnterpriseDB Team */
         case BackendMessageCode.ParamData:
             if (CurrentReader != null)
             {
-                CurrentReader.ProcessEDBDataRowMessage(buf, false);
+                CurrentReader.ProcessEDBDataRowMessage(buf, false, isParamData: true);
                 var outParamDataRowMessage = new DataRowMessage();
                 outParamDataRowMessage.Load(len);
                 LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", outParamDataRowMessage)}");
