@@ -1536,7 +1536,7 @@ public sealed partial class EDBConnector
 
             return rowOutDescriptionMessage;
         case BackendMessageCode.DataRow:
-            if (CurrentReader != null && _currentCommand.CommandType == CommandType.StoredProcedure)
+            if (CurrentReader != null && _currentCommand?.CommandType == CommandType.StoredProcedure)
                 CurrentReader.ProcessEDBDataRowMessage(buf, isReturnRow: true, isParamData: false);
             return _dataRowMessage.Load(len);
         /* EnterpriseDB Team */
