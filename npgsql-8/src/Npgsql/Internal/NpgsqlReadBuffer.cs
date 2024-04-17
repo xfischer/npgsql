@@ -22,7 +22,7 @@ sealed partial class EDBReadBuffer : IDisposable
     #region Fields and Properties
 
 #if DEBUG
-    internal static readonly bool BufferBoundsChecks = true;
+    internal static readonly bool BufferBoundsChecks = Statics.EnableAssertions;
 #else
     internal static readonly bool BufferBoundsChecks = Statics.EnableAssertions;
 #endif
@@ -346,7 +346,7 @@ sealed partial class EDBReadBuffer : IDisposable
                                 {
                                     Thread.Sleep(TimeSpan.FromMilliseconds(delay));
                                 }
-                                
+
                                 finalCt.ThrowIfCancellationRequested();
                             }
                         }
@@ -410,7 +410,14 @@ sealed partial class EDBReadBuffer : IDisposable
                         // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
                         // return garbage if reused. To prevent this, we flow down and break the connection immediately.
                         // See #4305.
-                        isStreamBroken = connector.IsSecure && e is IOException;
+                        if (connector is null)
+                        {
+                            isStreamBroken = true;
+                        }
+                        else
+                        {
+                            isStreamBroken = connector.IsSecure && e is IOException;
+                        }
 #endif
                         // When reading notifications (Wait), just throw TimeoutException or
                         // OperationCanceledException immediately.
@@ -446,27 +453,13 @@ sealed partial class EDBReadBuffer : IDisposable
                         throw connector.Break(CreateException(connector));
 
                         static Exception CreateException(EDBConnector connector)
-#if DEBUG // EnterpriseDB 
-                        {
-                            if (connector.UserCancellationRequested)
-                            {
-                                if (connector.PostgresCancellationPerformed)
-                                    return new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken);
-                                else
-                                    return new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
-                            }
-                            else
-                            {
-                                return EDBTimeoutException();
-                            }
-                        }
-#else
+
                             => !connector.UserCancellationRequested
                                 ? EDBTimeoutException()
                                 : connector.PostgresCancellationPerformed
                                     ? new OperationCanceledException("Query was cancelled", TimeoutException(), connector.UserCancellationToken)
                                     : new OperationCanceledException("Query was cancelled", connector.UserCancellationToken);
-#endif
+
                     }
 
                     default:
@@ -718,7 +711,7 @@ sealed partial class EDBReadBuffer : IDisposable
         }
     }
 
-	// EnterpriseDB
+    // EnterpriseDB
     /// <summary>
     /// Seeks within the current in-memory data. Does not read any data from the underlying.
     /// </summary>
@@ -744,7 +737,7 @@ sealed partial class EDBReadBuffer : IDisposable
 
         ReadPosition = absoluteOffset;
     }
-	
+
     public ValueTask<int> ReadAsync(bool commandScoped, Memory<byte> output, CancellationToken cancellationToken = default)
     {
         var readFromBuffer = Math.Min(ReadBytesLeft, output.Length);

@@ -837,28 +837,40 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             var taken = new List<int>();
             var refCursorValueSet = Command.Parameters.RefCursorParam?.Value != null;
 
-            foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+            if (Command.Parameters.HasOutputParameters)
             {
-                if (p.IsOutputDirection && !refCursorValueSet)
+                foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
                 {
-                    int idx;
-                    if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
+                    if (p.IsOutputDirection && !refCursorValueSet)
                     {
-                        // TODO: Provider-specific check?
-                        p.Value = GetValue(idx);
-                        taken.Add(idx);
-                    }
-                    else
-                    {
-                        pending.Enqueue(p);
+                        int idx;
+                        if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
+                        {
+                            // TODO: Provider-specific check?
+                            p.Value = GetValue(idx);
+                            taken.Add(idx);
+                        }
+                        else
+                        {
+                            pending.Enqueue(p);
+                        }
                     }
                 }
-            }
-            for (var i = 0; pending.Count != 0; ++i)
-            {
-                if (!taken.Contains(i))
+
+                if (pending.Count == 0)
                 {
-                    pending.Dequeue().Value = GetEDBValue(i);
+                    // We should have an empty OutTuple
+                    // Consume it until RFQ
+                    var outTupleFieldLength = Buffer.ReadInt32();
+                    Debug.Assert(outTupleFieldLength == -1);
+                }
+
+                for (var i = 0; pending.Count != 0; ++i)
+                {
+                    if (!taken.Contains(i))
+                    {
+                        pending.Dequeue().Value = GetEDBValue(i);
+                    }
                 }
             }
 

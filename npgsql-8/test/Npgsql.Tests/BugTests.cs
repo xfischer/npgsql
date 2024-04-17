@@ -1235,7 +1235,11 @@ $$;");
         Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
     }
 
+#if NETFRAMEWORK
+    [Test, EDBExplicit("Raises timeout exception in .NET Framework"), IssueLink("https://github.com/npgsql/npgsql/issues/3373")]
+#else
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3373")]
+#endif
     public async Task Bug3373()
     {
         await using var conn = await OpenConnectionAsync();
@@ -1297,7 +1301,11 @@ $$;");
         await Task.Yield();
     }
 
+#if NETFRAMEWORK
+    [Test, EDBExplicit("Not working with .NET Framework")]
+#else
     [Test]
+#endif
     [IssueLink("https://github.com/npgsql/npgsql/issues/3924")]
     public async Task Bug3924()
     {

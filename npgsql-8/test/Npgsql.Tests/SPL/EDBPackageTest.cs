@@ -20,8 +20,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
     [NonParallelizable]
     internal class EDBPackageTest : EPASTestBase
     {
-        EDBConnection? conn = null;
-
         private static string[] EMP_RESULT = {
             "2009 JACK SALES 01-01-2023 5000.00 0.00 1001 20"
             };
@@ -51,7 +49,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [SetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();
 
             Execute("DROP PACKAGE BODY emp_admin;");
             Execute("DROP PACKAGE emp_admin;");
@@ -325,13 +323,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         public void Dispose()
         {
             Execute("DROP TABLE emp1");
-            TestUtil.closeDB(conn);
         }
 
         private int Execute(string query)
         {
             try
             {
+                using var conn = OpenConnection();
                 using (var com = new EDBCommand(query, conn))
                 {
                     com.CommandType = CommandType.Text;
@@ -377,6 +375,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
         private double getEmpSalary(int empno)
         {
+            using var conn = OpenConnection();
             //Get the salary infomation of one employee
             var command = "select sal from emp1 where empno=" + empno;
 
@@ -392,6 +391,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void GetDeptNameTest()
         {
+            using var conn = OpenConnection();
             //call function get_dept_name in package emp_admin
             var commandText = "emp_admin.get_dept_name(:param1)";
 
@@ -414,6 +414,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void HireEmpTest()
         {
+            using var conn = OpenConnection();
             //call procedure hire_emp in package emp_admin to insert employee
             //record
             var commandText = "emp_admin.hire_emp(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8)";
@@ -467,6 +468,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void FireEmpTest()
         {
+            using var conn = OpenConnection();
             //call procedure fire_emp in package emp_admin to delete employee
             var commandText = "emp_admin.fire_emp(:param1)";
 
@@ -493,6 +495,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [TestCase(false)]
         public void UpdateEmpSalTest(bool declareReturnValue)
         {
+            using var conn = OpenConnection();
             //call function update_emp_sal in package emp_admin to update
             //salary of given employee
             var commandText = "emp_admin.update_emp_sal(:param1, :param2)";
@@ -524,6 +527,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void UsingPackagesWithUserDefinedTypesTest()
         {
+            using var conn = OpenConnection();
             //The following anonymous block runs function and procedures in package emp_rpt.
             //In the anonymous block's declaration section, note the declaration of cursor
             //variable v_emp_cur using the package’s public REF CURSOR type, EMP_REFCUR.v_emp_cur
@@ -584,6 +588,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void UsingPackagesWithUserDefinedTypesRecordVariableTest()
         {
+            using var conn = OpenConnection();
             //The following anonymous block shows another way to achieve the same result.
             //Instead of using the package procedures fetch_emp and close_refcur, the logic
             //of these programs is coded directly into the anonymous block. In the anonymous
@@ -647,9 +652,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
         }
 
-        [Test]
+        [Test, Timeout(1500)]
         public void UsingPackagesWithUserDefinedTypesFunctionCallTest()
         {
+            using var conn = OpenConnection();
             //The following code called function emp_rpt.open_emp_by_dept and
             //and returned cusor emp_rpt.EMP_REFCUR as ResultSet
             EDBTransaction tran = conn.BeginTransaction();

@@ -1,3 +1,5 @@
+//#define EDB_DIAGNOSTICS
+
 using EnterpriseDB.EDBClient.Internal;
 using System;
 using System.Collections.Generic;
@@ -48,7 +50,7 @@ static class Statics
         => throw connector.Break(
             new EDBException($"Received backend message {msg.Code} while expecting {typeof(T).Name}. Please file a bug."));
 
-    [Conditional("DEBUG")]
+    [Conditional("DEBUG"), Conditional("EDB_DIAGNOSTICS")]
     internal static void ValidateBackendMessageCode(BackendMessageCode code)
     {
         switch (code)

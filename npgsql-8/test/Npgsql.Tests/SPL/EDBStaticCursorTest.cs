@@ -17,11 +17,9 @@ using static System.Collections.Specialized.BitVector32;
 //Port JDBC tests to .NET from enhancements\spl\BasicStatementTest.java
 namespace EnterpriseDB.EDBClient.Tests.SPL
 {
-    [NonParallelizable]
+    [NonParallelizable, Timeout(2000)]
     internal class EDBStaticCursorTest : EPASTestBase
     {
-        EDBConnection? conn = null;
-
         private static int EMPNO = 7369;
         private static string ENAME = "SMITH";
         private static int EMP_COUNT = 14;
@@ -65,10 +63,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             "Name = JAMES, salary = 950.00",
             "Name = MILLER, salary = 1300.00" };
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();
 
             Execute("DROP PROCEDURE fetching_rows;");
             Execute("DROP PROCEDURE fetching_rows_variable_type;");
@@ -245,16 +243,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
         }
 
-        [TearDown]
-        public void Dispose()
-        {
-            TestUtil.closeDB(conn);
-        }
-
         private int Execute(string query)
         {
             try
             {
+                using var conn = OpenConnection();
                 using (var com = new EDBCommand(query, conn))
                 {
                     com.CommandType = CommandType.Text;
@@ -271,6 +264,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void FetchingRowsTest()
         {
+            using var conn = OpenConnection();
             var command = "fetching_rows(:param1,:param2)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -294,6 +288,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void FetchingRowsVariableTypeTest()
         {
+            using var conn = OpenConnection();
             var command = "fetching_rows_variable_type(:param1,:param2)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -318,6 +313,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Ignore("EC-2633")]
         public void FetchingRowsRecordRowtypeTest()
         {
+            using var conn = OpenConnection();
             var command = "fetching_rows_record_rowtype";
 
             var cstmt = new EDBCommand(command, conn);
@@ -332,6 +328,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void UsingRowtypeWithCursorsTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "using_rowtype_with_cursors";
 
             var mre = new ManualResetEvent(false);
@@ -369,6 +366,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void CursorAttributeIsopenTest()
         {
+            using var conn = OpenConnection();
             var command = "cursor_attribute_isopen(:param1, :param2, :param3)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -394,6 +392,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void CursorAttributeFoundTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "cursor_attribute_found";
 
             var mre = new ManualResetEvent(false);
@@ -431,6 +430,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void CursorAttributeNotFoundTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "cursor_attribute_not_found";
 
             var mre = new ManualResetEvent(false);
@@ -468,6 +468,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void CursorAttributeRowCountTest()
         {
+            using var conn = OpenConnection();
             var command = "cursor_attribute_count(:param1)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -486,6 +487,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void CursorForLoopTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "cursor_for_loop";
 
             var mre = new ManualResetEvent(false);
@@ -524,6 +526,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Ignore("EC-2638: syntax error at or near \"my_record\"")]
         public void ParameterizedCursorTest()
         {
+            using var conn = OpenConnection();
             //You can declare a static cursor that accepts parameters and can pass values
             //for those parameters when opening that cursor. This example creates a
             //parameterized cursor that displays the name and salary of all employees from

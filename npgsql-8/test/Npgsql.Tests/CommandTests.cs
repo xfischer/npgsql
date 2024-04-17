@@ -183,7 +183,11 @@ public class CommandTests : MultiplexingTestBase
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
     }
 
+#if NETFRAMEWORK
+    [Test, EDBExplicit("Returns null instead of exception in .NET Framework")]
+#else
     [Test, Description("Times out an async operation, testing that cancellation occurs successfully")]
+#endif
     [IssueLink("https://github.com/npgsql/npgsql/issues/607")]
     public async Task Timeout_async_soft()
     {

@@ -18,8 +18,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
     [NonParallelizable]
     internal class EDBRefCursorTest : EPASTestBase
     {
-        EDBConnection? conn = null;
-
         private static string[] CLOSING_CUSOR_RESULT = {
             "7369 SMITH",
             "7566 JONES",
@@ -79,10 +77,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             "7902 FORD"
             };
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();
 
             Execute("DROP PROCEDURE emp_by_dept;");
             Execute("DROP FUNCTION emp_by_job;");
@@ -300,16 +298,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Execute(deptQueryFromString);
         }
 
-        [TearDown]
-        public void Dispose()
-        {
-            TestUtil.closeDB(conn);
-        }
-
         private int Execute(string query)
         {
             try
             {
+                using var conn = OpenConnection();
                 using (var com = new EDBCommand(query, conn))
                 {
                     com.CommandType = CommandType.Text;
@@ -323,9 +316,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             return 0;
         }
 
-        [Test, Timeout(10000)]
+        [Test, Timeout(2000)]
         public void ClosingCursorVariableTest()
         {
+            using var conn = OpenConnection();
+
             var sqlStr = "emp_by_dept(20)";
 
             var mre = new ManualResetEvent(false);
@@ -360,9 +355,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
         }
 
-        [Test, Timeout(10000)]
+        [Test, Timeout(2000)]
         public void ReturningRefCursorFromFunctionTest()
         {
+            using var conn = OpenConnection();
+
             //conn.setAutoCommit(false);                    //JDBC does this.
             EDBTransaction tran = conn.BeginTransaction();   //.NET does this.
             var command = "emp_by_job(:param1)";
@@ -405,6 +402,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Ignore("EC-2634: 42601: missing \";\" at end of SQL statement (parsed as multiple batches, not a single statement)")]
         public void ModularizingCursorOperationsTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "DECLARE\n"
                      + "    gen_refcur      SYS_REFCURSOR;\n"
                      + "BEGIN\n"
@@ -462,9 +460,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
         }
 
-        [Test, Timeout(10000)]
+        [Test, Timeout(2000)]
         public void DynamicQueriesTest()
         {
+            using var conn = OpenConnection();
             //conn.setAutoCommit(false);                    //JDBC does this.
             EDBTransaction tran = conn.BeginTransaction();   //.NET does this.
             var command = "dept_query(:param1)";
@@ -499,9 +498,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             tran.Commit();
         }
 
-        [Test, Timeout(10000)]
+        [Test, Timeout(2000)]
         public void DynamicQueriesWithParametersTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "dept_query_with_parameters(30, 1500)";
 
             var mre = new ManualResetEvent(false);
@@ -541,9 +541,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             mre.Close();
         }
 
-        [Test, Timeout(10000)]
+        [Test, Timeout(2000)]
         public void DynamicQueriesFromStringTest()
         {
+            using var conn = OpenConnection();
             var sqlStr = "dept_query_from_string(20, 1500)";
 
             var mre = new ManualResetEvent(false);
