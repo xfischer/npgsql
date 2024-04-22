@@ -576,9 +576,11 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             // There are no more queries, we're done. Read the RFQ.
             // XFI Merge v8 : community code
-            // if (_statements.Count is 0 || !(_statements[_statements.Count - 1].AppendErrorBarrier ?? Command.EnableErrorBarriers))
-            //		Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector);
-            ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector));
+            if (_statements.Count is 0 || !(_statements[_statements.Count - 1].AppendErrorBarrier ?? Command.EnableErrorBarriers))
+                Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector);
+
+            State = ReaderState.Consumed;
+            //ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector));
             RowDescription = null;
             return false;
         }

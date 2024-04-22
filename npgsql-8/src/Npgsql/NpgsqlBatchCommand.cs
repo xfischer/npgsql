@@ -93,7 +93,7 @@ public sealed class EDBBatchCommand : DbBatchCommand
     /// </remarks>
     public bool? AppendErrorBarrier {
         get => appendErrorBarrier;
-        set => appendErrorBarrier = false; // EnterpriseDB: FIXME disabled Error barriers
+        set => appendErrorBarrier = value;
     }
 
     /// <summary>

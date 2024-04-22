@@ -409,7 +409,6 @@ public class BatchTests : MultiplexingTestBase
     #region Error barriers
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Batch_with_error_at_start([Values] bool withErrorBarriers)
     {
         await using var conn = await OpenConnectionAsync();
@@ -434,7 +433,6 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Batch_with_error_at_end([Values] bool withErrorBarriers)
     {
         await using var conn = await OpenConnectionAsync();
@@ -459,7 +457,6 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Batch_with_multiple_errors([Values] bool withErrorBarriers)
     {
         await using var conn = await OpenConnectionAsync();
@@ -502,7 +499,6 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Batch_close_dispose_reader_with_multiple_errors([Values] bool withErrorBarriers, [Values] bool dispose)
     {
         // Create a temp pool since we dispose the reader (and check the state afterwards) and it can be reused by another connection
@@ -562,7 +558,6 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Batch_with_result_sets_and_error([Values] bool withErrorBarriers)
     {
         await using var conn = await OpenConnectionAsync();
@@ -600,7 +595,6 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-3005")]
     public async Task Error_with_AppendErrorBarrier()
     {
         await using var conn = await OpenConnectionAsync();
@@ -623,7 +617,7 @@ public class BatchTests : MultiplexingTestBase
         Assert.That(await conn.ExecuteScalarAsync($"SELECT id FROM {table} ORDER BY id"), Is.EqualTo(9));
     }
 
-    [Test]
+    [Test, Timeout(1500)]
     public async Task AppendErrorBarrier_on_last_command([Values] bool enabled)
     {
         await using var conn = await OpenConnectionAsync();

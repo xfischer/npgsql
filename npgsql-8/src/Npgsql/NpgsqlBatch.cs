@@ -78,7 +78,7 @@ public class EDBBatch : DbBatch
     public bool EnableErrorBarriers
     {
         get => Command.EnableErrorBarriers;
-        set => Command.EnableErrorBarriers = false;  // EnterpriseDB: FIXME disabled Error barriers
+        set => Command.EnableErrorBarriers = value;
     }
 
     /// <summary>
