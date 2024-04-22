@@ -888,7 +888,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
                     // Clear the buffer, roll back any pending transaction and prepend a reset message if needed
                     // Also returns the connector to the pool, if there is an open transaction and multiplexing is on
                     // Note that we're doing this only for pooled connections
-                    await connector.Reset(async);
+                    await connector.Reset(async).ConfigureAwait(false);
                 }
                 else
                 {

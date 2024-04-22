@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal;
 using EDBTypes;
-using System.CodeDom;
 
 namespace EnterpriseDB.EDBClient;
 

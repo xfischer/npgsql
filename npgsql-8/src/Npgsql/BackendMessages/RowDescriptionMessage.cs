@@ -254,7 +254,7 @@ sealed class RowDescriptionMessage : IBackendMessage
         return _insensitiveIndex.TryGetValue(name, out fieldIndex);
     }
 
-    public BackendMessageCode Code => _isOutDescription ? BackendMessageCode.OutDescription : BackendMessageCode.RowDescription; // EnterpriseDB added OutDescription
+    public BackendMessageCode Code => _isOutDescription ? BackendMessageCode.OutDescription : BackendMessageCode.RowDescription; // EnterpriseDB added OutDescription to explicitely track this message and avoid confusion
 
     internal RowDescriptionMessage Clone() => new(this);
 }

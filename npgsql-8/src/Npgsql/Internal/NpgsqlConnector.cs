@@ -1305,7 +1305,7 @@ public sealed partial class EDBConnector
             var syncTime = Connection.Settings.PgPoolSyncTime > 10 ? Connection.Settings.PgPoolSyncTime : 10;
             if (_currentCommand != null && _currentCommand.CommandType == CommandType.StoredProcedure && ReadBuffer.ReadBytesLeft < 5)
             {
-                Task.Run(async delegate { await Task.Delay(syncTime); }).Wait();
+                Task.Run(async delegate { await Task.Delay(syncTime).ConfigureAwait(false); }).Wait();
             }
         }
         if (PendingPrependedResponses > 0 ||
@@ -1541,15 +1541,20 @@ public sealed partial class EDBConnector
             return _dataRowMessage.Load(len);
         /* EnterpriseDB Team */
         case BackendMessageCode.ParamData:
-            if (CurrentReader != null)
+            if (CurrentReader is null)
             {
-                CurrentReader.ProcessEDBDataRowMessage(buf, false, isParamData: true);
-                var outParamDataRowMessage = new DataRowMessage();
-                outParamDataRowMessage.Load(len);
-                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", outParamDataRowMessage)}");
-                return outParamDataRowMessage;
+                // EnterpriseDB
+                // this is the case when using ExecuteNonQuery with unbound parameters
+                // connector shall consume remaining buffer. Sending command complete is like "ignoring data"
+                // not sure if this is needded
+                LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : Reader null, sending CommandComplete.");
+                return _commandCompleteMessage.Load(buf, len);
             }
-            return _commandCompleteMessage.Load(buf, len);
+            CurrentReader.ProcessEDBDataRowMessage(buf, false, isParamData: true);
+            var outParamDataRowMessage = new DataRowMessage();
+            outParamDataRowMessage.Load(len);
+            LogMessages.TryEDBTrace(ConnectionLogger, $"ParseServerMessage/ParamData : {string.Join(",", outParamDataRowMessage)}");
+            return outParamDataRowMessage;
         case BackendMessageCode.CommandComplete:
             return _commandCompleteMessage.Load(buf, len);
         case BackendMessageCode.ReadyForQuery:
