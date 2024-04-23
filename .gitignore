@@ -19,7 +19,7 @@ artifacts/
 **/TestResults
 edb-rebrand-c/x64
 */x64
-**/edb_nuget_packages
+**/edb_dotnet_nugetpackages
 **/latex/**/*.synctex.gz
 **/latex/**/*.aux
 **/latex/**/*.fdb_latexmk
