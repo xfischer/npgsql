@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</RootNamespace>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
 
     <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
     <Description>EDB Postgres Advanced Server provider for Entity Framework Core.</Description>

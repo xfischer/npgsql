@@ -10,4 +10,4 @@ The EDB .NET Connector distributed with EDB Postgres Advanced Server provides co
 - Retrieve information from an EDB Postgres Advanced Server database.
 - Update information stored on an EDB Postgres Advanced Server database.
 
-The EDB .NET Connector functionality is built on the core functionality of the Npgsql open source project. For details, see the [Npgsql User Guide](http://www.npgsql.org/doc/index.html).
+The EDB .NET Connector functionality is built on the core functionality of the Npgsql open source project. For details, see the [EDB .NET Connector Documentation](https://www.enterprisedb.com/docs/net_connector/latest/).

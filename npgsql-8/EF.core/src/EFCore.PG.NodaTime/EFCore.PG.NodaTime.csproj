@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime</RootNamespace>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFramework>
 
     <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Shay Rojansky</Authors>
@@ -24,10 +24,6 @@
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <None Include="build\**\*">
-      <Pack>True</Pack>
-      <PackagePath>build</PackagePath>
-    </None>
   </ItemGroup>
 
 </Project>
