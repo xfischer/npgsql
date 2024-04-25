@@ -212,7 +212,6 @@ partial class EDBConnector
         }
 
         var paramsLength = 0;
-        var paramsLengthOld = 0;
         for (var paramIndex = 0; paramIndex < parameters.Count; paramIndex++)
         {
             var param = parameters[paramIndex];
@@ -229,7 +228,6 @@ partial class EDBConnector
                 && param.Direction != ParameterDirection.ReturnValue)
             {
                 paramsLength += size.Value > 0 ? size.Value : 0;
-                paramsLengthOld += param.WriteSize?.Value > 0 ? param.WriteSize.Value.Value : 0;
             }
         }
 

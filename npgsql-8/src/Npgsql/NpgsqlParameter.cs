@@ -46,7 +46,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     internal PgConverter? Converter { get; private set; }
 
     internal DataFormat Format { get; private protected set; }
-    internal protected Size? WriteSize { get; set; }
+    private protected Size? WriteSize { get; set; }
     private protected object? _writeState;
     private protected Size _bufferRequirement;
     private protected bool _asObject;
