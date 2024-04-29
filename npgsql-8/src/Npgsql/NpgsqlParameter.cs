@@ -764,7 +764,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     ///<summary>
     /// Get param direction
     /// </summary>
-    public enum EDBParameterDirection //EnterpriseDB Team
+    internal enum EDBParameterDirection //EnterpriseDB Team
     {
         /// <summary>
         /// unknown, Input 

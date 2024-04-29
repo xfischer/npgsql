@@ -153,6 +153,29 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         }
     }
 
+    // EnterpriseDB : remove optins (see EC-3060)
+    public void RemoveTypeInfoResolverFactory(Type type)
+    {
+        _lock.EnterWriteLock();
+        try
+        {
+            for (var i = 0; i < _pluginResolverFactories.Count; i++)
+            {
+                if (_pluginResolverFactories[i].GetType() == type)
+                {
+                    _pluginResolverFactories.RemoveAt(i);
+                    break;
+                }
+            }
+
+            ResetTypeMappingCache();
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+    }
+
     void ReplaceTypeInfoResolverFactory(PgTypeInfoResolverFactory factory)
     {
         _lock.EnterWriteLock();
@@ -221,6 +244,14 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
     }
 
     /// <inheritdoc />
+    // EnterpriseDB : remove optins (see EC-3060)
+    public IEDBTypeMapper DisableDynamicJson()
+    {
+        RemoveTypeInfoResolverFactory(typeof(JsonDynamicTypeInfoResolverFactory));
+        return this;
+    }
+
+    /// <inheritdoc />
     [RequiresUnreferencedCode("The mapping of PostgreSQL records as .NET tuples requires reflection usage which is incompatible with trimming.")]
     [RequiresDynamicCode("The mapping of PostgreSQL records as .NET tuples requires dynamic code usage which is incompatible with NativeAOT.")]
     public IEDBTypeMapper EnableRecordsAsTuples()
@@ -230,11 +261,27 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
     }
 
     /// <inheritdoc />
+    // EnterpriseDB : remove optins (see EC-3060)
+    public IEDBTypeMapper DisableRecordsAsTuples()
+    {
+        RemoveTypeInfoResolverFactory(typeof(TupledRecordTypeInfoResolverFactory));
+        return this;
+    }
+
+    /// <inheritdoc />
     [RequiresUnreferencedCode("The use of unmapped enums, ranges or multiranges requires reflection usage which is incompatible with trimming.")]
     [RequiresDynamicCode("The use of unmapped enums, ranges or multiranges requires dynamic code usage which is incompatible with NativeAOT.")]
     public IEDBTypeMapper EnableUnmappedTypes()
     {
         AddTypeInfoResolverFactory(new UnmappedTypeInfoResolverFactory());
+        return this;
+    }
+
+    /// <inheritdoc />
+    // EnterpriseDB : remove optins (see EC-3060)
+    public IEDBTypeMapper DisableUnmappedTypes()
+    {
+        RemoveTypeInfoResolverFactory(typeof(UnmappedTypeInfoResolverFactory));
         return this;
     }
 

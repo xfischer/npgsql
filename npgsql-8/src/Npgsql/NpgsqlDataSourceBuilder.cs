@@ -75,6 +75,8 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     /// <summary>
     /// Constructs a new <see cref="EDBDataSourceBuilder" />, optionally starting out from the given <paramref name="connectionString"/>.
     /// </summary>
+    [RequiresUnreferencedCode("EnableDynamicJson, EnableUnmappedTypes and EnableRecordsAsTuples requires Reflection")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "EnterpriseDB reverts breaking change introduced in v8")]
     public EDBDataSourceBuilder(string? connectionString = null)
     {
         _internalBuilder = new(new EDBConnectionStringBuilder(connectionString));
@@ -90,11 +92,17 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
             instance.AppendResolverFactory(new LTreeTypeInfoResolverFactory());
         };
         _internalBuilder.ConfigureResolverChain = static chain => chain.Add(UnsupportedTypeInfoResolver);
+
         _internalBuilder.EnableTransportSecurity();
         _internalBuilder.EnableIntegratedSecurity();
         _internalBuilder.EnableRanges();
         _internalBuilder.EnableMultiranges();
         _internalBuilder.EnableArrays();
+
+        // EnterpriseDB : revert breaking change introduced in V8 for native AOT (EC-3060)
+        _internalBuilder.EnableDynamicJson();
+        _internalBuilder.EnableUnmappedTypes();
+        _internalBuilder.EnableRecordsAsTuples();
     }
 
     /// <summary>
@@ -150,6 +158,39 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     public EDBDataSourceBuilder EnableDynamicJson(Type[]? jsonbClrTypes = null, Type[]? jsonClrTypes = null)
     {
         _internalBuilder.EnableDynamicJson(jsonbClrTypes, jsonClrTypes);
+        return this;
+    }
+
+
+    // EnterpriseDB : remove optins (see EC-3060)
+
+    /// <summary>
+    /// Disables Dynamic Json (reverts EnableDynamicJson opt-in)
+    /// </summary>
+    /// <returns></returns>
+    public EDBDataSourceBuilder DisableDynamicJson()
+    {
+        _internalBuilder.DisableDynamicJson();
+        return this;
+    }
+
+    /// <summary>
+    /// Disables Records as tuples (reverts EnableRecordsAsTuples opt-in)
+    /// </summary>
+    /// <returns></returns>
+    public EDBDataSourceBuilder DisableRecordsAsTuples()
+    {
+        _internalBuilder.DisableRecordsAsTuples();
+        return this;
+    }
+
+    /// <summary>
+    /// Disables UnmappedTypes (reverts EnableUnmappedTypes opt-in)
+    /// </summary>
+    /// <returns></returns>
+    public EDBDataSourceBuilder DisableUnmappedTypes()
+    {
+        _internalBuilder.DisableUnmappedTypes();
         return this;
     }
 
@@ -455,4 +496,10 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         "The use of unmapped enums, ranges or multiranges requires dynamic code usage which is incompatible with NativeAOT.")]
     IEDBTypeMapper IEDBTypeMapper.EnableUnmappedTypes()
         => EnableUnmappedTypes();
+
+
+    // EnterpriseDB : remove optins (see EC-3060)
+    IEDBTypeMapper IEDBTypeMapper.DisableDynamicJson() => DisableDynamicJson();
+    IEDBTypeMapper IEDBTypeMapper.DisableUnmappedTypes() => DisableUnmappedTypes();
+    IEDBTypeMapper IEDBTypeMapper.DisableRecordsAsTuples() => DisableRecordsAsTuples();
 }

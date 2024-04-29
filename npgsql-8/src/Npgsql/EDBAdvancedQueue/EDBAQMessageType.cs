@@ -34,7 +34,7 @@ namespace EnterpriseDB.EDBClient
     public enum EDBAQMessageType
     {
         /// <summary>
-        /// Raw (Not Sopported)
+        /// Raw (Not Supported)
         /// </summary>
         /// <value>The raw message type.Note: Currently, this payload type is not supported.</value>
         Raw = 1,
@@ -45,7 +45,7 @@ namespace EnterpriseDB.EDBClient
         Udt = 2,
 
         /// <summary>
-        /// Xml (Not Sopported)
+        /// Xml (Not Supported)
         /// </summary>
         /// <value>The XML type message.Note: Currently, this payload type is not supported.</value>
         Xml = 3

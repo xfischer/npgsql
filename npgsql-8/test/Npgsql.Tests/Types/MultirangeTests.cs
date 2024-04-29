@@ -133,7 +133,9 @@ public class MultirangeTests : TestBase
     [Test]
     public async Task Unmapped_multirange_supported_only_with_EnableUnmappedTypes()
     {
-        await using var connection = await DataSource.OpenConnectionAsync();
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes());
+        await using var connection = await dataSource.OpenConnectionAsync();
         var rangeType = await GetTempTypeName(connection);
         var multirangeTypeName = rangeType + "_multirange";
         await connection.ExecuteNonQueryAsync($"CREATE TYPE {rangeType} AS RANGE(subtype=text)");
@@ -151,18 +153,18 @@ public class MultirangeTests : TestBase
                 new("bar", "foo"),
                 new("moo", "zoo"),
             },
-            multirangeTypeName);
+            multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead("""{["bar","foo"],["moo","zoo"]}""",
-            multirangeTypeName);
+            multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead<EDBRange<string>>(
             """{["bar","foo"],["moo","zoo"]}""",
-            multirangeTypeName);
+            multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }
@@ -172,6 +174,9 @@ public class MultirangeTests : TestBase
     public MultirangeTests() => DataSource = CreateDataSource(builder =>
         {
             builder.ConnectionStringBuilder.Timezone = "Europe/Berlin";
+            builder.DisableUnmappedTypes()  // EnterpriseDB : revert datasource builder to default without opt-ins
+            .DisableDynamicJson()
+            .DisableRecordsAsTuples();
         });
 
     [OneTimeSetUp]

@@ -38,7 +38,9 @@ public class JsonTests : MultiplexingTestBase
     [Test]
     public async Task As_string_with_GetTextReader()
     {
-        await using var conn = await OpenConnectionAsync();
+        // EnterpriseDB force datasource without opt-ins
+        using var ds = CreateDataSource(b => b.DisableDynamicJson());
+        using var conn = await ds.OpenConnectionAsync();
         await using var cmd = new EDBCommand($$"""SELECT '{"K": "V"}'::{{PostgresType}}""", conn);
         await using var reader = await cmd.ExecuteReaderAsync();
         reader.Read();
@@ -56,17 +58,32 @@ public class JsonTests : MultiplexingTestBase
 
     [Test]
     public async Task Write_as_ReadOnlyMemory_of_byte()
-        => await AssertTypeWrite(new ReadOnlyMemory<byte>("""{"K": "V"}"""u8.ToArray()), """{"K": "V"}""", PostgresType, EDBDbType,
+    {
+        // EnterpriseDB force datasource without opt-ins
+        using var ds = CreateDataSource(b => b.DisableDynamicJson());
+        using var con = await ds.OpenConnectionAsync();
+        await AssertTypeWrite(connection: con, () => new ReadOnlyMemory<byte>("""{"K": "V"}"""u8.ToArray()), """{"K": "V"}""", PostgresType, EDBDbType,
             isDefault: false);
+    }
 
     [Test]
     public async Task Write_as_ArraySegment_of_char()
-        => await AssertTypeWrite(new ArraySegment<char>("""{"K": "V"}""".ToCharArray()), """{"K": "V"}""", PostgresType, EDBDbType,
+    {
+        // EnterpriseDB force datasource without opt-ins
+        using var ds = CreateDataSource(b => b.DisableDynamicJson());
+        using var con = await ds.OpenConnectionAsync();
+        await AssertTypeWrite(connection: con, () => new ArraySegment<char>("""{"K": "V"}""".ToCharArray()), """{"K": "V"}""", PostgresType, EDBDbType,
             isDefault: false);
+    }
 
     [Test]
-    public Task As_MemoryStream()
-        => AssertTypeWrite(() => new MemoryStream("""{"K": "V"}"""u8.ToArray()), """{"K": "V"}""", PostgresType, EDBDbType, isDefault: false);
+    public async Task As_MemoryStream()
+    {
+        // EnterpriseDB force datasource without opt-ins
+        using var ds = CreateDataSource(b => b.DisableDynamicJson());
+        using var con = await ds.OpenConnectionAsync();
+        await AssertTypeWrite(connection: con, () => new MemoryStream("""{"K": "V"}"""u8.ToArray()), """{"K": "V"}""", PostgresType, EDBDbType, isDefault: false);
+    }
 
     [Test]
     public async Task As_JsonDocument()

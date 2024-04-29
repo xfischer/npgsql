@@ -276,7 +276,7 @@ class PoolTests : TestBase
         Assert.That(asyncOpenerThreadId, Is.Not.EqualTo(Environment.CurrentManagedThreadId));
     }
 
-    [Test] //TODO: parallelize
+    [Test, Timeout(15000)] //TODO: parallelize
     public async Task Release_waiter_on_connection_failure()
     {
         await using var dataSource = CreateDataSource(csb =>

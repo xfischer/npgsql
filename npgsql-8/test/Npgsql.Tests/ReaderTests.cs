@@ -2226,6 +2226,7 @@ LANGUAGE plpgsql VOLATILE";
     #region Timeout
 
     [Test, Description("Timeouts sequential ReadAsGetFieldValueAsync")]
+    [Timeout(30000)] // EnterpriseDB
     public async Task GetFieldValueAsync_sequential_timeout()
     {
         if (IsMultiplexing)

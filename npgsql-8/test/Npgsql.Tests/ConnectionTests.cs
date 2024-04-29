@@ -224,7 +224,7 @@ public class ConnectionTests : MultiplexingTestBase
         => Assert.Throws<ArgumentException>(() =>
             new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests"));
 
-    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one")]
+    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one"), Timeout(15000)]
     public async Task Fail_connect_then_succeed([Values] bool pooling)
     {
         if (IsMultiplexing && !pooling) // Multiplexing doesn't work without pooling
@@ -1209,6 +1209,7 @@ CREATE TABLE record ()");
 //#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
+    [Timeout(10000)]
     [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]
     public async Task Non_UTF8_Encoding()
     {

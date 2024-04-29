@@ -77,7 +77,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     public EDBSlimDataSourceBuilder(string? connectionString = null)
         : this(new EDBConnectionStringBuilder(connectionString))
-    {}
+    { }
 
     internal EDBSlimDataSourceBuilder(EDBConnectionStringBuilder connectionStringBuilder)
     {
@@ -500,6 +500,28 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
+    // EnterpriseDB : remove optins (see EC-3060)
+    internal EDBSlimDataSourceBuilder DisableDynamicJson()
+    {
+        _resolverChainBuilder.RemoveResolverFactory(typeof(JsonDynamicTypeInfoResolverFactory));
+        return this;
+    }
+
+    // EnterpriseDB : remove optins (see EC-3060)
+    internal EDBSlimDataSourceBuilder DisableRecordsAsTuples()
+    {
+        _resolverChainBuilder.RemoveResolverFactory(typeof(TupledRecordTypeInfoResolverFactory));
+        return this;
+    }
+
+
+    // EnterpriseDB : remove optins (see EC-3060)
+    internal EDBSlimDataSourceBuilder DisableUnmappedTypes()
+    {
+        _resolverChainBuilder.RemoveResolverFactory(typeof(UnmappedTypeInfoResolverFactory));
+        return this;
+    }
+
     /// <summary>
     /// Sets up mappings for the PostgreSQL <c>record</c> type as a .NET <see cref="ValueTuple" /> or <see cref="Tuple" />.
     /// </summary>
@@ -684,4 +706,11 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         "The use of unmapped enums, ranges or multiranges requires dynamic code usage which is incompatible with NativeAOT.")]
     IEDBTypeMapper IEDBTypeMapper.EnableUnmappedTypes()
         => EnableUnmappedTypes();
+
+
+    // EnterpriseDB : remove optins (see EC-3060)
+    IEDBTypeMapper IEDBTypeMapper.DisableDynamicJson() => DisableDynamicJson();
+    IEDBTypeMapper IEDBTypeMapper.DisableUnmappedTypes() => DisableUnmappedTypes();
+    IEDBTypeMapper IEDBTypeMapper.DisableRecordsAsTuples() => DisableRecordsAsTuples();
+
 }

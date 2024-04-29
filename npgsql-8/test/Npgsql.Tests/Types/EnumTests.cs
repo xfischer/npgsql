@@ -131,7 +131,7 @@ CREATE TYPE {type2} AS ENUM ('label1', 'label2', 'label3')");
         var type = await GetTempTypeName(adminConnection);
         await adminConnection.ExecuteNonQueryAsync($"CREATE TYPE {type} AS ENUM ('Simple', 'TwoWords', 'some_database_name')");
 
-        var dataSourceBuilder = CreateDataSourceBuilder();
+        var dataSourceBuilder = CreateDataSourceBuilder().DisableUnmappedTypes(); // EnterpriseDB : disable DisableUnmappedTypes()
         dataSourceBuilder.MapEnum<NameTranslationEnum>(type, nameTranslator: new EDBNullNameTranslator());
         await using var dataSource = dataSourceBuilder.Build();
 
@@ -143,7 +143,9 @@ CREATE TYPE {type2} AS ENUM ('label1', 'label2', 'label3')");
     [Test]
     public async Task Unmapped_enum_as_clr_enum()
     {
-        await using var dataSource = CreateDataSource(b => b.EnableUnmappedTypes());
+        // EnterpriseDB EnableUnmappedTypes active by default
+        // await using var dataSource = CreateDataSource(b => b.EnableUnmappedTypes());
+        await using var dataSource = CreateDataSource();
         await using var connection = await dataSource.OpenConnectionAsync();
         var type1 = await GetTempTypeName(connection);
         var type2 = await GetTempTypeName(connection);
@@ -159,7 +161,9 @@ CREATE TYPE {type2} AS ENUM ('value1', 'value2');");
     [Test]
     public async Task Unmapped_enum_as_clr_enum_supported_only_with_EnableUnmappedTypes()
     {
-        await using var connection = await DataSource.OpenConnectionAsync();
+
+        await using var dataSource = CreateDataSource(b => b.DisableUnmappedTypes()); // EnterpriseDB
+        await using var connection = await dataSource.OpenConnectionAsync();
         var enumType = await GetTempTypeName(connection);
         await connection.ExecuteNonQueryAsync($"CREATE TYPE {enumType} AS ENUM ('sad', 'ok', 'happy')");
         await connection.ReloadTypesAsync();
@@ -169,11 +173,11 @@ CREATE TYPE {type2} AS ENUM ('value1', 'value2');");
             nameof(EDBSlimDataSourceBuilder.EnableUnmappedTypes),
             nameof(EDBDataSourceBuilder));
 
-        var exception = await AssertTypeUnsupportedWrite(Mood.Happy, enumType);
+        var exception = await AssertTypeUnsupportedWrite(Mood.Happy, enumType, dataSource: dataSource); // EnterpriseDB: force datasource without opt-ins
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
-        exception = await AssertTypeUnsupportedRead<Mood>("happy", enumType);
+        exception = await AssertTypeUnsupportedRead<Mood>("happy", enumType, dataSource: dataSource); // EnterpriseDB: force datasource without opt-ins
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }

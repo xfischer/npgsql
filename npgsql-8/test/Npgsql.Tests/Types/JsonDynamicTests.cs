@@ -118,6 +118,9 @@ public class JsonDynamicTests : MultiplexingTestBase
     {
         // This test uses base.DataSource, which doesn't have EnableDynamicJson()
 
+        // EnterpriseDB: force datasource without opt-ins
+        var dataSource = CreateDataSource(b => b.DisableDynamicJson());
+
         var errorMessage = string.Format(
             EDBStrings.DynamicJsonNotEnabled,
             nameof(WeatherForecast),
@@ -132,7 +135,7 @@ public class JsonDynamicTests : MultiplexingTestBase
                     TemperatureC = 10
                 },
                 PostgresType,
-                base.DataSource);
+                dataSource); // EnterpriseDB force datasource without opt-ins
 
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
@@ -142,7 +145,7 @@ public class JsonDynamicTests : MultiplexingTestBase
                 ? """{"Date": "2019-09-01T00:00:00", "Summary": "Partly cloudy", "TemperatureC": 10}"""
                 : """{"Date":"2019-09-01T00:00:00","TemperatureC":10,"Summary":"Partly cloudy"}""",
             PostgresType,
-            base.DataSource);
+            dataSource);  // EnterpriseDB force datasource without opt-ins
 
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));

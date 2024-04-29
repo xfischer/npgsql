@@ -44,18 +44,21 @@ public class DateTimeTests : TestBase
     [Test]
     public async Task Datemultirange_as_array_of_EDBRange_of_DateTime()
     {
-        await using var conn = await OpenConnectionAsync();
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes());
+        await using var conn = await dataSource.OpenConnectionAsync();
         await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
         await AssertType(
+            dataSource, // EnterpriseDB force datasource without opt-ins
             new[]
             {
                 new EDBRange<DateTime>(new(2002, 3, 4), true, new(2002, 3, 6), false),
                 new EDBRange<DateTime>(new(2002, 3, 8), true, new(2002, 3, 11), false)
             },
-            "{[2002-03-04,2002-03-06),[2002-03-08,2002-03-11)}",
+            "{[04-MAR-02,06-MAR-02),[08-MAR-02,11-MAR-02)}", // EnterpriseDB redwood dates
             "datemultirange",
             EDBDbType.DateMultirange,
             isDefaultForWriting: false);
@@ -92,18 +95,21 @@ public class DateTimeTests : TestBase
     [Test]
     public async Task Datemultirange_as_array_of_EDBRange_of_DateOnly()
     {
-        await using var conn = await OpenConnectionAsync();
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes().DisableRecordsAsTuples().DisableDynamicJson());
+        await using var conn = await dataSource.OpenConnectionAsync();
 		await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
         await AssertType(
+            dataSource, // EnterpriseDB force datasource without opt-ins
             new[]
             {
                 new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
                 new EDBRange<DateOnly>(new(2002, 3, 8), true, new(2002, 3, 11), false)
             },
-            "{[2002-03-04,2002-03-06),[2002-03-08,2002-03-11)}",
+            "{[04-MAR-02,06-MAR-02),[08-MAR-02,11-MAR-02)}", // EnterpriseDB redwood dates
             "datemultirange",
             EDBDbType.DateMultirange,
             isDefaultForReading: false);

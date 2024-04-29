@@ -358,6 +358,7 @@ CREATE TYPE {compositeType} AS (date_times timestamp[])");
     }
 
     [Test]
+    [Timeout(10000)]
     public async Task Composite_containing_converter_resolver_type_throws()
     {
         await using var adminConnection = await OpenConnectionAsync();

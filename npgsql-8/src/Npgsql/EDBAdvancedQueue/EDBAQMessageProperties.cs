@@ -135,7 +135,7 @@ namespace EnterpriseDB.EDBClient
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("(");
-            PropertyInfo[] props = this.GetType().GetProperties();
+            PropertyInfo[] props = GetType().GetProperties();
             foreach (PropertyInfo prp in props)
             {
                 object value = prp.GetValue(this, null);
@@ -162,7 +162,7 @@ namespace EnterpriseDB.EDBClient
             value = value.Replace(@"(", string.Empty).Replace(@")", string.Empty); ;
             EDBAQMessageProperties obj = new EDBAQMessageProperties(1, 0, null, null, null, null, null, null, null, null, null, 0);
             string[] arr = value.Split(',');
-            PropertyInfo[] props = this.GetType().GetProperties();
+            PropertyInfo[] props = GetType().GetProperties();
             for (int i = 0; i < arr.Length; i++)
             {
                 if (arr[i] != null && arr[i] != "")

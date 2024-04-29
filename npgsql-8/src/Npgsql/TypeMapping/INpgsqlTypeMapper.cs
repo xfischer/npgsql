@@ -248,4 +248,27 @@ public interface IEDBTypeMapper
     /// Resets all mapping changes performed on this type mapper and reverts it to its original, starting state.
     /// </summary>
     void Reset();
+
+
+    
+    // EnterpriseDB : remove optins (see EC-3060)
+
+    /// <summary>
+    /// Reverts EnableDynamicJson() call
+    /// </summary>
+    /// <returns></returns>
+    IEDBTypeMapper DisableDynamicJson();
+
+    /// <summary>
+    /// Reverts EnableUnmappedTypes() call
+    /// </summary>
+    /// <returns></returns>
+    IEDBTypeMapper DisableUnmappedTypes();
+
+
+    /// <summary>
+    /// Reverts EnableRecordsAsTuples() call
+    /// </summary>
+    /// <returns></returns>
+    IEDBTypeMapper DisableRecordsAsTuples();
 }

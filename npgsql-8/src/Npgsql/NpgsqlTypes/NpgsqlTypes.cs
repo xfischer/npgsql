@@ -84,6 +84,8 @@ public struct EDBLine : IEquatable<EDBLine>
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
     static readonly Regex Regex = new(@"\{(-?\d+.?\d*),(-?\d+.?\d*),(-?\d+.?\d*)\}");
+
+
     public static EDBLine Parse(string s)
     {
         var m = Regex.Match(s);

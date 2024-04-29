@@ -18,7 +18,7 @@ namespace EnterpriseDB.EDBClient
             TypeInfoMappingCollection? _mappings;
             protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new());
 
-            public PgTypeInfo GetTypeInfo(System.Type type, DataTypeName? dataTypeName, PgSerializerOptions options)
+            public PgTypeInfo? GetTypeInfo(System.Type type, DataTypeName? dataTypeName, PgSerializerOptions options)
             {
                 PgTypeInfo? typeInfo = Mappings.Find(type, dataTypeName, options);
                 if (typeInfo is not null)

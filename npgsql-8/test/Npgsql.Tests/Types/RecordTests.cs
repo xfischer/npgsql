@@ -91,7 +91,9 @@ public class RecordTests : MultiplexingTestBase
     [Test]
     public async Task As_ValueTuple_supported_only_with_EnableRecordsAsTuples()
     {
-        await using var connection = await DataSource.OpenConnectionAsync();
+        // EnterpriseDB : disable RecordsAsTuples or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableRecordsAsTuples());
+        await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = new EDBCommand("SELECT (1, 'foo')::record", connection);
         await using var reader = await command.ExecuteReaderAsync();
         await reader.ReadAsync();

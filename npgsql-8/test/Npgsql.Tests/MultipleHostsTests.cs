@@ -430,6 +430,7 @@ public class MultipleHostsTests : TestBase
     }
 
     [Test]
+    [Timeout(30000)] // EnterpriseDB
     public async Task Connect_state_changing_hosts([Values] bool alwaysCheckHostState)
     {
         await using var primaryPostmaster = PgPostmasterMock.Start(state: Primary);

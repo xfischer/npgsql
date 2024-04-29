@@ -43,7 +43,9 @@ struct PgTypeInfoResolverChainBuilder
         _ => throw new ArgumentOutOfRangeException(nameof(factory), factory, null)
     };
 
-    void AddResolverFactory(Type type, object factory, bool prepend = false)
+
+    // EnterpriseDB : remove optins (see EC-3060)
+    internal void RemoveResolverFactory(Type type)
     {
         for (var i = 0; i < _factories.Count; i++)
             if (_factories[i].ImplementationType == type)
@@ -51,6 +53,11 @@ struct PgTypeInfoResolverChainBuilder
                 _factories.RemoveAt(i);
                 break;
             }
+    }
+
+    void AddResolverFactory(Type type, object factory, bool prepend = false)
+    {
+        RemoveResolverFactory(type);
 
         if (prepend)
             _factories.Insert(0, (type, factory));

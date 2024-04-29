@@ -198,7 +198,9 @@ class RangeTests : MultiplexingTestBase
     [Test]
     public async Task Unmapped_range_supported_only_with_EnableUnmappedTypes()
     {
-        await using var connection = await DataSource.OpenConnectionAsync();
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes());
+        await using var connection = await dataSource.OpenConnectionAsync();
         var rangeType = await GetTempTypeName(connection);
         await connection.ExecuteNonQueryAsync($"CREATE TYPE {rangeType} AS RANGE(subtype=text)");
         await Task.Yield(); // TODO: fix multiplexing deadlock bug
@@ -209,15 +211,15 @@ class RangeTests : MultiplexingTestBase
             nameof(EDBSlimDataSourceBuilder.EnableUnmappedTypes),
             nameof(EDBDataSourceBuilder));
 
-        var exception = await AssertTypeUnsupportedWrite(new EDBRange<string>("bar", "foo"), rangeType);
+        var exception = await AssertTypeUnsupportedWrite(new EDBRange<string>("bar", "foo"), rangeType, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
-        exception = await AssertTypeUnsupportedRead("""["bar","foo"]""", rangeType);
+        exception = await AssertTypeUnsupportedRead("""["bar","foo"]""", rangeType, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
-        exception = await AssertTypeUnsupportedRead<EDBRange<string>>("""["bar","foo"]""", rangeType);
+        exception = await AssertTypeUnsupportedRead<EDBRange<string>>("""["bar","foo"]""", rangeType, dataSource: dataSource); // EnterpriseDB : add datasource parameter
         Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }

@@ -33,24 +33,27 @@ namespace EnterpriseDB.EDBClient
     /// Represents a SQL statement  to execute
     /// DMBS_AQ functionality on a PostgreSQL database.
     /// </summary>
-    public class EDBAQQueue : IDisposable, ICloneable
+    /// <remarks>
+    /// Constructor.
+    /// </remarks>
+    public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneable
     {
         /// <summary>
         /// Connection to be used for AQ operations
         /// </summary>
         /// <value>The connection to be used.</value>
-        public EDBConnection Connection { get; set; }
+        public EDBConnection Connection { get; set; } = con;
         /// <summary>
         /// Name of the queue
         /// </summary>
         /// <value>.</value>
-        public string Name { get; set; }
+        public string Name { get; set; } = name;
         /// <summary>
         /// MessageType of the message.
         /// </summary>
         /// <value>The name of the queue.</value>
         [System.ComponentModel.DefaultValue(EDBAQMessageType.Udt)]
-        public EDBAQMessageType MessageType { get; set; }
+        public EDBAQMessageType MessageType { get; set; } = EDBAQMessageType.Udt;
         /// <summary>
         /// Name of the user defined type.
         /// </summary>
@@ -60,38 +63,16 @@ namespace EnterpriseDB.EDBClient
         /// EDBAQEnqueueOptions to be used.
         /// </summary>
         /// <value>The enqueue options to be used.</value>
-        public EDBAQEnqueueOptions EnqueueOptions { get; set; }
-        /// <summary>
-        /// EDBAQDequeueOptions to be used 
-        /// </summary>
-        /// <value>The dequeue options to be used.</value>
-        public EDBAQDequeueOptions DequeueOptions { get; set; }
-        /// <summary>
-        /// EDBAQMessageProperties to be used 
-        /// </summary>
-        /// <value>The message properties to be used.</value>
-        public EDBAQMessageProperties MessageProperties { get; set; }
-
-        static EDBAQQueue()
-        {
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public EDBAQQueue(string name, EDBConnection con)
-        {
-            Connection = con;
-            Name = name;
-            EnqueueOptions = new EDBAQEnqueueOptions(visibility: 0,
+        public EDBAQEnqueueOptions EnqueueOptions { get; set; } = new EDBAQEnqueueOptions(visibility: 0,
                                                      relative_msgid: null,
                                                      sequence_deviation: null,
                                                      transformation: null,
                                                      delivery_mode: 0);
-            DequeueOptions = new EDBAQDequeueOptions(consumer_name: null,
+        /// <summary>
+        /// EDBAQDequeueOptions to be used 
+        /// </summary>
+        /// <value>The dequeue options to be used.</value>
+        public EDBAQDequeueOptions DequeueOptions { get; set; } = new EDBAQDequeueOptions(consumer_name: null,
                                                      dequeue_mode: EDBAQDequeueMode.REMOVE,
                                                      navigation: 0,
                                                      visibility: 0,
@@ -101,7 +82,11 @@ namespace EnterpriseDB.EDBClient
                                                      deq_condition: null,
                                                      transformation: null,
                                                      delivery_mode: 0);
-            MessageProperties = new EDBAQMessageProperties(priority: 1,
+        /// <summary>
+        /// EDBAQMessageProperties to be used 
+        /// </summary>
+        /// <value>The message properties to be used.</value>
+        public EDBAQMessageProperties MessageProperties { get; set; } = new EDBAQMessageProperties(priority: 1,
                                                            delay: 0,
                                                            expiration: null,
                                                            correlation: null,
@@ -113,7 +98,12 @@ namespace EnterpriseDB.EDBClient
                                                            original_msgid: null,
                                                            transaction_group: null,
                                                            delivery_mode: 0);
-            MessageType = EDBAQMessageType.Udt;
+
+        static EDBAQQueue()
+        {
+           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
+           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
+           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
         }
 
         /// <summary>
