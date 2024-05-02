@@ -7,63 +7,71 @@ on:
   workflow_dispatch:
   
 env:
-  dotnet_sdk_version: '6.0.x'
+  dotnet_sdk_version: '8.0.x'
 
 jobs:
   build-dotnet-win64:
 
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup .NET Core 6 and 3.1
+    - name: Setup .NET 8, 7, 6
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: |
           ${{ env.dotnet_sdk_version }}
-          3.1.x
+          7.0.x
+          6.0.x
           
     # Restore and Build Npgsql.csproj
     - name: Driver Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql
+      working-directory: npgsql-8\src\Npgsql
 
     # Restore and Build Npgsql.OpenTelemetry.csproj
     - name: OpenTelemetry Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.OpenTelemetry
+      working-directory: npgsql-8\src\Npgsql.OpenTelemetry
+
+    # Restore and Build Npgsql.DependencyInjection.csproj
+    - name: DependencyInjection Restore & build
+      run: |
+        dotnet restore
+        dotnet build --no-restore
+      working-directory: npgsql-8\src\Npgsql.DependencyInjection
       
     # Restore and Build Npgsql.GeoJSON.csproj
     - name: Plugin GeoJSON Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.GeoJSON
+      working-directory: npgsql-8\src\Npgsql.GeoJSON
       
     # Restore and Build Npgsql.Json.NET.csproj
     - name: Plugin Json.NET Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.Json.NET
+      working-directory: npgsql-8\src\Npgsql.Json.NET
       
     # Restore and Build Npgsql.NetTopologySuite.csproj
     - name: Plugin NetTopologySuite Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.NetTopologySuite
+      working-directory: npgsql-8\src\Npgsql.NetTopologySuite
       
     # Restore and Build Npgsql.NodaTime.csproj
     - name: Plugin NodaTime Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\src\Npgsql.NodaTime
+      working-directory: npgsql-8\src\Npgsql.NodaTime
       
     # Restore and Build EFCore.PG.csproj
     - name: EFCore.PG Restore & build
@@ -71,14 +79,7 @@ jobs:
         dotnet restore
         dotnet build --no-restore
       working-directory: EF.core\src\EFCore.PG
-      
-    # Restore and Build EFCore.PG.FuzzyStringMatch.csproj
-    - name: EFCore.PG.FuzzyStringMatch Restore & build
-      run: |
-        dotnet restore
-        dotnet build --no-restore
-      working-directory: EF.core\src\EFCore.PG.FuzzyStringMatch
-      
+            
     # Restore and Build EFCore.PG.NodaTime.csproj
     - name: EFCore.PG.NodaTime Restore & build
       run: |
@@ -92,14 +93,7 @@ jobs:
         dotnet restore
         dotnet build --no-restore
       working-directory: EF.core\src\EFCore.PG.NTS
-      
-    # Restore and Build EFCore.PG.Trigrams.csproj
-    - name: EFCore.PG.Trigrams Restore & build
-      run: |
-        dotnet restore
-        dotnet build --no-restore
-      working-directory: EF.core\src\EFCore.PG.Trigrams
-      
+            
     # Restore and Build Npgsql.Tests.csproj
     - name: Tests Restore & build
       run: |
