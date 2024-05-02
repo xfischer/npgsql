@@ -543,7 +543,7 @@ public abstract class ReplicationConnection : IAsyncDisposable
             if (columnStream != null && !bypassingStream && !_replicationCancellationTokenSource.Token.IsCancellationRequested)
                 await columnStream.DisposeAsync().ConfigureAwait(false);
 
-#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+#if NETSTANDARD2_0 // EnterpriseDB (NETFRAMEWORK)
             if (_sendFeedbackTimer != null)
             {
                 var mre = new ManualResetEvent(false);
@@ -561,6 +561,11 @@ public abstract class ReplicationConnection : IAsyncDisposable
                 if (actuallyDisposed)
                     await mre.WaitOneAsync(cancellationToken).ConfigureAwait(false);
             }
+#elif NETFRAMEWORK
+            if (_sendFeedbackTimer != null)
+                _sendFeedbackTimer.Dispose();
+            if (_requestFeedbackTimer != null)
+                _requestFeedbackTimer.Dispose();
 #else
 
             if (_sendFeedbackTimer != null)

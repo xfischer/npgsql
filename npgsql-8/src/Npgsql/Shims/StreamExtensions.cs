@@ -62,15 +62,13 @@ namespace System.IO
             try
             {
                 // Old implementation
-                //var result = await stream.ReadAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
                 //new Span<byte>(sharedBuffer, 0, result).CopyTo(buffer.Span);
                 //return result;
 
 				// EnterpriseDB
                 var readTask = stream.ReadAsync(sharedBuffer, 0, buffer.Length, cancellationToken);
 
-                await Task.WhenAny(readTask, Task.Delay(1500, cancellationToken)).ConfigureAwait(false);
-                //Task.WaitAny(new Task[] { readTask }, 6000, cancellationToken);
+                await Task.WhenAny(readTask, Task.Delay(5000, cancellationToken)).ConfigureAwait(false);
 
                 if (readTask.IsCompleted)
                 {
