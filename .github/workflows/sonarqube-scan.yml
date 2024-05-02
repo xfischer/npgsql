@@ -21,7 +21,7 @@ on:
       ref:
         description: "Branch to scan"
         required: true
-        default: "main"
+        default: "master"
 
 jobs:
   SonarQube-Scan:
