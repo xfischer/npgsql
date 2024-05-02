@@ -78,25 +78,25 @@ jobs:
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: EF.core\src\EFCore.PG
+      working-directory: npgsql-8\EF.core\src\EFCore.PG
             
     # Restore and Build EFCore.PG.NodaTime.csproj
     - name: EFCore.PG.NodaTime Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: EF.core\src\EFCore.PG.NodaTime
+      working-directory: npgsql-8\EF.core\src\EFCore.PG.NodaTime
       
     # Restore and Build EFCore.PG.NTS.csproj
     - name: EFCore.PG.NTS Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: EF.core\src\EFCore.PG.NTS
+      working-directory: npgsql-8\EF.core\src\EFCore.PG.NTS
             
     # Restore and Build Npgsql.Tests.csproj
     - name: Tests Restore & build
       run: |
         dotnet restore
         dotnet build --no-restore
-      working-directory: npgsql-6\test\Npgsql.Tests
+      working-directory: npgsql-8\test\Npgsql.Tests
