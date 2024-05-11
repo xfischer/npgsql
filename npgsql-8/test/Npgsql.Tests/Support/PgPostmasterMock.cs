@@ -138,6 +138,7 @@ class PgPostmasterMock : IAsyncDisposable
         var readBuffer = new EDBReadBuffer(null!, stream, clientSocket, ReadBufferSize, Encoding,
             RelaxedEncoding);
         var writeBuffer = new EDBWriteBuffer(null!, stream, clientSocket, WriteBufferSize, Encoding);
+        writeBuffer.MessageLengthValidation = false;
 
         await readBuffer.EnsureAsync(4);
         var len = readBuffer.ReadInt32();
