@@ -113,6 +113,7 @@ class WriteBufferTests
     {
         Underlying = new MemoryStream();
         WriteBuffer = new EDBWriteBuffer(null, Underlying, null, EDBReadBuffer.DefaultSize, EDBWriteBuffer.UTF8Encoding);
+        WriteBuffer.MessageLengthValidation = false;
     }
 #pragma warning restore CS8625
 
