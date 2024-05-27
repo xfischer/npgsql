@@ -552,7 +552,7 @@ partial class EDBConnector
     internal Task WriteClose(StatementOrPortal type, byte[] asciiName, bool async, CancellationToken cancellationToken = default)
     {
         var len = sizeof(byte) +               // Message code
-                  sizeof(int) +               // Length
+                  sizeof(int)  +               // Length
                   sizeof(byte) +               // Statement or portal
                   asciiName.Length + sizeof(byte);  // Statement or portal name plus null terminator
 

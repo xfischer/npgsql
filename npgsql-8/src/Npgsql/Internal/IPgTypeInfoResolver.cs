@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 
 namespace EnterpriseDB.EDBClient.Internal;
@@ -6,6 +7,7 @@ namespace EnterpriseDB.EDBClient.Internal;
 /// <summary>
 /// An EDB resolver for type info. Used by EDB to read and write values to PostgreSQL.
 /// </summary>
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public interface IPgTypeInfoResolver
 {
     /// <summary>

@@ -28,15 +28,19 @@ sealed class JsonDynamicTypeInfoResolverFactory : PgTypeInfoResolverFactory
     public override IPgTypeInfoResolver CreateResolver() => new Resolver(_jsonbClrTypes, _jsonClrTypes, _serializerOptions);
     public override IPgTypeInfoResolver CreateArrayResolver() => new ArrayResolver(_jsonbClrTypes, _jsonClrTypes, _serializerOptions);
 
-    public static void ThrowIfUnsupported<TBuilder>(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
+    // Split into a nested class to avoid erroneous trimming/AOT warnings because the JsonDynamicTypeInfoResolverFactory is marked as incompatible.
+    internal static class Support
     {
-        if (dataTypeName is { SchemaSpan: "pg_catalog", UnqualifiedNameSpan: "json" or "_json" or "jsonb" or "_jsonb" })
-            throw new NotSupportedException(
-                string.Format(
-                    EDBStrings.DynamicJsonNotEnabled,
-                    type is null || type == typeof(object) ? "<unknown>" : type.Name,
-                    nameof(EDBSlimDataSourceBuilder.EnableDynamicJson),
-                    typeof(TBuilder).Name));
+        public static void ThrowIfUnsupported<TBuilder>(Type? type, DataTypeName? dataTypeName)
+	    {
+	        if (dataTypeName is { SchemaSpan: "pg_catalog", UnqualifiedNameSpan: "json" or "_json" or "jsonb" or "_jsonb" })
+	            throw new NotSupportedException(
+	                string.Format(
+	                    EDBStrings.DynamicJsonNotEnabled,
+	                    type is null || type == typeof(object) ? "<unknown>" : type.Name,
+	                    nameof(EDBSlimDataSourceBuilder.EnableDynamicJson),
+	                    typeof(TBuilder).Name));
+        }
     }
 
     [RequiresUnreferencedCode("Json serializer may perform reflection on trimmed types.")]
@@ -117,7 +121,7 @@ sealed class JsonDynamicTypeInfoResolverFactory : PgTypeInfoResolverFactory
         protected override DynamicMappingCollection? GetMappings(Type? type, DataTypeName dataTypeName, PgSerializerOptions options)
         {
             // Match all types except null, object and text types as long as DataTypeName (json/jsonb) is present.
-            if (type is null || type == typeof(object) || Array.IndexOf(PgSerializerOptions.WellKnownTextTypes, type) != -1
+            if (type is null || type == typeof(object) || PgSerializerOptions.IsWellKnownTextType(type)
                                        || dataTypeName != DataTypeNames.Jsonb && dataTypeName != DataTypeNames.Json)
                 return null;
 

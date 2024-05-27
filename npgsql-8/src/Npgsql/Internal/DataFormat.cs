@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public enum DataFormat : byte
 {
     Binary,

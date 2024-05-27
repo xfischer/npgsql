@@ -26,7 +26,7 @@ public sealed class EDBParameter<T> : EDBParameter
         get => _typedValue;
         set
         {
-            if (typeof(T) == typeof(object) && (value is null || _typedValue?.GetType() != value.GetType()))
+            if (typeof(T) == typeof(object) && ShouldResetObjectTypeInfo(value))
                 ResetTypeInfo();
             else
                 ResetBindingInfo();
@@ -91,18 +91,17 @@ public sealed class EDBParameter<T> : EDBParameter
     }
 
     // We ignore allowNullReference, it's just there to control the base implementation.
-    private protected override void BindCore(bool allowNullReference = false, bool isOutputParameter = false) // EnterpriseDB isOutputParameter
+    private protected override void BindCore(DataFormat? formatPreference, bool allowNullReference = false, bool isOutputParameter = false) // EnterpriseDB isOutputParameter
     {
         if (_asObject)
         {
             // If we're object typed we should not support null.
-            base.BindCore(typeof(T) != typeof(object), isOutputParameter);  // EnterpriseDB isOutputParameter
+            base.BindCore(formatPreference, typeof(T) != typeof(object), isOutputParameter);  // EnterpriseDB isOutputParameter
             return;
         }
 
         var value = TypedValue;
-        Debug.Assert(Converter is PgConverter<T>);
-        if (TypeInfo!.Bind(Unsafe.As<PgConverter<T>>(Converter), value, out var size, out _writeState, out var dataFormat) is { } info)
+        if (TypeInfo!.Bind(Converter!.UnsafeDowncast<T>(), value, out var size, out _writeState, out var dataFormat, formatPreference) is { } info)
         {
             WriteSize = size;
             _bufferRequirement = info.BufferRequirement;
@@ -120,11 +119,10 @@ public sealed class EDBParameter<T> : EDBParameter
         if (_asObject)
             return base.WriteValue(async, writer, cancellationToken);
 
-        Debug.Assert(Converter is PgConverter<T>);
         if (async)
-            return Unsafe.As<PgConverter<T>>(Converter!).WriteAsync(writer, TypedValue!, cancellationToken);
+            return Converter!.UnsafeDowncast<T>().WriteAsync(writer, TypedValue!, cancellationToken);
 
-        Unsafe.As<PgConverter<T>>(Converter!).Write(writer, TypedValue!);
+        Converter!.UnsafeDowncast<T>().Write(writer, TypedValue!);
         return new();
     }
 

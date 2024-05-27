@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public enum SizeKind
 {
     Unknown = 0,
@@ -10,6 +12,7 @@ public enum SizeKind
     UpperBound
 }
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly struct Size : IEquatable<Size>
 {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Data.Common;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -11,13 +10,38 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Extension method for setting up EDB services in an <see cref="IServiceCollection" />.
 /// </summary>
-public static class EDBServiceCollectionExtensions
+public static partial class EDBServiceCollectionExtensions
 {
     /// <summary>
     /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
     /// </summary>
     /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <param name="connectionString">An EDB connection string.</param>
+    /// <param name="connectionLifetime">
+    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
+    /// Defaults to <see cref="ServiceLifetime.Transient" />.
+    /// </param>
+    /// <param name="dataSourceLifetime">
+    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
+    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
+    /// </param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
+    /// <returns>The same service collection so that multiple calls can be chained.</returns>
+    public static IServiceCollection AddEDBDataSource(
+        this IServiceCollection serviceCollection,
+        string connectionString,
+        ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
+        ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
+        object? serviceKey = null)
+        => AddEDBDataSourceCore(
+            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null,
+            connectionLifetime, dataSourceLifetime, state: null);
+
+    /// <summary>
+    /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
+    /// </summary>
+    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <param name="connectionString">An EDB connection string.</param>
     /// <param name="dataSourceBuilderAction">
     /// An action to configure the <see cref="EDBDataSourceBuilder" /> for further customizations of the <see cref="EDBDataSource" />.
     /// </param>
@@ -38,7 +62,9 @@ public static class EDBServiceCollectionExtensions
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
-        => AddEDBDataSourceCore(serviceCollection, serviceKey, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+        => AddEDBDataSourceCore(serviceCollection, serviceKey, connectionString,
+            static (_, builder, state) => ((Action<EDBDataSourceBuilder>)state!)(builder)
+            , connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
@@ -56,15 +82,18 @@ public static class EDBServiceCollectionExtensions
     /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
     /// Defaults to <see cref="ServiceLifetime.Singleton" />.
     /// </param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
     public static IServiceCollection AddEDBDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
-        Action<EDBDataSourceBuilder> dataSourceBuilderAction,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddEDBDataSourceCore(serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+        Action<IServiceProvider, EDBDataSourceBuilder> dataSourceBuilderAction,
+        ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
+        ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
+        object? serviceKey = null)
+        => AddEDBDataSourceCore(serviceCollection, serviceKey, connectionString,
+            static (sp, builder, state) => ((Action<IServiceProvider, EDBDataSourceBuilder>)state!)(sp, builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
@@ -81,37 +110,15 @@ public static class EDBServiceCollectionExtensions
     /// </param>
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    public static IServiceCollection AddEDBDataSource(
+    public static IServiceCollection AddEDBSlimDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
-        => AddEDBDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
-
-    /// <summary>
-    /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="connectionString">An EDB connection string.</param>
-    /// <param name="connectionLifetime">
-    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
-    /// Defaults to <see cref="ServiceLifetime.Transient" />.
-    /// </param>
-    /// <param name="dataSourceLifetime">
-    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
-    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
-    /// </param>
-    /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
-    public static IServiceCollection AddEDBDataSource(
-        this IServiceCollection serviceCollection,
-        string connectionString,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddEDBDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
+        => AddEDBSlimDataSourceCore(
+            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null,
+            connectionLifetime, dataSourceLifetime, state: null);
 
     /// <summary>
     /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
@@ -138,7 +145,9 @@ public static class EDBServiceCollectionExtensions
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
-        => AddEDBSlimDataSourceCore(serviceCollection, serviceKey, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+        => AddEDBSlimDataSourceCore(serviceCollection, serviceKey, connectionString,
+            static (_, builder, state) => ((Action<EDBSlimDataSourceBuilder>)state!)(builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
@@ -156,18 +165,22 @@ public static class EDBServiceCollectionExtensions
     /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
     /// Defaults to <see cref="ServiceLifetime.Singleton" />.
     /// </param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
     public static IServiceCollection AddEDBSlimDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
-        Action<EDBSlimDataSourceBuilder> dataSourceBuilderAction,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddEDBSlimDataSourceCore(serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+        Action<IServiceProvider, EDBSlimDataSourceBuilder> dataSourceBuilderAction,
+        ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
+        ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
+        object? serviceKey = null)
+        => AddEDBSlimDataSourceCore(serviceCollection, serviceKey, connectionString,
+            static (sp, builder, state) => ((Action<IServiceProvider, EDBSlimDataSourceBuilder>)state!)(sp, builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
-    /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
+    /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
+    /// <see cref="IServiceCollection" />.
     /// </summary>
     /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <param name="connectionString">An EDB connection string.</param>
@@ -181,37 +194,15 @@ public static class EDBServiceCollectionExtensions
     /// </param>
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    public static IServiceCollection AddEDBSlimDataSource(
+    public static IServiceCollection AddMultiHostEDBDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
-        => AddEDBSlimDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
-
-    /// <summary>
-    /// Registers an <see cref="EDBDataSource" /> and an <see cref="EDBConnection" /> in the <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="connectionString">An EDB connection string.</param>
-    /// <param name="connectionLifetime">
-    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
-    /// Defaults to <see cref="ServiceLifetime.Transient" />.
-    /// </param>
-    /// <param name="dataSourceLifetime">
-    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
-    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
-    /// </param>
-    /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
-    public static IServiceCollection AddEDBSlimDataSource(
-        this IServiceCollection serviceCollection,
-        string connectionString,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddEDBSlimDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
+        => AddMultiHostEDBDataSourceCore(
+            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null,
+            connectionLifetime, dataSourceLifetime, state: null);
 
     /// <summary>
     /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
@@ -239,7 +230,9 @@ public static class EDBServiceCollectionExtensions
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
         => AddMultiHostEDBDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+            serviceCollection, serviceKey, connectionString,
+            static (_, builder, state) => ((Action<EDBDataSourceBuilder>)state!)(builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
@@ -257,16 +250,19 @@ public static class EDBServiceCollectionExtensions
     /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
     /// Defaults to <see cref="ServiceLifetime.Singleton" />.
     /// </param>
+    /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
     public static IServiceCollection AddMultiHostEDBDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
-        Action<EDBDataSourceBuilder> dataSourceBuilderAction,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
+        Action<IServiceProvider, EDBDataSourceBuilder> dataSourceBuilderAction,
+        ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
+        ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
+        object? serviceKey = null)
         => AddMultiHostEDBDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+            serviceCollection, serviceKey, connectionString,
+            static (sp, builder, state) => ((Action<IServiceProvider, EDBDataSourceBuilder>)state!)(sp, builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
@@ -284,38 +280,15 @@ public static class EDBServiceCollectionExtensions
     /// </param>
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    public static IServiceCollection AddMultiHostEDBDataSource(
+    public static IServiceCollection AddMultiHostEDBSlimDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
-        => AddMultiHostEDBDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
-
-    /// <summary>
-    /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
-    /// <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="connectionString">An EDB connection string.</param>
-    /// <param name="connectionLifetime">
-    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
-    /// Defaults to <see cref="ServiceLifetime.Transient" />.
-    /// </param>
-    /// <param name="dataSourceLifetime">
-    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
-    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
-    /// </param>
-    /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
-    public static IServiceCollection AddMultiHostEDBDataSource(
-        this IServiceCollection serviceCollection,
-        string connectionString,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddMultiHostEDBDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
+        => AddMultiHostEDBSlimDataSourceCore(
+            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null,
+            connectionLifetime, dataSourceLifetime, state: null);
 
     /// <summary>
     /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
@@ -343,7 +316,9 @@ public static class EDBServiceCollectionExtensions
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
         => AddMultiHostEDBSlimDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
+            serviceCollection, serviceKey, connectionString,
+            static (_, builder, state) => ((Action<EDBSlimDataSourceBuilder>)state!)(builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     /// <summary>
     /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
@@ -361,73 +336,28 @@ public static class EDBServiceCollectionExtensions
     /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
     /// Defaults to <see cref="ServiceLifetime.Singleton" />.
     /// </param>
-    /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
-    public static IServiceCollection AddMultiHostEDBSlimDataSource(
-        this IServiceCollection serviceCollection,
-        string connectionString,
-        Action<EDBSlimDataSourceBuilder> dataSourceBuilderAction,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddMultiHostEDBSlimDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction, connectionLifetime, dataSourceLifetime);
-
-    /// <summary>
-    /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
-    /// <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="connectionString">An EDB connection string.</param>
-    /// <param name="connectionLifetime">
-    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
-    /// Defaults to <see cref="ServiceLifetime.Transient" />.
-    /// </param>
-    /// <param name="dataSourceLifetime">
-    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
-    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
-    /// </param>
     /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the data source.</param>
     /// <returns>The same service collection so that multiple calls can be chained.</returns>
     public static IServiceCollection AddMultiHostEDBSlimDataSource(
         this IServiceCollection serviceCollection,
         string connectionString,
+        Action<IServiceProvider, EDBSlimDataSourceBuilder> dataSourceBuilderAction,
         ServiceLifetime connectionLifetime = ServiceLifetime.Transient,
         ServiceLifetime dataSourceLifetime = ServiceLifetime.Singleton,
         object? serviceKey = null)
         => AddMultiHostEDBSlimDataSourceCore(
-            serviceCollection, serviceKey, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
-
-    /// <summary>
-    /// Registers an <see cref="EDBMultiHostDataSource" /> and an <see cref="EDBConnection" /> in the
-    /// <see cref="IServiceCollection" />.
-    /// </summary>
-    /// <param name="serviceCollection">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="connectionString">An EDB connection string.</param>
-    /// <param name="connectionLifetime">
-    /// The lifetime with which to register the <see cref="EDBConnection" /> in the container.
-    /// Defaults to <see cref="ServiceLifetime.Transient" />.
-    /// </param>
-    /// <param name="dataSourceLifetime">
-    /// The lifetime with which to register the <see cref="EDBDataSource" /> service in the container.
-    /// Defaults to <see cref="ServiceLifetime.Singleton" />.
-    /// </param>
-    /// <returns>The same service collection so that multiple calls can be chained.</returns>
-    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Defined for binary compatibility with 7.0")]
-    public static IServiceCollection AddMultiHostEDBSlimDataSource(
-        this IServiceCollection serviceCollection,
-        string connectionString,
-        ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
-        => AddMultiHostEDBSlimDataSourceCore(
-            serviceCollection, serviceKey: null, connectionString, dataSourceBuilderAction: null, connectionLifetime, dataSourceLifetime);
+            serviceCollection, serviceKey, connectionString,
+            static (sp, builder, state) => ((Action<IServiceProvider, EDBSlimDataSourceBuilder>)state!)(sp, builder),
+            connectionLifetime, dataSourceLifetime, state: dataSourceBuilderAction);
 
     static IServiceCollection AddEDBDataSourceCore(
         this IServiceCollection serviceCollection,
         object? serviceKey,
         string connectionString,
-        Action<EDBDataSourceBuilder>? dataSourceBuilderAction,
+        Action<IServiceProvider, EDBDataSourceBuilder, object?>? dataSourceBuilderAction,
         ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
+        ServiceLifetime dataSourceLifetime,
+        object? state)
     {
         serviceCollection.TryAdd(
             new ServiceDescriptor(
@@ -437,7 +367,7 @@ public static class EDBServiceCollectionExtensions
                 {
                     var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                     dataSourceBuilder.UseLoggerFactory(sp.GetService<ILoggerFactory>());
-                    dataSourceBuilderAction?.Invoke(dataSourceBuilder);
+                    dataSourceBuilderAction?.Invoke(sp, dataSourceBuilder, state);
                     return dataSourceBuilder.Build();
                 },
                 dataSourceLifetime));
@@ -451,9 +381,10 @@ public static class EDBServiceCollectionExtensions
         this IServiceCollection serviceCollection,
         object? serviceKey,
         string connectionString,
-        Action<EDBSlimDataSourceBuilder>? dataSourceBuilderAction,
+        Action<IServiceProvider, EDBSlimDataSourceBuilder, object?>? dataSourceBuilderAction,
         ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
+        ServiceLifetime dataSourceLifetime,
+        object? state)
     {
         serviceCollection.TryAdd(
             new ServiceDescriptor(
@@ -463,7 +394,7 @@ public static class EDBServiceCollectionExtensions
                 {
                     var dataSourceBuilder = new EDBSlimDataSourceBuilder(connectionString);
                     dataSourceBuilder.UseLoggerFactory(sp.GetService<ILoggerFactory>());
-                    dataSourceBuilderAction?.Invoke(dataSourceBuilder);
+                    dataSourceBuilderAction?.Invoke(sp, dataSourceBuilder, state);
                     return dataSourceBuilder.Build();
                 },
                 dataSourceLifetime));
@@ -477,9 +408,10 @@ public static class EDBServiceCollectionExtensions
         this IServiceCollection serviceCollection,
         object? serviceKey,
         string connectionString,
-        Action<EDBDataSourceBuilder>? dataSourceBuilderAction,
+        Action<IServiceProvider, EDBDataSourceBuilder, object?>? dataSourceBuilderAction,
         ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
+        ServiceLifetime dataSourceLifetime,
+        object? state)
     {
         serviceCollection.TryAdd(
             new ServiceDescriptor(
@@ -489,7 +421,7 @@ public static class EDBServiceCollectionExtensions
                 {
                     var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                     dataSourceBuilder.UseLoggerFactory(sp.GetService<ILoggerFactory>());
-                    dataSourceBuilderAction?.Invoke(dataSourceBuilder);
+                    dataSourceBuilderAction?.Invoke(sp, dataSourceBuilder, state);
                     return dataSourceBuilder.BuildMultiHost();
                 },
                 dataSourceLifetime));
@@ -522,9 +454,10 @@ public static class EDBServiceCollectionExtensions
         this IServiceCollection serviceCollection,
         object? serviceKey,
         string connectionString,
-        Action<EDBSlimDataSourceBuilder>? dataSourceBuilderAction,
+        Action<IServiceProvider, EDBSlimDataSourceBuilder, object?>? dataSourceBuilderAction,
         ServiceLifetime connectionLifetime,
-        ServiceLifetime dataSourceLifetime)
+        ServiceLifetime dataSourceLifetime,
+        object? state)
     {
         serviceCollection.TryAdd(
             new ServiceDescriptor(
@@ -534,7 +467,7 @@ public static class EDBServiceCollectionExtensions
                 {
                     var dataSourceBuilder = new EDBSlimDataSourceBuilder(connectionString);
                     dataSourceBuilder.UseLoggerFactory(sp.GetService<ILoggerFactory>());
-                    dataSourceBuilderAction?.Invoke(dataSourceBuilder);
+                    dataSourceBuilderAction?.Invoke(sp, dataSourceBuilder, state);
                     return dataSourceBuilder.BuildMultiHost();
                 },
                 dataSourceLifetime));

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient.Internal;
@@ -8,6 +9,7 @@ namespace EnterpriseDB.EDBClient.Internal;
 /// and the types it contains. When first connecting to a database, EDB will attempt to load information
 /// about it via this factory.
 /// </summary>
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public interface IEDBDatabaseInfoFactory
 {
     /// <summary>

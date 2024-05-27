@@ -5,6 +5,7 @@
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;json;postgres;ado;ado.net;database;sql</PackageTags>
     <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
     <AssemblyName>EnterpriseDB.EDBClient.Json.NET</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

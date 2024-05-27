@@ -478,9 +478,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                 }
 
-                if (!Command.IsWrappedByBatch && StatementIndex == 0 && ((Command._parameters?.HasOutputParameters ?? false) || (Command._parameters?._hasReturnParam ?? false)))//ZK: Changed EnterpriseDB Team
+                // EnterpriseDB changed check condition
+                // community:
+                // if ((Command.IsWrappedByBatch || StatementIndex is 0) && Command.InternalBatchCommands[StatementIndex]._parameters?.HasOutputParameters == true)
+                //
+                bool hasOutParameters = Command._parameters?.HasOutputParameters ?? false;
+                bool hasReturnParam = Command._parameters?._hasReturnParam ?? false;
+                if (!Command.IsWrappedByBatch && StatementIndex == 0 && (hasOutParameters || hasReturnParam))
                 {
-                    // If output parameters are present and this is the first row of the first resultset,
+                    // If output parameters are present and this is the first row of the resultset,
                     // we must always read it in non-sequential mode because it will be traversed twice (once
                     // here for the parameters, then as a regular row).
                     msg = await Connector.ReadMessage(async).ConfigureAwait(false);
@@ -489,13 +495,13 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         /* Community code
 						ProcessMessage(msg);
 	                    if (msg.Code == BackendMessageCode.DataRow)
-	                        PopulateOutputParameters();
+	                        PopulateOutputParameters(Command.InternalBatchCommands[StatementIndex]._parameters!);
 						*/
                         if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
                         {
                             var pos = Connector.ReadBuffer.ReadPosition;
                             ProcessMessage(msg);
-                            PopulateNonPreparedOutputParameters();
+                            PopulateNonPreparedOutputParameters(Command.InternalBatchCommands[StatementIndex]._parameters!);
                             Connector.ReadBuffer.ReadPosition = pos;
                             State = ReaderState.BetweenResults;
                         }
@@ -556,7 +562,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     State = ReaderState.InResult;
 					if (Command.CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                     {
-                        await PopulateOutputParameters(async).ConfigureAwait(false);
+                        await PopulateOutputParameters(async, Command.InternalBatchCommands[StatementIndex]._parameters!).ConfigureAwait(false);
                     }
                     return true;
                 case BackendMessageCode.DataRow:
@@ -683,7 +689,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
     }
 
-    async Task PopulateOutputParameters(bool async) // EnterpriseDB (renamed)
+    async Task PopulateOutputParameters(bool async, EDBParameterCollection parameters) // EnterpriseDB (renamed)
     {
         // The first row in a stored procedure command that has output parameters needs to be traversed twice -
         // once for populating the output parameters and once for the actual result set traversal. So in this
@@ -716,7 +722,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     {
 
 
-                        if (Command.Parameters._hasReturnParam && retDataFetched != true)
+                        if (parameters._hasReturnParam && retDataFetched != true)
                         {
                             retDataFetched = true;
                             paramdata = false;
@@ -724,7 +730,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                         else
                         {
-                            if (Command.Parameters.HasOutputParameters && !_isOutParamReceived)
+                            if (parameters.HasOutputParameters && !_isOutParamReceived)
                             {
                                 done = false;
                             }
@@ -742,7 +748,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                 case BackendMessageCode.CommandComplete:
                 case BackendMessageCode.EmptyQueryResponse:
-                    if (Command.Parameters.HasOutputParameters && !_isOutParamReceived)
+                    if (parameters.HasOutputParameters && !_isOutParamReceived)
                     {
                         continue;
                     }
@@ -750,7 +756,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.RowDescription:
                 case BackendMessageCode.OutDescription:
                     callableDescription = RowDescription;
-                    foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+                    foreach (var p in (IEnumerable<EDBParameter>)parameters)
                     {
                         if (p.IsOutputDirection)
                         {
@@ -764,7 +770,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.ParameterDescription:
                 case BackendMessageCode.NoData:
                     bool hasNoOutParam = true;
-                    foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+                    foreach (var p in (IEnumerable<EDBParameter>)parameters)
                     {
                         if (p.IsOutputDirection)
                         {
@@ -790,7 +796,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             for (var i = 0; i < FieldCount; i++)
             {
-                if (Command.Parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
+                if (parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
                 {
                     p.Value = GetValue(i);
                     taken.Add(p);
@@ -802,7 +808,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             // Not sure where this odd behavior comes from: all output parameters which did not get matched by
             // name now get populated with column values which weren't matched. Keeping this for backwards compat,
             // opened #2252 for investigation.
-            foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+            foreach (var p in (IEnumerable<EDBParameter>)parameters)
             {
                 if (!p.IsOutputDirection || taken.Contains(p))
                     continue;
@@ -814,34 +820,34 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             State = ReaderState.BeforeResult;  // Set the state back
         }
-        else if (Command.Parameters.HasOutputParameters || Command.Parameters.HasReturnParam || Command.Parameters.HasRefCursorParam)
+        else if (parameters.HasOutputParameters || parameters.HasReturnParam || parameters.HasRefCursorParam)
         {
             // EnterpriseDB : we now need to fill the out parameter values from _callable_description (RowDescription of OutTuples)
             // RowDescription contains nothing OR return value at this stage
             // We need to set the internal RowDescription to _callable_description
-            if (Command.Parameters.HasReturnParam)
+            if (parameters.HasReturnParam)
             {
                 if (callableDescription == null)
                     ThrowHelper.ThrowEDBException("Internal error: a return value could not be set because a row description was expected");
                 Debug.Assert(RowDescription != null);
                 Debug.Assert(RowDescription.Count <= 1, "Row description should contain 0 or 1 return value, not more");
                 callableDescription.AppendReturnData(RowDescription[0]);
-                Command.Parameters.InternalList.Add(Command.Parameters.ReturnParam);
+                parameters.InternalList.Add(parameters.ReturnParam);
                 RowDescription = callableDescription;
             }
 
-            if (Command.Parameters.HasOutputParameters)
+            if (parameters.HasOutputParameters)
             {
                 RowDescription = callableDescription;
             }
 
             var pending = new Queue<EDBParameter>();
             var taken = new List<int>();
-            var refCursorValueSet = Command.Parameters.RefCursorParam?.Value != null;
+            var refCursorValueSet = parameters.RefCursorParam?.Value != null;
 
-            if (Command.Parameters.HasOutputParameters)
+            if (parameters.HasOutputParameters)
             {
-                foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+                foreach (var p in (IEnumerable<EDBParameter>)parameters)
                 {
                     if (p.IsOutputDirection && !refCursorValueSet)
                     {
@@ -875,22 +881,17 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     }
                 }
             }
-
-            if (Command.Parameters.HasReturnParam)
-            {
-                //State = ReaderState.Consumed;
-            }
         }
     }
 
-    void PopulateNonPreparedOutputParameters() // EnterpriseDB (renamed)
+    void PopulateNonPreparedOutputParameters(EDBParameterCollection parameters) // EnterpriseDB (renamed)
     {
         // The first row in a stored procedure command that has output parameters needs to be traversed twice -
         // once for populating the output parameters and once for the actual result set traversal. So in this
         // case we can't be sequential.
 #if DEBUG
         bool hasOutParam = false;
-        foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+        foreach (var p in (IEnumerable<EDBParameter>)parameters)
         {
             if (p.IsOutputDirection)
             {
@@ -900,7 +901,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
         Debug.Assert(hasOutParam);
 #endif
-        Debug.Assert(StatementIndex == 0);
         Debug.Assert(RowDescription != null);
         Debug.Assert(State == ReaderState.BeforeResult);
 
@@ -913,7 +913,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var taken = new List<EDBParameter>();
         for (var i = 0; i < FieldCount; i++)
         {
-            if (Command.Parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
+            if (parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
             {
                 p.Value = GetValue(i);
                 taken.Add(p);
@@ -925,7 +925,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         // Not sure where this odd behavior comes from: all output parameters which did not get matched by
         // name now get populated with column values which weren't matched. Keeping this for backwards compat,
         // opened #2252 for investigation.
-        foreach (var p in (IEnumerable<EDBParameter>)Command.Parameters)
+        foreach (var p in (IEnumerable<EDBParameter>)parameters)
         {
             if (!p.IsOutputDirection || taken.Contains(p))
                 continue;
@@ -1924,29 +1924,28 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
             throw new IndexOutOfRangeException($"length must be between 0 and {buffer.Length - bufferOffset}");
 
-        // Check whether we can do resumable reads.
+        // Check whether we have a GetChars implementation for this column type.
         var field = GetInfo(ordinal, typeof(GetChars), out var converter, out var bufferRequirement, out var asObject);
-        if (converter is not IResumableRead { Supported: true })
-            throw new NotSupportedException("The GetChars method is not supported for this column type");
 
         var columnLength = SeekToColumn(async: false, ordinal, field, resumableOp: true).GetAwaiter().GetResult();
         if (columnLength == -1)
             ThrowHelper.ThrowInvalidCastException_NoValue(CheckRowAndGetField(ordinal));
 
+        var reader = PgReader;
         dataOffset = buffer is null ? 0 : dataOffset;
-        PgReader.InitCharsRead(checked((int)dataOffset),
-            buffer is not null ? new ArraySegment<char>(buffer, bufferOffset, length) : (ArraySegment<char>?)null,
-            out var previousDataOffset);
-
-        if (_isSequential && previousDataOffset > dataOffset)
+        if (_isSequential && reader.CharsRead > dataOffset)
             ThrowHelper.ThrowInvalidOperationException("Attempt to read a position in the column which has already been read");
 
-        PgReader.StartRead(bufferRequirement);
+        reader.StartCharsRead(checked((int)dataOffset),
+            buffer is not null ? new ArraySegment<char>(buffer, bufferOffset, length) : (ArraySegment<char>?)null);
+
+        reader.StartRead(bufferRequirement);
         var result = asObject
-            ? (GetChars)converter.ReadAsObject(PgReader)
-            : ((PgConverter<GetChars>)converter).Read(PgReader);
-        PgReader.AdvanceCharsRead(result.Read);
-        PgReader.EndRead();
+            ? (GetChars)converter.ReadAsObject(reader)
+            : ((PgConverter<GetChars>)converter).Read(reader);
+        reader.EndRead();
+
+        reader.EndCharsRead();
         return result.Read;
     }
 
@@ -2011,7 +2010,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             await PgReader.StartReadAsync(bufferRequirement, cancellationToken).ConfigureAwait(false);
             var result = asObject
                 ? (T)await converter.ReadAsObjectAsync(PgReader, cancellationToken).ConfigureAwait(false)
-                : await Unsafe.As<PgConverter<T>>(converter).ReadAsync(PgReader, cancellationToken).ConfigureAwait(false);
+                : await converter.UnsafeDowncast<T>().ReadAsync(PgReader, cancellationToken).ConfigureAwait(false);
             await PgReader.EndReadAsync().ConfigureAwait(false);
             return result;
         }
@@ -2062,7 +2061,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         PgReader.StartRead(bufferRequirement);
         var result = asObject
             ? (T)converter.ReadAsObject(PgReader)
-            : Unsafe.As<PgConverter<T>>(converter).Read(PgReader);
+            : converter.UnsafeDowncast<T>().Read(PgReader);
         PgReader.EndRead();
         return result;
 

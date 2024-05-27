@@ -8,6 +8,7 @@
     <AssemblyName>EnterpriseDB.EDBClient.NodaTime</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <RootNamespace>EnterpriseDB.EDBClient.NodaTime</RootNamespace>
+    <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
   </PropertyGroup>
 
   <ItemGroup>

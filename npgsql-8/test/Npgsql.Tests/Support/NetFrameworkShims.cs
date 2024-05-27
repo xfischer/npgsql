@@ -23,6 +23,8 @@ namespace EnterpriseDB.EDBClient.Tests
 
         internal static ValueTask<EDBTransaction> BeginTransactionAsync(this EDBConnection connection)
             => new ValueTask<EDBTransaction>(connection.BeginTransaction());
+        internal static ValueTask<EDBTransaction> BeginTransactionAsync(this EDBConnection connection, System.Data.IsolationLevel isolationLevel)
+            => new ValueTask<EDBTransaction>(connection.BeginTransaction(isolationLevel));
 
         public static Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -48,6 +50,7 @@ namespace EnterpriseDB.EDBClient.Tests
     }
 }
 
+#if NETFRAMEWORK
 // Range, Index
 namespace System
 {
@@ -318,3 +321,4 @@ namespace System.Runtime.CompilerServices
         }
     }
 }
+#endif

@@ -55,7 +55,7 @@ public class LegacyNodaTimeTests : TestBase, IDisposable
             "timestamp with time zone",
             EDBDbType.TimestampTz,
             DbType.DateTimeOffset,
-            isDefault: false,
+            isDefaultForWriting: false,
             isEDBDbTypeInferredFromClrType: false);
 
     [Test]

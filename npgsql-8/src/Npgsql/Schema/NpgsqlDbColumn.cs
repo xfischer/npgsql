@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data.Common;
-using System.Runtime.CompilerServices;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
@@ -32,7 +31,7 @@ public class EDBDbColumn : DbColumn
     }
 
     internal EDBDbColumn Clone() =>
-        Unsafe.As<EDBDbColumn>(MemberwiseClone());
+        (EDBDbColumn)MemberwiseClone();
 
     #region Standard fields
     // ReSharper disable once InconsistentNaming

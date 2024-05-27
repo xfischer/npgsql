@@ -604,10 +604,11 @@ sealed class SqlQueryParser
             {
                 batchCommand = batchCommands[statementIndex];
                 batchCommand.Reset();
+                batchCommand._parameters = parameters;
             }
             else
             {
-                batchCommand = new EDBBatchCommand();
+                batchCommand = new EDBBatchCommand { _parameters = parameters };
                 batchCommands.Add(batchCommand);
             }
         }

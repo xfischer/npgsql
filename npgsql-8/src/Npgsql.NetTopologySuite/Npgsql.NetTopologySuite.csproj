@@ -8,6 +8,7 @@
     <AssemblyName>EnterpriseDB.EDBClient.NetTopologySuite</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <NoWarn>$(NoWarn);NU5104</NoWarn>
+    <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@ using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 [RequiresDynamicCode("A dynamic type info resolver may need to construct a generic converter for a statically unknown type.")]
 public abstract class DynamicTypeInfoResolver : IPgTypeInfoResolver
 {

@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public abstract class PgConverterResolver
 {
     private protected PgConverterResolver() { }

@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -17,6 +18,7 @@ namespace EnterpriseDB.EDBClient.Internal;
 /// A buffer used by EDB to read data from the socket efficiently.
 /// Provides methods which decode different values types and tracks the current position.
 /// </summary>
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 sealed partial class EDBReadBuffer : IDisposable
 {
     #region Fields and Properties
@@ -134,6 +136,9 @@ sealed partial class EDBReadBuffer : IDisposable
 
     #region I/O
 
+    public void Ensure(int count)
+        => Ensure(count, async: false, readingNotifications: false, checkDataAvailable: false).GetAwaiter().GetResult();
+
     public ValueTask Ensure(int count, bool async)
         => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
 
@@ -199,6 +204,7 @@ sealed partial class EDBReadBuffer : IDisposable
             }
         }
     }
+
     async ValueTask<int> ReadWithTimeoutAsync(Memory<byte> buffer, CancellationToken cancellationToken)
     {
         var finalCt = Timeout != TimeSpan.Zero
@@ -606,6 +612,7 @@ sealed partial class EDBReadBuffer : IDisposable
     public float ReadSingle()
     {
         CheckBounds(sizeof(float));
+#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
         float result;
         if (BitConverter.IsLittleEndian)
         {
@@ -614,6 +621,11 @@ sealed partial class EDBReadBuffer : IDisposable
         }
         else
             result = Unsafe.ReadUnaligned<float>(ref Buffer[ReadPosition]);
+#else
+        var result = BitConverter.IsLittleEndian
+            ? BitConverter.Int32BitsToSingle(BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<int>(ref Buffer[ReadPosition])))
+            : Unsafe.ReadUnaligned<float>(ref Buffer[ReadPosition]);
+#endif
         ReadPosition += sizeof(float);
         return result;
     }
@@ -622,14 +634,9 @@ sealed partial class EDBReadBuffer : IDisposable
     public double ReadDouble()
     {
         CheckBounds(sizeof(double));
-        double result;
-        if (BitConverter.IsLittleEndian)
-        {
-            var value = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<long>(ref Buffer[ReadPosition]));
-            result = Unsafe.As<long, double>(ref value);
-        }
-        else
-            result = Unsafe.ReadUnaligned<double>(ref Buffer[ReadPosition]);
+        var result = BitConverter.IsLittleEndian
+            ? BitConverter.Int64BitsToDouble(BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<long>(ref Buffer[ReadPosition])))
+            : Unsafe.ReadUnaligned<double>(ref Buffer[ReadPosition]);
         ReadPosition += sizeof(double);
         return result;
     }

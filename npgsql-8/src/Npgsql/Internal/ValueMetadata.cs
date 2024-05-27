@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public readonly struct ValueMetadata
 {
     public required DataFormat Format { get; init; }

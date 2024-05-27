@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public abstract class PgTypeInfoResolverFactory
 {
     public abstract IPgTypeInfoResolver CreateResolver();

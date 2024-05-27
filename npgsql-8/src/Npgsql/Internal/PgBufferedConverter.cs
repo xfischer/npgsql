@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
+[Experimental(EDBDiagnostics.ConvertersExperimental)]
 public abstract class PgBufferedConverter<T> : PgConverter<T>
 {
     protected PgBufferedConverter(bool customDbNullPredicate = false) : base(customDbNullPredicate) { }

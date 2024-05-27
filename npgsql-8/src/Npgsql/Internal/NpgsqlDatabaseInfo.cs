@@ -12,6 +12,7 @@ namespace EnterpriseDB.EDBClient.Internal;
 /// Base class for implementations which provide information about PostgreSQL and PostgreSQL-like databases
 /// (e.g. type definitions, capabilities...).
 /// </summary>
+[Experimental(EDBDiagnostics.DatabaseInfoExperimental)]
 public abstract class EDBDatabaseInfo
 {
     #region Fields
@@ -240,6 +241,11 @@ public abstract class EDBDatabaseInfo
 
     internal void ProcessTypes()
     {
+        var unspecified = new PostgresBaseType(DataTypeName.Unspecified, Oid.Unspecified);
+        ByOID[Oid.Unspecified.Value] = unspecified;
+        ByFullName[unspecified.DataTypeName.Value] = unspecified;
+        ByName[unspecified.InternalName] = unspecified;
+
         foreach (var type in GetTypes())
         {
             ByOID[type.OID] = type;

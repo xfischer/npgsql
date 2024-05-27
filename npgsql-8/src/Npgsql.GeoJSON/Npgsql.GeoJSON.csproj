@@ -5,6 +5,7 @@
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;postgis;geojson;spatial;ado;ado.net;database;sql</PackageTags>
     <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
     <AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
+    <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 

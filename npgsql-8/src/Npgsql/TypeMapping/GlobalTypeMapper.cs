@@ -338,6 +338,11 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         try
         {
             _userTypeMapper.MapEnum(clrType, pgName, nameTranslator);
+
+            // Temporary hack for EFCore.PG enum mapping compat
+            if (_userTypeMapper.Items.FirstOrDefault(i => i.ClrType == clrType) is UserTypeMapping userTypeMapping)
+                HackyEnumTypeMappings.Add(new(clrType, userTypeMapping.PgTypeName, nameTranslator ?? DefaultNameTranslator));
+
             ResetTypeMappingCache();
             return this;
         }
@@ -354,9 +359,14 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         _lock.EnterWriteLock();
         try
         {
-            var result = _userTypeMapper.UnmapEnum(clrType, pgName, nameTranslator);
+            var removed = _userTypeMapper.UnmapEnum(clrType, pgName, nameTranslator);
+
+            // Temporary hack for EFCore.PG enum mapping compat
+            if (removed && ((List<UserTypeMapping>)_userTypeMapper.Items).FindIndex(m => m.ClrType == clrType) is > -1 and var index)
+                HackyEnumTypeMappings.RemoveAt(index);
+
             ResetTypeMappingCache();
-            return result;
+            return removed;
         }
         finally
         {
