@@ -9,6 +9,8 @@
     <Description>EDB Postgres Advanced Server provider for Entity Framework Core.</Description>
     <PackageTags>epas;advanced server;edb;enterprisedb;postgresql;postgres;Entity Framework Core;entity-framework-core;ef;efcore;orm;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>NPG9001</NoWarn>
+    <!-- Precompiled query is experimental -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 

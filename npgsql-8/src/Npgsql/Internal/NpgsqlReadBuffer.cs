@@ -24,7 +24,7 @@ sealed partial class EDBReadBuffer : IDisposable
     #region Fields and Properties
 
 #if DEBUG
-    internal static readonly bool BufferBoundsChecks = Statics.EnableAssertions;
+    internal static readonly bool BufferBoundsChecks = true;
 #else
     internal static readonly bool BufferBoundsChecks = Statics.EnableAssertions;
 #endif
