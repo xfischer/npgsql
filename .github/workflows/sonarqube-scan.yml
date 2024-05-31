@@ -93,6 +93,35 @@ jobs:
           edbas-version: 16
           additional-options: --superpassword edb
 
+      - name: Add KeyPair
+        shell: bash
+        run: |
+          cp server.crt "/c/Program Files/edb/as16/data/server.crt"
+          cp server.key "/c/Program Files/edb/as16/data/server.key"
+        working-directory: source/edb_test_db_scripts
+
+      - name: Configure EPAS Server
+        shell: bash
+        run: |
+          export PATH=$PATH:"/c/Program Files/edb/as16/bin"
+          export EPAS="/c/Program Files/edb/as16"
+          cd "$EPAS"
+          SOCKET_DIR=$(echo "$LOCALAPPDATA\Temp" | sed 's|\\|/|g')
+          sed -i "s|max_connections = 100|max_connections = 500|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#unix_socket_directories = ''|unix_socket_directories = '$SOCKET_DIR'|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#wal_level =|wal_level = logical #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#max_wal_senders =|max_wal_senders = 50 #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#logical_decoding_work_mem =|logical_decoding_work_mem = 64kB #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#wal_sender_timeout =|wal_sender_timeout = 3s #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#synchronous_standby_names =|synchronous_standby_names = 'npgsql_test_sync_standby' #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#synchronous_commit =|synchronous_commit = local #|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#max_prepared_transactions = 0|max_prepared_transactions = 100|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#ssl = off|ssl = on|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#ssl_cert_file = 'server.crt'|ssl_cert_file = 'server.crt'|" "$EPAS/data/postgresql.conf"
+          sed -i "s|#ssl_key_file = 'server.crt'|ssl_key_file = 'server.key'|" "$EPAS/data/postgresql.conf"
+          cat "$EPAS/data/postgresql.conf"
+          pg_ctl -D "$EPAS/data"  restart
+
       - name: Create test database
         shell: cmd
         run: makedb.bat 5444
