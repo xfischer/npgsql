@@ -100,4 +100,51 @@ sealed class DateOnlyDateConverter : PgBufferedConverter<DateOnly>
         writer.WriteInt32(value.DayNumber - BaseValue.DayNumber);
     }
 }
+sealed class DateOnlyTimeStampConverter : PgBufferedConverter<DateOnly>
+{
+    readonly bool _dateTimeInfinityConversions;
+
+    static readonly DateOnly BaseValue = new(2000, 1, 1);
+
+    public DateOnlyTimeStampConverter(bool dateTimeInfinityConversions)
+        => _dateTimeInfinityConversions = dateTimeInfinityConversions;
+
+    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
+    {
+        bufferRequirements = BufferRequirements.CreateFixedSize(sizeof(int));
+        return format is DataFormat.Binary;
+    }
+
+    protected override DateOnly ReadCore(PgReader reader)
+        => reader.ReadInt32() switch
+        {
+            int.MaxValue => _dateTimeInfinityConversions
+                ? DateOnly.MaxValue
+                : throw new InvalidCastException(EDBStrings.CannotReadInfinityValue),
+            int.MinValue => _dateTimeInfinityConversions
+                ? DateOnly.MinValue
+                : throw new InvalidCastException(EDBStrings.CannotReadInfinityValue),
+            var value => BaseValue.AddDays(value)
+        };
+
+    protected override void WriteCore(PgWriter writer, DateOnly value)
+    {
+        if (_dateTimeInfinityConversions)
+        {
+            if (value == DateOnly.MaxValue)
+            {
+                writer.WriteInt32(int.MaxValue);
+                return;
+            }
+
+            if (value == DateOnly.MinValue)
+            {
+                writer.WriteInt32(int.MinValue);
+                return;
+            }
+        }
+
+        writer.WriteInt32(value.DayNumber - BaseValue.DayNumber);
+    }
+}
 #endif

@@ -27,6 +27,33 @@ sealed class DateTimeConverter : PgBufferedConverter<DateTime>
         => writer.WriteInt64(PgTimestamp.Encode(value, _dateTimeInfinityConversions));
 }
 
+#if NET6_0_OR_GREATER
+// EnterpriseDB
+sealed class DateOnlyFromRedwoodDateConverter : PgBufferedConverter<DateOnly>
+{
+    readonly bool _dateTimeInfinityConversions;
+    readonly DateTimeKind _kind;
+
+    public DateOnlyFromRedwoodDateConverter(bool dateTimeInfinityConversions, DateTimeKind kind)
+    {
+        _dateTimeInfinityConversions = dateTimeInfinityConversions;
+        _kind = kind;
+    }
+
+    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
+    {
+        bufferRequirements = BufferRequirements.CreateFixedSize(sizeof(long));
+        return format is DataFormat.Binary;
+    }
+
+    protected override DateOnly ReadCore(PgReader reader)
+        => DateOnly.FromDateTime(PgTimestamp.Decode(reader.ReadInt64(), _kind, _dateTimeInfinityConversions));
+
+    protected override void WriteCore(PgWriter writer, DateOnly value)
+        => writer.WriteInt64(PgTimestamp.Encode(value.ToDateTime(TimeOnly.MinValue), _dateTimeInfinityConversions));
+}
+#endif
+
 sealed class DateTimeOffsetConverter : PgBufferedConverter<DateTimeOffset>
 {
     readonly bool _dateTimeInfinityConversions;

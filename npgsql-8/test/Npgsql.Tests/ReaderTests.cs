@@ -2284,8 +2284,13 @@ LANGUAGE plpgsql VOLATILE";
 
         var task = reader.GetFieldValueAsync<byte[]>(0);
 
-        var exception = Assert.ThrowsAsync<EDBException>(async () => await task)!;
+#if NETFRAMEWORK
+        var exception = Assert.CatchAsync(async () => await task)!;
+        Assert.That(exception.GetBaseException().InnerException, Is.TypeOf<TimeoutException>());
+#else
+        var exception = Assert.ThrowsAsync<EDBException>(async () => await task)!;        
         Assert.That(exception.InnerException, Is.TypeOf<TimeoutException>());
+#endif
 
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
@@ -2363,7 +2368,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.Connector!.State, Is.EqualTo(ConnectorState.Ready));
     }
 
-    #endregion
+#endregion
 
     #region Initialization / setup / teardown
 

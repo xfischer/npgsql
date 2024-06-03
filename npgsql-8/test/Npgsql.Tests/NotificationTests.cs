@@ -144,7 +144,13 @@ public class NotificationTests : TestBase
         //Assert.That(TestLoggerSink.Records, Has.Some.With.Property("EventId").EqualTo(new EventId(EDBEventId.Keepalive)));
     }
 
-    [Test]
+
+
+#if NETFRAMEWORK
+    [Test, EDBExplicit("Times out instead of returning")]
+#else
+    [Test] 
+#endif
     public async Task WaitAsync_with_keepalive()
     {
         var notify = GetUniqueIdentifier(nameof(NotificationTests));

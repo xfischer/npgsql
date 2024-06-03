@@ -240,7 +240,18 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
     #if NET6_0_OR_GREATER
             mappings.AddStructType<DateOnly>(DataTypeNames.Date,
                 static (options, mapping, _) => mapping.CreateInfo(options, new DateOnlyDateConverter(options.EnableDateTimeInfinityConversions)));
-    #endif
+
+            // EnterpriseDB
+            mappings.AddStructType<DateOnly>(DataTypeNames.Timestamp,
+                static (options, mapping, _) =>
+                    mapping.CreateInfo(options, new DateOnlyFromRedwoodDateConverter(options.EnableDateTimeInfinityConversions, DateTimeKind.Unspecified)),
+                MatchRequirement.DataTypeName);
+
+            mappings.AddStructType<DateOnly>(DataTypeNames.TimestampTz,
+                static (options, mapping, _) =>
+                    mapping.CreateInfo(options, new DateOnlyFromRedwoodDateConverter(options.EnableDateTimeInfinityConversions, DateTimeKind.Utc)),
+                MatchRequirement.DataTypeName);
+#endif
 
             // Interval
             mappings.AddStructType<TimeSpan>(DataTypeNames.Interval,
@@ -455,7 +466,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructArrayType<int>(DataTypeNames.Date);
     #if NET6_0_OR_GREATER
             mappings.AddStructArrayType<DateOnly>(DataTypeNames.Date);
-    #endif
+
+            // EnterpriseDB
+            mappings.AddStructArrayType<DateOnly>(DataTypeNames.Timestamp);
+#endif
 
             // Interval
             mappings.AddStructArrayType<TimeSpan>(DataTypeNames.Interval);

@@ -706,7 +706,7 @@ WHERE e."TimestampDateTime"::timestamptz = TIMESTAMPTZ '1998-04-12T13:26:38Z'
             await AssertQuery(
             async,
             ss => ss.Set<Entity>().Where(
-                e => e.TimestamptzDateTime.ToLocalTime().Date == new DateTime(1998, 4, 12)));
+                e => e.TimestamptzDateTime.ToLocalTime().Date == new DateTime(new DateOnly(1998, 4, 12), TimeOnly.MinValue, DateTimeKind.Unspecified)));
 
             AssertSql(
 """
