@@ -46,7 +46,7 @@ public struct EDBPoint : IEquatable<EDBPoint>
         => HashCode.Combine(X, Y);
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
-    static readonly Regex Regex = new(@"\((-?\d+.?\d*),(-?\d+.?\d*)\)");
+    static readonly Regex Regex = new(@"\((-?\d+.?\d*),(-?\d+.?\d*)\)", RegexOptions.None, TimeSpan.FromSeconds(1));
     public static EDBPoint Parse(string s)
     {
         var m = Regex.Match(s);
@@ -83,7 +83,7 @@ public struct EDBLine : IEquatable<EDBLine>
     }
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
-    static readonly Regex Regex = new(@"\{(-?\d+.?\d*),(-?\d+.?\d*),(-?\d+.?\d*)\}");
+    static readonly Regex Regex = new(@"\{(-?\d+.?\d*),(-?\d+.?\d*),(-?\d+.?\d*)\}", RegexOptions.None, TimeSpan.FromSeconds(1));
 
 
     public static EDBLine Parse(string s)
@@ -136,7 +136,7 @@ public struct EDBLSeg : IEquatable<EDBLSeg>
     }
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
-    static readonly Regex Regex = new(@"\[\((-?\d+.?\d*),(-?\d+.?\d*)\),\((-?\d+.?\d*),(-?\d+.?\d*)\)\]");
+    static readonly Regex Regex = new(@"\[\((-?\d+.?\d*),(-?\d+.?\d*)\),\((-?\d+.?\d*),(-?\d+.?\d*)\)\]", RegexOptions.None, TimeSpan.FromSeconds(1));
     public static EDBLSeg Parse(string s)
     {
         var m = Regex.Match(s);
@@ -233,7 +233,7 @@ public struct EDBBox : IEquatable<EDBBox>
         => HashCode.Combine(Top, Right, Bottom, LowerLeft);
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
-    static readonly Regex Regex = new(@"\((-?\d+.?\d*),(-?\d+.?\d*)\),\((-?\d+.?\d*),(-?\d+.?\d*)\)");
+    static readonly Regex Regex = new(@"\((-?\d+.?\d*),(-?\d+.?\d*)\),\((-?\d+.?\d*),(-?\d+.?\d*)\)", RegexOptions.None, TimeSpan.FromSeconds(1));
     public static EDBBox Parse(string s)
     {
         var m = Regex.Match(s);
@@ -526,7 +526,7 @@ public struct EDBCircle : IEquatable<EDBCircle>
         => obj is EDBCircle circle && Equals(circle);
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
-    static readonly Regex Regex = new(@"<\((-?\d+.?\d*),(-?\d+.?\d*)\),(\d+.?\d*)>");
+    static readonly Regex Regex = new(@"<\((-?\d+.?\d*),(-?\d+.?\d*)\),(\d+.?\d*)>", RegexOptions.None, TimeSpan.FromSeconds(1));
     public static EDBCircle Parse(string s)
     {
         var m = Regex.Match(s);
