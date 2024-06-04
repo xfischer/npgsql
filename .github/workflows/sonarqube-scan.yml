@@ -9,9 +9,7 @@ on:
     tags:
       - "**"
     branches:
-      - "*main*"
-      - "*master*"
-      - "*STABLE*"
+      - master
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -22,6 +20,10 @@ on:
         description: "Branch to scan"
         required: true
         default: "master"
+      run_coverage: # add radion button to run coverage
+        type: boolean
+        description: "Run coverage"
+        required: true
 
 jobs:
   SonarQube-Scan:
@@ -32,6 +34,13 @@ jobs:
       contents: read
     runs-on: windows-latest
     steps:
+      - name: Setup for coverage
+        id: setup-coverage
+        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+        run: |
+          echo "Running Coverage" >> $GITHUB_SUMMARY
+          echo "COVERAGE=true" >> $GITHUB_ENV
+
       - name: Checkout source repository for dispatch runs
         id: checkout-source-dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -53,12 +62,12 @@ jobs:
           token: ${{ secrets.GH_SLONIK }}
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
           java-version: 1.17
 
       - name: Cache SonarQube packages
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ~\.sonar\cache
           key: ${{ runner.os }}-sonar
@@ -66,7 +75,7 @@ jobs:
 
       - name: Cache SonarQube scanner
         id: cache-sonar-scanner
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: .\.sonar\scanner
           key: ${{ runner.os }}-sonar-scanner
@@ -80,7 +89,8 @@ jobs:
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: v2.2.2
@@ -88,12 +98,14 @@ jobs:
           path: foundation
 
       - name: Get EPAS Server
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: ./foundation/actions/windows/install/edbas
         with:
           edbas-version: 16
           additional-options: --superpassword edb
 
       - name: Add KeyPair
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         shell: bash
         run: |
           cp server.crt "/c/Program Files/edb/as16/data/server.crt"
@@ -101,6 +113,7 @@ jobs:
         working-directory: source/edb_test_db_scripts
 
       - name: Configure EPAS Server
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         shell: bash
         run: |
           export PATH=$PATH:"/c/Program Files/edb/as16/bin"
@@ -123,17 +136,20 @@ jobs:
           pg_ctl -D "$EPAS/data"  restart
 
       - name: Create test database
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         shell: cmd
         run: makedb.bat 5444
         working-directory: source/edb_test_db_scripts
 
       - name: Install PostGIS
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: ./foundation/actions/windows/install/postgis
         with:
           edbas-version: 16
           additional-options: --pgpassword edb --extract-only 1
 
       - name: Install DotNet Coverage tool
+        if: github.event_name == 'workflow_dispatch' && env.COVERAGE == 'true'  || github.event_name == 'push' && github.ref == 'refs/heads/master'
         shell: powershell
         run: |
           dotnet tool install --global dotnet-coverage
@@ -141,7 +157,13 @@ jobs:
       - name: Build and analyze
         shell: powershell
         run: |
+          if (${{ env.COVERAGE == 'true'}}) {
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           dotnet build source/npgsql-8/ef.core/efcore.pg.sln --no-incremental -f net8.0
           dotnet-coverage collect "dotnet test source/npgsql-8/ef.core/efcore.pg.sln -c Release -f net8.0" -f xml -o "coverage.xml"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          } else {
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true
+          dotnet build source/npgsql-8/ef.core/efcore.pg.sln --no-incremental -f net8.0
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          {
