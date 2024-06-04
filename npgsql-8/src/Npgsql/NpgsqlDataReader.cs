@@ -520,7 +520,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure)
                         msg = await ReadMessage(async).ConfigureAwait(false);
                     //if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription) && Command.CommandType == CommandType.StoredProcedure)
-					if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription)
+                    if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription)
                         && Command.CommandType == CommandType.StoredProcedure
                         && (Command.Parameters.HasOutputParameters
                             || Command.Parameters.HasReturnParam))
@@ -560,7 +560,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.RowDescription:
                 case BackendMessageCode.OutDescription:
                     State = ReaderState.InResult;
-					if (Command.CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
+                    if (Command.CommandType == CommandType.StoredProcedure) //EnterpriseDB Team
                     {
                         await PopulateOutputParameters(async, Command.InternalBatchCommands[StatementIndex]._parameters!).ConfigureAwait(false);
                     }
@@ -851,17 +851,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 {
                     if (p.IsOutputDirection && !refCursorValueSet)
                     {
-                        int idx;
-                        if (RowDescription.TryGetFieldIndex(p.TrimmedName, out idx))
-                        {
-                            // TODO: Provider-specific check?
-                            p.Value = GetValue(idx);
-                            taken.Add(idx);
-                        }
-                        else
-                        {
-                            pending.Enqueue(p);
-                        }
+                        Debug.Assert((RowDescription?.TryGetFieldIndex(p.TrimmedName, out _)).GetValueOrDefault(false), "Output parameters should not appear in RowDescription");
+
+                        pending.Enqueue(p);
                     }
                 }
 

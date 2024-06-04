@@ -58,7 +58,7 @@ readonly struct PgMoney
         destination[3] = (uint)raw.Flags;
         scale = raw.Scale;
 #else
-        decimal.GetBits(value, MemoryMarshal.Cast<uint, int>(destination));
+        _ = decimal.GetBits(value, MemoryMarshal.Cast<uint, int>(destination));
 #endif
 #if NET7_0_OR_GREATER
         scale = value.Scale;
