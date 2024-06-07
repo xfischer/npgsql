@@ -839,21 +839,26 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             if (parameters.HasOutputParameters)
             {
                 RowDescription = callableDescription;
-            }
 
-            var pending = new Queue<EDBParameter>();
-            var taken = new List<int>();
-            var refCursorValueSet = parameters.RefCursorParam?.Value != null;
+                var pending = new Queue<EDBParameter>();
+                var taken = new List<int>();
+                var refCursorValueSet = parameters.RefCursorParam?.Value != null;
 
-            if (parameters.HasOutputParameters)
-            {
                 foreach (var p in (IEnumerable<EDBParameter>)parameters)
                 {
                     if (p.IsOutputDirection && !refCursorValueSet)
                     {
-                        Debug.Assert((RowDescription?.TryGetFieldIndex(p.TrimmedName, out _)).GetValueOrDefault(false), "Output parameters should not appear in RowDescription");
-
-                        pending.Enqueue(p);
+                        int idx;
+                        if (RowDescription?.TryGetFieldIndex(p.TrimmedName, out idx) ?? false)
+                        {
+                            // TODO: Provider-specific check?
+                            p.Value = GetValue(idx);
+                            taken.Add(idx);
+                        }
+                        else
+                        {
+                            pending.Enqueue(p);
+                        }
                     }
                 }
 
