@@ -1,0 +1,14 @@
+#Packaging edb-dotne
+# This is a dummy file to be able to use packaging-windows.yml file in other branches.
+name: Windows edb-dotnet Installer
+
+on: workflow_dispatch
+
+jobs:
+
+  test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Print simple message
+        run: echo Hello
