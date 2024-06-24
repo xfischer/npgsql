@@ -57,6 +57,22 @@ class EDBSqlQueryParserTests : TestBase
     [Theory]
     [TestCase(true)]
     [TestCase(false)]
+    public void CreateSPLProcedureLowerCase(bool redwoodMode)
+    {
+        var commandText = @"create or replace procedure oneoutargproc_test1(a out varchar)
+                 as
+                begin
+                    a:='hello'
+                end;";
+
+        var result = ParseCommand(commandText, redwoodMode);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+    }
+
+    [Theory]
+    [TestCase(true)]
+    [TestCase(false)]
     public void CreatePlPgSqlProcedure(bool redwoodMode)
     {
         var commandText = @"CREATE OR REPLACE PROCEDURE oneOutArgProc_test1(a OUT varchar)

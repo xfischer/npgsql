@@ -1,3 +1,5 @@
+//#define EDB_DIAGNOSTICS
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +13,6 @@ sealed class SqlQueryParser
 
     readonly Dictionary<string, int> _paramIndexMap = new(StringComparer.OrdinalIgnoreCase);
     readonly StringBuilder _rewrittenSql = new();
-    string? sqlString; // EnterpriseDB Team
     readonly bool supportsRedwoodDialect; // EnterpriseDB Team
 
     // EnterpriseDB Team
@@ -104,6 +105,8 @@ sealed class SqlQueryParser
         _paramIndexMap.Clear();
         _rewrittenSql.Clear();
 
+        //char[] trim = new char[] { ' ', '\r', '\n' };
+        sql = sql.Trim(); //EnterpriseDB Team
         var currCharOfs = 0;
         var isProcedure = false;//EnterpriseDB Team
         var numActiveBlocks = 0;//EnterpriseDB Team
@@ -115,24 +118,28 @@ sealed class SqlQueryParser
         var currTokenBeg = 0;
         var blockCommentLevel = 0;
         var parenthesisLevel = 0;
-        sqlString = sql.ToString(); // EnterpriseDB Team
+        string sqlString, temp;
 
-        var temp = sql.ToString().ToUpper();//EnterpriseDB Team
+        sqlString = temp = sql; // EnterpriseDB Team
+
         if (ContainsSPLStartingKeyword(temp))
             isProcedure = true;
 
         None:
         if (currCharOfs >= end)
+        {
+            WriteDebug("Finish1");
             goto Finish;
+        }
         var lastChar = ch;
         ch = sql[currCharOfs++];
-        NoneContinue:
+    NoneContinue:
         while (true)
         {
             //EnterpriseDB Team
             if (isProcedure)
             {
-                temp = sql.ToString().Substring(currCharOfs - 1).ToUpper();
+                temp = sql.ToString().Substring(currCharOfs - 1);
             }
 
             if (isProcedure && temp.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase))
@@ -170,7 +177,18 @@ sealed class SqlQueryParser
                 }
                 if (next == ' ' || next == '\n' || next == '\t' || next == ';')
                 {
-                    variableDeclare++;
+                    // EnterpriseDB
+                    // AS is not a variable declaration in one line declaration such as
+                    //  CREATE PROCEDURE name() AS 'SELECT 1' LANGUAGE sql;
+
+                    if (temp.Length > 3)
+                    {
+                        next = temp[3];
+                        if (next != '\'' && next != '$')
+                            variableDeclare++;
+                    }
+                    else
+                        variableDeclare++;
                 }
             }
 
@@ -186,34 +204,53 @@ sealed class SqlQueryParser
                     variableDeclare++;
                 }
             }
-			// ^^^ EnterpriseDB Team
+            // ^^^ EnterpriseDB Team
             switch (ch)
             {
             case '/':
+                WriteDebug("BlockCommentBegin /");
                 goto BlockCommentBegin;
             case '-':
+                WriteDebug("LineCommentBegin -");
                 goto LineCommentBegin;
             case '\'':
                 if (standardConformingStrings)
+                {
+                    WriteDebug("Quoted \\");
                     goto Quoted;
+                }
+                WriteDebug("Escaped \\");
                 goto Escaped;
             case '$':
                 if (!IsIdentifier(lastChar))
+                {
+                    WriteDebug("DollarQuotedStart $");
                     goto DollarQuotedStart;
+                }
                 break;
             case '"':
+                WriteDebug("Quoted \"");
                 goto Quoted;
             case ':':
                 if (lastChar != ':')
+                {
+                    WriteDebug("NamedParamStart :");
                     goto NamedParamStart;
+                }
                 break;
             case '@':
                 if (lastChar != '@')
+                {
+                    WriteDebug("NamedParamStart @");
                     goto NamedParamStart;
+                }
                 break;
             case ';':
                 if (parenthesisLevel == 0)
+                {
+                    WriteDebug("SemiColon ;");
                     goto SemiColon;
+                }
                 break;
             case '(':
                 parenthesisLevel++;
@@ -226,7 +263,10 @@ sealed class SqlQueryParser
                 if (!isProcedure)
                 {
                     if (!IsLetter(lastChar))
+                    {
+                        WriteDebug("EscapedStart E/e");
                         goto EscapedStart;
+                    }
                     else
                         break;
                 }
@@ -237,18 +277,24 @@ sealed class SqlQueryParser
             case 'x': //EnterpriseDB Team
             case 'X': //EnterpriseDB Team
                 if (!IsLetter(lastChar))
+                {
+                    WriteDebug("EscapedStart X/x");
                     goto EscapedStart;
+                }
                 break;
             }
 
             if (currCharOfs >= end)
+            {
+                WriteDebug("Finish currCharOfs >= end");
                 goto Finish;
+            }
 
             lastChar = ch;
             ch = sql[currCharOfs++];
         }
 
-        NamedParamStart:
+    NamedParamStart:
         if (currCharOfs < end)
         {
             lastChar = ch;
@@ -258,14 +304,17 @@ sealed class SqlQueryParser
                 if (currCharOfs - 1 > currTokenBeg)
                     _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - 1 - currTokenBeg);
                 currTokenBeg = currCharOfs++ - 1;
+                WriteDebug("NamedParamStart -> NamedParam");
                 goto NamedParam;
             }
             currCharOfs++;
+            WriteDebug("NamedParamStart -> NoneContinue");
             goto NoneContinue;
         }
+        WriteDebug("NamedParamStart -> Finish");
         goto Finish;
 
-        NamedParam:
+    NamedParam:
         // We have already at least one character of the param name
         while (true)
         {
@@ -291,9 +340,13 @@ sealed class SqlQueryParser
                             _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - currTokenBeg);
                             currTokenBeg = currCharOfs;
                             if (currCharOfs >= end)
+                            {
+                                WriteDebug("NamedParam -> Finish (parameters)");
                                 goto Finish;
+                            }
 
                             currCharOfs++;
+                            WriteDebug("NamedParam -> NoneContinue (parameters)");
                             goto NoneContinue;
                         }
                     }
@@ -309,16 +362,20 @@ sealed class SqlQueryParser
                 currTokenBeg = currCharOfs;
 
                 if (currCharOfs >= end)
+                {
+                    WriteDebug("NamedParam -> Finish (currCharOfs >= end)");
                     goto Finish;
+                }
 
                 currCharOfs++;
+                WriteDebug("NamedParam -> Finish (currCharOfs >= end)");
                 goto NoneContinue;
             }
 
             currCharOfs++;
         }
 
-        Quoted:
+    Quoted:
         Debug.Assert(ch == '\'' || ch == '"');
         while (currCharOfs < end && sql[currCharOfs] != ch)
         {
@@ -328,41 +385,53 @@ sealed class SqlQueryParser
         {
             currCharOfs++;
             ch = '\0';
+            WriteDebug("Quoted -> None");
             goto None;
         }
+        WriteDebug("Quoted -> Finish");
         goto Finish;
 
-        EscapedStart:
+    EscapedStart:
         if (currCharOfs < end)
         {
             lastChar = ch;
             ch = sql[currCharOfs++];
             if (ch == '\'')
+            {
+                WriteDebug("EscapedStart -> Escaped");
                 goto Escaped;
+            }
+            WriteDebug("EscapedStart -> NoneContinue");
             goto NoneContinue;
         }
+        WriteDebug("EscapedStart -> Finish");
         goto Finish;
 
-        Escaped:
+    Escaped:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             switch (ch)
             {
             case '\'':
+                WriteDebug("Escaped -> MaybeConcatenatedEscaped");
                 goto MaybeConcatenatedEscaped;
             case '\\':
             {
                 if (currCharOfs >= end)
+                {
+                    WriteDebug("Escaped -> Finish \\\\");
                     goto Finish;
+                }
                 currCharOfs++;
                 break;
             }
             }
         }
+        WriteDebug("Escaped -> Finish");
         goto Finish;
 
-        MaybeConcatenatedEscaped:
+    MaybeConcatenatedEscaped:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
@@ -370,6 +439,7 @@ sealed class SqlQueryParser
             {
             case '\r':
             case '\n':
+                WriteDebug("MaybeConcatenatedEscaped -> MaybeConcatenatedEscaped2 (/r/n)");
                 goto MaybeConcatenatedEscaped2;
             case ' ':
             case '\t':
@@ -377,27 +447,37 @@ sealed class SqlQueryParser
                 continue;
             default:
                 lastChar = '\0';
+                WriteDebug("MaybeConcatenatedEscaped -> NoneContinue (/0)");
                 goto NoneContinue;
             }
         }
+        WriteDebug("MaybeConcatenatedEscaped -> Finish");
         goto Finish;
 
-        MaybeConcatenatedEscaped2:
+    MaybeConcatenatedEscaped2:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             switch (ch)
             {
             case '\'':
+                WriteDebug("MaybeConcatenatedEscaped2 -> Escaped (\\)");
                 goto Escaped;
             case '-':
             {
                 if (currCharOfs >= end)
+                {
+                    WriteDebug("MaybeConcatenatedEscaped2 -> Finish (-)");
                     goto Finish;
+                }
                 ch = sql[currCharOfs++];
                 if (ch == '-')
+                {
+                    WriteDebug("MaybeConcatenatedEscaped2 -> MaybeConcatenatedEscapeAfterComment (-)");
                     goto MaybeConcatenatedEscapeAfterComment;
+                }
                 lastChar = '\0';
+                WriteDebug("MaybeConcatenatedEscaped2 -> NoneContinue");
                 goto NoneContinue;
             }
             case ' ':
@@ -408,21 +488,27 @@ sealed class SqlQueryParser
                 continue;
             default:
                 lastChar = '\0';
+                WriteDebug("MaybeConcatenatedEscaped2 -> NoneContinue (default)");
                 goto NoneContinue;
             }
         }
+        WriteDebug("MaybeConcatenatedEscaped2 -> Finish");
         goto Finish;
 
-        MaybeConcatenatedEscapeAfterComment:
+    MaybeConcatenatedEscapeAfterComment:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             if (ch == '\r' || ch == '\n')
+            {
+                WriteDebug("MaybeConcatenatedEscapeAfterComment -> MaybeConcatenatedEscaped2 (/r/n)");
                 goto MaybeConcatenatedEscaped2;
+            }
         }
+        WriteDebug("MaybeConcatenatedEscapeAfterComment -> Finish");
         goto Finish;
 
-        DollarQuotedStart:
+    DollarQuotedStart:
         if (currCharOfs < end)
         {
             ch = sql[currCharOfs];
@@ -431,21 +517,25 @@ sealed class SqlQueryParser
                 // Empty tag
                 dollarTagStart = dollarTagEnd = currCharOfs;
                 currCharOfs++;
+                WriteDebug("DollarQuotedStart -> DollarQuoted");
                 goto DollarQuoted;
             }
             if (IsIdentifierStart(ch))
             {
                 dollarTagStart = currCharOfs;
                 currCharOfs++;
+                WriteDebug("DollarQuotedStart -> DollarQuotedInFirstDelim");
                 goto DollarQuotedInFirstDelim;
             }
             lastChar = '$';
             currCharOfs++;
+            WriteDebug("DollarQuotedStart -> NoneContinue");
             goto NoneContinue;
         }
+        WriteDebug("DollarQuotedStart -> Finish");
         goto Finish;
 
-        DollarQuotedInFirstDelim:
+    DollarQuotedInFirstDelim:
         while (currCharOfs < end)
         {
             lastChar = ch;
@@ -453,98 +543,132 @@ sealed class SqlQueryParser
             if (ch == '$')
             {
                 dollarTagEnd = currCharOfs - 1;
+                WriteDebug("DollarQuotedInFirstDelim -> DollarQuoted");
                 goto DollarQuoted;
             }
             if (!IsDollarTagIdentifier(ch))
+            {
+                WriteDebug("DollarQuotedInFirstDelim -> NoneContinue");
                 goto NoneContinue;
+            }
         }
+        WriteDebug("DollarQuotedInFirstDelim -> Finish");
         goto Finish;
 
-        DollarQuoted:
+    DollarQuoted:
         var tag = sql.AsSpan(dollarTagStart - 1, dollarTagEnd - dollarTagStart + 2);
         var pos = sql.AsSpan(dollarTagEnd + 1).IndexOf(tag);
         if (pos == -1)
         {
             currCharOfs = end;
+            WriteDebug("DollarQuoted -> Finish");
             goto Finish;
         }
         pos += dollarTagEnd + 1; // If the substring is found adjust the position to be relative to the entire string
         currCharOfs = pos + dollarTagEnd - dollarTagStart + 2;
         ch = '\0';
+        WriteDebug("DollarQuoted -> None");
         goto None;
 
-        LineCommentBegin:
+    LineCommentBegin:
         if (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             if (ch == '-')
+            {
+                WriteDebug("LineCommentBegin -> LineComment");
                 goto LineComment;
+            }
             lastChar = '\0';
+            WriteDebug("LineCommentBegin -> NoneContinue");
             goto NoneContinue;
         }
+        WriteDebug("LineCommentBegin -> Finish");
         goto Finish;
 
-        LineComment:
+    LineComment:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             if (ch == '\r' || ch == '\n')
+            {
+                WriteDebug("LineComment -> None");
                 goto None;
+            }
         }
+        WriteDebug("LineComment -> Finish");
         goto Finish;
 
-        BlockCommentBegin:
+    BlockCommentBegin:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             if (ch == '*')
             {
                 blockCommentLevel++;
+                WriteDebug("BlockCommentBegin -> BlockComment *");
                 goto BlockComment;
             }
             if (ch != '/')
             {
                 if (blockCommentLevel > 0)
+                {
+                    WriteDebug("BlockCommentBegin -> BlockComment");
                     goto BlockComment;
+                }
                 lastChar = '\0';
+                WriteDebug("BlockCommentBegin -> NoneContinue");
                 goto NoneContinue;
             }
         }
+        WriteDebug("BlockCommentBegin -> Finish");
         goto Finish;
 
-        BlockComment:
+    BlockComment:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             switch (ch)
             {
             case '*':
+                WriteDebug("BlockComment -> BlockCommentEnd");
                 goto BlockCommentEnd;
             case '/':
+                WriteDebug("BlockComment -> BlockCommentBegin");
                 goto BlockCommentBegin;
             }
         }
+        WriteDebug("BlockComment -> Finish");
         goto Finish;
 
-        BlockCommentEnd:
+    BlockCommentEnd:
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs++];
             if (ch == '/')
             {
                 if (--blockCommentLevel > 0)
+                {
+                    WriteDebug("BlockCommentEnd -> BlockComment /");
                     goto BlockComment;
+                }
+                WriteDebug("BlockCommentEnd -> None");
                 goto None;
             }
             if (ch != '*')
+            {
+                WriteDebug("BlockCommentEnd -> BlockComment *");
                 goto BlockComment;
+            }
         }
+        WriteDebug("BlockCommentEnd -> Finish");
         goto Finish;
 
-        SemiColon:
+    SemiColon:
         if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0)) //EnterpriseDB Team
         {
             currCharOfs++;
+            WriteDebug("SemiColon -> None");
             goto None;
         }
         _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - currTokenBeg - 1);
@@ -563,16 +687,16 @@ sealed class SqlQueryParser
 
             if (command is null)
             {
-               ThrowHelper.ThrowNotSupportedException($"Specifying multiple SQL statements in a single {nameof(EDBBatchCommand)} isn't supported, " +
-                    "please remove all semicolons.");
+                ThrowHelper.ThrowNotSupportedException($"Specifying multiple SQL statements in a single {nameof(EDBBatchCommand)} isn't supported, " +
+                     "please remove all semicolons.");
             }
 
             statementIndex++;
-			//EnterpriseDB Team
+            //EnterpriseDB Team
             isProcedure = false;
             if (sqlString != null)
             {
-                temp = sqlString.ToUpper();
+                temp = sqlString;
                 if (ContainsSPLStartingKeyword(temp))
                     isProcedure = true;
             }
@@ -581,13 +705,14 @@ sealed class SqlQueryParser
             _rewrittenSql.Clear();
 
             currTokenBeg = currCharOfs;
+            WriteDebug("SemiColon -> None while");
             goto None;
         }
         if (batchCommands is not null && batchCommands.Count > statementIndex + 1)
             batchCommands.RemoveRange(statementIndex + 1, batchCommands.Count - (statementIndex + 1));
         return;
 
-        Finish:
+    Finish:
         _rewrittenSql.Append(sql, currTokenBeg, end - currTokenBeg);
         if (statementIndex is 0 && _paramIndexMap.Count is 0)
             // Single statement, no parameters, no rewriting necessary
@@ -614,7 +739,7 @@ sealed class SqlQueryParser
         }
     }
 
-	//EnterpriseDB Team
+    //EnterpriseDB Team
     private bool ContainsSPLStartingKeyword(string temp)
     {
         // abort if postgres
@@ -670,4 +795,10 @@ sealed class SqlQueryParser
 
     static bool IsParamNameChar(char ch)
         => char.IsLetterOrDigit(ch) || ch == '_' || ch == '.';  // why dot??
+
+    [Conditional("EDB_DIAGNOSTICS")]
+    static void WriteDebug(string message)
+    {
+        Debug.WriteLine("SqlQueryParser: " + message);
+    }
 }
