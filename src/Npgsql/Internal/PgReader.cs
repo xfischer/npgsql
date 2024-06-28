@@ -582,7 +582,7 @@ public class PgReader
         var origOffset = FieldOffset;
         // A breaking exception unwind from a nested scope should not try to consume its remaining data.
         if (!_buffer.Connector.IsBroken)
-            await _buffer.Skip(async:true, remaining).ConfigureAwait(false);
+            await _buffer.Skip(async: true, remaining).ConfigureAwait(false);
 
         Debug.Assert(FieldRemaining == FieldSize - origOffset - remaining);
     }
