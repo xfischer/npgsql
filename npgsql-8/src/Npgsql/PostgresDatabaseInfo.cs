@@ -121,7 +121,7 @@ class PostgresDatabaseInfo : EDBDatabaseInfo
     /// For arrays and ranges, join in the element OID and type (to filter out arrays of unhandled
     /// types).
     /// </remarks>
-    static string GenerateLoadTypesQuery(bool withRange, bool withMultirange, bool loadTableComposites)
+    static string GenerateLoadTypesQuery(bool withRange, bool withMultirange, bool loadTableComposites, bool loadEDBIsTableOfTypes = true)
         => $@"
 SELECT ns.nspname, t.oid, t.typname, t.typtype, t.typnotnull, t.elemtypoid
 FROM (
@@ -140,6 +140,7 @@ FROM (
                 {(withRange ? "WHEN typ.typtype='r' THEN rngsubtype" : "")}
                 {(withMultirange ? "WHEN typ.typtype='m' THEN (SELECT rngtypid FROM pg_range WHERE rngmultitypid = typ.oid)" : "")}
                 WHEN typ.typtype='d' THEN typ.typbasetype
+                {(loadEDBIsTableOfTypes ? "WHEN typ.typtype='N' THEN typ.typelem" : "")}
             END AS elemtypoid
         FROM pg_type AS typ
         LEFT JOIN pg_class AS cls ON (cls.oid = typ.typrelid)
@@ -155,6 +156,7 @@ WHERE
     typtype IN ('b', 'r', 'm', 'e', 'd') OR -- Base, range, multirange, enum, domain
     (typtype = 'c' AND {(loadTableComposites ? "ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast', 'sys')" : "relkind='c'")}) OR -- User-defined free-standing composites (not table composites) by default
     (typtype = 'p' AND typname IN ('record', 'void', 'unknown')) OR -- Some special supported pseudo-types
+    {(loadEDBIsTableOfTypes ? "(typtype = 'N' AND ns.nspname <> 'sys') OR -- EnterpriseDB Package TABLE OF types" : "")}
     (typtype = 'a' AND (  -- Array of...
         elemtyptype IN ('b', 'r', 'm', 'e', 'd') OR -- Array of base, range, multirange, enum, domain
         (elemtyptype = 'p' AND elemtypname IN ('record', 'void')) OR -- Arrays of special supported pseudo-types
@@ -162,7 +164,7 @@ WHERE
     ))
 ORDER BY CASE
        WHEN typtype IN ('b', 'e', 'p') THEN 0           -- First base types, enums, pseudo-types
-       WHEN typtype = 'c' THEN 1                        -- Composites after (fields loaded later in 2nd pass)
+       WHEN typtype IN ({(loadEDBIsTableOfTypes ? "'c', 'N'" : "'c'")}) THEN 1 -- Composites after (fields loaded later in 2nd pass)
        WHEN typtype = 'r' THEN 2                        -- Ranges after
        WHEN typtype = 'm' THEN 3                        -- Multiranges after
        WHEN typtype = 'd' AND elemtyptype <> 'a' THEN 4 -- Domains over non-arrays after
@@ -410,6 +412,11 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};";
             case 'c': // Composite
                 var compositeType = new PostgresCompositeType(nspname, typname, oid);
                 byOID[compositeType.OID] = compositeType;
+                continue;
+
+            case 'N': // EnterpriseDB TABLE OF
+                var compositeType2 = new PostgresCompositeType(nspname, typname, oid);
+                byOID[compositeType2.OID] = compositeType2;
                 continue;
 
             case 'd': // Domain

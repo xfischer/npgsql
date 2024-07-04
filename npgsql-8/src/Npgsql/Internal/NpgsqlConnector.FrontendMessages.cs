@@ -227,7 +227,7 @@ partial class EDBConnector
                 param.Value = null;
             }
             param.ResolveTypeInfo(SerializerOptions);
-            param.Bind(out var format, out var size);
+            param.Bind(out var format, out var size, allResultTypesAreUnknown ? DataFormat.Text : null);
 
             if (param.Direction != ParameterDirection.Output
                 && param.Direction != ParameterDirection.ReturnValue)
@@ -236,7 +236,7 @@ partial class EDBConnector
             }
         }
 
-        var formatCodeListLength = parameters.Count;//formatCodesSum == 0 ? 0 : formatCodesSum == inputParameters.Count ? 1 : inputParameters.Count;
+        var formatCodeListLength = parameters.Count; // EnterpriseDB : we specify format for every parameter (before: 0 means all-text, 1 means all-binary, >1 means mix-and-match)
 
         var messageLength = headerLength +
             sizeof(short) * formatCodeListLength +                  // List of format codes
@@ -261,7 +261,7 @@ partial class EDBConnector
         {
             if (writeBuffer.WriteSpaceLeft < sizeof(short))
                 await Flush(async, cancellationToken).ConfigureAwait(false);
-            writeBuffer.WriteInt16(DataFormat.Binary.ToFormatCode());
+            writeBuffer.WriteInt16(allResultTypesAreUnknown ? DataFormat.Text.ToFormatCode() : DataFormat.Binary.ToFormatCode());
         }
         else if (formatCodeListLength > 1)
         {
@@ -270,7 +270,7 @@ partial class EDBConnector
                 // EDBMERGE: commented in v7, maybe useful in v8 
                 if (writeBuffer.WriteSpaceLeft < sizeof(short))
                     await Flush(async, cancellationToken).ConfigureAwait(false);
-                writeBuffer.WriteInt16(parameters[paramIndex].Format.ToFormatCode());
+                writeBuffer.WriteInt16(allResultTypesAreUnknown ? DataFormat.Text.ToFormatCode() : parameters[paramIndex].Format.ToFormatCode());
             }
         }
 
@@ -467,7 +467,8 @@ partial class EDBConnector
             formatCodesSum += format.ToFormatCode();
         }
 
-        var formatCodeListLength = formatCodesSum == 0 ? 0 : formatCodesSum == parameters.Count ? 1 : parameters.Count;
+        var formatCodeListLength = formatCodesSum == 0 ? 0
+                                   : formatCodesSum == parameters.Count ? 1 : parameters.Count;
 
         var messageLength = headerLength +
                             sizeof(short) * formatCodeListLength +                  // List of format codes

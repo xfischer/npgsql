@@ -1,0 +1,100 @@
+﻿using System;
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Internal.Postgres;
+
+namespace EnterpriseDB.EDBClient.Internal;
+
+internal class EDBTableOfResolverFactory : PgTypeInfoResolverFactory
+{
+    private readonly string[] _knownTableOfTypes;
+
+    public EDBTableOfResolverFactory(string[] knownTableOfTypes) => _knownTableOfTypes = knownTableOfTypes;
+
+    public override IPgTypeInfoResolver? CreateArrayResolver() => null;
+    public override IPgTypeInfoResolver CreateResolver() => new Resolver(_knownTableOfTypes);
+}
+
+internal class Resolver : IPgTypeInfoResolver
+{
+    private readonly string[] _knownTableOfTypes;
+
+    TypeInfoMappingCollection? _mappings;
+    protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new(), _knownTableOfTypes);
+
+    public Resolver(string[] knownTableOfTypes) => _knownTableOfTypes = knownTableOfTypes;
+
+    public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
+        => Mappings.Find(type, dataTypeName, options);
+
+    static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings, string[] knownTableOfTypes)
+    {
+        foreach (var dataTypeName in knownTableOfTypes)
+        {
+            var matchRequirement = MatchRequirement.DataTypeName;
+            mappings.AddType<ArrayList>(dataTypeName,
+                (options, mapping, _) => mapping.CreateInfo(options, new BackendTextToArrayConverter(options), preferredFormat: DataFormat.Text, supportsWriting: true),
+                matchRequirement);
+        }
+
+        return mappings;
+    }
+}
+
+internal class BackendTextToArrayConverter : PgConverter<ArrayList>
+{
+    private readonly PgSerializerOptions _options;
+
+    public BackendTextToArrayConverter(PgSerializerOptions options)
+        : base(customDbNullPredicate: true)
+    {
+        _options = options;
+    }
+
+    protected override bool IsDbNullValue(ArrayList? value, ref object? writeState) => value == null;
+
+    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
+    {
+        bufferRequirements = BufferRequirements.None;
+        return format == DataFormat.Text;
+    }
+
+    public override Size GetSize(SizeContext context, [DisallowNull] ArrayList value, ref object? writeState) => Size.Unknown;
+
+    internal async override ValueTask<object> ReadAsObject(bool async, PgReader reader, CancellationToken cancellationToken)
+    {
+        string value;
+
+        if (async)
+        {
+            var textReader = await reader.GetTextReaderAsync(_options.TextEncoding, cancellationToken).ConfigureAwait(false);
+#if !NET7_0_OR_GREATER
+            value = textReader.ReadToEnd();
+#else
+            value = await textReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+#endif
+        }
+        else
+        {
+            value = reader.GetTextReader(_options.TextEncoding).ReadToEnd();
+        }
+
+        var arrayList = ArrayBackendToNativeTypeConverter.ToArrayList(value);
+
+
+        return arrayList;
+    }
+
+    public override ArrayList Read(PgReader reader) => throw new NotImplementedException();
+
+    public override ValueTask<ArrayList> ReadAsync(PgReader reader, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+    internal override ValueTask WriteAsObject(bool async, PgWriter writer, object value, CancellationToken cancellationToken) => throw new NotImplementedException();
+
+    public override void Write(PgWriter writer, [DisallowNull] ArrayList value) => throw new NotImplementedException();
+
+    public override ValueTask WriteAsync(PgWriter writer, [DisallowNull] ArrayList value, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+}
+

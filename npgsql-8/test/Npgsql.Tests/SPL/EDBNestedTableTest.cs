@@ -4,6 +4,10 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Xml.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -29,6 +33,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         private static int[] empnos = new int[] { 7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844 };
         private static string[] deptNames = new string[] { "ACCOUNTING", "OPERATIONS", "RESEARCH", "SALES" };
         private static string[] deptLocs = new string[] { "NEW YORK", "BOSTON", "DALLAS", "CHICAGO" };
+        //private static string[] deptLocs = new string[] { "T(_)_,_", "NEW YORK", "BOSTON", "DALLAS" };
         private static int EMP_TOTAL = enames.Length;
         private static int DEPT_TOTAL = deptNames.Length;
 
@@ -118,8 +123,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2644: 42601: syntax error at end of input")]
-        public void SimpleNestedTableTest()
+        public async Task SimpleNestedTableTest_ArrayList([Values] bool async, [Values] bool deriveParameters)
         {
             //A procedure has an output parameter which is nested table
             // with four elements.
@@ -146,12 +150,57 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                            + " End pkgSimpleTest;";
             Execute(pkgBody, true);
 
-            var commandText = "pkgSimpleTest.simpleNestedTableTest";
-            var cstmt = new EDBCommand(commandText, conn);
-            cstmt.CommandType = CommandType.StoredProcedure;
-            EDBCommandBuilder.DeriveParameters(cstmt);
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("pkgsimpletest.dname_tbl_typ");
+            await using var dataSource = dataSourceBuilder.Build();
+            await using var connection = await dataSource.OpenConnectionAsync();
 
-            Assert.AreEqual("test", cstmt.Parameters[0].Value.ToString());
+            var commandText = "pkgSimpleTest.simpleNestedTableTest";
+            var cstmt = new EDBCommand(commandText, connection);
+            cstmt.CommandType = CommandType.StoredProcedure;
+            cstmt.AllResultTypesAreUnknown = true;
+
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+            }
+            else
+            {
+                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "pkgsimpletest.dname_tbl_typ"
+                });
+            }
+
+            Assert.AreEqual(1, cstmt.Parameters.Count);
+            Assert.AreEqual("pkgsimpletest.dname_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+            if (async)
+            {
+                await cstmt.PrepareAsync();
+                await cstmt.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                cstmt.Prepare();
+                cstmt.ExecuteNonQuery();
+            }
+            
+
+            var paramValue = cstmt.Parameters[0].Value;
+            
+            Assert.IsNotNull(paramValue);
+            Assert.IsInstanceOf<ArrayList>(paramValue);
+
+            var arrayList = (ArrayList)paramValue!;
+            Assert.AreEqual(DEPT_TOTAL, arrayList.Count);
+            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(string));
+
+            for (int i = 0; i < DEPT_TOTAL; i++)
+            {
+                Assert.AreEqual(deptNames[i], arrayList[i]);
+            }
 
             //CallableStatement cstmt = con.prepareCall(commandText);
             //cstmt.registerOutParameter(1, Types.ARRAY);
@@ -165,8 +214,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2644: 42601: syntax error at end of input")]
-        public void NestedTableExtendTest()
+        public async Task NestedTableExtendTest_ArrayList([Values] bool async, [Values] bool deriveParameters)
         {
             //the creation of an empty table with the constructor emp_tbl_typ()
             //as the first statement in the executable section of the anonymous block.
@@ -200,12 +248,65 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                            + " End pkgExtendTest;";
             Execute(pkgBody, true);
 
-            var commandText = "pkgExtendTest.nestedTableExtendTest";
-            var cstmt = new EDBCommand(commandText, conn);
-            cstmt.CommandType = CommandType.StoredProcedure;
-            EDBCommandBuilder.DeriveParameters(cstmt);
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("pkgextendtest.emp_tbl_typ");
+            //dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetest.dept_obj_typ");
+            await using var dataSource = dataSourceBuilder.Build();
+            await using var connection = await dataSource.OpenConnectionAsync();
 
-            Assert.AreEqual("test", cstmt.Parameters[0].Value.ToString());
+            var commandText = "pkgExtendTest.nestedTableExtendTest";
+            var cstmt = new EDBCommand(commandText, connection);
+            cstmt.CommandType = CommandType.StoredProcedure;
+            cstmt.AllResultTypesAreUnknown = true;
+
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+            }
+            else
+            {
+                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "pkgextendtest.emp_tbl_typ"
+                });
+            }
+
+            Assert.AreEqual(1, cstmt.Parameters.Count);
+            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+
+            if (async)
+            {
+                await cstmt.PrepareAsync();
+                await cstmt.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                cstmt.Prepare();
+                cstmt.ExecuteNonQuery();
+            }
+
+            var paramValue = cstmt.Parameters[0].Value;
+            Assert.IsNotNull(paramValue);
+            Assert.IsInstanceOf<ArrayList>(paramValue);
+
+            var arrayList = (ArrayList)paramValue!;
+            Assert.AreEqual(10, arrayList.Count);
+            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(ArrayList));
+
+            for (int i = 0; i < arrayList.Count; i++)
+            {
+                ArrayList tuple = (ArrayList)arrayList[i]!;
+
+                Assert.AreEqual(2, tuple.Count);
+
+                int empNo = int.Parse(tuple[0].ToString()); // Todo "NULL" check
+                string empName = tuple[1].ToString()!;                
+
+                Assert.AreEqual(empnos[i], empNo);
+                Assert.AreEqual(enames[i], empName);
+            }
 
             //CallableStatement cstmt = con.prepareCall(commandText);
             //cstmt.registerOutParameter(1, Types.ARRAY);
@@ -224,8 +325,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2645: Couldn't find PostgreSQL type with OID 214516")]
-        public void ObjectTypeNestedTableTest()
+        public async Task ObjectTypeNestedTableTest_ArrayList([Values] bool async, [Values] bool deriveParameters)
         {
             //The following procedure defines a nested table type whose element
             //consists of the dept_obj_typ object type. A nested table variable is declared,
@@ -259,20 +359,67 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                            + "End pkgObjectTypeTest;";
             Execute(pkgBody);
 
-            conn.ReloadTypes();
-
             //Close and reopen the connection so that custom types are reloaded.
             TestUtil.closeDB(conn);
-            EDBConnection.GlobalTypeMapper.MapComposite<dept_obj_typ>("public.dept_obj_typ");
 
-            conn = OpenConnection();
+            // what we would like
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetest.dept_tbl_typ");
+            //dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetest.dept_obj_typ");
+            await using var dataSource = dataSourceBuilder.Build();
+            await using var connection = await dataSource.OpenConnectionAsync();
 
             var commandText = "pkgObjectTypeTest.objectTypeNestedTableTest";
-            var cstmt = new EDBCommand(commandText, conn);
+            var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            EDBCommandBuilder.DeriveParameters(cstmt);
+            cstmt.AllResultTypesAreUnknown = true;
 
-            Assert.AreEqual("test", cstmt.Parameters[0].Value.ToString());
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+            }
+            else
+            {
+                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "pkgobjecttypetest.dept_tbl_typ"
+                });
+            }
+
+            Assert.AreEqual(1, cstmt.Parameters.Count);
+            Assert.AreEqual("pkgobjecttypetest.dept_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+            if (async)
+            {
+                await cstmt.PrepareAsync();
+                await cstmt.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                cstmt.Prepare();
+                cstmt.ExecuteNonQuery();
+            }
+
+            var paramValue = cstmt.Parameters[0].Value;
+            Assert.IsNotNull(paramValue);
+            Assert.IsInstanceOf<ArrayList>(paramValue);
+
+            var arrayList = (ArrayList)paramValue!;
+            Assert.AreEqual(4, arrayList.Count);
+            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(ArrayList));
+
+
+            for (int i = 0; i < DEPT_TOTAL; i++)
+            {
+
+                ArrayList tuple = (ArrayList)arrayList[i]!;
+                Assert.AreEqual(2, tuple.Count);
+
+                Assert.AreEqual(deptNames[i], tuple[0]);
+                Assert.AreEqual(deptLocs[i], tuple[1]);
+            }
+
 
             //String commandText = "{call pkgObjectTypeTest.objectTypeNestedTableTest(?)}";
             //CallableStatement cstmt = con.prepareCall(commandText);
