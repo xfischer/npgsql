@@ -53,7 +53,7 @@ class SqlQueryParserTests
         var results = ParseCommand(sql, p);
         Assert.That(results.Single().PositionalParameters.Single(), Is.SameAs(p));
     }
-
+    
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1177")]
     public void Parameter_gets_bound_non_ascii()
     {

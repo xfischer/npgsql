@@ -319,7 +319,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
 
     /// <summary>
     /// Marks all of the query's result columns as either known or unknown.
-    /// Unknown result columns are requested from PostgreSQL in text format, and EDB makes no
+    /// Unknown result columns are requested from PostgreSQL in text format, and EDB .NET Connector makes no
     /// attempt to parse them. They will be accessible as strings only.
     /// </summary>
     public bool AllResultTypesAreUnknown
@@ -337,7 +337,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
 
     /// <summary>
     /// Marks the query's result columns as known or unknown, on a column-by-column basis.
-    /// Unknown result columns are requested from PostgreSQL in text format, and EDB makes no
+    /// Unknown result columns are requested from PostgreSQL in text format, and EDB .NET Connector makes no
     /// attempt to parse them. They will be accessible as strings only.
     /// </summary>
     /// <remarks>
@@ -472,7 +472,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     {
         using var c = new EDBCommand(DeriveParametersForFunctionQuery, InternalConnection);
         c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
-        c.Parameters[0].Value = CommandText;
+        var text = CommandText.AsSpan();
+        var parenthesis = text.IndexOf('(');
+        c.Parameters[0].Value = parenthesis >= 0 ? text.Slice(0, parenthesis).ToString() : CommandText;
 
         string[]? names = null;
         uint[]? types = null;

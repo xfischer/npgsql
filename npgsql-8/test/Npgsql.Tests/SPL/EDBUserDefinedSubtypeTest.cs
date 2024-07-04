@@ -103,6 +103,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             using (var cstmt = new EDBCommand(commandText, conn))
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
+
                 cstmt.Parameters.Add(new EDBParameter("emp_name", EDBTypes.EDBDbType.Varchar, 10, "emp_name",
                     ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 

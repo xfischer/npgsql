@@ -117,7 +117,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             public string? Type2;
         }
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             using var con = OpenConnection();
@@ -160,7 +160,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             CreateDropProcedure(procCreate);
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Dispose()
         {
             using var con = OpenConnection();
@@ -203,21 +203,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             int count = createProcCommand.ExecuteNonQuery();
         }
 
-        [Test/*, Ignore("Composite types functionality has changed, need to re-look.")*/]
+        [Test]
         public async Task CustomTypeArrayAsInParamTest()
         {
-            //con.ReloadTypes();
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
             dataSourceBuilder.MapComposite<TestType>("public.test_type");
             await using var dataSource = dataSourceBuilder.Build();
 
             await using var connection = await dataSource.OpenConnectionAsync();
 
-            //connection.ReloadTypes();
-
             using var Command = new EDBCommand("TEST_PROC_TYPE_ARRAY", connection);
 
-            Command.CommandType = System.Data.CommandType.StoredProcedure;
+            Command.CommandType = CommandType.StoredProcedure;
             EDBCommandBuilder.DeriveParameters(Command);
 
             Command.Parameters[0].Value = 20;
@@ -238,8 +235,50 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 };
             Command.Parameters[2].Value = myTests.ToArray();
 
-            Command.Prepare();
-            Command.ExecuteNonQuery();
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await Command.PrepareAsync();
+                await Command.ExecuteNonQueryAsync();
+            });
+        }
+
+        [Test]
+        public async Task CustomTypeArrayAsInParamTest_ManualWiring()
+        {
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.MapComposite<TestType>("public.test_type");
+            await using var dataSource = dataSourceBuilder.Build();
+
+            await using var connection = await dataSource.OpenConnectionAsync();
+
+            using var Command = new EDBCommand("TEST_PROC_TYPE_ARRAY", connection);
+            Command.CommandType = CommandType.StoredProcedure;
+
+            Command.Parameters.AddWithValue(EDBTypes.EDBDbType.Numeric, 20);
+            Command.Parameters.AddWithValue(EDBTypes.EDBDbType.Varchar, "Testing3");
+
+            List<TestType> myTests = new List<TestType>()
+                {
+                new ()
+                {
+                    Type1 = "Test2",
+                    Type2 = "Test3"
+                },
+                new TestType()
+                {
+                    Type1 = "Test4",
+                    Type2 = "Test5"
+                }
+                };
+
+            Command.Parameters.AddWithValue(myTests.ToArray());
+
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await Command.PrepareAsync();
+                await Command.ExecuteNonQueryAsync();
+            }
+            );
         }
     }
 

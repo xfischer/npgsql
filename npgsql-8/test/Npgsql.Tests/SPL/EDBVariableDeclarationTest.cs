@@ -6,6 +6,7 @@ using System.Data.SqlTypes;
 using System.Xml.Linq;
 using System.Threading;
 using System.Collections;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -331,7 +332,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2633 && EC-2634")]
+        [EDBExplicit("EC-2633 && EC-2634")]
         public void RecordTypeVariableOutputTest()
         {
             Execute("DROP PACKAGE BODY pkgRecordTypeTest;");

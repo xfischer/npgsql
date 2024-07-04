@@ -137,7 +137,7 @@ namespace EnterpriseDB.EDBClient
             {
                 var command = new EDBCommand("DBMS_AQ.ENQUEUE(:queue_name, :enqueue_options, :message_properties, :payload, :MsgId)", Connection);
                 command.CommandType = CommandType.StoredProcedure;
-                command.AllResultTypesAreUnknown = true;
+                command.AllResultTypesAreUnknown = false;
                 command.Parameters.Add(new EDBParameter("queue_name", EDBTypes.EDBDbType.Varchar, 10, "queue_name", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 command.Parameters[0].Value = Name;
                 command.Parameters.Add(new EDBParameter
@@ -201,7 +201,7 @@ namespace EnterpriseDB.EDBClient
 
                 var command = new EDBCommand("DBMS_AQ.DEQUEUE(:queue_name, :dequeue_options, :message_properties, :payload, :MsgId)", Connection);
                 command.CommandType = CommandType.StoredProcedure;
-                command.AllResultTypesAreUnknown = true;
+                command.AllResultTypesAreUnknown = false;
                 command.Parameters.Add(new EDBParameter("queue_name", EDBTypes.EDBDbType.Varchar, 10, "queue_name", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 command.Parameters[0].Value = Name;
                 command.Parameters.Add(new EDBParameter
