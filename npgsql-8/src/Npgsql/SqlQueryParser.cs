@@ -747,24 +747,9 @@ sealed class SqlQueryParser
             return false;
 
         // abort if redwood and plpgsql
-#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-        if (temp.IndexOf("LANGUAGE PLPGSQL", StringComparison.OrdinalIgnoreCase) >= 0)
-            return false;
-#else
         if (temp.Contains("LANGUAGE PLPGSQL", StringComparison.OrdinalIgnoreCase))
             return false;
-#endif
 
-
-#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-        return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
-            || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
-                        && (temp.Contains("PROCEDURE ")
-                        || temp.Contains("FUNCTION ")
-                        || temp.Contains("TRIGGER ")
-                        || temp.Contains("DECLARE ")
-                        || temp.Contains("PACKAGE "));
-#else
         return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
             || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
                         && (temp.Contains("PROCEDURE ", StringComparison.OrdinalIgnoreCase)
@@ -772,7 +757,7 @@ sealed class SqlQueryParser
                         || temp.Contains("TRIGGER ", StringComparison.OrdinalIgnoreCase)
                         || temp.Contains("DECLARE ", StringComparison.OrdinalIgnoreCase)
                         || temp.Contains("PACKAGE ", StringComparison.OrdinalIgnoreCase));
-#endif
+
     }
 
     // Is ASCII letter comparison optimization https://github.com/dotnet/runtime/blob/60cfaec2e6cffeb9a006bec4b8908ffcf71ac5b4/src/libraries/System.Private.CoreLib/src/System/Char.cs#L236
