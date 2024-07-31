@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TestCaseSource("BackendDataCases")]
         public void TestArrayParsing(string data, int numRows, int numTupleColumns)
         {
-            ArrayList result = ArrayBackendToNativeTypeConverter.ToArrayList(data);
+            ArrayList result = ArrayBackendToNativeTypeConverter.ToArrayList(data, null, null);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(numRows, result.Count);

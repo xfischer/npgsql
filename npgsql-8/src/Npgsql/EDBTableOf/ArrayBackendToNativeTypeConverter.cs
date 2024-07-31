@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using EnterpriseDB.EDBClient.Internal;
+using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace EnterpriseDB.EDBClient
 {
     internal static class ArrayBackendToNativeTypeConverter
     {
+
         /// <summary>
         /// Creates an array list from EPAS table of represenation (array of domain or tuples)
         /// Multidimensional arrays are treated as ArrayLists of ArrayLists
         /// </summary>
-        public static ArrayList ToArrayList(string BackendData)
+        public static ArrayList ToArrayList(string BackendData, PgSerializerOptions? options, PostgresArrayType? pgType)
         {
 
             /* Examples :
@@ -33,20 +37,78 @@ namespace EnterpriseDB.EDBClient
             {
                 foreach (string arrayChunk in TupleChunkEnumeration(stripBraces))
                 {
-                    list.Add(ToArrayList(arrayChunk));
+                    list.Add(ToArrayList(arrayChunk, options, pgType));
                 }
             }
             else
             //We're either dealing with a 1-dimension array or treating a row of an n-dimension array. In either case parse the elements and put them in our ArrayList
             {
+                int fieldIndex = 0;
                 foreach (string token in TokenEnumeration(stripBraces))
                 {
+                    if (pgType is null || options is null) // here for EDBTextConverterTests which passes null for both
+                    {
+                        list.Add(token);
+                        continue;
+                    }
+
                     //Use the NpgsqlBackendTypeInfo for the element type to obtain each element.
-                    list.Add(token);
+                    if (pgType.Element is PostgresBaseType pgBaseType)
+                    {
+                        var boxedToken = ConvertStringToNative(options, token, pgBaseType);
+                        list.Add(boxedToken);
+                    }
+                    else if (pgType.Element is PostgresCompositeType pgCompositeType)
+                    {
+                        if (pgCompositeType.MutableFields[fieldIndex++].Type is PostgresBaseType fieldType)
+                        {
+                            var boxedToken = ConvertStringToNative(options, token, fieldType);
+                            list.Add(boxedToken);
+                        }
+                        else
+                        {
+                            throw new NotSupportedException($"Table of nested types should contain only primitive types or composite types (type found: {pgCompositeType.MutableFields[fieldIndex].Type}. Please file a bug");
+                        }
+                    }
+                    else
+                    {
+                        throw new NotSupportedException("Table of nested types should contain only primitive types or composite types. Please file a bug");
+                    }
+
                 }
             }
             return list;
+
+
+            static object? ConvertStringToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]  PostgresBaseType pgBaseType)
+            {
+                var typeInfo = options.GetObjectOrDefaultTypeInfo(pgBaseType)
+                                           ?? throw new NotSupportedException(
+                                               $"Reading isn't supported for record field 0 (PG type '{pgBaseType.DisplayName}'");
+
+                object? nativeValue;
+                if (token == "NULL")
+                {
+                    // Slow. Fast replacement here :  https://devblogs.microsoft.com/premier-developer/dissecting-the-new-constraint-in-c-a-perfect-example-of-a-leaky-abstraction/
+                    if (typeInfo.Type.IsByRef)
+                    {
+                        nativeValue = null;
+                    }
+                    else
+                    {
+                        nativeValue = Activator.CreateInstance(typeInfo.Type);
+                    }
+                }
+                else
+                {
+                    nativeValue = Convert.ChangeType(token, typeInfo.Type);
+                }
+
+                return nativeValue;
+            }
         }
+
+
 
         /// <summary>
         /// Takes a string representation of a pg 1-dimensional array

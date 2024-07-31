@@ -51,6 +51,7 @@ public class PgTypeInfo
 
     bool HasCachedInfo(PgConverter converter) => ReferenceEquals(Converter, converter);
 
+
     public Type Type { get; }
     public PgSerializerOptions Options { get; }
 

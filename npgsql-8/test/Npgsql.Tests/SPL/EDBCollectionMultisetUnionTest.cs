@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Xml.Linq;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -15,19 +16,33 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 {
     internal class EDBCollectionMultisetUnionTest : EPASTestBase
     {
-        EDBConnection? conn = null;
+        EDBDataSource dataSource= null;
 
         private int[] MULTI_UNION_RESULT = { 10, 20, 30, 30, 40 };
         private int[] MULTI_UNION_DISTINCT_RESULT = { 10, 20, 30, 40 };
         private int[] MULTI_UNION_DISTINCT_RESULT02 = { 10, 20, 30, 40, 50 };
 
+        [SetUp]
+        public void Init()
+        {
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSource = dataSourceBuilder.Build();
+        }
+
         [TearDown]
         public void Dispose()
         {
-            TestUtil.closeDB(conn);
+            dataSource.Dispose();
+            dataSource = null;
         }
 
         private int Execute(string query, bool checkSuccess)
+        {
+            using (var conn = dataSource.OpenConnection())
+                return Execute(query, conn, checkSuccess);
+        }
+
+        private static int Execute(string query, EDBConnection conn, bool checkSuccess)
         {
             try
             {
@@ -39,7 +54,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             }
             catch (Exception ex)
             {
-                if(checkSuccess)
+                if (checkSuccess)
                     Assert.Fail(ex.Message);
             }
 
@@ -47,11 +62,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2650")]
+        [EDBExplicit("EC-2650")]
         public void MultisetUnionTest()
         {
-            Execute("DROP PACKAGE BODY mulUnPkg;", false);
-            Execute("DROP PACKAGE mulUnPkg;", false);
+            var conn = dataSource.OpenConnection();
+
+            Execute("DROP PACKAGE BODY mulUnPkg;",conn, false);
+            Execute("DROP PACKAGE mulUnPkg;", conn, false);
 
             //The MULTISET UNION operator combines two collections to
             //form a third collection. The signature is:
@@ -65,7 +82,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                             + "      count         OUT INTEGER, \n"
                             + "      collection_3  OUT int_arr_typ); \n"
                             + "END mulUnPkg; ";
-            Execute(mulUnPkg, true);
+            Execute(mulUnPkg, conn, true);
 
             var mulUnPkgBody = "CREATE OR REPLACE PACKAGE BODY mulUnPkg \n"
                                 + "Is \n"
@@ -83,11 +100,19 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                                 + "    count :=  collection_3.COUNT;\n"
                                 + "  END mulUnionTest;\n"
                                 + "End mulUnPkg;";
-            Execute(mulUnPkgBody, true);
+            Execute(mulUnPkgBody, conn, true);
+            conn.Dispose();
+
             var commandText = "mulUnPkg.mulUnionTest";//(:count, :collection)
 
+            EDBDataSourceBuilder builder = new EDBDataSourceBuilder(TestUtil.ConnectionString);
+            builder.UseEDBIsTableOf("mulunpkg.int_arr_typ");
+            var ds = builder.Build();
+            conn = ds.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
+            cstmt.UnknownResultTypeList = [false, true];
+
 
             //cstmt.Parameters.Add(new EDBParameter("count", EDBTypes.EDBDbType.Integer, 10, "count",
             //    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
@@ -96,6 +121,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             //    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
 
             cstmt.DeriveParameters();
+            cstmt.Parameters[0].Direction = ParameterDirection.Output;
+            cstmt.Parameters[1].Direction = ParameterDirection.Output;
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -152,6 +179,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             var commandText = "mulUnDisPkg.mulUnionDistinctTest";
 
+            using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
 
@@ -213,6 +241,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             var commandText = "mulUnDisPkg02.mulUnionDistinctTest02";
 
+            using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
 

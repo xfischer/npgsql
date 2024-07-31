@@ -355,6 +355,7 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};";
                 continue;
 
             case 'a': // Array
+            case 'N': // EnterpriseDB TABLE OF
             {
                 Debug.Assert(elemtypoid > 0);
                 if (!byOID.TryGetValue(elemtypoid, out var elementPostgresType))
@@ -412,11 +413,6 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};";
             case 'c': // Composite
                 var compositeType = new PostgresCompositeType(nspname, typname, oid);
                 byOID[compositeType.OID] = compositeType;
-                continue;
-
-            case 'N': // EnterpriseDB TABLE OF
-                var compositeType2 = new PostgresCompositeType(nspname, typname, oid);
-                byOID[compositeType2.OID] = compositeType2;
                 continue;
 
             case 'd': // Domain

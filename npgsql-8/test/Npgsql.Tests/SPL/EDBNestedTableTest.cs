@@ -19,8 +19,14 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 {
     public class dept_obj_typ
     {
-        public string dname;
-        public string loc;
+        public string? dname;
+        public string? loc;
+    }
+
+    public class emp_rec_typ
+    {
+        public decimal empno;
+        public string? ename;
     }
 
     [NonParallelizable]
@@ -30,7 +36,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
         private static string[] enames = new string[] { "SMITH", "ALLEN", "WARD", "JONES", "MARTIN",
             "BLAKE", "CLARK", "SCOTT", "KING", "TURNER" };
-        private static int[] empnos = new int[] { 7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844 };
+        private static decimal[] empnos = new decimal[] { 7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844 };
         private static string[] deptNames = new string[] { "ACCOUNTING", "OPERATIONS", "RESEARCH", "SALES" };
         private static string[] deptLocs = new string[] { "NEW YORK", "BOSTON", "DALLAS", "CHICAGO" };
         //private static string[] deptLocs = new string[] { "T(_)_,_", "NEW YORK", "BOSTON", "DALLAS" };
@@ -186,10 +192,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
             }
-            
+
 
             var paramValue = cstmt.Parameters[0].Value;
-            
+
             Assert.IsNotNull(paramValue);
             Assert.IsInstanceOf<ArrayList>(paramValue);
 
@@ -200,6 +206,98 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             for (int i = 0; i < DEPT_TOTAL; i++)
             {
                 Assert.AreEqual(deptNames[i], arrayList[i]);
+            }
+
+            //CallableStatement cstmt = con.prepareCall(commandText);
+            //cstmt.registerOutParameter(1, Types.ARRAY);
+            //cstmt.execute();
+            //Array arr = (Array)cstmt.getObject(1);
+            //String names[] = (String[])arr.getArray();
+            //Assert.assertEquals(DEPT_TOTAL, names.length);
+            //for (int i = 0; i<DEPT_TOTAL; i++) {
+            //    Assert.assertEquals(deptNames[i], names[i]);
+            //}
+        }
+
+        [Test]
+        public async Task SimpleNestedTableTest_Integer_ArrayList([Values] bool async, [Values] bool deriveParameters)
+        {
+            //A procedure has an output parameter which is nested table
+            // with four elements.
+            var createPkg = " CREATE OR REPLACE PACKAGE pkgSimpleTestInt Is \n"
+                    + "   TYPE dname_int_tbl_typ IS TABLE OF INT; \n"
+                    + "   Procedure simpleNestedTableTestInt(dname_tbl Out dname_int_tbl_typ); \n"
+                    + " End pkgSimpleTestInt; ";
+            Execute(createPkg, true);
+
+            var pkgBody = " CREATE OR REPLACE PACKAGE BODY pkgSimpleTestInt \n"
+                           + "  Is \n"
+                           + "  Procedure simpleNestedTableTestInt(dname_tbl Out dname_int_tbl_typ) \n"
+                           + "    Is \n"
+                           + "    DECLARE \n"
+                           + "     CURSOR emp_cur IS SELECT empno FROM emp1 ORDER BY empno; \n"
+                           + "     i INTEGER := 0; \n"
+                           + "    BEGIN\n"
+                           + "      dname_tbl := dname_int_tbl_typ(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); \n"
+                           + "      FOR r_emp IN emp_cur LOOP \n"
+                           + "        i := i + 1; \n"
+                           + "        dname_tbl(i) := r_emp.empno; \n"
+                           + "      END LOOP; \n"
+                           + "  End simpleNestedTableTestInt; \n"
+                           + " End pkgSimpleTestInt;";
+            Execute(pkgBody, true);
+
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("pkgsimpletestint.dname_int_tbl_typ");
+            await using var dataSource = dataSourceBuilder.Build();
+            await using var connection = await dataSource.OpenConnectionAsync();
+
+            var commandText = "pkgsimpletestint.simpleNestedTableTestInt";
+            var cstmt = new EDBCommand(commandText, connection);
+            cstmt.CommandType = CommandType.StoredProcedure;
+            cstmt.AllResultTypesAreUnknown = true;
+
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+            }
+            else
+            {
+                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "pkgsimpletestint.dname_int_tbl_typ"
+                });
+            }
+
+            Assert.AreEqual(1, cstmt.Parameters.Count);
+            Assert.AreEqual("pkgsimpletestint.dname_int_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+            if (async)
+            {
+                await cstmt.PrepareAsync();
+                await cstmt.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                cstmt.Prepare();
+                cstmt.ExecuteNonQuery();
+            }
+
+
+            var paramValue = cstmt.Parameters[0].Value;
+
+            Assert.IsNotNull(paramValue);
+            Assert.IsInstanceOf<ArrayList>(paramValue);
+
+            var arrayList = (ArrayList)paramValue!;
+            Assert.AreEqual(EMP_TOTAL, arrayList.Count);
+            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(int));
+
+            for (int i = 0; i < EMP_TOTAL; i++)
+            {
+                Assert.AreEqual(arrayList[i].GetType(), typeof(int));
+                Assert.AreEqual(empnos[i], arrayList[i]);
             }
 
             //CallableStatement cstmt = con.prepareCall(commandText);
@@ -259,13 +357,15 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             cstmt.CommandType = CommandType.StoredProcedure;
             cstmt.AllResultTypesAreUnknown = true;
 
+
+            EDBParameter? tableOfParam = null;
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
             }
             else
             {
-                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                tableOfParam = cstmt.Parameters.Add(new EDBParameter()
                 {
                     Direction = ParameterDirection.Output,
                     DataTypeName = "pkgextendtest.emp_tbl_typ"
@@ -287,7 +387,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 cstmt.ExecuteNonQuery();
             }
 
-            var paramValue = cstmt.Parameters[0].Value;
+            var paramValue = deriveParameters ? cstmt.Parameters[0].Value : tableOfParam.Value;
             Assert.IsNotNull(paramValue);
             Assert.IsInstanceOf<ArrayList>(paramValue);
 
@@ -301,11 +401,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
                 Assert.AreEqual(2, tuple.Count);
 
-                int empNo = int.Parse(tuple[0].ToString()); // Todo "NULL" check
-                string empName = tuple[1].ToString()!;                
-
-                Assert.AreEqual(empnos[i], empNo);
-                Assert.AreEqual(enames[i], empName);
+                Assert.AreEqual(tuple[0].GetType(), typeof(decimal));
+                Assert.AreEqual(tuple[1].GetType(), typeof(string));
+                Assert.AreEqual(empnos[i], tuple[0]);
+                Assert.AreEqual(enames[i], tuple[1]);
             }
 
             //CallableStatement cstmt = con.prepareCall(commandText);
@@ -416,6 +515,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ArrayList tuple = (ArrayList)arrayList[i]!;
                 Assert.AreEqual(2, tuple.Count);
 
+                Assert.AreEqual(tuple[0].GetType(), typeof(string));
+                Assert.AreEqual(tuple[1].GetType(), typeof(string));
                 Assert.AreEqual(deptNames[i], tuple[0]);
                 Assert.AreEqual(deptLocs[i], tuple[1]);
             }
