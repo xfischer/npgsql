@@ -1,13 +1,14 @@
-﻿using System;
+﻿using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
+using Npgsql.Tests.Support;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
-using System.Data;
-using System.Data.SqlTypes;
-using System.Xml.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System;
 using System.Collections;
+using System.Data;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -32,8 +33,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
     [NonParallelizable]
     internal class EDBNestedTableTest : EPASTestBase
     {
-        EDBConnection? conn = null;
-
         private static string[] enames = new string[] { "SMITH", "ALLEN", "WARD", "JONES", "MARTIN",
             "BLAKE", "CLARK", "SCOTT", "KING", "TURNER" };
         private static decimal[] empnos = new decimal[] { 7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844 };
@@ -43,10 +42,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         private static int EMP_TOTAL = enames.Length;
         private static int DEPT_TOTAL = deptNames.Length;
 
-        [SetUp]
+        [OneTimeSetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();
 
             Execute("DROP PACKAGE BODY pkgSimpleTest;");
             Execute("DROP PACKAGE pkgSimpleTest;");
@@ -103,16 +102,12 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             }
         }
 
-        [TearDown]
-        public void Dispose()
-        {
-            TestUtil.closeDB(conn);
-        }
-
         private int Execute(string query, bool shouldPass = false)
         {
             try
             {
+
+                using var conn = OpenConnection();
                 using (var com = new EDBCommand(query, conn))
                 {
                     com.CommandType = CommandType.Text;
@@ -312,6 +307,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
+        [NonParallelizable]
         public async Task NestedTableExtendTest_ArrayList([Values] bool async, [Values] bool deriveParameters)
         {
             //the creation of an empty table with the constructor emp_tbl_typ()
@@ -458,9 +454,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                            + "End pkgObjectTypeTest;";
             Execute(pkgBody);
 
-            //Close and reopen the connection so that custom types are reloaded.
-            TestUtil.closeDB(conn);
-
             // what we would like
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
             dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetest.dept_tbl_typ");
@@ -537,6 +530,211 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             //Assert.assertEquals(deptNames[i], dname);
             //    Assert.assertEquals(deptLocs[i], dloc);
             //}
+        }
+
+        /// <summary>
+        /// Test written as NUnit did not support Guids
+        /// </summary>
+        /// <returns></returns>
+        [Test]
+        public async Task DomainTypeNestedTableTest_Uuid()
+        {
+            var testArray = new Guid[] { Guid.Empty, Guid.NewGuid() };
+            var expectedType = typeof(Guid);
+
+            await DomainTypeNestedTableTest<Guid>("uuid", testArray);
+        }
+
+        [Test]
+        public async Task DomainTypeNestedTableTest_Timestamp()
+        {
+            var testArray = new DateTime[] { new DateTime(2024,12,30,12,59,59, DateTimeKind.Unspecified).RemoveSecondsFraction()
+                , new DateTime(2024,12,30,0,0,0, DateTimeKind.Unspecified).RemoveSecondsFraction() };
+            var expectedType = typeof(DateTime);
+
+            await DomainTypeNestedTableTest<DateTime>("timestamp without time zone", testArray);
+        }
+
+        [Test]
+        public async Task DomainTypeNestedTableTest_TimestampTz()
+        {
+            var testArray = new DateTime[] { new DateTime(2024,12,30,12,59,59, DateTimeKind.Local).RemoveSecondsFraction()
+                , new DateTime(2024,12,30,0,0,0, DateTimeKind.Local).RemoveSecondsFraction() };
+            var expectedType = typeof(DateTime);
+
+            await DomainTypeNestedTableTest<DateTime>("timestamp with time zone", testArray);
+        }
+
+        [Test]
+        public async Task DomainTypeNestedTableTest_Time()
+        {
+            var testArray = new TimeSpan[] { new TimeSpan(hours: 1, minutes: 2,seconds: 3)
+                , new TimeSpan(days:0, hours: 1, minutes: 2,seconds: 3,milliseconds:999) };
+            var expectedType = typeof(TimeSpan);
+
+            await DomainTypeNestedTableTest<TimeSpan>("time without time zone", testArray);
+        }
+
+        [Test]
+        public async Task DomainTypeNestedTableTest_TimeTz()
+        {
+            var testArray = new DateTimeOffset[] { DateTimeOffset.Now.RemoveSecondsFraction()
+                , DateTimeOffset.Now.AddMinutes(8).RemoveSecondsFraction() };
+            var expectedType = typeof(DateTimeOffset);
+
+            await DomainTypeNestedTableTest<DateTimeOffset>("time with time zone", testArray);
+        }
+
+        [Test]
+        [EDBExplicit("EDBInterval should be replaced by NodaTime or TimeSpan, see https://www.npgsql.org/doc/types/datetime.html#detailed-behavior-reading-values-from-the-database")]
+        public async Task DomainTypeNestedTableTest_Interval()
+        {
+            // 1 day 12 hours 59 min 10 sec
+            // 123 ms
+            var testArray = new EDBInterval[] {
+                new EDBInterval(1,2,3*60*1000*1000)
+                , new EDBInterval(0,0,0) };
+            var expectedType = typeof(TimeSpan);
+
+
+            await DomainTypeNestedTableTest<EDBInterval>("interval", testArray, (a) => a.Select(i => $"'{i.Months} months {i.Days} days {i.Time / 1000} milliseconds'::interval").ToArray());
+        }
+
+        [Test]
+        public async Task DomainTypeNestedTableTest_Cidr()
+        {
+
+            // 1 day 12 hours 59 min 10 sec
+            // 123 ms
+            var testArray = new EDBCidr[] {
+                new EDBCidr("192.168.1.0/24")
+                , new EDBCidr("192.168.1.0/24") };
+            var expectedType = typeof(EDBCidr);
+
+            await DomainTypeNestedTableTest<EDBCidr>("cidr", testArray);
+        }
+
+
+        [TestCaseSource(typeof(DomainTypeCases))]
+        public async Task DomainTypeNestedTableTest<T>(string pgTypeName, T[] values, Func<T[], string[]> stringRepresentations = null, Action<EDBConnection> configurationSteps = null)
+        {
+            // must match server locale for params encoding
+            TestUtil.SetCurrentCulture(System.Globalization.CultureInfo.GetCultureInfo("EN-us"));
+
+
+            var createPkg = $"""
+                CREATE OR REPLACE PACKAGE pkgDomainTypeTest Is
+                    TYPE type_tbl_type IS TABLE OF {pgTypeName};
+                    Procedure domainTestProc(type_tbl Out type_tbl_type);
+                End pkgDomainTypeTest; 
+                """;
+
+            Execute(createPkg, true);
+            stringRepresentations ??= ToOracleArrayDecl;
+
+            var stringsParam = string.Join(",", stringRepresentations.Invoke(values));
+
+            var pkgBody = $"""
+                CREATE OR REPLACE PACKAGE BODY pkgDomainTypeTest IS
+                    Procedure domainTestProc(type_tbl Out type_tbl_type) IS
+                    BEGIN
+                        type_tbl := type_tbl_type({stringsParam});
+                    END domainTestProc;
+                END pkgDomainTypeTest;
+                """;
+
+            Execute(pkgBody, true);
+
+            try
+            {
+                var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+                dataSourceBuilder.UseEDBIsTableOf("pkgdomaintypetest.type_tbl_type");
+                await using var dataSource = dataSourceBuilder.Build();
+                await using var connection = await dataSource.OpenConnectionAsync();
+
+                configurationSteps?.Invoke(connection);
+
+                //await connection.ExecuteNonQueryAsync("SET datestyle TO ISO");
+
+                var commandText = "pkgDomainTypeTest.domainTestProc";
+                var cstmt = new EDBCommand(commandText, connection);
+                cstmt.CommandType = CommandType.StoredProcedure;
+                cstmt.AllResultTypesAreUnknown = true;
+
+                cstmt.DeriveParameters();
+
+                Assert.AreEqual(1, cstmt.Parameters.Count);
+                Assert.AreEqual("pkgdomaintypetest.type_tbl_type", cstmt.Parameters[0].DataTypeName);
+
+                await cstmt.PrepareAsync();
+                await cstmt.ExecuteNonQueryAsync();
+
+                var paramValue = cstmt.Parameters[0].Value;
+
+                Assert.IsNotNull(paramValue);
+                Assert.IsInstanceOf<ArrayList>(paramValue);
+
+                var arrayList = (ArrayList)paramValue!;
+                Assert.AreEqual(values.Length, arrayList.Count);
+                CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(T));
+
+                for (int i = 0; i < values.Length; i++)
+                {
+                    Assert.AreEqual(values[i], arrayList[i]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            finally
+            {
+                Execute("DROP PACKAGE BODY pkgDomainTypeTest;");
+            }
+        }
+
+        public class DomainTypeCases : IEnumerable
+        {
+
+            public IEnumerator GetEnumerator()
+            {
+                yield return new TestCaseData("boolean", new bool[] { true, false, true }, null, null);
+                yield return new TestCaseData("double precision", new double[] { 0, 1.1, 2.02, -1, -2.345 }, null, null);
+                yield return new TestCaseData("smallint", new short[] { 0, 1, 2, -1 }, null, null);
+                yield return new TestCaseData("integer", new int[] { 0, 1, 2, -1 }, null, null);
+                yield return new TestCaseData("bigint", new long[] { 0, 1, 2, -1 }, null, null);
+                yield return new TestCaseData("numeric", new decimal[] { 0m, 1.1m, 2.02m, -1m, -2.345m }, null, null);
+                yield return new TestCaseData("real", new float[] { 0, 1.1f, 2.02f, -1f, -2.345f }, null, null);
+                yield return new TestCaseData("double precision", new double[] { 0, 1.1, 2.02, -1, -2.345 }, null, null);
+                yield return new TestCaseData("money", new decimal[] { 0m, 1.1m, 2.02m, -1m, -2.35m }, null, null);// new Action<EDBConnection>(conn => conn.ExecuteNonQuery("SET lc_monetary='C'")));
+
+                yield return new TestCaseData("text", new string[] { "", "Test1", "Test 2" }, null, null);
+                yield return new TestCaseData("character varying", new string[] { "", "Test1", "Test 2" }, null, null);
+                yield return new TestCaseData("character", new string[] { "a", "T", "t" }, null, null);
+                yield return new TestCaseData("inet", new EDBInet[] { new EDBInet("127.0.0.1"), new EDBInet("192.168.1.1/24") }, null, null);
+                yield return new TestCaseData("date", new DateTime[] {
+                    new DateTime(2024, 12, 30, 23, 59, 59, DateTimeKind.Unspecified).RemoveSecondsFraction(),
+                    new DateTime(2024,12,30,0,0,0, DateTimeKind.Unspecified).RemoveSecondsFraction()
+                }, null, null);
+            }
+        }
+
+        private static string[] ToOracleArrayDecl<T>(T[] values)
+        {
+            if (typeof(T) == typeof(DateTime))
+                return values.Select(v => string.Concat('\'', (v as DateTime?)?.ToString("yyyy-MM-dd HH:mm:ss.fffffzz"), '\'')).ToArray();
+
+            if (typeof(T) == typeof(string)
+                || typeof(T) == typeof(char)
+                || typeof(T) == typeof(Guid)
+                || typeof(T) == typeof(DateTimeOffset)
+                || typeof(T) == typeof(TimeSpan)
+                || typeof(T) == typeof(EDBCidr)
+                || typeof(T) == typeof(EDBInet))
+                return values.Select(v => string.Concat('\'', v.ToString(), '\'')).ToArray();
+
+            var result = values.Select(v => v.ToString()).ToArray();
+            return result!;
         }
     }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
