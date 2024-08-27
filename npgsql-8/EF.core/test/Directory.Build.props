@@ -5,6 +5,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
+	<SonarQubeTestProject>true</SonarQubeTestProject>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
     <!-- There's lots of use of internal EF Core APIs from the tests, suppress the analyzer warnings for those -->
