@@ -1,6 +1,6 @@
 ###
 # Foundation-security Trufflehog workflow
-# version: 2.0
+# version: 2.1
 ###
 name: Foundation-Security/Trufflehog Scan
 
@@ -22,9 +22,10 @@ jobs:
         id: checkout-source
         uses: actions/checkout@v4
         with:
-          repository: ${{github.repository}}
+          repository: ${{ github.repository }}
           ref: ${{ github.ref }}
           path: source
+          fetch-depth: 0
           token: ${{secrets.GH_SLONIK}}
 
       - name: Checkout foundation-security repository
@@ -41,3 +42,5 @@ jobs:
         uses: ./foundation-security/actions/trufflehog
         with:
           cloudsmith-token: ${{ secrets.CLOUDSMITH_READ_ALL }}
+          github-token: ${{ secrets.GH_SLONIK }}
+          slack-token: ${{ secrets.SLONIK_SLACK_BOT_TOKEN }}
