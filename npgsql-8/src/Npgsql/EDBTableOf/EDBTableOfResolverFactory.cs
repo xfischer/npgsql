@@ -34,7 +34,6 @@ internal class Resolver : IPgTypeInfoResolver
     {
         // EnterpriseDB : parameter is seen as INOUT even if it's OUT (EPAS behaviour).
         // Setting supportsWriting to false will raise an exception as parameter Bind is called.
-
         foreach (var dataTypeName in knownTableOfTypes)
         {
             var matchRequirement = MatchRequirement.DataTypeName;
@@ -69,7 +68,7 @@ internal class BackendTextToArrayConverter : PgConverter<ArrayList>
         if (format != DataFormat.Text)
             return false;
 
-        // Nested table of type should be seen as a pgArrayOfCompositeType : an array with elements matching table of signature
+        // Nested table of type should be seen as a pgArrayOfCompositeType : an array with elements matching TABLE OF signature
         if (_options.DatabaseInfo.TryGetPostgresTypeByName(_dataTypeName, out var pgType)
              && pgType is PostgresArrayType pgArrayOfCompositeType)
         {

@@ -6,7 +6,9 @@ using EnterpriseDB.EDBClient.Internal.Composites;
 
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
-sealed class CompositeConverter<T> : PgStreamingConverter<T> where T : notnull
+// EnterpriseDB: made partial to allo ITextFormatConverter inheritance as a marker for text to composite conversion (EC-3164)
+// Used in ArrayBackendToNativeTypeConverter
+sealed partial class CompositeConverter<T> : PgStreamingConverter<T> where T : notnull
 {
     readonly CompositeInfo<T> _composite;
     readonly BufferRequirements _bufferRequirements;
@@ -78,7 +80,7 @@ sealed class CompositeConverter<T> : PgStreamingConverter<T> where T : notnull
 
             // We're only requiring the PgTypeIds to be oids if this converter is actually used during execution.
             // As a result we can still introspect in the global mapper and create all the info with portable ids.
-            if(oid != field.PgTypeId.Oid)
+            if (oid != field.PgTypeId.Oid)
                 // We could remove this requirement by storing a dictionary of CompositeInfos keyed by backend.
                 throw new InvalidCastException(
                     $"Cannot read oid {oid} into composite field {field.Name} with oid {field.PgTypeId}. " +

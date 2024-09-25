@@ -175,7 +175,7 @@ sealed class SqlQueryParser
                         next = temp[2];
                     }
                 }
-                if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
                 {
                     // EnterpriseDB
                     // AS is not a variable declaration in one line declaration such as
@@ -199,7 +199,7 @@ sealed class SqlQueryParser
                 {
                     next = temp[7];
                 }
-                if (next == ' ' || next == '\n' || next == '\t' || next == ';')
+                if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
                 {
                     variableDeclare++;
                 }

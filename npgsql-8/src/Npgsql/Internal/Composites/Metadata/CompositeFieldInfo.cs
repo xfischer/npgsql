@@ -105,7 +105,9 @@ abstract class CompositeFieldInfo
     public abstract Type Type { get; }
 
     protected abstract PgConverter BindValue(object instance, out Size writeRequirement);
-    protected abstract void AddValue(CompositeBuilder builder, object value);
+
+    // EnterpriseDB: protected->internal to allow Text to composite conversion (EC-3164)
+    internal abstract void AddValue(CompositeBuilder builder, object value);
 
     public abstract StrongBox CreateBox();
     public abstract void Set(object instance, StrongBox value);
@@ -202,7 +204,8 @@ sealed class CompositeFieldInfo<T> : CompositeFieldInfo
         return resolution.Converter;
     }
 
-    protected override void AddValue(CompositeBuilder builder, object value) => builder.AddValue((T)value);
+    // EnterpriseDB: protected->internal to allow Text to composite conversion (EC-3164)
+    internal override void AddValue(CompositeBuilder builder, object value) => builder.AddValue((T)value);
 
     public override ValueTask Read(bool async, PgConverter converter, CompositeBuilder builder, PgReader reader, CancellationToken cancellationToken = default)
     {

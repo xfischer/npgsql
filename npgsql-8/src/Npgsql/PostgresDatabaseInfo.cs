@@ -164,12 +164,13 @@ WHERE
     ))
 ORDER BY CASE
        WHEN typtype IN ('b', 'e', 'p') THEN 0           -- First base types, enums, pseudo-types
-       WHEN typtype IN ({(loadEDBIsTableOfTypes ? "'c', 'N'" : "'c'")}) THEN 1 -- Composites after (fields loaded later in 2nd pass)
+       WHEN typtype = 'c' THEN 1                        -- Composites after (fields loaded later in 2nd pass)
        WHEN typtype = 'r' THEN 2                        -- Ranges after
        WHEN typtype = 'm' THEN 3                        -- Multiranges after
        WHEN typtype = 'd' AND elemtyptype <> 'a' THEN 4 -- Domains over non-arrays after
        WHEN typtype = 'a' THEN 5                        -- Arrays after
        WHEN typtype = 'd' AND elemtyptype = 'a' THEN 6  -- Domains over arrays last
+	   WHEN typtype = 'N' THEN 7  						-- EnterpriseDB: TableOF types last
 END;"; // EnterpriseDB Team : add sys schema
 
     static string GenerateLoadCompositeTypesQuery(bool loadTableComposites)

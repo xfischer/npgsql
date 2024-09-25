@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Net;
-using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text;
-using EDBTypes;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.PostgresTypes;
 
@@ -14,6 +10,12 @@ namespace EnterpriseDB.EDBClient;
 
 internal static class ArrayBackendToNativeTypeConverter
 {
+    private struct TypeDescriptor
+    {
+        public bool RequiresSpecificParsing;
+        public PostgresType PostgresType;
+        public char TupleSeparator;
+    }
 
     /// <summary>
     /// Creates an array list from EPAS table of represenation (array of domain or tuples)
@@ -21,33 +23,48 @@ internal static class ArrayBackendToNativeTypeConverter
     /// </summary>
     public static ArrayList ToArrayList(string BackendData, PgSerializerOptions? options, PostgresArrayType? pgType)
     {
-
         /* Examples :
-         * 
+         * Points: "{\"(0,0)\",\"(-4.2,43.5)\"}"
+         * Table of real,real: "{\"(-5.2,43.5)\",\"(-5.2,43.5)\"}"
          * Array of domain types :  {7369,7499,7521}
          * Array of tuples with space-escaped ones : {\"(ACCOUNTING,\\\"NEW YORK\\\")\",\"(OPERATIONS,BOSTON)\",\"(RESEARCH,DALLAS)\",\"(SALES,CHICAGO)\"}
         */
 
-        ArrayList list = new ArrayList();
+        if (pgType?.Element is PostgresCompositeType pgCompositeType)
+        {
+            using var tokenEnumerator = BackendTextEnumerator.EnumerateTokens(BackendData).GetEnumerator();
+            return ToArrayList_Composite(tokenEnumerator, options, pgCompositeType, head: true);
+        }
+
         //remove the braces on either side and work on what they contain.
         var stripBracesSpan = BackendData.AsSpan().Trim().Slice(1, BackendData.Length - 2).Trim();
         string stripBraces = stripBracesSpan.ToString();
         if (stripBraces.Length == 0)
         {
-            return list;
+            return new();
         }
-        if (stripBraces.Length > 2 && stripBraces.Substring(0, 2) == "\"(")
+
+        var list = new ArrayList();
+        TypeDescriptor pgTypeDescriptor = GetElementTypeDescription(options, pgType);
+        if ((stripBraces.Length > 2 && stripBraces.Substring(0, 2) == "\"(")
+            || pgTypeDescriptor.RequiresSpecificParsing)
         // there are tuples inside
         {
-            foreach (string arrayChunk in TupleChunkEnumeration(stripBraces))
+            foreach (string arrayChunk in TupleChunkEnumeration(stripBraces, pgTypeDescriptor.TupleSeparator))
             {
-                list.Add(ToArrayList(arrayChunk, options, pgType));
+                if (pgTypeDescriptor.RequiresSpecificParsing)
+                {
+                    list.Add(StringToNativeConverter.ConvertStringToNative(options, arrayChunk, pgTypeDescriptor.PostgresType));
+                }
+                else
+                {
+                    list.Add(ToArrayList(arrayChunk, options, pgType));
+                }
             }
         }
         else
         //We're either dealing with a 1-dimension array or treating a row of an n-dimension array. In either case parse the elements and put them in our ArrayList
         {
-            int fieldIndex = 0;
             foreach (string token in TokenEnumeration(stripBraces))
             {
                 if (pgType is null || options is null) // here for EDBTextConverterTests which passes null for both
@@ -57,96 +74,153 @@ internal static class ArrayBackendToNativeTypeConverter
                 }
 
                 //Use the NpgsqlBackendTypeInfo for the element type to obtain each element.
-                if (pgType.Element is PostgresBaseType pgBaseType)
+                if (pgType.Element is PostgresBaseType pgElementBaseType)
                 {
-                    var boxedToken = ConvertStringToNative(options, token, pgBaseType);
+                    var boxedToken = StringToNativeConverter.ConvertStringToNative(options, token, pgElementBaseType);
                     list.Add(boxedToken);
                 }
-                else if (pgType.Element is PostgresCompositeType pgCompositeType)
+                else if (pgType.Element is PostgresEnumType pgEnumType)
                 {
-                    if (pgCompositeType.MutableFields[fieldIndex++].Type is PostgresBaseType fieldType)
+                    var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
+                    if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
                     {
-                        var boxedToken = ConvertStringToNative(options, token, fieldType);
-                        list.Add(boxedToken);
+                        // no enum mapping found, return token as string
+                        list.Add(token);
                     }
                     else
                     {
-                        throw new NotSupportedException($"Table of nested types should contain only primitive types or composite types (type found: {pgCompositeType.MutableFields[fieldIndex].Type}. Please file a bug");
+                        var enumValue = Enum.Parse(enumTypeInfo.Type, token, ignoreCase: true);
+                        list.Add(enumValue);
                     }
                 }
                 else
                 {
                     throw new NotSupportedException("Table of nested types should contain only primitive types or composite types. Please file a bug");
                 }
-
             }
         }
         return list;
     }
 
-    static object? ConvertStringToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresBaseType pgBaseType)
+    private static ArrayList ToArrayList_Composite(IEnumerator<string> tokenEnumerator, PgSerializerOptions? options, PostgresCompositeType pgCompType, bool head)
     {
-        var typeInfo = options.GetObjectOrDefaultTypeInfo(pgBaseType)
-                                   ?? throw new NotSupportedException(
-                                       $"Reading isn't supported for record field 0 (PG type '{pgBaseType.DisplayName}'");
+        /* Examples :
+         * Points: "{\"(0,0)\",\"(-4.2,43.5)\"}"
+         * Table of real,real: "{\"(-5.2,43.5)\",\"(-5.2,43.5)\"}"
+         * Array of domain types :  {7369,7499,7521}
+         * Array of tuples with space-escaped ones : {\"(ACCOUNTING,\\\"NEW YORK\\\")\",\"(OPERATIONS,BOSTON)\",\"(RESEARCH,DALLAS)\",\"(SALES,CHICAGO)\"}
+        */
 
-        object? nativeValue;
-        if (token == "NULL")
+        if (options == null)
+            throw new EDBException("PgSerializerOptions is required");
+
+        var list = new ArrayList();
+        List<object> compositeFieldValues = new(30);
+        //remove the braces on either side and work on what they contain.
+
+        bool endOfBuffer = false;
+
+        do
         {
-            // Slow. Fast replacement here :  https://devblogs.microsoft.com/premier-developer/dissecting-the-new-constraint-in-c-a-perfect-example-of-a-leaky-abstraction/
-            if (typeInfo.Type.IsByRef)
+            foreach (var field in pgCompType.Fields)
             {
-                nativeValue = null;
+                if (field.Type is PostgresCompositeType pgNestedComposite)
+                {
+                    var nestedComposite = ToArrayList_Composite(tokenEnumerator, options, pgNestedComposite, head: false);
+                    if (nestedComposite.Count == 0)
+                    {
+                        endOfBuffer = true;
+                        break;
+                    }
+                    // Add composite. If mapped we have a single typed element
+                    // otherwise we get all individual fields
+                    foreach(var comp in nestedComposite)
+                    {
+                        compositeFieldValues.Add(comp);
+                    }
+                }
+                else if (tokenEnumerator.MoveNext())
+                {                    
+                    var token = tokenEnumerator.Current;
+
+                    if (field.Type is PostgresBaseType pgElementBaseType)
+                    {
+                        var boxedToken = StringToNativeConverter.ConvertStringToNative(options, token, pgElementBaseType);
+                        compositeFieldValues.Add(boxedToken!);
+                    }
+                    else if (field.Type is PostgresEnumType pgEnumType)
+                    {
+                        var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
+                        if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
+                        {
+                            // no enum mapping found, return token as string
+                            compositeFieldValues.Add(token);
+                        }
+                        else
+                        {
+                            var enumValue = Enum.Parse(enumTypeInfo.Type, token, ignoreCase: true);
+                            compositeFieldValues.Add(enumValue);
+                        }
+                    }
+                    else
+                    {
+                        throw new EDBException($"{field.GetType().Name} not supported for TABLE OF declarations. Please contact support.");
+                    }
+                }
+                else
+                {
+                    endOfBuffer = true;
+                    break;
+                }
+            }
+
+            if (endOfBuffer)
+                break;
+
+            // Create composite instance if converter found
+            var pgCompTypeInfo = options.GetObjectOrDefaultTypeInfo(pgCompType);            
+            var converter = pgCompTypeInfo?.GetResolution().Converter;
+            if (converter is not null && converter is ITextFormatConverter textConverter)
+            {
+                var compositeInstance = textConverter.ReadFromValues(compositeFieldValues.ToArray());
+                list.Add(compositeInstance);
             }
             else
             {
-                if (typeInfo.Type == typeof(string)) return string.Empty;
-                if (typeInfo.Type == typeof(bool)) return false;
-                if (typeInfo.Type == typeof(short)) return (int)0;
-                if (typeInfo.Type == typeof(int)) return 0;
-                if (typeInfo.Type == typeof(long)) return (long)0;
-                if (typeInfo.Type == typeof(ushort)) return (ushort)0;
-                if (typeInfo.Type == typeof(uint)) return (uint)0;
-                if (typeInfo.Type == typeof(ulong)) return (ulong)0;
-                if (typeInfo.Type == typeof(float)) return (float)0;
-                if (typeInfo.Type == typeof(double)) return (double)0;
-                if (typeInfo.Type == typeof(decimal)) return (decimal)0;
-                if (typeInfo.Type == typeof(Guid)) return Guid.Empty;
-                if (typeInfo.Type == typeof(DateTime)) return DateTime.MinValue;
-                if (typeInfo.Type == typeof(DateTimeOffset)) return DateTimeOffset.MinValue;
-                if (typeInfo.Type == typeof(EDBCidr)) return new EDBCidr();
-
-                nativeValue = Activator.CreateInstance(typeInfo.Type);
+                // No converter found, return each field in a separate arraylist slot
+                list.Add(new ArrayList(compositeFieldValues));
             }
+
+            compositeFieldValues.Clear();
         }
-        else
-        {
-            if (typeInfo.Type == typeof(string)) return token;
-            if (typeInfo.Type == typeof(bool)) return (bool)(token == "t");
-            if (typeInfo.Type == typeof(short)) return short.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(int)) return int.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(long)) return long.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(ushort)) return ushort.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(uint)) return uint.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(ulong)) return ulong.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(float)) return float.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(double)) return double.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(decimal)) return pgBaseType.Name == "money" ? decimal.Parse(token, NumberStyles.Currency) : decimal.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(Guid)) return Guid.Parse(token);
-            if (typeInfo.Type == typeof(DateTime)) return DateTime.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(DateTimeOffset)) return DateTimeOffset.Parse(token, CultureInfo.InvariantCulture);
-            if (typeInfo.Type == typeof(EDBCidr)) return new EDBCidr(token);
-            if (typeInfo.Type == typeof(IPAddress)) return new EDBInet(token);
-            if (typeInfo.Type == typeof(EDBInterval)) return EDBIntervalExtensions.Parse(token);
-            if (typeInfo.Type == typeof(TimeSpan)) return TimeSpan.Parse(token, CultureInfo.InvariantCulture);
+        while (head && !endOfBuffer);
 
-            nativeValue = Convert.ChangeType(token, typeInfo.Type);
-
-        }
-
-        return nativeValue;
+        return list;
     }
 
+    private static TypeDescriptor GetElementTypeDescription(PgSerializerOptions? options, PostgresArrayType? pgType)
+    {
+        var result = new TypeDescriptor();
+        result.RequiresSpecificParsing = false;
+        result.TupleSeparator = ',';
+        result.PostgresType = null!;
+
+        if (pgType is null || options is null)
+        {
+            return result;
+        }
+
+        if (pgType.Element is PostgresBaseType pgBaseTypeInstance
+            && StringToNativeConverter.ShouldProcessWholeTuple(pgBaseTypeInstance))
+        {
+            result.TupleSeparator = StringToNativeConverter.GetTupleSeparator(pgBaseTypeInstance);
+            result.PostgresType = pgBaseTypeInstance;
+            result.RequiresSpecificParsing = true;
+            return result;
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Takes a string representation of a pg 1-dimensional array
@@ -200,27 +274,20 @@ internal static class ArrayBackendToNativeTypeConverter
     /// and allows enumeration of the string represenations of the next
     /// lower level of rows (which in turn can be taken as (n-1)-dimensional arrays.
     /// </summary>
-    private static IEnumerable<string> TupleChunkEnumeration(string source)
+    private static IEnumerable<string> TupleChunkEnumeration(string source, char tupleSeparator)
     {
         char lastEscaped = '\0';
         bool inTuple = false;
         int escapeLevel = 0;
+        int parenthesisDepth = 0;
         StringBuilder sb = new StringBuilder(source.Length);
 
         int idx = 0;
         while (idx < source.Length)
         {
             char c = source[idx];
-            switch (c)
+            if (c == tupleSeparator) //ending this item, unless we're in a quoted string.
             {
-            case '"': //entering of leaving a quoted string
-                if (inTuple)
-                {
-                    sb.Append(c);
-                }
-
-                break;
-            case ',': //ending this item, unless we're in a quoted string.
                 if (inTuple)
                 {
                     sb.Append(c);
@@ -232,38 +299,54 @@ internal static class ArrayBackendToNativeTypeConverter
                     lastEscaped = '\0';
                     escapeLevel = 0;
                 }
-                break;
-            case '\\': //next char is an escaped character, grab it, ignore the \ we are on now.
-                if (source[idx + 1] == lastEscaped)
+            }
+            else
+            {
+                switch (c)
                 {
-                    escapeLevel--;
-                    idx++;
+                case '"': //entering of leaving a quoted string
+                    if (inTuple)
+                    {
+                        sb.Append(c);
+                    }
+
+                    break;
+                case '\\': //next char is an escaped character, grab it, ignore the \ we are on now.
+                    if (source[idx + 1] == lastEscaped)
+                    {
+                        escapeLevel--;
+                        idx++;
+                    }
+                    else
+                    {
+                        escapeLevel++;
+                        lastEscaped = source[++idx];
+                    }
+                    if (inTuple)
+                        sb.Append(lastEscaped);
+                    break;
+                case '(':
+                    if (!inTuple)
+                        inTuple = true;
+
+                    parenthesisDepth++;
+
+                    sb.Append(c);
+
+                    break;
+                case ')':
+                    parenthesisDepth--;
+
+                    if (inTuple && parenthesisDepth == 0 && escapeLevel == 0)
+                        inTuple = false;
+
+                    sb.Append(c);
+                    break;
+
+                default:
+                    sb.Append(c);
+                    break;
                 }
-                else
-                {
-                    escapeLevel++;
-                    lastEscaped = source[++idx];
-                }
-                if (inTuple)
-                    sb.Append(lastEscaped);
-                break;
-            case '(':
-                if (!inTuple)
-                    inTuple = true;
-
-                sb.Append(c);
-
-                break;
-            case ')':
-                if (inTuple && escapeLevel == 0)
-                    inTuple = false;
-
-                sb.Append(c);
-                break;
-
-            default:
-                sb.Append(c);
-                break;
             }
             idx++;
         }
