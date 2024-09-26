@@ -14,7 +14,34 @@ namespace EnterpriseDB.EDBClient
 {
     internal static class StringToNativeConverter
     {
-        internal static object? ConvertStringToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresType pgBaseType)
+        internal static object ConvertTextToNative(string token, PostgresType fieldPgType, PgSerializerOptions options)
+        {
+            if (fieldPgType is PostgresBaseType pgElementBaseType)
+            {
+                var boxedToken = StringToNativeConverter.ConvertDomainTypeTextToNative(options, token, pgElementBaseType);
+                return boxedToken!;
+            }
+            else if (fieldPgType is PostgresEnumType pgEnumType)
+            {
+                var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
+                if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
+                {
+                    // no enum mapping found, return token as string
+                    return token;
+                }
+                else
+                {
+                    var enumValue = Enum.Parse(enumTypeInfo.Type, token, ignoreCase: true);
+                    return enumValue;
+                }
+            }
+            else
+            {
+                throw new EDBException($"{fieldPgType.GetType().Name} not supported for TABLE OF declarations. Please contact support.");
+            }
+        }
+
+        private static object? ConvertDomainTypeTextToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresType pgBaseType)
         {
             var typeInfo = options.GetObjectOrDefaultTypeInfo(pgBaseType)
                                        ?? throw new NotSupportedException(
@@ -123,9 +150,9 @@ namespace EnterpriseDB.EDBClient
             return nativeValue;
         }
 
-
         private static string[] HstoreTupleSeparator = new string[] { "\", \"", "\",\"" };
         private static string[] HstoreKeyvalueSeparator = new string[] { "=>" };
+
         private static object HstoreStringToNative(string token)
         {
             var pairs = token.Split(HstoreTupleSeparator, StringSplitOptions.RemoveEmptyEntries);

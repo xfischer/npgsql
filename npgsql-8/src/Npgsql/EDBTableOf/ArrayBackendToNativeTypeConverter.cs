@@ -18,8 +18,10 @@ internal static class ArrayBackendToNativeTypeConverter
     }
 
     /// <summary>
-    /// Creates an array list from EPAS table of represenation (array of domain or tuples)
-    /// Multidimensional arrays are treated as ArrayLists of ArrayLists
+    /// Creates an array list from EPAS table of represenation (array of domain/tuples/composites)
+    /// If a type is a composite, we explore the fiels and recursively extract the tokens to build the final composite
+    /// If it's a domain type, we process each tuple and check if a specialized parse is needed (ie point, box, line, ...)
+    /// Otherwise we convert each token separately and return the native token values
     /// </summary>
     public static ArrayList ToArrayList(string BackendData, PgSerializerOptions? options, PostgresArrayType? pgType)
     {
@@ -30,6 +32,8 @@ internal static class ArrayBackendToNativeTypeConverter
          * Array of tuples with space-escaped ones : {\"(ACCOUNTING,\\\"NEW YORK\\\")\",\"(OPERATIONS,BOSTON)\",\"(RESEARCH,DALLAS)\",\"(SALES,CHICAGO)\"}
         */
 
+
+        // If composite, call dedicated method
         if (pgType?.Element is PostgresCompositeType pgCompositeType)
         {
             using var tokenEnumerator = BackendTextEnumerator.EnumerateTokens(BackendData).GetEnumerator();
@@ -54,7 +58,7 @@ internal static class ArrayBackendToNativeTypeConverter
             {
                 if (pgTypeDescriptor.RequiresSpecificParsing)
                 {
-                    list.Add(StringToNativeConverter.ConvertStringToNative(options, arrayChunk, pgTypeDescriptor.PostgresType));
+                    list.Add(StringToNativeConverter.ConvertTextToNative(arrayChunk, pgTypeDescriptor.PostgresType, options));
                 }
                 else
                 {
@@ -70,32 +74,11 @@ internal static class ArrayBackendToNativeTypeConverter
                 if (pgType is null || options is null) // here for EDBTextConverterTests which passes null for both
                 {
                     list.Add(token);
-                    continue;
-                }
-
-                //Use the NpgsqlBackendTypeInfo for the element type to obtain each element.
-                if (pgType.Element is PostgresBaseType pgElementBaseType)
-                {
-                    var boxedToken = StringToNativeConverter.ConvertStringToNative(options, token, pgElementBaseType);
-                    list.Add(boxedToken);
-                }
-                else if (pgType.Element is PostgresEnumType pgEnumType)
-                {
-                    var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
-                    if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
-                    {
-                        // no enum mapping found, return token as string
-                        list.Add(token);
-                    }
-                    else
-                    {
-                        var enumValue = Enum.Parse(enumTypeInfo.Type, token, ignoreCase: true);
-                        list.Add(enumValue);
-                    }
                 }
                 else
                 {
-                    throw new NotSupportedException("Table of nested types should contain only primitive types or composite types. Please file a bug");
+                    var nativeValue = StringToNativeConverter.ConvertTextToNative(token, pgType.Element, options);
+                    list.Add(nativeValue);
                 }
             }
         }
@@ -105,9 +88,6 @@ internal static class ArrayBackendToNativeTypeConverter
     private static ArrayList ToArrayList_Composite(IEnumerator<string> tokenEnumerator, PgSerializerOptions? options, PostgresCompositeType pgCompType, bool head)
     {
         /* Examples :
-         * Points: "{\"(0,0)\",\"(-4.2,43.5)\"}"
-         * Table of real,real: "{\"(-5.2,43.5)\",\"(-5.2,43.5)\"}"
-         * Array of domain types :  {7369,7499,7521}
          * Array of tuples with space-escaped ones : {\"(ACCOUNTING,\\\"NEW YORK\\\")\",\"(OPERATIONS,BOSTON)\",\"(RESEARCH,DALLAS)\",\"(SALES,CHICAGO)\"}
         */
 
@@ -142,30 +122,8 @@ internal static class ArrayBackendToNativeTypeConverter
                 else if (tokenEnumerator.MoveNext())
                 {                    
                     var token = tokenEnumerator.Current;
-
-                    if (field.Type is PostgresBaseType pgElementBaseType)
-                    {
-                        var boxedToken = StringToNativeConverter.ConvertStringToNative(options, token, pgElementBaseType);
-                        compositeFieldValues.Add(boxedToken!);
-                    }
-                    else if (field.Type is PostgresEnumType pgEnumType)
-                    {
-                        var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
-                        if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
-                        {
-                            // no enum mapping found, return token as string
-                            compositeFieldValues.Add(token);
-                        }
-                        else
-                        {
-                            var enumValue = Enum.Parse(enumTypeInfo.Type, token, ignoreCase: true);
-                            compositeFieldValues.Add(enumValue);
-                        }
-                    }
-                    else
-                    {
-                        throw new EDBException($"{field.GetType().Name} not supported for TABLE OF declarations. Please contact support.");
-                    }
+                    var nativeValue = StringToNativeConverter.ConvertTextToNative(token, field.Type, options);
+                    compositeFieldValues.Add(nativeValue);
                 }
                 else
                 {
