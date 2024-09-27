@@ -128,7 +128,7 @@ sealed class SqlQueryParser
         None:
         if (currCharOfs >= end)
         {
-            WriteDebug("Finish1");
+            WriteDebug(currCharOfs, "Finish1");
             goto Finish;
         }
         var lastChar = ch;
@@ -144,6 +144,7 @@ sealed class SqlQueryParser
 
             if (isProcedure && temp.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase))
             {
+                WriteDebug(currCharOfs, $"BEGIN : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks + 1}, variableDeclare:{variableDeclare}->{variableDeclare - 1}");
                 numActiveBlocks++;
                 variableDeclare--;
             }
@@ -155,7 +156,10 @@ sealed class SqlQueryParser
                     || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END LOOP", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END CASE", StringComparison.OrdinalIgnoreCase)))
+                {
+                    WriteDebug(currCharOfs, $"END IF,_,LOOP,CASE : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks - 1}, variableDeclare:{variableDeclare}");
                     numActiveBlocks--;
+                }
             }
 
             if (isProcedure && temp.StartsWith("IS", StringComparison.OrdinalIgnoreCase)
@@ -185,10 +189,17 @@ sealed class SqlQueryParser
                     {
                         next = temp[3];
                         if (next != '\'' && next != '$')
+                        {
+                            WriteDebug(currCharOfs, $"IS/AS/TRIGGER next:backslash or $ : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
                             variableDeclare++;
+                        }
                     }
                     else
+                    {
+                        WriteDebug(currCharOfs, $"IS/AS/TRIGGER temp.Length<=3:{temp.Length} : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
+
                         variableDeclare++;
+                    }
                 }
             }
 
@@ -201,6 +212,7 @@ sealed class SqlQueryParser
                 }
                 if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
                 {
+                    WriteDebug(currCharOfs, $"DECLARE next:space/;/newline : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
                     variableDeclare++;
                 }
             }
@@ -208,47 +220,47 @@ sealed class SqlQueryParser
             switch (ch)
             {
             case '/':
-                WriteDebug("BlockCommentBegin /");
+                WriteDebug(currCharOfs, "BlockCommentBegin /");
                 goto BlockCommentBegin;
             case '-':
-                WriteDebug("LineCommentBegin -");
+                WriteDebug(currCharOfs, "LineCommentBegin -");
                 goto LineCommentBegin;
             case '\'':
                 if (standardConformingStrings)
                 {
-                    WriteDebug("Quoted \\");
+                    WriteDebug(currCharOfs, "Quoted \\");
                     goto Quoted;
                 }
-                WriteDebug("Escaped \\");
+                WriteDebug(currCharOfs, "Escaped \\");
                 goto Escaped;
             case '$':
                 if (!IsIdentifier(lastChar))
                 {
-                    WriteDebug("DollarQuotedStart $");
+                    WriteDebug(currCharOfs, "DollarQuotedStart $");
                     goto DollarQuotedStart;
                 }
                 break;
             case '"':
-                WriteDebug("Quoted \"");
+                WriteDebug(currCharOfs, "Quoted \"");
                 goto Quoted;
             case ':':
                 if (lastChar != ':')
                 {
-                    WriteDebug("NamedParamStart :");
+                    WriteDebug(currCharOfs, "NamedParamStart :");
                     goto NamedParamStart;
                 }
                 break;
             case '@':
                 if (lastChar != '@')
                 {
-                    WriteDebug("NamedParamStart @");
+                    WriteDebug(currCharOfs, "NamedParamStart @");
                     goto NamedParamStart;
                 }
                 break;
             case ';':
                 if (parenthesisLevel == 0)
                 {
-                    WriteDebug("SemiColon ;");
+                    WriteDebug(currCharOfs, "SemiColon ;");
                     goto SemiColon;
                 }
                 break;
@@ -264,7 +276,7 @@ sealed class SqlQueryParser
                 {
                     if (!IsLetter(lastChar))
                     {
-                        WriteDebug("EscapedStart E/e");
+                        WriteDebug(currCharOfs, "EscapedStart E/e");
                         goto EscapedStart;
                     }
                     else
@@ -278,7 +290,7 @@ sealed class SqlQueryParser
             case 'X': //EnterpriseDB Team
                 if (!IsLetter(lastChar))
                 {
-                    WriteDebug("EscapedStart X/x");
+                    WriteDebug(currCharOfs, "EscapedStart X/x");
                     goto EscapedStart;
                 }
                 break;
@@ -286,7 +298,7 @@ sealed class SqlQueryParser
 
             if (currCharOfs >= end)
             {
-                WriteDebug("Finish currCharOfs >= end");
+                WriteDebug(currCharOfs, "Finish currCharOfs >= end");
                 goto Finish;
             }
 
@@ -304,14 +316,14 @@ sealed class SqlQueryParser
                 if (currCharOfs - 1 > currTokenBeg)
                     _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - 1 - currTokenBeg);
                 currTokenBeg = currCharOfs++ - 1;
-                WriteDebug("NamedParamStart -> NamedParam");
+                WriteDebug(currCharOfs, "NamedParamStart -> NamedParam");
                 goto NamedParam;
             }
             currCharOfs++;
-            WriteDebug("NamedParamStart -> NoneContinue");
+            WriteDebug(currCharOfs, "NamedParamStart -> NoneContinue");
             goto NoneContinue;
         }
-        WriteDebug("NamedParamStart -> Finish");
+        WriteDebug(currCharOfs, "NamedParamStart -> Finish");
         goto Finish;
 
     NamedParam:
@@ -341,12 +353,12 @@ sealed class SqlQueryParser
                             currTokenBeg = currCharOfs;
                             if (currCharOfs >= end)
                             {
-                                WriteDebug("NamedParam -> Finish (parameters)");
+                                WriteDebug(currCharOfs, "NamedParam -> Finish (parameters)");
                                 goto Finish;
                             }
 
                             currCharOfs++;
-                            WriteDebug("NamedParam -> NoneContinue (parameters)");
+                            WriteDebug(currCharOfs, "NamedParam -> NoneContinue (parameters)");
                             goto NoneContinue;
                         }
                     }
@@ -363,12 +375,12 @@ sealed class SqlQueryParser
 
                 if (currCharOfs >= end)
                 {
-                    WriteDebug("NamedParam -> Finish (currCharOfs >= end)");
+                    WriteDebug(currCharOfs, "NamedParam -> Finish (currCharOfs >= end)");
                     goto Finish;
                 }
 
                 currCharOfs++;
-                WriteDebug("NamedParam -> Finish (currCharOfs >= end)");
+                WriteDebug(currCharOfs, "NamedParam -> Finish (currCharOfs >= end)");
                 goto NoneContinue;
             }
 
@@ -385,10 +397,10 @@ sealed class SqlQueryParser
         {
             currCharOfs++;
             ch = '\0';
-            WriteDebug("Quoted -> None");
+            WriteDebug(currCharOfs, "Quoted -> None");
             goto None;
         }
-        WriteDebug("Quoted -> Finish");
+        WriteDebug(currCharOfs, "Quoted -> Finish");
         goto Finish;
 
     EscapedStart:
@@ -398,13 +410,13 @@ sealed class SqlQueryParser
             ch = sql[currCharOfs++];
             if (ch == '\'')
             {
-                WriteDebug("EscapedStart -> Escaped");
+                WriteDebug(currCharOfs, "EscapedStart -> Escaped");
                 goto Escaped;
             }
-            WriteDebug("EscapedStart -> NoneContinue");
+            WriteDebug(currCharOfs, "EscapedStart -> NoneContinue");
             goto NoneContinue;
         }
-        WriteDebug("EscapedStart -> Finish");
+        WriteDebug(currCharOfs, "EscapedStart -> Finish");
         goto Finish;
 
     Escaped:
@@ -414,13 +426,13 @@ sealed class SqlQueryParser
             switch (ch)
             {
             case '\'':
-                WriteDebug("Escaped -> MaybeConcatenatedEscaped");
+                WriteDebug(currCharOfs, "Escaped -> MaybeConcatenatedEscaped");
                 goto MaybeConcatenatedEscaped;
             case '\\':
             {
                 if (currCharOfs >= end)
                 {
-                    WriteDebug("Escaped -> Finish \\\\");
+                    WriteDebug(currCharOfs, "Escaped -> Finish \\\\");
                     goto Finish;
                 }
                 currCharOfs++;
@@ -428,7 +440,7 @@ sealed class SqlQueryParser
             }
             }
         }
-        WriteDebug("Escaped -> Finish");
+        WriteDebug(currCharOfs, "Escaped -> Finish");
         goto Finish;
 
     MaybeConcatenatedEscaped:
@@ -439,7 +451,7 @@ sealed class SqlQueryParser
             {
             case '\r':
             case '\n':
-                WriteDebug("MaybeConcatenatedEscaped -> MaybeConcatenatedEscaped2 (/r/n)");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscaped -> MaybeConcatenatedEscaped2 (/r/n)");
                 goto MaybeConcatenatedEscaped2;
             case ' ':
             case '\t':
@@ -447,11 +459,11 @@ sealed class SqlQueryParser
                 continue;
             default:
                 lastChar = '\0';
-                WriteDebug("MaybeConcatenatedEscaped -> NoneContinue (/0)");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscaped -> NoneContinue (/0)");
                 goto NoneContinue;
             }
         }
-        WriteDebug("MaybeConcatenatedEscaped -> Finish");
+        WriteDebug(currCharOfs, "MaybeConcatenatedEscaped -> Finish");
         goto Finish;
 
     MaybeConcatenatedEscaped2:
@@ -461,23 +473,23 @@ sealed class SqlQueryParser
             switch (ch)
             {
             case '\'':
-                WriteDebug("MaybeConcatenatedEscaped2 -> Escaped (\\)");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> Escaped (\\)");
                 goto Escaped;
             case '-':
             {
                 if (currCharOfs >= end)
                 {
-                    WriteDebug("MaybeConcatenatedEscaped2 -> Finish (-)");
+                    WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> Finish (-)");
                     goto Finish;
                 }
                 ch = sql[currCharOfs++];
                 if (ch == '-')
                 {
-                    WriteDebug("MaybeConcatenatedEscaped2 -> MaybeConcatenatedEscapeAfterComment (-)");
+                    WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> MaybeConcatenatedEscapeAfterComment (-)");
                     goto MaybeConcatenatedEscapeAfterComment;
                 }
                 lastChar = '\0';
-                WriteDebug("MaybeConcatenatedEscaped2 -> NoneContinue");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> NoneContinue");
                 goto NoneContinue;
             }
             case ' ':
@@ -488,11 +500,11 @@ sealed class SqlQueryParser
                 continue;
             default:
                 lastChar = '\0';
-                WriteDebug("MaybeConcatenatedEscaped2 -> NoneContinue (default)");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> NoneContinue (default)");
                 goto NoneContinue;
             }
         }
-        WriteDebug("MaybeConcatenatedEscaped2 -> Finish");
+        WriteDebug(currCharOfs, "MaybeConcatenatedEscaped2 -> Finish");
         goto Finish;
 
     MaybeConcatenatedEscapeAfterComment:
@@ -501,11 +513,11 @@ sealed class SqlQueryParser
             ch = sql[currCharOfs++];
             if (ch == '\r' || ch == '\n')
             {
-                WriteDebug("MaybeConcatenatedEscapeAfterComment -> MaybeConcatenatedEscaped2 (/r/n)");
+                WriteDebug(currCharOfs, "MaybeConcatenatedEscapeAfterComment -> MaybeConcatenatedEscaped2 (/r/n)");
                 goto MaybeConcatenatedEscaped2;
             }
         }
-        WriteDebug("MaybeConcatenatedEscapeAfterComment -> Finish");
+        WriteDebug(currCharOfs, "MaybeConcatenatedEscapeAfterComment -> Finish");
         goto Finish;
 
     DollarQuotedStart:
@@ -517,22 +529,22 @@ sealed class SqlQueryParser
                 // Empty tag
                 dollarTagStart = dollarTagEnd = currCharOfs;
                 currCharOfs++;
-                WriteDebug("DollarQuotedStart -> DollarQuoted");
+                WriteDebug(currCharOfs, "DollarQuotedStart -> DollarQuoted");
                 goto DollarQuoted;
             }
             if (IsIdentifierStart(ch))
             {
                 dollarTagStart = currCharOfs;
                 currCharOfs++;
-                WriteDebug("DollarQuotedStart -> DollarQuotedInFirstDelim");
+                WriteDebug(currCharOfs, "DollarQuotedStart -> DollarQuotedInFirstDelim");
                 goto DollarQuotedInFirstDelim;
             }
             lastChar = '$';
             currCharOfs++;
-            WriteDebug("DollarQuotedStart -> NoneContinue");
+            WriteDebug(currCharOfs, "DollarQuotedStart -> NoneContinue");
             goto NoneContinue;
         }
-        WriteDebug("DollarQuotedStart -> Finish");
+        WriteDebug(currCharOfs, "DollarQuotedStart -> Finish");
         goto Finish;
 
     DollarQuotedInFirstDelim:
@@ -543,16 +555,16 @@ sealed class SqlQueryParser
             if (ch == '$')
             {
                 dollarTagEnd = currCharOfs - 1;
-                WriteDebug("DollarQuotedInFirstDelim -> DollarQuoted");
+                WriteDebug(currCharOfs, "DollarQuotedInFirstDelim -> DollarQuoted");
                 goto DollarQuoted;
             }
             if (!IsDollarTagIdentifier(ch))
             {
-                WriteDebug("DollarQuotedInFirstDelim -> NoneContinue");
+                WriteDebug(currCharOfs, "DollarQuotedInFirstDelim -> NoneContinue");
                 goto NoneContinue;
             }
         }
-        WriteDebug("DollarQuotedInFirstDelim -> Finish");
+        WriteDebug(currCharOfs, "DollarQuotedInFirstDelim -> Finish");
         goto Finish;
 
     DollarQuoted:
@@ -561,13 +573,13 @@ sealed class SqlQueryParser
         if (pos == -1)
         {
             currCharOfs = end;
-            WriteDebug("DollarQuoted -> Finish");
+            WriteDebug(currCharOfs, "DollarQuoted -> Finish");
             goto Finish;
         }
         pos += dollarTagEnd + 1; // If the substring is found adjust the position to be relative to the entire string
         currCharOfs = pos + dollarTagEnd - dollarTagStart + 2;
         ch = '\0';
-        WriteDebug("DollarQuoted -> None");
+        WriteDebug(currCharOfs, "DollarQuoted -> None");
         goto None;
 
     LineCommentBegin:
@@ -576,14 +588,14 @@ sealed class SqlQueryParser
             ch = sql[currCharOfs++];
             if (ch == '-')
             {
-                WriteDebug("LineCommentBegin -> LineComment");
+                WriteDebug(currCharOfs, "LineCommentBegin -> LineComment");
                 goto LineComment;
             }
             lastChar = '\0';
-            WriteDebug("LineCommentBegin -> NoneContinue");
+            WriteDebug(currCharOfs, "LineCommentBegin -> NoneContinue");
             goto NoneContinue;
         }
-        WriteDebug("LineCommentBegin -> Finish");
+        WriteDebug(currCharOfs, "LineCommentBegin -> Finish");
         goto Finish;
 
     LineComment:
@@ -592,11 +604,11 @@ sealed class SqlQueryParser
             ch = sql[currCharOfs++];
             if (ch == '\r' || ch == '\n')
             {
-                WriteDebug("LineComment -> None");
+                WriteDebug(currCharOfs, "LineComment -> None");
                 goto None;
             }
         }
-        WriteDebug("LineComment -> Finish");
+        WriteDebug(currCharOfs, "LineComment -> Finish");
         goto Finish;
 
     BlockCommentBegin:
@@ -606,22 +618,22 @@ sealed class SqlQueryParser
             if (ch == '*')
             {
                 blockCommentLevel++;
-                WriteDebug("BlockCommentBegin -> BlockComment *");
+                WriteDebug(currCharOfs, "BlockCommentBegin -> BlockComment *");
                 goto BlockComment;
             }
             if (ch != '/')
             {
                 if (blockCommentLevel > 0)
                 {
-                    WriteDebug("BlockCommentBegin -> BlockComment");
+                    WriteDebug(currCharOfs, "BlockCommentBegin -> BlockComment");
                     goto BlockComment;
                 }
                 lastChar = '\0';
-                WriteDebug("BlockCommentBegin -> NoneContinue");
+                WriteDebug(currCharOfs, "BlockCommentBegin -> NoneContinue");
                 goto NoneContinue;
             }
         }
-        WriteDebug("BlockCommentBegin -> Finish");
+        WriteDebug(currCharOfs, "BlockCommentBegin -> Finish");
         goto Finish;
 
     BlockComment:
@@ -631,14 +643,14 @@ sealed class SqlQueryParser
             switch (ch)
             {
             case '*':
-                WriteDebug("BlockComment -> BlockCommentEnd");
+                WriteDebug(currCharOfs, "BlockComment -> BlockCommentEnd");
                 goto BlockCommentEnd;
             case '/':
-                WriteDebug("BlockComment -> BlockCommentBegin");
+                WriteDebug(currCharOfs, "BlockComment -> BlockCommentBegin");
                 goto BlockCommentBegin;
             }
         }
-        WriteDebug("BlockComment -> Finish");
+        WriteDebug(currCharOfs, "BlockComment -> Finish");
         goto Finish;
 
     BlockCommentEnd:
@@ -649,26 +661,27 @@ sealed class SqlQueryParser
             {
                 if (--blockCommentLevel > 0)
                 {
-                    WriteDebug("BlockCommentEnd -> BlockComment /");
+                    WriteDebug(currCharOfs, "BlockCommentEnd -> BlockComment /");
                     goto BlockComment;
                 }
-                WriteDebug("BlockCommentEnd -> None");
+                WriteDebug(currCharOfs, "BlockCommentEnd -> None");
                 goto None;
             }
             if (ch != '*')
             {
-                WriteDebug("BlockCommentEnd -> BlockComment *");
+                WriteDebug(currCharOfs, "BlockCommentEnd -> BlockComment *");
                 goto BlockComment;
             }
         }
-        WriteDebug("BlockCommentEnd -> Finish");
+        WriteDebug(currCharOfs, "BlockCommentEnd -> Finish");
         goto Finish;
 
     SemiColon:
+        WriteDebug(currCharOfs, $"SemiColon: isProcedure:{isProcedure}, numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}");
         if (isProcedure && (numActiveBlocks > 0 || variableDeclare > 0)) //EnterpriseDB Team
         {
             currCharOfs++;
-            WriteDebug("SemiColon -> None");
+            WriteDebug(currCharOfs, "SemiColon -> None");
             goto None;
         }
         _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - currTokenBeg - 1);
@@ -700,12 +713,12 @@ sealed class SqlQueryParser
                 if (ContainsSPLStartingKeyword(temp))
                     isProcedure = true;
             }
+            WriteDebug(currCharOfs, "SemiColon -> None MoveToNextBatchCommand");
             MoveToNextBatchCommand();
             _paramIndexMap.Clear();
             _rewrittenSql.Clear();
 
             currTokenBeg = currCharOfs;
-            WriteDebug("SemiColon -> None while");
             goto None;
         }
         if (batchCommands is not null && batchCommands.Count > statementIndex + 1)
@@ -782,8 +795,8 @@ sealed class SqlQueryParser
         => char.IsLetterOrDigit(ch) || ch == '_' || ch == '.';  // why dot??
 
     [Conditional("EDB_DIAGNOSTICS")]
-    static void WriteDebug(string message)
+    static void WriteDebug(int offset, string message)
     {
-        Debug.WriteLine("SqlQueryParser: " + message);
+        Debug.WriteLine($"SqlQueryParser: {message} [offset: {offset}]");
     }
 }
