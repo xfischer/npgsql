@@ -488,28 +488,27 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             await Execute(conn, procSql1, false);
 
-            //EC-3186
-            /*String procSql2 = "CREATE OR REPLACE PROCEDURE xml_dom_proc2()\n"
-		+ "IS\n"
-		+ "    l_xmltype XMLTYPE;\n"
-		+ "    l_domdoc dbms_xmldom.DOMDocument;\n"
-		+ "    l_root_node dbms_xmldom.DOMNode;\n"
-		+ "    l_department_element dbms_xmldom.DOMElement;\n"
-		+ "    l_departments_node dbms_xmldom.DOMNode;\n"
-		+ "    l_branch_element dbms_xmldom.DOMElement;\n"
-		+ "    l_branches_node dbms_xmldom.DOMNode;\n"
-		+ "BEGIN\n"
-		+ "    l_domdoc := dbms_xmldom.newDomDocument;\n"
-		+ "    l_root_node := dbms_xmldom.makeNode(l_domdoc);\n"
-		+ "    l_department_element := dbms_xmldom.createElement(l_domdoc, 'Deptartments' );\n"
-		+ "    l_departments_node := dbms_xmldom.appendChild(l_root_node,dbms_xmldom.makeNode(l_department_element));\n"
-		+ "    l_branch_element := dbms_xmldom.createElement(l_domdoc, 'Branches' );\n"
-		+ "    l_branches_node := dbms_xmldom.appendChild(l_root_node,dbms_xmldom.makeNode(l_branch_element));\n"
-		+ "    l_xmltype := dbms_xmldom.getXmlType(l_domdoc);\n"
-		+ "    DBMS_OUTPUT.PUT_LINE(l_xmltype.getStringVal());\n"
-		+ "END;\n";
+            String procSql2 = "CREATE OR REPLACE PROCEDURE xml_dom_proc2()\n"
+        + "IS\n"
+        + "    l_xmltype XMLTYPE;\n"
+        + "    l_domdoc dbms_xmldom.DOMDocument;\n"
+        + "    l_root_node dbms_xmldom.DOMNode;\n"
+        + "    l_department_element dbms_xmldom.DOMElement;\n"
+        + "    l_departments_node dbms_xmldom.DOMNode;\n"
+        + "    l_branch_element dbms_xmldom.DOMElement;\n"
+        + "    l_branches_node dbms_xmldom.DOMNode;\n"
+        + "BEGIN\n"
+        + "    l_domdoc := dbms_xmldom.newDomDocument;\n"
+        + "    l_root_node := dbms_xmldom.makeNode(l_domdoc);\n"
+        + "    l_department_element := dbms_xmldom.createElement(l_domdoc, 'Departments');\n"
+        + "    l_departments_node := dbms_xmldom.appendChild(l_root_node,dbms_xmldom.makeNode(l_department_element));\n"
+        + "    l_branch_element := dbms_xmldom.createElement(l_domdoc, 'Branches');\n"
+        + "    l_branches_node := dbms_xmldom.appendChild(l_root_node,dbms_xmldom.makeNode(l_branch_element));\n"
+        + "    l_xmltype := dbms_xmldom.getXmlType(l_domdoc);\n"
+        + "    DBMS_OUTPUT.PUT_LINE(l_xmltype.getStringVal());\n"
+        + "END;\n";
 
-	    await Execute(conn, procSql2, false);*/
+            await Execute(conn, procSql2, false);
         }
 
         //--DB-2579 : Implementation of DBMS_XMLDOM package in EPAS
@@ -534,9 +533,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(values[1], messages[1]);
         }
 
-        //Will not work due to //EC-3186
         //--DB-2579 : Implementation of DBMS_XMLDOM package in EPAS
-        [Ignore("Will not work due to //EC-3186")]
         [Test]
         public async Task DB_2579_XmlDomTest2()
         {
@@ -548,7 +545,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             string[] values =
                 {
-            "<Deptartments/>\n<Branches/>\n",
+            "<Departments/>\n<Branches/>\n",
         };
 
             var messages = await ExecuteProcNotice(conn, "xml_dom_proc2");
