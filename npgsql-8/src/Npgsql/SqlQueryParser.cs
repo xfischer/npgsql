@@ -149,7 +149,7 @@ sealed class SqlQueryParser
             }
 
 
-            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase))
+            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase) && !IsLetter(lastChar))
             {
                 if (!(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
