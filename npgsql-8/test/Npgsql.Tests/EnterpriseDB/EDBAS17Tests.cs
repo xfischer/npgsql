@@ -92,7 +92,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             return val;
         }
 
-        private async Task RunQueryAndVerifyResult(EDBConnection conn, string query, string[] expected)
+        private async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
         {
             try
             {
@@ -121,7 +121,37 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
+        private static void RunQueryAndVerifyResult(EDBConnection conn, string query, string[] expected)
+        {
+            try
+            {
+                using (var com = new EDBCommand("", conn))
+                {
+                    com.CommandType = CommandType.Text;
+
+                    com.CommandText = query;
+                    using (EDBDataReader reader = com.ExecuteReader())
+                    {
+                        Assert.IsTrue(reader.HasRows);
+
+                        int i = 0;
+                        while (reader.Read())
+                        {
+                            Assert.AreEqual(expected[i], reader.GetString(0));
+                            i++;
+                        }
+                        Assert.AreEqual(expected.Length, i);
+                        reader.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+        }
+
+        private static async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
         {
             DateTime? val = null;
             try
@@ -382,7 +412,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         //--DB-1753 : XMLType: create Oracle-compatible XMLType as object type and implement its member functions.
         [Test]
-        public async Task DB_1753_ExtractXMLTest()
+        public async Task DB_1753_ExtractXMLAsTextTest()
         {
             await using var conn = await OpenConnectionAsync();
 
@@ -404,12 +434,52 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 "<b xmlns=\"http://example.com\">test1</b>"
                };
 
-            await RunQueryAndVerifyResult(conn, "SELECT CAST(person_data.EXTRACT_XML('/PDRecord/PDName') AS TEXT) FROM person_xmltype", expected);
+            await RunQueryAndVerifyResultAsync(conn, "SELECT CAST(person_data.EXTRACT_XML('/PDRecord/PDName') AS TEXT) FROM person_xmltype", expected);
 
-            await RunQueryAndVerifyResult(conn, "SELECT CAST(EXTRACT_XML(person_data, '/PDRecord/PDName') AS TEXT) FROM person_xmltype", expected);
+            await RunQueryAndVerifyResultAsync(conn, "SELECT CAST(EXTRACT_XML(person_data, '/PDRecord/PDName') AS TEXT) FROM person_xmltype", expected);
 
-            await RunQueryAndVerifyResult(conn,
+            await RunQueryAndVerifyResultAsync(conn,
             "SELECT CAST(EXTRACT_XML(xmltype('<a xmlns=\"http://example.com\"><b>test</b><b>test1</b></a>'), '//mydefns:b', ARRAY[ARRAY['mydefns', 'http://example.com']])  AS TEXT)",
+            expected2);
+        }
+
+        [Test]
+        public async Task DB_1753_ExtractXMLValueTest()
+        {
+            await using var conn = await OpenConnectionAsync();
+
+            TestUtil.MinimumPgVersion(conn, "17.0.0");
+
+            await SetUpXMLType(conn);
+
+            string[] expected =
+                {
+            "<PDName>test_user1</PDName>",
+            "<PDName>test_user2</PDName>",
+            "<PDName>test_user3</PDName>",
+            "<PDName>test_user4</PDName>",
+            "<PDName>test_user5</PDName>"
+        };
+
+            string[] expected2 = {
+                "<b xmlns=\"http://example.com\">test</b>",
+                "<b xmlns=\"http://example.com\">test1</b>"
+               };
+
+            await RunQueryAndVerifyResultAsync(conn, "SELECT person_data.EXTRACT_XML('/PDRecord/PDName') FROM person_xmltype", expected);
+
+            await RunQueryAndVerifyResultAsync(conn, "SELECT EXTRACT_XML(person_data, '/PDRecord/PDName') FROM person_xmltype", expected);
+
+            await RunQueryAndVerifyResultAsync(conn,
+            "SELECT EXTRACT_XML(xmltype('<a xmlns=\"http://example.com\"><b>test</b><b>test1</b></a>'), '//mydefns:b', ARRAY[ARRAY['mydefns', 'http://example.com']])",
+            expected2);
+
+            RunQueryAndVerifyResult(conn, "SELECT person_data.EXTRACT_XML('/PDRecord/PDName') FROM person_xmltype", expected);
+
+            RunQueryAndVerifyResult(conn, "SELECT EXTRACT_XML(person_data, '/PDRecord/PDName') FROM person_xmltype", expected);
+
+            RunQueryAndVerifyResult(conn,
+            "SELECT EXTRACT_XML(xmltype('<a xmlns=\"http://example.com\"><b>test</b><b>test1</b></a>'), '//mydefns:b', ARRAY[ARRAY['mydefns', 'http://example.com']])",
             expected2);
         }
 
@@ -436,9 +506,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 "test"
                };
 
-            await RunQueryAndVerifyResult(conn, "SELECT EXTRACTVALUE(person_data, '/PDRecord/PDName') FROM person_xmltype", expected);
+            await RunQueryAndVerifyResultAsync(conn, "SELECT EXTRACTVALUE(person_data, '/PDRecord/PDName') FROM person_xmltype", expected);
 
-            await RunQueryAndVerifyResult(conn,
+            await RunQueryAndVerifyResultAsync(conn,
             "SELECT EXTRACTVALUE(xmltype('<a xmlns=\"http://example.com\"><b>test</b><b>test1</b></a>'),'//mydefns:b[position()=1]/text()',ARRAY[ARRAY['mydefns', 'http://example.com']])",
             expected2);
         }

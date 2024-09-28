@@ -126,6 +126,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                     MatchRequirement.DataTypeName);
             }
 
+            // EnterpriseDB: sys.xmltype support
+            mappings.AddType<string>(DataTypeNames.XmlType,
+                                static (options, mapping, _) => mapping.CreateInfo(options, new XmlTypeStringTextConverter(options.DatabaseInfo.GetPostgresType(DataTypeNames.Xml), options.TextEncoding), preferredFormat: DataFormat.Binary), isDefault: true);
+
             // Jsonb
             const byte jsonbVersion = 1;
             mappings.AddType<string>(DataTypeNames.Jsonb,
@@ -392,7 +396,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Alternative text types
             foreach(var dataTypeName in new[] { "citext", DataTypeNames.Varchar,
                         DataTypeNames.Bpchar, DataTypeNames.Json,
-                        DataTypeNames.Xml, DataTypeNames.Name, DataTypeNames.RefCursor })
+                        DataTypeNames.Xml, DataTypeNames.Name, DataTypeNames.RefCursor})
             {
                 mappings.AddArrayType<string>(dataTypeName);
                 mappings.AddStructArrayType<char>(dataTypeName);
@@ -400,6 +404,8 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 mappings.AddStructArrayType<ReadOnlyMemory<byte>>(dataTypeName);
                 mappings.AddArrayType<Stream>(dataTypeName);
             }
+            // EnterpriseDB: sys.xmltype support
+            mappings.AddArrayType<string>(DataTypeNames.XmlType);
 
             // Jsonb
             mappings.AddArrayType<string>(DataTypeNames.Jsonb);
