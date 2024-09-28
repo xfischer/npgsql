@@ -121,7 +121,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private void RunQueryAndVerifyResult(EDBConnection conn, string query, string[] expected)
+        private static void RunQueryAndVerifyResult(EDBConnection conn, string query, string[] expected)
         {
             try
             {
@@ -151,7 +151,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
+        private static async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
         {
             DateTime? val = null;
             try

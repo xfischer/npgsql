@@ -23,7 +23,7 @@ sealed class XmlTypeStringTextConverter : StringBasedTextConverter<string>
         if (reader.ShouldBuffer(3 * sizeof(int)))
             reader.Buffer(3 * sizeof(int));
 
-        var format = reader.ReadInt32(); // not sure if it is format or nested field count
+        _ = reader.ReadInt32(); // not sure if it is format or nested field count
         var oid = reader.ReadInt32();
         if (oid != _plainXmlPgTypeOid)
             throw new InvalidCastException($"Unknown wire type id : {oid}. {_plainXmlPgTypeOid} (xml) expected");
