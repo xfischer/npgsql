@@ -129,6 +129,9 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // EnterpriseDB: sys.xmltype support
             mappings.AddType<string>(DataTypeNames.XmlType,
                                 static (options, mapping, _) => mapping.CreateInfo(options, new XmlTypeStringTextConverter(options.DatabaseInfo.GetPostgresType(DataTypeNames.Xml), options.TextEncoding), preferredFormat: DataFormat.Binary), isDefault: true);
+            // EnterpriseDB: bfile support
+            mappings.AddType<string>(DataTypeNames.BFile,
+                    static (options, mapping, _) => mapping.CreateInfo(options, new StringTextConverter(options.TextEncoding), preferredFormat: DataFormat.Binary), isDefault: true);
 
             // Jsonb
             const byte jsonbVersion = 1;
@@ -406,6 +409,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             }
             // EnterpriseDB: sys.xmltype support
             mappings.AddArrayType<string>(DataTypeNames.XmlType);
+            mappings.AddArrayType<string>(DataTypeNames.BFile);
 
             // Jsonb
             mappings.AddArrayType<string>(DataTypeNames.Jsonb);

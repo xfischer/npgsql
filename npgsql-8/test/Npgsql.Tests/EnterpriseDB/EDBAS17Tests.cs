@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Threading;
+using System.IO;
+using System.Linq;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -1000,38 +1002,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             //	10 | tmp_2235,"file1_2235.txt"
             //	20 | wrongdir,"file2_2235.txt"
 
-            //It looks like BFILE type is not supported in .NET. Reported in EC-3187.
-            //Currently we are just getting the first column.
-            //To Reproduce the issue, uncomment the commented out lines below.
             using (var com = new EDBCommand("", conn))
             {
                 com.CommandType = CommandType.Text;
 
-                //com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
-                com.CommandText = "SELECT col1_2235 FROM table1_2235";
+                com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
+                //com.CommandText = "SELECT col1_2235 FROM table1_2235";
                 EDBDataReader reader = await com.ExecuteReaderAsync();
 
                 Assert.IsTrue(reader.HasRows);
 
                 Assert.IsTrue(await reader.ReadAsync());
                 Assert.AreEqual(10, reader.GetInt32(0));
-                //Assert.AreEqual("tmp_2235,\"file1_2235.txt\"", reader.GetValue(1).ToString());
+                Assert.AreEqual("tmp_2235,\"file1_2235.txt\"", reader.GetValue(1).ToString());
 
                 Assert.IsTrue(await reader.ReadAsync());
                 Assert.AreEqual(20, reader.GetInt32(0));
-                //Assert.AreEqual("wrongdir,\"file2_2235.txt\"", reader.GetValue(1).ToString());
+                Assert.AreEqual("wrongdir,\"file2_2235.txt\"", reader.GetValue(1).ToString());
 
                 await reader.CloseAsync();
             }
         }
 
-        //For this test to work, create a file /tmp/file1_2235.txt and add the following text in it
-        //this is test
-
-        //Worked fine when written, May fail if the above file is not created so ignored it.
-
         //--DB-2235 : Implement BFILE as native datatype
-        [Ignore("Requires directory and file access")]
+                //For this test to work, create a file /tmp/file1_2235.txt and add the following text in it
+        //this is test
         [Test]
         public async Task DB_2235_DisplayBFILEProcTest()
         {
@@ -1041,20 +1036,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             await SetUpDbmsBFILE(conn);
 
+            // File contents areThis is a test
             string expected = "\\x46696c6520636f6e74656e7473206172657468697320697320746573740a";
+            await CreateTestFileAsync();
 
             var messages = await ExecuteProcNotice(conn, "displaybfile_proc");
             Assert.AreEqual(1, messages.Count);
             Assert.AreEqual(expected, messages[0]);
         }
 
-        //For this test to work, create a file /tmp/file1_2235.txt and add the following text in it
-        //this is test
+        private static async Task CreateTestFileAsync()
+        {
+            if (!Directory.Exists("/tmp"))
+            {
+                Directory.CreateDirectory("/tmp");
+            }
+            using (var f = File.CreateText("/tmp/file1_2235.txt"))
+            {
+                await f.WriteAsync("this is test\n");
+            }
+        }
 
-        //Worked fine when written, May fail if the above file is not created so ignored it.
 
         //--DB-2235 : Implement BFILE as native datatype
-        [Ignore("Requires directory and file access")]
         [Test]
         public async Task DB_2235_SubStringBFILEProcTest()
         {

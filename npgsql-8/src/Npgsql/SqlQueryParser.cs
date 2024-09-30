@@ -149,17 +149,14 @@ sealed class SqlQueryParser
                 variableDeclare--;
             }
 
-
-            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase) && !IsLetter(lastChar))
-            {
-                if (!(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
+            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase) && !IsLetter(lastChar)
+                && !(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END LOOP", StringComparison.OrdinalIgnoreCase)
                     || temp.StartsWith("END CASE", StringComparison.OrdinalIgnoreCase)))
-                {
-                    WriteDebug(currCharOfs, $"END IF,_,LOOP,CASE : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks - 1}, variableDeclare:{variableDeclare}");
-                    numActiveBlocks--;
-                }
+            {
+                WriteDebug(currCharOfs, $"END IF,_,LOOP,CASE : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks - 1}, variableDeclare:{variableDeclare}");
+                numActiveBlocks--;
             }
 
             if (isProcedure && temp.StartsWith("IS", StringComparison.OrdinalIgnoreCase)

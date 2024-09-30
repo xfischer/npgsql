@@ -77,6 +77,7 @@ static class DataTypeNames
     public static DataTypeName Unknown => ValidatedName("pg_catalog.unknown");
     public static DataTypeName Void => ValidatedName("pg_catalog.void");
 
-    // EnterpriseDB: add sys.xmltype support
+    // EnterpriseDB
     public static DataTypeName XmlType => ValidatedName("sys.xmltype");
+    public static DataTypeName BFile => ValidatedName("pg_catalog.bfile");
 }
