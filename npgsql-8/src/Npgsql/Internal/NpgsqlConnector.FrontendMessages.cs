@@ -257,13 +257,15 @@ partial class EDBConnector
         writeBuffer.WriteInt16((short)formatCodeListLength);
 
         // 0 length implicitly means all-text, 1 means all-binary, >1 means mix-and-match
-        if (formatCodeListLength == 1)
-        {
-            if (writeBuffer.WriteSpaceLeft < sizeof(short))
-                await Flush(async, cancellationToken).ConfigureAwait(false);
-            writeBuffer.WriteInt16(allResultTypesAreUnknown ? DataFormat.Text.ToFormatCode() : DataFormat.Binary.ToFormatCode());
-        }
-        else if (formatCodeListLength > 1)
+        // EnterpriseDB: not needed, we write the expected format for each parameter
+        //if (formatCodeListLength == 1)
+        //{
+        //    if (writeBuffer.WriteSpaceLeft < sizeof(short))
+        //        await Flush(async, cancellationToken).ConfigureAwait(false);
+        //    writeBuffer.WriteInt16(allResultTypesAreUnknown ? DataFormat.Text.ToFormatCode() : DataFormat.Binary.ToFormatCode());
+        //}
+        //else
+        if (formatCodeListLength >= 1)
         {
             for (var paramIndex = 0; paramIndex < parameters.Count; paramIndex++)
             {
