@@ -1,10 +1,8 @@
 ﻿using System;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
 using System.Data;
-using System.Data.SqlTypes;
-using System.Xml.Linq;
-using EnterpriseDB.EDBClient.Tests.Support;
+using System.Threading.Tasks;
+using System.Collections;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -16,28 +14,16 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 {
     internal class EDBCollectionMultisetUnionTest : EPASTestBase
     {
-        EDBDataSource dataSource= null;
+        private readonly int[] MULTI_UNION_RESULT = { 10, 20, 30, 30, 40 };
+        private readonly int[] MULTI_UNION_DISTINCT_RESULT = { 10, 20, 30, 40 };
+        private readonly int[] MULTI_UNION_DISTINCT_RESULT02 = { 10, 20, 30, 40, 50 };
 
-        private int[] MULTI_UNION_RESULT = { 10, 20, 30, 30, 40 };
-        private int[] MULTI_UNION_DISTINCT_RESULT = { 10, 20, 30, 40 };
-        private int[] MULTI_UNION_DISTINCT_RESULT02 = { 10, 20, 30, 40, 50 };
 
-        [SetUp]
-        public void Init()
-        {
-            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSource = dataSourceBuilder.Build();
-        }
-
-        [TearDown]
-        public void Dispose()
-        {
-            dataSource.Dispose();
-            dataSource = null;
-        }
 
         private int Execute(string query, bool checkSuccess)
         {
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            using var dataSource = dataSourceBuilder.Build();
             using (var conn = dataSource.OpenConnection())
                 return Execute(query, conn, checkSuccess);
         }
@@ -62,13 +48,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [EDBExplicit("EC-2650")]
-        public void MultisetUnionTest()
+        [NonParallelizable]
+        public void MultisetUnionTest([Values] bool deriveParameters)
         {
-            var conn = dataSource.OpenConnection();
-
-            Execute("DROP PACKAGE BODY mulUnPkg;",conn, false);
-            Execute("DROP PACKAGE mulUnPkg;", conn, false);
+            Execute("DROP PACKAGE BODY mulUnPkg;", false);
+            Execute("DROP PACKAGE mulUnPkg;", false);
 
             //The MULTISET UNION operator combines two collections to
             //form a third collection. The signature is:
@@ -82,7 +66,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                             + "      count         OUT INTEGER, \n"
                             + "      collection_3  OUT int_arr_typ); \n"
                             + "END mulUnPkg; ";
-            Execute(mulUnPkg, conn, true);
+            Execute(mulUnPkg, true);
 
             var mulUnPkgBody = "CREATE OR REPLACE PACKAGE BODY mulUnPkg \n"
                                 + "Is \n"
@@ -100,32 +84,58 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                                 + "    count :=  collection_3.COUNT;\n"
                                 + "  END mulUnionTest;\n"
                                 + "End mulUnPkg;";
-            Execute(mulUnPkgBody, conn, true);
-            conn.Dispose();
+            Execute(mulUnPkgBody, true);
+
 
             var commandText = "mulUnPkg.mulUnionTest";//(:count, :collection)
 
-            EDBDataSourceBuilder builder = new EDBDataSourceBuilder(TestUtil.ConnectionString);
-            builder.UseEDBIsTableOf("mulunpkg.int_arr_typ");
-            var ds = builder.Build();
-            conn = ds.OpenConnection();
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("mulunpkg.int_arr_typ");
+            var dataSource = dataSourceBuilder.Build();
+            using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
-            cstmt.UnknownResultTypeList = [false, true];
 
 
-            //cstmt.Parameters.Add(new EDBParameter("count", EDBTypes.EDBDbType.Integer, 10, "count",
-            //    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
-            //cstmt.Parameters.Add(new EDBParameter("collection", EDBTypes.EDBDbType.Array | EDBTypes.EDBDbType.Numeric, 10, "collection",
-            //    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-
-            cstmt.DeriveParameters();
-            cstmt.Parameters[0].Direction = ParameterDirection.Output;
-            cstmt.Parameters[1].Direction = ParameterDirection.Output;
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+                foreach (var p in cstmt.Parameters)
+                {
+                    // Fixup parameter description
+                    ((EDBParameter)p).Direction = ParameterDirection.Output;
+                }
+            }
+            else
+            {
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "integer"
+                });
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "mulunpkg.int_arr_typ"
+                });
+            }
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
+
+            Assert.AreEqual(2, cstmt.Parameters.Count);
+            Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
+            Assert.AreEqual("mulunpkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+
+            int count = (int)cstmt.Parameters[0].Value;
+            Assert.AreEqual(5, count);
+            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            Assert.AreEqual(5, arr.Count);
+            for (int i = 0; i < arr.Count; i++)
+            {
+                decimal value = (decimal)arr[i];
+                Assert.AreEqual(MULTI_UNION_RESULT[i], (int)value);
+            }
 
             //The following code is from JDBC test and should be converted to .NET
             //if and when this issue is resolved.
@@ -142,8 +152,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2650")]
-        public void MultisetUnionDistinctTest()
+        [NonParallelizable]
+        //[Ignore("EC-2650")]
+        public async Task MultisetUnionDistinctTest([Values] bool deriveParameters)
         {
             Execute("DROP PACKAGE BODY mulUnDisPkg;", false);
             Execute("DROP PACKAGE mulUnDisPkg;", false);
@@ -179,14 +190,53 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             var commandText = "mulUnDisPkg.mulUnionDistinctTest";
 
-            using var conn = dataSource.OpenConnection();
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("mulundispkg.int_arr_typ");
+            await using var ds = dataSourceBuilder.Build();
+            await using var conn = await ds.OpenConnectionAsync();
+
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
 
-            cstmt.DeriveParameters();
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+                foreach (var p in cstmt.Parameters)
+                {
+                    // Fixup parameter description
+                    ((EDBParameter)p).Direction = ParameterDirection.Output;
+                }
+            }
+            else
+            {
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "integer"
+                });
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "mulundispkg.int_arr_typ"
+                });
+            }
 
-            cstmt.Prepare();
-            cstmt.ExecuteNonQuery();
+            await cstmt.PrepareAsync();
+            await cstmt.ExecuteNonQueryAsync();
+
+            Assert.AreEqual(2, cstmt.Parameters.Count);
+            Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
+            Assert.AreEqual("mulundispkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+
+            int count = (int)cstmt.Parameters[0].Value;
+            Assert.AreEqual(4, count);
+            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            Assert.AreEqual(4, arr.Count);
+            for(int i = 0; i < arr.Count; i++)
+            {
+                decimal value = (decimal)arr[i];
+                Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT[i], (int)value);
+            }
 
             //The following code is from JDBC test and should be converted to .NET
             //if and when this issue is resolved.
@@ -204,8 +254,8 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        [Ignore("EC-2650")]
-        public void MultisetUnionDistinct02Test()
+        [NonParallelizable]
+        public void MultisetUnionDistinct02Test([Values] bool deriveParameters)
         {
             Execute("DROP PACKAGE BODY mulUnDisPkg02;", false);
             Execute("DROP PACKAGE mulUnDisPkg02;", false);
@@ -241,14 +291,52 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             var commandText = "mulUnDisPkg02.mulUnionDistinctTest02";
 
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.UseEDBIsTableOf("mulundispkg02.int_arr_typ");
+            var dataSource = dataSourceBuilder.Build();
             using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
             cstmt.CommandType = CommandType.StoredProcedure;
 
-            cstmt.DeriveParameters();
+            if (deriveParameters)
+            {
+                cstmt.DeriveParameters();
+                foreach (var p in cstmt.Parameters)
+                {
+                    // Fixup parameter description
+                    ((EDBParameter)p).Direction = ParameterDirection.Output;
+                }
+            }
+            else
+            {
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "integer"
+                });
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "mulundispkg02.int_arr_typ"
+                });
+            }
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
+
+            Assert.AreEqual(2, cstmt.Parameters.Count);
+            Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
+            Assert.AreEqual("mulundispkg02.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+
+            int count = (int)cstmt.Parameters[0].Value;
+            Assert.AreEqual(5, count);
+            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            Assert.AreEqual(5, arr.Count);
+            for (int i = 0; i < arr.Count; i++)
+            {
+                decimal value = (decimal)arr[i];
+                Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT02[i], (int)value);
+            }
 
             //The following code is from JDBC test and should be converted to .NET
             //if and when this issue is resolved.

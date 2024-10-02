@@ -1,4 +1,4 @@
-﻿using EDBTypes;
+using EDBTypes;
 using EnterpriseDB.EDBClient.Tests.Support;
 using Npgsql.Tests.Support;
 using NUnit.Framework;
@@ -172,7 +172,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgSimpleTest.simpleNestedTableTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
@@ -253,7 +252,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgsimpletestint.simpleNestedTableTestInt";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
@@ -344,7 +342,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgExtendTest.nestedTableExtendTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             EDBParameter? tableOfParam = null;
             //if (deriveParameters)
             //{
@@ -437,7 +434,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgExtendTest.nestedTableExtendTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             EDBParameter? tableOfParam = null;
             //if (deriveParameters)
             //{
@@ -531,7 +527,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgExtendTest.nestedTableExtendTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             EDBParameter? tableOfParam = null;
             //if (deriveParameters)
             //{
@@ -580,7 +575,7 @@ internal class EDBNestedTableTest : EPASTestBase
     }
 
     [Test]
-    public async Task NestedTableExtendTest_ArrayList_OtherParam() //([Values] bool deriveParameters)
+    public async Task NestedTableExtendTest_ArrayList_OtherParam([Values] bool deriveParameters)
     {
         try
         {
@@ -594,19 +589,20 @@ internal class EDBNestedTableTest : EPASTestBase
                              + "      ename       VARCHAR2(10) \n"
                              + "     );\n"
                              + "   TYPE emp_tbl_typ IS TABLE OF emp_rec_typ; \n"
-                             + "   Procedure nestedTableExtendTest(test_num Out int, emp_tbl Out emp_tbl_typ); "
+                             + "   Procedure nestedTableExtendTest(test_num Out int, emp_tbl Out emp_tbl_typ, test_num2 Out int); "
                              + " End pkgExtendTest;";
             Execute(createPkg, true);
 
             var pkgBody = " CREATE OR REPLACE PACKAGE BODY pkgExtendTest \n"
                            + " Is \n"
-                           + "  Procedure nestedTableExtendTest(test_num Out int, emp_tbl Out emp_tbl_typ) \n "
+                           + "  Procedure nestedTableExtendTest(test_num Out int, emp_tbl Out emp_tbl_typ, test_num2 Out int) \n "
                            + "   Is \n"
                            + "   DECLARE \n"
                            + "      CURSOR emp_cur IS SELECT empno, ename FROM emp1 WHERE ROWNUM <= 10 order by empno; \n"
                            + "      i  INTEGER := 0; \n"
                            + "   BEGIN\n"
                            + "    test_num := 123; \n"
+                           + "    test_num2 := 456; \n"
                            + "    emp_tbl := emp_tbl_typ(); \n"
                            + "    FOR r_emp IN emp_cur LOOP \n"
                            + "        i := i + 1; \n"
@@ -629,23 +625,38 @@ internal class EDBNestedTableTest : EPASTestBase
 
 
             // DeriveParameters works but parameters directions are wrong (INOUT instead of OUT), this is a backend issue
-            //cstmt.DeriveParameters();
-
-            cstmt.Parameters.Add(new EDBParameter()
+            if (deriveParameters)
             {
-                Direction = ParameterDirection.Output,
-                DataTypeName = "integer"
-            });
-            cstmt.Parameters.Add(new EDBParameter()
+                cstmt.DeriveParameters();
+                foreach (var p in cstmt.Parameters)
+                {
+                    // Fixup parameter description
+                    ((EDBParameter)p).Direction = ParameterDirection.Output;
+                }
+            }
+            else
             {
-                Direction = ParameterDirection.Output,
-                DataTypeName = "pkgextendtest.emp_tbl_typ"
-            });
-        
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "integer"
+                });
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "pkgextendtest.emp_tbl_typ"
+                });
+                cstmt.Parameters.Add(new EDBParameter()
+                {
+                    Direction = ParameterDirection.Output,
+                    DataTypeName = "integer"
+                });
+            }
 
-            Assert.AreEqual(2, cstmt.Parameters.Count);
+            Assert.AreEqual(3, cstmt.Parameters.Count);
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[1].DataTypeName);
+            Assert.AreEqual("integer", cstmt.Parameters[2].DataTypeName);
 
             //cstmt.Parameters[0].Direction = ParameterDirection.Output;
             await cstmt.PrepareAsync();
@@ -659,7 +670,11 @@ internal class EDBNestedTableTest : EPASTestBase
             var paramValue = cstmt.Parameters[1].Value;
             Assert.IsNotNull(paramValue);
             Assert.IsInstanceOf<ArrayList>(paramValue);
-
+            paramValueInt = cstmt.Parameters[2].Value;
+            Assert.IsNotNull(paramValueInt);
+            Assert.IsInstanceOf<int>(paramValueInt);
+            Assert.AreEqual(456, paramValueInt);
+            
             var arrayList = (ArrayList)paramValue!;
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(ArrayList));
@@ -733,7 +748,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgObjectTypeTest.objectTypeNestedTableTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             //if (deriveParameters)
             //{
             //    cstmt.DeriveParameters();
@@ -828,7 +842,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgObjectTypeTestComposite.objectTypeNestedTableTestComposite";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             cstmt.DeriveParameters();
 
             Assert.AreEqual(1, cstmt.Parameters.Count);
@@ -918,7 +931,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgObjectTypeTestNestedCompositeJoint.objectTypeNestedTableTestCompositeJoint";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             cstmt.DeriveParameters();
 
             Assert.AreEqual(1, cstmt.Parameters.Count);
@@ -1022,7 +1034,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgObjectTypeTestNestedCompositeJoint.objectTypeNestedTableTestCompositeJoint";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             cstmt.DeriveParameters();
 
             Assert.AreEqual(1, cstmt.Parameters.Count);
@@ -1520,7 +1531,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgDomainTypeTest.domainTestProc";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             cstmt.DeriveParameters();
 
             Assert.AreEqual(1, cstmt.Parameters.Count);
@@ -1762,7 +1772,6 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgDomainTypeTest.domainTestProc";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            
             cstmt.DeriveParameters();
 
             Assert.AreEqual(1, cstmt.Parameters.Count);
