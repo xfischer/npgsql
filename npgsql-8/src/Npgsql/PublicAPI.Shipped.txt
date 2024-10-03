@@ -2109,3 +2109,5 @@ static readonly EnterpriseDB.EDBClient.EDBAQVisibility.ON_COMMIT -> int
 EnterpriseDB.EDBClient.EDBTableOfExtensions
 EnterpriseDB.EDBClient.EDBParameter.TypeInfo.get -> EnterpriseDB.EDBClient.Internal.PgTypeInfo?
 static EnterpriseDB.EDBClient.EDBTableOfExtensions.UseEDBIsTableOf(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, params string![]! knownTableOfTypes) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+EnterpriseDB.EDBClient.PostgresTypes.EDBTableOfType
+EnterpriseDB.EDBClient.PostgresTypes.EDBTableOfType.EDBTableOfType(string! ns, string! name, uint oid, EnterpriseDB.EDBClient.PostgresTypes.PostgresType! elementPostgresType) -> void

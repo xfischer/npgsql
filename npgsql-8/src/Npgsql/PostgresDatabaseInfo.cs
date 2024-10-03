@@ -356,7 +356,6 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};";
                 continue;
 
             case 'a': // Array
-            case 'N': // EnterpriseDB TABLE OF
             {
                 Debug.Assert(elemtypoid > 0);
                 if (!byOID.TryGetValue(elemtypoid, out var elementPostgresType))
@@ -367,6 +366,20 @@ ORDER BY oid{(withEnumSortOrder ? ", enumsortorder" : "")};";
                 }
 
                 var arrayType = new PostgresArrayType(nspname, typname, oid, elementPostgresType);
+                byOID[arrayType.OID] = arrayType;
+                continue;
+            }
+            case 'N': // EnterpriseDB TABLE OF
+            {
+                Debug.Assert(elemtypoid > 0);
+                if (!byOID.TryGetValue(elemtypoid, out var elementPostgresType))
+                {
+                    _connectionLogger.LogTrace("Array type '{ArrayTypeName}' refers to unknown element with OID {ElementTypeOID}, skipping",
+                        typname, elemtypoid);
+                    continue;
+                }
+
+                var arrayType = new EDBTableOfType(nspname, typname, oid, elementPostgresType);
                 byOID[arrayType.OID] = arrayType;
                 continue;
             }

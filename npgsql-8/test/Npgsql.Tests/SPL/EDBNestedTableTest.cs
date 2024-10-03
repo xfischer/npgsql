@@ -165,7 +165,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgsimpletest.dname_tbl_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
 
@@ -245,7 +244,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgsimpletestint.dname_int_tbl_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
 
@@ -334,7 +332,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgextendtest.emp_tbl_typ");
             dataSourceBuilder.MapComposite<emp_rec_typ>("pkgextendtest.emp_rec_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -426,7 +423,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgextendtest.emp_tbl_typ");
             //dataSourceBuilder.MapComposite<emp_rec_typ>("pkgextendtest.emp_rec_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -519,7 +515,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgextendtest.emp_tbl_typ");
             //dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetest.dept_obj_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -614,7 +609,7 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgextendtest.emp_tbl_typ");
+            //dataSourceBuilder.UseEDBIsTableOf();
             //dataSourceBuilder.MapComposite<emp_rec_typ>("pkgextendtest.emp_rec_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -740,7 +735,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
             // what we would like
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetest.dept_tbl_typ");
             //dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetest.dept_obj_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -834,7 +828,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
             // what we would like
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetestcomposite.dept_tbl_typ_composite");
             dataSourceBuilder.MapComposite<dept_obj_typ>("public.dept_obj_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -922,7 +915,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
             // what we would like
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ");
             //dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetestnestedcompositejoint.dept_rec_typ");
             //dataSourceBuilder.MapComposite<JointComposite>("pkgobjecttypetestnestedcompositejoint.joint_composite");
             await using var dataSource = dataSourceBuilder.Build();
@@ -1024,7 +1016,6 @@ internal class EDBNestedTableTest : EPASTestBase
 
             // what we would like
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ");
             dataSourceBuilder.MapComposite<emp_rec_typ>("pkgobjecttypetestnestedcompositejoint.emp_rec_typ");
             dataSourceBuilder.MapComposite<dept_obj_typ>("pkgobjecttypetestnestedcompositejoint.dept_rec_typ");
             dataSourceBuilder.MapComposite<JointComposite>("pkgobjecttypetestnestedcompositejoint.joint_composite");
@@ -1521,7 +1512,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgdomaintypetest.type_tbl_type");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
 
@@ -1761,7 +1751,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("pkgdomaintypetest.type_tbl_type");
             configuration?.Invoke(dataSourceBuilder);
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();

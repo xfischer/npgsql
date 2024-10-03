@@ -90,7 +90,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var commandText = "mulUnPkg.mulUnionTest";//(:count, :collection)
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("mulunpkg.int_arr_typ");
             var dataSource = dataSourceBuilder.Build();
             using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);
@@ -191,7 +190,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var commandText = "mulUnDisPkg.mulUnionDistinctTest";
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("mulundispkg.int_arr_typ");
             await using var ds = dataSourceBuilder.Build();
             await using var conn = await ds.OpenConnectionAsync();
 
@@ -292,7 +290,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var commandText = "mulUnDisPkg02.mulUnionDistinctTest02";
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            dataSourceBuilder.UseEDBIsTableOf("mulundispkg02.int_arr_typ");
             var dataSource = dataSourceBuilder.Build();
             using var conn = dataSource.OpenConnection();
             var cstmt = new EDBCommand(commandText, conn);

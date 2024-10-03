@@ -103,6 +103,9 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         _internalBuilder.EnableDynamicJson();
         _internalBuilder.EnableUnmappedTypes();
         _internalBuilder.EnableRecordsAsTuples();
+
+        // EnterpriseDB : add TABLEOF support
+        _internalBuilder.AddTypeInfoResolverFactory(new EDBTableOfResolverFactory());
     }
 
     /// <summary>
