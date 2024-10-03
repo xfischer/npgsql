@@ -4,6 +4,10 @@ using System.Text;
 // ReSharper disable once CheckNamespace
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
+/// <summary>
+/// EnterpriseDB: Converts sys.xmltype to text
+/// sys.xmltype is actually a record type, so this might change
+/// </summary>
 sealed class XmlTypeStringTextConverter : StringBasedTextConverter<string>
 {
     private readonly uint _plainXmlPgTypeOid;
