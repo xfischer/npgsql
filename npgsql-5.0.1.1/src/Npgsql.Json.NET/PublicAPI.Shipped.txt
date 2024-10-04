@@ -1,9 +1,0 @@
-﻿#nullable enable
-EnterpriseDB.EDBClient.Json.NET.JsonHandlerFactory
-EnterpriseDB.EDBClient.Json.NET.JsonHandlerFactory.JsonHandlerFactory(Newtonsoft.Json.JsonSerializerSettings? settings = null) -> void
-EnterpriseDB.EDBClient.Json.NET.JsonbHandlerFactory
-EnterpriseDB.EDBClient.Json.NET.JsonbHandlerFactory.JsonbHandlerFactory(Newtonsoft.Json.JsonSerializerSettings? settings = null) -> void
-EnterpriseDB.EDBClient.EDBJsonNetExtensions
-override EnterpriseDB.EDBClient.Json.NET.JsonHandlerFactory.Create(EnterpriseDB.EDBClient.PostgresTypes.PostgresType! postgresType, EnterpriseDB.EDBClient.EDBConnection! conn) -> EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<string!>!
-override EnterpriseDB.EDBClient.Json.NET.JsonbHandlerFactory.Create(EnterpriseDB.EDBClient.PostgresTypes.PostgresType! postgresType, EnterpriseDB.EDBClient.EDBConnection! conn) -> EnterpriseDB.EDBClient.TypeHandling.EDBTypeHandler<string!>!
-static EnterpriseDB.EDBClient.EDBJsonNetExtensions.UseJsonNet(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null, Newtonsoft.Json.JsonSerializerSettings? settings = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

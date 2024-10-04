@@ -1,1 +1,0 @@
-dotnet pack EF.core/EFCore.PG.sln -c Release -o edb_nuget_packages

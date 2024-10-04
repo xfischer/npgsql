@@ -1,2 +1,0 @@
-﻿#nullable enable
-Npgsql.NpgsqlBatch.CreateBatchCommand() -> Npgsql.NpgsqlBatchCommand!

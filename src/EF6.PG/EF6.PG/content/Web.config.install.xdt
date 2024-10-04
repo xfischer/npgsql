@@ -1,9 +1,0 @@
-﻿<configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
-  <entityFramework>
-    <defaultConnectionFactory xdt:Transform="Remove" />
-    <defaultConnectionFactory type="EnterpriseDB.EDBClient.EDBConnectionFactory, EntityFramework6.EnterpriseDB.EDBClient" xdt:Transform="Insert" />
-    <providers>
-      <provider invariantName="EnterpriseDB.EDBClient" type="EnterpriseDB.EDBClient.EDBServices, EntityFramework6.EnterpriseDB.EDBClient" xdt:Transform="InsertIfMissing" xdt:Locator="Match(invariantName)" />
-    </providers>
-  </entityFramework>
-</configuration>

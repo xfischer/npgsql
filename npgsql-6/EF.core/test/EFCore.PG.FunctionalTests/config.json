@@ -1,7 +1,0 @@
-{
-    "Test": {
-      "Npgsql": {
-        "DefaultConnection": "Server=localhost;port=5444;Username=enterprisedb;Password=edb"
-      }
-    }
-}
