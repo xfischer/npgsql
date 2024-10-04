@@ -158,9 +158,9 @@ namespace EnterpriseDB.EDBClient
         {
             // Remove all non digits chars except commas and dots
             var sb = new StringBuilder(token.Length);
+            int index = 0;
             foreach (var c in token)
             {
-
                 if (c >= '0' && c <= '9')
                 {
                     sb.Append(c);
@@ -169,15 +169,20 @@ namespace EnterpriseDB.EDBClient
                 {
                     sb.Append(CultureInfo.InvariantCulture.NumberFormat.NegativeSign);
                 }
+                else if (c == '(' && index == 0)
+                {
+                    sb.Append(CultureInfo.InvariantCulture.NumberFormat.NegativeSign);
+                }
                 else if (c == ',' || c == '٫' // commas variations
                     || c == '.')
                 {
                     sb.Append(CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator);
                 }
+                index++;
             }
             var finalToken = sb.ToString();
 
-            return decimal.Parse(finalToken, NumberStyles.Currency | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+            return decimal.Parse(finalToken, NumberStyles.Currency | NumberStyles.AllowLeadingSign | NumberStyles.AllowParentheses, CultureInfo.InvariantCulture);
         }
 
         private static string[] HstoreTupleSeparator = new string[] { "\", \"", "\",\"" };
