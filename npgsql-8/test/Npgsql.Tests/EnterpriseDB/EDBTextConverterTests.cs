@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,13 +40,37 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         [Test]
-        [TestCaseSource("BackendDataCases")]
+        [TestCaseSource(nameof(BackendDataCases))]
         public void TestFieldEnumeration(string data, int numRows, int numTupleColumns)
         {
             var result = BackendTextEnumerator.EnumerateTokens(data).ToList();
 
             Assert.AreEqual(numRows * numTupleColumns, result.Count);
 
+        }
+
+        [Test]
+        [TestCaseSource(nameof(BackendMoneyCases))]
+        public void MoneyParsingTests(string data, decimal expected)
+        {
+            decimal value = StringToNativeConverter.ParseMoney(data);
+            Assert.AreEqual(expected, value);
+
+            foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
+            {
+                string localized = expected.ToString(culture);
+                value = StringToNativeConverter.ParseMoney(localized);
+                Assert.AreEqual(expected, value);
+            }
+
+            expected *= -1;
+
+            foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
+            {
+                var localized = expected.ToString(culture);
+                value = StringToNativeConverter.ParseMoney(localized);
+                Assert.AreEqual(expected, value);
+            }
         }
 
 
@@ -64,6 +89,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                         , 4, 3);
             yield return new TestCaseData("{\"(7369,SMITH)\",\"(7499,ALLEN)\",\"(7521,WARD)\",\"(7566,JONES)\",\"(7654,MARTIN)\",\"(7698,BLAKE)\",\"(7782,CLARK)\",\"(7788,SCOTT)\",\"(7839,KING)\",\"(7844,TURNER)\"}"
                                         , 10, 2);
+        }
+
+        // Test case : backend data as test, element count (rows), and num tup
+        private static IEnumerable<TestCaseData> BackendMoneyCases()
+        {
+            yield return new TestCaseData("12,30 €", 12.3m );
+            yield return new TestCaseData("$ -5650.06", -5650.06m);
+            yield return new TestCaseData("Rs0.00", 0m);
         }
     }
 }

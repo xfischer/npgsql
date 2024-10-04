@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient
 {
@@ -96,7 +97,7 @@ namespace EnterpriseDB.EDBClient
                 if (typeInfo.Type == typeof(ulong)) return ulong.Parse(token, CultureInfo.InvariantCulture);
                 if (typeInfo.Type == typeof(float)) return float.Parse(token, CultureInfo.InvariantCulture);
                 if (typeInfo.Type == typeof(double)) return double.Parse(token, CultureInfo.InvariantCulture);
-                if (typeInfo.Type == typeof(decimal)) return pgBaseType.Name == "money" ? decimal.Parse(token, NumberStyles.Currency) : decimal.Parse(token, CultureInfo.InvariantCulture);
+                if (typeInfo.Type == typeof(decimal)) return pgBaseType.Name == "money" ? ParseMoney(token) : decimal.Parse(token, CultureInfo.InvariantCulture);
                 if (typeInfo.Type == typeof(Guid)) return Guid.Parse(token);
                 if (typeInfo.Type == typeof(DateTime)) return DateTime.Parse(token, CultureInfo.InvariantCulture);
                 if (typeInfo.Type == typeof(DateTimeOffset)) return DateTimeOffset.Parse(token, CultureInfo.InvariantCulture);
@@ -148,6 +149,35 @@ namespace EnterpriseDB.EDBClient
             }
 
             return nativeValue;
+        }
+
+        /// <summary>
+        /// Translates any digit or decimal point to a culture invariant version and parses the resulting string to decimal
+        /// </summary>
+        internal static decimal ParseMoney(string token)
+        {
+            // Remove all non digits chars except commas and dots
+            var sb = new StringBuilder(token.Length);
+            foreach (var c in token)
+            {
+
+                if (c >= '0' && c <= '9')
+                {
+                    sb.Append(c);
+                }
+                else if (c == '-' || c == '−') // negative signs variations
+                {
+                    sb.Append(CultureInfo.InvariantCulture.NumberFormat.NegativeSign);
+                }
+                else if (c == ',' || c == '٫' // commas variations
+                    || c == '.')
+                {
+                    sb.Append(CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator);
+                }
+            }
+            var finalToken = sb.ToString();
+
+            return decimal.Parse(finalToken, NumberStyles.Currency | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
         }
 
         private static string[] HstoreTupleSeparator = new string[] { "\", \"", "\",\"" };
