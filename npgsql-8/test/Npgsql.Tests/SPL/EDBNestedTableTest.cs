@@ -382,6 +382,92 @@ internal class EDBNestedTableTest : EPASTestBase
         }
     }
 
+
+    [Test]
+    public async Task NestedTableExtendTest_BigPayload() //([Values] bool deriveParameters)
+    {
+        try
+        {
+            //the creation of an empty table with the constructor emp_tbl_typ()
+            //as the first statement in the executable section of the anonymous block.
+            //The EXTEND collection method is then used to add an element to the
+            //table for each employee returned from the result set.
+            var createPkg = " CREATE OR REPLACE PACKAGE pkgExtendTest Is \n"
+                             + "   TYPE emp_rec_typ IS RECORD ( \n"
+                             + "      empno  NUMBER(4), \n"
+                             + "      ename       VARCHAR2(10) \n"
+                             + "     );\n"
+                             + "   TYPE emp_tbl_typ IS TABLE OF emp_rec_typ; \n"
+                             + "   Procedure nestedTableExtendTest(emp_tbl Out emp_tbl_typ); "
+                             + " End pkgExtendTest;";
+            Execute(createPkg, true);
+
+            var pkgBody = """
+                                CREATE OR REPLACE PACKAGE BODY pkgExtendTest 
+                                IS
+                                Procedure nestedTableExtendTest(emp_tbl Out emp_tbl_typ) 
+                                 Is
+                                 DECLARE
+                                    CURSOR emp_cur IS SELECT empno, ename FROM emp1 WHERE ROWNUM <= 10 order by empno;
+                                    i  INTEGER := 0;
+                                 BEGIN
+                                  emp_tbl := emp_tbl_typ();
+                                  FOR r_emp IN emp_cur LOOP
+                                        FOR n IN 1..1000 LOOP
+                                            i := i + 1;
+                                            emp_tbl.EXTEND;
+                                            emp_tbl(i) := r_emp;
+                                        END LOOP;
+                                  END LOOP;
+                                End nestedTableExtendTest;
+                                End pkgExtendTest;
+                                """;
+            Execute(pkgBody, true);
+
+
+            var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
+            dataSourceBuilder.MapComposite<emp_rec_typ>("pkgextendtest.emp_rec_typ");
+            await using var dataSource = dataSourceBuilder.Build();
+            await using var connection = await dataSource.OpenConnectionAsync();
+
+            var commandText = "pkgExtendTest.nestedTableExtendTest";
+            var cstmt = new EDBCommand(commandText, connection);
+            cstmt.CommandType = CommandType.StoredProcedure;
+            EDBParameter? tableOfParam = null;
+            //if (deriveParameters)
+            //{
+            //    cstmt.DeriveParameters();
+            //}
+            //else
+            //{
+            tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+            {
+                Direction = ParameterDirection.Output,
+                DataTypeName = "pkgextendtest.emp_tbl_typ"
+            });
+            //}
+
+            Assert.AreEqual(1, cstmt.Parameters.Count);
+            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+            await cstmt.PrepareAsync();
+            await cstmt.ExecuteNonQueryAsync();
+
+            var paramValue = tableOfParam.Value;
+            Assert.IsNotNull(paramValue);
+            Assert.IsInstanceOf<ArrayList>(paramValue);
+
+            var arrayList = (ArrayList)paramValue!;
+            Assert.AreEqual(10000, arrayList.Count);
+            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
+        }
+        finally
+        {
+            Execute("DROP PACKAGE BODY pkgExtendTest;");
+            Execute("DROP PACKAGE pkgExtendTest;");
+        }
+    }
+
     [Test]
     public async Task NestedTableExtendTest_ArrayList() //([Values] bool deriveParameters)
     {
