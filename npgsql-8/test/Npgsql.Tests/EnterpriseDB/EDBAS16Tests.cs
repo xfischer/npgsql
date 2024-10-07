@@ -1082,6 +1082,100 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
         }
+
+
+        private async Task SetUpXMLType(EDBConnection conn)
+        {
+            await Execute(conn, "drop procedure xml_funcs_proc;", true);
+            await Execute(conn, "drop table person_xmltype;", true);
+
+            string tblSql = """
+                CREATE TABLE person_xmltype
+                (
+                    person_id   integer,
+                    person_data xmltype
+                );
+                """;
+            await Execute(conn, tblSql, false);
+
+            string insSql = """
+                                INSERT INTO person_xmltype
+                                (person_id, person_data)
+                                VALUES
+                                (1, '<PDRecord><PDName>test_user1</PDName><PDID>1</PDID><PDEmail>test_user1@testmail.com</PDEmail></PDRecord>'::xml),
+                                (2, '<PDRecord><PDName>test_user2</PDName><PDID>2</PDID><PDEmail>test_user2@testmail.com</PDEmail></PDRecord>'::xml),
+                                (3, '<PDRecord><PDName>test_user3</PDName><PDID>3</PDID><PDEmail>test_user3@testmail.com</PDEmail></PDRecord>'::xml),
+                                (4, '<PDRecord><PDName>test_user4</PDName><PDID>4</PDID><PDEmail>test_user4@testmail.com</PDEmail></PDRecord>'::xml),
+                                (5, '<PDRecord><PDName>test_user5</PDName><PDID>5</PDID><PDEmail>test_user5@testmail.com</PDEmail></PDRecord>'::xml);
+                """;
+            await Execute(conn, insSql, false);
+
+            string procSql = "CREATE OR REPLACE PROCEDURE xml_funcs_proc()\n"
+        + "IS\n"
+        + "    xmltype_data XMLTYPE;\n"
+        + "BEGIN\n"
+        + "    SELECT person_data.EXTRACT_XML('/PDRecord/PDID/text()') INTO xmltype_data FROM person_xmltype LIMIT 1;\n"
+        + "    DBMS_OUTPUT.PUT_LINE(xmltype_data.getNumberval());\n"
+        + "    SELECT person_data.EXTRACT_XML('/PDRecord/PDEmail/text()') INTO xmltype_data FROM person_xmltype LIMIT 1;\n"
+        + "    DBMS_OUTPUT.PUT_LINE(xmltype_data.getStringVal());\n"
+        + "    DBMS_OUTPUT.PUT_LINE(xmltype_data.getClobVal());\n"
+        + "END;\n";
+
+            await Execute(conn, procSql, false);
+        }
+
+        private async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
+        {
+            try
+            {
+                using (var com = new EDBCommand("", conn))
+                {
+                    com.CommandType = CommandType.Text;
+
+                    com.CommandText = query;
+                    EDBDataReader reader = await com.ExecuteReaderAsync();
+
+                    Assert.IsTrue(reader.HasRows);
+
+                    int i = 0;
+                    while (await reader.ReadAsync())
+                    {
+                        Assert.AreEqual(expected[i], reader.GetString(0));
+                        i++;
+                    }
+                    Assert.AreEqual(expected.Length, i);
+                    await reader.CloseAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+        }
+
+        //--DB-1753 : XMLType: create Oracle-compatible XMLType as object type and implement its member functions.
+        [Test]
+        public async Task DB_1753_ExtractXMLAsTextTest()
+        {
+            await using var conn = await OpenConnectionAsync();
+
+            TestUtil.MaximumPgVersionExclusive(conn, "17.0.0");
+            TestUtil.MinimumPgVersion(conn, "16.0.0");
+
+            await SetUpXMLType(conn);
+
+            string[] expected =
+                {
+            "<PDRecord><PDName>test_user1</PDName><PDID>1</PDID><PDEmail>test_user1@testmail.com</PDEmail></PDRecord>",
+            "<PDRecord><PDName>test_user2</PDName><PDID>2</PDID><PDEmail>test_user2@testmail.com</PDEmail></PDRecord>",
+            "<PDRecord><PDName>test_user3</PDName><PDID>3</PDID><PDEmail>test_user3@testmail.com</PDEmail></PDRecord>",
+            "<PDRecord><PDName>test_user4</PDName><PDID>4</PDID><PDEmail>test_user4@testmail.com</PDEmail></PDRecord>",
+            "<PDRecord><PDName>test_user5</PDName><PDID>5</PDID><PDEmail>test_user5@testmail.com</PDEmail></PDRecord>"
+        };
+
+            await RunQueryAndVerifyResultAsync(conn, "SELECT person_data FROM person_xmltype ORDER BY person_id", expected);
+
+        }
     }
 #pragma warning restore CS8602
 }
