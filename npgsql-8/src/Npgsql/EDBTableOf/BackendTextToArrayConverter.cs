@@ -12,7 +12,7 @@ internal class BackendTextToArrayConverter : PgConverter<List<object>>
 {
     private readonly PgSerializerOptions _options;
     private readonly string _dataTypeName;
-    private PostgresArrayType? _pgType;
+    private EDBTableOfType? _pgType;
 
     public BackendTextToArrayConverter(PgSerializerOptions options, string dataTypeName)
         : base(customDbNullPredicate: true)
@@ -31,7 +31,7 @@ internal class BackendTextToArrayConverter : PgConverter<List<object>>
 
         // Nested table of type should be seen as a pgArrayOfCompositeType : an array with elements matching TABLE OF signature
         if (_options.DatabaseInfo.TryGetPostgresTypeByName(_dataTypeName, out var pgType)
-             && pgType is PostgresArrayType pgArrayOfCompositeType)
+             && pgType is EDBTableOfType pgArrayOfCompositeType)
         {
             _pgType = pgArrayOfCompositeType;
             return true;
