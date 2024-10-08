@@ -4,8 +4,8 @@ setlocal
 SET /P AREYOUSURE=Are you sure (Y/[N])?
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
 
-SET version=8.0.3.1
-SET efversion=8.0.3.1
+SET version=8.0.2.2
+SET efversion=8.0.2.2
 SET output_dir=edb_dotnet_nugetpackages
 SET NUGET_KEY=masked_out_for_security
 
