@@ -1,11 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -16,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TestCaseSource("BackendDataCases")]
         public void TestArrayParsing(string data, int numRows, int numTupleColumns)
         {
-            ArrayList result = ArrayBackendToNativeTypeConverter.ToArrayList(data, null, null);
+            List<object> result = ArrayBackendToNativeTypeConverter.ToList(data, null, null);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(numRows, result.Count);
@@ -27,10 +24,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
             else
             {
-                CollectionAssert.AllItemsAreInstancesOfType(result, typeof(ArrayList));
+                CollectionAssert.AllItemsAreInstancesOfType(result, typeof(List<object>));
                 foreach (var subItem in result)
                 {
-                    var tupleArray = ((ArrayList)subItem);
+                    var tupleArray = ((List<object>)subItem);
 
                     Assert.AreEqual(numTupleColumns, tupleArray.Count);
                     CollectionAssert.AllItemsAreInstancesOfType(tupleArray, typeof(string));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using EnterpriseDB.EDBClient.PostgresTypes;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
-internal class BackendTextToArrayConverter : PgConverter<ArrayList>
+internal class BackendTextToArrayConverter : PgConverter<List<object>>
 {
     private readonly PgSerializerOptions _options;
     private readonly string _dataTypeName;
@@ -20,7 +21,7 @@ internal class BackendTextToArrayConverter : PgConverter<ArrayList>
         _dataTypeName = dataTypeName;
     }
 
-    protected override bool IsDbNullValue(ArrayList? value, ref object? writeState) => value == null;
+    protected override bool IsDbNullValue(List<object>? value, ref object? writeState) => value == null;
 
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
     {
@@ -39,7 +40,7 @@ internal class BackendTextToArrayConverter : PgConverter<ArrayList>
         return false;
     }
 
-    public override Size GetSize(SizeContext context, [DisallowNull] ArrayList value, ref object? writeState) => Size.Unknown;
+    public override Size GetSize(SizeContext context, [DisallowNull] List<object> value, ref object? writeState) => Size.Unknown;
 
     internal async override ValueTask<object> ReadAsObject(bool async, PgReader reader, CancellationToken cancellationToken)
     {
@@ -62,20 +63,20 @@ internal class BackendTextToArrayConverter : PgConverter<ArrayList>
             value = reader.GetTextReader(_options.TextEncoding).ReadToEnd();
         }
 
-        var arrayList = ArrayBackendToNativeTypeConverter.ToArrayList(value, _options, _pgType);
+        var arrayList = ArrayBackendToNativeTypeConverter.ToList(value, _options, _pgType);
 
 
         return arrayList;
     }
 
-    public override ArrayList Read(PgReader reader) => throw new NotImplementedException();
+    public override List<object> Read(PgReader reader) => throw new NotImplementedException();
 
-    public override ValueTask<ArrayList> ReadAsync(PgReader reader, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public override ValueTask<List<object>> ReadAsync(PgReader reader, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
     internal override ValueTask WriteAsObject(bool async, PgWriter writer, object value, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-    public override void Write(PgWriter writer, [DisallowNull] ArrayList value) => throw new NotImplementedException();
+    public override void Write(PgWriter writer, [DisallowNull] List<object> value) => throw new NotImplementedException();
 
-    public override ValueTask WriteAsync(PgWriter writer, [DisallowNull] ArrayList value, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public override ValueTask WriteAsync(PgWriter writer, [DisallowNull] List<object> value, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }
 

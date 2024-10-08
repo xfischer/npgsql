@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.PostgresTypes;
@@ -23,7 +21,7 @@ internal static class ArrayBackendToNativeTypeConverter
     /// If it's a domain type, we process each tuple and check if a specialized parse is needed (ie point, box, line, ...)
     /// Otherwise we convert each token separately and return the native token values
     /// </summary>
-    public static ArrayList ToArrayList(string BackendData, PgSerializerOptions? options, PostgresArrayType? pgType)
+    public static List<object> ToList(string BackendData, PgSerializerOptions? options, PostgresArrayType? pgType)
     {
         /* Examples :
          * Points: "{\"(0,0)\",\"(-4.2,43.5)\"}"
@@ -37,7 +35,7 @@ internal static class ArrayBackendToNativeTypeConverter
         if (pgType?.Element is PostgresCompositeType pgCompositeType)
         {
             using var tokenEnumerator = BackendTextEnumerator.EnumerateTokens(BackendData).GetEnumerator();
-            return ToArrayList_Composite(tokenEnumerator, options, pgCompositeType, head: true);
+            return ToList_Composite(tokenEnumerator, options, pgCompositeType, head: true);
         }
 
         //remove the braces on either side and work on what they contain.
@@ -48,7 +46,7 @@ internal static class ArrayBackendToNativeTypeConverter
             return new();
         }
 
-        var list = new ArrayList();
+        var list = new List<object>();
         TypeDescriptor pgTypeDescriptor = GetElementTypeDescription(options, pgType);
         if ((stripBraces.Length > 2 && stripBraces.Substring(0, 2) == "\"(")
             || pgTypeDescriptor.RequiresSpecificParsing)
@@ -62,12 +60,12 @@ internal static class ArrayBackendToNativeTypeConverter
                 }
                 else
                 {
-                    list.Add(ToArrayList(arrayChunk, options, pgType));
+                    list.Add(ToList(arrayChunk, options, pgType));
                 }
             }
         }
         else
-        //We're either dealing with a 1-dimension array or treating a row of an n-dimension array. In either case parse the elements and put them in our ArrayList
+        //We're either dealing with a 1-dimension array or treating a row of an n-dimension array. In either case parse the elements and put them in our List<object>
         {
             foreach (string token in TokenEnumeration(stripBraces))
             {
@@ -85,7 +83,7 @@ internal static class ArrayBackendToNativeTypeConverter
         return list;
     }
 
-    private static ArrayList ToArrayList_Composite(IEnumerator<string> tokenEnumerator, PgSerializerOptions? options, PostgresCompositeType pgCompType, bool head)
+    private static List<object> ToList_Composite(IEnumerator<string> tokenEnumerator, PgSerializerOptions? options, PostgresCompositeType pgCompType, bool head)
     {
         /* Examples :
          * Array of tuples with space-escaped ones : {\"(ACCOUNTING,\\\"NEW YORK\\\")\",\"(OPERATIONS,BOSTON)\",\"(RESEARCH,DALLAS)\",\"(SALES,CHICAGO)\"}
@@ -94,7 +92,7 @@ internal static class ArrayBackendToNativeTypeConverter
         if (options == null)
             throw new EDBException("PgSerializerOptions is required");
 
-        var list = new ArrayList();
+        var list = new List<object>();
         List<object> compositeFieldValues = new(30);
         //remove the braces on either side and work on what they contain.
 
@@ -106,7 +104,7 @@ internal static class ArrayBackendToNativeTypeConverter
             {
                 if (field.Type is PostgresCompositeType pgNestedComposite)
                 {
-                    var nestedComposite = ToArrayList_Composite(tokenEnumerator, options, pgNestedComposite, head: false);
+                    var nestedComposite = ToList_Composite(tokenEnumerator, options, pgNestedComposite, head: false);
                     if (nestedComposite.Count == 0)
                     {
                         endOfBuffer = true;
@@ -145,8 +143,8 @@ internal static class ArrayBackendToNativeTypeConverter
             }
             else
             {
-                // No converter found, return each field in a separate arraylist slot
-                list.Add(new ArrayList(compositeFieldValues));
+                // No converter found, return each field in a separate list slot
+                list.Add(new List<object>(compositeFieldValues));
             }
 
             compositeFieldValues.Clear();

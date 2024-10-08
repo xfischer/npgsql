@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 using EnterpriseDB.EDBClient.PostgresTypes;
 
@@ -16,8 +13,7 @@ internal class EDBTableOfResolverFactory : PgTypeInfoResolverFactory
 
 internal class EDBTableOfResolver : IPgTypeInfoResolver
 {
-    TypeInfoMappingCollection? _mappings;
-    protected TypeInfoMappingCollection Mappings => _mappings ??= new();
+    readonly TypeInfoMappingCollection mappings = new();
 
     public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
     {
@@ -28,12 +24,12 @@ internal class EDBTableOfResolver : IPgTypeInfoResolver
         {
             // EnterpriseDB : parameter is seen as INOUT even if it's OUT (EPAS behaviour).
             // Setting supportsWriting to false will raise an exception as parameter Bind is called.
-            Mappings.AddType<ArrayList>(dataTypeName,
+            mappings.AddType<List<object>>(dataTypeName,
                 (options, mapping, _) => mapping.CreateInfo(options, new BackendTextToArrayConverter(options, dataTypeName), preferredFormat: DataFormat.Text, supportsWriting: true),
                 MatchRequirement.DataTypeName);
         }
 
-        return Mappings.Find(type, dataTypeName, options);
+        return mappings.Find(type, dataTypeName, options);
     }
 }
 
