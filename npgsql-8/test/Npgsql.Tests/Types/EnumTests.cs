@@ -155,11 +155,6 @@ CREATE TYPE {type1} AS ENUM ('sad', 'ok', 'happy');
 CREATE TYPE {type2} AS ENUM ('value1', 'value2');");
         await connection.ReloadTypesAsync();
 
-        await using var cmd = new EDBCommand($"SELECT 'sad'::{type1}", connection);
-        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
-        await reader.ReadAsync();
-        var test = reader.GetValue(0);
-
         await AssertType(connection, Mood.Happy, "happy", type1, npgsqlDbType: null, isDefault: false);
         await AssertType(connection, AnotherEnum.Value2, "value2", type2, npgsqlDbType: null, isDefault: false);
     }

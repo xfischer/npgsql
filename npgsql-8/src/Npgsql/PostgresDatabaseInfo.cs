@@ -170,7 +170,7 @@ ORDER BY CASE
        WHEN typtype = 'd' AND elemtyptype <> 'a' THEN 4 -- Domains over non-arrays after
        WHEN typtype = 'a' THEN 5                        -- Arrays after
        WHEN typtype = 'd' AND elemtyptype = 'a' THEN 6  -- Domains over arrays last
-	   WHEN typtype = 'N' THEN 7  						-- EnterpriseDB: TableOF types last
+       {(loadEDBIsTableOfTypes ? "WHEN typtype = 'N' THEN 7   -- EnterpriseDB: TableOF types last" : "")}
 END;"; // EnterpriseDB Team : add sys schema
 
     static string GenerateLoadCompositeTypesQuery(bool loadTableComposites)

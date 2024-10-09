@@ -436,6 +436,31 @@ WHERE pg_proc.oid = :proname::regproc
 GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_proc.proargmodes, pg_proc.pronargs;
 ";
 
+    // -- EnterpriseDB (EC-3203) query also search for proargdeclaredmodes, used to reflect declared modes for packages
+    // those modes had to be overriden for Oracle/PG compatibility
+    const string DeriveParametersForFunctionQuery_Redwood = @"
+SELECT
+CASE
+	WHEN pg_proc.proargnames IS NULL THEN array_cat(array_fill(''::name,ARRAY[pg_proc.pronargs]),array_agg(pg_attribute.attname ORDER BY pg_attribute.attnum))
+	ELSE pg_proc.proargnames
+END AS proargnames,
+pg_proc.proargtypes,
+CASE
+	WHEN pg_proc.proallargtypes IS NULL AND (array_agg(pg_attribute.atttypid))[1] IS NOT NULL THEN array_cat(string_to_array(pg_proc.proargtypes::text,' ')::oid[],array_agg(pg_attribute.atttypid ORDER BY pg_attribute.attnum))
+	ELSE pg_proc.proallargtypes
+END AS proallargtypes,
+CASE
+	WHEN pg_proc.proargmodes IS NULL AND (array_agg(pg_attribute.atttypid))[1] IS NOT NULL THEN array_cat(array_fill('i'::""char"",ARRAY[pg_proc.pronargs]),array_fill('o'::""char"",ARRAY[array_length(array_agg(pg_attribute.atttypid), 1)]))
+    ELSE COALESCE(pg_proc.proargdeclaredmodes, pg_proc.proargmodes) -- EnterpriseDB
+END AS proargmodes
+FROM pg_proc
+LEFT JOIN pg_type ON pg_proc.prorettype = pg_type.oid
+LEFT JOIN pg_attribute ON pg_type.typrelid = pg_attribute.attrelid AND pg_attribute.attnum >= 1 AND NOT pg_attribute.attisdropped
+WHERE pg_proc.oid = :proname::regproc
+GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_proc.proargmodes, pg_proc.proargdeclaredmodes, pg_proc.pronargs;
+";
+
+
     internal void DeriveParameters()
     {
         var conn = CheckAndGetConnection();
@@ -470,7 +495,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     void DeriveParametersForFunction()
     {
-        using var c = new EDBCommand(DeriveParametersForFunctionQuery, InternalConnection);
+        // EnterpriseDB : proargdeclaresmodes added in redwood (EC-3203)
+        using var c = InternalConnection!.EDBDataSource.DatabaseInfo.SupportsRedwoodDialect ?
+                        new EDBCommand(DeriveParametersForFunctionQuery_Redwood, InternalConnection)
+                        : new EDBCommand(DeriveParametersForFunctionQuery, InternalConnection);
         c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
         var text = CommandText.AsSpan();
         var parenthesis = text.IndexOf('(');

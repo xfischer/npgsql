@@ -58,7 +58,7 @@ partial class EDBConnector
                   sizeof(byte) +            // Statement or portal
                   (asciiName.Length + 1);   // Statement/portal name
 
-        var writeBuffer = WriteBuffer;		
+        var writeBuffer = WriteBuffer;
         writeBuffer.StartMessage(len);
         if (writeBuffer.WriteSpaceLeft < len)
             return FlushAndWrite(len, statementOrPortal, asciiName, async, cancellationToken);
@@ -148,7 +148,7 @@ partial class EDBConnector
             localParameters.Count * sizeof(short);  // IN, OUT, or INOUT parameter specifier
 
 
-		WriteBuffer.StartMessage(messageLength);
+        WriteBuffer.StartMessage(messageLength);
         WriteBuffer.WriteByte(FrontendMessageCode.ParseOut);
         WriteBuffer.WriteInt32(messageLength - 1);
         WriteBuffer.WriteNullTerminatedString(asciiName);
@@ -227,10 +227,9 @@ partial class EDBConnector
                 param.Value = null;
             }
             param.ResolveTypeInfo(SerializerOptions);
-            param.Bind(out var format, out var size, allResultTypesAreUnknown ? DataFormat.Text : null);
+            param.Bind(out _, out var size, allResultTypesAreUnknown ? DataFormat.Text : null);
 
-            if (param.Direction != ParameterDirection.Output
-                && param.Direction != ParameterDirection.ReturnValue)
+            if (!param.IsOutReturnDirectionStrict)
             {
                 paramsLength += size.Value > 0 ? size.Value : 0;
             }
@@ -555,7 +554,7 @@ partial class EDBConnector
     internal Task WriteClose(StatementOrPortal type, byte[] asciiName, bool async, CancellationToken cancellationToken = default)
     {
         var len = sizeof(byte) +               // Message code
-                  sizeof(int)  +               // Length
+                  sizeof(int) +               // Length
                   sizeof(byte) +               // Statement or portal
                   asciiName.Length + sizeof(byte);  // Statement or portal name plus null terminator
 

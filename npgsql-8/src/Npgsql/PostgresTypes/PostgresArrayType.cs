@@ -22,7 +22,7 @@ public class PostgresArrayType : PostgresType
         : base(ns, name, oid)
     {
         Element = elementPostgresType;
-        Element.Array = this;
+        Element.Array ??= this; // EnterpriseDB : null-coalescing assignment to avoid reassignation
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ public class PostgresArrayType : PostgresType
         : base(dataTypeName, oid)
     {
         Element = elementPostgresType;
-        Element.Array = this;
+        Element.Array ??= this; // EnterpriseDB : null-coalescing assignment to avoid reassignation
     }
 
     // PostgreSQL array types have an underscore-prefixed name (_text), but we

@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using System.Data;
 using System.Threading.Tasks;
-using System.Collections;
+using System.Collections.Generic;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -99,11 +99,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
-                foreach (var p in cstmt.Parameters)
-                {
-                    // Fixup parameter description
-                    ((EDBParameter)p).Direction = ParameterDirection.Output;
-                }
             }
             else
             {
@@ -126,9 +121,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("mulunpkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
 
-            int count = (int)cstmt.Parameters[0].Value;
+            var count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(5, count);
-            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            List<object> arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(5, arr.Count);
             for (int i = 0; i < arr.Count; i++)
             {
@@ -199,11 +194,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
-                foreach (var p in cstmt.Parameters)
-                {
-                    // Fixup parameter description
-                    ((EDBParameter)p).Direction = ParameterDirection.Output;
-                }
             }
             else
             {
@@ -226,9 +216,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("mulundispkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
 
-            int count = (int)cstmt.Parameters[0].Value;
+            int count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(4, count);
-            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            List<object>  arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(4, arr.Count);
             for(int i = 0; i < arr.Count; i++)
             {
@@ -298,11 +288,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
-                foreach (var p in cstmt.Parameters)
-                {
-                    // Fixup parameter description
-                    ((EDBParameter)p).Direction = ParameterDirection.Output;
-                }
             }
             else
             {
@@ -325,9 +310,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("mulundispkg02.int_arr_typ", cstmt.Parameters[1].DataTypeName);
 
-            int count = (int)cstmt.Parameters[0].Value;
+            int count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(5, count);
-            ArrayList arr = (ArrayList)cstmt.Parameters[1].Value;
+            List<object> arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(5, arr.Count);
             for (int i = 0; i < arr.Count; i++)
             {

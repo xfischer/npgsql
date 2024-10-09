@@ -695,7 +695,6 @@ internal class EDBNestedTableTest : EPASTestBase
             Execute(pkgBody, true);
 
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
-            //dataSourceBuilder.UseEDBIsTableOf();
             //dataSourceBuilder.MapComposite<emp_rec_typ>("pkgextendtest.emp_rec_typ");
             await using var dataSource = dataSourceBuilder.Build();
             await using var connection = await dataSource.OpenConnectionAsync();
@@ -705,15 +704,9 @@ internal class EDBNestedTableTest : EPASTestBase
             cstmt.CommandType = CommandType.StoredProcedure;
 
 
-            // DeriveParameters works but parameters directions are wrong (INOUT instead of OUT), this is a backend issue
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
-                foreach (var p in cstmt.Parameters)
-                {
-                    // Fixup parameter description
-                    ((EDBParameter)p).Direction = ParameterDirection.Output;
-                }
             }
             else
             {
@@ -828,15 +821,9 @@ internal class EDBNestedTableTest : EPASTestBase
             cstmt.CommandType = CommandType.StoredProcedure;
 
 
-            // DeriveParameters works but parameters directions are wrong (INOUT instead of OUT), this is a backend issue
             if (deriveParameters)
             {
                 cstmt.DeriveParameters();
-                foreach (var p in cstmt.Parameters)
-                {
-                    // Fixup parameter description
-                    ((EDBParameter)p).Direction = ParameterDirection.Output;
-                }
             }
             else
             {
