@@ -174,7 +174,7 @@ namespace EnterpriseDB.EDBClient
                     sb.Append(CultureInfo.InvariantCulture.NumberFormat.NegativeSign);
                 }
                 else if (c == ',' || c == '٫' // commas variations
-                    || c == '.')
+                    || c == '.' || c == '/')
                 {
                     sb.Append(CultureInfo.InvariantCulture.NumberFormat.CurrencyDecimalSeparator);
                 }

@@ -52,6 +52,8 @@ namespace EDBSample
 
             try
             {
+                await NestedTableSample.Sample_NestedTableTypesAsync(connectionString);
+
                 var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                 await using var dataSource = dataSourceBuilder.Build();
                 await using var conn = await dataSource.OpenConnectionAsync();
