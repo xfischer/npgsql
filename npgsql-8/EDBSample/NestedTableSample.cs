@@ -13,6 +13,8 @@ namespace EDBSample
     internal static class NestedTableSample
     {
 
+        // Composite type, will be mapped to the nested table type
+        // This will work if field types are convertible from database types
         public class Employee
         {
             [PgName("empno")]
@@ -21,109 +23,113 @@ namespace EDBSample
             public string? Name;
         }
 
-        public static async Task Sample_NestedTableTypesAsync(string ConnectionString)
+        public static void Sample_NestedTableTypes(string ConnectionString)
         {
             var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
             dataSourceBuilder.MapComposite<Employee>("pkgextendtest.emp_rec_typ");
-            await using var dataSource = dataSourceBuilder.Build();
-            await using var connection = await dataSource.OpenConnectionAsync();
 
-            try
+            using (var dataSource = dataSourceBuilder.Build())
             {
-                await CreatePackageAsync(connection);
-
-                var commandText = "pkgExtendTest.nestedTableExtendTest";
-                var cstmt = new EDBCommand(commandText, connection);
-                cstmt.CommandType = CommandType.StoredProcedure;
-
-                var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                using (var connection = dataSource.OpenConnection())
                 {
-                    Direction = ParameterDirection.Output,
-                    DataTypeName = "pkgextendtest.emp_tbl_typ"
-                });
-                
-                await cstmt.PrepareAsync();
-                await cstmt.ExecuteNonQueryAsync();
 
-                List<object>? employees = tableOfParam.Value as List<object>;
-                if (employees == null)
-                {
-                    Console.WriteLine($"No employee found");
-                    return;
-                }
-
-                foreach(var employeeRecord in employees)
-                {
-                    var employee = employeeRecord as Employee;
-                    if (employee != null)
+                    try
                     {
-                        Console.WriteLine($"Employee {employee.Number}: {employee.Name}");
+                        CreatePackage(connection);
+
+                        var commandText = "pkgExtendTest.nestedTableExtendTest";
+                        var cstmt = new EDBCommand(commandText, connection);
+                        cstmt.CommandType = CommandType.StoredProcedure;
+
+                        var tableOfParam = cstmt.Parameters.Add(new EDBParameter()
+                        {
+                            Direction = ParameterDirection.Output,
+                            DataTypeName = "pkgextendtest.emp_tbl_typ"
+                        });
+
+                        cstmt.Prepare();
+                        cstmt.ExecuteNonQuery();
+
+                        List<object>? employees = tableOfParam.Value as List<object>;
+                        if (employees == null)
+                        {
+                            Console.WriteLine($"No employee found");
+                            return;
+                        }
+
+                        foreach (var employeeRecord in employees)
+                        {
+                            var employee = employeeRecord as Employee;
+                            if (employee != null)
+                            {
+                                Console.WriteLine($"Employee {employee.Number}: {employee.Name}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error: {ex.Message}");
+                    }
+                    finally
+                    {
+                        Cleanup(connection);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                await CleanupAsync(connection);
-            }
         }
 
-        private async static Task CreatePackageAsync(EDBConnection connection)
+        // helper methods to create package and cleaning up  
+        static void CreatePackage(EDBConnection connection)
         {
-            var createPackage = """
-                CREATE OR REPLACE PACKAGE pkgExtendTest IS 
-                   TYPE emp_rec_typ IS RECORD ( 
-                      empno  NUMBER(4), 
-                      ename       VARCHAR2(10) 
-                     );
-                   TYPE emp_tbl_typ IS TABLE OF emp_rec_typ; 
-                   PROCEDURE nestedTableExtendTest(emp_tbl OUT emp_tbl_typ);
-                END pkgExtendTest;
-                """;
+            var createPackage = 
+"                CREATE OR REPLACE PACKAGE pkgExtendTest IS  \n" +
+"                   TYPE emp_rec_typ IS RECORD (  \n" +
+"                      empno  NUMBER(4),  \n" +
+"                      ename       VARCHAR2(10)  \n" +
+"                     ); \n" +
+"                   TYPE emp_tbl_typ IS TABLE OF emp_rec_typ;  \n" +
+"                   PROCEDURE nestedTableExtendTest(emp_tbl OUT emp_tbl_typ); \n" +
+"                END pkgExtendTest; \n";
             using (var com = new EDBCommand(createPackage, connection) { CommandType = CommandType.Text })
             {
-                await com.ExecuteNonQueryAsync();
+                com.ExecuteNonQuery();
             }
 
-            var createPackageBody = """
-                    CREATE OR REPLACE PACKAGE BODY pkgExtendTest IS
-                	PROCEDURE nestedTableExtendTest(emp_tbl OUT emp_tbl_typ) IS
-                   	DECLARE 
-                      CURSOR emp_cur IS SELECT empno, ename FROM emp WHERE ROWNUM <= 10 order by empno; 
-                      i  INTEGER := 0; 
-                	BEGIN
-                	    emp_tbl := emp_tbl_typ(); 
-                	    FOR r_emp IN emp_cur LOOP 
-                	        i := i + 1; 
-                	        emp_tbl.EXTEND; 
-                	        emp_tbl(i) := r_emp; 
-                	    END LOOP; 
-                 	END nestedTableExtendTest;
-                END pkgExtendTest;
-                """;
+            var createPackageBody = 
+"                    CREATE OR REPLACE PACKAGE BODY pkgExtendTest IS \n" +
+"                    PROCEDURE nestedTableExtendTest(emp_tbl OUT emp_tbl_typ) IS \n" +
+"                      DECLARE  \n" +
+"                      CURSOR emp_cur IS SELECT empno, ename FROM emp WHERE ROWNUM <= 10 order by empno;  \n" +
+"                      i  INTEGER := 0;  \n" +
+"                    BEGIN \n" +
+"                       emp_tbl := emp_tbl_typ();  \n" +
+"                       FOR r_emp IN emp_cur LOOP  \n" +
+"                          i := i + 1;  \n" +
+"                          emp_tbl.EXTEND;  \n" +
+"                          emp_tbl(i) := r_emp;  \n" +
+"                       END LOOP;  \n" +
+"                    END nestedTableExtendTest; \n" +
+"                    END pkgExtendTest; \n";
             using (var com = new EDBCommand(createPackageBody, connection) { CommandType = CommandType.Text })
             {
-                await com.ExecuteNonQueryAsync();
+                com.ExecuteNonQuery();
             }
 
-            await connection.ReloadTypesAsync();
+            connection.ReloadTypes();
         }
 
-        private async static Task CleanupAsync(EDBConnection connection)
+        static void Cleanup(EDBConnection connection)
         {
             var dropPackageBody = "DROP PACKAGE BODY pkgExtendTest";
             var dropPackage = "DROP PACKAGE pkgExtendTest";
 
             using (var com = new EDBCommand(dropPackageBody, connection) { CommandType = CommandType.Text })
             {
-                await com.ExecuteNonQueryAsync();
+                com.ExecuteNonQuery();
             }
             using (var com = new EDBCommand(dropPackage, connection) { CommandType = CommandType.Text })
             {
-                await com.ExecuteNonQueryAsync();
+                com.ExecuteNonQuery();
             }
         }
     }

@@ -13,7 +13,7 @@ namespace EDBSample
     // environment, easier debugging
     internal class Program
     {
-        static string connectionString = "Server=localhost;Port=5444;User Id=enterprisedb;Password=edb;Database=edb";
+        static string connectionString = "Server=localhost;Port=5446;User Id=enterprisedb;Password=edb;Database=edb";
         //static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
         static ILoggerFactory _loggerFactory;
@@ -28,7 +28,10 @@ namespace EDBSample
                 _logger.LogDebug("---- Starting");
 
 
+                NestedTableSample.Sample_NestedTableTypes(connectionString);
+
                 await Sample();
+
 
                 //await Timeout_async_soft();
                 //Bad_database();
@@ -52,8 +55,6 @@ namespace EDBSample
 
             try
             {
-                await NestedTableSample.Sample_NestedTableTypesAsync(connectionString);
-
                 var dataSourceBuilder = new EDBDataSourceBuilder(connectionString);
                 await using var dataSource = dataSourceBuilder.Build();
                 await using var conn = await dataSource.OpenConnectionAsync();
