@@ -262,7 +262,10 @@ public struct EDBBox : IEquatable<EDBBox>
 /// </summary>
 public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 {
-    readonly List<EDBPoint> _points;
+    List<EDBPoint> _points;
+
+    List<EDBPoint> Points => _points ??= new();
+
     public bool Open { get; set; }
 
     public EDBPath()
@@ -293,23 +296,23 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 
     public EDBPoint this[int index]
     {
-        get => _points[index];
-        set => _points[index] = value;
+        get => Points[index];
+        set => Points[index] = value;
     }
 
-    public int Capacity => _points.Capacity;
-    public int Count => _points.Count;
+    public int Capacity => Points.Capacity;
+    public int Count => _points?.Count ?? 0;
     public bool IsReadOnly => false;
 
-    public int IndexOf(EDBPoint item) => _points.IndexOf(item);
-    public void Insert(int index, EDBPoint item) => _points.Insert(index, item);
-    public void RemoveAt(int index) => _points.RemoveAt(index);
-    public void Add(EDBPoint item) => _points.Add(item);
-    public void Clear() =>  _points.Clear();
-    public bool Contains(EDBPoint item) => _points.Contains(item);
-    public void CopyTo(EDBPoint[] array, int arrayIndex) =>  _points.CopyTo(array, arrayIndex);
-    public bool Remove(EDBPoint item) =>  _points.Remove(item);
-    public IEnumerator<EDBPoint> GetEnumerator() =>  _points.GetEnumerator();
+    public int IndexOf(EDBPoint item) => Points.IndexOf(item);
+    public void Insert(int index, EDBPoint item) => Points.Insert(index, item);
+    public void RemoveAt(int index) => Points.RemoveAt(index);
+    public void Add(EDBPoint item) => Points.Add(item);
+    public void Clear() => Points.Clear();
+    public bool Contains(EDBPoint item) => Points.Contains(item);
+    public void CopyTo(EDBPoint[] array, int arrayIndex) => Points.CopyTo(array, arrayIndex);
+    public bool Remove(EDBPoint item) => Points.Remove(item);
+    public IEnumerator<EDBPoint> GetEnumerator() => Points.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public bool Equals(EDBPath other)
@@ -349,12 +352,12 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
         var sb = new StringBuilder();
         sb.Append(Open ? '[' : '(');
         int i;
-        for (i = 0; i < _points.Count; i++)
+        for (i = 0; i < Count; i++)
         {
             var p = _points[i];
             sb.AppendFormat(CultureInfo.InvariantCulture, "({0},{1})", p.X, p.Y);
             if (i < _points.Count - 1)
-                sb.Append(",");
+                sb.Append(',');
         }
         sb.Append(Open ? ']' : ')');
         return sb.ToString();
@@ -387,9 +390,12 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 /// <summary>
 /// Represents a PostgreSQL Polygon type.
 /// </summary>
-public readonly struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
+public struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
 {
-    readonly List<EDBPoint> _points;
+    List<EDBPoint> _points;
+
+    List<EDBPoint> Points => _points ??= new();
+
     public EDBPolygon()
         => _points = new();
 
@@ -403,23 +409,23 @@ public readonly struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
 
     public EDBPoint this[int index]
     {
-        get => _points[index];
-        set => _points[index] = value;
+        get => Points[index];
+        set => Points[index] = value;
     }
 
-    public int Capacity => _points.Capacity;
-    public int Count => _points.Count;
+    public int Capacity => Points.Capacity;
+    public int Count => _points?.Count ?? 0;
     public bool IsReadOnly => false;
 
-    public int IndexOf(EDBPoint item) => _points.IndexOf(item);
-    public void Insert(int index, EDBPoint item) => _points.Insert(index, item);
-    public void RemoveAt(int index) =>  _points.RemoveAt(index);
-    public void Add(EDBPoint item) =>  _points.Add(item);
-    public void Clear() =>  _points.Clear();
-    public bool Contains(EDBPoint item) => _points.Contains(item);
-    public void CopyTo(EDBPoint[] array, int arrayIndex) => _points.CopyTo(array, arrayIndex);
-    public bool Remove(EDBPoint item) => _points.Remove(item);
-    public IEnumerator<EDBPoint> GetEnumerator() => _points.GetEnumerator();
+    public int IndexOf(EDBPoint item) => Points.IndexOf(item);
+    public void Insert(int index, EDBPoint item) => Points.Insert(index, item);
+    public void RemoveAt(int index) => Points.RemoveAt(index);
+    public void Add(EDBPoint item) => Points.Add(item);
+    public void Clear() => Points.Clear();
+    public bool Contains(EDBPoint item) => Points.Contains(item);
+    public void CopyTo(EDBPoint[] array, int arrayIndex) => Points.CopyTo(array, arrayIndex);
+    public bool Remove(EDBPoint item) => Points.Remove(item);
+    public IEnumerator<EDBPoint> GetEnumerator() => Points.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public bool Equals(EDBPolygon other)
@@ -474,7 +480,7 @@ public readonly struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
         var sb = new StringBuilder();
         sb.Append('(');
         int i;
-        for (i = 0; i < _points.Count; i++)
+        for (i = 0; i < Count; i++)
         {
             var p = _points[i];
             sb.AppendFormat(CultureInfo.InvariantCulture, "({0},{1})", p.X, p.Y);
@@ -594,8 +600,8 @@ public readonly record struct EDBInet
     }
 
     public override string ToString()
-        => (Address.AddressFamily == AddressFamily.InterNetwork && Netmask == 32) ||
-           (Address.AddressFamily == AddressFamily.InterNetworkV6 && Netmask == 128)
+        => (Address?.AddressFamily == AddressFamily.InterNetwork && Netmask == 32) ||
+           (Address?.AddressFamily == AddressFamily.InterNetworkV6 && Netmask == 128)
             ? Address.ToString()
             : $"{Address}/{Netmask}";
 

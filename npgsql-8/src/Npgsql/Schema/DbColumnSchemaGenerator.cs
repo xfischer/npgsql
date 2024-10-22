@@ -268,7 +268,7 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
         var serializerOptions = _connection.Connector!.SerializerOptions;
 
         column.EDBDbType = column.PostgresType.DataTypeName.ToEDBDbType();
-        if (serializerOptions.GetObjectOrDefaultTypeInfo(column.PostgresType) is { } typeInfo)
+        if (serializerOptions.GetObjectOrDefaultTypeInfoInternal(serializerOptions.ToCanonicalTypeId(column.PostgresType)) is { } typeInfo)
         {
             column.DataType = typeInfo.Type;
             column.IsLong = column.PostgresType.DataTypeName == DataTypeNames.Bytea;

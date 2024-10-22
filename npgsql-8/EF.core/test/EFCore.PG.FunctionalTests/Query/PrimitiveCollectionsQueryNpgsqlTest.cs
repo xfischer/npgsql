@@ -596,6 +596,36 @@ WHERE cardinality(p."Ints") = 2
 """);
     }
 
+    public override async Task Column_collection_Count_with_predicate(bool async)
+    {
+        await base.Column_collection_Count_with_predicate(async);
+
+        AssertSql(
+            """
+SELECT p."Id", p."Bool", p."Bools", p."DateTime", p."DateTimes", p."Enum", p."Enums", p."Int", p."Ints", p."NullableInt", p."NullableInts", p."NullableString", p."NullableStrings", p."String", p."Strings"
+FROM "PrimitiveCollectionsEntity" AS p
+WHERE (
+    SELECT count(*)::int
+    FROM unnest(p."Ints") AS i(value)
+    WHERE i.value > 1) = 2
+""");
+    }
+
+    public override async Task Column_collection_Where_Count(bool async)
+    {
+        await base.Column_collection_Where_Count(async);
+
+        AssertSql(
+            """
+SELECT p."Id", p."Bool", p."Bools", p."DateTime", p."DateTimes", p."Enum", p."Enums", p."Int", p."Ints", p."NullableInt", p."NullableInts", p."NullableString", p."NullableStrings", p."String", p."Strings"
+FROM "PrimitiveCollectionsEntity" AS p
+WHERE (
+    SELECT count(*)::int
+    FROM unnest(p."Ints") AS i(value)
+    WHERE i.value > 1) = 2
+""");
+    }
+
     public override async Task Column_collection_index_int(bool async)
     {
         await base.Column_collection_index_int(async);
@@ -1190,7 +1220,7 @@ LEFT JOIN LATERAL (
     FROM unnest(p."DateTimes") WITH ORDINALITY AS d(value)
     WHERE date_part('day', d.value AT TIME ZONE 'UTC')::int <> 1 OR d.value AT TIME ZONE 'UTC' IS NULL
 ) AS t ON TRUE
-ORDER BY p."Id" NULLS FIRST
+ORDER BY p."Id" NULLS FIRST, t.ordinality NULLS FIRST
 """);
     }
 
@@ -1279,7 +1309,7 @@ LEFT JOIN LATERAL (
     FROM unnest(p."NullableInts") WITH ORDINALITY AS n0(value)
     WHERE n0.value IS NULL
 ) AS t0 ON TRUE
-ORDER BY p."Id" NULLS FIRST, t.ordinality NULLS FIRST
+ORDER BY p."Id" NULLS FIRST, t.ordinality NULLS FIRST, t0.ordinality NULLS FIRST
 """);
     }
 
@@ -1321,7 +1351,7 @@ LEFT JOIN LATERAL (
     FROM unnest(p."DateTimes") WITH ORDINALITY AS d0(value)
     WHERE d0.value > TIMESTAMPTZ '2000-01-01T00:00:00Z'
 ) AS t0 ON TRUE
-ORDER BY p."Id" NULLS FIRST, i.ordinality NULLS FIRST, i0.value DESC NULLS LAST, i0.ordinality NULLS FIRST, t.ordinality NULLS FIRST
+ORDER BY p."Id" NULLS FIRST, i.ordinality NULLS FIRST, i0.value DESC NULLS LAST, i0.ordinality NULLS FIRST, t.ordinality NULLS FIRST, t0.ordinality NULLS FIRST
 """);
     }
 

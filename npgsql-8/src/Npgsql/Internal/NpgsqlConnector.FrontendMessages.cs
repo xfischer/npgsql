@@ -468,8 +468,7 @@ partial class EDBConnector
             formatCodesSum += format.ToFormatCode();
         }
 
-        var formatCodeListLength = formatCodesSum == 0 ? 0
-                                   : formatCodesSum == parameters.Count ? 1 : parameters.Count;
+        var formatCodeListLength = formatCodesSum == 0 ? 0 : formatCodesSum == parameters.Count ? 1 : parameters.Count;
 
         var messageLength = headerLength +
                             sizeof(short) * formatCodeListLength +                  // List of format codes

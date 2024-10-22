@@ -477,7 +477,41 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
+    
+	/// <summary>
+    /// Sets up network mappings. This allows mapping PhysicalAddress, IPAddress, NpgsqlInet and NpgsqlCidr types
+    /// to PostgreSQL <c>macaddr</c>, <c>macaddr8</c>, <c>inet</c> and <c>cidr</c> types.
+    /// </summary>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder EnableNetworkTypes()
+    {
+        _resolverChainBuilder.AppendResolverFactory(new NetworkTypeInfoResolverFactory());
+        return this;
+    }
+	
+	/// <summary>
+    /// Sets up network mappings. This allows mapping types like NpgsqlPoint and NpgsqlPath
+    /// to PostgreSQL <c>point</c>, <c>path</c> and so on types.
+    /// </summary>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder EnableGeometricTypes()
+    {
+        _resolverChainBuilder.AppendResolverFactory(new GeometricTypeInfoResolverFactory());
+        return this;
+    }
+
     /// <summary>
+    /// Sets up System.Text.Json mappings. This allows mapping JsonDocument and JsonElement types to PostgreSQL <c>json</c> and <c>jsonb</c>
+    /// types.
+    /// </summary>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder EnableJsonTypes()
+    {
+        _resolverChainBuilder.AppendResolverFactory(() => new JsonTypeInfoResolverFactory(JsonSerializerOptions));
+        return this;
+    }
+	
+	/// <summary>
     /// Sets up dynamic System.Text.Json mappings. This allows mapping arbitrary .NET types to PostgreSQL <c>json</c> and <c>jsonb</c>
     /// types, as well as <see cref="JsonNode" /> and its derived types.
     /// </summary>
@@ -490,6 +524,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// <remarks>
     /// Due to the dynamic nature of these mappings, they are not compatible with NativeAOT or trimming.
     /// </remarks>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     [RequiresUnreferencedCode("Json serializer may perform reflection on trimmed types.")]
     [RequiresDynamicCode("Serializing arbitrary types to json can require creating new generic types or methods, which requires creating code at runtime. This may not work when AOT compiling.")]
     public EDBSlimDataSourceBuilder EnableDynamicJson(

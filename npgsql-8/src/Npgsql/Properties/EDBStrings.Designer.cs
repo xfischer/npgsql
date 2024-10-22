@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Properties {
     [System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class EDBStrings {
-        
+  
         private static System.Resources.ResourceManager resourceMan;
         
         private static System.Globalization.CultureInfo resourceCulture;

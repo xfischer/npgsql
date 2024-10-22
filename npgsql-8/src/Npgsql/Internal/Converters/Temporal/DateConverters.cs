@@ -100,6 +100,8 @@ sealed class DateOnlyDateConverter : PgBufferedConverter<DateOnly>
         writer.WriteInt32(value.DayNumber - BaseValue.DayNumber);
     }
 }
+
+// EnterpriseDB (EC-3056 dateonly / timeonly fix with EPAS)
 sealed class DateOnlyTimeStampConverter : PgBufferedConverter<DateOnly>
 {
     readonly bool _dateTimeInfinityConversions;

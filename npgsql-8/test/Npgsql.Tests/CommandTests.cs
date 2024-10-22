@@ -304,7 +304,6 @@ public class CommandTests : MultiplexingTestBase
     #region Cancel
 
     [Test, Description("Basic cancellation scenario")]
-    [Ignore("Flaky, see https://github.com/npgsql/npgsql/issues/5070")]
     public async Task Cancel()
     {
         if (IsMultiplexing)
@@ -344,7 +343,6 @@ public class CommandTests : MultiplexingTestBase
     }
 
     [Test, Description("Cancels an async query with the cancellation token, with successful PG cancellation")]
-    [Explicit("Flaky due to #5033")]
     public async Task Cancel_async_soft()
     {
         if (IsMultiplexing)
@@ -363,6 +361,48 @@ public class CommandTests : MultiplexingTestBase
 
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
+    }
+
+    [Test, Description("Cancels an async query with the cancellation token and prepended query, with successful PG cancellation")]
+    [IssueLink("https://github.com/npgsql/npgsql/issues/5191")]
+    public async Task Cancel_async_soft_with_prepended_query()
+    {
+        if (IsMultiplexing)
+            return; // Multiplexing, cancellation
+
+        await using var postmasterMock = PgPostmasterMock.Start(ConnectionString);
+        await using var dataSource = CreateDataSource(postmasterMock.ConnectionString);
+        await using var conn = await dataSource.OpenConnectionAsync();
+        var server = await postmasterMock.WaitForServerConnection();
+
+        var processId = conn.ProcessID;
+
+        await using var tx = await conn.BeginTransactionAsync();
+        await using var cmd = CreateSleepCommand(conn);
+        using var cancellationSource = new CancellationTokenSource();
+        var t = cmd.ExecuteNonQueryAsync(cancellationSource.Token);
+
+        await server.ExpectSimpleQuery("BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED");
+        cancellationSource.Cancel();
+        await server
+            .WriteCommandComplete()
+            .WriteReadyForQuery(TransactionStatus.InTransactionBlock)
+            .FlushAsync();
+
+         Assert.That((await postmasterMock.WaitForCancellationRequest()).ProcessId,
+            Is.EqualTo(processId));
+
+         await server
+             .WriteErrorResponse(PostgresErrorCodes.QueryCanceled)
+             .WriteReadyForQuery()
+             .FlushAsync();
+
+        var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t)!;
+        Assert.That(exception.InnerException,
+            Is.TypeOf<PostgresException>().With.Property(nameof(PostgresException.SqlState)).EqualTo(PostgresErrorCodes.QueryCanceled));
+        Assert.That(exception.CancellationToken, Is.EqualTo(cancellationSource.Token));
+
+        Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Open));
     }
 
     [Test, Description("Cancels an async query with the cancellation token, with unsuccessful PG cancellation (socket break)")]
@@ -859,9 +899,11 @@ $$ LANGUAGE plpgsql;";
     [Test]
     public async Task Parameter_overflow_message_length_throws()
     {
-        await using var conn = CreateConnection();
-        await conn.OpenAsync();
-        await using var cmd = new EDBCommand("SELECT @a, @b, @c, @d, @e, @f, @g, @h", conn);
+        // Create a separate dataSource because of Multiplexing (otherwise we can break unrelated queries)
+        await using var dataSource = CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
+        await using var cmd = new 
+            EDBCommand("SELECT @a, @b, @c, @d, @e, @f, @g, @h", conn);
 
         var largeParam = new string('A', 1 << 29);
         cmd.Parameters.AddWithValue("a", largeParam);
@@ -924,11 +966,13 @@ $$ LANGUAGE plpgsql;";
     [Test]
     public async Task Array_overflow_message_length_throws()
     {
-        await using var connection = await OpenConnectionAsync();
+        // Create a separate dataSource because of Multiplexing (otherwise we can break unrelated queries)
+        await using var dataSource = CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
 
         var largeString = new string('A', 1 << 29);
 
-        await using var cmd = connection.CreateCommand();
+        await using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT @a";
         var array = new[]
         {
@@ -1119,11 +1163,15 @@ $$ LANGUAGE plpgsql;";
     }
 
     [Test]
-    public void Command_is_recycled()
+    public void Command_is_recycled([Values] bool allResultTypesAreUnknown)
     {
         using var conn = OpenConnection();
         var cmd1 = conn.CreateCommand();
         cmd1.CommandText = "SELECT @p1";
+        if (allResultTypesAreUnknown)
+            cmd1.AllResultTypesAreUnknown = true;
+        else
+            cmd1.UnknownResultTypeList = [true];
         var tx = conn.BeginTransaction();
         cmd1.Transaction = tx;
         cmd1.Parameters.AddWithValue("p1", 8);
@@ -1136,6 +1184,8 @@ $$ LANGUAGE plpgsql;";
         Assert.That(cmd2.CommandType, Is.EqualTo(CommandType.Text));
         Assert.That(cmd2.Transaction, Is.Null);
         Assert.That(cmd2.Parameters, Is.Empty);
+        Assert.That(cmd2.AllResultTypesAreUnknown, Is.False);
+        Assert.That(cmd2.UnknownResultTypeList, Is.Null);
         // TODO: Leaving this for now, since it'll be replaced by the new batching API
         // Assert.That(cmd2.Statements, Is.Empty);
     }

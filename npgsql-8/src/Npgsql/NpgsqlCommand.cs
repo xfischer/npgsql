@@ -198,6 +198,25 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         }
     }
 
+    string GetBatchFullCommandText()
+    {
+        Debug.Assert(IsWrappedByBatch);
+        if (InternalBatchCommands.Count == 0)
+            return string.Empty;
+        if (InternalBatchCommands.Count == 1)
+            return InternalBatchCommands[0].CommandText;
+        var sb = new StringBuilder();
+        sb.Append(InternalBatchCommands[0].CommandText);
+        for (var i = 1; i < InternalBatchCommands.Count; i++)
+        {
+            sb
+                .Append(';')
+                .AppendLine()
+                .Append(InternalBatchCommands[i].CommandText);
+        }
+        return sb.ToString();
+    }
+
     /// <summary>
     /// Gets or sets the wait time (in seconds) before terminating the attempt  to execute a command and generating an error.
     /// </summary>
@@ -208,8 +227,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         get => _timeout ?? (InternalConnection?.CommandTimeout ?? DefaultTimeout);
         set
         {
-            if (value < 0)
-            {
+            if (value < 0) {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "CommandTimeout can't be less than zero.");
             }
 
@@ -763,11 +781,16 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                 continue;
 
                             var pStatement = batchCommand.PreparedStatement!;
+                            var replacedStatement = pStatement.StatementBeingReplaced;
 
-                            if (pStatement.StatementBeingReplaced != null)
+                            if (replacedStatement != null)
                             {
                                 Expect<CloseCompletedMessage>(await connector.ReadMessage(async).ConfigureAwait(false), connector);
-                                pStatement.StatementBeingReplaced.CompleteUnprepare();
+                                replacedStatement.CompleteUnprepare();
+
+                                if (!replacedStatement.IsExplicit)
+                                    connector.PreparedStatementManager.AutoPrepared[replacedStatement.AutoPreparedSlotIndex] = null;
+
                                 pStatement.StatementBeingReplaced = null;
                             }
 
@@ -1648,6 +1671,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         break;
                     }
 
+                    // If a cancellation is in progress, wait for it to "complete" before proceeding (#615)
+                    // We do it before changing the state because we only allow sending cancellation request if State == InProgress
+                    connector.ResetCancellation();
+
                     State = CommandState.InProgress;
 
                     if (logger.IsEnabled(LogLevel.Information))
@@ -1660,10 +1687,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     EDBEventSource.Log.CommandStart(CommandText);
                     startTimestamp = connector.DataSource.MetricsReporter.ReportCommandStart();
-                    TraceCommandStart(connector);
-
-                    // If a cancellation is in progress, wait for it to "complete" before proceeding (#615)
-                    connector.ResetCancellation();
+                    TraceCommandStart(connector.Settings);
+                    TraceCommandEnrich(connector);
 
                     // We do not wait for the entire send to complete before proceeding to reading -
                     // the sending continues in parallel with the user's reading. Waiting for the
@@ -1745,6 +1770,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 }
 
                 State = CommandState.InProgress;
+
+                TraceCommandStart(conn.Settings);
 
                 // TODO: Experiment: do we want to wait on *writing* here, or on *reading*?
                 // Previous behavior was to wait on reading, which throw the exception from ExecuteReader (and not from
@@ -1837,7 +1864,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         if (connector is null)
             return;
 
-        connector.PerformUserCancellation();
+        connector.PerformImmediateUserCancellation();
     }
 
     #endregion Cancel
@@ -1870,7 +1897,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         // Can be null if it's owned by batch
         _parameters?.Clear();
         _timeout = null;
-        _allResultTypesAreUnknown = false;
+        AllResultTypesAreUnknown = false;
+        Debug.Assert(_unknownResultTypeList is null);
         EnableErrorBarriers = false;
     }
 
@@ -1880,19 +1908,23 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     #region Tracing
 
-    internal void TraceCommandStart(EDBConnector connector)
+    internal void TraceCommandStart(EDBConnectionStringBuilder settings)
     {
         Debug.Assert(CurrentActivity is null);
         if (EDBActivitySource.IsEnabled)
-            CurrentActivity = EDBActivitySource.CommandStart(connector, CommandText, CommandType);
+            CurrentActivity = EDBActivitySource.CommandStart(settings, IsWrappedByBatch ? GetBatchFullCommandText() : CommandText, CommandType);
+    }
+
+    internal void TraceCommandEnrich(EDBConnector connector)
+    {
+        if (CurrentActivity is not null)
+            EDBActivitySource.Enrich(CurrentActivity, connector);
     }
 
     internal void TraceReceivedFirstResponse()
     {
         if (CurrentActivity is not null)
-        {
             EDBActivitySource.ReceivedFirstResponse(CurrentActivity);
-        }
     }
 
     internal void TraceCommandStop()

@@ -155,8 +155,7 @@ public class MultipleHostsTests : TestBase
         Assert.That(exception.Message, Is.EqualTo("No suitable host was found."));
         Assert.That(exception.InnerException, Is.Null);
 
-        var serversCount = servers.Length;
-        for (var i = 0; i < serversCount; i++)
+        for (var i = 0; i < servers.Length; i++)
             _ = await postmasters[i].WaitForServerConnection();
     }
 

@@ -112,8 +112,23 @@ class MiscTypeTests : MultiplexingTestBase
         cmd.UnknownResultTypeList = new[] { true, false };
         await using var reader = await cmd.ExecuteReaderAsync();
         reader.Read();
+
         Assert.That(reader.GetFieldType(0), Is.EqualTo(typeof(string)));
         Assert.That(reader.GetString(0), Is.EqualTo("t"));
+        Assert.That(reader.GetValue(0), Is.EqualTo("t"));
+        Assert.That(reader.GetFieldValue<object>(0), Is.EqualTo("t"));
+
+        // Try some alternative text types
+        Assert.That(reader.GetFieldValue<byte[]>(0), Is.EqualTo("t"));
+        Assert.That(reader.GetFieldValue<char[]>(0), Is.EqualTo("t"));
+
+        // Try as async
+        Assert.That(await reader.GetFieldValueAsync<string>(0), Is.EqualTo("t"));
+        Assert.That(await reader.GetFieldValueAsync<object>(0), Is.EqualTo("t"));
+        Assert.That(await reader.GetFieldValueAsync<byte[]>(0), Is.EqualTo("t"));
+        Assert.That(await reader.GetFieldValueAsync<char[]>(0), Is.EqualTo("t"));
+
+        // Normal binary column
         Assert.That(reader.GetInt32(1), Is.EqualTo(8));
     }
 
@@ -160,11 +175,7 @@ class MiscTypeTests : MultiplexingTestBase
     {
         await AssertTypeWrite(new object?[] { (short)4, null, (long)5, 6 }, "{4,NULL,5,6}", "integer[]", EDBDbType.Integer | EDBDbType.Array, isDefault: false);
         await AssertTypeWrite(new object?[] { "text", null, DBNull.Value, "chars".ToCharArray(), 'c' }, "{text,NULL,NULL,chars,c}", "text[]", EDBDbType.Text | EDBDbType.Array, isDefault: false);
-    }
 
-    [Test]
-    public async Task ObjectArrayWithTimeStamp()
-    {
         await using var dataSource = CreateDataSource(b => b.ConnectionStringBuilder.Timezone = "Europe/Berlin");
 
         // EnterpriseDB : DateTime.UnixEpoch not available in NETFRAMEWORK

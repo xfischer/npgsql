@@ -45,8 +45,9 @@ public abstract class PgStreamingConverter<T> : PgConverter<T>
         static object BoxResult(Task task)
         {
             // We're using ValueTask.Result here to avoid rooting any TaskAwaiter or ValueTaskAwaiter types.
+            Debug.Assert(task is Task<T>);
             // On ValueTask calling .Result is equivalent to GetAwaiter().GetResult() w.r.t. exception wrapping.
-            return new ValueTask<T>(task: (Task<T>)task).Result!;
+            return new ValueTask<T>(task: Unsafe.As<Task<T>>(task)).Result!;
         }
     }
 

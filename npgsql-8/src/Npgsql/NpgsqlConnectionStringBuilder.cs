@@ -1682,7 +1682,7 @@ public enum ServerCompatibilityMode
     /// The server is doesn't support full type loading from the PostgreSQL catalogs, support the basic set
     /// of types via information hardcoded inside EnterpriseDB.EDBClient.
     /// </summary>
-    NoTypeLoading
+    NoTypeLoading,
 }
 
 /// <summary>

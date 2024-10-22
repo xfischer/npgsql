@@ -344,10 +344,8 @@ public abstract class TestBase
 
         for (var i = 0; i < cmd.Parameters.Count * 2; i += 2)
         {
-            object r0 = reader[i];
-            object r1 = reader[i+1];
-            Assert.That(r0, Is.EqualTo(pgTypeNameWithoutFacets), $"Got wrong PG type name when writing with {errorIdentifier[i / 2]}");
-            Assert.That(r1, Is.EqualTo(expectedSqlLiteral), $"Got wrong SQL literal when writing with {errorIdentifier[i / 2]}");
+            Assert.That(reader[i], Is.EqualTo(pgTypeNameWithoutFacets), $"Got wrong PG type name when writing with {errorIdentifier[i / 2]}");
+            Assert.That(reader[i+1], Is.EqualTo(expectedSqlLiteral), $"Got wrong SQL literal when writing with {errorIdentifier[i / 2]}");
         }
 
         void CheckInference(bool valueOnlyInference = false)

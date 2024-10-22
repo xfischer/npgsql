@@ -194,6 +194,20 @@ public class TypesTests
         => Assert.That(new EDBPolygon { new(1, 2) }, Is.EqualTo(new EDBPolygon(new EDBPoint(1, 2))));
 
     [Test]
+    public void EDBPath_default()
+    {
+        EDBPath defaultPath = default;
+        Assert.IsFalse(defaultPath.Equals(new EDBPath { new(1, 2) }));
+    }
+
+    [Test]
+    public void EDBPolygon_default()
+    {
+        EDBPolygon defaultPolygon = default;
+        Assert.IsFalse(defaultPolygon.Equals(new EDBPolygon { new(1, 2) }));
+    }
+
+    [Test]
     public void Bug1011018()
     {
         var p = new EDBParameter();

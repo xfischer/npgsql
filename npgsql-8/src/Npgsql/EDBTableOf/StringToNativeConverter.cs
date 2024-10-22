@@ -24,7 +24,8 @@ namespace EnterpriseDB.EDBClient
             }
             else if (fieldPgType is PostgresEnumType pgEnumType)
             {
-                var enumTypeInfo = options.GetDefaultTypeInfo(pgEnumType);
+                var pgTypeId = options.ToCanonicalTypeId(pgEnumType);
+                var enumTypeInfo = options.GetObjectOrDefaultTypeInfoInternal(pgTypeId);
                 if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
                 {
                     // no enum mapping found, return token as string
@@ -44,7 +45,8 @@ namespace EnterpriseDB.EDBClient
 
         private static object? ConvertDomainTypeTextToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresType pgBaseType)
         {
-            var typeInfo = options.GetObjectOrDefaultTypeInfo(pgBaseType)
+            var pgTypeId = options.ToCanonicalTypeId(pgBaseType);
+            var typeInfo = options.GetObjectOrDefaultTypeInfoInternal(pgTypeId)
                                        ?? throw new NotSupportedException(
                                            $"Reading isn't supported for record field 0 (PG type '{pgBaseType.DisplayName}'");
 

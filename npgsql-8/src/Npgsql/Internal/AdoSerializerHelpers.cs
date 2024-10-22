@@ -2,31 +2,51 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal.Postgres;
-using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
 static class AdoSerializerHelpers
 {
-    public static PgTypeInfo GetTypeInfoForReading(Type type, PostgresType postgresType, PgSerializerOptions options)
+
+    // EnterpriseDB: this PR https://github.com/npgsql/npgsql/pull/5768 assumes all text formats are unknown. This doesn't work with a mapped converter (ie TABLE OF types)
+    // This method avoids raising an exception when called from RowDescriptionMessage.GetInfoSlow
+    public static bool TryGetTypeInfoForReading(Type type, PgTypeId pgTypeId, PgSerializerOptions options, out PgTypeInfo? typeInfo)
+    {
+        typeInfo = null;
+        try
+        {
+            typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        return typeInfo != null;
+    }
+
+    public static PgTypeInfo GetTypeInfoForReading(Type type, PgTypeId pgTypeId, PgSerializerOptions options)
     {
         PgTypeInfo? typeInfo = null;
         Exception? inner = null;
         try
         {
-            typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfo(postgresType) : options.GetTypeInfo(type, postgresType);
+            typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
         }
         catch (Exception ex)
         {
             inner = ex;
         }
-        return typeInfo ?? ThrowReadingNotSupported(type, postgresType.DisplayName, inner);
+        return typeInfo ?? ThrowReadingNotSupported(type, options, pgTypeId, inner);
 
         // InvalidCastException thrown to align with ADO.NET convention.
         [DoesNotReturn]
-        static PgTypeInfo ThrowReadingNotSupported(Type? type, string displayName, Exception? inner = null)
-            => throw new InvalidCastException($"Reading{(type is null ? "" : $" as '{type.FullName}'")} is not supported for fields having DataTypeName '{displayName}'", inner);
+        static PgTypeInfo ThrowReadingNotSupported(Type? type, PgSerializerOptions options, PgTypeId pgTypeId, Exception? inner = null)
+        {
+            throw new InvalidCastException(
+                $"Reading{(type is null ? "" : $" as '{type.FullName}'")} is not supported for fields having DataTypeName '{options.DatabaseInfo.FindPostgresType(pgTypeId)?.DisplayName ?? "unknown"}'",
+                inner);
+        }
     }
 
     public static PgTypeInfo GetTypeInfoForWriting(Type? type, PgTypeId? pgTypeId, PgSerializerOptions options, EDBDbType? npgsqlDbType = null)
@@ -38,7 +58,7 @@ static class AdoSerializerHelpers
         Exception? inner = null;
         try
         {
-            typeInfo = type is null ? options.GetDefaultTypeInfo(pgTypeId!.Value) : options.GetTypeInfo(type, pgTypeId);
+            typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
         }
         catch (Exception ex)
         {

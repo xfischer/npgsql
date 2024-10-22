@@ -91,10 +91,7 @@ public sealed class EDBBatchCommand : DbBatchCommand
     ///     batch via <see cref="EDBBatch.EnableErrorBarriers" />.
     /// </para>
     /// </remarks>
-    public bool? AppendErrorBarrier {
-        get => appendErrorBarrier;
-        set => appendErrorBarrier = value;
-    }
+    public bool? AppendErrorBarrier { get; set; }
 
     /// <summary>
     /// The number of rows affected or retrieved.
@@ -199,7 +196,6 @@ public sealed class EDBBatchCommand : DbBatchCommand
     internal EDBConnector? ConnectorPreparedOn { get; set; }
 
     internal bool IsPreparing;
-    private bool? appendErrorBarrier;
 
     /// <summary>
     /// Holds the server-side (prepared) statement name. Empty string for non-prepared statements.
@@ -294,11 +290,7 @@ public sealed class EDBBatchCommand : DbBatchCommand
         OID = msg.OID;
     }
 
-    internal void ResetPreparation()
-    {
-        PreparedStatement = null;
-        ConnectorPreparedOn = null;
-    }
+    internal void ResetPreparation() => ConnectorPreparedOn = null;
 
     /// <summary>
     /// Returns the <see cref="CommandText"/>.

@@ -341,7 +341,7 @@ public sealed class EDBBinaryExporter : ICancelable
                 // Handle plugin types via lookup.
                 : GetRepresentationalOrDefault(npgsqlDbType.Value.ToUnqualifiedDataTypeNameOrThrow());
         }
-        var info = options.GetTypeInfo(type, pgTypeId)
+        var info = options.GetTypeInfoInternal(type, pgTypeId)
                    ?? throw new NotSupportedException($"Reading is not supported for type '{type}'{(npgsqlDbType is null ? "" : $" and EDBDbType '{npgsqlDbType}'")}");
 
         // Binary export has no type info so we only do caller-directed interpretation of data.
@@ -450,7 +450,7 @@ public sealed class EDBBinaryExporter : ICancelable
     /// <summary>
     /// Cancels an ongoing export.
     /// </summary>
-    public void Cancel() => _connector.PerformUserCancellation();
+    public void Cancel() => _connector.PerformImmediateUserCancellation();
 
     /// <summary>
     /// Async cancels an ongoing export.

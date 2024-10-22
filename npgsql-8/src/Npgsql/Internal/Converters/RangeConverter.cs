@@ -112,7 +112,8 @@ sealed class RangeConverter<TSubtype> : PgStreamingConverter<EDBRange<TSubtype>>
                 (state ??= new WriteState()).LowerBoundSize = size;
                 state.LowerBoundWriteState = subTypeState;
             }
-            // EnterpriseDB: removed unreachable code
+            else if (state is not null)
+                state.LowerBoundSize = -1;
         }
 
         if (!value.UpperBoundInfinite)

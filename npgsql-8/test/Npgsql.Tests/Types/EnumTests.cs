@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.NameTranslation;
 using EnterpriseDB.EDBClient.PostgresTypes;
@@ -6,7 +7,6 @@ using EDBTypes;
 using NUnit.Framework;
 using EnterpriseDB.EDBClient.Properties;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
-using System;
 using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;

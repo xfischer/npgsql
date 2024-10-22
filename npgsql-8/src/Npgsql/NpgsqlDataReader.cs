@@ -499,11 +499,22 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 						*/
                         if (msg.Code == BackendMessageCode.DataRow && _behavior != CommandBehavior.SequentialAccess)
                         {
+
                             var pos = Connector.ReadBuffer.ReadPosition;
                             ProcessMessage(msg);
-                            PopulateNonPreparedOutputParameters(Command.InternalBatchCommands[StatementIndex]._parameters!);
+                            try
+                            {
+                                PopulateNonPreparedOutputParameters(Command.InternalBatchCommands[StatementIndex]._parameters!);
+                            }
+                            catch (Exception e)
+                            {
+                                // TODO: ideally we should flow down to global exception filter and consume there
+                                await Consume(async, firstException: e).ConfigureAwait(false);
+                                throw;
+                            }
                             Connector.ReadBuffer.ReadPosition = pos;
                             State = ReaderState.BetweenResults;
+
                         }
 
                     }
@@ -586,7 +597,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector);
 
             State = ReaderState.Consumed;
-            //ProcessMessage(Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector));
             RowDescription = null;
             return false;
         }
@@ -602,6 +612,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 // Prevent the command or batch from being recycled (by the connection) when it's disposed. This is important since
                 // the exception is very likely to escape the using statement of the command, and by that time some other user may
                 // already be using the recycled instance.
+                // TODO: we probably should do than even if it's not PostgresException (error from PopulateOutputParameters)
                 Command.IsCacheable = false;
 
                 // If the schema of a table changes after a statement is prepared on that table, PostgreSQL errors with
@@ -632,6 +643,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 // However, if the command has error barrier, we now have to consume results from the commands after it (unless it's the
                 // last one).
                 // Note that Consume calls NextResult (this method) recursively, the isConsuming flag tells us we're in this mode.
+                // TODO: We might as well call Consume on every command (even the last one) to make sure we do read every single message until RFQ
+                // in case we get an exception in the middle of NextResult
                 if ((statement.AppendErrorBarrier ?? Command.EnableErrorBarriers) && StatementIndex < _statements.Count - 1)
                 {
                     if (isConsuming)

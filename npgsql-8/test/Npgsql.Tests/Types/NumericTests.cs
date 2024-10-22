@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -76,6 +77,8 @@ public class NumericTests : MultiplexingTestBase
 
         // Bug 2033
         new object[] { "0.0036882500000000000000000000", 0.0036882500000000000000000000M },
+        // Bug 5848
+        new object[] { "10836968.715000000000000000000000", 10836968.715000000000000000000000M },
 
         new object[] { "936490726837837729197", 936490726837837729197M },
         new object[] { "9364907268378377291970000", 9364907268378377291970000M },
@@ -211,7 +214,7 @@ public class NumericTests : MultiplexingTestBase
 #if NET7_0_OR_GREATER
         Assert.That(value.Scale, Is.EqualTo(2));
 #else
-        Assert.That(value.ToString(System.Globalization.CultureInfo.InvariantCulture), Is.EqualTo(0.00M.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        Assert.That(value.ToString(CultureInfo.InvariantCulture), Is.EqualTo(0.00M.ToString(CultureInfo.InvariantCulture)));
 #endif
     }
 
