@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using EDBTypes;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Threading;
+using System.Diagnostics;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -20,8 +21,11 @@ static partial class LogMessages
     [LoggerMessage(
        Level = LogLevel.Trace,
        Message = "EDB: {message}")]
+    [Conditional("EDB_DIAGNOSTICS")]
     internal static partial void EDBTrace(this ILogger logger, string message);
 
+
+    [Conditional("EDB_DIAGNOSTICS")]
     internal static void TryEDBTrace(this ILogger logger, string message)
     {
         if (logger is null || logger is NullLogger)

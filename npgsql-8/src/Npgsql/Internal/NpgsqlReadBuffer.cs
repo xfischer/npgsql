@@ -327,10 +327,10 @@ sealed partial class EDBReadBuffer : IDisposable
             {
                 try
                 {
-#if NETFRAMEWORK // EnterpriseDB (additionnal param)
+#if NET472 // EnterpriseDB (additionnal param, see EC-3214)
                     if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
 
-                    // In .Net Framework NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
+                    // In .Net Framework 4.7.2 NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
                     // When there is no data to read, it hangs. The workaround is not wait for available data and check the token
                     if (readingNotifications || checkDataAvailable || (buffer.Connector?.PostgresCancellationPerformed ?? false))
                     {
