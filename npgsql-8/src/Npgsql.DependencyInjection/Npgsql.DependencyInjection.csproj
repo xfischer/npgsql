@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
 	<!-- DbDataSource was introduced to .NET in net7.0. Before that EDB has its own built-in copy. -->
-        <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
 	<!--
 	<TargetFrameworks Condition="'$(DeveloperBuild)' != 'True'">netstandard2.0;net7.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFrameworks>
@@ -18,10 +18,6 @@
         <ProjectReference Include="..\Npgsql\Npgsql.csproj" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
-    </ItemGroup>
-    
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     </ItemGroup>

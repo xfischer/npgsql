@@ -40,10 +40,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net8.0
 copy bin\%RELEASE_CONFIGURATION%\net8.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net8.0 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\net8.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net8.0 || goto :error
 
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net7.0
-copy bin\%RELEASE_CONFIGURATION%\net7.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net7.0 || goto :error 
-copy bin\%RELEASE_CONFIGURATION%\net7.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net7.0 || goto :error 
-
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0
 copy bin\%RELEASE_CONFIGURATION%\net6.0\EnterpriseDB.EDBClient.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
 copy bin\%RELEASE_CONFIGURATION%\net6.0\Microsoft.Extensions.Logging.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\net6.0 || goto :error 
@@ -145,7 +141,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net8.0
 cd %SOURCE_PATH%
 cd npgsql-8\src\Npgsql.OpenTelemetry
@@ -169,15 +164,11 @@ copy bin\Release\net481\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\O
 copy bin\Release\net6.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net6.0 || goto :error
 copy bin\Release\net6.0\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net6.0 || goto :error
 
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net7.0 || goto :error
-copy bin\Release\net7.0\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net7.0 || goto :error
-
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.OpenTelemetry.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net8.0 || goto :error
 copy bin\Release\net8.0\OpenTelemetry.Api.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\OpenTelemetry\net8.0 || goto :error
 
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net8.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\netstandard2.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\netstandard2.1
@@ -190,9 +181,6 @@ dotnet build -property:Configuration=Release -property:SourceLinkCreate=false ||
 
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net8.0 || goto :error
 copy bin\Release\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net8.0 || goto :error
-
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net7.0 || goto :error
-copy bin\Release\net7.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net7.0 || goto :error
 
 copy bin\Release\net6.0\EnterpriseDB.EDBClient.DependencyInjection.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net6.0 || goto :error
 copy bin\Release\net6.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\DependencyInjection\net6.0 || goto :error
@@ -249,7 +237,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net8.0
 cd %SOURCE_PATH%
 cd npgsql-8\src\Npgsql.GeoJSON
@@ -274,9 +261,6 @@ copy bin\Release\net481\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins
 copy bin\Release\net6.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net6.0 || goto :error
 copy bin\Release\net6.0\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net6.0 || goto :error
 
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net7.0 || goto :error
-copy bin\Release\net7.0\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net7.0 || goto :error
-
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.GeoJSON.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net8.0 || goto :error
 copy bin\Release\net8.0\GeoJSON.Net.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\GeoJSON\net8.0 || goto :error
 
@@ -286,7 +270,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net8.0
 cd %SOURCE_PATH%
 cd npgsql-8\src\Npgsql.Json.NET
@@ -311,9 +294,6 @@ copy bin\Release\net481\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plu
 copy bin\Release\net6.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net6.0 || goto :error
 copy bin\Release\net6.0\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net6.0 || goto :error
 
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net7.0 || goto :error
-copy bin\Release\net7.0\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net7.0 || goto :error
-
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.Json.NET.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net8.0 || goto :error
 copy bin\Release\net8.0\Newtonsoft.Json.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\Json.NET\net8.0 || goto :error
 
@@ -323,7 +303,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net8.0
 cd %SOURCE_PATH%
 cd npgsql-8\src\Npgsql.NetTopologySuite
@@ -354,10 +333,6 @@ copy bin\Release\net6.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR
 copy bin\Release\net6.0\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net6.0 || goto :error
 copy bin\Release\net6.0\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net6.0 || goto :error
 
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net7.0 || goto :error
-copy bin\Release\net7.0\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net7.0 || goto :error
-copy bin\Release\net7.0\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net7.0 || goto :error
-
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net8.0 || goto :error
 copy bin\Release\net8.0\NetTopologySuite.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net8.0 || goto :error
 copy bin\Release\net8.0\NetTopologySuite.IO.PostGis.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NetTopologySuite\net8.0 || goto :error
@@ -368,7 +343,6 @@ mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net472
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net48
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net481
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0
-mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net7.0
 mkdir %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net8.0
 cd %SOURCE_PATH%
 cd npgsql-8\src\Npgsql.NodaTime
@@ -392,9 +366,6 @@ copy bin\Release\net481\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\No
 
 copy bin\Release\net6.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0 || goto :error
 copy bin\Release\net6.0\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net6.0 || goto :error
-
-copy bin\Release\net7.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net7.0 || goto :error
-copy bin\Release\net7.0\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net7.0 || goto :error
 
 copy bin\Release\net8.0\EnterpriseDB.EDBClient.NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net8.0 || goto :error
 copy bin\Release\net8.0\NodaTime.dll %STAGING_DIR%\%TARGET_FRAMEWORK%\plugins\NodaTime\net8.0 || goto :error

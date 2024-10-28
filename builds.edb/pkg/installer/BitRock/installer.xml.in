@@ -819,7 +819,6 @@ EOF
           <platforms>windows</platforms>
           <distributionFileList>
 			<distributionDirectory origin="DOTNET_STAGING_PATH\NET80_FRAMEWORK\net8.0"/>
-			<distributionDirectory origin="DOTNET_STAGING_PATH\NET80_FRAMEWORK\net7.0"/>
 			<distributionDirectory origin="DOTNET_STAGING_PATH\NET80_FRAMEWORK\net6.0"/>
 			<!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\net5.0"/>  -->
 			<!--  <distributionDirectory origin="DOTNET_STAGING_PATH\NET70_FRAMEWORK\net471"/> -->

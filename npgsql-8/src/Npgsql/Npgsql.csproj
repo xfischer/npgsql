@@ -5,7 +5,7 @@
     <Description>EDB .NET Connector is the .NET data provider for EDB Postgres Advanced Server.</Description>
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFrameworks>
     <NoWarn>$(NoWarn);CA2017</NoWarn>
     <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->

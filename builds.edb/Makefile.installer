@@ -16,20 +16,10 @@ build-dotnet80:
 
 	cmd /c "pkg\\installer\\build-dotnet8.bat $(DOTNET_SOURCE_PATH) $(NET80_FRAMEWORK) Release AnyCPU NET8.0 $(DOTNET_STAGING_PATH)"
 
-# Build .NET7
-build-dotnet70:
-
-	cmd /c "pkg\\installer\\build-dotnet7.bat $(DOTNET_SOURCE_PATH) $(NET70_FRAMEWORK) Release AnyCPU NET7.0 $(DOTNET_STAGING_PATH)"
-
 # Build .NET6
 build-dotnet60:
 
 	cmd /c "pkg\\installer\\build-dotnet6.bat $(DOTNET_SOURCE_PATH) $(NET60_FRAMEWORK) Release AnyCPU NET6.0 $(DOTNET_STAGING_PATH)"
-
-# Build .NET5
-build-dotnet50:
-
-	cmd /c "pkg\\installer\\build-dotnet5.bat $(DOTNET_SOURCE_PATH) $(NET50_FRAMEWORK) Release AnyCPU NET5.0 $(DOTNET_STAGING_PATH)"
 
 # Build .NET 461
 build-dotnet461:
