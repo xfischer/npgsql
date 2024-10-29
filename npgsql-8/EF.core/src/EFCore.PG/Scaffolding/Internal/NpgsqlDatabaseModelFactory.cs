@@ -1120,7 +1120,12 @@ JOIN pg_namespace ns ON ns.oid=extnamespace
         var commandText = $"""
 SELECT
     nspname, collname, collprovider, collcollate, collctype,
-    {(connection.PostgreSqlVersion >= new Version(15, 0) ? "colliculocale" : "NULL AS colliculocale")},
+    {(connection.PostgreSqlVersion.Major switch
+        {
+            >= 17 => "colllocale",
+            >= 15 => "colliculocale AS colllocale",
+            _ => "NULL AS colllocale"
+        })},
     {(connection.PostgreSqlVersion >= new Version(12, 0) ? "collisdeterministic" : "true AS collisdeterministic")}
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
@@ -1136,7 +1141,7 @@ WHERE
             {
                 var schema = reader.GetString(reader.GetOrdinal("nspname"));
                 var name = reader.GetString(reader.GetOrdinal("collname"));
-                var icuLocale = reader.GetValueOrDefault<string>("colliculocale");
+                var icuLocale = reader.GetValueOrDefault<string>("colllocale");
                 var lcCollate = reader.GetValueOrDefault<string>("collcollate");
                 var lcCtype = reader.GetValueOrDefault<string>("collctype");
                 var providerCode = reader.GetChar(reader.GetOrdinal("collprovider"));
