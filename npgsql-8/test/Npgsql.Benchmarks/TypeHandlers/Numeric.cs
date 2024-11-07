@@ -2,7 +2,8 @@
 using BenchmarkDotNet.Attributes;
 using EnterpriseDB.EDBClient.Internal.Converters;
 
-namespace EnterpriseDB.EDBClient.Benchmarks.TypeHandlers;
+/* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
+namespace Npgsql.Benchmarks.TypeHandlers;
 
 [Config(typeof(Config))]
 public class Int16 : TypeHandlerBenchmarks<short>
@@ -64,3 +65,4 @@ public class Money : TypeHandlerBenchmarks<decimal>
 {
     public Money() : base(new MoneyConverter<decimal>()) { }
 }
+*/

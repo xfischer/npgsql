@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 public class ReadArrays
 {

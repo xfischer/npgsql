@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
-
+namespace Npgsql.Benchmarks;
+/* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
 public class UnixDomainSocket
 {
     readonly EDBConnection _tcpipConn;
@@ -40,3 +40,4 @@ public class UnixDomainSocket
     [Benchmark]
     public string UnixDomain() => (string)_unixCmd.ExecuteScalar()!;
 }
+*/

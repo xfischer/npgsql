@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Running;
 using System.Reflection;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 class Program
 {

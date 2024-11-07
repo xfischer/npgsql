@@ -2,7 +2,8 @@ using BenchmarkDotNet.Attributes;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+/* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
+namespace Npgsql.Benchmarks;
 
 [MemoryDiagnoser]
 public class ResolveHandler
@@ -40,3 +41,4 @@ public class ResolveHandler
     public PgTypeInfo? ResolveBoth()
         => _serializerOptions.GetTypeInfoInternal(typeof(int), new Oid(23)); // int4
 }
+*/

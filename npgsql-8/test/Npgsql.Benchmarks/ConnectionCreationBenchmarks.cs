@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 
 // ReSharper disable UnusedMember.Global
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 [Config(typeof(Config))]
 public class ConnectionCreationBenchmarks

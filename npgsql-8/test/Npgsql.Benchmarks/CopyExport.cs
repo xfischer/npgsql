@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 public class CopyExport
 {

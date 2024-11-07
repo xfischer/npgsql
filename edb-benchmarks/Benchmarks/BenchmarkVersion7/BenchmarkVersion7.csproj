@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <OutputType>Exe</OutputType>
+	  <TargetFrameworks>net472;net48;net481;net8.0</TargetFrameworks>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>11</LangVersion>
+	  <Nullable>enable</Nullable>
+	  <NoWarn>CS8625</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\BenchmarkVersion4\BenchmarkEnvironment.cs" Link="BenchmarkEnvironment.cs" />
+    <Compile Include="..\BenchmarkVersion4\EDBBenchmark.cs" Link="EDBBenchmark.cs" />
+    <Compile Include="..\BenchmarkVersion4\EPASBenchmark.cs" Link="EPASBenchmark.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\CommandExecuteBenchmarks.cs" Link="NpgsqlBenchmarks\CommandExecuteBenchmarks.cs" />
+    <Compile Include="..\BenchmarkVersion4\EDBManualConfig.cs" Link="EDBManualConfig.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\Commit.cs" Link="NpgsqlBenchmarks\Commit.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\ConnectionCreationBenchmarks.cs" Link="NpgsqlBenchmarks\ConnectionCreationBenchmarks.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\ConnectionOpenCloseBenchmarks.cs" Link="NpgsqlBenchmarks\ConnectionOpenCloseBenchmarks.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\CopyExport.cs" Link="NpgsqlBenchmarks\CopyExport.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\CopyImport.cs" Link="NpgsqlBenchmarks\CopyImport.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\GetFieldValue.cs" Link="NpgsqlBenchmarks\GetFieldValue.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\Insert.cs" Link="NpgsqlBenchmarks\Insert.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\Prepare.cs" Link="NpgsqlBenchmarks\Prepare.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\ReadArray.cs" Link="NpgsqlBenchmarks\ReadArray.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\ReadColumns.cs" Link="NpgsqlBenchmarks\ReadColumns.cs" />
+    <Compile Include="..\BenchmarkVersion4\NpgsqlBenchmarks\ReadRows.cs" Link="NpgsqlBenchmarks\ReadRows.cs" />
+  </ItemGroup>
+	
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="EnterpriseDB.EDBClient" Version="7.0.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="NpgsqlBenchmarks\" />
+  </ItemGroup>
+
+</Project>

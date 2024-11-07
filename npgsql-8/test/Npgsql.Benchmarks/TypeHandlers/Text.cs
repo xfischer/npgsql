@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using EnterpriseDB.EDBClient.Internal.Converters;
 
-namespace EnterpriseDB.EDBClient.Benchmarks.TypeHandlers;
+namespace Npgsql.Benchmarks.TypeHandlers;
 
+/* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
 [Config(typeof(Config))]
 public class Text : TypeHandlerBenchmarks<string>
 {
@@ -16,3 +17,4 @@ public class Text : TypeHandlerBenchmarks<string>
             yield return new string('x', i);
     }
 }
+*/

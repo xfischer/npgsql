@@ -1,6 +1,7 @@
-﻿using System;
+﻿global using EnterpriseDB.EDBClient;
+using System;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 static class BenchmarkEnvironment
 {
@@ -10,7 +11,7 @@ static class BenchmarkEnvironment
     /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
     /// test database.
     /// </summary>
-    const string DefaultConnectionString = "Server=localhost;User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests";
+    const string DefaultConnectionString = "Server=localhost;port=5446;User ID=enterprisedb;Password=edb;Database=test";
 
     internal static EDBConnection GetConnection() => new(ConnectionString);
 

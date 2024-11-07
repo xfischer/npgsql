@@ -26,3 +26,8 @@ edb-rebrand-c/x64
 **/latex/**/*.fls
 **/latex/**/*.log
 **/latex/**/*.pdf
+edb-benchmarks/**/results
+edb-benchmarks/**/*.log
+edb-benchmarks/Benchmarks/**report.csv
+edb-benchmarks/*report.csv
+edb-benchmarks/**/*.xlsx

@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text;
 using BenchmarkDotNet.Attributes;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 public class ReadColumns
 {

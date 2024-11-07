@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BenchmarkVersion8": {
+      "commandName": "Project",
+      "commandLineArgs": "--job Short"
+    }
+  }
+}

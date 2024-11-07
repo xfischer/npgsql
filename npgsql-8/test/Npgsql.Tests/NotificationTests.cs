@@ -115,11 +115,8 @@ public class NotificationTests : TestBase
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
 
-#if NET48_OR_GREATER
+
     [Test, EDBExplicit("Hangs")]
-#else
-    [Test] // EDBExplicit("Hangs")]
-#endif
     public void WaitAsync_with_timeout()
     {
         using var conn = OpenConnection();

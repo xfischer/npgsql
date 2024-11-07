@@ -2,7 +2,7 @@
 
 /* Disabling for now: unmapped composite support is probably going away, and there's a good chance this
  * class can be simplified to a certain extent
-namespace EnterpriseDB.EDBClient.Benchmarks.TypeHandlers
+namespace Npgsql.Benchmarks.TypeHandlers
 {
     public abstract class Composite<T> : TypeHandlerBenchmarks<T>
     {

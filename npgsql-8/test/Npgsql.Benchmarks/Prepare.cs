@@ -7,7 +7,7 @@ using BenchmarkDotNet.Attributes;
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AssignNullToNotNullAttribute.Global
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 public class Prepare
 {

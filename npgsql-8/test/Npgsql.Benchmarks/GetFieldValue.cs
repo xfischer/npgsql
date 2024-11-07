@@ -2,7 +2,7 @@
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 
-namespace EnterpriseDB.EDBClient.Benchmarks;
+namespace Npgsql.Benchmarks;
 
 [Config(typeof(Config))]
 public class GetFieldValue

@@ -8,9 +8,12 @@ using System.IO;
 using System.Threading;
 using EnterpriseDB.EDBClient.Internal;
 
+/* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
+ * class can be simplified to a certain extent
+ * 
 #nullable disable
 
-namespace EnterpriseDB.EDBClient.Benchmarks.TypeHandlers;
+namespace Npgsql.Benchmarks.TypeHandlers;
 
 public abstract class TypeHandlerBenchmarks<T>
 {
@@ -102,3 +105,4 @@ public abstract class TypeHandlerBenchmarks<T>
         ((PgConverter<T>)_converter).Write(_writer, _value);
     }
 }
+*/

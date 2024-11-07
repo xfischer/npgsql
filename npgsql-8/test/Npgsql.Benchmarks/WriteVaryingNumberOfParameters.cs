@@ -2,7 +2,7 @@
 using BenchmarkDotNet.Attributes;
 using EDBTypes;
 
-namespace EnterpriseDB.EDBClient.Benchmarks.Types;
+namespace Npgsql.Benchmarks.Types;
 
 public class WriteVaryingNumberOfParameters
 {

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <DebugType>portable</DebugType>
-    <AssemblyName>EnterpriseDB.EDBClient.Benchmarks</AssemblyName>
+    <AssemblyName>Npgsql.Benchmarks</AssemblyName>
     <OutputType>Exe</OutputType>
     <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
   </PropertyGroup>

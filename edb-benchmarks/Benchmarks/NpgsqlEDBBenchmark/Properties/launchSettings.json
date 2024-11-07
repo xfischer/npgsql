@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NpgsqlEDBBenchmark": {
+      "commandName": "Project",
+      "commandLineArgs": "--IterationCount 5 --warmupCount 5 -f *BindVariable*"
+    }
+  }
+}
