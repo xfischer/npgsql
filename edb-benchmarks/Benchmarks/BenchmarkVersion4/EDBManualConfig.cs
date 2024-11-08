@@ -22,7 +22,6 @@ namespace EDBBenchmark
             WithOption(ConfigOptions.JoinSummary, true);
 
 #if DEBUG
-            var jobs = GetJobs().ToList();
             //--IterationCount 5 --warmupCount 5 -f *BindVariable*
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net472).WithId("net472"));
 #else

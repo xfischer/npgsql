@@ -122,8 +122,7 @@ sealed class SqlQueryParser
 
         sqlString = temp = sql; // EnterpriseDB Team
 
-        if (ContainsSPLStartingKeyword(temp))
-            isProcedure = true;
+        bool isProcedureGlobal = isProcedure = ContainsSPLStartingKeyword(temp);
 
         None:
         if (currCharOfs >= end)
@@ -683,6 +682,8 @@ sealed class SqlQueryParser
         }
         _rewrittenSql.Append(sql, currTokenBeg, currCharOfs - currTokenBeg - 1);
         batchCommand.FinalCommandText = _rewrittenSql.ToString();
+
+
         while (currCharOfs < end)
         {
             ch = sql[currCharOfs];
@@ -703,13 +704,11 @@ sealed class SqlQueryParser
 
             statementIndex++;
             //EnterpriseDB Team
-            isProcedure = false;
             if (sqlString != null)
             {
                 temp = sqlString;
-                if (ContainsSPLStartingKeyword(temp))
-                    isProcedure = true;
             }
+            isProcedure = isProcedureGlobal;
             WriteDebug(currCharOfs, "SemiColon -> None MoveToNextBatchCommand");
             MoveToNextBatchCommand();
             _paramIndexMap.Clear();
