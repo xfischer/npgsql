@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@V4
 
       - name: NuGet Cache
-        uses: actions/cache@v3
+        uses: actions/cache@V4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Build.targets') }}
@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v3.0.3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.dotnet_sdk_version }}
 

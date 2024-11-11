@@ -84,7 +84,7 @@ jobs:
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@V4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: v2.2.2
