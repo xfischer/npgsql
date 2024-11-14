@@ -59,7 +59,7 @@ jobs:
           echo "PACKAGING_REF=main" >> $GITHUB_ENV
 
       - name: Checkout edb-dotnet repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
@@ -68,7 +68,7 @@ jobs:
           token: ${{ env.GITHUB_TOKEN }}
 
       - name: Checkout Packaging rep
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/edb-dotnet-packaging
           ref: ${{ env.PACKAGING_REF }}
@@ -77,7 +77,7 @@ jobs:
           token: ${{ secrets.GH_SLONIK }}
 
       - name: Checkout Foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: ${{ env.FOUNDATION_VER }}
@@ -131,7 +131,7 @@ jobs:
     needs: prepare
     steps:
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: ${{ env.FOUNDATION_VER }}
@@ -187,8 +187,15 @@ jobs:
           sed -i "s|NET70_FRAMEWORK|7.0|g" packaging-config/installer/installer.xml
           sed -i "s|NET80_FRAMEWORK|8.0|g" packaging-config/installer/installer.xml
 
+      - name: Checkout upload-packaging repository
+        uses: actions/checkout@v4
+        with:
+          repository: "EnterpriseDB/upload-artifact"
+          token: ${{ env.GITHUB_TOKEN }}
+          path: upload-artifact
+
       - name: Upload staging artifact
-        uses: actions/upload-artifact@v3
+        uses: ./upload-artifact
         with:
           name: builds-windows
           path: packaging-config/installer/
@@ -212,15 +219,22 @@ jobs:
     needs: build
     steps:
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: ${{ env.FOUNDATION_VER }}
           token: ${{ env.GITHUB_TOKEN }}
           path: foundation
 
+      - name: Checkout download-packaging repository
+        uses: actions/checkout@v4
+        with:
+          repository: "EnterpriseDB/download-artifact"
+          token: ${{ env.GITHUB_TOKEN }}
+          path: download-artifact
+
       - name: Download installer archive artifact
-        uses: actions/download-artifact@v3
+        uses: ./download-artifact
         with:
           name: windows-installers
 
@@ -236,7 +250,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: ${{ env.FOUNDATION_VER }}
@@ -263,7 +277,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout foundation repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: EnterpriseDB/foundation-packaging
           ref: ${{ env.FOUNDATION_VER }}
