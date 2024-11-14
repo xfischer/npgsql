@@ -1,14 +1,277 @@
-#Packaging edb-dotne
-# This is a dummy file to be able to use packaging-windows.yml file in other branches.
 name: Windows edb-dotnet Installer
 
-on: workflow_dispatch
+on:
+   #push:
+     #branches: [ master ]
+
+   workflow_dispatch:
+        inputs:
+            maturity:
+              description: Maturity level of the package
+              required: true
+              default: snapshot
+              type: choice
+              options:
+                - ALL
+                - hotfix
+                - snapshot
+                - testing
+                - release
+
+            packaging-ref:
+              description: Packaging branch/ref name
+              default: "main"
+              required: true
+              type: string
+
+            architecture:
+              description: CPU Architecture
+              required: true
+              default: x64
+              type: choice
+              options:
+                - x64
+                - x86
+                - N/A
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_SLONIK }}
+  TPA_2Q_SUBSCRIPTION_TOKEN: ${{ secrets.TPA_2Q_SUBSCRIPTION_TOKEN }}
+  CLOUDSMITH_TOKEN: ${{ secrets.CLOUDSMITH_READ_ALL }}
+  SECRET_SERIALIZE: ${{ secrets.PASSPHRASE }}
+  FOUNDATION_VER: "v2.2.2"   # Foundation framework version branch or tag
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
 
-  test:
-    runs-on: ubuntu-22.04
+    outputs:
+        serialized: ${{ steps.serialize.outputs.serial }}
+
+    env:
+      PACKAGING_REF: ${{inputs.packaging-ref}}
 
     steps:
-      - name: Print simple message
-        run: echo Hello
+      - name: Set default packaging ref
+        shell: bash
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: |
+          echo "PACKAGING_REF=main" >> $GITHUB_ENV
+
+      - name: Checkout edb-dotnet repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          path: src
+          ref: ${{ github.ref_name }}
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Checkout Packaging rep
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/edb-dotnet-packaging
+          ref: ${{ env.PACKAGING_REF }}
+          path: packaging-config
+          fetch-depth: 0
+          token: ${{ secrets.GH_SLONIK }}
+
+      - name: Checkout Foundation repository
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Get-packaging files
+        id: get-packaging-files
+        uses: ./foundation/actions/get/packaging-files
+        with:
+          packaging-dir: packaging-config
+
+      - name: Get foundation config
+        uses: ./foundation/actions/get/foundation-config
+
+      - name: Get maturity
+        id: get-maturity
+        uses: ./foundation/actions/get/maturity
+        with:
+          maturity: ${{ inputs.maturity }}
+
+      - name: Get version
+        id: get-version
+        uses: ./foundation/actions/get/version
+        with:
+          use-file: packaging/get-version.sh
+          source-dir: ./src
+
+      - name: Set package version into env
+        shell: bash
+        run: |
+          echo "PKG_VERSION="$(echo ${{ env.VERSION }} | awk -F"-" '{print $1}')"" >> $GITHUB_ENV
+
+      - name: Get source tar
+        uses: ./foundation/actions/get/source-archive
+        with:
+          source-dir: src
+          use-file: packaging/generate-sources.sh
+
+      - name: Get revision
+        uses: ./foundation/actions/get/package-revision
+
+      - name: Serialize env
+        id: serialize
+        uses: ./foundation/actions/environment/serialize
+        with:
+          secret: ${{ env.SECRET_SERIALIZE }}
+
+  build:
+    runs-on: windows-latest
+    needs: prepare
+    steps:
+      - name: Checkout foundation repository
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Download packaging-config artifact
+        uses: ./foundation/actions/utils/download-tar
+        with:
+          artifact-name: packaging-config
+          download-path: packaging-config
+
+      - name: Download source archive artifact
+        uses: ./foundation/actions/utils/download-tar
+        with:
+          artifact-name: source-tar
+          download-path: ./
+          tarfile-name: "*.tar.bz2"
+
+      - name: Deserialize env
+        id: deserialize
+        uses: ./foundation/actions/environment/deserialize
+        with:
+          secret: ${{secrets.PASSPHRASE}}
+          serialized: ${{ needs.prepare.outputs.serialized }}
+
+      - name: Build .NET
+        run: |
+          packaging-config/installer/edbdotnet/scripts/windows/edb-dotnet-build.ps1 "$(PWD)/edb-dotnet-${{ env.PKG_VERSION }}" "8.0" "Release" "AnyCPU" "NET8.0" "$(PWD)/staging"
+        shell: pwsh
+
+      - name: Pre-installer
+        shell: bash
+        run: |
+          set -xe
+          DOTNET_STAGING_PATH="$PWD/packaging-config/installer/inst"
+          mkdir -p "${DOTNET_STAGING_PATH}"
+          cp -pr "$(PWD)/staging/"* "${DOTNET_STAGING_PATH}/"
+
+          mkdir -p "${DOTNET_STAGING_PATH}/samples"
+          cp -rp edb-dotnet-${{ env.PKG_VERSION }}/samples/SAMPLE_TEST.cs "${DOTNET_STAGING_PATH}/samples"
+          cp -rp edb-dotnet-${{ env.PKG_VERSION }}/samples/SAMPLE_TEST.vb "${DOTNET_STAGING_PATH}/samples"
+          cp packaging-config/installer/installer.xml.in packaging-config/installer/installer.xml
+
+          sed -i 's/@@WINDIR@@/windows-${{ inputs.architecture }}/' $PWD/packaging-config/installer/installer.xml
+          sed -i 's/@@windowsArchitecture@@/${{ inputs.architecture }}/' $PWD/packaging-config/installer/installer.xml
+          sed -i "s|EDB_VERSION_DOTNET|${{ env.PKG_VERSION }}|g" packaging-config/installer/installer.xml
+          sed -i "s|EDB_BUILDNUM_DOTNET|${{ env.foundation_packaging_revision }}|g" packaging-config/installer/installer.xml
+          sed -i "s|DOTNET_STAGING_PATH|inst|g" packaging-config/installer/installer.xml
+          sed -i "s|NET45_FRAMEWORK|4.6|g" packaging-config/installer/installer.xml
+          sed -i "s|NET50_FRAMEWORK|5.0|g" packaging-config/installer/installer.xml
+          sed -i "s|NET60_FRAMEWORK|6.0|g" packaging-config/installer/installer.xml
+          sed -i "s|NET70_FRAMEWORK|7.0|g" packaging-config/installer/installer.xml
+          sed -i "s|NET80_FRAMEWORK|8.0|g" packaging-config/installer/installer.xml
+
+      - name: Upload staging artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: builds-windows
+          path: packaging-config/installer/
+        
+      - name: Installer
+        id: installer
+        uses: ./foundation/actions/installer/installbuilder/
+        with:
+          platform: windows
+          platform-arch: ${{ inputs.architecture }}
+          installer-xml: $PWD/packaging-config/installer/installer.xml
+          installer-name: edb-dotnet
+
+      - name: enable tmate debugging
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 3
+        if: ${{ failure() }}
+
+  test-installer:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Checkout foundation repository
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Download installer archive artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-installers
+
+      - name: Test the produced installer
+        uses: ./foundation/actions/installer/test-installer/
+        with:
+          platform: windows
+          platform-arch: ${{ inputs.architecture }}
+          additional-options: "--unattendedmodeui minimal --extract-only 1"
+
+  manifest:
+    needs: [prepare, test-installer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout foundation repository
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Deserialize env
+        id: deserialize
+        uses: ./foundation/actions/environment/deserialize
+        with:
+          secret: ${{secrets.PASSPHRASE}}
+          serialized: ${{ needs.prepare.outputs.serialized }}
+
+      - name: Manifest
+        uses: ./foundation/actions/publish/manifest
+        with:
+          artifact-name: windows-installers
+
+  conveyor-upload:
+    permissions:
+      id-token: write
+      contents: read
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout foundation repository
+        uses: actions/checkout@v3
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Upload
+        uses: ./foundation/actions/publish/conveyor-upload
+        with:
+          artifact-name: windows-installers
+          environment: dev
