@@ -1,52 +1,52 @@
 name: Windows edb-dotnet Installer
 
 on:
-   #push:
-     #branches: [ master ]
+  #push:
+  #branches: [ master ]
 
-   workflow_dispatch:
-        inputs:
-            maturity:
-              description: Maturity level of the package
-              required: true
-              default: snapshot
-              type: choice
-              options:
-                - ALL
-                - hotfix
-                - snapshot
-                - testing
-                - release
+  workflow_dispatch:
+    inputs:
+      maturity:
+        description: Maturity level of the package
+        required: true
+        default: snapshot
+        type: choice
+        options:
+          - ALL
+          - hotfix
+          - snapshot
+          - testing
+          - release
 
-            packaging-ref:
-              description: Packaging branch/ref name
-              default: "main"
-              required: true
-              type: string
+      packaging-ref:
+        description: Packaging branch/ref name
+        default: "main"
+        required: true
+        type: string
 
-            architecture:
-              description: CPU Architecture
-              required: true
-              default: x64
-              type: choice
-              options:
-                - x64
-                - x86
-                - N/A
+      architecture:
+        description: CPU Architecture
+        required: true
+        default: x64
+        type: choice
+        options:
+          - x64
+          - x86
+          - N/A
 
 env:
   GITHUB_TOKEN: ${{ secrets.GH_SLONIK }}
   TPA_2Q_SUBSCRIPTION_TOKEN: ${{ secrets.TPA_2Q_SUBSCRIPTION_TOKEN }}
   CLOUDSMITH_TOKEN: ${{ secrets.CLOUDSMITH_READ_ALL }}
   SECRET_SERIALIZE: ${{ secrets.PASSPHRASE }}
-  FOUNDATION_VER: "v2.2.2"   # Foundation framework version branch or tag
+  FOUNDATION_VER: "v2.2.2" # Foundation framework version branch or tag
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
 
     outputs:
-        serialized: ${{ steps.serialize.outputs.serial }}
+      serialized: ${{ steps.serialize.outputs.serial }}
 
     env:
       PACKAGING_REF: ${{inputs.packaging-ref}}
@@ -199,7 +199,7 @@ jobs:
         with:
           name: builds-windows
           path: packaging-config/installer/
-        
+
       - name: Installer
         id: installer
         uses: ./foundation/actions/installer/installbuilder/
@@ -245,6 +245,58 @@ jobs:
           platform-arch: ${{ inputs.architecture }}
           additional-options: "--unattendedmodeui minimal --extract-only 1"
 
+  blackduck-scan:
+    name: Generate SBOM and upload to Blackduck
+    needs: [prepare, build, test-installer]
+
+    runs-on: windows-latest
+    steps:
+      - name: Checkout foundation repository branch/tag ${{ env.FOUNDATION_VER }}
+        uses: actions/checkout@v4
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: ${{ env.FOUNDATION_VER }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: foundation
+
+      - name: Deserialize env
+        id: deserialize
+        uses: ./foundation/actions/environment/deserialize
+        with:
+          secret: ${{secrets.PASSPHRASE}}
+          serialized: ${{ needs.prepare.outputs.serialized }}
+
+      - name: Checkout download-packaging repository
+        uses: actions/checkout@v4
+        with:
+          repository: "EnterpriseDB/download-artifact"
+          token: ${{ env.GITHUB_TOKEN }}
+          path: download-artifact
+
+      - name: Download installer archive artifact
+        uses: ./download-artifact
+        with:
+          name: windows-installers
+
+      - name: Install the produced installer
+        uses: ./foundation/actions/installer/test-installer/
+        with:
+          platform: windows
+          platform-arch: x64
+          additional-options: "--extract-only 1 --prefix \"${{ github.workspace }}\\extracted-installer\""
+
+      - name: Run bom-squad
+        uses: EnterpriseDB/bom-squad-action@v1
+        with:
+          cloudsmith-token: ${{ secrets.CLOUDSMITH_READ_ALL }}
+          blackduck-token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+          github-workspace: ${{ github.workspace }}
+          command-type: "generate"
+          scan-type: "dir"
+          scan-source: "extracted-installer"
+          additional-args: "--source-name=edb-dotnet-${{ env.VERSION }}.${{ env.EXTRA_VERSION }} --source-version=${{ env.VERSION }}.${{ env.EXTRA_VERSION }}"
+          blackduck-project: "edb-dotnet"
+          blackduck-version: ${{ env.VERSION }}.${{ env.EXTRA_VERSION }}
   manifest:
     needs: [prepare, test-installer]
     runs-on: ubuntu-latest
