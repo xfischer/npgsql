@@ -72,7 +72,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
 
-        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
+        [Test]
         public void FB8070_1()
         {
             con.Open();

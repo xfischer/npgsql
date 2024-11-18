@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -11,6 +12,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Summary description for EDBFunctionWithArray.
     /// </summary>
     [TestFixture]
+    [NonParallelizable]
 	public class EDBFunctionWithArray : EPASTestBase
     {
 		EDBConnection? con = null;
@@ -183,7 +185,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         #region Function Return Array
 
-        [Test, Ignore("Fix Array test")]
+        [Test]
 		public void FuncReturningArrayVarchar()
 		{
 
@@ -211,7 +213,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                Object rst = command.Parameters[5].Value;
+                Object rst = command.Parameters[5].Value!;
 
                 Assert.AreEqual(a, (string[])rst);
             }
@@ -223,7 +225,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
 		}
 
-		[Test, Ignore("Fix Array test")]
+		[Test]
 		public void FuncReturningArrayNumeric()
 		{
 
@@ -246,18 +248,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[0].Value;
+            Object rst = command.Parameters["param"].Value!;
 			
-			Console.WriteLine(rst);
-			
-			Assert.AreEqual(a,(decimal[])rst);	
+			Assert.NotNull(rst);
+			Assert.AreEqual(a,(decimal[])rst!);
+            CollectionAssert.AreEqual(a,(decimal[])rst!);
 			command=new EDBCommand("drop table tblTest;",con);
 
 			command.ExecuteNonQuery();
 
 		}
 
-		[Test, Ignore("Fix Array test")]
+		[Test]
 		public void FuncReturningArrayInteger()
 		{
             int[] a = {132,897};
@@ -277,7 +279,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[0].Value;
+            Object rst = command.Parameters["param"].Value!;
 			
 			Console.WriteLine(rst);
 			
@@ -288,7 +290,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		}
 
-		[Test, Ignore("Fix Array test")]
+		[Test]
 		public void FuncReturningArrayFloat()
 		{
 
@@ -308,7 +310,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[2].Value;
+            Object rst = command.Parameters[2].Value!;
 			
 			Console.WriteLine(rst);
 			
@@ -319,11 +321,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		}
 
-		[Test, Ignore("Fix Array test")]
+		[Test]
 		public void FuncReturningArrayDoublePrecision()
 		{
 
-            double[] a = { 555.43534543233, 344654.345344398 };
+            double[] a = { 555.43534543233, 344654.34534439785 };
 			EDBCommand command = new EDBCommand("CREATE TABLE tblTest4 (d1 double precision[],f2 double precision[]);", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest4 VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');", con);
@@ -339,17 +341,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[2].Value;
+            Object rst = command.Parameters["param"].Value!;
 			
 			Console.WriteLine(rst);
 			
-			Assert.AreEqual(a,(double[])rst);	
-			command=new EDBCommand("drop table tblTest4;",con);
+			Assert.AreEqual(a,(double[])rst);
+            CollectionAssert.AreEqual(a, (double[])rst);
+            command =new EDBCommand("drop table tblTest4;",con);
 			
 			command.ExecuteNonQuery();
 		}
 
-		[Test, Ignore("Fix Array test")]
+		[Test]
 		public void FuncReturningArrayBigInt()
 		{
 
@@ -369,12 +372,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             EDBDataReader Reader = command.ExecuteReader();
 
-            Object rst = command.Parameters[2].Value;
+            Object rst = command.Parameters["param"].Value!;
 
             Console.WriteLine(rst);
 			Reader.Close();
-			
-			Assert.AreEqual(a,(long)rst);	
+
+            Assert.AreEqual(a, (long[])rst);
+            CollectionAssert.AreEqual(a, (long[])rst);
 
 			command=new EDBCommand("drop table tblTest5;",con);
 			command.ExecuteNonQuery();

@@ -191,7 +191,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         /* To verify the sanity of functions without parameters*/
-        [Test]//, Ignore("Investigate Prompt")]
+        [Test]
         public void testemptyfunction()
         {
             using var con = OpenConnection();
@@ -228,7 +228,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         /* To verify the sanity of functions with three IN parameters*/
-        [Test, /*Ignore("Investigate Prompt")*/]
+        [Test]
         public void testThreeInArg()
         {
             using var con = OpenConnection();
@@ -261,7 +261,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, /*Ignore("Investigate Prompt")*/]
+        [Test]
         public void testThreeInArg_SELECT()
         {
             using var con = OpenConnection();
@@ -1519,7 +1519,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
         /* To verify the sanity of IN, INOUT and OUT parameters in functions with MONEY datatype */
-        [Test, /*Ignore("Investigate Prompt")*/]
+        [Test]
         public void testFunctionWithMONEYASInInoutOut()
         {
             using var con = OpenConnection();
@@ -1570,7 +1570,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         /* To verify the sanity of IN, INOUT and OUT parameters in functions with SMALLMONEY datatype */
-        [Test, /*Ignore("Investigate Prompt")*/]
+        [Test]
         public void testFunctionWithSmallMoneyASInInoutOut()
         {
             using var con = OpenConnection();
@@ -2403,7 +2403,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         #region TERSE
 
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
 
         public void TERSE_FUNC_NATIVE_INPUT_TYPES()
         {
@@ -2466,7 +2466,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, /*Ignore("Temp")*/]
+        [Test]
         public void TERSE_FUNC_NATIVE_OUTPUT_TYPES()
         {
             using var con = OpenConnection();
@@ -2802,7 +2802,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void TERSE_FUNC_DEFAULT_TYPES()
         {
 

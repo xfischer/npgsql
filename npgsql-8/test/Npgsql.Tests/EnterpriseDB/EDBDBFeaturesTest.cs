@@ -131,7 +131,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             cmd.ExecuteNonQuery(); 
         } 
 
-		[Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
+		[Test]
 		public void TestDefaultwithOneParameter()
 		{
 			con.Open();

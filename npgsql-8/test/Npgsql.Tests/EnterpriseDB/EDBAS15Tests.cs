@@ -281,7 +281,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         //--DB-2021 : Quick fix/Assess of ERROR row variable cannot be part of a multiple-item INTO list
-        [Test/*, Ignore("Custom types functionality has changed, need to re-look")*/]
+        [Test]
         public async Task DB_2021_RowVarMultipleItemINTOListTest()
         {
 #nullable disable

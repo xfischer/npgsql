@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.True(0 != oid, "Invalid OID value");
         }
 
-        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
+        [Test]
         public void CreateTest()
         {
             try

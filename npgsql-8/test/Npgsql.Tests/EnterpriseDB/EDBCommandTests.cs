@@ -41,6 +41,7 @@ using System.Threading;
 using System.Reflection;
 using System.Text;
 using NUnit.Framework.Constraints;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -245,7 +246,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, EDBExplicit("Needs to be fixed")]
         public void FunctionCallReturnSingleValue()
         {
             con.Open();
@@ -263,7 +264,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
 
-        [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Test, EDBExplicit("Needs to be fixed")]
         public void FunctionCallReturnSingleValueWithPrepare()
         {
             con.Open();

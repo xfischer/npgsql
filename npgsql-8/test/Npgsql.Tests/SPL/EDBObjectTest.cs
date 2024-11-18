@@ -301,7 +301,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void StaticMethodTest()
         {
             conn.ReloadTypes();
@@ -359,7 +358,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void ConstuctorMethodTest()
         {
             // call constructor method
@@ -409,7 +407,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void ReferencingAnObjectTest()
         {
             // This example displays the values assigned to the emp_obj_typ object.
@@ -463,7 +460,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void ReferencingAnObjectWithMemberMethodTest()
         {
             // You can duplicate the results of the previous anonymous block by calling
@@ -515,7 +511,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void ReferencingAnObjectDisplayDeptTest()
         {
             //This anonymous block creates an instance of dept_obj_type and calls
@@ -565,7 +560,6 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         }
 
         [Test]
-        //[Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
         public void ReferencingAnObjectGetDnameTest()
         {
             //You can call the static function defined in dept_obj_type

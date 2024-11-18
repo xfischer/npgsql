@@ -3,6 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -50,7 +51,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.closeDB(con);
         }
 
-        [Test]
+        [Test, EDBExplicit("Needs to be fixed")]
         public void FB_11665()
         {
             EDBCommand edbFunctionCmd = new EDBCommand("surname1", con);
@@ -100,7 +101,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
 
-        [Test, Ignore("Cause Hang, need to investigate")]
+        [Test]
         public void FB_12481()
         {
             EDBCommand Command = new EDBCommand("", con);

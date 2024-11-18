@@ -319,7 +319,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.dropTable(con, "testclob");
         }
 
-        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
+        [Test]
         public void ExecuteReaderClobTest()
         {
             using var con = OpenConnection();

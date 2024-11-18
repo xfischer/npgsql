@@ -1922,7 +1922,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
 
-        [Test, /*Ignore("MERGE_NEED_TO_EXPLORE")*/]
+        [Test]
         public async Task TERSE_PROC_NATIVE_INPUT_TYPES()
         {
             try

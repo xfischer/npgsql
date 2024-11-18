@@ -905,7 +905,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, Ignore("Investigate")]
+        [Test]
         public void PACKAGERefCursorProc()
         {
             EDBTransaction tran = con.BeginTransaction();
@@ -1052,7 +1052,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test]//, Ignore("Investigate default params failure")]
+        [Test]
         public void PACKAGEDefaultInAsReturn()
         {
 

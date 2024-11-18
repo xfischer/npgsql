@@ -131,7 +131,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureINTWithInInoutOut()
         {
             //////prereq
@@ -180,7 +180,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureINT4WithInInoutOut()
         {
             //////prereq
@@ -228,7 +228,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureINT8WithInInoutOut()
         {
             //////prereq
@@ -279,7 +279,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureNUMERICWithInInoutOut()
         {
             //////prereq
@@ -331,7 +331,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureFLOATWithInInoutOut()
         {
             //////prereq
@@ -378,7 +378,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureREALWithInInoutOut()
         {
             //////prereq
@@ -426,7 +426,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureCHARWithInInoutOut()
         {
             //////prereq
@@ -527,7 +527,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureVARCHARWithInInoutOut()
         {
             //////prereq
@@ -575,7 +575,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageProcedureTEXTCHARWithInInoutOut()
         {
             //////prereq
@@ -628,7 +628,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionINTWithInInoutOut()
         {
             //////prereq
@@ -680,7 +680,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionINT4WithInInoutOut()
         {
             //////prereq
@@ -730,7 +730,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionINT8WithInInoutOut()
         {
             //////prereq
@@ -780,7 +780,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionNUMERICWithInInoutOut()
         {
             //////prereq
@@ -832,7 +832,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionFLOATWithInInoutOut()
         {
             //////prereq
@@ -883,7 +883,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionREALWithInInoutOut()
         {
             //////prereq
@@ -989,7 +989,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionVARCHARWithInInoutOut()
         {
             //////prereq
@@ -1043,7 +1043,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////and with Parameter types IN, INOUT, OUT
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
-        [Test, /*Ignore("Investigate")*/]
+        [Test]
         public void testPackageFunctionTEXTWithInInoutOut()
         {
             //////prereq
@@ -1698,7 +1698,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, /*Ignore("Investigate exception caught")*/]
+        [Test]
         public void TERSE_PKG_FUNC_NATIVE_INPUT_TYPES_RETURN_INTEGER()
         {
             try
@@ -1766,7 +1766,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, /*Ignore("Investigate exception caught")*/]
+        [Test]
         public void TERSE_PKG_FUNC_NATIVE_INPUT_TYPES()
         {
             try

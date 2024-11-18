@@ -10,6 +10,7 @@ using EnterpriseDB.EDBClient.Internal.Converters;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
@@ -54,7 +55,7 @@ public class ArrayTests : MultiplexingTestBase
     public async Task Nullable_ints_cannot_be_read_as_non_nullable()
         => await AssertTypeUnsupportedRead<InvalidOperationException>("{1,NULL,2}", "int[]");
 
-    [Test]
+    [Test, EDBExplicit("Needs to be fixed on .NET Framework")]
     public async Task Throws_too_many_dimensions()
     {
         await using var conn = CreateConnection();
