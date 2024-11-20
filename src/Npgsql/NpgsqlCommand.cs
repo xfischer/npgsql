@@ -17,6 +17,7 @@ using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 using Npgsql.Internal;
 using Npgsql.Properties;
+using System.Collections;
 
 namespace Npgsql;
 
@@ -46,10 +47,7 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
     int? _timeout;
     internal NpgsqlParameterCollection? _parameters;
 
-    /// <summary>
-    /// Whether this <see cref="NpgsqlCommand" /> is wrapped by an <see cref="NpgsqlBatch" />.
-    /// </summary>
-    internal bool IsWrappedByBatch { get; }
+    internal NpgsqlBatch? WrappingBatch { get; }
 
     internal List<NpgsqlBatchCommand> InternalBatchCommands { get; }
 
@@ -142,13 +140,13 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
     /// <summary>
     /// Used when this <see cref="NpgsqlCommand"/> instance is wrapped inside an <see cref="NpgsqlBatch"/>.
     /// </summary>
-    internal NpgsqlCommand(int batchCommandCapacity, NpgsqlConnection? connection = null)
+    internal NpgsqlCommand(NpgsqlBatch batch, int batchCommandCapacity, NpgsqlConnection? connection = null)
     {
         GC.SuppressFinalize(this);
         InternalBatchCommands = new List<NpgsqlBatchCommand>(batchCommandCapacity);
         InternalConnection = connection;
         CommandType = CommandType.Text;
-        IsWrappedByBatch = true;
+        WrappingBatch = batch;
 
         // These can/should never be used in this mode
         _commandText = null!;
@@ -161,8 +159,8 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
     /// <summary>
     /// Used when this <see cref="NpgsqlCommand"/> instance is wrapped inside an <see cref="NpgsqlBatch"/>.
     /// </summary>
-    internal NpgsqlCommand(NpgsqlConnector connector, int batchCommandCapacity)
-        : this(batchCommandCapacity)
+    internal NpgsqlCommand(NpgsqlBatch batch, NpgsqlConnector connector, int batchCommandCapacity)
+        : this(batch, batchCommandCapacity)
         => _connector = connector;
 
     internal static NpgsqlCommand CreateCachedCommand(NpgsqlConnection connection)
@@ -183,7 +181,7 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
         get => _commandText;
         set
         {
-            Debug.Assert(!IsWrappedByBatch);
+            Debug.Assert(WrappingBatch is null);
 
             if (State != CommandState.Idle)
                 ThrowHelper.ThrowInvalidOperationException("An open data reader exists for this command.");
@@ -197,7 +195,7 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
 
     string GetBatchFullCommandText()
     {
-        Debug.Assert(IsWrappedByBatch);
+        Debug.Assert(WrappingBatch is not null);
         if (InternalBatchCommands.Count == 0)
             return string.Empty;
         if (InternalBatchCommands.Count == 1)
@@ -424,7 +422,7 @@ public class NpgsqlCommand : DbCommand, ICloneable, IComponent
     /// Gets the <see cref="NpgsqlParameterCollection"/>.
     /// </summary>
     /// <value>The parameters of the SQL statement or function (stored procedure). The default is an empty collection.</value>
-    public new NpgsqlParameterCollection Parameters => _parameters ??= new();
+    public new NpgsqlParameterCollection Parameters => _parameters ??= [];
 
     #endregion
 
@@ -558,7 +556,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         {
             LogMessages.DerivingParameters(connector.CommandLogger, CommandText, connector.Id);
 
-            if (IsWrappedByBatch)
+            if (WrappingBatch is not null)
                 foreach (var batchCommand in InternalBatchCommands)
                     connector.SqlQueryParser.ParseRawQuery(batchCommand, connector.UseConformingStrings, deriveParameters: true);
             else
@@ -671,7 +669,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         var needToPrepare = false;
 
-        if (IsWrappedByBatch)
+        if (WrappingBatch is not null)
         {
             foreach (var batchCommand in InternalBatchCommands)
             {
@@ -1031,7 +1029,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         static void ValidateParameterCount(NpgsqlBatchCommand batchCommand)
         {
-            if (batchCommand.HasParameters && batchCommand.PositionalParameters.Count > ushort.MaxValue)
+            if (batchCommand is { HasParameters: true, PositionalParameters.Count: > ushort.MaxValue })
                 ThrowHelper.ThrowNpgsqlException("A statement cannot have more than 65535 parameters");
         }
     }
@@ -1083,7 +1081,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         i == 0 ? UnknownResultTypeList : null,
                         async, cancellationToken).ConfigureAwait(false);
 
-                    await connector.WriteDescribe(StatementOrPortal.Portal, Array.Empty<byte>(), async, cancellationToken).ConfigureAwait(false);
+                    await connector.WriteDescribe(StatementOrPortal.Portal, [], async, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -1154,8 +1152,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
             var batchCommand = InternalBatchCommands[i];
 
-            await connector.WriteParse(batchCommand.FinalCommandText!, Array.Empty<byte>(), NpgsqlBatchCommand.EmptyParameters, async, cancellationToken).ConfigureAwait(false);
-            await connector.WriteDescribe(StatementOrPortal.Statement, Array.Empty<byte>(), async, cancellationToken).ConfigureAwait(false);
+            await connector.WriteParse(batchCommand.FinalCommandText!, [], NpgsqlBatchCommand.EmptyParameters, async, cancellationToken).ConfigureAwait(false);
+            await connector.WriteDescribe(StatementOrPortal.Statement, [], async, cancellationToken).ConfigureAwait(false);
         }
 
         await connector.WriteSync(async, cancellationToken).ConfigureAwait(false);
@@ -1294,7 +1292,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     async ValueTask<object?> ExecuteScalar(bool async, CancellationToken cancellationToken)
     {
         var behavior = CommandBehavior.SingleRow;
-        if (IsWrappedByBatch || _parameters?.HasOutputParameters != true)
+        if (WrappingBatch is not null || _parameters?.HasOutputParameters != true)
             behavior |= CommandBehavior.SequentialAccess;
 
         var reader = await ExecuteReader(async, behavior, cancellationToken).ConfigureAwait(false);
@@ -1414,7 +1412,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     {
                     case true:
                         Debug.Assert(_connectorPreparedOn != null);
-                        if (IsWrappedByBatch)
+                        if (WrappingBatch is not null)
                         {
                             foreach (var batchCommand in InternalBatchCommands)
                             {
@@ -1449,7 +1447,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     case false:
                         var numPrepared = 0;
 
-                        if (IsWrappedByBatch)
+                        if (WrappingBatch is not null)
                         {
                             for (var i = 0; i < InternalBatchCommands.Count; i++)
                             {
@@ -1505,7 +1503,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     NpgsqlEventSource.Log.CommandStart(CommandText);
                     startTimestamp = connector.DataSource.MetricsReporter.ReportCommandStart();
-                    TraceCommandStart(connector.Settings);
+                    TraceCommandStart(connector.Settings, connector.DataSource.Configuration.TracingOptions);
                     TraceCommandEnrich(connector);
 
                     // We do not wait for the entire send to complete before proceeding to reading -
@@ -1540,7 +1538,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 else
                     reader.NextResult();
 
-                TraceReceivedFirstResponse();
+                TraceReceivedFirstResponse(connector.DataSource.Configuration.TracingOptions);
 
                 return reader;
             }
@@ -1559,7 +1557,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     ThrowHelper.ThrowNotSupportedException("Synchronous command execution is not supported when multiplexing is on");
                 }
 
-                if (IsWrappedByBatch)
+                if (WrappingBatch is not null)
                 {
                     foreach (var batchCommand in InternalBatchCommands)
                     {
@@ -1575,7 +1573,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 State = CommandState.InProgress;
 
-                TraceCommandStart(conn.Settings);
+                TraceCommandStart(conn.Settings, conn.NpgsqlDataSource.Configuration.TracingOptions);
 
                 // TODO: Experiment: do we want to wait on *writing* here, or on *reading*?
                 // Previous behavior was to wait on reading, which throw the exception from ExecuteReader (and not from
@@ -1712,23 +1710,48 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     #region Tracing
 
-    internal void TraceCommandStart(NpgsqlConnectionStringBuilder settings)
+    internal void TraceCommandStart(NpgsqlConnectionStringBuilder settings, NpgsqlTracingOptions tracingOptions)
     {
         Debug.Assert(CurrentActivity is null);
+
         if (NpgsqlActivitySource.IsEnabled)
-            CurrentActivity = NpgsqlActivitySource.CommandStart(settings, IsWrappedByBatch ? GetBatchFullCommandText() : CommandText, CommandType);
+        {
+            var enableTracing = WrappingBatch is not null
+                ? tracingOptions.BatchFilter?.Invoke(WrappingBatch) ?? true
+                : tracingOptions.CommandFilter?.Invoke(this) ?? true;
+
+            var spanName = WrappingBatch is not null
+                ? tracingOptions.BatchSpanNameProvider?.Invoke(WrappingBatch)
+                : tracingOptions.CommandSpanNameProvider?.Invoke(this);
+
+            if (enableTracing)
+            {
+                CurrentActivity = NpgsqlActivitySource.CommandStart(
+                    settings,
+                    WrappingBatch is not null ? GetBatchFullCommandText() : CommandText,
+                    CommandType,
+                    spanName);
+            }
+        }
     }
 
     internal void TraceCommandEnrich(NpgsqlConnector connector)
     {
         if (CurrentActivity is not null)
+        {
             NpgsqlActivitySource.Enrich(CurrentActivity, connector);
+            var tracingOptions = connector.DataSource.Configuration.TracingOptions;
+            if (WrappingBatch is not null)
+                tracingOptions.BatchEnrichmentCallback?.Invoke(CurrentActivity, WrappingBatch);
+            else
+                tracingOptions.CommandEnrichmentCallback?.Invoke(CurrentActivity, this);
+        }
     }
 
-    internal void TraceReceivedFirstResponse()
+    internal void TraceReceivedFirstResponse(NpgsqlTracingOptions tracingOptions)
     {
         if (CurrentActivity is not null)
-            NpgsqlActivitySource.ReceivedFirstResponse(CurrentActivity);
+            NpgsqlActivitySource.ReceivedFirstResponse(CurrentActivity, tracingOptions);
     }
 
     internal void TraceCommandStop()
@@ -1812,7 +1835,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     LogMessages.ExecutingCommandWithParameters(
                         logger,
                         singleCommand.FinalCommandText!,
-                        ParametersDbNullAsString(singleCommand),
+                        GetParametersForLogging(singleCommand),
                         connector.Id);
                 }
                 else
@@ -1820,7 +1843,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     LogMessages.CommandExecutionCompletedWithParameters(
                         logger,
                         singleCommand.FinalCommandText!,
-                        ParametersDbNullAsString(singleCommand),
+                        GetParametersForLogging(singleCommand),
                         connector.QueryLogStopWatch.ElapsedMilliseconds,
                         connector.Id);
                 }
@@ -1839,7 +1862,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             {
                 var commands = new (string, object[])[InternalBatchCommands.Count];
                 for (var i = 0; i < InternalBatchCommands.Count; i++)
-                    commands[i] = (InternalBatchCommands[i].FinalCommandText!, ParametersDbNullAsString(InternalBatchCommands[i]));
+                    commands[i] = (InternalBatchCommands[i].FinalCommandText!, GetParametersForLogging(InternalBatchCommands[i]));
 
                 if (executing)
                     LogMessages.ExecutingBatchWithParameters(logger, commands, connector.Id);
@@ -1858,15 +1881,53 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
         }
 
-        object[] ParametersDbNullAsString(NpgsqlBatchCommand c)
+        static object[] GetParametersForLogging(NpgsqlBatchCommand c)
         {
             var positionalParameters = c.CurrentParametersReadOnly;
             var parameters = new object[positionalParameters.Count];
             for (var i = 0; i < positionalParameters.Count; i++)
-                parameters[i] = positionalParameters[i].Value == DBNull.Value ? "NULL" : positionalParameters[i].Value!;
+            {
+                parameters[i] = GetParameterForLogging(positionalParameters[i].Value);
+            }
             return parameters;
+
+            object GetParameterForLogging(object? value)
+            {
+                return value switch
+                {
+                    DBNull or null => "NULL",
+                    IEnumerable enumerable and not string => GetEnumerableForLogging(enumerable),
+                    _ => value
+                };
+
+                string GetEnumerableForLogging(IEnumerable enumerable)
+                {
+                    var vsb = new StringBuilder(256);
+                    var count = 0;
+                    vsb.Append('[');
+                    foreach (var e in enumerable)
+                    {
+                        if (count > 9)
+                        {
+                            vsb.Append(", ...");
+                            break;
+                        }
+
+                        if (count > 0)
+                        {
+                            vsb.Append(", ");
+                        }
+
+                        vsb.Append(GetParameterForLogging(e));
+                        count++;
+                    }
+
+                    vsb.Append(']');
+                    return vsb.ToString();
+                }
+            }
         }
-    }
+   }
 
     /// <summary>
     /// Create a new command based on this one.

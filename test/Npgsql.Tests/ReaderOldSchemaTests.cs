@@ -11,7 +11,7 @@ namespace Npgsql.Tests;
 /// This tests the .NET Framework DbDataReader schema/metadata API, which returns DataTable.
 /// For the new CoreCLR API, see <see cref="ReaderNewSchemaTests"/>.
 /// </summary>
-public class ReaderOldSchemaTests : SyncOrAsyncTestBase
+public class ReaderOldSchemaTests(SyncOrAsync syncOrAsync) : SyncOrAsyncTestBase(syncOrAsync)
 {
     [Test]
     public async Task Primary_key_composite()
@@ -55,7 +55,7 @@ CREATE TABLE {table} (
     public async Task IsAutoIncrement()
     {
         await using var conn = await OpenConnectionAsync();
-        IgnoreOnRedshift(conn, "Serial columns not supported on Redshift");
+        await IgnoreOnRedshift(conn, "Serial columns not supported on Redshift");
 
         var table = await CreateTempTable(conn, "serial SERIAL, int INT");
 
@@ -72,7 +72,7 @@ CREATE TABLE {table} (
     public async Task IsAutoIncrement_identity()
     {
         await using var conn = await OpenConnectionAsync();
-        IgnoreOnRedshift(conn, "Serial columns not supported on Redshift");
+        await IgnoreOnRedshift(conn, "Serial columns not supported on Redshift");
         MinimumPgVersion(conn, "10.0", "IDENTITY introduced in PostgreSQL 10");
 
         var table =
@@ -90,7 +90,7 @@ CREATE TABLE {table} (
     public async Task IsIdentity()
     {
         await using var conn = await OpenConnectionAsync();
-        IgnoreOnRedshift(conn, "Identity columns not support on Redshift");
+        await IgnoreOnRedshift(conn, "Identity columns not support on Redshift");
         MinimumPgVersion(conn, "10.0", "IDENTITY introduced in PostgreSQL 10");
         var table = await CreateTempTable(
             conn,
@@ -239,8 +239,6 @@ SELECT 1 AS some_other_column, 2";
         Assert.That(dt.Rows[2]["BaseColumnName"].ToString(), Is.EqualTo("date"));
         Assert.That(dt.Rows[2]["ColumnName"].ToString(), Is.EqualTo("date"));
     }
-
-    public ReaderOldSchemaTests(SyncOrAsync syncOrAsync) : base(syncOrAsync) { }
 
     async Task<DataTable?> GetSchemaTable(NpgsqlDataReader dr) => IsAsync ? await dr.GetSchemaTableAsync() : dr.GetSchemaTable();
 }

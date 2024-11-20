@@ -1734,9 +1734,7 @@ public sealed class NpgsqlConnection : DbConnection, ICloneable, IComponent
     /// </param>
     /// <returns>The collection specified.</returns>
     public override Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
-    {
-        return NpgsqlSchema.GetSchema(async: true, this, collectionName, restrictions, cancellationToken);
-    }
+        => NpgsqlSchema.GetSchema(async: true, this, collectionName, restrictions, cancellationToken);
 
     #endregion Schema operations
 
@@ -1899,7 +1897,7 @@ public sealed class NpgsqlConnection : DbConnection, ICloneable, IComponent
     /// Flushes the type cache for this connection's connection string and reloads the types for this connection only.
     /// Type changes will appear for other connections only after they are re-opened from the pool.
     /// </summary>
-    public async Task ReloadTypesAsync()
+    public async Task ReloadTypesAsync(CancellationToken cancellationToken = default)
     {
         CheckReady();
 
@@ -1910,7 +1908,7 @@ public sealed class NpgsqlConnection : DbConnection, ICloneable, IComponent
             NpgsqlTimeout.Infinite,
             forceReload: true,
             async: true,
-            CancellationToken.None).ConfigureAwait(false);
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1967,11 +1965,9 @@ enum ConnectorBindingScope
     Temporary
 }
 
-readonly struct EndScopeDisposable : IDisposable
+readonly struct EndScopeDisposable(NpgsqlConnection connection) : IDisposable
 {
-    readonly NpgsqlConnection _connection;
-    public EndScopeDisposable(NpgsqlConnection connection) => _connection = connection;
-    public void Dispose() => _connection.EndBindingScope(ConnectorBindingScope.Temporary);
+    public void Dispose() => connection.EndBindingScope(ConnectorBindingScope.Temporary);
 }
 
 #region Delegates

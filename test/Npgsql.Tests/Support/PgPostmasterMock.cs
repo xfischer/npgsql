@@ -21,7 +21,7 @@ class PgPostmasterMock : IAsyncDisposable
     static readonly Encoding RelaxedEncoding = NpgsqlWriteBuffer.RelaxedUTF8Encoding;
 
     readonly Socket _socket;
-    readonly List<PgServerMock> _allServers = new();
+    readonly List<PgServerMock> _allServers = [];
     bool _acceptingClients;
     Task? _acceptClientsTask;
     int _processIdCounter;
@@ -80,17 +80,20 @@ class PgPostmasterMock : IAsyncDisposable
         Port = localEndPoint.Port;
         connectionStringBuilder.Host = Host;
         connectionStringBuilder.Port = Port;
+#pragma warning disable CS0618 // Type or member is obsolete
         connectionStringBuilder.ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading;
+#pragma warning restore CS0618 // Type or member is obsolete
         ConnectionString = connectionStringBuilder.ConnectionString;
 
         _socket.Listen(5);
     }
 
-    public NpgsqlDataSourceBuilder GetDataSourceBuilder()
-        => new(ConnectionString);
-
-    public NpgsqlDataSource CreateDataSource()
-        => NpgsqlDataSource.Create(ConnectionString);
+    public NpgsqlDataSource CreateDataSource(Action<NpgsqlDataSourceBuilder>? configure = null)
+    {
+        var builder = new NpgsqlDataSourceBuilder(ConnectionString);
+        configure?.Invoke(builder);
+        return builder.Build();
+    }
 
     void AcceptClients()
     {

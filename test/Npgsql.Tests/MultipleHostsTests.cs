@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -20,10 +19,12 @@ using TransactionStatus = Npgsql.Internal.TransactionStatus;
 
 namespace Npgsql.Tests;
 
+#pragma warning disable CS0618
+
 public class MultipleHostsTests : TestBase
 {
     static readonly object[] MyCases =
-    {
+    [
         new object[] { TargetSessionAttributes.Standby,        new[] { Primary,         Standby         }, 1 },
         new object[] { TargetSessionAttributes.Standby,        new[] { PrimaryReadOnly, Standby         }, 1 },
         new object[] { TargetSessionAttributes.PreferStandby,  new[] { Primary,         Standby         }, 1 },
@@ -41,7 +42,7 @@ public class MultipleHostsTests : TestBase
         new object[] { TargetSessionAttributes.ReadWrite,      new[] { PrimaryReadOnly, Primary         }, 1 },
         new object[] { TargetSessionAttributes.ReadOnly,       new[] { Primary,         Standby         }, 1 },
         new object[] { TargetSessionAttributes.ReadOnly,       new[] { PrimaryReadOnly, Standby         }, 0 }
-    };
+    ];
 
     [Test]
     [TestCaseSource(nameof(MyCases))]
@@ -615,10 +616,11 @@ public class MultipleHostsTests : TestBase
     public async Task Offline_state_on_query_execution_TimeoutException()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = 1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = 1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -641,10 +643,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_TimeoutException_with_disabled_cancellation()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = -1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = -1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -667,10 +670,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_cancellation_with_disabled_cancellation_timeout()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 30;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = -1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 30;
+            builder.ConnectionStringBuilder.CancellationTimeout = -1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -697,10 +701,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_TimeoutException_with_cancellation_failure()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = 0;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = 0;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
 
@@ -1166,15 +1171,11 @@ public class MultipleHostsTests : TestBase
     static string MultipleHosts(params PgPostmasterMock[] postmasters)
         => string.Join(",", postmasters.Select(p => $"{p.Host}:{p.Port}"));
 
-    class DisposableWrapper : IAsyncDisposable
+    class DisposableWrapper(IEnumerable<IAsyncDisposable> disposables) : IAsyncDisposable
     {
-        readonly IEnumerable<IAsyncDisposable> _disposables;
-
-        public DisposableWrapper(IEnumerable<IAsyncDisposable> disposables) => _disposables = disposables;
-
         public async ValueTask DisposeAsync()
         {
-            foreach (var disposable in _disposables)
+            foreach (var disposable in disposables)
                 await disposable.DisposeAsync();
         }
     }

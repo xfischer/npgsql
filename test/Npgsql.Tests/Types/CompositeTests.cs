@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Npgsql.PostgresTypes;
@@ -9,7 +10,7 @@ using static Npgsql.Tests.TestUtil;
 
 namespace Npgsql.Tests.Types;
 
-public class CompositeTests : MultiplexingTestBase
+public class CompositeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     [Test]
     public async Task Basic()
@@ -305,7 +306,7 @@ CREATE TYPE {compositeType} AS (ints int4[])");
 
         await AssertType(
             connection,
-            new SomeCompositeWithArray { Ints = new[] { 1, 2, 3, 4 } },
+            new SomeCompositeWithArray { Ints = [1, 2, 3, 4] },
             @"(""{1,2,3,4}"")",
             compositeType,
             npgsqlDbType: null,
@@ -339,6 +340,29 @@ CREATE TYPE {compositeType} AS (enum_value {enumType});");
     }
 
     [Test]
+    public async Task Composite_containing_IPAddress()
+    {
+        await using var adminConnection = await OpenConnectionAsync();
+        var compositeType = await GetTempTypeName(adminConnection);
+
+        await adminConnection.ExecuteNonQueryAsync($@"
+CREATE TYPE {compositeType} AS (address inet)");
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.MapComposite<SomeCompositeWithIPAddress>(compositeType);
+        await using var dataSource = dataSourceBuilder.Build();
+        await using var connection = await dataSource.OpenConnectionAsync();
+
+        await AssertType(
+            connection,
+            new SomeCompositeWithIPAddress { Address = IPAddress.Loopback },
+            @"(127.0.0.1)",
+            compositeType,
+            npgsqlDbType: null,
+            comparer: (actual, expected) => actual.Address!.Equals(expected.Address));
+    }
+
+    [Test]
     public async Task Composite_containing_converter_resolver_type()
     {
         await using var adminConnection = await OpenConnectionAsync();
@@ -355,7 +379,9 @@ CREATE TYPE {compositeType} AS (date_times timestamp[])");
 
         await AssertType(
             connection,
-            new SomeCompositeWithConverterResolverType { DateTimes = new [] { new DateTime(DateTime.UnixEpoch.Ticks, DateTimeKind.Unspecified), new DateTime(DateTime.UnixEpoch.Ticks, DateTimeKind.Unspecified).AddDays(1) } },
+            new SomeCompositeWithConverterResolverType { DateTimes = [new DateTime(DateTime.UnixEpoch.Ticks, DateTimeKind.Unspecified), new DateTime(DateTime.UnixEpoch.Ticks, DateTimeKind.Unspecified).AddDays(1)
+                ]
+            },
             """("{""1970-01-01 00:00:00"",""1970-01-02 00:00:00""}")""",
             compositeType,
             npgsqlDbType: null,
@@ -379,7 +405,7 @@ CREATE TYPE {compositeType} AS (date_times timestamp[])");
 
         Assert.ThrowsAsync<ArgumentException>(() => AssertType(
             connection,
-            new SomeCompositeWithConverterResolverType { DateTimes = new[] { DateTime.UnixEpoch } }, // UTC DateTime
+            new SomeCompositeWithConverterResolverType { DateTimes = [DateTime.UnixEpoch] }, // UTC DateTime
             """("{""1970-01-01 01:00:00"",""1970-01-02 01:00:00""}")""",
             compositeType,
             npgsqlDbType: null,
@@ -394,8 +420,7 @@ CREATE TYPE {compositeType} AS (date_times timestamp[])");
 
         var dataSourceBuilder = CreateDataSourceBuilder();
         dataSourceBuilder.MapComposite<SomeComposite>(table);
-        if (enabled)
-            dataSourceBuilder.ConnectionStringBuilder.LoadTableComposites = true;
+        dataSourceBuilder.ConfigureTypeLoading(b => b.EnableTableCompositesLoading(enabled));
         await using var dataSource = dataSourceBuilder.Build();
         await using var connection = await dataSource.OpenConnectionAsync();
 
@@ -428,7 +453,7 @@ CREATE TYPE {compositeType} AS (date_times timestamp[])");
         await adminConnection.ExecuteNonQueryAsync($"ALTER TABLE {table} DROP COLUMN bar;");
 
         var dataSourceBuilder = CreateDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.LoadTableComposites = true;
+        dataSourceBuilder.ConfigureTypeLoading(b => b.EnableTableCompositesLoading());
         dataSourceBuilder.MapComposite<SomeComposite>(table);
         await using var dataSource = dataSourceBuilder.Build();
         await using var connection = await dataSource.OpenConnectionAsync();
@@ -633,25 +658,21 @@ CREATE TYPE {type2} AS (comp {type1}, comps {type1}[]);");
 
     #region Test Types
 
-    readonly struct DuplicateOneLongOneBool
+#pragma warning disable CS9113
+    readonly struct DuplicateOneLongOneBool(bool boolean, [PgName("boolean")] int @bool)
     {
-        public DuplicateOneLongOneBool(bool boolean, [PgName("boolean")]int @bool)
-        {
-        }
-
         [PgName("long")]
         public long LongValue { get; }
 
         [PgName("boolean")]
         public bool BooleanValue { get; }
     }
+#pragma warning restore CS9113
 
     readonly struct MissingSetterOneLongOneBool
     {
         public MissingSetterOneLongOneBool(long @long)
-        {
-            LongValue = @long;
-        }
+            => LongValue = @long;
 
         public MissingSetterOneLongOneBool(bool boolean, [PgName("boolean")]int @bool)
         {
@@ -671,9 +692,7 @@ CREATE TYPE {type2} AS (comp {type1}, comps {type1}[]);");
         }
 
         public OneLongOneBool(long @long)
-        {
-            LongValue = @long;
-        }
+            => LongValue = @long;
 
         public OneLongOneBool(double other)
         {
@@ -726,6 +745,11 @@ CREATE TYPE {type2} AS (comp {type1}, comps {type1}[]);");
         public TestEnum EnumValue { get; set; }
     }
 
+    class SomeCompositeWithIPAddress
+    {
+        public IPAddress? Address { get; set; }
+    }
+
     class SomeCompositeWithConverterResolverType
     {
         public DateTime[]? DateTimes { get; set; }
@@ -754,8 +778,6 @@ CREATE TYPE {type2} AS (comp {type1}, comps {type1}[]);");
     {
         public int? Foo { get; set; }
     }
-
-    public CompositeTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
 
     #endregion
 }

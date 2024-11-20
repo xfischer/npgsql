@@ -1,5 +1,3 @@
-#if NET7_0_OR_GREATER
-
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -564,11 +562,9 @@ Start formatting event queue, going to sleep a bit for late events
         }
     }
 
-    public class TransactionEvent
+    public class TransactionEvent(string message)
     {
-        public TransactionEvent(string message)
-            => Message = $"{message} (TId {Thread.CurrentThread.ManagedThreadId})";
-        public string Message { get; }
+        public string Message { get; } = $"{message} (TId {Thread.CurrentThread.ManagedThreadId})";
     }
 
     #endregion Utilities
@@ -635,5 +631,3 @@ CREATE TABLE {tableName} ({columns})");
 
     #endregion
 }
-
-#endif

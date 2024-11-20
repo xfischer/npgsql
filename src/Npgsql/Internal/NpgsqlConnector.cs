@@ -60,9 +60,7 @@ public sealed partial class NpgsqlConnector
     ProvidePasswordCallback? ProvidePasswordCallback { get; }
 #pragma warning restore CS0618
 
-#if NET7_0_OR_GREATER
     Action<NegotiateAuthenticationClientOptions>? NegotiateOptionsCallback { get; }
-#endif
 
     public Encoding TextEncoding { get; private set; } = default!;
 
@@ -177,7 +175,7 @@ public sealed partial class NpgsqlConnector
     /// <summary>
     /// Holds all run-time parameters in raw, binary format for efficient handling without allocations.
     /// </summary>
-    readonly List<(byte[] Name, byte[] Value)> _rawParameters = new();
+    readonly List<(byte[] Name, byte[] Value)> _rawParameters = [];
 
     /// <summary>
     /// If this connector was broken, this contains the exception that caused the break.
@@ -504,7 +502,7 @@ public sealed partial class NpgsqlConnector
             SerializerOptions = DataSource.SerializerOptions;
             DatabaseInfo = DataSource.DatabaseInfo;
 
-            if (Settings.Pooling && !Settings.Multiplexing && !Settings.NoResetOnClose && DatabaseInfo.SupportsDiscard)
+            if (Settings.Pooling && Settings is { Multiplexing: false, NoResetOnClose: false } && DatabaseInfo.SupportsDiscard)
             {
                 _sendResetOnClose = true;
                 GenerateResetMessage();
@@ -913,16 +911,6 @@ public sealed partial class NpgsqlConnector
 
             var host = Host;
 
-#if !NET8_0_OR_GREATER
-            // If the host is a valid IP address - replace it with an empty string
-            // We do that because .NET uses targetHost argument to send SNI to the server
-            // RFC explicitly prohibits sending an IP address so some servers might fail
-            // This was already fixed for .NET 8
-            // See #5543 for discussion
-            if (IPAddress.TryParse(host, out _))
-                host = string.Empty;
-#endif
-
             timeout.CheckAndApply(this);
 
             var sslStream = new SslStream(_stream, leaveInnerStreamOpen: false);
@@ -934,10 +922,7 @@ public sealed partial class NpgsqlConnector
                 EnabledSslProtocols = SslProtocols.None,
                 CertificateRevocationCheckMode = checkCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.Offline,
                 RemoteCertificateValidationCallback = certificateValidationCallback,
-                ApplicationProtocols = new List<SslApplicationProtocol>
-                {
-                    _alpnProtocol
-                }
+                ApplicationProtocols = [_alpnProtocol]
             };
 
             if (SslClientAuthenticationOptionsCallback is not null)
@@ -1148,7 +1133,7 @@ public sealed partial class NpgsqlConnector
 
         if (Settings.TcpKeepAlive)
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-        if (Settings.TcpKeepAliveInterval > 0 && Settings.TcpKeepAliveTime == 0)
+        if (Settings is { TcpKeepAliveInterval: > 0, TcpKeepAliveTime: 0 })
             throw new ArgumentException("If TcpKeepAliveInterval is defined, TcpKeepAliveTime must be defined as well");
         if (Settings.TcpKeepAliveTime > 0)
         {
@@ -1198,7 +1183,7 @@ public sealed partial class NpgsqlConnector
 
                     // We have a resultset for the command - hand back control to the command (which will
                     // return it to the user)
-                    command.TraceReceivedFirstResponse();
+                    command.TraceReceivedFirstResponse(DataSource.Configuration.TracingOptions);
                     ReaderCompleted.Reset();
                     command.ExecutionCompletion.SetResult(this);
 
@@ -1962,29 +1947,21 @@ public sealed partial class NpgsqlConnector
         return new(this, registration, currentUserCancellationToken, currentAttemptPostgresCancellation);
     }
 
-    internal readonly struct NestedCancellableScope : IDisposable
+    internal readonly struct NestedCancellableScope(
+        NpgsqlConnector connector,
+        CancellationTokenRegistration registration,
+        CancellationToken previousCancellationToken,
+        bool previousAttemptPostgresCancellation)
+        : IDisposable
     {
-        readonly NpgsqlConnector _connector;
-        readonly CancellationTokenRegistration _registration;
-        readonly CancellationToken _previousCancellationToken;
-        readonly bool _previousAttemptPostgresCancellation;
-
-        public NestedCancellableScope(NpgsqlConnector connector, CancellationTokenRegistration registration, CancellationToken previousCancellationToken, bool previousAttemptPostgresCancellation)
-        {
-            _connector = connector;
-            _registration = registration;
-            _previousCancellationToken = previousCancellationToken;
-            _previousAttemptPostgresCancellation = previousAttemptPostgresCancellation;
-        }
-
         public void Dispose()
         {
-            if (_connector is null)
+            if (connector is null)
                 return;
 
-            _connector.UserCancellationToken = _previousCancellationToken;
-            _connector.AttemptPostgresCancellation = _previousAttemptPostgresCancellation;
-            _registration.Dispose();
+            connector.UserCancellationToken = previousCancellationToken;
+            connector.AttemptPostgresCancellation = previousAttemptPostgresCancellation;
+            registration.Dispose();
         }
     }
 
@@ -2012,7 +1989,7 @@ public sealed partial class NpgsqlConnector
             // therefore vulnerable to the race condition in #615.
             if (copyOperation is NpgsqlBinaryImporter ||
                 copyOperation is NpgsqlCopyTextWriter ||
-                copyOperation is NpgsqlRawCopyStream rawCopyStream && rawCopyStream.CanWrite)
+                copyOperation is NpgsqlRawCopyStream { CanWrite: true })
             {
                 try
                 {
@@ -2687,7 +2664,7 @@ public sealed partial class NpgsqlConnector
                 {
                     msg = await ReadMessageWithNotifications(async).ConfigureAwait(false);
                 }
-                catch (Exception e) when (e is OperationCanceledException || e is NpgsqlException npgEx && npgEx.InnerException is TimeoutException)
+                catch (Exception e) when (e is OperationCanceledException || e is NpgsqlException { InnerException: TimeoutException })
                 {
                     // We're somewhere in the middle of a reading keepalive messages
                     // Breaking the connection, as we've lost protocol sync
@@ -2783,7 +2760,7 @@ public sealed partial class NpgsqlConnector
 
         for (var i = 0; i < _rawParameters.Count; i++)
         {
-            (var currentName, var currentValue) = _rawParameters[i];
+            var (currentName, currentValue) = _rawParameters[i];
             if (incomingName.SequenceEqual(currentName))
             {
                 if (incomingValue.SequenceEqual(currentValue))

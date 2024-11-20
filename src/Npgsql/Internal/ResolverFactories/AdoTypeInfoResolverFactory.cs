@@ -38,13 +38,12 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
 
         static PgTypeInfo? GetEnumTypeInfo(Type? type, DataTypeName dataTypeName, PgSerializerOptions options)
         {
-            if (type is not null && type != typeof(string))
+            if (type is not null && type != typeof(object) && type != typeof(string)
+                || options.DatabaseInfo.GetPostgresType(dataTypeName) is not PostgresEnumType)
                 return null;
 
-            if (options.DatabaseInfo.GetPostgresType(dataTypeName) is not PostgresEnumType)
-                return null;
-
-            return new PgTypeInfo(options, new StringTextConverter(options.TextEncoding), dataTypeName);
+            return new PgTypeInfo(options, new StringTextConverter(options.TextEncoding), dataTypeName,
+                unboxedType: type == typeof(object) ? typeof(string) : null);
         }
 
         static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings)
@@ -173,7 +172,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Varbit
             mappings.AddType<object>(DataTypeNames.Varbit,
                 static (options, mapping, _) => mapping.CreateInfo(options,
-                    new PolymorphicBitStringConverterResolver(options.GetCanonicalTypeId(DataTypeNames.Varbit)), supportsWriting: false));
+                    new PolymorphicBitStringConverterResolver(options.GetCanonicalTypeId(DataTypeNames.Varbit)), includeDataTypeName: true, supportsWriting: false));
             mappings.AddType<BitArray>(DataTypeNames.Varbit,
                 static (options, mapping, _) => mapping.CreateInfo(options, new BitArrayBitStringConverter()), isDefault: true);
             mappings.AddStructType<bool>(DataTypeNames.Varbit,
@@ -184,7 +183,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Bit
             mappings.AddType<object>(DataTypeNames.Bit,
                 static (options, mapping, _) => mapping.CreateInfo(options,
-                    new PolymorphicBitStringConverterResolver(options.GetCanonicalTypeId(DataTypeNames.Bit)), supportsWriting: false));
+                    new PolymorphicBitStringConverterResolver(options.GetCanonicalTypeId(DataTypeNames.Bit)), includeDataTypeName: true, supportsWriting: false));
             mappings.AddType<BitArray>(DataTypeNames.Bit,
                 static (options, mapping, _) => mapping.CreateInfo(options, new BitArrayBitStringConverter()), isDefault: true);
             mappings.AddStructType<bool>(DataTypeNames.Bit,
@@ -202,9 +201,9 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverStructType<DateTime>(DataTypeNames.Timestamp,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateResolver(options, options.GetCanonicalTypeId(DataTypeNames.TimestampTz), options.GetCanonicalTypeId(DataTypeNames.Timestamp),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch), isDefault: true);
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName), isDefault: true);
             }
             mappings.AddStructType<long>(DataTypeNames.Timestamp,
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int8Converter<long>()));
@@ -221,9 +220,9 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverStructType<DateTime>(DataTypeNames.TimestampTz,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateResolver(options, options.GetCanonicalTypeId(DataTypeNames.TimestampTz), options.GetCanonicalTypeId(DataTypeNames.Timestamp),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch), isDefault: true);
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName), isDefault: true);
                 mappings.AddStructType<DateTimeOffset>(DataTypeNames.TimestampTz,
                     static (options, mapping, _) => mapping.CreateInfo(options, new DateTimeOffsetConverter(options.EnableDateTimeInfinityConversions)));
             }
@@ -511,7 +510,8 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
 
         static PgTypeInfo? GetEnumArrayTypeInfo(Type? elementType, PostgresType pgElementType, Type? type, DataTypeName dataTypeName, PgSerializerOptions options)
         {
-            if ((type != typeof(object) && elementType is not null && elementType != typeof(string)) || pgElementType is not PostgresEnumType enumType)
+            if ((type is not null && type != typeof(object) && elementType != typeof(string))
+                || pgElementType is not PostgresEnumType enumType)
                 return null;
 
             var mappings = new TypeInfoMappingCollection();

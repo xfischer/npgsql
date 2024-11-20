@@ -86,9 +86,12 @@ public static class TestUtil
 
     static readonly Version MinCreateExtensionVersion = new(9, 1);
 
-    public static void IgnoreOnRedshift(NpgsqlConnection conn, string? ignoreText = null)
+    public static async Task IgnoreOnRedshift(NpgsqlConnection conn, string? ignoreText = null)
     {
-        if (new NpgsqlConnectionStringBuilder(conn.ConnectionString).ServerCompatibilityMode == ServerCompatibilityMode.Redshift)
+        await using var command = conn.CreateCommand();
+        command.CommandText = "SELECT version()";
+        var version = (string)(await command.ExecuteScalarAsync())!;
+        if (version.Contains("redshift", StringComparison.OrdinalIgnoreCase))
         {
             var msg = "Test ignored on Redshift";
             if (ignoreText != null)
@@ -97,8 +100,8 @@ public static class TestUtil
         }
     }
 
-    public static bool IsPgPrerelease(NpgsqlConnection conn)
-        => ((string)conn.ExecuteScalar("SELECT version()")!).Contains("beta");
+    public static async Task<bool> IsPgPrerelease(NpgsqlConnection conn)
+        => ((string) (await conn.ExecuteScalarAsync("SELECT version()"))!).Contains("beta");
 
     public static void EnsureExtension(NpgsqlConnection conn, string extension, string? minVersion = null)
         => EnsureExtension(conn, extension, minVersion, async: false).GetAwaiter().GetResult();
@@ -165,7 +168,7 @@ public static class TestUtil
 
     public static async Task EnsurePostgis(NpgsqlConnection conn)
     {
-        var isPreRelease = IsPgPrerelease(conn);
+        var isPreRelease = await IsPgPrerelease(conn);
         try
         {
             await EnsureExtensionAsync(conn, "postgis");
@@ -518,13 +521,9 @@ public static class NpgsqlCommandExtensions
 /// test reproduces the issue)
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class IssueLink : Attribute
+public class IssueLink(string linkAddress) : Attribute
 {
-    public string LinkAddress { get; private set; }
-    public IssueLink(string linkAddress)
-    {
-        LinkAddress = linkAddress;
-    }
+    public string LinkAddress { get; private set; } = linkAddress;
 }
 
 public enum PrepareOrNot

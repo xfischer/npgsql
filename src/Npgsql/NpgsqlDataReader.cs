@@ -67,7 +67,7 @@ public sealed class NpgsqlDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Records, for each column, its starting offset and length in the current row.
     /// Used only in non-sequential mode.
     /// </summary>
-    readonly List<(int Offset, int Length)> _columns = new();
+    readonly List<(int Offset, int Length)> _columns = [];
     int _columnsStartPos;
 
     /// <summary>
@@ -459,7 +459,7 @@ public sealed class NpgsqlDataReader : DbDataReader, IDbColumnSchemaGenerator
                     continue;
                 }
 
-                if ((Command.IsWrappedByBatch || StatementIndex is 0) && Command.InternalBatchCommands[StatementIndex]._parameters?.HasOutputParameters == true)
+                if ((Command.WrappingBatch is not null || StatementIndex is 0) && Command.InternalBatchCommands[StatementIndex]._parameters?.HasOutputParameters == true)
                 {
                     // If output parameters are present and this is the first row of the resultset,
                     // we must always read it in non-sequential mode because it will be traversed twice (once
@@ -502,7 +502,7 @@ public sealed class NpgsqlDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
 
             // There are no more queries, we're done. Read the RFQ.
-            if (_statements.Count is 0 || !(_statements[_statements.Count - 1].AppendErrorBarrier ?? Command.EnableErrorBarriers))
+            if (_statements.Count is 0 || !(_statements[^1].AppendErrorBarrier ?? Command.EnableErrorBarriers))
                 Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector);
 
             State = ReaderState.Consumed;
@@ -998,7 +998,7 @@ public sealed class NpgsqlDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
             catch (Exception e)
             {
-                exceptions ??= new();
+                exceptions ??= [];
                 exceptions.Add(e);
             }
         }
@@ -2131,8 +2131,8 @@ public sealed class NpgsqlDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         var field = RowDescription![ordinal];
 
-        converter = field.ObjectOrDefaultInfo.Converter;
-        bufferRequirement = field.ObjectOrDefaultInfo.BufferRequirement;
+        converter = field.ObjectInfo.Converter;
+        bufferRequirement = field.ObjectInfo.BufferRequirement;
         return field.DataFormat;
     }
 

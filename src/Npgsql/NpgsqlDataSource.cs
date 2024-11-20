@@ -4,7 +4,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -96,6 +95,8 @@ public abstract class NpgsqlDataSource : DbDataSource
 
         (var name,
                 LoggingConfiguration,
+                _,
+                _,
                 TransportSecurityHandler,
                 IntegratedSecurityHandler,
                 SslClientAuthenticationOptionsCallback,
@@ -107,11 +108,8 @@ public abstract class NpgsqlDataSource : DbDataSource
                 var resolverChain,
                 _defaultNameTranslator,
                 ConnectionInitializer,
-                ConnectionInitializerAsync
-#if NET7_0_OR_GREATER
-                ,_
-#endif
-                )
+                ConnectionInitializerAsync,
+                _)
             = dataSourceConfig;
         _connectionLogger = LoggingConfiguration.ConnectionLogger;
 
@@ -226,6 +224,29 @@ public abstract class NpgsqlDataSource : DbDataSource
     public static NpgsqlDataSource Create(NpgsqlConnectionStringBuilder connectionStringBuilder)
         => Create(connectionStringBuilder.ToString());
 
+    /// <summary>
+    /// Flushes the type cache for this data source.
+    /// Type changes will appear for connections only after they are re-opened from the pool.
+    /// </summary>
+    public void ReloadTypes()
+    {
+        using var connection = OpenConnection();
+        connection.ReloadTypes();
+    }
+
+    /// <summary>
+    /// Flushes the type cache for this data source.
+    /// Type changes will appear for connections only after they are re-opened from the pool.
+    /// </summary>
+    public async Task ReloadTypesAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            await connection.ReloadTypesAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     internal async Task Bootstrap(
         NpgsqlConnector connector,
         NpgsqlTimeout timeout,
@@ -269,8 +290,7 @@ public abstract class NpgsqlDataSource : DbDataSource
                     ArrayNullabilityMode = Settings.ArrayNullabilityMode,
                     EnableDateTimeInfinityConversions = !Statics.DisableDateTimeInfinityConversions,
                     TextEncoding = connector.TextEncoding,
-                    DefaultNameTranslator = _defaultNameTranslator,
-
+                    DefaultNameTranslator = _defaultNameTranslator
                 };
 
             IsBootstrapped = true;
@@ -447,7 +467,7 @@ public abstract class NpgsqlDataSource : DbDataSource
                 connector = null;
                 return false;
             }
-            connector = list[list.Count - 1];
+            connector = list[^1];
             list.RemoveAt(list.Count - 1);
             if (list.Count == 0)
                 _pendingEnlistedConnectors.Remove(transaction);
@@ -520,16 +540,13 @@ public abstract class NpgsqlDataSource : DbDataSource
 
     #endregion
 
-    sealed class DatabaseStateInfo
+    sealed class DatabaseStateInfo(DatabaseState state, NpgsqlTimeout timeout, DateTime timeStamp)
     {
-        internal readonly DatabaseState State;
-        internal readonly NpgsqlTimeout Timeout;
+        internal readonly DatabaseState State = state;
+        internal readonly NpgsqlTimeout Timeout = timeout;
         // While the TimeStamp is not strictly required, it does lower the risk of overwriting the current state with an old value
-        internal readonly DateTime TimeStamp;
+        internal readonly DateTime TimeStamp = timeStamp;
 
         public DatabaseStateInfo() : this(default, default, default) { }
-
-        public DatabaseStateInfo(DatabaseState state, NpgsqlTimeout timeout, DateTime timeStamp)
-            => (State, Timeout, TimeStamp) = (state, timeout, timeStamp);
     }
 }

@@ -5,16 +5,9 @@ using Npgsql.Internal.Postgres;
 
 namespace Npgsql.Internal.Converters;
 
-sealed class RecordConverter<T> : PgStreamingConverter<T>
+sealed class RecordConverter<T>(PgSerializerOptions options, Func<object[], T>? factory = null) : PgStreamingConverter<T>
 {
-    readonly PgSerializerOptions _options;
-    readonly Func<object[], T>? _factory;
-
-    public RecordConverter(PgSerializerOptions options, Func<object[], T>? factory = null)
-    {
-        _options = options;
-        _factory = factory;
-    }
+    static bool IsObjectArrayRecord => typeof(T) == typeof(object[]);
 
     public override T Read(PgReader reader)
         => Read(async: false, reader, CancellationToken.None).GetAwaiter().GetResult();
@@ -41,11 +34,13 @@ sealed class RecordConverter<T> : PgStreamingConverter<T>
                 continue;
 
             var postgresType =
-                _options.DatabaseInfo.GetPostgresType(typeOid).GetRepresentationalType()
+                options.DatabaseInfo.GetPostgresType(typeOid).GetRepresentationalType()
                 ?? throw new NotSupportedException($"Reading isn't supported for record field {i} (unknown type OID {typeOid}");
+            var pgTypeId = options.ToCanonicalTypeId(postgresType);
 
-            var pgTypeId = _options.ToCanonicalTypeId(postgresType);
-            var typeInfo = _options.GetObjectOrDefaultTypeInfoInternal(pgTypeId)
+            // TODO resolve based on types expected by _factory (pass in a Type[] during construcion)
+            // Only allow object polymorphism for object[] records, valuetuple records are always strongly typed.
+            var typeInfo = (IsObjectArrayRecord ? options.GetTypeInfo(typeof(object), pgTypeId) : options.GetDefaultTypeInfo(pgTypeId))
                            ?? throw new NotSupportedException(
                                $"Reading isn't supported for record field {i} (PG type '{postgresType.DisplayName}'");
 
@@ -64,7 +59,7 @@ sealed class RecordConverter<T> : PgStreamingConverter<T>
             }
         }
 
-        return _factory is null ? (T)(object)result : _factory(result);
+        return factory is null ? (T)(object)result : factory(result);
     }
 
     public override Size GetSize(SizeContext context, T value, ref object? writeState)

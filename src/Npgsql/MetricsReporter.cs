@@ -31,7 +31,7 @@ sealed class MetricsReporter : IDisposable
     readonly NpgsqlDataSource _dataSource;
     readonly KeyValuePair<string, object?> _poolNameTag;
 
-    static readonly List<MetricsReporter> Reporters = new();
+    static readonly List<MetricsReporter> Reporters = [];
 
     CommandCounters _commandCounters;
 
@@ -136,12 +136,7 @@ sealed class MetricsReporter : IDisposable
 
         if (CommandDuration.Enabled && startTimestamp > 0)
         {
-#if NET7_0_OR_GREATER
-            var duration = Stopwatch.GetElapsedTime(startTimestamp);
-#else
-            var duration = new TimeSpan((long)((Stopwatch.GetTimestamp() - startTimestamp) * StopWatchTickFrequency));
-#endif
-            CommandDuration.Record(duration.TotalSeconds, _poolNameTag);
+            CommandDuration.Record(Stopwatch.GetElapsedTime(startTimestamp).TotalSeconds, _poolNameTag);
         }
     }
 
