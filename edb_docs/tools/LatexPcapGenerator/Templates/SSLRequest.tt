@@ -1,0 +1,11 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+\begin{leftwordgroup}{<#= this.Type #>}
+        \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
+        \bitbox{4}{\tiny <#= this.Payload #>} &
+        \bitbox{24}[bgcolor=lightgray]{}
+    \end{leftwordgroup}

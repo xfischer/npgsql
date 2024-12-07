@@ -1,0 +1,11 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+    \begin{leftwordgroup}{BindComplete}
+        \bitbox{1}[bgcolor=lightcyan]{2} &        
+        \bitbox{4}[bgcolor=lightgreen]{length: 4} &
+        \bitbox{27}[bgcolor=lightgray]{}
+    \end{leftwordgroup}

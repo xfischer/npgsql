@@ -1,0 +1,39 @@
+\documentclass[margin=5mm]{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\input{../includes/colors.tex}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 1_spl_inout_fe_prepare.pdf -quality 90 -background white -flatten 1_spl_inout_fe_prepare.png
+
+\begin{document}
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    \\
+    \bitheader{0-31} 
+    \\
+
+    \begin{leftwordgroup}{OutDescription}
+        \bitbox{1}[bgcolor=edborange]{u} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{2}{\tiny field \\ \tiny count} &        
+        \bitbox{25}[bgcolor=lightgray]{}
+    
+        \\
+
+        \begin{rightwordgroup}{$\times$ each OUT \\ INOUT param}
+            \bitbox{14}{column name (=?name?)} &
+            \bitbox{2}{\rotatebox{90}{\small index}} &
+            \bitbox{4}{\small type \\ oid} &
+            \bitbox{2}{\rotatebox{90}{\small length}} &
+            \bitbox{4}{\rotatebox{90}{\parbox{1cm}{\tiny type \\ modifier}}} &
+            \bitbox{2}{\rotatebox{90}{\small format}} & 
+            \bitbox{4}[bgcolor=lightgray]{}
+            
+        \end{rightwordgroup}
+    \end{leftwordgroup} 
+
+    \\
+    \end{bytefield}
+    
+\end{document}

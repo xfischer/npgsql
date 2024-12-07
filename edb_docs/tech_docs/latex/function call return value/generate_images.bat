@@ -1,1 +1,0 @@
-forfiles /m *.pdf /c "cmd /c convert -density 300 @file -quality 90 -background white -flatten @fname.png"

@@ -1,0 +1,40 @@
+\documentclass[margin=5mm]{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\input{../includes/colors.tex}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 1_spl_inout_fe_prepare.pdf -quality 90 -background white -flatten 1_spl_inout_fe_prepare.png
+
+\begin{document}
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    \\
+    \bitheader{0-31} 
+    \\
+
+    \begin{leftwordgroup}{DataRow \\ \small $\times$ each row}
+        \bitbox{1}[bgcolor=lightcyan]{D} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{2}{\rotatebox{90}{\tiny num fields}} & 
+        \bitbox{25}[bgcolor=lightgray]{}
+
+        \\
+
+        \begin{rightwordgroup}{$\times$ each param \\ \tiny if value}
+            \bitbox{4}[bgcolor=lightergreen]{\small length} &
+            \bitbox{28}{\small parameter value [...]}
+        \end{rightwordgroup}
+
+        \\
+        
+        \begin{rightwordgroup}{if param \\ is NULL}
+            \bitbox{4}[bgcolor=lightergreen]{\small length \\ = \\ -1}& 
+            \bitbox{28}[bgcolor=lightgray]{}
+        \end{rightwordgroup}
+    \end{leftwordgroup}
+
+    \\
+    \end{bytefield}
+    
+\end{document}

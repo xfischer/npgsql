@@ -1,7 +1,7 @@
-\documentclass{standalone}
+\documentclass[margin=5mm]{standalone}
 \usepackage{bytefield}
 \usepackage{graphicx}
-\usepackage{color}
+\input{../includes/colors.tex}
 
 % doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
 % convert to image using ImageMagik : convert -density 300 4_spl_inout_be_execute.pdf -quality 90 -background white -flatten 4_spl_inout_be_execute.png
@@ -11,12 +11,6 @@
 % ie: SPL call sp_test(:param1 IN, param2 OUT)
 
 \begin{document}
-\definecolor{lightcyan}{rgb}{0.84,1,1}
-\definecolor{lightgreen}{rgb}{0.64,1,0.71}
-\definecolor{lightergreen}{rgb}{0.74,1,0.81}
-\definecolor{lightred}{rgb}{1,0.7,0.71}
-\definecolor{edborange}{rgb}{1,0.243,0}
-\definecolor{lightgray}{gray}{0.8}
 \begin{bytefield}[bitheight=8ex]{32}
  
     \\

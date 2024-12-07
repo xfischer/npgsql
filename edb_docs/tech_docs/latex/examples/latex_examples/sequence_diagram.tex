@@ -1,0 +1,217 @@
+\documentclass{article}
+
+% Use the necessary packages
+\usepackage{pgf-umlsd}   % For drawing sequence diagrams
+\usepackage{bytefield}    % For drawing bytefield datagrams
+\usepackage{geometry}     % For page margins
+\usepackage{graphicx}
+\input{../includes/colors.tex}
+
+% Set margins
+\geometry{margin=1in}
+
+\begin{document}
+
+\title{Sequence Diagram with Bytefield Datagrams}
+\author{}
+\date{}
+\maketitle
+
+\section*{Sequence Diagram with Bytefield Messages}
+
+% Create two columns using minipage for manual control
+\begin{minipage}{0.5\textwidth}
+    % Left Column: Sequence Diagram
+    \begin{sequencediagram}
+        \newthread{actor1}{Actor 1}    % First actor/thread
+        \newinst{actor2}{Actor 2}      % Second actor/instance
+
+        % Actor 1 sends a message to Actor 2 (Message 1)
+        \mess{actor1}{Message 1}{actor2}
+
+        % Actor 2 responds to Actor 1 (Response)
+        \mess{actor2}{Response}{actor1}
+
+        % Actor 1 sends another message to Actor 2 (Message 2)
+        \mess{actor1}{Message 2}{actor2}
+
+        % Actor 2 sends a final message to Actor 1 (Final Message)
+        \mess{actor2}{Final Message}{actor1}
+    \end{sequencediagram}
+\end{minipage}%
+\begin{minipage}{0.5\textwidth}
+    % Right Column: Bytefield Diagrams
+
+    % Datagram for Message 1
+    \noindent\textbf{Message 1:}
+    \begin{bytefield}[bitwidth=0.6em]{16}
+        \bitheader{0-15} \\
+        \bitbox{8}{Field 1} & \bitbox{8}{Field 2}
+    \end{bytefield}
+
+    \vspace{0.5cm} % Add some space between datagrams
+
+    % Datagram for Response
+    \noindent\textbf{Response:}
+    \begin{bytefield}[bitwidth=0.6em]{16}
+        \bitheader{0-15} \\
+        \bitbox{4}{V} & \bitbox{4}{IHL} & \bitbox{8}{TOS}
+    \end{bytefield}
+
+    \vspace{0.5cm}
+
+    % Datagram for Message 2
+    \noindent\textbf{Message 2:}
+    \begin{bytefield}[bitwidth=0.6em]{32}
+        \bitheader{0-31} \\
+        \bitbox{16}{Field A} & \bitbox{16}{Field B}
+    \end{bytefield}
+
+    \vspace{0.5cm}
+
+    % Datagram for Final Message
+    \noindent\textbf{Final Message:}
+    \begin{bytefield}[bitwidth=0.6em]{32}
+        \bitheader{0-31} \\
+        \bitbox{8}{Type} & \bitbox{24}{Payload}
+    \end{bytefield}
+\end{minipage}
+
+\section*{Details}
+
+
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    
+    Packet(s):4
+    
+        \\
+    PacketIndex:1 Emitter:FrontEnd
+    
+        \\
+    
+        \bitheader{0,1,4,5,31} 
+    
+        \\
+    
+    
+        \begin{leftwordgroup}{ParseOut}
+            \bitbox{1}[bgcolor=edborange]{O} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 68} &
+            \bitbox{12}{\tiny Statement: \_p1} &
+            \bitbox{13}{\tiny Query: CALL public.mixArgFunc\_test(\$1, \$2, \$3)} &
+            \bitbox{2}{\tiny paramCount: 3}
+    
+        \\
+    
+        \begin{rightwordgroup}{parameter types}
+        
+            \bitbox{4}{oid: 1700} & 
+        
+            \bitbox{4}{oid: 1700} & 
+        
+            \bitbox{4}{oid: 1700} & 
+            \bitbox{20}[bgcolor=lightgray]{}
+        \end{rightwordgroup}
+    
+        \\ 
+    
+        \begin{rightwordgroup}{parameter directions}
+                \bitbox{2}{\rotatebox{90}{\tiny INOUT}} & 
+                \bitbox{2}{\rotatebox{90}{\tiny OUT}} & 
+                \bitbox{2}{\rotatebox{90}{\tiny IN}} & 
+               \bitbox{26}[bgcolor=lightgray]{}
+        \end{rightwordgroup}
+        
+    
+        \end{leftwordgroup}
+        
+        \\
+    
+        \begin{leftwordgroup}{Describe}
+            \bitbox{1}[bgcolor=lightcyan]{D} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 9} &
+            \bitbox{1}{S} &
+            \bitbox{26}{statement name: \_p1}
+        \end{leftwordgroup} \\
+    
+    
+        \begin{leftwordgroup}{Sync}
+            \bitbox{1}[bgcolor=lightcyan]{S} &        
+            \bitbox{4}[bgcolor=lightgreen]{length: 4} &
+            \bitbox{27}[bgcolor=lightgray]{}
+        \end{leftwordgroup} \\
+        
+    \end{bytefield}  
+        \vspace{0.5cm}
+        \\
+
+Text bla bytefield
+
+\centering
+        \begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+            
+    PacketIndex:2 Emitter:BackEnd
+    
+    
+ 
+        \\
+    
+        \bitheader{0,1,4,5,31} 
+    
+        \\
+    
+        \begin{leftwordgroup}{ParseComplete}
+            \bitbox{1}[bgcolor=lightcyan]{1} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 4} &
+            \bitbox{27}[bgcolor=lightgray]{} 
+        \end{leftwordgroup} \\
+    
+        \begin{leftwordgroup}{Parameter \\ Description}
+            \bitbox{1}[bgcolor=lightcyan]{t} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 18} &
+            \bitbox{2}{\tiny params \\ \tiny =3} &
+            \bitbox{25}[bgcolor=lightgray]{}
+    
+            \\
+            
+            \begin{rightwordgroup}{parameters oid}
+                        \bitbox{4}{oid: 1700} & 
+                        \bitbox{4}{oid: 1700} & 
+                        \bitbox{4}{oid: 1700} & 
+                        \bitbox{20}[bgcolor=lightgray]{}
+            \end{rightwordgroup}
+        \end{leftwordgroup} \\
+    
+        \begin{leftwordgroup}{Row Description}
+            \bitbox{1}[bgcolor=lightcyan]{T} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 40} &
+            \bitbox{2}{\tiny fields \\ \tiny 1} &        
+            \bitbox{25}[bgcolor=lightgray]{}
+        
+                    \\
+    
+            \begin{rightwordgroup}{column 1}
+                \bitbox{14}{name: mixargfunc\_test} &
+                \bitbox{4}{\small table oid: 0} &
+                \bitbox{2}{\rotatebox{90}{\tiny index: 0}} &
+                \bitbox{4}{\small type oid: 23} &
+                \bitbox{2}{\rotatebox{90}{\tiny length: 4}} &
+                \bitbox{4}{\rotatebox{90}{\parbox{1cm}{\tiny type \\ modifier: -1}}} &
+                \bitbox{2}{\rotatebox{90}{\tiny format:Text}} 
+                
+            \end{rightwordgroup}
+                \end{leftwordgroup}  \\
+    
+    \begin{leftwordgroup}{ReadyForQuery}
+            \bitbox{1}[bgcolor=lightcyan]{Z} &
+            \bitbox{4}[bgcolor=lightgreen]{length: 5} &
+            \bitbox{27}{\small Status: Idle (73)}
+        \end{leftwordgroup}
+        \\
+    
+      
+    
+        \end{bytefield}    
+
+\end{document}

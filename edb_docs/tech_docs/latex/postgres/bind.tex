@@ -1,0 +1,58 @@
+\documentclass[margin=8mm]{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\input{../includes/colors.tex}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 1_spl_inout_fe_prepare.pdf -quality 90 -background white -flatten 1_spl_inout_fe_prepare.png
+
+\begin{document}
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    \\
+    \bitheader{0-5,31} 
+    \\
+        \bitbox{1}[bgcolor=lightcyan]{B} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{13}{portal name [$\cdots$] \\ \tiny (empty for unnamed)} &        
+        \bitbox{14}{statement name [$\cdots$] \tiny (empty for unnamed)} 
+
+        \\
+        \\        
+
+        \begin{rightwordgroup}{\small Parameter formats \\ alternatives}
+            \bitbox{2}{0 \tiny \\ or \\ \small 1} & 
+            \bitbox{30}[bgcolor=lightgray]{No parameters (0), all text (0), all binary (1)}
+        \\ 
+        
+            \bitbox{2}[bgcolor=lightergreen]{\rotatebox{90}{\small count}} &
+            \bitbox{2}{\rotatebox{90}{\tiny format 1}} &
+            \bitbox{2}{\tiny [...]} &
+            \bitbox{2}{\rotatebox{90}{\tiny format n}} &
+            \bitbox{24}[bgcolor=lightgray]{Format specified for each parameter} 
+        \end{rightwordgroup}  \\
+        
+        \\
+        \begin{rightwordgroup}{\small Parameter values \\ \tiny \it unspecified (OUT params): \\ \tiny \it length=-1, no value}
+            \bitbox{2}[bgcolor=lightergreen]{\rotatebox{90}{\small count}} &
+            \bitbox{4}[bgcolor=lightergreen]{param1 length} &
+            \bitbox{8}{param1 value [...]} &
+            \bitbox{4}{$\cdots$} & 
+            \bitbox{4}[bgcolor=lightergreen]{param n length} &
+            \bitbox{8}{param n value [...]} &
+            \bitbox{2}[bgcolor=lightgray]{} 
+        \end{rightwordgroup}  \\
+        \\
+
+        \begin{rightwordgroup}{\small Result formats \\ alternatives}
+            \bitbox{2}{0 \tiny \\ or \\ \small 1} & 
+            \bitbox{30}[bgcolor=lightgray]{All results as text (0) or binary (1)}
+        \\
+            \bitbox{2}[bgcolor=lightergreen]{\rotatebox{90}{\small count}} &
+            \bitbox{2}{\rotatebox{90}{\tiny format 1}} &
+            \bitbox{2}{\tiny [...]} &
+            \bitbox{2}{\rotatebox{90}{\tiny format n}} &
+            \bitbox{24}[bgcolor=lightgray]{Format specified for each result}
+        \end{rightwordgroup}
+    \end{bytefield}    
+\end{document}

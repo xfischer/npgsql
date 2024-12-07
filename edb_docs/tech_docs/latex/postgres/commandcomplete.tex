@@ -1,0 +1,27 @@
+\documentclass[margin=5mm]{standalone}
+\usepackage{bytefield}
+\usepackage{graphicx}
+\input{../includes/colors.tex}
+
+% doc for bytefield : https://texdoc.org/serve/bytefield.pdf/0
+% convert to image using ImageMagik : convert -density 300 1_spl_inout_fe_prepare.pdf -quality 90 -background white -flatten 1_spl_inout_fe_prepare.png
+
+\begin{document}
+% If you want different heights for your bitboxes:\vspace{2ex}
+
+\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+    
+    \\
+    \bitheader{0-31} 
+    \\
+
+    \begin{leftwordgroup}{CommandComplete}
+        \bitbox{1}[bgcolor=lightcyan]{C} &
+        \bitbox{4}[bgcolor=lightgreen]{length} &
+        \bitbox{27}{informational message $\cdots$} 
+    \end{leftwordgroup}
+    \\
+\end{bytefield}
+
+
+\end{document}

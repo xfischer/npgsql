@@ -27,11 +27,14 @@ namespace EDBSample
             {
                 _logger.LogDebug("---- Starting");
 
-
-                NestedTableSample.Sample_NestedTableTypes(connectionString);
-
                 await Sample();
 
+                using (var sample = new TechTalkSample(connectionString))
+                {
+                    await sample.RunAsync();
+                }
+
+                //NestedTableSample.Sample_NestedTableTypes(connectionString);
 
                 //await Timeout_async_soft();
                 //Bad_database();
@@ -48,6 +51,8 @@ namespace EDBSample
                 _logger.LogError(e, "Error");
             }
 
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
         }
 
         static async Task Sample()
