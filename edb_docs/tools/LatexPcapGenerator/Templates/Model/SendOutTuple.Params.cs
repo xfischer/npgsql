@@ -24,7 +24,7 @@ public partial class SendOutTuple : ITextTransformer
                 }
                 else
                 {
-                    Parameters.Add((f.Length, fieldLabel, TrimUnescape(Convert.ToHexStringLower(f.Data!), 50)));
+                    Parameters.Add((f.Length, fieldLabel, TrimUnescape(BitConverter.ToString(f.Data!).Replace("-", ":").ToLower(), 50)));
                 }
             }
             else

@@ -26,7 +26,7 @@ public partial class DataRow : ITextTransformer
                 }
                 else
                 {
-                    Fields.Add((f.Length, fieldLabel, TrimUnescape(Convert.ToHexStringLower(f.Data!), 50)));
+                    Fields.Add((f.Length, fieldLabel, TrimUnescape(BitConverter.ToString(f.Data!).Replace("-", ":").ToLower(), 50)));
                 }
             }
             else

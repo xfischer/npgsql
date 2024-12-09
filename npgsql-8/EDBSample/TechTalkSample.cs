@@ -71,7 +71,7 @@ namespace EDBSample
                 AS
                 BEGIN
                     b := 'I now have a value :)';
-                    return 123;
+                    return a;
                 END;
                 """;
             command.ExecuteNonQuery();
@@ -95,7 +95,7 @@ namespace EDBSample
                 AS
                 BEGIN
                     b := 'I now have a value :)';
-                    return 123;
+                    return a;
                 END;
                 """);
 
