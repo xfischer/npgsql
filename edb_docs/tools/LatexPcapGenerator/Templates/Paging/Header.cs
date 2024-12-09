@@ -49,18 +49,29 @@ namespace pcap2latex.Templates.Paging
 
 \begin{document}
 \begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
-    
 ");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
+            #line 22 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
+ 
+    if (!string.IsNullOrWhiteSpace(this.Message))
+    {
+
+            
+            #line default
+            #line hidden
+            this.Write("    \r\n");
+            
+            #line 27 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Message));
             
             #line default
             #line hidden
             this.Write("\r\n\r\n");
             
-            #line 25 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
- } else { 
+            #line 29 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
+ 
+    }
+} else { 
             
             #line default
             #line hidden
@@ -82,7 +93,7 @@ namespace pcap2latex.Templates.Paging
     
 ");
             
-            #line 42 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
+            #line 48 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Message));
             
             #line default
@@ -90,7 +101,7 @@ namespace pcap2latex.Templates.Paging
             this.Write("\r\n\r\nPackets are grouped in conversations.\r\nA conversation ends when backend is is" +
                     "suing a ReadyForQuery message.\r\n\r\n\\section{Conversation}\r\n\r\n");
             
-            #line 49 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
+            #line 55 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\Header.tt"
  } 
             
             #line default

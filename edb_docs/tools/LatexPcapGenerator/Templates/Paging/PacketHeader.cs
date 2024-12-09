@@ -30,95 +30,119 @@ namespace pcap2latex.Templates.Paging
         {
             
             #line 6 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
- if (this.State.Standalone) { 
+ 
+if (this.State.Multiple)
+{
+
             
             #line default
             #line hidden
-            this.Write("\\\\\r\n\\textbf{PacketIndex:");
+            this.Write("\t\\textbf{");
             
-            #line 8 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(this.Direction));
+            
+            #line default
+            #line hidden
+            this.Write("}\r\n\t\\\\\r\n\t\\bitheader{0,1,4,5,31} \\\\\r\n");
+            
+            #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+
+}
+else
+{
+	if (this.State.Standalone) { 
+            
+            #line default
+            #line hidden
+            this.Write("\t\\\\\r\n\t\\textbf{PacketIndex:");
+            
+            #line 19 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.PacketIndex));
             
             #line default
             #line hidden
             this.Write("} ");
             
-            #line 8 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 19 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.MessagesCount));
             
             #line default
             #line hidden
             this.Write(" \\textbf{");
             
-            #line 8 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 19 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Direction));
             
             #line default
             #line hidden
-            this.Write("}\r\n\\\\\r\n\\bitheader{0,1,4,5,31} \\\\\r\n");
+            this.Write("}\r\n\t\\\\\r\n\t\\bitheader{0,1,4,5,31} \\\\\r\n\t");
             
-            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 22 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
  
-} 
-else 
-{ 
+	} 
+	else 
+	{ 
             
             #line default
             #line hidden
-            this.Write("\\vspace{1cm}\r\n\r\n\\begin{bytefield}[boxformatting={\\centering\\small}, bitheight=8ex" +
-                    "]{32}\r\n");
+            this.Write("\t\\vspace{1cm}\r\n\r\n\t\\begin{bytefield}[boxformatting={\\centering\\small}, bitheight=8" +
+                    "ex]{32}\r\n\t");
             
-            #line 18 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 29 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
  
-	if (this.PacketIndex == 0)  // Page break
-	{	
-
+		if (this.PacketIndex == 0)  // Page break
+		{	
+	
             
             #line default
             #line hidden
-            this.Write("-page-break-\\\\\r\n");
+            this.Write("\t-page-break-\\\\\r\n\t");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 34 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
 
-	} else {
-
+		} else {
+	
             
             #line default
             #line hidden
-            this.Write("\\textbf{PacketIndex:");
+            this.Write("\t\\textbf{PacketIndex:");
             
-            #line 26 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 37 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.PacketIndex));
             
             #line default
             #line hidden
             this.Write("} ");
             
-            #line 26 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 37 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.MessagesCount));
             
             #line default
             #line hidden
             this.Write(" \\textbf{");
             
-            #line 26 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 37 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Direction));
             
             #line default
             #line hidden
-            this.Write("}\\\\\r\n");
+            this.Write("}\\\\\r\n\t");
             
-            #line 27 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+            #line 38 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
 
-	}
-
+		}
+	
             
             #line default
             #line hidden
-            this.Write("\\bitheader{0,1,4,5,31} \\\\\r\n");
+            this.Write("\t\\bitheader{0,1,4,5,31} \\\\\r\n\t");
             
-            #line 31 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
- } 
+            #line 42 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Paging\PacketHeader.tt"
+ 
+	} 
+}
+
             
             #line default
             #line hidden

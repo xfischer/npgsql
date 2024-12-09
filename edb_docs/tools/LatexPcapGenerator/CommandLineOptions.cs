@@ -18,6 +18,9 @@ public class CommandLineOptions
     [Option(shortName: 's', longName: "standalone", Required = true, HelpText = "True for standlone LaTeX, ideal for short messages. False will generate LaTeX article breaking pages when possible", Default = true)]
     public bool? Standalone { get; set; }
 
+    [Option(Default = false, HelpText = "When set, one file is generated per message in standalone mode")]
+    public bool Multiple { get; set; }
+
     [Option(shortName: 'p', longName: "port", Required = true, Default = 5432, HelpText = "PostgreSQL port number. Only packets from/to this port will be processed.")]
     public int Port { get; set; }
 

@@ -19,10 +19,16 @@
 
 \begin{document}
 \begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+<# 
+    if (!string.IsNullOrWhiteSpace(this.Message))
+    {
+#>
     
 <#= this.Message #>
 
-<# } else { #>
+<# 
+    }
+} else { #>
 \documentclass{article}
 \usepackage[margin=1.3cm,a4paper]{geometry}% http://ctan.org/pkg/geometry
 \usepackage{bytefield}

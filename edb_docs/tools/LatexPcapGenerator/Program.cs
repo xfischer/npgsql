@@ -30,10 +30,10 @@ internal class Program
             try
             {
                 CheckInputFile(opts.InputFile);
-                opts.OutputFile = CheckOutputFile(opts.InputFile, opts.OutputFile);
+                opts.OutputFile = CheckOutputFile(opts.InputFile, opts.OutputFile, opts.Multiple);
 
                 // We have the parsed arguments, so let's just pass them down
-                ProcessFile(opts.InputFile, opts.OutputFile, opts.Standalone ?? true, opts.Port);
+                ProcessFile(opts.InputFile, opts.OutputFile, opts.Standalone ?? true, opts.Port, opts.Multiple);
             }
             catch (Exception ex)
             {
@@ -54,10 +54,17 @@ internal class Program
 
     }
 
-    private static void ProcessFile(string inputFile, string outputFile, bool standalone, int port)
+    private static void ProcessFile(string inputFile, string outputPath, bool standalone, int port, bool multipleFiles)
     {
         Console.WriteLine("Wireshark to LaTeX converter - Copyright EnterpriseDB");
-        Console.WriteLine($"Processing file '{Path.GetFileName(inputFile)}' as {(standalone ? "standalone" : "article")} LaTeX document...");
+        if (multipleFiles)
+        {
+            Console.WriteLine($"Processing file '{Path.GetFileName(inputFile)}' as multiple standalone LaTeX documents...");
+        }
+        else
+        {
+            Console.WriteLine($"Processing file '{Path.GetFileName(inputFile)}' as {(standalone ? "standalone" : "article")} LaTeX document...");
+        }
 
         GenerationState? state = null;
         try
@@ -80,7 +87,8 @@ internal class Program
             }
             packets = packetList;
 #endif
-            state = PcapToLatexService.PcapToLaTeX(packets, outputFile, standalone);
+            state = multipleFiles ? PcapToLatexService.PcapToLaTeX_MultipleFiles(packets, outputPath)
+                : PcapToLatexService.PcapToLaTeX(packets, outputPath, standalone);
         }
         catch (Exception ex)
         {
@@ -89,7 +97,7 @@ internal class Program
         }
         finally
         {
-            Console.WriteLine($"LaTeX file written to {outputFile}");
+            Console.WriteLine($"LaTeX file written to {outputPath}");
             if (state != null)
             {
                 Console.Write($"{state.StatsPacketsProcessed} packet(s) processed. {state.StatsMesssagesProcessed} messages written");
@@ -115,10 +123,10 @@ internal class Program
         return true;
     }
 
-    private static string CheckOutputFile(string inputFile, string? outputFile)
+    private static string CheckOutputFile(string inputFile, string? outputFile, bool multiple)
     {
         if (outputFile == null)
-            return Path.ChangeExtension(inputFile, ".tex");
+            return multiple ? Path.Combine(Path.GetDirectoryName(inputFile)!, Path.GetFileNameWithoutExtension(inputFile)) : Path.ChangeExtension(inputFile, ".tex")!;
         return outputFile;
     }
 

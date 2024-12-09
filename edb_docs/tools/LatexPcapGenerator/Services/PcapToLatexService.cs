@@ -1,6 +1,7 @@
 ﻿using pcap2latex.Model;
 using pcap2latex.Templates;
 using pcap2latex.Templates.Paging;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace pcap2latex;
@@ -74,6 +75,58 @@ public static class PcapToLatexService
         return state;
     }
 
+    public static GenerationState PcapToLaTeX_MultipleFiles(IEnumerable<PostgresPacket> pgSqlPackets, string latexOutputDirectory)
+    {
+        GenerationState state = new(standalone: true, multiple: true);
+
+        int packetIndex = 1;
+        if (!Directory.Exists(latexOutputDirectory))
+            Directory.CreateDirectory(latexOutputDirectory);
+
+        foreach (var packet in pgSqlPackets)
+        {
+            foreach (var pgMessage in packet.Messages)
+            {
+                var fileLatexBuilder = new StringBuilder();
+                // Packet Header
+                fileLatexBuilder.AppendLine(new PacketHeader(packet.Messages, packet.IsFrontEnd, packetIndex, state).TransformText());
+
+                bool success = ProcessPostGresMessage(pgMessage, state, fileLatexBuilder, (builder, stateObj) =>
+                {
+                    state.StatsMesssagesProcessed++;
+
+                    // Last packet Footer
+                    fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
+
+                    // Footer
+                    fileLatexBuilder.AppendLine(ProcessFooter(state));
+
+                    // Header INSERTION AT BEGINNING
+                    fileLatexBuilder.Insert(0, ProcessHeader(null, state) + Environment.NewLine);
+
+
+                    var finalLatex = fileLatexBuilder.ToString();
+                    var fileName = Path.Combine(latexOutputDirectory, $"packet{packetIndex:0000}_message{state.StatsMesssagesProcessed:0000}.tex");
+                    File.WriteAllText(fileName, finalLatex);
+                    fileLatexBuilder.Clear();
+                });
+
+                if (!success)
+                {
+                    state.StatsMesssagesInvalid++;
+                    fileLatexBuilder.AppendLine($"No message definition found for code '{pgMessage.GetType().Name}'");
+                    fileLatexBuilder.AppendLine("\\\\");
+                    Console.WriteLine($"No message definition found for code '{pgMessage.GetType().Name}'");
+                }
+            }
+            packetIndex++;
+            state.StatsPacketsProcessed++;
+        }
+
+
+        return state;
+    }
+
     private static string? ProcessMessageSeparator()
     {
         return new MessageSeparator().TransformText();
@@ -84,12 +137,12 @@ public static class PcapToLatexService
         return new Footer(state).TransformText();
     }
 
-    private static string ProcessHeader(string message, GenerationState state)
+    private static string ProcessHeader(string? message, GenerationState state)
     {
         return new Header(message, state).TransformText();
     }
 
-    private static bool ProcessPostGresMessage(PostgresMessageBase message, GenerationState state, StringBuilder latexBuilder)
+    private static bool ProcessPostGresMessage(PostgresMessageBase message, GenerationState state, StringBuilder latexBuilder, Action<StringBuilder, GenerationState>? messageReadyAction = null)
     {
         // check consecutive datarows
         // if max datarows reached, skip until the last and write a "n skipped rows" skippedwords
@@ -109,6 +162,9 @@ public static class PcapToLatexService
                     ITextTransformer skippedWordsTransformer = new SkippedWords("DataRow", skippedItems: state.ConsecutiveDataRows);
 
                     WriteTextTransformation(state, latexBuilder, skippedWordsTransformer);
+
+                    // Send event (for multiple mode)
+                    messageReadyAction?.Invoke(latexBuilder, state);
                 }
                 state.ConsecutiveDataRows = 0;
                 // continue
@@ -127,6 +183,9 @@ public static class PcapToLatexService
         }
 
         WriteTextTransformation(state, latexBuilder, textTransformer);
+
+        // Send event (for multiple mode)
+        messageReadyAction?.Invoke(latexBuilder, state);
 
         return true;
     }

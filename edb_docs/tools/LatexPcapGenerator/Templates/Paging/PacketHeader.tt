@@ -3,29 +3,43 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
-<# if (this.State.Standalone) { #>
-\\
-\textbf{PacketIndex:<#= this.PacketIndex #>} <#= this.MessagesCount #> \textbf{<#= this.Direction #>}
-\\
-\bitheader{0,1,4,5,31} \\
 <# 
-} 
-else 
-{ #>
-\vspace{1cm}
+if (this.State.Multiple)
+{
+#>
+	\textbf{<#= this.Direction #>}
+	\\
+	\bitheader{0,1,4,5,31} \\
+<#
+}
+else
+{
+	if (this.State.Standalone) { #>
+	\\
+	\textbf{PacketIndex:<#= this.PacketIndex #>} <#= this.MessagesCount #> \textbf{<#= this.Direction #>}
+	\\
+	\bitheader{0,1,4,5,31} \\
+	<# 
+	} 
+	else 
+	{ #>
+	\vspace{1cm}
 
-\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
-<# 
-	if (this.PacketIndex == 0)  // Page break
-	{	
+	\begin{bytefield}[boxformatting={\centering\small}, bitheight=8ex]{32}
+	<# 
+		if (this.PacketIndex == 0)  // Page break
+		{	
+	#>
+	-page-break-\\
+	<#
+		} else {
+	#>
+	\textbf{PacketIndex:<#= this.PacketIndex #>} <#= this.MessagesCount #> \textbf{<#= this.Direction #>}\\
+	<#
+		}
+	#>
+	\bitheader{0,1,4,5,31} \\
+	<# 
+	} 
+}
 #>
--page-break-\\
-<#
-	} else {
-#>
-\textbf{PacketIndex:<#= this.PacketIndex #>} <#= this.MessagesCount #> \textbf{<#= this.Direction #>}\\
-<#
-	}
-#>
-\bitheader{0,1,4,5,31} \\
-<# } #>
