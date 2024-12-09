@@ -10,6 +10,8 @@ public static class LatexHelper
         return str
             .Replace("\\", "\\textbackslash ")
             .ReplaceLineEndings(" ")
+            .Replace("{", "\\{")
+            .Replace("}", "\\}")
             .Replace("#", "\\#")
             .Replace("$", "\\$")
             .Replace("%", "\\%")
@@ -18,8 +20,11 @@ public static class LatexHelper
 
     }
 
-    public static string TrimUnescape(string str, int maxLength)
+    public static string TrimUnescape(string? str, int maxLength)
     {
+        if (str == null)
+            return string.Empty;
+
         if (str.Length < maxLength)
             return Unescape(str);
         return Unescape(str.Substring(0, maxLength)) + "$\\cdots$";

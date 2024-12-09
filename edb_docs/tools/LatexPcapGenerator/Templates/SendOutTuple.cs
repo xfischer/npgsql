@@ -47,23 +47,22 @@ namespace pcap2latex.Templates
             
             #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
 
-        int fieldIndex = 0;
         foreach(var f in this.Parameters)
         {
         
             
             #line default
             #line hidden
-            this.Write("        \\\\\r\n        \\begin{rightwordgroup}{param ");
+            this.Write("        \\\\\r\n        \\begin{rightwordgroup}{");
             
-            #line 19 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(++fieldIndex));
+            #line 18 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(f.Name));
             
             #line default
             #line hidden
             this.Write("}\r\n        ");
             
-            #line 20 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 19 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
 
                 if (f.Length > 0)
                 {
@@ -73,21 +72,21 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("            \\bitbox{4}[bgcolor=lightergreen]{\\small length: ");
             
-            #line 24 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(f.Length));
             
             #line default
             #line hidden
             this.Write("} &\r\n            \\bitbox{28}{\\small ");
             
-            #line 25 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 24 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(f.Data ?? ""));
             
             #line default
             #line hidden
             this.Write("}\r\n        ");
             
-            #line 26 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 25 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
 
                 }
                 else
@@ -98,14 +97,14 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("            \\bitbox{4}[bgcolor=lightergreen]{\\small length: ");
             
-            #line 31 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 30 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(f.Length));
             
             #line default
             #line hidden
             this.Write("} &\r\n            \\bitbox{28}[bgcolor=lightgray]{}\r\n        ");
             
-            #line 33 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 32 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
 
                 }
         
@@ -114,7 +113,7 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("        \\end{rightwordgroup}\r\n        ");
             
-            #line 37 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+            #line 36 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
 
             }
         
@@ -125,7 +124,7 @@ namespace pcap2latex.Templates
             return this.GenerationEnvironment.ToString();
         }
         
-        #line 41 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
+        #line 40 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SendOutTuple.tt"
  float ITextTransformer.EstimateBytefieldRowCount() => 1 + this.Parameters.Count; 
         
         #line default

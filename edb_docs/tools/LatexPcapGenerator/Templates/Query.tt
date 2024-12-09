@@ -7,5 +7,5 @@
     \begin{leftwordgroup}{Query}
         \bitbox{1}[bgcolor=lightcyan]{<#= this.MessageCode #>} &        
         \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
-        \bitbox{27}{<#= this.QueryText #>}
+        \bitbox{27}{<#= this.QueryText #> $\cdots$}
     \end{leftwordgroup}

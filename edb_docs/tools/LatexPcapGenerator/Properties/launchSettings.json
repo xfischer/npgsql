@@ -1,28 +1,12 @@
 {
   "profiles": {
-    "SimpleQuery": {
+    "TestInvalid": {
       "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\Postgres basic Simple Query.pdml\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\simple.tex\""
-    },
-    "ExtendedQuery": {
-      "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\Postgres basic Extended Query.pdml\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\extended.tex\""
-    },
-    "CallEPAS": {
-      "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\CALL EPAS.pdml\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\call_epas.tex\""
-    },
-    "FuncSPLEPAS": {
-      "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\FUNC SPL EPAS.pdml\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\funcspl_epas.tex\""
-    },
-    "BigSammplePcap": {
-      "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\BigSampleRaw.pcapng\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\BigSample_pcap.tex\" -s:0 -port:5446"
+      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\repl.pcapng\" -s false -p 5446"
     },
     "TEST": {
       "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\TEST.pcapng\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\TEST.tex\" -s:1 -port:5446"
+      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\TEST.pcapng\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\TEST.tex\" --standalone 1 --port 5446"
     }
   }
 }

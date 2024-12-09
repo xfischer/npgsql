@@ -13,6 +13,8 @@
 
 ## Messages exchanged on the wire
 
+### Theorical packets
+
 1. FrontEnd SENDS
 
     [Query](https://www.postgresql.org/docs/current/protocol-message-formats.html#PROTOCOL-MESSAGE-FORMATS-QUERY)
@@ -31,3 +33,9 @@
 
     [ReadyForQuery](https://www.postgresql.org/docs/current/protocol-message-formats.html#PROTOCOL-MESSAGE-FORMATS-READYFORQUERY)
     ![ReadyForQuery](../postgres/readyforquery.png)
+
+---
+
+### Pratical packets
+
+ ![SimpleQueryPractical](simple_query.png)

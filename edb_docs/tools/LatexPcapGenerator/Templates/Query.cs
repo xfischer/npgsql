@@ -49,7 +49,7 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("}\r\n    \\end{leftwordgroup}");
+            this.Write(" $\\cdots$}\r\n    \\end{leftwordgroup}");
             return this.GenerationEnvironment.ToString();
         }
     }

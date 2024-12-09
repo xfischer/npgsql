@@ -7,9 +7,15 @@ public class RowDescriptionMessage(char code, int length) : PostgresMessageBase(
 
     public List<FieldDescription> FieldDescriptions { get; internal set; } = new();
 
-    internal static RowDescriptionMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static RowDescriptionMessage? Read(char messageCode, PcapBinaryReader reader)
     {
+        if (!reader.HasSufficientData(4))
+            return null;
         var len = reader.ReadInt32();
+
+        if (!reader.HasSufficientData(len))
+            return null;
+
         var message = new RowDescriptionMessage(messageCode, len);
         message.FieldCount = reader.ReadInt16();
         

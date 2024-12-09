@@ -11,12 +11,14 @@ public static class PcapService
 {
     public static IEnumerable<PostgresPacket> ConvertPcap(string pcapFile, ushort pgsqlPortNumber = 5432)
     {
+        PcapReadState state = new();
+        state.Port = pgsqlPortNumber;
+
         using var device = new CaptureFileReaderDevice(pcapFile);
         device.Open(new());
 
         // Capture packets using GetNextPacket()
         PacketCapture e;
-        byte[]? previousRemainder = null;
         int packetRelativeIndex = 0;
         while (device.GetNextPacket(out e) == GetPacketStatus.PacketRead)
         {
@@ -40,11 +42,10 @@ public static class PcapService
                         time.Hour, time.Minute, time.Second, time.Millisecond, len,
                         srcIp, srcPort, dstIp, dstPort);
 
-                    var pgPacket = ParsePacket(tcpPacket, ipPacket, pgsqlPortNumber, previousRemainder, out var remainder);
+                    var pgPacket = ParsePacket(tcpPacket, ipPacket, state);
                     pgPacket.PacketIndex = packetRelativeIndex++;
                     yield return pgPacket;
 
-                    previousRemainder = remainder;
                 }
             }
         }
@@ -53,7 +54,7 @@ public static class PcapService
 
 
     // Minumum viable PDML info
-    private static PostgresPacket ParsePacket(PacketDotNet.TcpPacket tcpPacket, PacketDotNet.IPPacket ipPacket, ushort pgsqlPortNumber, byte[]? previousRemainder, out byte[]? nextRemainder)
+    private static PostgresPacket ParsePacket(PacketDotNet.TcpPacket tcpPacket, PacketDotNet.IPPacket ipPacket, PcapReadState state)
     {
         var pgPacket = new PostgresPacket();
 
@@ -64,39 +65,32 @@ public static class PcapService
         // TCP
         pgPacket.SourcePort = tcpPacket.SourcePort;
         pgPacket.DestinationPort = tcpPacket.DestinationPort;
-        pgPacket.IsFrontEnd = tcpPacket.DestinationPort == pgsqlPortNumber;
+        pgPacket.IsFrontEnd = tcpPacket.DestinationPort == state.Port;
 
         // Reconstruct packet
-        byte[] payloadData = GetReconstructedPayload(tcpPacket, previousRemainder);
+        byte[] payloadData = GetReconstructedPayload(tcpPacket, state.PreviousBufferLeftover);
         using var memStream = new MemoryStream(payloadData);
         using var reader = new PcapBinaryReader(memStream, Encoding.UTF8);
 
-        nextRemainder = null;
+        byte[]? nextRemainder = null;
         while (reader.BaseStream.Position != memStream.Length)
         {
-            try
+            var currentPosition = reader.BaseStream.Position;
+            ushort clientPort = pgPacket.IsFrontEnd ? pgPacket.SourcePort : pgPacket.DestinationPort;
+            if (TryReadMessage(reader, state, pgPacket.IsFrontEnd, (int)clientPort, out var message))
             {
-                var currentPosition = reader.BaseStream.Position;
-                ushort clientPort = pgPacket.IsFrontEnd ? pgPacket.SourcePort : pgPacket.DestinationPort;
-                if (TryReadMessage(reader, pgPacket.IsFrontEnd, (int)clientPort, out var message))
-                {
-                    Debug.Assert(message != null);
-                    pgPacket.Messages.Add(message!);
-                }
-                else
-                {
-
-                    reader.BaseStream.Seek(currentPosition, SeekOrigin.Begin);
-                    nextRemainder = reader.ReadBytes((int)(memStream.Length - currentPosition));
-                }
-
+                Debug.Assert(message != null);
+                pgPacket.Messages.Add(message!);
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error {ex.ToString()}");
-            }
 
+                reader.BaseStream.Seek(currentPosition, SeekOrigin.Begin);
+                nextRemainder = reader.ReadBytes((int)(memStream.Length - currentPosition));
+            }
         }
+
+        state.PreviousBufferLeftover = nextRemainder;
 
         return pgPacket;
 
@@ -114,35 +108,13 @@ public static class PcapService
         }
     }
 
-    private static Dictionary<int, bool> _sslRequestedFromClient = new();
-    private static bool SSLRequestedFromClient(int port)
-    {
-        if (_sslRequestedFromClient.TryGetValue(port, out var ssl))
-            return ssl;
-        return false;
-    }
-    private static Dictionary<int, AuthenticationGenericMessage?> _lastAuthPacket = new();
 
 
-    private static AuthenticationGenericMessage? LastAuthPacket(int port)
-    {
-        if (_lastAuthPacket.TryGetValue(port, out var message))
-            return message;
-        return null;
-    }
-    private static void SetLastAuthPacket(int port, AuthenticationGenericMessage? message)
-    {
-        _lastAuthPacket[port] = message;
-    }
-    private static void SetSSLRequestedFromClient(int port, bool value)
-    {
-        _sslRequestedFromClient[port] = value;
-    }
-
-    private static bool TryReadMessage(PcapBinaryReader reader, bool isFrontEnd, int clientPort, out PostgresMessageBase? message)
+    private static bool TryReadMessage(PcapBinaryReader reader, PcapReadState state, bool isFrontEnd, int clientPort, out PostgresMessageBase? message)
     {
         try
         {
+            message = null;
             var messageCode = reader.ReadChar();
 
             // Check if auth
@@ -154,9 +126,16 @@ public static class PcapService
                 messageLength = reader.ReadInt32();
             }
 
-            var pgMessage = PostgresMessages.GetMessage(messageCode, isFrontEnd);
+            var pgMessage = PostgresMessages.GetMessage(messageCode, isFrontEnd) ?? PostgresMessages.GetMessage(messageCode, !isFrontEnd);
+
             if (pgMessage == null)
+            {
                 throw new NotSupportedException($"Message not supported for code: '{messageCode}'");
+            }
+
+            // Check if buffer empty
+            if (!reader.HasSufficientData(1 + 4)) // code + length
+                return false;
 
             message = pgMessage.Value.Name! switch
             {
@@ -176,35 +155,39 @@ public static class PcapService
                 nameof(ReadyForQuery) => ReadyForQueryMessage.Read(messageCode, reader),
                 nameof(DescribeOut) => DescribeOutMessage.Read(messageCode, reader),
                 nameof(OutDescription) => OutDescriptionMessage.Read(messageCode, reader),
-                nameof(DataRow) => DataRowMessage.Read(messageCode, reader),
+                nameof(DataRow) => DataRowMessage.Read(messageCode, reader, state.LastRowDescription),
                 nameof(CommandComplete) => CommandCompleteMessage.Read(messageCode, reader),
-                nameof(NoticeResponse) when SSLRequestedFromClient(clientPort) => SSLResponseMessage.Read(messageCode),
+                nameof(NoticeResponse) when state.SSLRequestedFromClient(clientPort) => SSLResponseMessage.Read(messageCode),
                 nameof(NoticeResponse) => NoticeResponseMessage.Read(messageCode, reader),
-                "ParamData" => SendOutTupleMessage.Read(messageCode, reader),
+                "ParamData" => SendOutTupleMessage.Read(messageCode, reader, state.LastOutDescription),
                 nameof(Terminate) => TerminateMessage.Read(messageCode, reader),
                 "StartupMessage" when messageLength == 8 => SSLRequestMessage.Read(messageCode, messageLength, reader),
                 "StartupMessage" when messageLength > 8 => StartupMessageMessage.Read(messageCode, messageLength, reader),
                 "AuthenticationRequest" => AuthenticationMessage.Read(messageCode, reader),
-                "Password" => LastAuthPacket(clientPort)!.ReadResponseMessage(messageCode, reader),
+                "Password" => state.LastAuthPacket(clientPort)!.ReadResponseMessage(messageCode, reader),
                 nameof(ParameterStatus) => ParameterStatusMessage.Read(messageCode, reader),
                 nameof(BackendKeyData) => BackendKeyDataMessage.Read(messageCode, reader),
                 nameof(ErrorResponse) => ErrorResponseMessage.Read(messageCode, reader),
-                _ => null,
+                _ => throw new NotImplementedException($"Missing implementation for message '{pgMessage.Value.Name}' (code: '{messageCode}') read."),
             };
 
-            if (message == null)
-                throw new NotSupportedException($"Message not supported for code: '{messageCode}'");
+            if (message == null) // Cannot read, unsufficient buffer data available
+                return false;
 
             if (message is AuthenticationGenericMessage authMsg)
             {
-                SetLastAuthPacket(clientPort, authMsg);
+                state.SetLastAuthPacket(clientPort, authMsg);
             }
+            if (message is RowDescriptionMessage rowDesc)
+                state.LastRowDescription = rowDesc;
+            if (message is OutDescriptionMessage outDesc)
+                state.LastOutDescription = outDesc;
 
-            SetSSLRequestedFromClient(clientPort, message is SSLRequestMessage);
+            state.SetSSLRequestedFromClient(clientPort, message is SSLRequestMessage);
 
             return true;
         }
-        catch (EndOfStreamException ex)
+        catch (EndOfStreamException)
         {
             message = null;
             return false;

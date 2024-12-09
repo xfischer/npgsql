@@ -14,56 +14,62 @@ public static class PcapToLatexService
         GenerationState state = new(standalone: standalone);
 
         var fileLatexBuilder = new StringBuilder();
-
-        //// Header
-        //fileLatexBuilder.AppendLine(ProcessHeader("PostgreSQL packet dissections", state));
-
         int packetIndex = 1;
-        foreach (var packet in pgSqlPackets)
+
+        try
         {
-            state.LatexRowCount = 0;
-            // Packet Footer
-            if (packetIndex > 1)
+            //// Header
+            //fileLatexBuilder.AppendLine(ProcessHeader("PostgreSQL packet dissections", state));
+
+            foreach (var packet in pgSqlPackets)
             {
-                bool newChapter = state.LastMessage is ReadyForQueryMessage;
-                
-                fileLatexBuilder.AppendLine(new PacketFooter(newChapter, state).TransformText());
-                state.LatexRowCount += (newChapter ? 1 : 0);
+                state.LatexRowCount = 0;
+                // Packet Footer
+                if (packetIndex > 1)
+                {
+                    bool newChapter = state.LastMessage is ReadyForQueryMessage;
+
+                    fileLatexBuilder.AppendLine(new PacketFooter(newChapter, state).TransformText());
+                    state.LatexRowCount += (newChapter ? 1 : 0);
+                }
+
+                // Packet Header
+                fileLatexBuilder.AppendLine(new PacketHeader(packet.Messages, packet.IsFrontEnd, packetIndex, state).TransformText());
+
+                foreach (var pgMessage in packet.Messages)
+                {
+                    if (ProcessPostGresMessage(pgMessage, state, fileLatexBuilder))
+                    {
+                        state.StatsMesssagesProcessed++;
+                    }
+                    else
+                    {
+                        state.StatsMesssagesInvalid++;
+                        fileLatexBuilder.AppendLine($"No message definition found for code '{pgMessage.GetType().Name}'");
+                        fileLatexBuilder.AppendLine("\\\\");
+                        Console.WriteLine($"No message definition found for code '{pgMessage.GetType().Name}'");
+                    }
+                }
+                packetIndex++;
+                state.StatsPacketsProcessed++;
             }
 
-            // Packet Header
-            fileLatexBuilder.AppendLine(new PacketHeader(packet.Messages, packet.IsFrontEnd, packetIndex, state).TransformText());
-
-            foreach (var pgMessage in packet.Messages)
-            {
-                if (ProcessPostGresMessage(pgMessage, state, fileLatexBuilder))
-                {
-                    state.StatsMesssagesProcessed++;
-                }
-                else
-                {
-                    state.StatsMesssagesInvalid++;
-                    fileLatexBuilder.AppendLine($"No message definition found for code '{pgMessage.GetType().Name}'");
-                    fileLatexBuilder.AppendLine("\\\\");
-                    Console.WriteLine($"No message definition found for code '{pgMessage.GetType().Name}'");
-                }
-            }
-            packetIndex++;
-            state.StatsPacketsProcessed++;
         }
+        finally // write even if error occured
+        {
+            // Last packet Footer
+            fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
 
-        // Last packet Footer
-        fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
+            // Footer
+            fileLatexBuilder.AppendLine(ProcessFooter(state));
 
-        // Footer
-        fileLatexBuilder.AppendLine(ProcessFooter(state));
-
-        // Header INSERTION AT BEGINNING
-        fileLatexBuilder.Insert(0, ProcessHeader($"PostgreSQL packets. {packetIndex - 1} packet(s).", state) + Environment.NewLine);
+            // Header INSERTION AT BEGINNING
+            fileLatexBuilder.Insert(0, ProcessHeader($"PostgreSQL packets. {packetIndex - 1} packet(s).", state) + Environment.NewLine);
 
 
-        var finalLatex = fileLatexBuilder.ToString();
-        File.WriteAllText(latexOutputFile, finalLatex);
+            var finalLatex = fileLatexBuilder.ToString();
+            File.WriteAllText(latexOutputFile, finalLatex);
+        }
 
         return state;
     }
@@ -121,7 +127,7 @@ public static class PcapToLatexService
         }
 
         WriteTextTransformation(state, latexBuilder, textTransformer);
-        
+
         return true;
     }
 
@@ -131,7 +137,7 @@ public static class PcapToLatexService
         latexBuilder.AppendDebugLine($"% row count: {state.LatexRowCount}, estimated next: {estimatedRowCount}, new row count: {state.LatexRowCount + estimatedRowCount} (max: {MaxLatexRowsPerPage})");
         state.LatexRowCount += estimatedRowCount;
 
-        if (state.LatexRowCount > MaxLatexRowsPerPage)
+        if (state.LatexRowCount > MaxLatexRowsPerPage && !state.Standalone)
         {
             latexBuilder.AppendDebugLine($"% page break. row count: {state.LatexRowCount}, max: {MaxLatexRowsPerPage}");
             latexBuilder.AppendLine(new PacketFooter(newChapter: true, state, "Conversation (continuation)").TransformText());

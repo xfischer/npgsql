@@ -11,12 +11,11 @@
         \bitbox{25}[bgcolor=lightgray]{} 
         
 <#
-        int fieldIndex = 0;
         foreach(var f in this.Parameters)
         {
         #>
         \\
-        \begin{rightwordgroup}{param <#= ++fieldIndex #>}
+        \begin{rightwordgroup}{<#= f.Name #>}
         <#
                 if (f.Length > 0)
                 {

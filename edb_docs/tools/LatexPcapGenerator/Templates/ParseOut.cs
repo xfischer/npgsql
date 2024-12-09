@@ -28,38 +28,38 @@ namespace pcap2latex.Templates
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\n\r\n    \\begin{leftwordgroup}{ParseOut}\r\n        \\bitbox{1}[bgcolor=edborange]{O} " +
-                    "&\r\n        \\bitbox{4}[bgcolor=lightgreen]{length: ");
+            this.Write("\r\n    \\begin{leftwordgroup}{ParseOut}\r\n        \\bitbox{1}[bgcolor=edborange]{O} &" +
+                    "\r\n        \\bitbox{4}[bgcolor=lightgreen]{length: ");
             
-            #line 8 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Length));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{12}{\\tiny Statement: ");
             
-            #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Statement));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{13}{\\tiny Query: ");
             
-            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Query));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{2}{\\tiny paramCount: ");
             
-            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 12 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.ParameterTypes.Count));
             
             #line default
             #line hidden
-            this.Write("}\r\n\n    \\\\\n\r\n    \\begin{rightwordgroup}{parameter types}\n    ");
+            this.Write("}\r\n\r\n    \\\\\r\n\r\n    \\begin{rightwordgroup}{parameter types}\r\n    ");
             
-            #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 17 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
  
        int paramIndex = 0;
        foreach (var param in this.ParameterTypes) 
@@ -69,16 +69,16 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("\n        \\bitbox{4}{oid: ");
+            this.Write("        \\bitbox{4}{oid: ");
             
-            #line 14 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(param));
             
             #line default
             #line hidden
-            this.Write("} & \n    ");
+            this.Write("} & \r\n    ");
             
-            #line 14 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 24 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
 
        }
     
@@ -87,15 +87,15 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("    \\bitbox{");
             
-            #line 16 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 27 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(32 - paramIndex * 4));
             
             #line default
             #line hidden
-            this.Write("}[bgcolor=lightgray]{}\r\n    \\end{rightwordgroup}\n\r\n    \\\\ \r\n\r\n    \\begin{rightwor" +
-                    "dgroup}{parameter directions}\r\n    ");
+            this.Write("}[bgcolor=lightgray]{}\r\n    \\end{rightwordgroup}\r\n\r\n    \\\\ \r\n\r\n    \\begin{rightwo" +
+                    "rdgroup}{parameter directions}\r\n    ");
             
-            #line 21 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 33 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
  
        paramIndex = 0;
        foreach (var param in this.ParameterDirections) 
@@ -107,14 +107,14 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("        \\bitbox{2}{\\rotatebox{90}{\\tiny ");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 39 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(LatexHelper.ParamDirection(param)));
             
             #line default
             #line hidden
-            this.Write("}} & \n    ");
+            this.Write("}} & \r\n    ");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 40 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
 
        }
     
@@ -123,17 +123,17 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("       \\bitbox{");
             
-            #line 25 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+            #line 43 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(32 - paramIndex * 2));
             
             #line default
             #line hidden
-            this.Write("}[bgcolor=lightgray]{}\r\n    \\end{rightwordgroup}\n    \r\n\r\n    \\end{leftwordgroup}\r" +
-                    "\n");
+            this.Write("}[bgcolor=lightgray]{}\r\n    \\end{rightwordgroup}\r\n    \r\n\r\n    \\end{leftwordgroup}" +
+                    "\r\n");
             return this.GenerationEnvironment.ToString();
         }
         
-        #line 29 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
+        #line 48 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParseOut.tt"
  float ITextTransformer.EstimateBytefieldRowCount() => 3; 
         
         #line default

@@ -44,4 +44,12 @@ internal class PcapBinaryReader : BinaryReader
         }
         return string.Empty;
     }
+
+    internal void ThrowIfEndOfStream(int len)
+    {
+        if (base.BaseStream.Position + len > base.BaseStream.Length)
+            throw new EndOfStreamException($"Not sufficient data to read {len} bytes.");
+    }
+
+    internal bool HasSufficientData(int len) => base.BaseStream.Position + len <= base.BaseStream.Length+1;
 }

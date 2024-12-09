@@ -28,17 +28,17 @@ namespace pcap2latex.Templates
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\n\r\n    \\begin{leftwordgroup}{Parse}\r\n        \\bitbox{1}[bgcolor=lightcyan]{P} &\r\n" +
-                    "        \\bitbox{4}[bgcolor=lightgreen]{length: ");
+            this.Write("\r\n    \\begin{leftwordgroup}{Parse}\r\n        \\bitbox{1}[bgcolor=lightcyan]{P} &\r\n " +
+                    "       \\bitbox{4}[bgcolor=lightgreen]{length: ");
             
-            #line 8 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Length));
             
             #line default
             #line hidden
             this.Write("} &\r\n        ");
             
-            #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
  if (this.Statement.Length == 0) { 
             
             #line default
@@ -46,49 +46,49 @@ namespace pcap2latex.Templates
             this.Write("        \\bitbox{6}{\\small Statement: (null)} &\r\n        \\bitbox{19}{\\small Query:" +
                     " ");
             
-            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 12 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(LatexHelper.TrimUnescape(this.Query, 50)));
             
             #line default
             #line hidden
             this.Write("} &\r\n        ");
             
-            #line 12 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
  } else { 
             
             #line default
             #line hidden
             this.Write("        \\bitbox{12}{\\small Statement: ");
             
-            #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 14 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Statement));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{13}{\\small Query: ");
             
-            #line 14 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 15 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(LatexHelper.TrimUnescape(this.Query, 50)));
             
             #line default
             #line hidden
             this.Write("} &\r\n        ");
             
-            #line 15 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 16 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
  }
             
             #line default
             #line hidden
             this.Write("        \r\n        \\bitbox{2}{\\tiny param Count: ");
             
-            #line 17 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 18 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.ParameterOids.Count));
             
             #line default
             #line hidden
-            this.Write("}\r\n\n");
+            this.Write("}\r\n\r\n");
             
-            #line 18 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 20 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
 
     if (this.ParameterOids.Count > 0)
     {
@@ -96,9 +96,9 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("    \\\\\r\n    \\begin{rightwordgroup}{parameter types}\n    ");
+            this.Write("    \\\\\r\n    \\begin{rightwordgroup}{parameter types}\r\n    ");
             
-            #line 22 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 26 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
  
        int paramIndex = 0;
        foreach (var param in this.ParameterOids) 
@@ -108,16 +108,16 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("\n        \\bitbox{4}{oid: ");
+            this.Write("        \\bitbox{4}{oid: ");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 32 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(param));
             
             #line default
             #line hidden
-            this.Write("} & \n    ");
+            this.Write("} & \r\n    ");
             
-            #line 23 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 33 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
 
        }
     
@@ -126,14 +126,14 @@ namespace pcap2latex.Templates
             #line hidden
             this.Write("    \\bitbox{");
             
-            #line 25 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 36 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(32 - paramIndex * 4));
             
             #line default
             #line hidden
             this.Write("}[bgcolor=lightgray]{}    \r\n    \\end{rightwordgroup} \r\n");
             
-            #line 27 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+            #line 38 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
 
     }
 
@@ -144,7 +144,7 @@ namespace pcap2latex.Templates
             return this.GenerationEnvironment.ToString();
         }
         
-        #line 31 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
+        #line 42 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\Parse.tt"
  float ITextTransformer.EstimateBytefieldRowCount() => 1 + this.ParameterOids.Count; 
         
         #line default
