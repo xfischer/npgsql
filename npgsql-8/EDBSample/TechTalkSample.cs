@@ -1,6 +1,7 @@
 ﻿using EnterpriseDB.EDBClient;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -63,20 +64,54 @@ namespace EDBSample
                 $$ LANGUAGE plpgsql;
                 """;
             command.ExecuteNonQuery();
+
+            command.CommandText = """
+                CREATE OR REPLACE FUNCTION mixArgFunc_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                    RETURN int
+                AS
+                BEGIN
+                    b:=c;
+                    a:=a+a;
+                    return b-1;
+                END;
+                """;
+            command.ExecuteNonQuery();
         }
 
 
         internal async Task RunAsync()
         {
-            await RunQueryAsync();
+            //await RunQueryAsync();
+            Console.WriteLine("Connection is open. Next query : SELECT * FROM emp WHERE deptno = @dept");
+            Console.ReadLine();
+
             await RunQueryWithParamAsync();
-            await RunQueryPreparedWithParamAsync();
 
-            await RunScalarFunctionCallAsync();
+            Console.WriteLine("Next query : SPL function call");
+            Console.WriteLine("""
+                CREATE OR REPLACE FUNCTION mixArgFunc_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                    RETURN int
+                AS
+                BEGIN
+                    b:=c;
+                    a:=a+a;
+                    return b-1;
+                END;
+                """);
+            Console.ReadLine();
 
-            await RunScalarFunctionParameterCallAsync();
+            await RunSPLFunctionAsync();
 
-            await RunFunctionOutParameterCallAsync();
+            Console.WriteLine("Done");
+            Console.ReadLine();
+
+            //await RunQueryPreparedWithParamAsync();
+
+            //await RunScalarFunctionCallAsync();
+
+            //await RunScalarFunctionParameterCallAsync();
+
+            //await RunFunctionOutParameterCallAsync();
         }
 
         private async Task RunFunctionOutParameterCallAsync()
@@ -175,6 +210,30 @@ namespace EDBSample
                 Console.WriteLine(string.Join(" ", strings));
                 strings.Clear();
             }
+        }
+
+        internal async Task RunSPLFunctionAsync()
+        {
+            // >P/B/D/E/S
+            // <1/2/T/D/D/D/D/D/C/Z
+            using var command = new EDBCommand("mixArgFunc_test(:paramInOut, :paramOut, :paramIn)", conn);
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new EDBParameter("paramInOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.InputOutput });
+            command.Parameters.Add(new EDBParameter("paramOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Output });
+            command.Parameters.Add(new EDBParameter("paramIn", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Input });
+            command.Parameters.Add(new EDBParameter("paramRetVal", 4) { Direction = ParameterDirection.ReturnValue });
+            //command.Parameters.Add(new EDBParameter("paramInOut", EDBTypes.EDBDbType.Numeric, 10, "paramInOut", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            //command.Parameters.Add(new EDBParameter("paramOut", EDBTypes.EDBDbType.Numeric, 10, "paramOut", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            //command.Parameters.Add(new EDBParameter("paramIn", EDBTypes.EDBDbType.Numeric, 10, "paramIn", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
+            //command.Parameters.Add(new EDBParameter("paramRetVal", EDBTypes.EDBDbType.Integer, 4, "paramRetVal", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
+
+            await command.PrepareAsync();
+
+            command.Parameters["paramInOut"].Value = 10;
+            command.Parameters["paramIn"].Value = 25;
+
+            using EDBDataReader reader = await command.ExecuteReaderAsync();
         }
 
         internal async Task RunQueryPreparedWithParamAsync()
