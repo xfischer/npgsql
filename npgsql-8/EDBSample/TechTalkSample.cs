@@ -66,13 +66,12 @@ namespace EDBSample
             command.ExecuteNonQuery();
 
             command.CommandText = """
-                CREATE OR REPLACE FUNCTION mixArgFunc_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                CREATE OR REPLACE FUNCTION myFunc(a IN text, b OUT text)
                     RETURN int
                 AS
                 BEGIN
-                    b:=c;
-                    a:=a+a;
-                    return b-1;
+                    b := 'I now have a value :)';
+                    return 123;
                 END;
                 """;
             command.ExecuteNonQuery();
@@ -87,17 +86,19 @@ namespace EDBSample
 
             await RunQueryWithParamAsync();
 
+            Console.ReadLine();
+            Console.Clear();
             Console.WriteLine("Next query : SPL function call");
             Console.WriteLine("""
-                CREATE OR REPLACE FUNCTION mixArgFunc_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC)
+                CREATE OR REPLACE FUNCTION myFunc(a IN text, b OUT text)
                     RETURN int
                 AS
                 BEGIN
-                    b:=c;
-                    a:=a+a;
-                    return b-1;
+                    b := 'I now have a value :)';
+                    return 123;
                 END;
                 """);
+
             Console.ReadLine();
 
             await RunSPLFunctionAsync();
@@ -196,18 +197,18 @@ namespace EDBSample
                 {
                     for (var i = 0; i < reader.FieldCount; i++)
                     {
-                        strings.Add(reader.GetName(i));
+                        strings.Add(reader.GetName(i).ToString().PadLeft(10, ' '));
                     }
-                    Console.WriteLine(string.Join(", ", strings));
+                    Console.WriteLine(string.Join("\t", strings));
                     strings.Clear();
                     firstRow = false;
                 }
 
                 for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    strings.Add(reader[i].ToString()!);
+                    strings.Add(reader[i].ToString()!.PadLeft(10, ' '));
                 }
-                Console.WriteLine(string.Join(" ", strings));
+                Console.WriteLine(string.Join("\t", strings));
                 strings.Clear();
             }
         }
@@ -216,22 +217,14 @@ namespace EDBSample
         {
             // >P/B/D/E/S
             // <1/2/T/D/D/D/D/D/C/Z
-            using var command = new EDBCommand("mixArgFunc_test(:paramInOut, :paramOut, :paramIn)", conn);
+            using var command = new EDBCommand("myFunc(:a, :b)", conn);
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(new EDBParameter("paramInOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.InputOutput });
-            command.Parameters.Add(new EDBParameter("paramOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Output });
-            command.Parameters.Add(new EDBParameter("paramIn", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Input });
-            command.Parameters.Add(new EDBParameter("paramRetVal", 4) { Direction = ParameterDirection.ReturnValue });
-            //command.Parameters.Add(new EDBParameter("paramInOut", EDBTypes.EDBDbType.Numeric, 10, "paramInOut", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramOut", EDBTypes.EDBDbType.Numeric, 10, "paramOut", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramIn", EDBTypes.EDBDbType.Numeric, 10, "paramIn", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramRetVal", EDBTypes.EDBDbType.Integer, 4, "paramRetVal", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
-
+            command.Parameters.Add(new EDBParameter("a", "I should be assigned to parameter B") { Direction = ParameterDirection.Input });
+            command.Parameters.Add(new EDBParameter("b", "I am parameter B, unchanged") { Direction = ParameterDirection.Output });
+            command.Parameters.Add(new EDBParameter("c", null) { Direction = ParameterDirection.ReturnValue });
+            
             await command.PrepareAsync();
-
-            command.Parameters["paramInOut"].Value = 10;
-            command.Parameters["paramIn"].Value = 25;
 
             using EDBDataReader reader = await command.ExecuteReaderAsync();
         }
