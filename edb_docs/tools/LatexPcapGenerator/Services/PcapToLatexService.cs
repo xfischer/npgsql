@@ -94,7 +94,7 @@ public static class PcapToLatexService
                 bool success = ProcessPostGresMessage(pgMessage, state, fileLatexBuilder, (builder, stateObj) =>
                 {
                     state.StatsMesssagesProcessed++;
-
+                    
                     // Last packet Footer
                     fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
 
@@ -104,11 +104,13 @@ public static class PcapToLatexService
                     // Header INSERTION AT BEGINNING
                     fileLatexBuilder.Insert(0, ProcessHeader(null, state) + Environment.NewLine);
 
-
                     var finalLatex = fileLatexBuilder.ToString();
                     var fileName = Path.Combine(latexOutputDirectory, $"packet{packetIndex:0000}_message{state.StatsMesssagesProcessed:0000}.tex");
                     File.WriteAllText(fileName, finalLatex);
                     fileLatexBuilder.Clear();
+
+                    // Packet Header
+                    fileLatexBuilder.AppendLine(new PacketHeader(packet.Messages, packet.IsFrontEnd, packetIndex, state).TransformText());
                 });
 
                 if (!success)

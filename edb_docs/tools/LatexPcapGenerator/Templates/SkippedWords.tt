@@ -5,7 +5,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
     \begin{leftwordgroup}{<#= this.MessageName #> $\times$ <#= this.SkippedItems #>}
-        \wordbox[lrt]{1}{<#= this.MessageName #> messages skipped for brievity $\cdots$} \\
+        \wordbox[lrt]{1}{<#= this.MessageName #> messages skipped for brevity $\cdots$} \\
         \skippedwords \\
         \wordbox[lrb]{1}{}
     \end{leftwordgroup}

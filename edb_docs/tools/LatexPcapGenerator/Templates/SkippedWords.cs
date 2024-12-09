@@ -49,8 +49,8 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write(" messages skipped for brievity $\\cdots$} \\\\\r\n        \\skippedwords \\\\\r\n        \\w" +
-                    "ordbox[lrb]{1}{}\r\n    \\end{leftwordgroup}\r\n");
+            this.Write(" messages skipped for brevity $\\cdots$} \\\\\r\n        \\skippedwords \\\\\r\n        \\wo" +
+                    "rdbox[lrb]{1}{}\r\n    \\end{leftwordgroup}\r\n");
             return this.GenerationEnvironment.ToString();
         }
         
