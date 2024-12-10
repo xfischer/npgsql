@@ -19,9 +19,6 @@ public static class PcapToLatexService
 
         try
         {
-            //// Header
-            //fileLatexBuilder.AppendLine(ProcessHeader("PostgreSQL packet dissections", state));
-
             foreach (var packet in pgSqlPackets)
             {
                 state.LatexRowCount = 0;
@@ -54,7 +51,6 @@ public static class PcapToLatexService
                 packetIndex++;
                 state.StatsPacketsProcessed++;
             }
-
         }
         finally // write even if error occured
         {
@@ -62,10 +58,10 @@ public static class PcapToLatexService
             fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
 
             // Footer
-            fileLatexBuilder.AppendLine(ProcessFooter(state));
+            fileLatexBuilder.AppendLine(new Footer(state).TransformText());
 
             // Header INSERTION AT BEGINNING
-            fileLatexBuilder.Insert(0, ProcessHeader($"PostgreSQL packets. {packetIndex - 1} packet(s).", state) + Environment.NewLine);
+            fileLatexBuilder.Insert(0, new Header($"PostgreSQL packets. {packetIndex - 1} packet(s).", state).TransformText() + Environment.NewLine);
 
 
             var finalLatex = fileLatexBuilder.ToString();
@@ -99,10 +95,10 @@ public static class PcapToLatexService
                     fileLatexBuilder.AppendLine(new PacketFooter(newChapter: false, state).TransformText());
 
                     // Footer
-                    fileLatexBuilder.AppendLine(ProcessFooter(state));
+                    fileLatexBuilder.AppendLine(new Footer(state).TransformText());
 
                     // Header INSERTION AT BEGINNING
-                    fileLatexBuilder.Insert(0, ProcessHeader(null, state) + Environment.NewLine);
+                    fileLatexBuilder.Insert(0, new Header(null, state).TransformText() + Environment.NewLine);
 
                     var finalLatex = fileLatexBuilder.ToString();
                     var fileName = Path.Combine(latexOutputDirectory, $"packet{packetIndex:0000}_message{state.StatsMesssagesProcessed:0000}.tex");
@@ -127,21 +123,6 @@ public static class PcapToLatexService
 
 
         return state;
-    }
-
-    private static string? ProcessMessageSeparator()
-    {
-        return new MessageSeparator().TransformText();
-    }
-
-    private static string? ProcessFooter(GenerationState state)
-    {
-        return new Footer(state).TransformText();
-    }
-
-    private static string ProcessHeader(string? message, GenerationState state)
-    {
-        return new Header(message, state).TransformText();
     }
 
     private static bool ProcessPostGresMessage(PostgresMessageBase message, GenerationState state, StringBuilder latexBuilder, Action<StringBuilder, GenerationState>? messageReadyAction = null)
@@ -175,12 +156,12 @@ public static class PcapToLatexService
 
         state.LastMessage = message;
 
-        ITextTransformer? textTransformer = FindTextTransformer(message, state);
+        ITextTransformer? textTransformer = FindTextTransformer(message);
 
         if (textTransformer == null)
         {
             latexBuilder.AppendLine($"No template found for '{message.GetType().Name}' \\\\");
-            latexBuilder.AppendLine(ProcessMessageSeparator());
+            latexBuilder.AppendLine(new MessageSeparator().TransformText());
             return false;
         }
 
@@ -207,10 +188,10 @@ public static class PcapToLatexService
         }
 
         latexBuilder.AppendLine(textTransformer.TransformText());
-        latexBuilder.AppendLine(ProcessMessageSeparator());
+        latexBuilder.AppendLine(new MessageSeparator().TransformText());
     }
 
-    private static ITextTransformer? FindTextTransformer(PostgresMessageBase message, GenerationState state) => message switch
+    private static ITextTransformer? FindTextTransformer(PostgresMessageBase message) => message switch
     {
         QueryMessage m => new Query(m),
         ParseMessage m => new Parse(m),

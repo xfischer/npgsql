@@ -108,8 +108,6 @@ public static class PcapService
         }
     }
 
-
-
     private static bool TryReadMessage(PcapBinaryReader reader, PcapReadState state, bool isFrontEnd, int clientPort, out PostgresMessageBase? message)
     {
         try
@@ -175,9 +173,7 @@ public static class PcapService
                 return false;
 
             if (message is AuthenticationGenericMessage authMsg)
-            {
                 state.SetLastAuthPacket(clientPort, authMsg);
-            }
             if (message is RowDescriptionMessage rowDesc)
                 state.LastRowDescription = rowDesc;
             if (message is OutDescriptionMessage outDesc)

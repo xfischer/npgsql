@@ -21,16 +21,13 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        HelpText oHelpText;
-        ParserResult<CommandLineOptions> oResult;
-
-        oResult = Parser.Default.ParseArguments<CommandLineOptions>(args);
-        oResult.WithParsed(opts =>
+        var result = Parser.Default.ParseArguments<CommandLineOptions>(args);
+        result.WithParsed(opts =>
         {
             try
             {
                 CheckInputFile(opts.InputFile);
-                opts.OutputFile = CheckOutputFile(opts.InputFile, opts.OutputFile, opts.Multiple);
+                opts.OutputFile = CheckAndFixOutputFile(opts.InputFile, opts.OutputFile, opts.Multiple);
 
                 // We have the parsed arguments, so let's just pass them down
                 ProcessFile(opts.InputFile, opts.OutputFile, opts.Standalone ?? true, opts.Port, opts.Multiple);
@@ -39,19 +36,14 @@ internal class Program
             {
 
                 Console.WriteLine("Error! " + ex.Message);
-                oHelpText = HelpText.AutoBuild(oResult, x => x, x => x);
+                var helpText = HelpText.AutoBuild(result, x => x, x => x);
 
-                Console.WriteLine(oHelpText);
+                Console.WriteLine(helpText);
 #if DEBUG
                 if (Debugger.IsAttached) Console.ReadLine();
 #endif
             }
         });
-
-        //oHelpText = HelpText.AutoBuild(oResult, x => x, x => x);
-
-        //Console.WriteLine(oHelpText);
-
     }
 
     private static void ProcessFile(string inputFile, string outputPath, bool standalone, int port, bool multipleFiles)
@@ -123,7 +115,7 @@ internal class Program
         return true;
     }
 
-    private static string CheckOutputFile(string inputFile, string? outputFile, bool multiple)
+    private static string CheckAndFixOutputFile(string inputFile, string? outputFile, bool multiple)
     {
         if (outputFile == null)
             return multiple ? Path.Combine(Path.GetDirectoryName(inputFile)!, Path.GetFileNameWithoutExtension(inputFile)) : Path.ChangeExtension(inputFile, ".tex")!;

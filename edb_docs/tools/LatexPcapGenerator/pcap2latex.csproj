@@ -19,24 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="SamplePdml\CALL EPAS.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SamplePdml\DissectionsPdml.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SamplePdml\FUNC SPL EPAS.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SamplePdml\Postgres basic Extended Query.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SamplePdml\Postgres basic Simple Query.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SamplePdml\sampleprogram.pdml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Templates\ErrorResponse.tt">
       <LastGenOutput>ErrorResponse.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>
