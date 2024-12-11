@@ -1,12 +1,8 @@
 {
   "profiles": {
-    "TestInvalid": {
+    "Sample": {
       "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\query.pcapng\" -s false -p 5446 --multiple"
-    },
-    "TEST": {
-      "commandName": "Project",
-      "commandLineArgs": "\"G:\\My Drive\\TechTalk\\TEST.pcapng\" \"C:\\dev\\repos\\edb-dotnet\\edb_docs\\tech_docs\\latex\\auto_generation\\TEST.tex\" --standalone 1 --port 5446 -multiple"
+      "commandLineArgs": "SampleData\\connectorStartup.pcapng -o SampleData\\output --standalone True --port 5446"
     }
   }
 }

@@ -28,25 +28,24 @@ namespace pcap2latex.Templates
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n\\begin{leftwordgroup}{ParameterStatus}\r\n\\bytefieldsetup{bitheight=4ex}\r\n       " +
-                    " \\bitbox{1}[bgcolor=lightcyan]{S} &\r\n        \\bitbox{4}[bgcolor=lightgreen]{leng" +
-                    "th: ");
+            this.Write("\r\n\\begin{leftwordgroup}{ParameterStatus}\r\n        \\bitbox{1}[bgcolor=lightcyan]{S" +
+                    "} &\r\n        \\bitbox{4}[bgcolor=lightgreen]{\\small length: ");
             
-            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
+            #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Length));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{13}{\\small ");
             
-            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
+            #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.ParamName));
             
             #line default
             #line hidden
             this.Write("} &\r\n        \\bitbox{14}{\\small ");
             
-            #line 12 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
+            #line 11 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.ParamValue));
             
             #line default
@@ -55,8 +54,8 @@ namespace pcap2latex.Templates
             return this.GenerationEnvironment.ToString();
         }
         
-        #line 14 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
- float ITextTransformer.EstimateBytefieldRowCount() => 0.5f; 
+        #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\ParameterStatus.tt"
+ float ITextTransformer.EstimateBytefieldRowCount() => 1f; 
         
         #line default
         #line hidden

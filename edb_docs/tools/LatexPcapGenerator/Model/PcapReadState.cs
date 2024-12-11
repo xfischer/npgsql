@@ -16,10 +16,13 @@ public class PcapReadState
         return false;
     }
     private Dictionary<int, AuthenticationGenericMessage?> _lastAuthPacket = new();
-    public AuthenticationGenericMessage? LastAuthPacket(int port)
+    public AuthenticationGenericMessage? PopLastAuthPacket(int port)
     {
         if (_lastAuthPacket.TryGetValue(port, out var message))
+        {
+            _lastAuthPacket.Remove(port);
             return message;
+        }
         return null;
     }
     public void SetLastAuthPacket(int port, AuthenticationGenericMessage? message)

@@ -9,8 +9,8 @@
     \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
     \bitbox{4}{\small type: <#= this.AuthTypeCode #>} &
     <# if (this.Data is null) { #>
-    \bitbox{23}[bgcolor=lightgray]{} &
+    \bitbox{23}[bgcolor=lightgray]{}
     <# } else { #>
-    \bitbox{23}{<#= this.Data #>} &
+    \bitbox{23}{<#= this.Data #>}
     <# } #>    
 \end{leftwordgroup}

@@ -132,7 +132,7 @@ public static class PcapService
             }
 
             // Check if buffer empty
-            if (!reader.HasSufficientData(1 + 4)) // code + length
+            if (!reader.HasSufficientData(sizeof(int)) && !state.SSLRequestedFromClient(clientPort)) // code + length
                 return false;
 
             message = pgMessage.Value.Name! switch
@@ -162,7 +162,7 @@ public static class PcapService
                 "StartupMessage" when messageLength == 8 => SSLRequestMessage.Read(messageCode, messageLength, reader),
                 "StartupMessage" when messageLength > 8 => StartupMessageMessage.Read(messageCode, messageLength, reader),
                 "AuthenticationRequest" => AuthenticationMessage.Read(messageCode, reader),
-                "Password" => state.LastAuthPacket(clientPort)!.ReadResponseMessage(messageCode, reader),
+                "Password" => state.PopLastAuthPacket(clientPort)!.ReadResponseMessage(messageCode, reader),
                 nameof(ParameterStatus) => ParameterStatusMessage.Read(messageCode, reader),
                 nameof(BackendKeyData) => BackendKeyDataMessage.Read(messageCode, reader),
                 nameof(ErrorResponse) => ErrorResponseMessage.Read(messageCode, reader),

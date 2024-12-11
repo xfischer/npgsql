@@ -57,7 +57,7 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("    \\bitbox{23}[bgcolor=lightgray]{} &\r\n    ");
+            this.Write("    \\bitbox{23}[bgcolor=lightgray]{}\r\n    ");
             
             #line 13 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\AuthenticationGeneric.tt"
  } else { 
@@ -71,7 +71,7 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("} &\r\n    ");
+            this.Write("}\r\n    ");
             
             #line 15 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\AuthenticationGeneric.tt"
  } 

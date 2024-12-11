@@ -5,10 +5,9 @@
 <#@ import namespace="System.Collections.Generic" #>
 
 \begin{leftwordgroup}{ParameterStatus}
-\bytefieldsetup{bitheight=4ex}
         \bitbox{1}[bgcolor=lightcyan]{S} &
-        \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
+        \bitbox{4}[bgcolor=lightgreen]{\small length: <#= this.Length #>} &
         \bitbox{13}{\small <#= this.ParamName #>} &
         \bitbox{14}{\small <#= this.ParamValue #>}
 \end{leftwordgroup}
-<#+ float ITextTransformer.EstimateBytefieldRowCount() => 0.5f; #>
+<#+ float ITextTransformer.EstimateBytefieldRowCount() => 1f; #>

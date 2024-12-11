@@ -65,6 +65,10 @@ public static class PcapToLatexService
 
 
             var finalLatex = fileLatexBuilder.ToString();
+            var outputDir = Path.GetDirectoryName(latexOutputFile);
+            if (!Directory.Exists(outputDir))
+                Directory.CreateDirectory(outputDir!);
+
             File.WriteAllText(latexOutputFile, finalLatex);
         }
 

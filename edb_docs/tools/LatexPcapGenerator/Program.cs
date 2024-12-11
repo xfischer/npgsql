@@ -39,11 +39,13 @@ internal class Program
                 var helpText = HelpText.AutoBuild(result, x => x, x => x);
 
                 Console.WriteLine(helpText);
-#if DEBUG
-                if (Debugger.IsAttached) Console.ReadLine();
-#endif
+
             }
         });
+
+#if DEBUG
+        if (Debugger.IsAttached) Console.ReadLine();
+#endif
     }
 
     private static void ProcessFile(string inputFile, string outputPath, bool standalone, int port, bool multipleFiles)
@@ -57,6 +59,7 @@ internal class Program
         {
             Console.WriteLine($"Processing file '{Path.GetFileName(inputFile)}' as {(standalone ? "standalone" : "article")} LaTeX document...");
         }
+        Console.WriteLine($"Output path: {outputPath}");
 
         GenerationState? state = null;
         try
@@ -117,8 +120,16 @@ internal class Program
 
     private static string CheckAndFixOutputFile(string inputFile, string? outputFile, bool multiple)
     {
+        inputFile = Path.GetFullPath(inputFile);
         if (outputFile == null)
             return multiple ? Path.Combine(Path.GetDirectoryName(inputFile)!, Path.GetFileNameWithoutExtension(inputFile)) : Path.ChangeExtension(inputFile, ".tex")!;
+
+        outputFile = Path.GetFullPath(outputFile);
+        bool isDirectory = string.IsNullOrEmpty(Path.GetExtension(outputFile));
+
+        if (isDirectory)
+            return multiple ? Path.Combine(outputFile, Path.GetFileNameWithoutExtension(Path.GetFileName(inputFile))) : Path.Combine(outputFile, Path.ChangeExtension(Path.GetFileName(inputFile), ".tex")!);
+
         return outputFile;
     }
 

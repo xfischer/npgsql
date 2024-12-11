@@ -9,5 +9,5 @@
     \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
     \bitbox{8}{\small Mechanism: <#= this.Mechanism #>} &    
     \bitbox{4}[bgcolor=lightergreen]{length: <#= this.InitialResponseLength #>} &
-    \bitbox{16}{<#= this.InitialResponseLength #>}
+    \bitbox{15}{<#= this.InitialResponseLength #>}
 \end{leftwordgroup}

@@ -19,6 +19,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleData\connectorStartup.pcapng">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleData\epas.pcapng">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleData\extendedQuery.pcapng">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleData\simpleQuery.pcapng">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Templates\ErrorResponse.tt">
       <LastGenOutput>ErrorResponse.cs</LastGenOutput>
       <Generator>TextTemplatingFilePreprocessor</Generator>

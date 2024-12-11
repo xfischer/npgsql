@@ -50,7 +50,7 @@ namespace pcap2latex.Templates
             
             #line default
             #line hidden
-            this.Write("} &\r\n    \\bitbox{16}{");
+            this.Write("} &\r\n    \\bitbox{15}{");
             
             #line 12 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\Templates\SASLInitialResponse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.InitialResponseLength));
