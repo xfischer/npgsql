@@ -1,19 +1,6 @@
 ﻿using CommandLine;
 using CommandLine.Text;
-using PacketDotNet;
 using pcap2latex.Model;
-using pcap2latex.Templates;
-using pcap2latex.Templates.Paging;
-using SharpPcap;
-using SharpPcap.LibPcap;
-using System.Diagnostics;
-using System.Globalization;
-using System.Numerics;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
 
 namespace pcap2latex;
 
