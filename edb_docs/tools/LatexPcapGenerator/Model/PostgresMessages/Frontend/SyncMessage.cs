@@ -10,12 +10,4 @@ internal class SyncMessage(char code, int length) : PostgresMessageBase(code, le
 
         return message;
     }
-
-    internal static SyncMessage Read(char code, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new SyncMessage(code, len);
-
-        return message;
-    }
 }

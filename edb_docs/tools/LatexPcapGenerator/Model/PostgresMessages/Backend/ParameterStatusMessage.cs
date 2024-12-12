@@ -15,14 +15,4 @@ public class ParameterStatusMessage(char code, int length) : PostgresMessageBase
 
         return message;
     }
-
-    internal static ParameterStatusMessage Read(char code, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new ParameterStatusMessage(code, len);
-        message.Name = LatexHelper.SafeGet(proto, 3, f => f.Show);
-        message.Value = LatexHelper.SafeGet(proto, 4, f => f.Show);
-
-        return message;
-    }
 }

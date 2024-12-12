@@ -9,13 +9,5 @@
 
             return message;
         }
-
-        internal static BindCompleteMessage Read(char messageCode, Serialization.Proto proto)
-        {
-            var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-            var message = new BindCompleteMessage(messageCode, len);
-
-            return message;
-        }
     }
 }

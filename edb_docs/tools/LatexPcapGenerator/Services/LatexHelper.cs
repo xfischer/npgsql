@@ -30,14 +30,6 @@ public static class LatexHelper
         return Unescape(str.Substring(0, maxLength)) + "$\\cdots$";
     }
 
-    public static T SafeGet<T>(Serialization.Proto proto, int index, Func<Serialization.Field, T> getter)
-    {
-        if (proto == null || proto.Fields == null || proto.Fields.Count < index || getter == null)
-            throw new ArgumentException($"Cannot get proto value {index}");
-
-        return getter(proto.Fields[index]);
-    }
-
     public static string ToFormatString(short format) =>
         format switch
         {
@@ -54,6 +46,14 @@ public static class LatexHelper
             3 => "INOUT",
             _ => "??"
         };
+
+    public static string GetProtoDirectionText(bool? isFrontEnd)
+    {
+        if (isFrontEnd == null)
+            return "Unkown";
+
+        return isFrontEnd.Value ? "\\underline{FrontEnd}$\\longrightarrow$BackEnd" : "FrontEnd$\\longleftarrow$\\underline{BackEnd}";
+    }
 
 
     [Conditional("DEBUG")]

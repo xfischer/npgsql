@@ -15,15 +15,5 @@ namespace pcap2latex
 
             return message;
         }
-
-        internal static ExecuteMessage Read(char code, Serialization.Proto proto)
-        {
-            var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-            var message = new ExecuteMessage(code, len);
-            message.PortalName = proto.Fields[3].Showname;
-            message.MaxRows = Convert.ToInt16(proto.Fields[4].Value, 16);
-
-            return message;
-        }
     }
 }

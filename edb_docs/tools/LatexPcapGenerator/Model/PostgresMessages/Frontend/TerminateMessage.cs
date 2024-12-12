@@ -10,12 +10,4 @@ internal class TerminateMessage(char code, int length) : PostgresMessageBase(cod
 
         return packet;
     }
-
-    internal static TerminateMessage Read(char messageCode, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var packet = new TerminateMessage(messageCode, len);
-
-        return packet;
-    }
 }

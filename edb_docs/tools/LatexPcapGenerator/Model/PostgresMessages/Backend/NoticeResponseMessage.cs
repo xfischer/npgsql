@@ -27,13 +27,5 @@ namespace pcap2latex
 
             return message;
         }
-
-        internal static NoticeResponseMessage Read(char code, Serialization.Proto proto)
-        {
-            var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-            var message = new NoticeResponseMessage(code, len);
-            message.Fields.Add(('M', proto.Fields[3].Showname));
-            return message;
-        }
     }
 }

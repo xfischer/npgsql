@@ -17,14 +17,5 @@ namespace pcap2latex
 
             return message;
         }
-
-        internal static BackendKeyDataMessage Read(char code, Serialization.Proto proto)
-        {
-            var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-            var message = new BackendKeyDataMessage(code, len);
-            message.ProcessId = LatexHelper.SafeGet(proto, 3, f => int.Parse(f.Show));
-            message.SecretKey = LatexHelper.SafeGet(proto, 4, f => uint.Parse(f.Show));
-            return message;
-        }
     }
 }

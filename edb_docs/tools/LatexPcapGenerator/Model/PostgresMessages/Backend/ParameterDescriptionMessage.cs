@@ -20,14 +20,4 @@ public class ParameterDescriptionMessage(char code, int length) : PostgresMessag
 
         return message;
     }
-
-    internal static ParameterDescriptionMessage Read(char messageCode, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new ParameterDescriptionMessage(messageCode, len);
-        message.ParameterCount = Convert.ToInt16(proto.Fields[3].Value, 16);
-        message.ParameterOids = proto.Fields[3].Fields.Select(f => int.Parse(f.Show)).ToList();
-
-        return message;
-    }
 }

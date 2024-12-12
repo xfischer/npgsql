@@ -64,15 +64,7 @@ internal class Program
         GenerationState? state = null;
         try
         {
-            IEnumerable<PostgresPacket> packets;
-            if (Path.GetExtension(inputFile).ToLower() == ".pdml")
-            {
-                packets = PdmlService.ConvertPdmlToPcap(inputFile);
-            }
-            else
-            {
-                packets = PcapService.ConvertPcap(inputFile, (ushort)port);
-            }
+            IEnumerable<PostgresPacket> packets = PcapService.ConvertPcap(inputFile, (ushort)port);
 
 #if DEBUG
             var packetList = new List<PostgresPacket>();
@@ -109,7 +101,7 @@ internal class Program
         {
             throw new ArgumentException($"Input file {inputFile} does not exists.");
         }
-        List<string> supportedFileTypes = [".pdml", ".pcap", ".pcapng"];
+        List<string> supportedFileTypes = [".pcap", ".pcapng"];
         var fileExt = Path.GetExtension(inputFile).ToLower();
         if (!supportedFileTypes.Contains(fileExt))
         {

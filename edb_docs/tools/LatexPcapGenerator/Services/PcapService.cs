@@ -52,8 +52,6 @@ public static class PcapService
     }
 
 
-
-    // Minumum viable PDML info
     private static PostgresPacket ParsePacket(PacketDotNet.TcpPacket tcpPacket, PacketDotNet.IPPacket ipPacket, PcapReadState state)
     {
         var pgPacket = new PostgresPacket();
@@ -68,7 +66,9 @@ public static class PcapService
         pgPacket.IsFrontEnd = tcpPacket.DestinationPort == state.Port;
 
         // Reconstruct packet
-        byte[] payloadData = GetReconstructedPayload(tcpPacket, state.PreviousBufferLeftover);
+        byte[] payloadData = state.PreviousBufferLeftover is null ? tcpPacket.PayloadData 
+                                                                : [.. state.PreviousBufferLeftover, .. tcpPacket.PayloadData];
+
         using var memStream = new MemoryStream(payloadData);
         using var reader = new PcapBinaryReader(memStream, Encoding.UTF8);
 
@@ -93,19 +93,6 @@ public static class PcapService
         state.PreviousBufferLeftover = nextRemainder;
 
         return pgPacket;
-
-        static byte[] GetReconstructedPayload(PacketDotNet.TcpPacket tcpPacket, byte[]? previousRemainder)
-        {
-            byte[] payloadData = tcpPacket.PayloadData;
-            if (previousRemainder is not null)
-            {
-                payloadData = new byte[previousRemainder.Length + payloadData.Length];
-                Array.Copy(previousRemainder, payloadData, previousRemainder.Length);
-                Array.Copy(tcpPacket.PayloadData, 0, payloadData, previousRemainder.Length, tcpPacket.PayloadData.Length);
-            }
-
-            return payloadData;
-        }
     }
 
     private static bool TryReadMessage(PcapBinaryReader reader, PcapReadState state, bool isFrontEnd, int clientPort, out PostgresMessageBase? message)

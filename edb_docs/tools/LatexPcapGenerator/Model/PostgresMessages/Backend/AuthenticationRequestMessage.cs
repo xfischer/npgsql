@@ -4,7 +4,7 @@ namespace pcap2latex;
 
 public class AuthenticationMessage(char code, int length) : PostgresMessageBase(code, length)
 {
-    public int AuthenticationType { get; private set; }
+    public int AuthenticationType { get; }
 
     internal static AuthenticationMessage Read(char messageCode, PcapBinaryReader reader)
     {
@@ -20,6 +20,7 @@ public class AuthenticationMessage(char code, int length) : PostgresMessageBase(
                 3 => new AuthenticationGenericMessage(messageCode, len, intData, "AuthenticationClearText"),
                 7 => new AuthenticationGenericMessage(messageCode, len, intData, "AuthenticationGSS"),
                 9 => new AuthenticationGenericMessage(messageCode, len, intData, "AuthenticationSSPI"),
+                _ => throw new InvalidDataException($"Invalid Authentication packet! Got value {intData} as 2nd int32 field (first was {len} length).")
             };
         }
         else if (len == 12)
@@ -35,15 +36,11 @@ public class AuthenticationMessage(char code, int length) : PostgresMessageBase(
                 10 => AuthenticationSASLMessage.Read(messageCode, len, intData, reader),
                 11 => new AuthenticationSASLContinueMessage(messageCode, len, intData, reader.ReadBytes(len - 4 - 4)),
                 12 => new AuthenticationSASLFinalMessage(messageCode, len, intData, reader.ReadBytes(len - 4 - 4)),
+                _ => throw new InvalidDataException($"Invalid Authentication packet! Got value {intData} as 2nd int32 field. (first was {len} length)")
             };
         }
 
         throw new InvalidDataException("Invalid Authentication packet!");
-    }
-
-    internal static AuthenticationMessage Read(char code, Serialization.Proto proto)
-    {
-        throw new NotImplementedException();
     }
 }
 
@@ -91,7 +88,7 @@ public class AuthenticationSASLFinalMessage : AuthenticationGenericMessage
 }
 public class SASLResponseMessage(char code, int length) : PostgresMessageBase(code, length)
 {
-    public byte[] AuthData { get; private set; }
+    public byte[] AuthData { get; private set; } = [];
 
     internal static SASLResponseMessage Read(char messageCode, PcapBinaryReader reader)
     {
@@ -133,10 +130,8 @@ public class AuthenticationMD5PasswordMessage(char code, int length) : Authentic
         throw new NotImplementedException();
     }
 
-    public int Data { get; }
-    public string AuthenticationName { get; }
     public int MD5Check { get; private set; }
-    public byte[] Salt { get; private set; }
+    public byte[] Salt { get; private set; } = [];
 }
 
 public class AuthenticationSASLMessage(char code, int length, int intData) : AuthenticationGenericMessage(code, length, intData, "AuthenticationSASL")
@@ -165,7 +160,7 @@ public class AuthenticationSASLMessage(char code, int length, int intData) : Aut
 }
 public class SASLInitialResponseMessage(char code, int length) : PostgresMessageBase(code, length)
 {
-    public string Mechanism { get; private set; }
+    public string Mechanism { get; private set; } = "";
     public int InitialResponseLength { get; private set; }
     public byte[] InitialResponse { get; private set; } = new byte[0];
 

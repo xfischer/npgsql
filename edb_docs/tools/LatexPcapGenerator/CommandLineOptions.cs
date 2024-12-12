@@ -11,8 +11,8 @@ namespace pcap2latex;
 [DebuggerStepThrough()]
 public class CommandLineOptions
 {
-    [Value(index: 0, Required = true, HelpText = "Capture file to translate (.pcapng, .pdml)")]
-    public string InputFile { get; set; }
+    [Value(index: 0, Required = true, HelpText = "Capture file to translate (.pcapng, .pcap)")]
+    public string InputFile { get; set; } = "";
 
     [Option(shortName: 'o', longName: "output", Required = false, Default =null, HelpText ="Output file path. Leave empty generate a file at the same location as input file, with .tex extension")]
     public string? OutputFile { get; set; }

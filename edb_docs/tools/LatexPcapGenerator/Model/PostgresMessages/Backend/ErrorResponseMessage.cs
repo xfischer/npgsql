@@ -26,10 +26,5 @@
 
             return message;
         }
-
-        internal static ErrorResponseMessage Read(char code, Serialization.Proto proto)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -23,19 +23,5 @@ public class FieldDescription
 
         return description;
     }
-
-    internal static FieldDescription Read(Serialization.Field column)
-    {
-        FieldDescription description = new();
-        description.ColumnName = column.Show;
-        description.TableOid = int.Parse(column.Fields[0].Show);
-        description.ColumnIndex = short.Parse(column.Fields[1].Show);
-        description.TypeOid = int.Parse(column.Fields[2].Show);
-        description.ColumnLength = short.Parse(column.Fields[3].Show);
-        description.TypeModifier = int.Parse(column.Fields[4].Show);
-        description.Format = short.Parse(column.Fields[5].Show);
-
-        return description;
-    }
 }
 

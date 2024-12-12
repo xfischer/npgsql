@@ -13,14 +13,5 @@ namespace pcap2latex
 
             return message;
         }
-
-        internal static CommandCompleteMessage Read(char code, Serialization.Proto proto)
-        {
-            var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-            var message = new CommandCompleteMessage(code, len);
-            message.Message = proto.Fields[3].Showname;
-
-            return message;
-        }
     }
 }

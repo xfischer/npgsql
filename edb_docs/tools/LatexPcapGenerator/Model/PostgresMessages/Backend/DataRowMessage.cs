@@ -18,7 +18,7 @@ public class DataRowMessage(char code, int length) : PostgresMessageBase(code, l
 
     public List<Row> ColumnValues { get; internal set; } = new();
 
-    internal static DataRowMessage? Read(char messageCode, PcapBinaryReader reader, RowDescriptionMessage lastRowDescription)
+    internal static DataRowMessage? Read(char messageCode, PcapBinaryReader reader, RowDescriptionMessage? lastRowDescription)
     {
         if (!reader.HasSufficientData(4))
             return null;
@@ -39,34 +39,6 @@ public class DataRowMessage(char code, int length) : PostgresMessageBase(code, l
 
             var row = new Row(colLength, isText, data, text) { Name = lastRowDescription?.FieldDescriptions[i].ColumnName };
             message.ColumnValues.Add(row);
-        }
-
-        return message;
-    }
-
-    internal static DataRowMessage Read(char code, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new DataRowMessage(code, len);
-        message.FieldCount = Convert.ToInt16(proto.Fields[3].Value, 16);
-        var fields = proto.Fields[3].Fields;
-        for (int i = 0; i < fields.Count; i++)
-        {
-            if (fields[i].Name.EndsWith("length"))
-            {
-                var length = int.Parse(fields[i].Show);
-                if (length > 0)
-                {
-                    i++;
-                    var data = Convert.FromHexString(fields[i].Value);
-                    message.ColumnValues.Add(new Row(length, false, data, null));
-                }
-                else
-                {
-                    message.ColumnValues.Add(new Row(length, false, Array.Empty<byte>(), null));
-                }
-
-            }
         }
 
         return message;

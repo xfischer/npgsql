@@ -21,15 +21,4 @@ public class ParseMessage(char code, int length) : PostgresMessageBase(code, len
         }
         return packet;
     }
-
-    internal static ParseMessage Read(char messageCode, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var packet = new ParseMessage(messageCode, len);
-        packet.Statement = proto.Fields[3].Show;
-        packet.Query = proto.Fields[4].Show;
-        packet.ParameterOids = proto.Fields[5].Fields.Select(f => int.Parse(f.Show)).ToList();
-        packet.ParameterCount = Convert.ToInt16(proto.Fields[5].Value, 16);
-        return packet;
-    }
 }

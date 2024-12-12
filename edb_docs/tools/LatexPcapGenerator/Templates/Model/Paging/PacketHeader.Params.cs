@@ -11,7 +11,7 @@ public partial class PacketHeader
 
     public PacketHeader(List<PostgresMessageBase> messages, bool isFrontEnd, int packetIndex, GenerationState state)
     {
-        Direction = PdmlHelper.GetProtoDirectionText(isFrontEnd);
+        Direction = LatexHelper.GetProtoDirectionText(isFrontEnd);
         PacketIndex = packetIndex;
         State = state;
         MessagesCount = messages.Count == 1 ? "message:1" : $"messages:{messages.Count}";

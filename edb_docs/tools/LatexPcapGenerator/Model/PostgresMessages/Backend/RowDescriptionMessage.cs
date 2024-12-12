@@ -26,18 +26,4 @@ public class RowDescriptionMessage(char code, int length) : PostgresMessageBase(
 
         return message;
     }
-
-    internal static RowDescriptionMessage Read(char messageCode, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new RowDescriptionMessage(messageCode, len);
-        message.FieldCount = Convert.ToInt16(proto.Fields[3].Value, 16);
-
-        foreach(var field in proto.Fields[3].Fields) 
-        {
-            message.FieldDescriptions.Add(FieldDescription.Read(field));
-        }
-
-        return message;
-    }
 }

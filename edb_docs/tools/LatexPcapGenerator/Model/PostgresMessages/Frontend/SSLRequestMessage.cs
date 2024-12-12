@@ -14,15 +14,4 @@ public class SSLRequestMessage(char code, int length) : PostgresMessageBase(code
 
         return message;
     }
-
-    internal static SSLRequestMessage Read(char code, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new SSLRequestMessage(code, len);
-        message.Payload = LatexHelper.SafeGet(proto, 3, f => int.Parse(f.Show));
-
-        Debug.Assert(message.Payload == 80877103);
-
-        return message;
-    }
 }

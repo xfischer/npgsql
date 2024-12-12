@@ -26,17 +26,4 @@ public class ParseOutMessage(char code, int length) : PostgresMessageBase(code, 
         }
         return packet;
     }
-    internal static ParseOutMessage Read(char messageCode, Serialization.Proto proto)
-    {
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new ParseOutMessage(messageCode, len);
-        message.Statement = proto.Fields[3].Show;
-        message.Query = proto.Fields[4].Show;
-        message.ParameterCount = Convert.ToInt16(proto.Fields[5].Value, 16);
-        message.ParameterOids = proto.Fields[5].Fields.Select(f => int.Parse(f.Show)).ToList();
-        message.ParameterDirections = proto.Fields[6].Fields.Select(f => short.Parse(f.Show)).ToList();
-        return message;
-    }
-
-
 }

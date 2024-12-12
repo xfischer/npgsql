@@ -1,21 +1,23 @@
-﻿namespace pcap2latex;
+﻿using System.Collections.ObjectModel;
+
+namespace pcap2latex;
 
 public class PcapReadState
 {
     public ushort Port { get; internal set; }
     public byte[]? PreviousBufferLeftover { get; internal set; } = null;
-    public RowDescriptionMessage LastRowDescription { get; internal set; }
-    public OutDescriptionMessage LastOutDescription { get; internal set; }
+    public RowDescriptionMessage? LastRowDescription { get; internal set; }
+    public OutDescriptionMessage? LastOutDescription { get; internal set; }
 
 
-    private Dictionary<int, bool> _sslRequestedFromClient = new();
+    private readonly Dictionary<int, bool> _sslRequestedFromClient = new();
     public bool SSLRequestedFromClient(int port)
     {
         if (_sslRequestedFromClient.TryGetValue(port, out var ssl))
             return ssl;
         return false;
     }
-    private Dictionary<int, AuthenticationGenericMessage?> _lastAuthPacket = new();
+    private readonly Dictionary<int, AuthenticationGenericMessage?> _lastAuthPacket = new();
     public AuthenticationGenericMessage? PopLastAuthPacket(int port)
     {
         if (_lastAuthPacket.TryGetValue(port, out var message))

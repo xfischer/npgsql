@@ -51,39 +51,4 @@ public class BindMessage(char code, int length) : PostgresMessageBase(code, leng
         }
         return message;
     }
-
-    internal static BindMessage Read(char code, Serialization.Proto proto)
-    {
-        ArgumentNullException.ThrowIfNull(proto);
-
-        var len = Convert.ToInt16(proto.Fields[1].Value, 16);
-        var message = new BindMessage(code, len);
-        message.PortalName = proto.Fields[3].Show;
-        message.StatementName = proto.Fields[4].Show;
-        message.ParameterFormatsCount = Convert.ToInt16(proto.Fields[5].Value, 16);
-        message.ParameterFormats = proto.Fields[5].Fields.Select(f => short.Parse(f.Show)).ToList();
-        message.ParameterValuesCount = Convert.ToInt16(proto.Fields[6].Value, 16);
-
-        // fields are length+data except for null fields (only length)
-        var paramValueFields = proto.Fields[6].Fields;
-        for (int i = 0; i < paramValueFields.Count; i++)
-        {
-            var field = paramValueFields[i];
-            var fieldLength = int.Parse(field.Show);
-            if (fieldLength >0)
-            {
-                i++;
-                // Data doesnt matter here
-                message.ParameterValues.Add((Length: fieldLength, Data: Array.Empty<byte>()));
-            }
-            else
-            {
-                message.ParameterValues.Add((Length: -1, Data: Array.Empty<byte>()));
-            }
-        }
-        message.ResultsFormatCount = Convert.ToInt16(proto.Fields[7].Value, 16);
-        message.ResultsFormat = proto.Fields[7].Fields.Select(f => short.Parse(f.Show)).ToList();
-      
-        return message;
-    }
 }
