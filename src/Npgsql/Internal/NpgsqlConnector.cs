@@ -392,10 +392,7 @@ public sealed partial class NpgsqlConnector
         CopyLogger = LoggingConfiguration.CopyLogger;
 
         SslClientAuthenticationOptionsCallback = dataSource.SslClientAuthenticationOptionsCallback;
-
-#if NET7_0_OR_GREATER
         NegotiateOptionsCallback = dataSource.Configuration.NegotiateOptionsCallback;
-#endif
 
         State = ConnectorState.Closed;
         TransactionStatus = TransactionStatus.Idle;
@@ -920,7 +917,7 @@ public sealed partial class NpgsqlConnector
                 TargetHost = host,
                 ClientCertificates = clientCertificates,
                 EnabledSslProtocols = SslProtocols.None,
-                CertificateRevocationCheckMode = checkCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.Offline,
+                CertificateRevocationCheckMode = checkCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.NoCheck,
                 RemoteCertificateValidationCallback = certificateValidationCallback,
                 ApplicationProtocols = [_alpnProtocol]
             };

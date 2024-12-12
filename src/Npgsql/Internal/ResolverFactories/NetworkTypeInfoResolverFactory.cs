@@ -48,11 +48,13 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new NpgsqlInetConverter()));
 
             // cidr
-            mappings.AddStructType<NpgsqlCidr>(DataTypeNames.Cidr,
-                static (options, mapping, _) => mapping.CreateInfo(options, new NpgsqlCidrConverter()), isDefault: true);
-
             mappings.AddStructType<IPNetwork>(DataTypeNames.Cidr,
-                static (options, mapping, _) => mapping.CreateInfo(options, new IPNetworkConverter()));
+                static (options, mapping, _) => mapping.CreateInfo(options, new IPNetworkConverter()), isDefault: true);
+
+#pragma warning disable CS0618 // NpgsqlCidr is obsolete
+            mappings.AddStructType<NpgsqlCidr>(DataTypeNames.Cidr,
+                static (options, mapping, _) => mapping.CreateInfo(options, new NpgsqlCidrConverter()));
+#pragma warning restore CS0618
 
             return mappings;
         }
@@ -77,11 +79,10 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructArrayType<NpgsqlInet>(DataTypeNames.Inet);
 
             // cidr
-            mappings.AddStructArrayType<NpgsqlCidr>(DataTypeNames.Cidr);
-
-#if NET8_0_OR_GREATER
             mappings.AddStructArrayType<IPNetwork>(DataTypeNames.Cidr);
-#endif
+#pragma warning disable CS0618 // NpgsqlCidr is obsolete
+            mappings.AddStructArrayType<NpgsqlCidr>(DataTypeNames.Cidr);
+#pragma warning restore CS0618
 
             return mappings;
         }
