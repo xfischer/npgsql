@@ -1,0 +1,3 @@
+﻿#nullable enable
+EnterpriseDB.EDBClient.EDBNodaTimeExtensions
+static EnterpriseDB.EDBClient.EDBNodaTimeExtensions.UseNodaTime(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!

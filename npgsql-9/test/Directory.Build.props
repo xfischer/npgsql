@@ -1,0 +1,19 @@
+﻿<Project>
+  <Import Project="../Directory.Build.props" />
+
+  <PropertyGroup>
+      <TargetFrameworks Condition="'$(DeveloperBuild)' != 'True'">net8.0;net48;net481;net472</TargetFrameworks>
+      <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFramework>
+      <!--<TargetFrameworks>net472;net48;net481;net6.0;net8.0</TargetFrameworks>-->
+    <IsPackable>false</IsPackable>
+
+    <!-- Suppress warnings for [RequiresPreviewFeatures] (<EnablePreviewFeatures> doesn't seem to work across <ProjectReference>) -->
+    <NoWarn>$(NoWarn);CA2252</NoWarn>
+
+	<SonarQubeTestProject>true</SonarQubeTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" />
+  </ItemGroup>
+</Project>

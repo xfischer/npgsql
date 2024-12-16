@@ -1,0 +1,68 @@
+﻿using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Properties;
+using EDBTypes;
+using NUnit.Framework;
+
+namespace EnterpriseDB.EDBClient.Tests.Types;
+
+public class LTreeTests : MultiplexingTestBase
+{
+    [Test]
+    public Task LQuery()
+        => AssertType("Top.Science.*", "Top.Science.*", "lquery", EDBDbType.LQuery, isDefaultForWriting: false);
+
+    [Test]
+    public Task LTree()
+        => AssertType("Top.Science.Astronomy", "Top.Science.Astronomy", "ltree", EDBDbType.LTree, isDefaultForWriting: false);
+
+    [Test]
+    public Task LTxtQuery()
+        => AssertType("Science & Astronomy", "Science & Astronomy", "ltxtquery", EDBDbType.LTxtQuery, isDefaultForWriting: false);
+
+    [Test]
+    public async Task LTree_not_supported_by_default_on_EDBSlimSourceBuilder()
+    {
+        var errorMessage = string.Format(
+            EDBStrings.LTreeNotEnabled, nameof(EDBSlimDataSourceBuilder.EnableLTree), nameof(EDBSlimDataSourceBuilder));
+
+        var dataSourceBuilder = new EDBSlimDataSourceBuilder(ConnectionString);
+        await using var dataSource = dataSourceBuilder.Build();
+
+        var exception =
+            await AssertTypeUnsupportedRead<EDBRange<int>>("Top.Science.Astronomy", "ltree", dataSource);
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
+        exception = await AssertTypeUnsupportedWrite<string>("Top.Science.Astronomy", "ltree", dataSource);
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
+    }
+
+    [Test]
+    public async Task EDBSlimSourceBuilder_EnableLTree()
+    {
+        var dataSourceBuilder = new EDBSlimDataSourceBuilder(ConnectionString);
+        dataSourceBuilder.EnableLTree();
+        await using var dataSource = dataSourceBuilder.Build();
+
+        await AssertType(dataSource, "Top.Science.Astronomy", "Top.Science.Astronomy", "ltree", EDBDbType.LTree, isDefaultForWriting: false, skipArrayCheck: true);
+    }
+
+    [Test]
+    public async Task EDBSlimSourceBuilder_EnableArrays()
+    {
+        var dataSourceBuilder = new EDBSlimDataSourceBuilder(ConnectionString);
+        dataSourceBuilder.EnableLTree();
+        dataSourceBuilder.EnableArrays();
+        await using var dataSource = dataSourceBuilder.Build();
+
+        await AssertType(dataSource, "Top.Science.Astronomy", "Top.Science.Astronomy", "ltree", EDBDbType.LTree, isDefaultForWriting: false);
+    }
+
+    [OneTimeSetUp]
+    public async Task SetUp()
+    {
+        await using var conn = await OpenConnectionAsync();
+        TestUtil.MinimumPgVersion(conn, "13.0");
+        await TestUtil.EnsureExtensionAsync(conn, "ltree");
+    }
+
+    public LTreeTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
+}
