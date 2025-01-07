@@ -20,16 +20,16 @@ public class QueryBugsTest : IClassFixture<NpgsqlFixture>
     #region Bug920
 
     [Fact]
-    public void Bug920()
+    public async Task Bug920()
     {
-        using var _ = CreateDatabase920();
+        await using var _ = await CreateDatabase920Async();
         using var context = new Bug920Context(_options);
         context.Entities.Add(new Bug920Entity { Enum = Bug920Enum.Two });
         context.SaveChanges();
     }
 
-    private NpgsqlTestStore CreateDatabase920()
-        => CreateTestStore(() => new Bug920Context(_options), _ => ClearLog());
+    private Task<NpgsqlTestStore> CreateDatabase920Async()
+        => CreateTestStoreAsync(() => new Bug920Context(_options), _ => ClearLog());
 
     public enum Bug920Enum { One, Two }
 
@@ -41,13 +41,8 @@ public class QueryBugsTest : IClassFixture<NpgsqlFixture>
         public Bug920Enum Enum { get; set; }
     }
 
-    private class Bug920Context : DbContext
+    private class Bug920Context(DbContextOptions options) : DbContext(options)
     {
-        public Bug920Context(DbContextOptions options)
-            : base(options)
-        {
-        }
-
         public DbSet<Bug920Entity> Entities { get; set; }
     }
 
@@ -55,17 +50,17 @@ public class QueryBugsTest : IClassFixture<NpgsqlFixture>
 
     private DbContextOptions _options;
 
-    private NpgsqlTestStore CreateTestStore<TContext>(
+    private async Task<NpgsqlTestStore> CreateTestStoreAsync<TContext>(
         Func<TContext> contextCreator,
         Action<TContext> contextInitializer)
         where TContext : DbContext, IDisposable
     {
-        var testStore = NpgsqlTestStore.CreateInitialized("QueryBugsTest");
+        var testStore = await NpgsqlTestStore.CreateInitializedAsync("QueryBugsTest");
 
         _options = Fixture.CreateOptions(testStore);
 
-        using var context = contextCreator();
-        context.Database.EnsureCreatedResiliently();
+        await using var context = contextCreator();
+        await context.Database.EnsureCreatedResilientlyAsync();
         contextInitializer?.Invoke(context);
         return testStore;
     }

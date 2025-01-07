@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿// Modified by EnterpriseDB Team
+using System.Data;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
@@ -46,7 +47,7 @@ public class NpgsqlDatabaseCreatorExistsTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, true, true)]
     public async Task Returns_true_when_database_exists(bool async, bool ambientTransaction, bool useCanConnect)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreateInitialized("ExistingBlogging");
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreateInitializedAsync("ExistingBlogging");
         await using var context = new BloggingContext(testDatabase);
         var creator = GetDatabaseCreator(context);
 
@@ -79,7 +80,7 @@ public class NpgsqlDatabaseCreatorEnsureDeletedTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, true, false)]
     public async Task Deletes_database(bool async, bool open, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.CreateInitialized("EnsureDeleteBlogging");
+        await using var testDatabase = await NpgsqlTestStore.CreateInitializedAsync("EnsureDeleteBlogging");
         if (!open)
         {
             testDatabase.CloseConnection();
@@ -166,11 +167,11 @@ public class NpgsqlDatabaseCreatorEnsureCreatedTest : NpgsqlDatabaseCreatorTest
         await using var context = new BloggingContext(testDatabase);
         if (createDatabase)
         {
-            testDatabase.Initialize(null, (Func<DbContext>)null);
+            await testDatabase.InitializeAsync(null, (Func<DbContext>)null);
         }
         else
         {
-            testDatabase.DeleteDatabase();
+            await testDatabase.DeleteDatabaseAsync();
         }
 
         var creator = GetDatabaseCreator(context);
@@ -209,8 +210,7 @@ public class NpgsqlDatabaseCreatorEnsureCreatedTest : NpgsqlDatabaseCreatorTest
         Assert.Equal(14, columns.Length);
 
         Assert.Equal(
-            new[]
-            {
+            new[] {
                 "Blogs.AndChew (bytea)",
                 "Blogs.AndRow (bytea)",
                 "Blogs.Cheese (text)",
@@ -234,7 +234,7 @@ public class NpgsqlDatabaseCreatorEnsureCreatedTest : NpgsqlDatabaseCreatorTest
     [InlineData(false)]
     public async Task Noop_when_database_exists_and_has_schema(bool async)
     {
-        await using var testDatabase = NpgsqlTestStore.CreateInitialized("InitializedBlogging");
+        await using var testDatabase = await NpgsqlTestStore.CreateInitializedAsync("InitializedBlogging");
         await using var context = new BloggingContext(testDatabase);
         context.Database.EnsureCreatedResiliently();
 
@@ -277,7 +277,7 @@ public class NpgsqlDatabaseCreatorHasTablesTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, true)]
     public async Task Returns_false_when_database_exists_but_has_no_tables(bool async, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreateInitialized("Empty");
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreateInitializedAsync("Empty");
         var creator = GetDatabaseCreator(testDatabase);
 
         await GetExecutionStrategy(testDatabase).ExecuteAsync(
@@ -295,8 +295,8 @@ public class NpgsqlDatabaseCreatorHasTablesTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, false)]
     public async Task Returns_true_when_database_exists_and_has_any_tables(bool async, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreate("ExistingTables")
-            .InitializeNpgsql(null, t => new BloggingContext(t), null);
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreate("ExistingTables")
+            .InitializeNpgsqlAsync(null, t => new BloggingContext(t), null);
         var creator = GetDatabaseCreator(testDatabase);
 
         await GetExecutionStrategy(testDatabase).ExecuteAsync(
@@ -315,7 +315,7 @@ public class NpgsqlDatabaseCreatorHasTablesTest : NpgsqlDatabaseCreatorTest
     [RequiresPostgis]
     public async Task Returns_false_when_database_exists_and_has_only_postgis_tables(bool async, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreateInitialized("Empty");
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreateInitializedAsync("Empty");
         testDatabase.ExecuteNonQuery("CREATE EXTENSION IF NOT EXISTS postgis");
 
         var creator = GetDatabaseCreator(testDatabase);
@@ -338,7 +338,7 @@ public class NpgsqlDatabaseCreatorDeleteTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, false)]
     public static async Task Deletes_database(bool async, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.CreateInitialized("DeleteBlogging");
+        await using var testDatabase = await NpgsqlTestStore.CreateInitializedAsync("DeleteBlogging");
         testDatabase.CloseConnection();
 
         var creator = GetDatabaseCreator(testDatabase);
@@ -386,7 +386,7 @@ public class NpgsqlDatabaseCreatorCreateTablesTest : NpgsqlDatabaseCreatorTest
     [InlineData(false, false)]
     public async Task Creates_schema_in_existing_database_test(bool async, bool ambientTransaction)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreateInitialized("ExistingBlogging" + (async ? "Async" : ""));
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreateInitializedAsync("ExistingBlogging" + (async ? "Async" : ""));
         await using var context = new BloggingContext(testDatabase);
         var creator = GetDatabaseCreator(context);
 
@@ -455,37 +455,37 @@ public class NpgsqlDatabaseCreatorCreateTablesTest : NpgsqlDatabaseCreatorTest
         using var context = new BloggingContext("Data Source=foo");
         var script = context.Database.GenerateCreateScript();
         Assert.Equal(
-            @"CREATE TABLE ""Blogs"" ("
+            """CREATE TABLE "Blogs" ("""
             + _eol
-            + @"    ""Key1"" text NOT NULL,"
+            + """    "Key1" text NOT NULL,"""
             + _eol
-            + @"    ""Key2"" bytea NOT NULL,"
+            + """    "Key2" bytea NOT NULL,"""
             + _eol
-            + @"    ""Cheese"" text,"
+            + """    "Cheese" text,"""
             + _eol
-            + @"    ""ErMilan"" integer NOT NULL,"
+            + """    "ErMilan" integer NOT NULL,"""
             + _eol
-            + @"    ""George"" boolean NOT NULL,"
+            + """    "George" boolean NOT NULL,"""
             + _eol
-            + @"    ""TheGu"" uuid NOT NULL,"
+            + """    "TheGu" uuid NOT NULL,"""
             + _eol
-            + @"    ""NotFigTime"" timestamp with time zone NOT NULL,"
+            + """    "NotFigTime" timestamp with time zone NOT NULL,"""
             + _eol
-            + @"    ""ToEat"" smallint NOT NULL,"
+            + """    "ToEat" smallint NOT NULL,"""
             + _eol
-            + @"    ""OrNothing"" double precision NOT NULL,"
+            + """    "OrNothing" double precision NOT NULL,"""
             + _eol
-            + @"    ""Fuse"" smallint NOT NULL,"
+            + """    "Fuse" smallint NOT NULL,"""
             + _eol
-            + @"    ""WayRound"" bigint NOT NULL,"
+            + """    "WayRound" bigint NOT NULL,"""
             + _eol
-            + @"    ""On"" real NOT NULL,"
+            + """    "On" real NOT NULL,"""
             + _eol
-            + @"    ""AndChew"" bytea,"
+            + """    "AndChew" bytea,"""
             + _eol
-            + @"    ""AndRow"" bytea,"
+            + """    "AndRow" bytea,"""
             + _eol
-            + @"    CONSTRAINT ""PK_Blogs"" PRIMARY KEY (""Key1"", ""Key2"")"
+            + """    CONSTRAINT "PK_Blogs" PRIMARY KEY ("Key1", "Key2")"""
             + _eol
             + ");"
             + _eol
@@ -543,7 +543,7 @@ public class NpgsqlDatabaseCreatorCreateTest : NpgsqlDatabaseCreatorTest
     [InlineData(false)]
     public async Task Throws_if_database_already_exists(bool async)
     {
-        await using var testDatabase = NpgsqlTestStore.GetOrCreateInitialized("ExistingBlogging");
+        await using var testDatabase = await NpgsqlTestStore.GetOrCreateInitializedAsync("ExistingBlogging");
         var creator = GetDatabaseCreator(testDatabase);
 
         var ex = async
@@ -574,13 +574,9 @@ public class NpgsqlDatabaseCreatorTest
         => new BloggingContext(testStore).GetService<IExecutionStrategyFactory>().Create();
 
     // ReSharper disable once ClassNeverInstantiated.Local
-    private class TestNpgsqlExecutionStrategyFactory : NpgsqlExecutionStrategyFactory
+    private class TestNpgsqlExecutionStrategyFactory(ExecutionStrategyDependencies dependencies)
+        : NpgsqlExecutionStrategyFactory(dependencies)
     {
-        public TestNpgsqlExecutionStrategyFactory(ExecutionStrategyDependencies dependencies)
-            : base(dependencies)
-        {
-        }
-
         protected override IExecutionStrategy CreateDefaultStrategy(ExecutionStrategyDependencies dependencies)
             => new NonRetryingExecutionStrategy(dependencies);
     }
@@ -592,24 +588,17 @@ public class NpgsqlDatabaseCreatorTest
             .AddScoped<IRelationalDatabaseCreator, TestDatabaseCreator>()
             .BuildServiceProvider();
 
-    protected class BloggingContext : DbContext
+    protected class BloggingContext(string connectionString) : DbContext
     {
-        private readonly string _connectionString;
-
         public BloggingContext(NpgsqlTestStore testStore)
             : this(testStore.ConnectionString)
         {
         }
 
-        public BloggingContext(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
                 .UseNpgsql(
-                    _connectionString, b => b
+                    connectionString, b => b
                         .ApplyConfiguration()
                         .SetPostgresVersion(TestEnvironment.PostgresVersion))
                 .UseInternalServiceProvider(CreateServiceProvider());
@@ -644,16 +633,13 @@ public class NpgsqlDatabaseCreatorTest
         public byte[] AndRow { get; set; }
     }
 
-    public class TestDatabaseCreator : NpgsqlDatabaseCreator
+    public class TestDatabaseCreator(
+        RelationalDatabaseCreatorDependencies dependencies,
+        INpgsqlRelationalConnection connection,
+        IRawSqlCommandBuilder rawSqlCommandBuilder,
+        IRelationalConnectionDiagnosticsLogger connectionLogger)
+        : NpgsqlDatabaseCreator(dependencies, connection, rawSqlCommandBuilder, connectionLogger)
     {
-        public TestDatabaseCreator(
-            RelationalDatabaseCreatorDependencies dependencies,
-            INpgsqlRelationalConnection connection,
-            IRawSqlCommandBuilder rawSqlCommandBuilder)
-            : base(dependencies, connection, rawSqlCommandBuilder)
-        {
-        }
-
         public bool HasTablesBase()
             => HasTables();
 

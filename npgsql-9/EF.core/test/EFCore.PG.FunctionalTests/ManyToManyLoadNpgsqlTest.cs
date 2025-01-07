@@ -3,14 +3,10 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class ManyToManyLoadNpgsqlTest : ManyToManyLoadTestBase<ManyToManyLoadNpgsqlTest.ManyToManyLoadNpgsqlFixture>
+public class ManyToManyLoadNpgsqlTest(ManyToManyLoadNpgsqlTest.ManyToManyLoadNpgsqlFixture fixture)
+    : ManyToManyLoadTestBase<ManyToManyLoadNpgsqlTest.ManyToManyLoadNpgsqlFixture>(fixture)
 {
-    public ManyToManyLoadNpgsqlTest(ManyToManyLoadNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
-    public class ManyToManyLoadNpgsqlFixture : ManyToManyLoadFixtureBase
+    public class ManyToManyLoadNpgsqlFixture : ManyToManyLoadFixtureBase, ITestSqlLoggerFactory
     {
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;

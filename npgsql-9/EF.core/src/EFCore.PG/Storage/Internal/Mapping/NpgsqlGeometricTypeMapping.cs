@@ -75,7 +75,7 @@ public class EDBPointTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBPoint).GetConstructor(new[] { typeof(double), typeof(double) })!;
+        typeof(EDBPoint).GetConstructor([typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -155,7 +155,7 @@ public class EDBLineTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBLine).GetConstructor(new[] { typeof(double), typeof(double), typeof(double) })!;
+        typeof(EDBLine).GetConstructor([typeof(double), typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -233,7 +233,7 @@ public class EDBLineSegmentTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBLSeg).GetConstructor(new[] { typeof(double), typeof(double), typeof(double), typeof(double) })!;
+        typeof(EDBLSeg).GetConstructor([typeof(double), typeof(double), typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -311,7 +311,7 @@ public class EDBBoxTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBBox).GetConstructor(new[] { typeof(double), typeof(double), typeof(double), typeof(double) })!;
+        typeof(EDBBox).GetConstructor([typeof(double), typeof(double), typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -411,10 +411,10 @@ public class EDBPathTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBPath).GetConstructor(new[] { typeof(IEnumerable<EDBPoint>), typeof(bool) })!;
+        typeof(EDBPath).GetConstructor([typeof(IEnumerable<EDBPoint>), typeof(bool)])!;
 
     private static readonly ConstructorInfo PointConstructor =
-        typeof(EDBPoint).GetConstructor(new[] { typeof(double), typeof(double) })!;
+        typeof(EDBPoint).GetConstructor([typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -511,10 +511,10 @@ public class EDBPolygonTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBPolygon).GetConstructor(new[] { typeof(EDBPoint[]) })!;
+        typeof(EDBPolygon).GetConstructor([typeof(EDBPoint[])])!;
 
     private static readonly ConstructorInfo PointConstructor =
-        typeof(EDBPoint).GetConstructor(new[] { typeof(double), typeof(double) })!;
+        typeof(EDBPoint).GetConstructor([typeof(double), typeof(double)])!;
 }
 
 /// <summary>
@@ -591,5 +591,5 @@ public class EDBCircleTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBCircle).GetConstructor(new[] { typeof(double), typeof(double), typeof(double) })!;
+        typeof(EDBCircle).GetConstructor([typeof(double), typeof(double), typeof(double)])!;
 }

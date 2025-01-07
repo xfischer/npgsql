@@ -5,8 +5,8 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.BulkUpdates;
 
-public class NorthwindBulkUpdatesNpgsqlFixture<TModelCustomizer> : NorthwindBulkUpdatesFixture<TModelCustomizer>
-    where TModelCustomizer : IModelCustomizer, new()
+public class NorthwindBulkUpdatesNpgsqlFixture<TModelCustomizer> : NorthwindBulkUpdatesRelationalFixture<TModelCustomizer>
+    where TModelCustomizer : ITestModelCustomizer, new()
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlNorthwindTestStoreFactory.Instance;

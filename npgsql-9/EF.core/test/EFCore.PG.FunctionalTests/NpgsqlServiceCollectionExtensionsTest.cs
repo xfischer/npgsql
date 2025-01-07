@@ -2,10 +2,4 @@
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class NpgsqlServiceCollectionExtensionsTest : RelationalServiceCollectionExtensionsTestBase
-{
-    public NpgsqlServiceCollectionExtensionsTest()
-        : base(NpgsqlTestHelpers.Instance)
-    {
-    }
-}
+public class NpgsqlServiceCollectionExtensionsTest() : RelationalServiceCollectionExtensionsTestBase(NpgsqlTestHelpers.Instance);

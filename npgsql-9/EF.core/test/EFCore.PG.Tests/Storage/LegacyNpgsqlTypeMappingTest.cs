@@ -49,9 +49,9 @@ public class LegacyNpgsqlTypeMappingTest : IClassFixture<LegacyNpgsqlTypeMapping
         new TypeMappingSourceDependencies(
             new ValueConverterSelector(new ValueConverterSelectorDependencies()),
             new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
-            Array.Empty<ITypeMappingSourcePlugin>()
+            []
         ),
-        new RelationalTypeMappingSourceDependencies(Array.Empty<IRelationalTypeMappingSourcePlugin>()),
+        new RelationalTypeMappingSourceDependencies([]),
         new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
         new NpgsqlSingletonOptions());
 
@@ -76,8 +76,6 @@ public class LegacyNpgsqlTypeMappingTest : IClassFixture<LegacyNpgsqlTypeMapping
 }
 
 [CollectionDefinition("LegacyDateTimeTest", DisableParallelization = true)]
-public class EventSourceTestCollection
-{
-}
+public class EventSourceTestCollection;
 
 #endif

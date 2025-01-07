@@ -16,7 +16,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 public class DateMapping : NpgsqlTypeMapping
 {
     private static readonly ConstructorInfo Constructor =
-        typeof(LocalDate).GetConstructor(new[] { typeof(int), typeof(int), typeof(int) })!;
+        typeof(LocalDate).GetConstructor([typeof(int), typeof(int), typeof(int)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -116,6 +116,8 @@ public class DateMapping : NpgsqlTypeMapping
 
     private sealed class JsonLocalDateReaderWriter : JsonValueReaderWriter<LocalDate>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonLocalDateReaderWriter).GetProperty(nameof(Instance))!;
+
         public static JsonLocalDateReaderWriter Instance { get; } = new();
 
         public override LocalDate FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
@@ -138,5 +140,8 @@ public class DateMapping : NpgsqlTypeMapping
 
         public override void ToJsonTyped(Utf8JsonWriter writer, LocalDate value)
             => writer.WriteStringValue(FormatLocalDate(value));
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

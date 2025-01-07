@@ -42,7 +42,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
     ///     For user-defined ranges, we have no <see cref="EDBDbType" /> and so the PG type name is set on
     ///     <see cref="EDBParameter.DataTypeName" /> instead.
     /// </summary>
-    private string? PgDataTypeName { get; init; }
+    public virtual string? UnquotedStoreType { get; init; }
 
     /// <summary>
     ///     Constructs an instance of the <see cref="NpgsqlRangeTypeMapping" /> class for a built-in range type which has a
@@ -74,7 +74,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         RelationalTypeMapping subtypeMapping)
         => new(quotedRangeStoreType, rangeClrType, rangeEDBDbType: EDBDbType.Unknown, subtypeMapping)
         {
-            PgDataTypeName = unquotedRangeStoreType
+            UnquotedStoreType = unquotedRangeStoreType
         };
 
     private NpgsqlRangeTypeMapping(
@@ -138,8 +138,8 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected override void ConfigureParameter(DbParameter parameter)
     {
-        // Built-in range types have an EDBDbType, so we just do the normal thing.
-        if (PgDataTypeName is null)
+        // Built-in range types have an NpgsqlDbType, so we just do the normal thing.
+        if (UnquotedStoreType is null)
         {
             Check.DebugAssert(EDBDbType is not EDBDbType.Unknown, "EDBDbType is Unknown but no PgDataTypeName is configured");
             base.ConfigureParameter(parameter);
@@ -154,7 +154,7 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
                 $"Npgsql-specific type mapping {GetType().Name} being used with non-Npgsql parameter type {parameter.GetType().Name}");
         }
 
-        npgsqlParameter.DataTypeName = PgDataTypeName;
+        npgsqlParameter.DataTypeName = UnquotedStoreType;
     }
 
     /// <summary>
@@ -260,10 +260,10 @@ public class NpgsqlRangeTypeMapping : NpgsqlTypeMapping
         _upperInfiniteProperty = rangeClrType.GetProperty(nameof(EDBRange<int>.UpperBoundInfinite))!;
 
         _rangeConstructor1 = rangeClrType.GetConstructor(
-            new[] { subtypeClrType, subtypeClrType })!;
+            [subtypeClrType, subtypeClrType])!;
         _rangeConstructor2 = rangeClrType.GetConstructor(
-            new[] { subtypeClrType, typeof(bool), subtypeClrType, typeof(bool) })!;
+            [subtypeClrType, typeof(bool), subtypeClrType, typeof(bool)])!;
         _rangeConstructor3 = rangeClrType.GetConstructor(
-            new[] { subtypeClrType, typeof(bool), typeof(bool), subtypeClrType, typeof(bool), typeof(bool) })!;
+            [subtypeClrType, typeof(bool), typeof(bool), subtypeClrType, typeof(bool), typeof(bool)])!;
     }
 }

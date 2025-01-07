@@ -499,7 +499,7 @@ LIMIT 2
     public void JsonContains_with_json_element()
     {
         using var ctx = CreateContext();
-        var element = JsonDocument.Parse(@"{""Name"": ""Joe"", ""Age"": 25}").RootElement;
+        var element = JsonDocument.Parse("""{"Name": "Joe", "Age": 25}""").RootElement;
         var count = ctx.JsonbEntities.Count(
             e =>
                 EF.Functions.JsonContains(e.Customer, element));
@@ -521,7 +521,7 @@ WHERE j."Customer" @> @__element_1
         using var ctx = CreateContext();
         var count = ctx.JsonbEntities.Count(
             e =>
-                EF.Functions.JsonContains(e.Customer, @"{""Name"": ""Joe"", ""Age"": 25}"));
+                EF.Functions.JsonContains(e.Customer, """{"Name": "Joe", "Age": 25}"""));
 
         Assert.Equal(1, count);
         AssertSql(
@@ -536,7 +536,7 @@ WHERE j."Customer" @> '{"Name": "Joe", "Age": 25}'
     public void JsonContains_with_string_parameter()
     {
         using var ctx = CreateContext();
-        var someJson = @"{""Name"": ""Joe"", ""Age"": 25}";
+        var someJson = """{"Name": "Joe", "Age": 25}""";
         var count = ctx.JsonbEntities.Count(
             e =>
                 EF.Functions.JsonContains(e.Customer, someJson));
@@ -556,7 +556,7 @@ WHERE j."Customer" @> @__someJson_1
     public void JsonContained_with_json_element()
     {
         using var ctx = CreateContext();
-        var element = JsonDocument.Parse(@"{""Name"": ""Joe"", ""Age"": 25}").RootElement;
+        var element = JsonDocument.Parse("""{"Name": "Joe", "Age": 25}""").RootElement;
         var count = ctx.JsonbEntities.Count(
             e =>
                 EF.Functions.JsonContained(element, e.Customer));
@@ -578,7 +578,7 @@ WHERE @__element_1 <@ j."Customer"
         using var ctx = CreateContext();
         var count = ctx.JsonbEntities.Count(
             e =>
-                EF.Functions.JsonContained(@"{""Name"": ""Joe"", ""Age"": 25}", e.Customer));
+                EF.Functions.JsonContained("""{"Name": "Joe", "Age": 25}""", e.Customer));
 
         Assert.Equal(1, count);
         AssertSql(
@@ -593,7 +593,7 @@ WHERE '{"Name": "Joe", "Age": 25}' <@ j."Customer"
     public void JsonContained_with_string_parameter()
     {
         using var ctx = CreateContext();
-        var someJson = @"{""Name"": ""Joe"", ""Age"": 25}";
+        var someJson = """{"Name": "Joe", "Age": 25}""";
         var count = ctx.JsonbEntities.Count(
             e =>
                 EF.Functions.JsonContained(someJson, e.Customer));
@@ -704,24 +704,19 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class JsonPocoQueryContext : PoolableDbContext
+    public class JsonPocoQueryContext(DbContextOptions options) : PoolableDbContext(options)
     {
         public DbSet<JsonbEntity> JsonbEntities { get; set; }
         public DbSet<JsonEntity> JsonEntities { get; set; }
 
-        public JsonPocoQueryContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        public static void Seed(JsonPocoQueryContext context)
+        public static async Task SeedAsync(JsonPocoQueryContext context)
         {
             context.JsonbEntities.AddRange(
                 new JsonbEntity
                 {
                     Id = 1,
                     Customer = CreateCustomer1(),
-                    ToplevelArray = new[] { "one", "two", "three" }
+                    ToplevelArray = ["one", "two", "three"]
                 },
                 new JsonbEntity { Id = 2, Customer = CreateCustomer2() });
             context.JsonEntities.AddRange(
@@ -729,10 +724,11 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
                 {
                     Id = 1,
                     Customer = CreateCustomer1(),
-                    ToplevelArray = new[] { "one", "two", "three" }
+                    ToplevelArray = ["one", "two", "three"]
                 },
                 new JsonEntity { Id = 2, Customer = CreateCustomer2() });
-            context.SaveChanges();
+
+            await context.SaveChangesAsync();
 
             static Customer CreateCustomer1()
                 => new()
@@ -750,12 +746,12 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
                             SomeProperty = 10,
                             SomeNullableInt = 20,
                             SomeNullableGuid = Guid.Parse("d5f2685d-e5c4-47e5-97aa-d0266154eb2d"),
-                            IntArray = new[] { 3, 4 },
-                            IntList = new List<int> { 3, 4 }
+                            IntArray = [3, 4],
+                            IntList = [3, 4]
                         }
                     },
-                    Orders = new[]
-                    {
+                    Orders =
+                    [
                         new Order
                         {
                             Price = 99.5m, ShippingAddress = "Some address 1",
@@ -764,7 +760,7 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
                         {
                             Price = 23, ShippingAddress = "Some address 2",
                         }
-                    },
+                    ],
                     VariousTypes = new VariousTypes
                     {
                         String = "foo",
@@ -794,22 +790,22 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
                             SomeProperty = 20,
                             SomeNullableInt = null,
                             SomeNullableGuid = null,
-                            IntArray = new[] { 5, 6, 7 },
-                            IntList = new List<int>
-                            {
+                            IntArray = [5, 6, 7],
+                            IntList =
+                            [
                                 5,
                                 6,
                                 7
-                            }
+                            ]
                         }
                     },
-                    Orders = new[]
-                    {
+                    Orders =
+                    [
                         new Order
                         {
                             Price = 5, ShippingAddress = "Moe's address",
                         }
-                    },
+                    ],
                     VariousTypes = new VariousTypes
                     {
                         String = "bar",
@@ -866,8 +862,8 @@ WHERE json_typeof(j."Customer" #> '{Statistics,Visits}') = 'number'
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
 
-        protected override void Seed(JsonPocoQueryContext context)
-            => JsonPocoQueryContext.Seed(context);
+        protected override Task SeedAsync(JsonPocoQueryContext context)
+            => JsonPocoQueryContext.SeedAsync(context);
     }
 
     public class Customer

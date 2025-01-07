@@ -82,8 +82,8 @@ public class EDBInetTypeMapping : NpgsqlTypeMapping
             _ => throw new UnreachableException()
         };
 
-    private static readonly MethodInfo IPAddressParseMethod = typeof(IPAddress).GetMethod("Parse", new[] { typeof(string) })!;
-    private static readonly ConstructorInfo EDBInetConstructor = typeof(EDBInet).GetConstructor(new[] { typeof(string) })!;
+    private static readonly MethodInfo IPAddressParseMethod = typeof(IPAddress).GetMethod("Parse", [typeof(string)])!;
+    private static readonly ConstructorInfo EDBInetConstructor = typeof(EDBInet).GetConstructor([typeof(string)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -93,6 +93,8 @@ public class EDBInetTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public sealed class JsonIPAddressReaderWriter : JsonValueReaderWriter<IPAddress>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonIPAddressReaderWriter).GetProperty(nameof(Instance))!;
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -118,6 +120,9 @@ public class EDBInetTypeMapping : NpgsqlTypeMapping
         /// </summary>
         public override void ToJsonTyped(Utf8JsonWriter writer, IPAddress value)
             => writer.WriteStringValue(value.ToString());
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 
     /// <summary>
@@ -128,6 +133,8 @@ public class EDBInetTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public sealed class JsonEDBInetReaderWriter : JsonValueReaderWriter<EDBInet>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonEDBInetReaderWriter).GetProperty(nameof(Instance))!;
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -153,5 +160,8 @@ public class EDBInetTypeMapping : NpgsqlTypeMapping
         /// </summary>
         public override void ToJsonTyped(Utf8JsonWriter writer, EDBInet value)
             => writer.WriteStringValue(value.ToString());
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

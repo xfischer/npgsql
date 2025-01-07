@@ -81,7 +81,7 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBLogSequenceNumber).GetConstructor(new[] { typeof(ulong) })!;
+        typeof(EDBLogSequenceNumber).GetConstructor([typeof(ulong)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -91,6 +91,8 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public sealed class JsonLogSequenceNumberReaderWriter : JsonValueReaderWriter<EDBLogSequenceNumber>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonLogSequenceNumberReaderWriter).GetProperty(nameof(Instance))!;
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -120,5 +122,8 @@ public class NpgsqlPgLsnTypeMapping : NpgsqlTypeMapping
         /// </summary>
         public override void ToJsonTyped(Utf8JsonWriter writer, EDBLogSequenceNumber value)
             => writer.WriteStringValue(value.ToString());
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

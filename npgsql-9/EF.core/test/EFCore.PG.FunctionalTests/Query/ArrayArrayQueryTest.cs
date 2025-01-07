@@ -2,13 +2,9 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Array;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class ArrayArrayQueryTest : ArrayQueryTest<ArrayArrayQueryTest.ArrayArrayQueryFixture>
+public class ArrayArrayQueryTest(ArrayArrayQueryTest.ArrayArrayQueryFixture fixture, ITestOutputHelper testOutputHelper)
+    : ArrayQueryTest<ArrayArrayQueryTest.ArrayArrayQueryFixture>(fixture, testOutputHelper)
 {
-    public ArrayArrayQueryTest(ArrayArrayQueryFixture fixture, ITestOutputHelper testOutputHelper)
-        : base(fixture, testOutputHelper)
-    {
-    }
-
     #region Indexers
 
     public override async Task Index_with_constant(bool async)
@@ -689,11 +685,11 @@ WHERE s."NullableText" ILIKE ANY (ARRAY['a%','b%','c%']::text[])
 
         AssertSql(
             """
-@__patternsActual_0={ 'a%', 'b%', 'c%' } (DbType = Object)
+@__patternsActual_1={ 'a%', 'b%', 'c%' } (DbType = Object)
 
 SELECT s."Id", s."ArrayContainerEntityId", s."ArrayOfStringConvertedToDelimitedString", s."Byte", s."ByteArray", s."Bytea", s."EnumConvertedToInt", s."EnumConvertedToString", s."IList", s."IntArray", s."IntList", s."ListOfStringConvertedToDelimitedString", s."NonNullableText", s."NullableEnumConvertedToString", s."NullableEnumConvertedToStringWithNonNullableLambda", s."NullableIntArray", s."NullableIntList", s."NullableStringArray", s."NullableStringList", s."NullableText", s."StringArray", s."StringList", s."ValueConvertedArrayOfEnum", s."ValueConvertedListOfEnum", s."Varchar10", s."Varchar15"
 FROM "SomeEntities" AS s
-WHERE s."NullableText" LIKE ANY (@__patternsActual_0)
+WHERE s."NullableText" LIKE ANY (@__patternsActual_1)
 """);
     }
 
@@ -839,7 +835,7 @@ WHERE array_cat(s."IntArray", ARRAY[5,6]::integer[]) = ARRAY[3,4,5,6]::integer[]
             """
 SELECT s."Id", s."ArrayContainerEntityId", s."ArrayOfStringConvertedToDelimitedString", s."Byte", s."ByteArray", s."Bytea", s."EnumConvertedToInt", s."EnumConvertedToString", s."IList", s."IntArray", s."IntList", s."ListOfStringConvertedToDelimitedString", s."NonNullableText", s."NullableEnumConvertedToString", s."NullableEnumConvertedToStringWithNonNullableLambda", s."NullableIntArray", s."NullableIntList", s."NullableStringArray", s."NullableStringList", s."NullableText", s."StringArray", s."StringList", s."ValueConvertedArrayOfEnum", s."ValueConvertedListOfEnum", s."Varchar10", s."Varchar15"
 FROM "SomeEntities" AS s
-WHERE COALESCE(array_position(s."IntArray", 6) - 1, -1) = 1
+WHERE array_position(s."IntArray", 6) - 1 = 1
 """);
     }
 
@@ -853,7 +849,7 @@ WHERE COALESCE(array_position(s."IntArray", 6) - 1, -1) = 1
             """
 SELECT s."Id", s."ArrayContainerEntityId", s."ArrayOfStringConvertedToDelimitedString", s."Byte", s."ByteArray", s."Bytea", s."EnumConvertedToInt", s."EnumConvertedToString", s."IList", s."IntArray", s."IntList", s."ListOfStringConvertedToDelimitedString", s."NonNullableText", s."NullableEnumConvertedToString", s."NullableEnumConvertedToStringWithNonNullableLambda", s."NullableIntArray", s."NullableIntList", s."NullableStringArray", s."NullableStringList", s."NullableText", s."StringArray", s."StringList", s."ValueConvertedArrayOfEnum", s."ValueConvertedListOfEnum", s."Varchar10", s."Varchar15"
 FROM "SomeEntities" AS s
-WHERE COALESCE(array_position(s."IntArray", 6, 2) - 1, -1) = 1
+WHERE array_position(s."IntArray", 6, 2) - 1 = 1
 """);
     }
 

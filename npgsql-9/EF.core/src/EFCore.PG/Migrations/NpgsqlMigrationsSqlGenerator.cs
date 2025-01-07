@@ -84,7 +84,7 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
                                         NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
                                         or NpgsqlValueGenerationStrategy.IdentityAlwaysColumn
                                         or NpgsqlValueGenerationStrategy.SerialColumn))
-                        ?? Enumerable.Empty<IColumn>())
+                        ?? [])
                 .Distinct()
                 .ToArray();
 
@@ -116,12 +116,14 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
                 //    e.g. negative values seeded)
                 builder
                     .AppendLine(
-                        @$"{selectOrPerform} setval(
+                        $"""
+{selectOrPerform} setval(
     pg_get_serial_sequence('{table}', '{unquotedColumn}'),
     GREATEST(
         (SELECT MAX({column}) FROM {table}) + 1,
         nextval(pg_get_serial_sequence('{table}', '{unquotedColumn}'))),
-    false);");
+    false);
+""");
             }
 
             builder.EndCommand();
@@ -786,6 +788,49 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
     }
 
     /// <inheritdoc />
+    protected override void SequenceOptions(
+        string? schema,
+        string name,
+        SequenceOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder,
+        bool forAlter)
+    {
+        var intTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(int));
+        var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
+
+        builder
+            .Append(" INCREMENT BY ")
+            .Append(intTypeMapping.GenerateSqlLiteral(operation.IncrementBy));
+
+        if (operation.MinValue != null)
+        {
+            builder
+                .Append(" MINVALUE ")
+                .Append(longTypeMapping.GenerateSqlLiteral(operation.MinValue));
+        }
+        else if (forAlter)
+        {
+            builder
+                .Append(" NO MINVALUE");
+        }
+
+        if (operation.MaxValue != null)
+        {
+            builder
+                .Append(" MAXVALUE ")
+                .Append(longTypeMapping.GenerateSqlLiteral(operation.MaxValue));
+        }
+        else if (forAlter)
+        {
+            builder
+                .Append(" NO MAXVALUE");
+        }
+
+        builder.Append(operation.IsCyclic ? " CYCLE" : " NO CYCLE");
+    }
+
+    /// <inheritdoc />
     protected override void Generate(RestartSequenceOperation operation, IModel? model, MigrationCommandListBuilder builder)
     {
         // PostgreSQL has ALTER SEQUENCE ... RESTART WITH x, which resets the current sequence value but does not change its start value
@@ -901,7 +946,7 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
     }
 
     /// <inheritdoc />
-    protected override void IndexOptions(CreateIndexOperation operation, IModel? model, MigrationCommandListBuilder builder)
+    protected override void IndexOptions(MigrationOperation operation, IModel? model, MigrationCommandListBuilder builder)
     {
         if (_postgresVersion.AtLeast(11) && operation[NpgsqlAnnotationNames.IndexInclude] is string[] { Length: > 0 } includeColumns)
         {
@@ -1200,9 +1245,9 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
             GenerateDropEnum(enumTypeToDrop, model, builder);
         }
 
-        foreach (var (newEnum, oldEnum) in operation.GetPostgresEnums()
+        foreach (var (newEnum, oldEnum) in operation.GetPostgresEnums().OrderBy(e => e.Schema).ThenBy(e => e.Name)
                      .Join(
-                         operation.GetOldPostgresEnums(),
+                         operation.GetOldPostgresEnums().OrderBy(e => e.Schema).ThenBy(e => e.Name),
                          e => new { e.Name, e.Schema },
                          e => new { e.Name, e.Schema },
                          (ne, oe) => (New: ne, Old: oe)))
@@ -1951,7 +1996,7 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
     /// <remarks>
     /// https://www.postgresql.org/docs/current/static/ddl-system-columns.html
     /// </remarks>
-    private static readonly string[] SystemColumnNames = { "tableoid", "xmin", "cmin", "xmax", "cmax", "ctid" };
+    private static readonly string[] SystemColumnNames = ["tableoid", "xmin", "cmin", "xmax", "cmax", "ctid"];
 
     #endregion System column utilities
 
@@ -2151,11 +2196,11 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
                     "json" => string.Join(
                         " || ", columnGroup.Select(
                             c =>
-                                $@"json_to_tsvector({tsVectorConfigLiteral}, {JsonColumn(c)}, '""all""')")),
+                                $"""json_to_tsvector({tsVectorConfigLiteral}, {JsonColumn(c)}, '"all"')""")),
                     "jsonb" => string.Join(
                         " || ", columnGroup.Select(
                             c =>
-                                $@"jsonb_to_tsvector({tsVectorConfigLiteral}, {JsonColumn(c)}, '""all""')")),
+                                $"""jsonb_to_tsvector({tsVectorConfigLiteral}, {JsonColumn(c)}, '"all"')""")),
                     "null" => throw new InvalidOperationException(
                         $"Column or index {columnOrIndexName} refers to unknown column in tsvector definition"),
                     _ => throw new ArgumentOutOfRangeException()
@@ -2217,22 +2262,13 @@ public class NpgsqlMigrationsSqlGenerator : MigrationsSqlGenerator
         return columns;
     }
 
-    private readonly struct IndexColumn
+    private readonly struct IndexColumn(string name, string? @operator, string? collation, bool isDescending, NullSortOrder nullSortOrder)
     {
-        public IndexColumn(string name, string? @operator, string? collation, bool isDescending, NullSortOrder nullSortOrder)
-        {
-            Name = name;
-            Operator = @operator;
-            Collation = collation;
-            IsDescending = isDescending;
-            NullSortOrder = nullSortOrder;
-        }
-
-        public string Name { get; }
-        public string? Operator { get; }
-        public string? Collation { get; }
-        public bool IsDescending { get; }
-        public NullSortOrder NullSortOrder { get; }
+        public string Name { get; } = name;
+        public string? Operator { get; } = @operator;
+        public string? Collation { get; } = collation;
+        public bool IsDescending { get; } = isDescending;
+        public NullSortOrder NullSortOrder { get; } = nullSortOrder;
     }
 
     #endregion

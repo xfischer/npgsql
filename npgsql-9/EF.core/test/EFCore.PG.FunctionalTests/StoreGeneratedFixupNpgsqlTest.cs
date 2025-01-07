@@ -2,18 +2,13 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class StoreGeneratedFixupNpgsqlTest : StoreGeneratedFixupRelationalTestBase<
-    StoreGeneratedFixupNpgsqlTest.StoreGeneratedFixupNpgsqlFixture>
+public class StoreGeneratedFixupNpgsqlTest(StoreGeneratedFixupNpgsqlTest.StoreGeneratedFixupNpgsqlFixture fixture)
+    : StoreGeneratedFixupRelationalTestBase<StoreGeneratedFixupNpgsqlTest.StoreGeneratedFixupNpgsqlFixture>(fixture)
 {
-    public StoreGeneratedFixupNpgsqlTest(StoreGeneratedFixupNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
     [Fact]
-    public void Temp_values_are_replaced_on_save()
-        => ExecuteWithStrategyInTransaction(
-            context =>
+    public Task Temp_values_are_replaced_on_save()
+        => ExecuteWithStrategyInTransactionAsync(
+            async context =>
             {
                 var entry = context.Add(new TestTemp());
 
@@ -22,7 +17,7 @@ public class StoreGeneratedFixupNpgsqlTest : StoreGeneratedFixupRelationalTestBa
 
                 var tempValue = entry.Property(e => e.Id).CurrentValue;
 
-                context.SaveChanges();
+                await context.SaveChangesAsync();
 
                 Assert.False(entry.Property(e => e.Id).IsTemporary);
                 Assert.NotEqual(tempValue, entry.Property(e => e.Id).CurrentValue);

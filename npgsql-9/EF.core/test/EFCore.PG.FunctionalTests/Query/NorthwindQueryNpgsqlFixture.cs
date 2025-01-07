@@ -6,7 +6,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
 public class NorthwindQueryNpgsqlFixture<TModelCustomizer> : NorthwindQueryRelationalFixture<TModelCustomizer>
-    where TModelCustomizer : IModelCustomizer, new()
+    where TModelCustomizer : ITestModelCustomizer, new()
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlNorthwindTestStoreFactory.Instance;

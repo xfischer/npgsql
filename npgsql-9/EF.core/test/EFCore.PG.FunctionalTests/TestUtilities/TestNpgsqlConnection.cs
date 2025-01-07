@@ -4,13 +4,9 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-public class TestEDBConnection : NpgsqlRelationalConnection
+public class TestEDBConnection(RelationalConnectionDependencies dependencies, DbDataSource dataSource = null)
+    : NpgsqlRelationalConnection(dependencies, dataSource)
 {
-    public TestEDBConnection(RelationalConnectionDependencies dependencies, DbDataSource dataSource = null)
-        : base(dependencies, dataSource)
-    {
-    }
-
     public string ErrorCode { get; set; } = "XX000";
     public Queue<bool?> OpenFailures { get; } = new();
     public int OpenCount { get; set; }

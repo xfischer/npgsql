@@ -63,7 +63,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
             new TypeMappingSourceDependencies(
                 new ValueConverterSelector(new ValueConverterSelectorDependencies()),
                 new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
-                Array.Empty<ITypeMappingSourcePlugin>()),
+                []),
             new RelationalTypeMappingSourceDependencies(
                 new IRelationalTypeMappingSourcePlugin[]
                 {
@@ -98,9 +98,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
     }
 
     [CollectionDefinition("LegacyNodaTimeTest", DisableParallelization = true)]
-    public class EventSourceTestCollection
-    {
-    }
+    public class EventSourceTestCollection;
 }
 
 #endif

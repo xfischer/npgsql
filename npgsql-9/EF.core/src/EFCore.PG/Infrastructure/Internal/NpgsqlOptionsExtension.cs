@@ -12,6 +12,7 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
 {
     private DbContextOptionsExtensionInfo? _info;
     private readonly List<UserRangeDefinition> _userRangeDefinitions;
+    private readonly List<EnumDefinition> _enumDefinitions;
 
     private Version? _postgresVersion;
 
@@ -36,6 +37,11 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         => _postgresVersion is not null;
 
     /// <summary>
+    ///     A lambda to configure Npgsql options on <see cref="EDBDataSourceBuilder" />.
+    /// </summary>
+    public virtual Action<EDBDataSourceBuilder>? DataSourceBuilderAction { get; private set; }
+
+    /// <summary>
     ///     The <see cref="DbDataSource" />, or <see langword="null" /> if a connection string or <see cref="DbConnection" /> was used
     ///     instead of a <see cref="DbDataSource" />.
     /// </summary>
@@ -58,7 +64,13 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         => _userRangeDefinitions;
 
     /// <summary>
-    /// The specified <see cref="ProvideClientCertificatesCallback"/>.
+    ///     The list of range mappings specified by the user.
+    /// </summary>
+    public virtual IReadOnlyList<EnumDefinition> EnumDefinitions
+        => _enumDefinitions;
+
+    /// <summary>
+    ///     The specified <see cref="ProvideClientCertificatesCallback" />.
     /// </summary>
     public virtual ProvideClientCertificatesCallback? ProvideClientCertificatesCallback { get; private set; }
 
@@ -84,7 +96,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     /// </summary>
     public NpgsqlOptionsExtension()
     {
-        _userRangeDefinitions = new List<UserRangeDefinition>();
+        _userRangeDefinitions = [];
+        _enumDefinitions = [];
     }
 
     // NB: When adding new options, make sure to update the copy ctor below.
@@ -99,7 +112,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         AdminDatabase = copyFrom.AdminDatabase;
         _postgresVersion = copyFrom._postgresVersion;
         UseRedshift = copyFrom.UseRedshift;
-        _userRangeDefinitions = new List<UserRangeDefinition>(copyFrom._userRangeDefinitions);
+        _userRangeDefinitions = [..copyFrom._userRangeDefinitions];
+        _enumDefinitions = [..copyFrom._enumDefinitions];
         ProvideClientCertificatesCallback = copyFrom.ProvideClientCertificatesCallback;
         RemoteCertificateValidationCallback = copyFrom.RemoteCertificateValidationCallback;
         ProvidePasswordCallback = copyFrom.ProvidePasswordCallback;
@@ -116,6 +130,21 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     /// </summary>
     public override int? MinBatchSize
         => base.MinBatchSize ?? 2;
+
+    /// <summary>
+    ///     Creates a new instance with all options the same as for this instance, but with the given option changed.
+    ///     It is unusual to call this method directly. Instead use <see cref="DbContextOptionsBuilder" />.
+    /// </summary>
+    /// <param name="dataSourceBuilderAction">A lambda to configure Npgsql options on <see cref="EDBDataSourceBuilder" />.</param>
+    /// <returns>A new instance with the option changed.</returns>
+    public virtual NpgsqlOptionsExtension WithDataSourceConfiguration(Action<EDBDataSourceBuilder> dataSourceBuilderAction)
+    {
+        var clone = (NpgsqlOptionsExtension)Clone();
+
+        clone.DataSourceBuilderAction = dataSourceBuilderAction;
+
+        return clone;
+    }
 
     /// <summary>
     ///     Creates a new instance with all options the same as for this instance, but with the given option changed.
@@ -181,7 +210,32 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     }
 
     /// <summary>
-    /// Returns a copy of the current instance configured to use the specified administrative database.
+    ///     Returns a copy of the current instance configured with the specified range mapping.
+    /// </summary>
+    public virtual NpgsqlOptionsExtension WithEnumMapping(
+        Type clrType,
+        string? enumName,
+        string? schemaName,
+        IEDBNameTranslator? nameTranslator)
+    {
+        if (clrType is not { IsEnum: true, IsClass: false})
+        {
+            throw new ArgumentException($"Enum type mappings require a CLR enum. {clrType.FullName} is not an enum.");
+        }
+
+        var clone = (NpgsqlOptionsExtension)Clone();
+
+#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
+        nameTranslator ??= EDBConnection.GlobalTypeMapper.DefaultNameTranslator;
+#pragma warning restore CS0618
+
+        clone._enumDefinitions.Add(new EnumDefinition(clrType, enumName, schemaName, nameTranslator));
+
+        return clone;
+    }
+
+    /// <summary>
+    ///     Returns a copy of the current instance configured to use the specified administrative database.
     /// </summary>
     /// <param name="adminDatabase">The name of the database for administrative operations.</param>
     public virtual NpgsqlOptionsExtension WithAdminDatabase(string? adminDatabase)
@@ -333,15 +387,10 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     public override DbContextOptionsExtensionInfo Info
         => _info ??= new ExtensionInfo(this);
 
-    private sealed class ExtensionInfo : RelationalExtensionInfo
+    private sealed class ExtensionInfo(IDbContextOptionsExtension extension) : RelationalExtensionInfo(extension)
     {
         private int? _serviceProviderHash;
         private string? _logFragment;
-
-        public ExtensionInfo(IDbContextOptionsExtension extension)
-            : base(extension)
-        {
-        }
 
         private new NpgsqlOptionsExtension Extension
             => (NpgsqlOptionsExtension)base.Extension;
@@ -402,12 +451,12 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
                     {
                         builder.Append(item.SubtypeClrType).Append("=>");
 
-                        if (item.SchemaName is not null)
+                        if (item.StoreTypeSchema is not null)
                         {
-                            builder.Append(item.SchemaName).Append(".");
+                            builder.Append(item.StoreTypeSchema).Append(".");
                         }
 
-                        builder.Append(item.RangeName);
+                        builder.Append(item.StoreTypeName);
 
                         if (item.SubtypeName is not null)
                         {
@@ -458,8 +507,8 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
         public override bool ShouldUseSameServiceProvider(DbContextOptionsExtensionInfo other)
             => other is ExtensionInfo otherInfo
                 && Extension.PostgresVersion == otherInfo.Extension.PostgresVersion
-                && ReferenceEquals(Extension.DataSource, otherInfo.Extension.DataSource)
                 && Extension.ReverseNullOrdering == otherInfo.Extension.ReverseNullOrdering
+                && Extension.EnumDefinitions.SequenceEqual(otherInfo.Extension.EnumDefinitions)
                 && Extension.UserRangeDefinitions.SequenceEqual(otherInfo.Extension.UserRangeDefinitions)
                 && Extension.UseRedshift == otherInfo.Extension.UseRedshift;
 
@@ -487,6 +536,16 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
             debugInfo["EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL:" + nameof(NpgsqlDbContextOptionsBuilder.ProvidePasswordCallback)]
                 = (Extension.ProvidePasswordCallback?.GetHashCode() ?? 0).ToString(CultureInfo.InvariantCulture);
 
+            foreach (var enumDefinition in Extension._enumDefinitions)
+            {
+                debugInfo[
+                        "EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL:"
+                        + nameof(NpgsqlDbContextOptionsBuilder.MapEnum)
+                        + ":"
+                        + enumDefinition.ClrType.Name]
+                    = enumDefinition.GetHashCode().ToString(CultureInfo.InvariantCulture);
+            }
+
             foreach (var rangeDefinition in Extension._userRangeDefinitions)
             {
                 debugInfo[
@@ -500,51 +559,4 @@ public class NpgsqlOptionsExtension : RelationalOptionsExtension
     }
 
     #endregion Infrastructure
-}
-
-/// <summary>
-/// A definition for a user-defined PostgreSQL range to be mapped.
-/// </summary>
-public record UserRangeDefinition
-{
-    /// <summary>
-    /// The name of the PostgreSQL range type to be mapped.
-    /// </summary>
-    public virtual string RangeName { get; }
-
-    /// <summary>
-    /// The PostgreSQL schema in which the range is defined. If null, the default schema is used
-    /// (which is public unless changed on the model).
-    /// </summary>
-    public virtual string? SchemaName { get; }
-
-    /// <summary>
-    /// The CLR type of the range's subtype (or element).
-    /// The actual mapped type will be an <see cref="EDBRange{T}"/> over this type.
-    /// </summary>
-    public virtual Type SubtypeClrType { get; }
-
-    /// <summary>
-    /// Optionally, the name of the range's PostgreSQL subtype (or element).
-    /// This is usually not needed - the subtype will be inferred based on <see cref="SubtypeClrType"/>.
-    /// </summary>
-    public virtual string? SubtypeName { get; }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    public UserRangeDefinition(
-        string rangeName,
-        string? schemaName,
-        Type subtypeClrType,
-        string? subtypeName)
-    {
-        RangeName = Check.NotEmpty(rangeName, nameof(rangeName));
-        SchemaName = schemaName;
-        SubtypeClrType = Check.NotNull(subtypeClrType, nameof(subtypeClrType));
-        SubtypeName = subtypeName;
-    }
 }

@@ -20,7 +20,7 @@ public class ExistingConnectionTest
             .AddEntityFrameworkNpgsql()
             .BuildServiceProvider();
 
-        await using (var store = NpgsqlTestStore.GetNorthwindStore())
+        await using (var store = await NpgsqlTestStore.GetNorthwindStoreAsync())
         {
             store.CloseConnection();
 
@@ -67,16 +67,10 @@ public class ExistingConnectionTest
         }
     }
 
-    private class NorthwindContext : DbContext
+    private class NorthwindContext(IServiceProvider serviceProvider, EDBConnection connection) : DbContext
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly EDBConnection _connection;
-
-        public NorthwindContext(IServiceProvider serviceProvider, EDBConnection connection)
-        {
-            _serviceProvider = serviceProvider;
-            _connection = connection;
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
+        private readonly EDBConnection _connection = connection;
 
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public DbSet<Customer> Customers { get; set; }
@@ -91,7 +85,7 @@ public class ExistingConnectionTest
                 b =>
                 {
                     b.HasKey(c => c.CustomerId);
-                    RelationalEntityTypeBuilderExtensions.ToTable((EntityTypeBuilder)b, "Customers");
+                    ((EntityTypeBuilder)b).ToTable("Customers");
                 });
     }
 
@@ -100,8 +94,10 @@ public class ExistingConnectionTest
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public string CustomerId { get; set; }
+
         // ReSharper disable once UnusedMember.Local
         public string CompanyName { get; set; }
+
         // ReSharper disable once UnusedMember.Local
         public string Fax { get; set; }
     }

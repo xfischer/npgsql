@@ -7,25 +7,25 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 public class ConnectionSpecificationTest
 {
     [Fact]
-    public void Can_specify_connection_string_in_OnConfiguring()
+    public async Task Can_specify_connection_string_in_OnConfiguring()
     {
         var serviceProvider = new ServiceCollection()
             .AddDbContext<StringInOnConfiguringContext>()
             .BuildServiceProvider();
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = serviceProvider.GetRequiredService<StringInOnConfiguringContext>();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = serviceProvider.GetRequiredService<StringInOnConfiguringContext>();
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
     [Fact]
-    public void Can_specify_connection_string_in_OnConfiguring_with_default_service_provider()
+    public async Task Can_specify_connection_string_in_OnConfiguring_with_default_service_provider()
     {
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = new StringInOnConfiguringContext();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = new StringInOnConfiguringContext();
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
     private class StringInOnConfiguringContext : NorthwindContextBase
@@ -35,42 +35,35 @@ public class ConnectionSpecificationTest
     }
 
     [Fact]
-    public void Can_specify_connection_in_OnConfiguring()
+    public async Task Can_specify_connection_in_OnConfiguring()
     {
         var serviceProvider = new ServiceCollection()
             .AddScoped(_ => new EDBConnection(NpgsqlTestStore.NorthwindConnectionString))
             .AddDbContext<ConnectionInOnConfiguringContext>().BuildServiceProvider();
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = serviceProvider.GetRequiredService<ConnectionInOnConfiguringContext>();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = serviceProvider.GetRequiredService<ConnectionInOnConfiguringContext>();
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
     [Fact]
-    public void Can_specify_connection_in_OnConfiguring_with_default_service_provider()
+    public async Task Can_specify_connection_in_OnConfiguring_with_default_service_provider()
     {
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = new ConnectionInOnConfiguringContext(new EDBConnection(NpgsqlTestStore.NorthwindConnectionString));
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = new ConnectionInOnConfiguringContext(new EDBConnection(NpgsqlTestStore.NorthwindConnectionString));
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
-    private class ConnectionInOnConfiguringContext : NorthwindContextBase
+    private class ConnectionInOnConfiguringContext(EDBConnection connection) : NorthwindContextBase
     {
-        private readonly EDBConnection _connection;
-
-        public ConnectionInOnConfiguringContext(EDBConnection connection)
-        {
-            _connection = connection;
-        }
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(_connection, b => b.ApplyConfiguration());
+            => optionsBuilder.UseNpgsql(connection, b => b.ApplyConfiguration());
 
         public override void Dispose()
         {
-            _connection.Dispose();
+            connection.Dispose();
             base.Dispose();
         }
     }
@@ -108,94 +101,77 @@ public class ConnectionSpecificationTest
     }
 
     // ReSharper disable once ClassNeverInstantiated.Local
-    private class NoUseNpgsqlContext : NorthwindContextBase
-    {
-    }
+    private class NoUseNpgsqlContext : NorthwindContextBase;
 
     [Fact]
-    public void Can_depend_on_DbContextOptions()
+    public async Task Can_depend_on_DbContextOptions()
     {
         var serviceProvider = new ServiceCollection()
             .AddScoped(_ => new EDBConnection(NpgsqlTestStore.NorthwindConnectionString))
             .AddDbContext<OptionsContext>()
             .BuildServiceProvider();
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = serviceProvider.GetRequiredService<OptionsContext>();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = serviceProvider.GetRequiredService<OptionsContext>();
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
     [Fact]
-    public void Can_depend_on_DbContextOptions_with_default_service_provider()
+    public async Task Can_depend_on_DbContextOptions_with_default_service_provider()
     {
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = new OptionsContext(
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = new OptionsContext(
             new DbContextOptions<OptionsContext>(),
             new EDBConnection(NpgsqlTestStore.NorthwindConnectionString));
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
-    private class OptionsContext : NorthwindContextBase
+    private class OptionsContext(DbContextOptions<OptionsContext> options, EDBConnection connection)
+        : NorthwindContextBase(options)
     {
-        private readonly EDBConnection _connection;
-        private readonly DbContextOptions<OptionsContext> _options;
-
-        public OptionsContext(DbContextOptions<OptionsContext> options, EDBConnection connection)
-            : base(options)
-        {
-            _options = options;
-            _connection = connection;
-        }
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            Assert.Same(_options, optionsBuilder.Options);
+            Assert.Same(options, optionsBuilder.Options);
 
-            optionsBuilder.UseNpgsql(_connection, b => b.ApplyConfiguration());
+            optionsBuilder.UseNpgsql(connection, b => b.ApplyConfiguration());
 
-            Assert.NotSame(_options, optionsBuilder.Options);
+            Assert.NotSame(options, optionsBuilder.Options);
         }
 
         public override void Dispose()
         {
-            _connection.Dispose();
+            connection.Dispose();
             base.Dispose();
         }
     }
 
     [Fact]
-    public void Can_depend_on_non_generic_options_when_only_one_context()
+    public async Task Can_depend_on_non_generic_options_when_only_one_context()
     {
         var serviceProvider = new ServiceCollection()
             .AddDbContext<NonGenericOptionsContext>()
             .BuildServiceProvider();
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = serviceProvider.GetRequiredService<NonGenericOptionsContext>();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = serviceProvider.GetRequiredService<NonGenericOptionsContext>();
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
     [Fact]
-    public void Can_depend_on_non_generic_options_when_only_one_context_with_default_service_provider()
+    public async Task Can_depend_on_non_generic_options_when_only_one_context_with_default_service_provider()
     {
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
-        using var context = new NonGenericOptionsContext(new DbContextOptions<DbContext>());
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
+        await using var context = new NonGenericOptionsContext(new DbContextOptions<DbContext>());
 
-        Assert.True(context.Customers.Any());
+        Assert.True(await context.Customers.AnyAsync());
     }
 
-    private class NonGenericOptionsContext : NorthwindContextBase
+    private class NonGenericOptionsContext(DbContextOptions options) : NorthwindContextBase(options)
     {
-        private readonly DbContextOptions _options;
-
-        public NonGenericOptionsContext(DbContextOptions options)
-            : base(options)
-        {
-            _options = options;
-        }
+        private readonly DbContextOptions _options = options;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -235,8 +211,10 @@ public class ConnectionSpecificationTest
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public string CustomerId { get; set; }
+
         // ReSharper disable once UnusedMember.Local
         public string CompanyName { get; set; }
+
         // ReSharper disable once UnusedMember.Local
         public string Fax { get; set; }
     }
@@ -244,68 +222,62 @@ public class ConnectionSpecificationTest
     #region Added for Npgsql
 
     [Fact]
-    public void Can_create_admin_connection_with_data_source()
+    public async Task Can_create_admin_connection_with_data_source()
     {
-        using var dataSource = EDBDataSource.Create(NpgsqlTestStore.NorthwindConnectionString);
+        await using var dataSource = EDBDataSource.Create(NpgsqlTestStore.NorthwindConnectionString);
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
 
         var optionsBuilder = new DbContextOptionsBuilder<GeneralOptionsContext>();
         optionsBuilder.UseNpgsql(dataSource, b => b.ApplyConfiguration());
-        using var context = new GeneralOptionsContext(optionsBuilder.Options);
+        await using var context = new GeneralOptionsContext(optionsBuilder.Options);
 
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
-        using var adminConnection = relationalConnection.CreateAdminConnection();
+        await using var adminConnection = relationalConnection.CreateAdminConnection();
 
         Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
-        adminConnection.Open();
+        await adminConnection.OpenAsync(CancellationToken.None);
     }
 
     [Fact]
-    public void Can_create_admin_connection_with_connection_string()
+    public async Task Can_create_admin_connection_with_connection_string()
     {
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
 
         var optionsBuilder = new DbContextOptionsBuilder<GeneralOptionsContext>();
         optionsBuilder.UseNpgsql(NpgsqlTestStore.NorthwindConnectionString, b => b.ApplyConfiguration());
-        using var context = new GeneralOptionsContext(optionsBuilder.Options);
+        await using var context = new GeneralOptionsContext(optionsBuilder.Options);
 
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
-        using var adminConnection = relationalConnection.CreateAdminConnection();
+        await using var adminConnection = relationalConnection.CreateAdminConnection();
 
         Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
-        adminConnection.Open();
+        await adminConnection.OpenAsync(CancellationToken.None);
     }
 
     [Fact]
-    public void Can_create_admin_connection_with_connection()
+    public async Task Can_create_admin_connection_with_connection()
     {
-        using var connection = new EDBConnection(NpgsqlTestStore.NorthwindConnectionString);
+        await using var connection = new EDBConnection(NpgsqlTestStore.NorthwindConnectionString);
         connection.Open();
 
-        using var _ = NpgsqlTestStore.GetNorthwindStore();
+        await using var _ = await NpgsqlTestStore.GetNorthwindStoreAsync();
 
         var optionsBuilder = new DbContextOptionsBuilder<GeneralOptionsContext>();
         optionsBuilder.UseNpgsql(connection, b => b.ApplyConfiguration());
-        using var context = new GeneralOptionsContext(optionsBuilder.Options);
+        await using var context = new GeneralOptionsContext(optionsBuilder.Options);
 
         var relationalConnection = context.GetService<INpgsqlRelationalConnection>();
-        using var adminConnection = relationalConnection.CreateAdminConnection();
+        await using var adminConnection = relationalConnection.CreateAdminConnection();
 
         Assert.Equal("postgres", new EDBConnectionStringBuilder(adminConnection.ConnectionString).Database);
 
         adminConnection.Open();
     }
 
-    private class GeneralOptionsContext : NorthwindContextBase
-    {
-        public GeneralOptionsContext(DbContextOptions<GeneralOptionsContext> options)
-            : base(options)
-        {
-        }
-    }
+    private class GeneralOptionsContext(DbContextOptions<GeneralOptionsContext> options) : NorthwindContextBase(options);
 
     #endregion
 }

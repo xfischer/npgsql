@@ -3,7 +3,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public abstract class ArrayQueryFixture : SharedStoreFixtureBase<ArrayQueryContext>, IQueryFixtureBase
+public abstract class ArrayQueryFixture : SharedStoreFixtureBase<ArrayQueryContext>, IQueryFixtureBase, ITestSqlLoggerFactory
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;
@@ -16,8 +16,8 @@ public abstract class ArrayQueryFixture : SharedStoreFixtureBase<ArrayQueryConte
     public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
         => base.AddOptions(builder).ConfigureWarnings(wcb => wcb.Ignore(CoreEventId.CollectionWithoutComparer));
 
-    protected override void Seed(ArrayQueryContext context)
-        => ArrayQueryContext.Seed(context);
+    protected override Task SeedAsync(ArrayQueryContext context)
+        => ArrayQueryContext.SeedAsync(context);
 
     public Func<DbContext> GetContextCreator()
         => CreateContext;

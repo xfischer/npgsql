@@ -1,4 +1,5 @@
-﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
+﻿// Modified by EnterpriseDB
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
@@ -359,7 +360,8 @@ WHERE n."LocalDateTime" AT TIME ZONE 'Europe/Berlin' = @__ToInstant_0
             async,
             ss => ss.Set<NodaTimeTypes>().Where(
                 t => t.LocalDateTime.InZoneLeniently(DateTimeZoneProviders.Tzdb[t.TimeZoneId]).ToInstant()
-                    == new ZonedDateTime(new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()));
+                    == new ZonedDateTime(
+                        new LocalDateTime(2018, 4, 20, 8, 31, 33, 666), DateTimeZone.Utc, Offset.Zero).ToInstant()));
 
         AssertSql(
 """
@@ -1210,16 +1212,16 @@ WHERE @__interval_0 @> n."Instant"
             : query.Single();
 
         var start = Instant.FromUtc(2018, 4, 20, 10, 31, 33).Plus(Duration.FromMilliseconds(666));
-        Assert.Equal(new Interval[] { new(start, start + Duration.FromDays(5)) }, union);
+        Assert.Equal([new(start, start + Duration.FromDays(5))], union);
 
         AssertSql(
-"""
-SELECT range_agg(t."Interval")
+            """
+SELECT range_agg(n0."Interval")
 FROM (
     SELECT n."Interval", TRUE AS "Key"
     FROM "NodaTimeTypes" AS n
-) AS t
-GROUP BY t."Key"
+) AS n0
+GROUP BY n0."Key"
 LIMIT 2
 """);
     }
@@ -1243,13 +1245,13 @@ LIMIT 2
         Assert.Equal(new Interval(start, start + Duration.FromDays(5)), intersection);
 
         AssertSql(
-"""
-SELECT range_intersect_agg(t."Interval")
+            """
+SELECT range_intersect_agg(n0."Interval")
 FROM (
     SELECT n."Interval", TRUE AS "Key"
     FROM "NodaTimeTypes" AS n
-) AS t
-GROUP BY t."Key"
+) AS n0
+GROUP BY n0."Key"
 LIMIT 2
 """);
     }
@@ -1418,16 +1420,16 @@ WHERE n."DateInterval" + @__dateInterval_0 = '[2018-04-20,2018-04-26]'::daterang
             ? await query.SingleAsync()
             : query.Single();
 
-        Assert.Equal(new DateInterval[] { new(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 24)) }, union);
+        Assert.Equal([new(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 24))], union);
 
         AssertSql(
             """
-SELECT range_agg(t."DateInterval")
+SELECT range_agg(n0."DateInterval")
 FROM (
     SELECT n."DateInterval", TRUE AS "Key"
     FROM "NodaTimeTypes" AS n
-) AS t
-GROUP BY t."Key"
+) AS n0
+GROUP BY n0."Key"
 LIMIT 2
 """);
     }
@@ -1450,13 +1452,13 @@ LIMIT 2
         Assert.Equal(new DateInterval(new LocalDate(2018, 4, 20), new LocalDate(2018, 4, 24)), intersection);
 
         AssertSql(
-"""
-SELECT range_intersect_agg(t."DateInterval")
+            """
+SELECT range_intersect_agg(n0."DateInterval")
 FROM (
     SELECT n."DateInterval", TRUE AS "Key"
     FROM "NodaTimeTypes" AS n
-) AS t
-GROUP BY t."Key"
+) AS n0
+GROUP BY n0."Key"
 LIMIT 2
 """);
     }
@@ -1823,12 +1825,12 @@ WHERE n."ZonedDateTime" = @__ToInstant_0
     public async Task ZonedDateTime_Distance()
     {
         await using var context = CreateContext();
+
         var closest = await context.NodaTimeTypes
             .OrderBy(
                 t => EF.Functions.Distance(
                     t.ZonedDateTime,
                     new ZonedDateTime(new LocalDateTime(2018, 4, 1, 0, 0, 0), DateTimeZone.Utc, Offset.Zero))).FirstAsync();
-
         Assert.Equal(1, closest.Id);
 
         AssertSql(
@@ -1860,13 +1862,8 @@ LIMIT 1
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class NodaTimeContext : PoolableDbContext
+    public class NodaTimeContext(DbContextOptions<NodaTimeContext> options) : PoolableDbContext(options)
     {
-        public NodaTimeContext(DbContextOptions<NodaTimeContext> options)
-            : base(options)
-        {
-        }
-
         // ReSharper disable once MemberHidesStaticFromOuterClass
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public DbSet<NodaTimeTypes> NodaTimeTypes { get; set; }
@@ -1912,18 +1909,13 @@ LIMIT 1
         protected override string StoreName
             => "NodaTimeTest";
 
-#pragma warning disable CS0618 // GlobalTypeMapper is obsolete
-        public NodaTimeQueryNpgsqlFixture()
-        {
-            EDBConnection.GlobalTypeMapper.UseNodaTime();
-        }
-#pragma warning restore CS0618
-
         // Set the PostgreSQL TimeZone parameter to something local, to ensure that operations which take TimeZone into account
         // don't depend on the database's time zone, and also that operations which shouldn't take TimeZone into account indeed
         // don't.
+        // We also instruct the test store to pass a connection string to UseNpgsql() instead of a DbConnection - that's required to allow
+        // EF's UseNodaTime() to function properly and instantiate an NpgsqlDataSource internally.
         protected override ITestStoreFactory TestStoreFactory
-            => NpgsqlTestStoreFactory.WithConnectionStringOptions("-c TimeZone=Europe/Berlin");
+            => new NpgsqlTestStoreFactory(connectionStringOptions: "-c TimeZone=Europe/Berlin", useConnectionString: true);
 
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
@@ -1941,8 +1933,12 @@ LIMIT 1
             return optionsBuilder;
         }
 
-        protected override void Seed(NodaTimeContext context)
-            => NodaTimeContext.Seed(context);
+        protected override Task SeedAsync(NodaTimeContext context)
+        {
+            NodaTimeContext.Seed(context);
+            return Task.CompletedTask;
+        }
+
 
         public Func<DbContext> GetContextCreator()
             => CreateContext;
@@ -1988,12 +1984,7 @@ LIMIT 1
 
     private class NodaTimeData : ISetSource
     {
-        private IReadOnlyList<NodaTimeTypes> NodaTimeTypes { get; }
-
-        public NodaTimeData()
-        {
-            NodaTimeTypes = CreateNodaTimeTypes();
-        }
+        private IReadOnlyList<NodaTimeTypes> NodaTimeTypes { get; } = CreateNodaTimeTypes();
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class

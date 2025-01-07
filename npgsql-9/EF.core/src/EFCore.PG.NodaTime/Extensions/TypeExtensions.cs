@@ -1,6 +1,5 @@
-
-
 // ReSharper disable once CheckNamespace
+
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 internal static class TypeExtensions

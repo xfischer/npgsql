@@ -128,19 +128,14 @@ WHERE e."BigInteger" % 2 = 0
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class BigIntegerQueryContext : PoolableDbContext
+    public class BigIntegerQueryContext(DbContextOptions options) : PoolableDbContext(options)
     {
         public DbSet<Entity> Entities { get; set; }
 
-        public BigIntegerQueryContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        public static void Seed(BigIntegerQueryContext context)
+        public static async Task SeedAsync(BigIntegerQueryContext context)
         {
             context.Entities.AddRange(BigIntegerData.CreateEntities());
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 
@@ -150,7 +145,7 @@ WHERE e."BigInteger" % 2 = 0
         public BigInteger BigInteger { get; set; }
     }
 
-    public class BigIntegerQueryFixture : SharedStoreFixtureBase<BigIntegerQueryContext>, IQueryFixtureBase
+    public class BigIntegerQueryFixture : SharedStoreFixtureBase<BigIntegerQueryContext>, IQueryFixtureBase, ITestSqlLoggerFactory
     {
         private BigIntegerData _expectedData;
 
@@ -163,8 +158,8 @@ WHERE e."BigInteger" % 2 = 0
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
 
-        protected override void Seed(BigIntegerQueryContext context)
-            => BigIntegerQueryContext.Seed(context);
+        protected override Task SeedAsync(BigIntegerQueryContext context)
+            => BigIntegerQueryContext.SeedAsync(context);
 
         public Func<DbContext> GetContextCreator()
             => CreateContext;
@@ -198,12 +193,7 @@ WHERE e."BigInteger" % 2 = 0
 
     protected class BigIntegerData : ISetSource
     {
-        public IReadOnlyList<Entity> Entities { get; }
-
-        public BigIntegerData()
-        {
-            Entities = CreateEntities();
-        }
+        public IReadOnlyList<Entity> Entities { get; } = CreateEntities();
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class

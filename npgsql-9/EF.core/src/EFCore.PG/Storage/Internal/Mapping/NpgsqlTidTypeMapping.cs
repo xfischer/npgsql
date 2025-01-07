@@ -79,5 +79,5 @@ public class NpgsqlTidTypeMapping : NpgsqlTypeMapping
     }
 
     private static readonly ConstructorInfo Constructor =
-        typeof(EDBTid).GetConstructor(new[] { typeof(uint), typeof(ushort) })!;
+        typeof(EDBTid).GetConstructor([typeof(uint), typeof(ushort)])!;
 }

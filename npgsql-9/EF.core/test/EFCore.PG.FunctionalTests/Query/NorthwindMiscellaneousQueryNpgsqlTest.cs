@@ -24,7 +24,7 @@ public class NorthwindMiscellaneousQueryNpgsqlTest : NorthwindMiscellaneousQuery
             """
 SELECT o."CustomerID"
 FROM "Orders" AS o
-WHERE o."OrderDate" IS NOT NULL AND o."EmployeeID"::text LIKE '%7%'
+WHERE o."OrderDate" IS NOT NULL AND COALESCE(o."EmployeeID"::text, '') LIKE '%7%'
 """);
     }
 
@@ -188,14 +188,26 @@ FROM "Customers" AS c
 
         AssertSql(
             """
-SELECT t."CustomerID", o0."OrderID", o0."CustomerID", o0."EmployeeID", o0."OrderDate"
+SELECT o0."CustomerID", o1."OrderID", o1."CustomerID", o1."EmployeeID", o1."OrderDate"
 FROM (
     SELECT DISTINCT o."CustomerID"
     FROM "Orders" AS o
     WHERE o."OrderID" < 10300
-) AS t
-LEFT JOIN "Orders" AS o0 ON t."CustomerID" = o0."CustomerID"
-ORDER BY t."CustomerID" NULLS FIRST
+) AS o0
+LEFT JOIN "Orders" AS o1 ON o0."CustomerID" = o1."CustomerID"
+ORDER BY o0."CustomerID" NULLS FIRST
+""");
+    }
+
+    public override async Task Where_bitwise_binary_xor(bool async)
+    {
+        await base.Where_bitwise_binary_xor(async);
+
+        AssertSql(
+            """
+SELECT o."OrderID", o."CustomerID", o."EmployeeID", o."OrderDate"
+FROM "Orders" AS o
+WHERE (o."OrderID" # 1) = 10249
 """);
     }
 
@@ -286,9 +298,8 @@ WHERE c."Region" = ANY (@__regions_0) OR (c."Region" IS NULL AND array_position(
         var result = async ? await query.ToListAsync() : query.ToList();
 
         Assert.Equal(
-            new[]
-            {
-                "ANATR",
+        [
+            "ANATR",
                 "BERGS",
                 "BOLID",
                 "CACTU",
@@ -310,15 +321,15 @@ WHERE c."Region" = ANY (@__regions_0) OR (c."Region" IS NULL AND array_position(
                 "TORTU",
                 "TRADH",
                 "WANDK"
-            }, result.Select(e => e.CustomerID));
+        ], result.Select(e => e.CustomerID));
 
         AssertSql(
             """
-@__collection_0={ 'A%', 'B%', 'C%' } (DbType = Object)
+@__collection_1={ 'A%', 'B%', 'C%' } (DbType = Object)
 
 SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
 FROM "Customers" AS c
-WHERE c."Address" LIKE ANY (@__collection_0)
+WHERE c."Address" LIKE ANY (@__collection_1)
 """);
     }
 
@@ -336,11 +347,33 @@ WHERE c."Address" LIKE ANY (@__collection_0)
 
         AssertSql(
             """
-@__collection_0={ 'A%', 'B%', 'C%' } (DbType = Object)
+@__collection_1={ 'A%', 'B%', 'C%' } (DbType = Object)
 
 SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
 FROM "Customers" AS c
-WHERE c."Address" LIKE ALL (@__collection_0)
+WHERE c."Address" LIKE ALL (@__collection_1)
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public async Task Array_All_Like_negated(bool async)
+    {
+        await using var context = CreateContext();
+
+        var collection = new[] { "A%", "B%", "C%" };
+        var query = context.Set<Customer>().Where(c => !collection.All(y => EF.Functions.Like(c.Address, y)));
+        var result = async ? await query.ToListAsync() : query.ToList();
+
+        Assert.NotEmpty(result);
+
+        AssertSql(
+            """
+@__collection_1={ 'A%', 'B%', 'C%' } (DbType = Object)
+
+SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
+FROM "Customers" AS c
+WHERE NOT (c."Address" LIKE ALL (@__collection_1))
 """);
     }
 
@@ -355,9 +388,8 @@ WHERE c."Address" LIKE ALL (@__collection_0)
         var result = async ? await query.ToListAsync() : query.ToList();
 
         Assert.Equal(
-            new[]
-            {
-                "ANATR",
+        [
+            "ANATR",
                 "BERGS",
                 "BOLID",
                 "CACTU",
@@ -379,15 +411,44 @@ WHERE c."Address" LIKE ALL (@__collection_0)
                 "TORTU",
                 "TRADH",
                 "WANDK"
-            }, result.Select(e => e.CustomerID));
+        ], result.Select(e => e.CustomerID));
 
         AssertSql(
             """
-@__collection_0={ 'a%', 'b%', 'c%' } (DbType = Object)
+@__collection_1={ 'a%', 'b%', 'c%' } (DbType = Object)
 
 SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
 FROM "Customers" AS c
-WHERE c."Address" ILIKE ANY (@__collection_0)
+WHERE c."Address" ILIKE ANY (@__collection_1)
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public async Task Array_Any_ILike_negated(bool async)
+    {
+        await using var context = CreateContext();
+
+        var collection = new[] { "a%", "b%", "c%" };
+        var query = context.Set<Customer>().Where(c => !collection.Any(y => EF.Functions.ILike(c.Address, y)));
+        var result = async ? await query.ToListAsync() : query.ToList();
+
+        Assert.Equal(
+        [
+            "ALFKI",
+            "ANTON",
+            "AROUT",
+            "BLAUS",
+            "BLONP"
+        ], result.Select(e => e.CustomerID).Order().Take(5));
+
+        AssertSql(
+            """
+@__collection_1={ 'a%', 'b%', 'c%' } (DbType = Object)
+
+SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
+FROM "Customers" AS c
+WHERE NOT (c."Address" ILIKE ANY (@__collection_1))
 """);
     }
 
@@ -405,11 +466,11 @@ WHERE c."Address" ILIKE ANY (@__collection_0)
 
         AssertSql(
             """
-@__collection_0={ 'a%', 'b%', 'c%' } (DbType = Object)
+@__collection_1={ 'a%', 'b%', 'c%' } (DbType = Object)
 
 SELECT c."CustomerID", c."Address", c."City", c."CompanyName", c."ContactName", c."ContactTitle", c."Country", c."Fax", c."Phone", c."PostalCode", c."Region"
 FROM "Customers" AS c
-WHERE c."Address" ILIKE ALL (@__collection_0)
+WHERE c."Address" ILIKE ALL (@__collection_1)
 """);
     }
 

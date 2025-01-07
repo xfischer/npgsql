@@ -9,7 +9,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.NodaTime.Query.I
 public class NpgsqlNodaTimeEvaluatableExpressionFilterPlugin : IEvaluatableExpressionFilterPlugin
 {
     private static readonly MethodInfo GetCurrentInstantMethod =
-        typeof(SystemClock).GetRuntimeMethod(nameof(SystemClock.GetCurrentInstant), Array.Empty<Type>())!;
+        typeof(SystemClock).GetRuntimeMethod(nameof(SystemClock.GetCurrentInstant), [])!;
 
     private static readonly MemberInfo SystemClockInstanceMember =
         typeof(SystemClock).GetMember(nameof(SystemClock.Instance)).FirstOrDefault()!;

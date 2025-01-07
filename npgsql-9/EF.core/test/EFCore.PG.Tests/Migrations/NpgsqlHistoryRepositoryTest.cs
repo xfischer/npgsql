@@ -114,7 +114,6 @@ VALUES ('Migration1', '7.0.0');
 
         Assert.Equal(
 """
-
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = 'Migration1') THEN
@@ -128,7 +127,6 @@ BEGIN
 
         Assert.Equal(
 """
-
 DO $EF$
 BEGIN
     IF EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = 'Migration1') THEN
@@ -157,13 +155,8 @@ END $EF$;
                     .Options)
             .GetService<IHistoryRepository>();
 
-    private class TestDbContext : DbContext
+    private class TestDbContext(DbContextOptions options) : DbContext(options)
     {
-        public TestDbContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
         public DbSet<Blog> Blogs { get; set; }
 
         [DbFunction("TableFunction")]

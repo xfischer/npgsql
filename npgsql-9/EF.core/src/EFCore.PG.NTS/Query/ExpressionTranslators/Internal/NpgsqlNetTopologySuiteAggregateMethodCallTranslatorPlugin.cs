@@ -28,10 +28,10 @@ public class NpgsqlNetTopologySuiteAggregateMethodCallTranslatorPlugin : IAggreg
             throw new ArgumentException($"Must be an {nameof(NpgsqlSqlExpressionFactory)}", nameof(sqlExpressionFactory));
         }
 
-        Translators = new IAggregateMethodCallTranslator[]
-        {
+        Translators =
+        [
             new NpgsqlNetTopologySuiteAggregateMethodTranslator(npgsqlSqlExpressionFactory, typeMappingSource)
-        };
+        ];
     }
 
     /// <summary>
@@ -52,16 +52,16 @@ public class NpgsqlNetTopologySuiteAggregateMethodCallTranslatorPlugin : IAggreg
 public class NpgsqlNetTopologySuiteAggregateMethodTranslator : IAggregateMethodCallTranslator
 {
     private static readonly MethodInfo GeometryCombineMethod
-        = typeof(GeometryCombiner).GetRuntimeMethod(nameof(GeometryCombiner.Combine), new[] { typeof(IEnumerable<Geometry>) })!;
+        = typeof(GeometryCombiner).GetRuntimeMethod(nameof(GeometryCombiner.Combine), [typeof(IEnumerable<Geometry>)])!;
 
     private static readonly MethodInfo ConvexHullMethod
-        = typeof(ConvexHull).GetRuntimeMethod(nameof(ConvexHull.Create), new[] { typeof(IEnumerable<Geometry>) })!;
+        = typeof(ConvexHull).GetRuntimeMethod(nameof(ConvexHull.Create), [typeof(IEnumerable<Geometry>)])!;
 
     private static readonly MethodInfo UnionMethod
-        = typeof(UnaryUnionOp).GetRuntimeMethod(nameof(UnaryUnionOp.Union), new[] { typeof(IEnumerable<Geometry>) })!;
+        = typeof(UnaryUnionOp).GetRuntimeMethod(nameof(UnaryUnionOp.Union), [typeof(IEnumerable<Geometry>)])!;
 
     private static readonly MethodInfo EnvelopeCombineMethod
-        = typeof(EnvelopeCombiner).GetRuntimeMethod(nameof(EnvelopeCombiner.CombineAsGeometry), new[] { typeof(IEnumerable<Geometry>) })!;
+        = typeof(EnvelopeCombiner).GetRuntimeMethod(nameof(EnvelopeCombiner.CombineAsGeometry), [typeof(IEnumerable<Geometry>)])!;
 
     private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
     private readonly IRelationalTypeMappingSource _typeMappingSource;
@@ -103,19 +103,18 @@ public class NpgsqlNetTopologySuiteAggregateMethodTranslator : IAggregateMethodC
             // https://postgis.net/docs/ST_ConvexHull.html
             return _sqlExpressionFactory.Function(
                 "ST_ConvexHull",
-                new[]
-                {
+                [
                     _sqlExpressionFactory.AggregateFunction(
                         "ST_Collect",
-                        new[] { sqlExpression },
+                        [sqlExpression],
                         source,
                         nullable: true,
-                        argumentsPropagateNullability: new[] { false },
+                        argumentsPropagateNullability: [false],
                         typeof(Geometry),
                         GetMapping())
-                },
+                ],
                 nullable: true,
-                argumentsPropagateNullability: new[] { true },
+                argumentsPropagateNullability: [true],
                 typeof(Geometry),
                 GetMapping());
         }
@@ -127,10 +126,10 @@ public class NpgsqlNetTopologySuiteAggregateMethodTranslator : IAggregateMethodC
             return _sqlExpressionFactory.Convert(
                 _sqlExpressionFactory.AggregateFunction(
                     "ST_Extent",
-                    new[] { sqlExpression },
+                    [sqlExpression],
                     source,
                     nullable: true,
-                    argumentsPropagateNullability: new[] { false },
+                    argumentsPropagateNullability: [false],
                     typeof(Geometry),
                     GetMapping()),
                 typeof(Geometry), GetMapping());
@@ -140,10 +139,10 @@ public class NpgsqlNetTopologySuiteAggregateMethodTranslator : IAggregateMethodC
         {
             return _sqlExpressionFactory.AggregateFunction(
                 method == UnionMethod ? "ST_Union" : "ST_Collect",
-                new[] { sqlExpression },
+                [sqlExpression],
                 source,
                 nullable: true,
-                argumentsPropagateNullability: new[] { false },
+                argumentsPropagateNullability: [false],
                 typeof(Geometry),
                 GetMapping());
         }

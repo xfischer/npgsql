@@ -1,13 +1,9 @@
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class NpgsqlNetTopologySuiteApiConsistencyTest : ApiConsistencyTestBase<
-    NpgsqlNetTopologySuiteApiConsistencyTest.NpgsqlNetTopologySuiteApiConsistencyFixture>
+public class NpgsqlNetTopologySuiteApiConsistencyTest(
+    NpgsqlNetTopologySuiteApiConsistencyTest.NpgsqlNetTopologySuiteApiConsistencyFixture fixture)
+    : ApiConsistencyTestBase<NpgsqlNetTopologySuiteApiConsistencyTest.NpgsqlNetTopologySuiteApiConsistencyFixture>(fixture)
 {
-    public NpgsqlNetTopologySuiteApiConsistencyTest(NpgsqlNetTopologySuiteApiConsistencyFixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override void AddServices(ServiceCollection serviceCollection)
         => serviceCollection.AddEntityFrameworkNpgsqlNetTopologySuite();
 
@@ -16,9 +12,7 @@ public class NpgsqlNetTopologySuiteApiConsistencyTest : ApiConsistencyTestBase<
 
     public class NpgsqlNetTopologySuiteApiConsistencyFixture : ApiConsistencyFixtureBase
     {
-        public override HashSet<Type> FluentApiTypes { get; } = new()
-        {
-            typeof(NpgsqlNetTopologySuiteDbContextOptionsBuilderExtensions), typeof(NpgsqlNetTopologySuiteServiceCollectionExtensions)
-        };
+        public override HashSet<Type> FluentApiTypes { get; } =
+            [typeof(NpgsqlNetTopologySuiteDbContextOptionsBuilderExtensions), typeof(NpgsqlNetTopologySuiteServiceCollectionExtensions)];
     }
 }

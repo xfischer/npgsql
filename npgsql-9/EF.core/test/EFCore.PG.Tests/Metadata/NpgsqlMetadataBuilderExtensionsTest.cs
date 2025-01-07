@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -76,30 +75,12 @@ public class NpgsqlInternalMetadataBuilderExtensionsTest
     }
 
     [ConditionalFact]
-    public void Throws_setting_sequence_generation_for_invalid_type()
-    {
-        var propertyBuilder = CreateBuilder()
-            .Entity(typeof(Splot))
-            .Property(typeof(string), "Name");
-
-        Assert.Equal(
-            NpgsqlStrings.SequenceBadType("Name", nameof(Splot), "string"),
-            Assert.Throws<ArgumentException>(
-                () => propertyBuilder.HasValueGenerationStrategy(NpgsqlValueGenerationStrategy.SequenceHiLo)).Message);
-
-        Assert.Equal(
-            NpgsqlStrings.SequenceBadType("Name", nameof(Splot), "string"),
-            Assert.Throws<ArgumentException>(
-                () => new PropertyBuilder((IMutableProperty)propertyBuilder.Metadata).UseHiLo()).Message);
-    }
-
-    [ConditionalFact]
     public void Can_access_index()
     {
         var modelBuilder = CreateBuilder();
         var entityTypeBuilder = modelBuilder.Entity(typeof(Splot));
         var idProperty = entityTypeBuilder.Property(typeof(int), "Id").Metadata;
-        var indexBuilder = entityTypeBuilder.HasIndex(new[] { idProperty });
+        var indexBuilder = entityTypeBuilder.HasIndex([idProperty]);
 
         Assert.NotNull(indexBuilder.HasMethod("gin"));
         Assert.Equal("gin", indexBuilder.Metadata.GetMethod());
@@ -121,7 +102,7 @@ public class NpgsqlInternalMetadataBuilderExtensionsTest
         var modelBuilder = CreateBuilder();
         var entityTypeBuilder = modelBuilder.Entity(typeof(Splot));
         var idProperty = entityTypeBuilder.Property(typeof(int), "Id").Metadata;
-        var key = entityTypeBuilder.HasKey(new[] { idProperty }).Metadata;
+        var key = entityTypeBuilder.HasKey([idProperty]).Metadata;
         var relationshipBuilder = entityTypeBuilder.HasRelationship(entityTypeBuilder.Metadata, key);
 
         Assert.NotNull(relationshipBuilder.HasConstraintName("Splew"));
@@ -138,7 +119,5 @@ public class NpgsqlInternalMetadataBuilderExtensionsTest
                 a => a.Name.StartsWith(RelationalAnnotationNames.Prefix, StringComparison.Ordinal)));
     }
 
-    private class Splot
-    {
-    }
+    private class Splot;
 }

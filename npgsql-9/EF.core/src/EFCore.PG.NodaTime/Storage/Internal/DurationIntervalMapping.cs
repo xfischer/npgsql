@@ -13,17 +13,17 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 /// </summary>
 public class DurationIntervalMapping : NpgsqlTypeMapping
 {
-    private static readonly MethodInfo FromDays = typeof(Duration).GetRuntimeMethod(nameof(Duration.FromDays), new[] { typeof(int) })!;
-    private static readonly MethodInfo FromHours = typeof(Duration).GetRuntimeMethod(nameof(Duration.FromHours), new[] { typeof(int) })!;
+    private static readonly MethodInfo FromDays = typeof(Duration).GetRuntimeMethod(nameof(Duration.FromDays), [typeof(int)])!;
+    private static readonly MethodInfo FromHours = typeof(Duration).GetRuntimeMethod(nameof(Duration.FromHours), [typeof(int)])!;
 
     private static readonly MethodInfo FromMinutes =
-        typeof(Duration).GetRuntimeMethod(nameof(Duration.FromMinutes), new[] { typeof(long) })!;
+        typeof(Duration).GetRuntimeMethod(nameof(Duration.FromMinutes), [typeof(long)])!;
 
     private static readonly MethodInfo FromSeconds =
-        typeof(Duration).GetRuntimeMethod(nameof(Duration.FromSeconds), new[] { typeof(long) })!;
+        typeof(Duration).GetRuntimeMethod(nameof(Duration.FromSeconds), [typeof(long)])!;
 
     private static readonly MethodInfo FromMilliseconds = typeof(Duration).GetRuntimeMethod(
-        nameof(Duration.FromMilliseconds), new[] { typeof(long) })!;
+        nameof(Duration.FromMilliseconds), [typeof(long)])!;
 
     private static readonly PropertyInfo Zero = typeof(Duration).GetProperty(nameof(Duration.Zero))!;
 
@@ -137,6 +137,8 @@ public class DurationIntervalMapping : NpgsqlTypeMapping
 
     private sealed class JsonDurationReaderWriter : JsonValueReaderWriter<Duration>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonDurationReaderWriter).GetProperty(nameof(Instance))!;
+
         public static JsonDurationReaderWriter Instance { get; } = new();
 
         public override Duration FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
@@ -144,5 +146,8 @@ public class DurationIntervalMapping : NpgsqlTypeMapping
 
         public override void ToJsonTyped(Utf8JsonWriter writer, Duration value)
             => writer.WriteStringValue(NpgsqlIntervalTypeMapping.FormatTimeSpanAsInterval(value.ToTimeSpan()));
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }
