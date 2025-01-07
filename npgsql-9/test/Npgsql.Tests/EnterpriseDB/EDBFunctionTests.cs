@@ -462,11 +462,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue(await reader.IsDBNullAsync("paramInOut"));
 #endif
 
-            object[] values = new object[reader.FieldCount];
+            var values = new object[reader.FieldCount];
             reader.GetValues(values);
 
             object[] expected = [DBNull.Value, 25, 24];
-            for (int i = 0; i < expected.Length; i++)
+            for (var i = 0; i < expected.Length; i++)
             {
                 Assert.AreEqual(expected[i], values[i]);
             }

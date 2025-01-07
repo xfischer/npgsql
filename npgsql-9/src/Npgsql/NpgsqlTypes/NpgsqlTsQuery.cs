@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 
-#pragma warning disable CA1034
 
 // ReSharper disable once CheckNamespace
 namespace EDBTypes;
@@ -382,16 +381,10 @@ public abstract class EDBTsQuery : IEquatable<EDBTsQuery>
         => left is null ? right is not null : !left.Equals(right);
 }
 
-readonly struct EDBTsQueryOperator
+readonly struct EDBTsQueryOperator(char character, short followedByDistance)
 {
-    public readonly char Char;
-    public readonly short FollowedByDistance;
-
-    public EDBTsQueryOperator(char character, short followedByDistance)
-    {
-        Char = character;
-        FollowedByDistance = followedByDistance;
-    }
+    public readonly char Char = character;
+    public readonly short FollowedByDistance = followedByDistance;
 
     public static implicit operator EDBTsQueryOperator(char c) => new(c, 0);
     public static implicit operator char(EDBTsQueryOperator o) => o.Char;
@@ -471,10 +464,8 @@ public sealed class EDBTsQueryLexeme : EDBTsQuery
     /// <summary>
     /// Weight enum, can be OR'ed together.
     /// </summary>
-#pragma warning disable CA1714
     [Flags]
     public enum Weight
-#pragma warning restore CA1714
     {
         /// <summary>
         /// None
@@ -543,9 +534,7 @@ public sealed class EDBTsQueryNot : EDBTsQuery
     /// <param name="child"></param>
     public EDBTsQueryNot(EDBTsQuery child)
         : base(NodeKind.Not)
-    {
-        Child = child;
-    }
+        => Child = child;
 
     internal override void WriteCore(StringBuilder sb, bool first = false)
     {
@@ -725,7 +714,7 @@ public sealed class EDBTsQueryFollowedBy : EDBTsQueryBinOp
 }
 
 /// <summary>
-/// Represents an empty tsquery. Shold only be used as top node.
+/// Represents an empty tsquery. Should only be used as top node.
 /// </summary>
 public sealed class EDBTsQueryEmpty : EDBTsQuery
 {

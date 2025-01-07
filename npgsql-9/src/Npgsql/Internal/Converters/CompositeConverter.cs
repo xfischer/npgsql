@@ -23,7 +23,7 @@ sealed partial class CompositeConverter<T> : PgStreamingConverter<T> where T : n
             var readReq = field.BinaryReadRequirement;
             var writeReq = field.BinaryWriteRequirement;
 
-            // If so we cannot depend on its buffer size being fixed.
+            // If field is nullable we cannot depend on its buffer size being fixed.
             if (field.IsDbNullable)
             {
                 readReq = readReq.Combine(Size.CreateUpperBound(0));

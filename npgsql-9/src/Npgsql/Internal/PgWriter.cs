@@ -27,40 +27,38 @@ interface IStreamingWriter<T>: IBufferWriter<T>
     ValueTask FlushAsync(CancellationToken cancellationToken = default);
 }
 
-sealed class EDBBufferWriter : IStreamingWriter<byte>
+sealed class EDBBufferWriter(EDBWriteBuffer buffer) : IStreamingWriter<byte>
 {
-    readonly EDBWriteBuffer _buffer;
     int? _lastBufferSize;
-    public EDBBufferWriter(EDBWriteBuffer buffer) => _buffer = buffer;
 
     public void Advance(int count)
     {
-        if (_lastBufferSize < count || _buffer.WriteSpaceLeft < count)
+        if (_lastBufferSize < count || buffer.WriteSpaceLeft < count)
             ThrowHelper.ThrowInvalidOperationException("Cannot advance past the end of the current buffer.");
         _lastBufferSize = null;
-        _buffer.WritePosition += count;
+        buffer.WritePosition += count;
     }
 
     public Memory<byte> GetMemory(int sizeHint = 0)
     {
-        var writePosition = _buffer.WritePosition;
-        var bufferSize = _buffer.Size - writePosition;
+        var writePosition = buffer.WritePosition;
+        var bufferSize = buffer.Size - writePosition;
         if (sizeHint > bufferSize)
             ThrowOutOfMemoryException();
 
         _lastBufferSize = bufferSize;
-        return _buffer.Buffer.AsMemory(writePosition, bufferSize);
+        return buffer.Buffer.AsMemory(writePosition, bufferSize);
     }
 
     public Span<byte> GetSpan(int sizeHint = 0)
     {
-        var writePosition = _buffer.WritePosition;
-        var bufferSize = _buffer.Size - writePosition;
+        var writePosition = buffer.WritePosition;
+        var bufferSize = buffer.Size - writePosition;
         if (sizeHint > bufferSize)
             ThrowOutOfMemoryException();
 
         _lastBufferSize = bufferSize;
-        return _buffer.Buffer.AsSpan(writePosition, bufferSize);
+        return buffer.Buffer.AsSpan(writePosition, bufferSize);
     }
 
     static void ThrowOutOfMemoryException() => throw new OutOfMemoryException("Not enough space left in buffer.");
@@ -68,7 +66,7 @@ sealed class EDBBufferWriter : IStreamingWriter<byte>
     public void Flush(TimeSpan timeout = default)
     {
         if (timeout == TimeSpan.Zero)
-            _buffer.Flush();
+            buffer.Flush();
         else
         {
             TimeSpan? originalTimeout = null;
@@ -76,21 +74,21 @@ sealed class EDBBufferWriter : IStreamingWriter<byte>
             {
                 if (timeout != TimeSpan.Zero)
                 {
-                    originalTimeout = _buffer.Timeout;
-                    _buffer.Timeout = timeout;
+                    originalTimeout = buffer.Timeout;
+                    buffer.Timeout = timeout;
                 }
-                _buffer.Flush();
+                buffer.Flush();
             }
             finally
             {
                 if (originalTimeout is { } value)
-                    _buffer.Timeout = value;
+                    buffer.Timeout = value;
             }
         }
     }
 
     public ValueTask FlushAsync(CancellationToken cancellationToken = default)
-        => new(_buffer.Flush(async: true, cancellationToken));
+        => new(buffer.Flush(async: true, cancellationToken));
 }
 
 [Experimental(EDBDiagnostics.ConvertersExperimental)]
@@ -261,7 +259,7 @@ public sealed class PgWriter
 
     public void WriteFloat(float value)
     {
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         Ensure(sizeof(float));
         BinaryPrimitives.WriteSingleBigEndian(Span, value);
         Advance(sizeof(float));
@@ -272,7 +270,7 @@ public sealed class PgWriter
 
     public void WriteDouble(double value)
     {
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         Ensure(sizeof(double));
         BinaryPrimitives.WriteDoubleBigEndian(Span, value);
         Advance(sizeof(double));
@@ -471,7 +469,7 @@ public sealed class PgWriter
             return Core(async, cancellationToken);
 
         return new(new NestedWriteScope());
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<NestedWriteScope> Core(bool async, CancellationToken cancellationToken)

@@ -27,7 +27,7 @@ static class ReflectionCompositeInfoFactory
             throw new AmbiguousMatchException($"Property {propertyMap[duplicates[0]].Name} and field {fieldMap[duplicates[0]].Name} map to the same '{pgFields[duplicates[0]].Name}' composite field name.");
 
         var (constructorInfo, parameterFieldMap) = MapBestMatchingConstructor<T>(pgFields, nameTranslator);
-        var constructorParameters = constructorInfo?.GetParameters() ?? Array.Empty<ParameterInfo>();
+        var constructorParameters = constructorInfo?.GetParameters() ?? [];
         var compositeFields = new CompositeFieldInfo?[pgFields.Count];
         for (var i = 0; i < parameterFieldMap.Length; i++)
         {
@@ -122,7 +122,7 @@ static class ReflectionCompositeInfoFactory
 
     static Delegate CreateGetter<T>(PropertyInfo info)
     {
-        var invalidOpExceptionMessageConstructor = typeof(InvalidOperationException).GetConstructor(new []{ typeof(string) })!;
+        var invalidOpExceptionMessageConstructor = typeof(InvalidOperationException).GetConstructor([typeof(string)])!;
         var instance = Expression.Parameter(typeof(object), "instance");
         var body = info.GetMethod is null || !info.GetMethod.IsPublic
             ? (Expression)Expression.Throw(Expression.New(invalidOpExceptionMessageConstructor,
@@ -139,7 +139,7 @@ static class ReflectionCompositeInfoFactory
         var instance = Expression.Parameter(typeof(object), "instance");
         var value = Expression.Parameter(info.PropertyType, "value");
 
-        var invalidOpExceptionMessageConstructor = typeof(InvalidOperationException).GetConstructor(new []{ typeof(string) })!;
+        var invalidOpExceptionMessageConstructor = typeof(InvalidOperationException).GetConstructor([typeof(string)])!;
         var body = info.SetMethod is null || !info.SetMethod.IsPublic
             ? (Expression)Expression.Throw(Expression.New(invalidOpExceptionMessageConstructor,
                 Expression.Constant($"No (public) setter for '{info}' on type {typeof(T)}")), info.PropertyType)
@@ -154,8 +154,8 @@ static class ReflectionCompositeInfoFactory
         => type.IsValueType ? Expression.Unbox(expression, type) : Expression.Convert(expression, type, null);
 
 #if !NETSTANDARD && !NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-    [DynamicDependency("TypedValue", typeof(StrongBox<>))]
-    [DynamicDependency("Length", typeof(StrongBox[]))]
+	[DynamicDependency(nameof(StrongBox<object>.TypedValue), typeof(StrongBox<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(StrongBox[]))]
 #endif
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "DynamicDependencies in place for the System.Linq.Expression.Property calls")]
     static Func<StrongBox[], T> CreateStrongBoxConstructor<T>(ConstructorInfo constructorInfo)
@@ -164,12 +164,12 @@ static class ReflectionCompositeInfoFactory
 
         var parameters = constructorInfo.GetParameters();
         var parameterCount = Expression.Constant(parameters.Length);
-        var argumentExceptionNameMessageConstructor = typeof(ArgumentException).GetConstructor(new []{ typeof(string), typeof(string) })!;
+        var argumentExceptionNameMessageConstructor = typeof(ArgumentException).GetConstructor([typeof(string), typeof(string)])!;
         return Expression
             .Lambda<Func<StrongBox[], T>>(
                 Expression.Block(
                     Expression.IfThen(
-                        Expression.LessThan(Expression.Property(values, "Length"), parameterCount),
+                        Expression.LessThan(Expression.Property(values, nameof(Array.Length)), parameterCount),
 
                         Expression.Throw(Expression.New(argumentExceptionNameMessageConstructor,
                             Expression.Constant("Passed fewer arguments than there are constructor parameters."), Expression.Constant(values.Name)))
@@ -180,7 +180,7 @@ static class ReflectionCompositeInfoFactory
                                 Expression.ArrayIndex(values, Expression.Constant(i)),
                                 typeof(StrongBox<>).MakeGenericType(parameter.ParameterType)
                             ),
-                            "TypedValue"
+                            nameof(StrongBox<object>.TypedValue)
                         )
                     ))
                 ), values)
@@ -261,7 +261,7 @@ static class ReflectionCompositeInfoFactory
                     clrDefaultConstructor = constructor;
 
             var parametersMap = new int[parameters.Length];
-#if NETSTANDARD2_0 || NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK  // EnterpriseDB
             for (var i = 0; i < parametersMap.Length; i++)
                 parametersMap[i] = -1;
 #else

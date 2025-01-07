@@ -26,7 +26,7 @@ abstract class ByteaConverters<T> : PgStreamingConverter<T>
     public override ValueTask WriteAsync(PgWriter writer, T value, CancellationToken cancellationToken = default)
         => writer.WriteBytesAsync(ConvertTo(value), cancellationToken);
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
     async ValueTask<T> Read(bool async, PgReader reader, CancellationToken cancellationToken)

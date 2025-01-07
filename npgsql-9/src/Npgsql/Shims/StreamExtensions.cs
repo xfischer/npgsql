@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0 || !NET7_0_OR_GREATER
+﻿#if NETSTANDARD2_0 || !NET7_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
 using System.Buffers;
 using System.Diagnostics;
 using System.Threading;
@@ -30,6 +30,20 @@ namespace System.IO
             while (totalRead < buffer.Length)
             {
                 var read = await stream.ReadAsync(buffer.Slice(totalRead), cancellationToken).ConfigureAwait(false);
+                if (read is 0)
+                    throw new EndOfStreamException();
+
+                totalRead += read;
+            }
+        }
+
+        public static async ValueTask ReadExactlyAsync(this Stream stream, byte[] buffer, int start, int length, CancellationToken cancellationToken = default)
+        {
+            var totalRead = 0;
+            var bufferMem = buffer.AsMemory();
+            while (totalRead < buffer.Length)
+            {
+                var read = await stream.ReadAsync(bufferMem.Slice(totalRead), cancellationToken).ConfigureAwait(false);
                 if (read is 0)
                     throw new EndOfStreamException();
 

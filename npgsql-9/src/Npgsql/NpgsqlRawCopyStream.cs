@@ -54,10 +54,10 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
     /// The copy binary format header signature
     /// </summary>
     internal static readonly byte[] BinarySignature =
-    {
+    [
         (byte)'P',(byte)'G',(byte)'C',(byte)'O',(byte)'P',(byte)'Y',
         (byte)'\n', 255, (byte)'\r', (byte)'\n', 0
-    };
+    ];
 
     readonly ILogger _copyLogger;
 
@@ -399,11 +399,11 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
                     {
                         if (_leftToReadInDataMsg > 0)
                         {
-                            await _readBuf.Skip(_leftToReadInDataMsg, async).ConfigureAwait(false);
+                            await _readBuf.Skip(async, _leftToReadInDataMsg).ConfigureAwait(false);
                         }
                         _connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                     }
-                    catch (OperationCanceledException e) when (e.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.QueryCanceled)
+                    catch (OperationCanceledException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.QueryCanceled })
                     {
                         LogMessages.CopyOperationCancelled(_copyLogger, _connector.Id);
                     }
@@ -448,15 +448,9 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
     public override bool CanSeek => false;
 
-    public override long Seek(long offset, SeekOrigin origin)
-    {
-        throw new NotSupportedException();
-    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
-    public override void SetLength(long value)
-    {
-        throw new NotSupportedException();
-    }
+    public override void SetLength(long value) => throw new NotSupportedException();
 
     public override long Length => throw new NotSupportedException();
 

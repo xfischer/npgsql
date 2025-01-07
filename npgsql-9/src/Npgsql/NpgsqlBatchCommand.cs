@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient;
 /// <inheritdoc/>
 public sealed class EDBBatchCommand : DbBatchCommand
 {
-    internal static readonly List<EDBParameter> EmptyParameters = new();
+    internal static readonly List<EDBParameter> EmptyParameters = [];
 
     string _commandText;
 
@@ -39,9 +39,8 @@ public sealed class EDBBatchCommand : DbBatchCommand
 
     internal EDBParameterCollection? _parameters;
     /// <inheritdoc cref="DbBatchCommand.Parameters"/>
-    public new EDBParameterCollection Parameters => _parameters ??= new();
+    public new EDBParameterCollection Parameters => _parameters ??= [];
 
-#pragma warning disable CA1822 // Mark members as static
 
 #if NET8_0_OR_GREATER
     /// <inheritdoc/>
@@ -66,7 +65,6 @@ public sealed class EDBBatchCommand : DbBatchCommand
 #endif
     => true;
 
-#pragma warning restore CA1822 // Mark members as static
 
     /// <summary>
     /// Appends an error barrier after this batch command. Defaults to the value of <see cref="EDBBatch.EnableErrorBarriers" /> on the
@@ -151,7 +149,7 @@ public sealed class EDBBatchCommand : DbBatchCommand
     /// </remarks>
     internal List<EDBParameter> PositionalParameters
     {
-        get => _inputParameters ??= _ownedInputParameters ??= new();
+        get => _inputParameters ??= _ownedInputParameters ??= [];
         set => _inputParameters = value;
     }
 
@@ -185,7 +183,7 @@ public sealed class EDBBatchCommand : DbBatchCommand
     /// </summary>
     internal PreparedStatement? PreparedStatement
     {
-        get => _preparedStatement != null && _preparedStatement.State == PreparedState.Unprepared
+        get => _preparedStatement is { State: PreparedState.Unprepared }
             ? _preparedStatement = null
             : _preparedStatement;
         set => _preparedStatement = value;
@@ -198,9 +196,9 @@ public sealed class EDBBatchCommand : DbBatchCommand
     internal bool IsPreparing;
 
     /// <summary>
-    /// Holds the server-side (prepared) statement name. Empty string for non-prepared statements.
+    /// Holds the server-side (prepared) ASCII statement name. Empty string for non-prepared statements.
     /// </summary>
-    internal byte[] StatementName => PreparedStatement?.Name ?? Array.Empty<byte>();
+    internal byte[] StatementName => PreparedStatement?.Name ?? [];
 
     /// <summary>
     /// Whether this statement has already been prepared (including automatic preparation).

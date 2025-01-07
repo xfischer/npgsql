@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Util;
 using static EnterpriseDB.EDBClient.Util.Statics;
-using System.Transactions;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Properties;
 
@@ -55,11 +54,20 @@ public sealed partial class EDBConnector
     /// </summary>
     public EDBConnectionStringBuilder Settings { get; }
 
+#if NET7_0_OR_GREATER  // EnterpriseDB (NETFRAMEWORK)
+    Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback { get; }
+#else
     Action<X509CertificateCollection>? ClientCertificatesCallback { get; }
     RemoteCertificateValidationCallback? UserCertificateValidationCallback { get; }
+#endif
+
 #pragma warning disable CS0618 // ProvidePasswordCallback is obsolete
     ProvidePasswordCallback? ProvidePasswordCallback { get; }
 #pragma warning restore CS0618
+
+#if NET7_0_OR_GREATER
+    Action<NegotiateAuthenticationClientOptions>? NegotiateOptionsCallback { get; }
+#endif
 
     public Encoding TextEncoding { get; private set; } = default!;
 
@@ -190,7 +198,7 @@ public sealed partial class EDBConnector
     /// <summary>
     /// Holds all run-time parameters in raw, binary format for efficient handling without allocations.
     /// </summary>
-    readonly List<(byte[] Name, byte[] Value)> _rawParameters = new();
+    readonly List<(byte[] Name, byte[] Value)> _rawParameters = [];
 
     /// <summary>
     /// If this connector was broken, this contains the exception that caused the break.
@@ -294,7 +302,15 @@ public sealed partial class EDBConnector
     internal bool AttemptPostgresCancellation { get; private set; }
     static readonly TimeSpan _cancelImmediatelyTimeout = TimeSpan.FromMilliseconds(-1);
 
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+    static readonly SslApplicationProtocol _alpnProtocol = new("postgresql");
+#endif
+
+#pragma warning disable CA1859
+    // We're casting to IDisposable to not explicitly reference X509Certificate2 for NativeAOT
+    // TODO: probably pointless now, needs to be rechecked
     IDisposable? _certificate;
+#pragma warning restore CA1859
 
     internal EDBLoggingConfiguration LoggingConfiguration { get; }
 
@@ -307,7 +323,7 @@ public sealed partial class EDBConnector
 
     internal EndPoint? ConnectedEndPoint { get; private set; }
 
-    #endregion
+#endregion
 
     #region Constants
 
@@ -349,12 +365,42 @@ public sealed partial class EDBConnector
     internal EDBConnector(EDBDataSource dataSource, EDBConnection conn)
         : this(dataSource)
     {
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+        var sslClientAuthenticationOptionsCallback = conn.SslClientAuthenticationOptionsCallback;
+#else
         if (conn.ProvideClientCertificatesCallback is not null)
             ClientCertificatesCallback = certs => conn.ProvideClientCertificatesCallback(certs);
         if (conn.UserCertificateValidationCallback is not null)
             UserCertificateValidationCallback = conn.UserCertificateValidationCallback;
-
+#endif
 #pragma warning disable CS0618 // Obsolete
+#if NET7_0_OR_GREATER
+        var provideClientCertificatesCallback = conn.ProvideClientCertificatesCallback;
+        var userCertificateValidationCallback = conn.UserCertificateValidationCallback;
+        if (provideClientCertificatesCallback is not null ||
+            userCertificateValidationCallback is not null)
+        {
+            if (sslClientAuthenticationOptionsCallback is not null)
+                throw new NotSupportedException(EDBStrings.SslClientAuthenticationOptionsCallbackWithOtherCallbacksNotSupported);
+
+            sslClientAuthenticationOptionsCallback = options =>
+            {
+                if (provideClientCertificatesCallback is not null)
+                {
+                    options.ClientCertificates ??= new X509Certificate2Collection();
+                    provideClientCertificatesCallback.Invoke(options.ClientCertificates);
+                }
+
+                if (userCertificateValidationCallback is not null)
+                {
+                    options.RemoteCertificateValidationCallback = userCertificateValidationCallback;
+                }
+            };
+        }
+
+        if (sslClientAuthenticationOptionsCallback is not null)
+            SslClientAuthenticationOptionsCallback = sslClientAuthenticationOptionsCallback;
+#endif
         ProvidePasswordCallback = conn.ProvidePasswordCallback;
 #pragma warning restore CS0618
     }
@@ -362,8 +408,12 @@ public sealed partial class EDBConnector
     EDBConnector(EDBConnector connector)
         : this(connector.DataSource)
     {
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+        SslClientAuthenticationOptionsCallback = connector.SslClientAuthenticationOptionsCallback;
+#else
         ClientCertificatesCallback = connector.ClientCertificatesCallback;
         UserCertificateValidationCallback = connector.UserCertificateValidationCallback;
+#endif
         ProvidePasswordCallback = connector.ProvidePasswordCallback;
     }
 
@@ -379,8 +429,16 @@ public sealed partial class EDBConnector
         TransactionLogger = LoggingConfiguration.TransactionLogger;
         CopyLogger = LoggingConfiguration.CopyLogger;
 
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+        SslClientAuthenticationOptionsCallback = dataSource.SslClientAuthenticationOptionsCallback;
+#else
         ClientCertificatesCallback = dataSource.ClientCertificatesCallback;
         UserCertificateValidationCallback = dataSource.UserCertificateValidationCallback;
+#endif
+
+#if NET7_0_OR_GREATER
+        NegotiateOptionsCallback = dataSource.Configuration.NegotiateOptionsCallback;
+#endif
 
         State = ConnectorState.Closed;
         TransactionStatus = TransactionStatus.Idle;
@@ -415,7 +473,7 @@ public sealed partial class EDBConnector
         }
     }
 
-    #endregion
+#endregion
 
     #region Configuration settings
 
@@ -487,7 +545,7 @@ public sealed partial class EDBConnector
             SerializerOptions = DataSource.SerializerOptions;
             DatabaseInfo = DataSource.DatabaseInfo;
 
-            if (Settings.Pooling && !Settings.Multiplexing && !Settings.NoResetOnClose && DatabaseInfo.SupportsDiscard)
+            if (Settings.Pooling && Settings is { Multiplexing: false, NoResetOnClose: false } && DatabaseInfo.SupportsDiscard)
             {
                 _sendResetOnClose = true;
                 GenerateResetMessage();
@@ -559,10 +617,9 @@ public sealed partial class EDBConnector
             SslMode sslMode,
             EDBTimeout timeout,
             bool async,
-            CancellationToken cancellationToken,
-            bool isFirstAttempt = true)
+            CancellationToken cancellationToken)
         {
-            await conn.RawOpen(sslMode, timeout, async, cancellationToken, isFirstAttempt).ConfigureAwait(false);
+            await conn.RawOpen(sslMode, timeout, async, cancellationToken).ConfigureAwait(false);
 
             var username = await conn.GetUsernameAsync(async, cancellationToken).ConfigureAwait(false);
 
@@ -593,8 +650,7 @@ public sealed partial class EDBConnector
                     sslMode == SslMode.Prefer ? SslMode.Disable : SslMode.Require,
                     timeout,
                     async,
-                    cancellationToken,
-                    isFirstAttempt: false).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
 
                 return;
             }
@@ -746,7 +802,7 @@ public sealed partial class EDBConnector
         }
     }
 
-    async Task RawOpen(SslMode sslMode, EDBTimeout timeout, bool async, CancellationToken cancellationToken, bool isFirstAttempt = true)
+    async Task RawOpen(SslMode sslMode, EDBTimeout timeout, bool async, CancellationToken cancellationToken)
     {
         try
         {
@@ -776,7 +832,16 @@ public sealed partial class EDBConnector
 
             IsSecure = false;
 
-            if ((sslMode is SslMode.Prefer && DataSource.TransportSecurityHandler.SupportEncryption) ||
+            if (GetSslNegotiation(Settings) == SslNegotiation.Direct)
+            {
+                // We already check that in EDBConnectionStringBuilder.PostProcessAndValidate, but since we also allow environment variables...
+                if (Settings.SslMode is not SslMode.Require and not SslMode.VerifyCA and not SslMode.VerifyFull)
+                    throw new ArgumentException("SSL Mode has to be Require or higher to be used with direct SSL Negotiation");
+                await DataSource.TransportSecurityHandler.NegotiateEncryption(async, this, sslMode, timeout, cancellationToken).ConfigureAwait(false);
+                if (ReadBuffer.ReadBytesLeft > 0)
+                    throw new EDBException("Additional unencrypted data received after SSL negotiation - this should never happen, and may be an indication of a man-in-the-middle attack.");
+            }
+            else if ((sslMode is SslMode.Prefer && DataSource.TransportSecurityHandler.SupportEncryption) ||
                 sslMode is SslMode.Require or SslMode.VerifyCA or SslMode.VerifyFull)
             {
                 WriteSslRequest();
@@ -795,7 +860,7 @@ public sealed partial class EDBConnector
                         throw new EDBException("SSL connection requested. No SSL enabled connection from this host is configured.");
                     break;
                 case 'S':
-                    await DataSource.TransportSecurityHandler.NegotiateEncryption(async, this, sslMode, timeout, isFirstAttempt).ConfigureAwait(false);
+                    await DataSource.TransportSecurityHandler.NegotiateEncryption(async, this, sslMode, timeout, cancellationToken).ConfigureAwait(false);
                     break;
                 }
 
@@ -820,7 +885,21 @@ public sealed partial class EDBConnector
         }
     }
 
-    internal async Task NegotiateEncryption(SslMode sslMode, EDBTimeout timeout, bool async, bool isFirstAttempt)
+    static SslNegotiation GetSslNegotiation(EDBConnectionStringBuilder settings)
+    {
+        if (settings.UserProvidedSslNegotiation is { } userProvidedSslNegotiation)
+            return userProvidedSslNegotiation;
+
+        if (PostgresEnvironment.SslNegotiation is { } sslNegotiationEnv)
+        {
+            if (Enum.TryParse<SslNegotiation>(sslNegotiationEnv, ignoreCase: true, out var sslNegotiation))
+                return sslNegotiation;
+        }
+
+        return SslNegotiation.Postgres;
+    }
+
+    internal async Task NegotiateEncryption(SslMode sslMode, EDBTimeout timeout, bool async, CancellationToken cancellationToken)
     {
         var clientCertificates = new X509Certificate2Collection();
         var certPath = Settings.SslCertificate ?? PostgresEnvironment.SslCert ?? PostgresEnvironment.SslCertDefault;
@@ -830,7 +909,7 @@ public sealed partial class EDBConnector
             var password = Settings.SslPassword;
 
             X509Certificate2? cert = null;
-            if (Path.GetExtension(certPath).ToUpperInvariant() != ".PFX")
+            if (!string.Equals(Path.GetExtension(certPath), ".pfx", StringComparison.OrdinalIgnoreCase))
             {
 #if NET5_0_OR_GREATER
                 // It's PEM time
@@ -862,14 +941,16 @@ public sealed partial class EDBConnector
 
         try
         {
+#if !NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             ClientCertificatesCallback?.Invoke(clientCertificates);
-
+#endif
             var checkCertificateRevocation = Settings.CheckCertificateRevocation;
 
             RemoteCertificateValidationCallback? certificateValidationCallback;
             X509Certificate2? caCert;
             string? certRootPath = null;
 
+#if !NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             if (UserCertificateValidationCallback is not null)
             {
                 if (sslMode is SslMode.VerifyCA or SslMode.VerifyFull)
@@ -883,7 +964,9 @@ public sealed partial class EDBConnector
 
                 certificateValidationCallback = UserCertificateValidationCallback;
             }
-            else if (sslMode is SslMode.Prefer or SslMode.Require)
+            else 
+#endif
+            if (sslMode is SslMode.Prefer or SslMode.Require)
             {
                 certificateValidationCallback = SslTrustServerValidation;
                 checkCertificateRevocation = false;
@@ -918,23 +1001,61 @@ public sealed partial class EDBConnector
 
             timeout.CheckAndApply(this);
 
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+            var sslStream = new SslStream(_stream, leaveInnerStreamOpen: false);
+
+            var sslStreamOptions = new SslClientAuthenticationOptions
+            {
+                TargetHost = host,
+                ClientCertificates = clientCertificates,
+                EnabledSslProtocols = SslProtocols.None,
+                CertificateRevocationCheckMode = checkCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.NoCheck,
+                RemoteCertificateValidationCallback = certificateValidationCallback,
+                ApplicationProtocols = [_alpnProtocol]
+            };
+
+            if (SslClientAuthenticationOptionsCallback is not null)
+            {
+                SslClientAuthenticationOptionsCallback.Invoke(sslStreamOptions);
+
+                // User changed remote certificate validation callback
+                // Check whether the change doesn't lead to unexpected behavior
+                if (sslStreamOptions.RemoteCertificateValidationCallback != certificateValidationCallback)
+                {
+                    if (sslMode is SslMode.VerifyCA or SslMode.VerifyFull)
+                        throw new ArgumentException(string.Format(EDBStrings.CannotUseSslVerifyWithCustomValidationCallback, sslMode));
+
+                    if (Settings.RootCertificate is not null)
+                        throw new ArgumentException(EDBStrings.CannotUseSslRootCertificateWithCustomValidationCallback);
+
+                    if (DataSource.TransportSecurityHandler.RootCertificateCallback is not null)
+                        throw new ArgumentException(EDBStrings.CannotUseValidationRootCertificateCallbackWithCustomValidationCallback);
+                }
+            }
+
+            try
+            {
+                if (async)
+                    await sslStream.AuthenticateAsClientAsync(sslStreamOptions, cancellationToken).ConfigureAwait(false);
+                else
+                    sslStream.AuthenticateAsClient(sslStreamOptions);
+
+                _stream = sslStream;
+            }
+            catch (Exception e)
+            {
+                sslStream.Dispose();
+                throw new EDBException("Exception while performing SSL handshake", e);
+            }
+#else
             try
             {
                 var sslStream = new SslStream(_stream, leaveInnerStreamOpen: false, certificateValidationCallback);
 
-                var sslProtocols = SslProtocols.None;
-#if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-                // On .NET Framework SslProtocols.None can be disabled, see #3718
-                if (DisableSystemDefaultTlsVersions)
-                {
-                sslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
-                }
-#endif
-
                 if (async)
-                    await sslStream.AuthenticateAsClientAsync(host, clientCertificates, sslProtocols, checkCertificateRevocation).ConfigureAwait(false);
+                    await sslStream.AuthenticateAsClientAsync(host, clientCertificates, SslProtocols.None, checkCertificateRevocation).ConfigureAwait(false);
                 else
-                    sslStream.AuthenticateAsClient(host, clientCertificates, sslProtocols, checkCertificateRevocation);
+                    sslStream.AuthenticateAsClient(host, clientCertificates, SslProtocols.None, checkCertificateRevocation);
 
                 _stream = sslStream;
             }
@@ -942,6 +1063,7 @@ public sealed partial class EDBConnector
             {
                 throw new EDBException("Exception while performing SSL handshake", e);
             }
+#endif
 
             ReadBuffer.Underlying = _stream;
             WriteBuffer.Underlying = _stream;
@@ -1029,7 +1151,7 @@ public sealed partial class EDBConnector
     async Task ConnectAsync(EDBTimeout timeout, CancellationToken cancellationToken)
     {
         Task<IPAddress[]> GetHostAddressesAsync(CancellationToken ct) =>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             Dns.GetHostAddressesAsync(Host, ct);
 #else
             Dns.GetHostAddressesAsync(Host);
@@ -1104,7 +1226,7 @@ public sealed partial class EDBConnector
             // we always fake-cancel the operation with the help of TaskTimeoutAndCancellation.ExecuteAsync. It stops waiting
             // and raises the exception, while the actual task may be left running.
             Task ConnectAsync(CancellationToken ct) =>
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 socket.ConnectAsync(endpoint, ct).AsTask();
 #else
                 socket.ConnectAsync(endpoint);
@@ -1132,7 +1254,7 @@ public sealed partial class EDBConnector
 
         if (Settings.TcpKeepAlive)
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-        if (Settings.TcpKeepAliveInterval > 0 && Settings.TcpKeepAliveTime == 0)
+        if (Settings is { TcpKeepAliveInterval: > 0, TcpKeepAliveTime: 0 })
             throw new ArgumentException("If TcpKeepAliveInterval is defined, TcpKeepAliveTime must be defined as well");
         if (Settings.TcpKeepAliveTime > 0)
         {
@@ -1172,7 +1294,7 @@ public sealed partial class EDBConnector
         }
     }
 
-    #endregion
+#endregion
 
     #region I/O
 
@@ -1207,7 +1329,7 @@ public sealed partial class EDBConnector
 
                     // We have a resultset for the command - hand back control to the command (which will
                     // return it to the user)
-                    command.TraceReceivedFirstResponse();
+                    command.TraceReceivedFirstResponse(DataSource.Configuration.TracingOptions);
                     ReaderCompleted.Reset();
                     command.ExecutionCompletion.SetResult(this);
 
@@ -1353,7 +1475,7 @@ public sealed partial class EDBConnector
         return new ValueTask<IBackendMessage?>(ParseServerMessage(ReadBuffer, messageCode, len, false))!;
     }
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
     async ValueTask<IBackendMessage?> ReadMessageLong(
@@ -1414,7 +1536,7 @@ public sealed partial class EDBConnector
                 {
                     if (dataRowLoadingMode == DataRowLoadingMode.Skip)
                     {
-                        await ReadBuffer.Skip(len, async).ConfigureAwait(false);
+                        await ReadBuffer.Skip(async, len).ConfigureAwait(false);
                         continue;
                     }
                 }
@@ -1617,15 +1739,15 @@ public sealed partial class EDBConnector
             var authType = (AuthenticationRequestType)buf.ReadInt32();
             return authType switch
             {
-                AuthenticationRequestType.AuthenticationOk => AuthenticationOkMessage.Instance,
-                AuthenticationRequestType.AuthenticationCleartextPassword => AuthenticationCleartextPasswordMessage.Instance,
-                AuthenticationRequestType.AuthenticationMD5Password => AuthenticationMD5PasswordMessage.Load(buf),
-                AuthenticationRequestType.AuthenticationGSS => AuthenticationGSSMessage.Instance,
-                AuthenticationRequestType.AuthenticationSSPI => AuthenticationSSPIMessage.Instance,
-                AuthenticationRequestType.AuthenticationGSSContinue => AuthenticationGSSContinueMessage.Load(buf, len),
-                AuthenticationRequestType.AuthenticationSASL => new AuthenticationSASLMessage(buf),
-                AuthenticationRequestType.AuthenticationSASLContinue => new AuthenticationSASLContinueMessage(buf, len - 4),
-                AuthenticationRequestType.AuthenticationSASLFinal => new AuthenticationSASLFinalMessage(buf, len - 4),
+                AuthenticationRequestType.Ok                => AuthenticationOkMessage.Instance,
+                AuthenticationRequestType.CleartextPassword => AuthenticationCleartextPasswordMessage.Instance,
+                AuthenticationRequestType.MD5Password       => AuthenticationMD5PasswordMessage.Load(buf),
+                AuthenticationRequestType.GSS               => AuthenticationGSSMessage.Instance,
+                AuthenticationRequestType.SSPI              => AuthenticationSSPIMessage.Instance,
+                AuthenticationRequestType.GSSContinue       => AuthenticationGSSContinueMessage.Load(buf, len),
+                AuthenticationRequestType.SASL              => new AuthenticationSASLMessage(buf),
+                AuthenticationRequestType.SASLContinue      => new AuthenticationSASLContinueMessage(buf, len - 4),
+                AuthenticationRequestType.SASLFinal         => new AuthenticationSASLFinalMessage(buf, len - 4),
                 _ => throw new NotSupportedException($"Authentication method not supported (Received: {authType})")
             };
 
@@ -2065,29 +2187,21 @@ public sealed partial class EDBConnector
         return new(this, registration, currentUserCancellationToken, currentAttemptPostgresCancellation);
     }
 
-    internal readonly struct NestedCancellableScope : IDisposable
+    internal readonly struct NestedCancellableScope(
+        EDBConnector connector,
+        CancellationTokenRegistration registration,
+        CancellationToken previousCancellationToken,
+        bool previousAttemptPostgresCancellation)
+        : IDisposable
     {
-        readonly EDBConnector _connector;
-        readonly CancellationTokenRegistration _registration;
-        readonly CancellationToken _previousCancellationToken;
-        readonly bool _previousAttemptPostgresCancellation;
-
-        public NestedCancellableScope(EDBConnector connector, CancellationTokenRegistration registration, CancellationToken previousCancellationToken, bool previousAttemptPostgresCancellation)
-        {
-            _connector = connector;
-            _registration = registration;
-            _previousCancellationToken = previousCancellationToken;
-            _previousAttemptPostgresCancellation = previousAttemptPostgresCancellation;
-        }
-
         public void Dispose()
         {
-            if (_connector is null)
+            if (connector is null)
                 return;
 
-            _connector.UserCancellationToken = _previousCancellationToken;
-            _connector.AttemptPostgresCancellation = _previousAttemptPostgresCancellation;
-            _registration.Dispose();
+            connector.UserCancellationToken = previousCancellationToken;
+            connector.AttemptPostgresCancellation = previousAttemptPostgresCancellation;
+            registration.Dispose();
         }
     }
 
@@ -2115,7 +2229,7 @@ public sealed partial class EDBConnector
             // therefore vulnerable to the race condition in #615.
             if (copyOperation is EDBBinaryImporter ||
                 copyOperation is EDBCopyTextWriter ||
-                copyOperation is EDBRawCopyStream rawCopyStream && rawCopyStream.CanWrite)
+                copyOperation is EDBRawCopyStream { CanWrite: true })
             {
                 try
                 {
@@ -2795,7 +2909,7 @@ public sealed partial class EDBConnector
                 {
                     msg = await ReadMessageWithNotifications(async).ConfigureAwait(false);
                 }
-                catch (Exception e) when (e is OperationCanceledException || e is EDBException npgEx && npgEx.InnerException is TimeoutException)
+                catch (Exception e) when (e is OperationCanceledException || e is EDBException { InnerException: TimeoutException })
                 {
                     // We're somewhere in the middle of a reading keepalive messages
                     // Breaking the connection, as we've lost protocol sync
@@ -2891,7 +3005,7 @@ public sealed partial class EDBConnector
 
         for (var i = 0; i < _rawParameters.Count; i++)
         {
-            (var currentName, var currentValue) = _rawParameters[i];
+            var (currentName, currentValue) = _rawParameters[i];
             if (incomingName.SequenceEqual(currentName))
             {
                 if (incomingValue.SequenceEqual(currentValue))

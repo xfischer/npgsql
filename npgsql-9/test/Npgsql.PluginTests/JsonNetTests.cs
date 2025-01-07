@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient.PluginTests;
 /// </summary>
 [TestFixture(EDBDbType.Jsonb)]
 [TestFixture(EDBDbType.Json)]
-public class JsonNetTests : TestBase
+public class JsonNetTests(EDBDbType npgsqlDbType) : TestBase
 {
     [Test]
     public Task Roundtrip_object()
@@ -26,7 +26,7 @@ public class JsonNetTests : TestBase
             new Foo { Bar = 8 },
             IsJsonb ? @"{""Bar"": 8}" : @"{""Bar"":8}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefault: false,
             isEDBDbTypeInferredFromClrType: false);
 
@@ -37,8 +37,8 @@ public class JsonNetTests : TestBase
             @"{""p"": 1}",
             @"{""p"": 1}",
             _pgTypeName,
-            _npgsqlDbType,
-            isDefault: false,
+            npgsqlDbType,
+            isDefaultForWriting: false,
             isEDBDbTypeInferredFromClrType: false);
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3085")]
@@ -48,7 +48,7 @@ public class JsonNetTests : TestBase
             @"{""p"": 1}".ToCharArray(),
             @"{""p"": 1}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefault: false,
             isEDBDbTypeInferredFromClrType: false);
 
@@ -59,7 +59,7 @@ public class JsonNetTests : TestBase
             Encoding.ASCII.GetBytes(@"{""p"": 1}"),
             @"{""p"": 1}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefault: false,
             isEDBDbTypeInferredFromClrType: false);
 
@@ -70,7 +70,7 @@ public class JsonNetTests : TestBase
             new JObject { ["Bar"] = 8 },
             IsJsonb ? @"{""Bar"": 8}" : @"{""Bar"":8}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             // By default we map JObject to jsonb
             isDefaultForWriting: IsJsonb,
             isDefaultForReading: false,
@@ -83,7 +83,7 @@ public class JsonNetTests : TestBase
             new JArray(new[] { 1, 2, 3 }),
             IsJsonb ? "[1, 2, 3]" : "[1,2,3]",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             // By default we map JArray to jsonb
             isDefaultForWriting: IsJsonb,
             isDefaultForReading: false,
@@ -108,9 +108,9 @@ public class JsonNetTests : TestBase
     {
         var dataSourceBuilder = CreateDataSourceBuilder();
         if (IsJsonb)
-            dataSourceBuilder.UseJsonNet(jsonbClrTypes: new[] { typeof(Foo) });
+            dataSourceBuilder.UseJsonNet(jsonbClrTypes: [typeof(Foo)]);
         else
-            dataSourceBuilder.UseJsonNet(jsonClrTypes: new[] { typeof(Foo) });
+            dataSourceBuilder.UseJsonNet(jsonClrTypes: [typeof(Foo)]);
         await using var dataSource = dataSourceBuilder.Build();
 
         await AssertType(
@@ -118,7 +118,7 @@ public class JsonNetTests : TestBase
             new Foo { Bar = 8 },
             IsJsonb ? @"{""Bar"": 8}" : @"{""Bar"":8}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefaultForReading: false,
             isEDBDbTypeInferredFromClrType: false);
     }
@@ -128,9 +128,9 @@ public class JsonNetTests : TestBase
     {
         var dataSourceBuilder = CreateDataSourceBuilder();
         if (IsJsonb)
-            dataSourceBuilder.UseJsonNet(jsonbClrTypes: new[] { typeof(int[]) });
+            dataSourceBuilder.UseJsonNet(jsonbClrTypes: [typeof(int[])]);
         else
-            dataSourceBuilder.UseJsonNet(jsonClrTypes: new[] { typeof(int[]) });
+            dataSourceBuilder.UseJsonNet(jsonClrTypes: [typeof(int[])]);
         await using var dataSource = dataSourceBuilder.Build();
 
         await AssertType(
@@ -138,7 +138,7 @@ public class JsonNetTests : TestBase
             new[] { 1, 2, 3 },
             IsJsonb ? "[1, 2, 3]" : "[1,2,3]",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefaultForReading: false,
             isEDBDbTypeInferredFromClrType: false);
     }
@@ -157,9 +157,9 @@ public class JsonNetTests : TestBase
 
         var dataSourceBuilder = CreateDataSourceBuilder();
         if (IsJsonb)
-            dataSourceBuilder.UseJsonNet(jsonbClrTypes: new[] { typeof(DateWrapper) }, settings: settings);
+            dataSourceBuilder.UseJsonNet(jsonbClrTypes: [typeof(DateWrapper)], settings: settings);
         else
-            dataSourceBuilder.UseJsonNet(jsonClrTypes: new[] { typeof(DateWrapper) }, settings: settings);
+            dataSourceBuilder.UseJsonNet(jsonClrTypes: [typeof(DateWrapper)], settings: settings);
         await using var dataSource = dataSourceBuilder.Build();
 
         await AssertType(
@@ -167,7 +167,7 @@ public class JsonNetTests : TestBase
             new DateWrapper { Date = new DateTime(2018, 04, 20) },
             IsJsonb ? "{\"Date\": \"The 20th of April, 2018\"}" : "{\"Date\":\"The 20th of April, 2018\"}",
             _pgTypeName,
-            _npgsqlDbType,
+            npgsqlDbType,
             isDefault: false,
             isEDBDbTypeInferredFromClrType: false);
     }
@@ -175,15 +175,15 @@ public class JsonNetTests : TestBase
     public async Task Bug3464()
     {
         var dataSourceBuilder = CreateDataSourceBuilder();
-        dataSourceBuilder.UseJsonNet(jsonbClrTypes: new[] { typeof(Bug3464Class) });
+        dataSourceBuilder.UseJsonNet(jsonbClrTypes: [typeof(Bug3464Class)]);
         await using var dataSource = dataSourceBuilder.Build();
 
         var expected = new Bug3464Class { SomeString = new string('5', 8174) };
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var cmd = new EDBCommand(@"SELECT @p1, @p2", conn);
 
-        cmd.Parameters.AddWithValue("p1", expected).EDBDbType = _npgsqlDbType;
-        cmd.Parameters.AddWithValue("p2", expected).EDBDbType = _npgsqlDbType;
+        cmd.Parameters.AddWithValue("p1", expected).EDBDbType = npgsqlDbType;
+        cmd.Parameters.AddWithValue("p2", expected).EDBDbType = npgsqlDbType;
 
         await using var reader = cmd.ExecuteReader();
     }
@@ -260,8 +260,7 @@ public class JsonNetTests : TestBase
         public override int GetHashCode() => Bar.GetHashCode();
     }
 
-    readonly EDBDbType _npgsqlDbType;
-    readonly string _pgTypeName;
+    readonly string _pgTypeName = npgsqlDbType.ToString().ToLower();
 
     [OneTimeSetUp]
     public void SetUp()
@@ -275,13 +274,7 @@ public class JsonNetTests : TestBase
     public async Task Teardown()
         => await JsonDataSource.DisposeAsync();
 
-    public JsonNetTests(EDBDbType npgsqlDbType)
-    {
-        _npgsqlDbType = npgsqlDbType;
-        _pgTypeName = npgsqlDbType.ToString().ToLower();
-    }
-
-    bool IsJsonb => _npgsqlDbType == EDBDbType.Jsonb;
+    bool IsJsonb => npgsqlDbType == EDBDbType.Jsonb;
 
     EDBDataSource JsonDataSource = default!;
 }

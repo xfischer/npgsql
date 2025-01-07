@@ -13,7 +13,13 @@ sealed class EDBInetConverter : PgBufferedConverter<EDBInet>
     const byte IPv6 = 3;
 
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
-        => CanConvertBufferedDefault(format, out bufferRequirements);
+        => CanConvertImpl(format, out bufferRequirements);
+
+    internal static bool CanConvertImpl(DataFormat format, out BufferRequirements bufferRequirements)
+    {
+        bufferRequirements = BufferRequirements.Create(Size.CreateUpperBound(20));
+        return format == DataFormat.Binary;
+    }
 
     public override Size GetSize(SizeContext context, EDBInet value, ref object? writeState)
         => GetSizeImpl(context, value.Address, ref writeState);

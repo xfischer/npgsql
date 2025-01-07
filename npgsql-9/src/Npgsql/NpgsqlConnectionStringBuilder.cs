@@ -7,7 +7,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal;
-using EnterpriseDB.EDBClient.Netstandard20;
 using EnterpriseDB.EDBClient.Replication;
 
 namespace EnterpriseDB.EDBClient;
@@ -274,7 +273,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     string? _database;
 
     /// <summary>
-    /// The username to connect with. Not required if using IntegratedSecurity.
+    /// The username to connect with.
     /// </summary>
     [Category("Connection")]
     [Description("The username to connect with.")]
@@ -292,7 +291,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     string? _username;
 
     /// <summary>
-    /// The password to connect with. Not required if using IntegratedSecurity.
+    /// The password to connect with.
     /// </summary>
     [Category("Connection")]
     [Description("The password to connect with.")]
@@ -461,6 +460,25 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
         }
     }
     SslMode _sslMode;
+
+    /// <summary>
+    /// Controls how SSL encryption is negotiated with the server, if SSL is used.
+    /// </summary>
+    [Category("Security")]
+    [Description("Controls how SSL encryption is negotiated with the server, if SSL is used.")]
+    [DisplayName("SSL Negotiation")]
+    [EDBConnectionStringProperty]
+    public SslNegotiation SslNegotiation
+    {
+        get => UserProvidedSslNegotiation ?? SslNegotiation.Postgres;
+        set
+        {
+            UserProvidedSslNegotiation = value;
+            SetValue(nameof(SslNegotiation), value);
+        }
+    }
+
+    internal SslNegotiation? UserProvidedSslNegotiation { get; private set; }
 
     /// <summary>
     /// Location of a client certificate to be sent to the server.
@@ -778,13 +796,17 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     /// <summary>
     /// The total maximum lifetime of connections (in seconds). Connections which have exceeded this value will be
     /// destroyed instead of returned from the pool. This is useful in clustered configurations to force load
-    /// balancing between a running server and a server just brought online.
+    /// balancing between a running server and a server just brought online. It can also be useful to prevent
+    /// runaway memory growth of connections at the PostgreSQL server side, because in some cases very long lived
+    /// connections slowly consume more and more memory over time.
+    /// Defaults to 3600 seconds (1 hour).
     /// </summary>
-    /// <value>The time (in seconds) to wait, or 0 to to make connections last indefinitely (the default).</value>
+    /// <value>The time (in seconds) to wait, or 0 to to make connections last indefinitely.</value>
     [Category("Pooling")]
     [Description("The total maximum lifetime of connections (in seconds).")]
     [DisplayName("Connection Lifetime")]
     [EDBConnectionStringProperty("Load Balance Timeout")]
+    [DefaultValue(3600)]
     public int ConnectionLifetime
     {
         get => _connectionLifetime;
@@ -1190,23 +1212,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     bool _noResetOnClose;
 
     /// <summary>
-    /// Load table composite type definitions, and not just free-standing composite types.
-    /// </summary>
-    [Category("Advanced")]
-    [Description("Load table composite type definitions, and not just free-standing composite types.")]
-    [DisplayName("Load Table Composites")]
-    [EDBConnectionStringProperty]
-    public bool LoadTableComposites
-    {
-        get => _loadTableComposites;
-        set
-        {
-            _loadTableComposites = value;
-            SetValue(nameof(LoadTableComposites), value);
-        }
-    }
-	// EnterpriseDB
-    /// <summary>
+	/// <summary>
     /// Property specifying whether connection is with PGPOOL or EPAS.
     /// Default is false which means EPAS.
     /// </summary>
@@ -1215,7 +1221,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     [DisplayName("PGPool Connection")]
     [EDBConnectionStringProperty]
     [DefaultValue(false)]
-    public bool IsPgPoolConnection
+    public bool IsPgPoolConnection // EnterpriseDB
     {
         get => _isPgPoolConnection;
         set
@@ -1236,7 +1242,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     [DisplayName("PGPool Sync Time")]
     [EDBConnectionStringProperty]
     [DefaultValue(10)]
-    public int PgPoolSyncTime
+    public int PgPoolSyncTime // EnterpriseDB
     {
         get => _pgPoolSyncTime;
         set
@@ -1246,7 +1252,6 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
         }
     }
     int _pgPoolSyncTime;
-    bool _loadTableComposites;
 
 	// EnterpriseDB
     /// <summary>
@@ -1375,7 +1380,26 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
 
     #endregion
 
-    #region Properties - Compatibility
+    #region Properties - Obsolete
+
+    /// <summary>
+    /// Load table composite type definitions, and not just free-standing composite types.
+    /// </summary>
+    [Category("Advanced")]
+    [Description("Load table composite type definitions, and not just free-standing composite types.")]
+    [DisplayName("Load Table Composites")]
+    [EDBConnectionStringProperty]
+    [Obsolete("Specifying type loading options through the connection string is obsolete, use the DataSource builder instead. See the 9.0 release notes for more information.")]
+    public bool LoadTableComposites
+    {
+        get => _loadTableComposites;
+        set
+        {
+            _loadTableComposites = value;
+            SetValue(nameof(LoadTableComposites), value);
+        }
+    }
+    bool _loadTableComposites;
 
     /// <summary>
     /// A compatibility mode for special PostgreSQL server types.
@@ -1384,9 +1408,11 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     [Description("A compatibility mode for special PostgreSQL server types.")]
     [DisplayName("Server Compatibility Mode")]
     [EDBConnectionStringProperty]
+    [Obsolete("Specifying type loading options through the connection string is obsolete, use the DataSource builder instead. See the 9.0 release notes for more information.")]
     public ServerCompatibilityMode ServerCompatibilityMode
     {
-        get => _serverCompatibilityMode;
+        // Physical replication connections don't allow regular queries, so we can't load types from PG
+        get => ReplicationMode is ReplicationMode.Physical ? ServerCompatibilityMode.NoTypeLoading : _serverCompatibilityMode;
         set
         {
             _serverCompatibilityMode = value;
@@ -1394,10 +1420,6 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
         }
     }
     ServerCompatibilityMode _serverCompatibilityMode;
-
-    #endregion
-
-    #region Properties - Obsolete
 
     /// <summary>
     /// Whether to trust the server certificate without validating it.
@@ -1452,8 +1474,10 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
             throw new ArgumentException("Host can't be null");
         if (Multiplexing && !Pooling)
             throw new ArgumentException("Pooling must be on to use multiplexing");
+        if (SslNegotiation == SslNegotiation.Direct && SslMode is not SslMode.Require and not SslMode.VerifyCA and not SslMode.VerifyFull)
+            throw new ArgumentException("SSL Mode has to be Require or higher to be used with direct SSL Negotiation");
 
-        if (!Host.Contains(","))
+        if (!Host.Contains(','))
         {
             if (TargetSessionAttributesParsed is not null &&
                 TargetSessionAttributesParsed != EnterpriseDB.EDBClient.TargetSessionAttributes.Any)
@@ -1499,7 +1523,11 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
             var ipv6End = originalHost.LastIndexOf(']');
             if (otherColon == -1 || portSeparator > ipv6End && otherColon < ipv6End)
             {
-                port = originalHost.Slice(portSeparator + 1).ParseInt();
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+                port = int.Parse(originalHost.Slice(portSeparator + 1));
+#else
+                port = int.Parse(originalHost.Slice(portSeparator + 1).ToString());
+#endif
                 host = originalHost.Slice(0, portSeparator).ToString();
                 return true;
             }
@@ -1546,7 +1574,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     /// <returns></returns>
     public override int GetHashCode() => Host?.GetHashCode() ?? 0;
 
-    #endregion
+#endregion
 
     #region IDictionary<string, object>
 
@@ -1652,7 +1680,7 @@ sealed class EDBConnectionStringPropertyAttribute : Attribute
     /// Creates a <see cref="EDBConnectionStringPropertyAttribute"/>.
     /// </summary>
     public EDBConnectionStringPropertyAttribute()
-        => Synonyms = Array.Empty<string>();
+        => Synonyms = [];
 
     /// <summary>
     /// Creates a <see cref="EDBConnectionStringPropertyAttribute"/>.
@@ -1664,26 +1692,6 @@ sealed class EDBConnectionStringPropertyAttribute : Attribute
 #endregion
 
 #region Enums
-
-/// <summary>
-/// An option specified in the connection string that activates special compatibility features.
-/// </summary>
-public enum ServerCompatibilityMode
-{
-    /// <summary>
-    /// No special server compatibility mode is active
-    /// </summary>
-    None,
-    /// <summary>
-    /// The server is an Amazon Redshift instance.
-    /// </summary>
-    Redshift,
-    /// <summary>
-    /// The server is doesn't support full type loading from the PostgreSQL catalogs, support the basic set
-    /// of types via information hardcoded inside EnterpriseDB.EDBClient.
-    /// </summary>
-    NoTypeLoading,
-}
 
 /// <summary>
 /// Specifies how to manage SSL.
@@ -1714,6 +1722,21 @@ public enum SslMode
     /// Fail the connection if the server doesn't support SSL. Also verifies server certificate with host's name.
     /// </summary>
     VerifyFull
+}
+
+/// <summary>
+/// Specifies how to initialize SSL session.
+/// </summary>
+public enum SslNegotiation
+{
+    /// <summary>
+    /// Perform PostgreSQL protocol negotiation.
+    /// </summary>
+    Postgres,
+    /// <summary>
+    /// Start SSL handshake directly after establishing the TCP/IP connection.
+    /// </summary>
+    Direct
 }
 
 /// <summary>

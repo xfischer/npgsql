@@ -13,9 +13,8 @@ static class EDBActivitySource
 
     internal static bool IsEnabled => Source.HasListeners();
 
-    internal static Activity? CommandStart(EDBConnectionStringBuilder settings, string commandText, CommandType commandType)
+    internal static Activity? CommandStart(EDBConnectionStringBuilder settings, string commandText, CommandType commandType, string? spanName)
     {
-
         var dbName = settings.Database ?? "UNKNOWN";
         string? dbOperation = null;
         string? dbSqlTable = null;
@@ -48,7 +47,7 @@ static class EDBActivitySource
             throw new ArgumentOutOfRangeException(nameof(commandType), commandType, null);
         }
 
-        var activity = Source.StartActivity(activityName, ActivityKind.Client);
+        var activity = Source.StartActivity(spanName ?? activityName, ActivityKind.Client);
         if (activity is not { IsAllDataRequested: true })
             return activity;
 
@@ -97,9 +96,9 @@ static class EDBActivitySource
         }
     }
 
-    internal static void ReceivedFirstResponse(Activity activity)
+    internal static void ReceivedFirstResponse(Activity activity, EDBTracingOptions tracingOptions)
     {
-        if (!activity.IsAllDataRequested)
+        if (!activity.IsAllDataRequested || !tracingOptions.EnableFirstResponseEvent)
             return;
 
         var activityEvent = new ActivityEvent("received-first-response");

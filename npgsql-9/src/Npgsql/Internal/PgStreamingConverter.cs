@@ -8,10 +8,8 @@ using System.Threading.Tasks;
 namespace EnterpriseDB.EDBClient.Internal;
 
 [Experimental(EDBDiagnostics.ConvertersExperimental)]
-public abstract class PgStreamingConverter<T> : PgConverter<T>
+public abstract class PgStreamingConverter<T>(bool customDbNullPredicate = false) : PgConverter<T>(customDbNullPredicate)
 {
-    protected PgStreamingConverter(bool customDbNullPredicate = false) : base(customDbNullPredicate) { }
-
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
     {
         bufferRequirements = BufferRequirements.None;
@@ -44,9 +42,9 @@ public abstract class PgStreamingConverter<T> : PgConverter<T>
 
         static object BoxResult(Task task)
         {
-            // We're using ValueTask.Result here to avoid rooting any TaskAwaiter or ValueTaskAwaiter types.
+            // Justification: exact type Unsafe.As used to reduce generic duplication cost.
             Debug.Assert(task is Task<T>);
-            // On ValueTask calling .Result is equivalent to GetAwaiter().GetResult() w.r.t. exception wrapping.
+            // Using .Result on ValueTask is equivalent to GetAwaiter().GetResult(), this removes TaskAwaiter<T> rooting.
             return new ValueTask<T>(task: Unsafe.As<Task<T>>(task)).Result!;
         }
     }
@@ -72,7 +70,7 @@ static class PgStreamingConverterHelpers
 {
     // Split out from the generic class to amortize the huge size penalty per async state machine, which would otherwise be per
     // instantiation.
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
     public static async ValueTask<object> AwaitTask(Task task, Continuation continuation)

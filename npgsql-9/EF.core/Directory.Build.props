@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>8.0.10.1</VersionPrefix>
-    <LangVersion>preview</LangVersion>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <VersionPrefix>9.0.2.1</VersionPrefix>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>NU5105</NoWarn>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>

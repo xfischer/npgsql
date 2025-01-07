@@ -1,5 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
@@ -12,14 +11,19 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Convent
 public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConvention
 {
     private readonly IRelationalTypeMappingSource _typeMappingSource;
+    private readonly IReadOnlyList<EnumDefinition> _enumDefinitions;
 
     /// <summary>
     ///     Creates a new instance of <see cref="NpgsqlPostgresModelFinalizingConvention" />.
     /// </summary>
     /// <param name="typeMappingSource">The type mapping source to use.</param>
-    public NpgsqlPostgresModelFinalizingConvention(IRelationalTypeMappingSource typeMappingSource)
+    /// <param name="enumDefinitions"></param>
+    public NpgsqlPostgresModelFinalizingConvention(
+        IRelationalTypeMappingSource typeMappingSource,
+        IReadOnlyList<EnumDefinition> enumDefinitions)
     {
         _typeMappingSource = typeMappingSource;
+        _enumDefinitions = enumDefinitions;
     }
 
     /// <inheritdoc />
@@ -39,6 +43,22 @@ public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConventio
                 }
             }
         }
+
+        SetupEnums(modelBuilder);
+    }
+
+    /// <summary>
+    ///     Configures the model to create PostgreSQL enums based on the user's enum definitions in the context options.
+    /// </summary>
+    protected virtual void SetupEnums(IConventionModelBuilder modelBuilder)
+    {
+        foreach (var enumDefinition in _enumDefinitions)
+        {
+            modelBuilder.HasPostgresEnum(
+                enumDefinition.StoreTypeSchema,
+                enumDefinition.StoreTypeName,
+                enumDefinition.Labels.Values.Order(StringComparer.Ordinal).ToArray());
+        }
     }
 
     /// <summary>
@@ -49,6 +69,7 @@ public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConventio
         RelationalTypeMapping typeMapping,
         IConventionModelBuilder modelBuilder)
     {
+        // TODO: does not work if CREATE EXTENSION was done on a non-default schema. #3177
         switch (typeMapping.StoreType)
         {
             case "hstore":

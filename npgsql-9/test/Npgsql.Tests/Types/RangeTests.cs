@@ -16,7 +16,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 class RangeTests : MultiplexingTestBase
 {
     static readonly TestCaseData[] RangeTestCases =
-    {
+    [
         new TestCaseData(new EDBRange<int>(1, true, 10, false), "[1,10)", "int4range", EDBDbType.IntegerRange)
             .SetName("IntegerRange"),
         new TestCaseData(new EDBRange<long>(1, true, 10, false), "[1,10)", "int8range", EDBDbType.BigIntRange)
@@ -52,7 +52,7 @@ class RangeTests : MultiplexingTestBase
             .SetName("InfiniteLowerBound"),
         new TestCaseData(new EDBRange<decimal>(1, true, false, 10, false, true), "[1,)", "numrange", EDBDbType.NumericRange)
             .SetName("InfiniteUpperBound")
-    };
+    ];
 
     // See more test cases in DateTimeTests
     [Test, TestCaseSource(nameof(RangeTestCases))]
@@ -99,7 +99,7 @@ class RangeTests : MultiplexingTestBase
     {
         var r1 = new EDBRange<int>(0, false, true, 1, false, false);
 
-        //different upper bound (lower bound shoulnd't matter since it is infinite)
+        //different upper bound (lower bound shouldn't matter since it is infinite)
         var r2 = new EDBRange<int>(1, false, true, 2, false, false);
         Assert.IsFalse(r1 == r2);
 
@@ -135,7 +135,7 @@ class RangeTests : MultiplexingTestBase
     [Test]
     public void GetHashCode_reference_types()
     {
-        EDBRange<string> a= default;
+        EDBRange<string> a = default;
         EDBRange<string> b = EDBRange<string>.Empty;
         EDBRange<string> c = EDBRange<string>.Parse("(,)");
 
@@ -410,14 +410,10 @@ class RangeTests : MultiplexingTestBase
         string? Value { get; }
 
         SimpleType(string? value)
-        {
-            Value = value;
-        }
+            => Value = value;
 
         public override string? ToString()
-        {
-            return Value;
-        }
+            => Value;
 
         class SimpleTypeConverter : TypeConverter
         {
@@ -442,28 +438,28 @@ class RangeTests : MultiplexingTestBase
         new object[][]
         {
             // (2018-05-17, 2018-05-18)
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, false) },
+            [new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, false)],
 
             // [2018-05-17, 2018-05-18]
-            new object[] { new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, true, false) },
+            [new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, true, false)],
 
             // [2018-05-17, 2018-05-18)
-            new object[] { new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, false, false) },
+            [new EDBRange<DateTime>(May_17_2018, true, false, May_18_2018, false, false)],
 
             // (2018-05-17, 2018-05-18]
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, true, false) },
+            [new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, true, false)],
 
             // (,)
-            new object[] { new EDBRange<DateTime>(default, false, true, default, false, true) },
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, true) },
+            [new EDBRange<DateTime>(default, false, true, default, false, true)],
+            [new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, true)],
 
             // (2018-05-17,)
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, false, default, false, true) },
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, true) },
+            [new EDBRange<DateTime>(May_17_2018, false, false, default, false, true)],
+            [new EDBRange<DateTime>(May_17_2018, false, false, May_18_2018, false, true)],
 
             // (,2018-05-18)
-            new object[] { new EDBRange<DateTime>(default, false, true, May_18_2018, false, false) },
-            new object[] { new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, false) }
+            [new EDBRange<DateTime>(default, false, true, May_18_2018, false, false)],
+            [new EDBRange<DateTime>(May_17_2018, false, true, May_18_2018, false, false)]
         };
 
     #endregion

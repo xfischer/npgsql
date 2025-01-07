@@ -2,13 +2,9 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class WithConstructorsNpgsqlTest : WithConstructorsTestBase<WithConstructorsNpgsqlTest.WithConstructorsNpgsqlFixture>
+public class WithConstructorsNpgsqlTest(WithConstructorsNpgsqlTest.WithConstructorsNpgsqlFixture fixture)
+    : WithConstructorsTestBase<WithConstructorsNpgsqlTest.WithConstructorsNpgsqlFixture>(fixture)
 {
-    public WithConstructorsNpgsqlTest(WithConstructorsNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
 
@@ -21,7 +17,9 @@ public class WithConstructorsNpgsqlTest : WithConstructorsTestBase<WithConstruct
         {
             base.OnModelCreating(modelBuilder, context);
 
-            modelBuilder.Entity<BlogQuery>().HasNoKey().ToSqlQuery(@"SELECT * FROM ""Blog""");
+            modelBuilder.Entity<BlogQuery>().HasNoKey().ToSqlQuery("""
+                SELECT * FROM "Blog"
+                """);
         }
     }
 }

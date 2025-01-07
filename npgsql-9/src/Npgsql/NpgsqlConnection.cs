@@ -91,10 +91,11 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         => throw new NotSupportedException();
 
     static Func<string, EDBConnection>? _cloningInstantiator;
+	
     /// <summary>
     /// The default TCP/IP port for PostgreSQL.
     /// </summary>
-    internal const int DefaultPort = 5444; // EnterpriseDB : default EPAS port
+    public const int DefaultPort = 5444; // EnterpriseDB : default EPAS port
 
     /// <summary>
     /// Maximum value for connection timeout.
@@ -432,7 +433,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// Gets the time (in seconds) to wait while trying to execute a command
     /// before terminating the attempt and generating an error.
     /// </summary>
-    /// <value>The time (in seconds) to wait for a command to complete. The default value is 20 seconds.</value>
+    /// <value>The time (in seconds) to wait for a command to complete. The default value is 30 seconds.</value>
     public int CommandTimeout => Settings.CommandTimeout;
 
     ///<summary>
@@ -577,7 +578,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// </summary>
     internal EDBBatch? CachedBatch { get; set; }
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     /// <inheritdoc/>
     public override bool CanCreateBatch => true;
 
@@ -1033,6 +1034,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <remarks>
     /// See <see href="https://msdn.microsoft.com/en-us/library/system.net.security.localcertificateselectioncallback(v=vs.110).aspx"/>
     /// </remarks>
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
     public ProvideClientCertificatesCallback? ProvideClientCertificatesCallback { get; set; }
 
     /// <summary>
@@ -1048,9 +1050,22 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// See <see href="https://msdn.microsoft.com/en-us/library/system.net.security.remotecertificatevalidationcallback(v=vs.110).aspx"/>.
     /// </para>
     /// </remarks>
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
     public RemoteCertificateValidationCallback? UserCertificateValidationCallback { get; set; }
 
-    #endregion SSL
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+    /// <summary>
+    /// When using SSL/TLS, this is a callback that allows customizing SslStream's authentication options.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// See <see href="https://learn.microsoft.com/en-us/dotnet/api/system.net.security.sslclientauthenticationoptions?view=net-8.0"/>.
+    /// </para>
+    /// </remarks>
+    public Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback { get; set; }
+#endif
+
+#endregion SSL
 
     #region Backend version, capabilities, settings
 
@@ -1407,11 +1422,11 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
 
     static bool IsValidCopyCommand(string copyCommand)
     {
-    #if NET6_0_OR_GREATER || NETSTANDARD2_1
+#if NET6_0_OR_GREATER || NETSTANDARD2_1
         return copyCommand.AsSpan().TrimStart().StartsWith("COPY", StringComparison.OrdinalIgnoreCase);
-    #else
+#else
         return copyCommand.TrimStart().StartsWith("COPY", StringComparison.OrdinalIgnoreCase);
-    #endif
+#endif
     }
     #endregion
 
@@ -1717,7 +1732,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
@@ -1732,7 +1747,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
@@ -1751,7 +1766,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
@@ -1781,9 +1796,12 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
             ? _cloningInstantiator!(_connectionString)
             : _dataSource.CreateConnection();
 
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+        conn.SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback;
+#endif
+#pragma warning disable CS0618 // Obsolete
         conn.ProvideClientCertificatesCallback = ProvideClientCertificatesCallback;
         conn.UserCertificateValidationCallback = UserCertificateValidationCallback;
-#pragma warning disable CS0618 // Obsolete
         conn.ProvidePasswordCallback = ProvidePasswordCallback;
 #pragma warning restore CS0618
         conn._userFacingConnectionString = _userFacingConnectionString;
@@ -1807,6 +1825,14 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
 
         return new EDBConnection(csb.ToString())
         {
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+            SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback ?? _dataSource?.SslClientAuthenticationOptionsCallback,
+#pragma warning disable CS0618 // Obsolete
+            ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
+            UserCertificateValidationCallback = UserCertificateValidationCallback,
+            ProvidePasswordCallback = ProvidePasswordCallback,
+#pragma warning restore CS0618
+#else
             ProvideClientCertificatesCallback =
                 ProvideClientCertificatesCallback ??
                 (_dataSource?.ClientCertificatesCallback is { } clientCertificatesCallback
@@ -1816,6 +1842,44 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
 #pragma warning disable CS0618 // Obsolete
             ProvidePasswordCallback = ProvidePasswordCallback,
 #pragma warning restore CS0618
+#endif
+        };
+    }
+
+    /// <summary>
+    /// Clones this connection, replacing its connection string with the given one.
+    /// This allows creating a new connection with the same security information
+    /// (password, SSL callbacks) while changing other connection parameters (e.g.
+    /// database or pooling)
+    /// </summary>
+    public async ValueTask<EDBConnection> CloneWithAsync(string connectionString, CancellationToken cancellationToken = default)
+    {
+        CheckDisposed();
+        var csb = new EDBConnectionStringBuilder(connectionString);
+        csb.Password ??= _dataSource is null ? null : await _dataSource.GetPassword(async: true, cancellationToken).ConfigureAwait(false);
+        if (csb.PersistSecurityInfo && !Settings.PersistSecurityInfo)
+            csb.PersistSecurityInfo = false;
+
+        return new EDBConnection(csb.ToString())
+        {
+#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+            SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback ?? _dataSource?.SslClientAuthenticationOptionsCallback,
+#pragma warning disable CS0618 // Obsolete
+            ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
+            UserCertificateValidationCallback = UserCertificateValidationCallback,
+            ProvidePasswordCallback = ProvidePasswordCallback,
+#pragma warning restore CS0618
+#else
+            ProvideClientCertificatesCallback =
+                ProvideClientCertificatesCallback ??
+                (_dataSource?.ClientCertificatesCallback is { } clientCertificatesCallback
+                    ? (ProvideClientCertificatesCallback)(certs => clientCertificatesCallback(certs))
+                    : null),
+            UserCertificateValidationCallback = UserCertificateValidationCallback ?? _dataSource?.UserCertificateValidationCallback,
+#pragma warning disable CS0618 // Obsolete
+            ProvidePasswordCallback = ProvidePasswordCallback,
+#pragma warning restore CS0618
+#endif
         };
     }
 
@@ -1898,7 +1962,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// Flushes the type cache for this connection's connection string and reloads the types for this connection only.
     /// Type changes will appear for other connections only after they are re-opened from the pool.
     /// </summary>
-    public async Task ReloadTypesAsync()
+    public async Task ReloadTypesAsync(CancellationToken cancellationToken = default)
     {
         CheckReady();
 
@@ -1909,7 +1973,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
                 EDBTimeout.Infinite,
                 forceReload: true,
                 async: true,
-                CancellationToken.None).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1928,7 +1992,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         remove => Disposed -= value;
     }
 
-    #endregion Misc
+#endregion Misc
 }
 
 enum ConnectorBindingScope
@@ -1966,11 +2030,9 @@ enum ConnectorBindingScope
     Temporary
 }
 
-readonly struct EndScopeDisposable : IDisposable
+readonly struct EndScopeDisposable(EDBConnection connection) : IDisposable
 {
-    readonly EDBConnection _connection;
-    public EndScopeDisposable(EDBConnection connection) => _connection = connection;
-    public void Dispose() => _connection.EndBindingScope(ConnectorBindingScope.Temporary);
+    public void Dispose() => connection.EndBindingScope(ConnectorBindingScope.Temporary);
 }
 
 #region Delegates

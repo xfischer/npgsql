@@ -16,9 +16,7 @@ public sealed class EDBOperationInProgressException : EDBException
     /// </param>
     public EDBOperationInProgressException(EDBCommand command)
         : base("A command is already in progress: " + command.CommandText)
-    {
-        CommandInProgress = command;
-    }
+        => CommandInProgress = command;
 
     internal EDBOperationInProgressException(ConnectorState state)
         : base($"The connection is already in state '{state}'")

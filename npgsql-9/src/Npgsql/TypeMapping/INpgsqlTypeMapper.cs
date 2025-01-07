@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using EnterpriseDB.EDBClient.Internal;
-using EnterpriseDB.EDBClient.Internal.ResolverFactories;
 using EnterpriseDB.EDBClient.NameTranslation;
 using EDBTypes;
 
@@ -193,7 +192,7 @@ public interface IEDBTypeMapper
         IEDBNameTranslator? nameTranslator = null);
 
     /// <summary>
-    /// Adds a type resolver factory, which produces resolvers that can add or modify support for PostgreSQL types.
+    /// Adds a type info resolver factory which can add or modify support for PostgreSQL types.
     /// Typically used by plugins.
     /// </summary>
     /// <param name="factory">The type resolver factory to be added.</param>

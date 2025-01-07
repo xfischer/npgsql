@@ -697,9 +697,6 @@ public class EDBParameterTest : TestBase
     [Test]
     public void DBNull_reuses_type_info([Values]bool generic)
     {
-        // Bootstrap datasource.
-        using (var _ = OpenConnection()) {}
-
         var param = generic ? new EDBParameter<object> { Value = "value" } : new EDBParameter { Value = "value" };
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var typeInfo, out _, out _);
@@ -708,20 +705,17 @@ public class EDBParameterTest : TestBase
         // Make sure we don't reset the type info when setting DBNull.
         param.Value = DBNull.Value;
         param.GetResolutionInfo(out var secondTypeInfo, out _, out _);
-        Assert.That(typeInfo, Is.SameAs(secondTypeInfo));
+        Assert.That(secondTypeInfo, Is.SameAs(typeInfo));
 
         // Make sure we don't resolve a different type info either.
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
-        Assert.That(secondTypeInfo, Is.SameAs(thirdTypeInfo));
+        Assert.That(thirdTypeInfo, Is.SameAs(secondTypeInfo));
     }
 
     [Test]
     public void DBNull_followed_by_non_null_reresolves([Values]bool generic)
     {
-        // Bootstrap datasource.
-        using (var _ = OpenConnection()) {}
-
         var param = generic ? new EDBParameter<object> { Value = DBNull.Value } : new EDBParameter { Value = DBNull.Value };
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var typeInfo, out _, out var pgTypeId);
@@ -735,16 +729,13 @@ public class EDBParameterTest : TestBase
         // Make sure we don't resolve the same type info either.
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
-        Assert.That(typeInfo, Is.Not.SameAs(thirdTypeInfo));
+        Assert.That(thirdTypeInfo, Is.Not.SameAs(typeInfo));
     }
 
     [Test]
     public void Changing_value_type_reresolves([Values]bool generic)
     {
-        // Bootstrap datasource.
-        using (var _ = OpenConnection()) {}
-
-        var param = generic ? new EDBParameter<object> { Value = "value" } : new EDBParameter { Value = "value" };
+		var param = generic ? new EDBParameter<object> { Value = "value" } : new EDBParameter { Value = "value" };
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var typeInfo, out _, out _);
         Assert.That(typeInfo, Is.Not.Null);
@@ -756,7 +747,7 @@ public class EDBParameterTest : TestBase
         // Make sure we don't resolve a different type info either.
         param.ResolveTypeInfo(DataSource.SerializerOptions);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
-        Assert.That(typeInfo, Is.Not.SameAs(thirdTypeInfo));
+        Assert.That(thirdTypeInfo, Is.Not.SameAs(typeInfo));
     }
 
 #if NeedsPorting
@@ -871,4 +862,11 @@ public class EDBParameterTest : TestBase
         Assert.AreEqual(15, parameter.LocaleId, "#2");
     }
 #endif
+
+    [OneTimeSetUp]
+    public async Task Bootstrap()
+    {
+        // Bootstrap datasource.
+        await using (var _ = await OpenConnectionAsync()) {}
+    }
 }

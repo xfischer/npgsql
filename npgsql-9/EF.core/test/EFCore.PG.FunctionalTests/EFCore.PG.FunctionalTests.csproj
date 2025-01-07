@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\..\src\Npgsql\Npgsql.csproj" />
     <ProjectReference Include="..\..\src\EFCore.PG\EFCore.PG.csproj" />
     <ProjectReference Include="..\..\src\EFCore.PG.NTS\EFCore.PG.NTS.csproj" />
+    <ProjectReference Include="..\..\src\EFCore.PG.NodaTime\EFCore.PG.NodaTime.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,10 +20,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
 
-    <!-- To work around https://github.com/advisories/GHSA-7jgj-8wvc-jh57 -->
-    <PackageReference Include="System.Net.Http" />
-    <!-- To work around https://github.com/advisories/GHSA-cmhx-cq75-c4mj -->
-    <PackageReference Include="System.Text.RegularExpressions" />
+    <!-- Needed to override xunit dependencies from EFCore projects on versions which aren't available on nuget.org -->
+    <PackageReference Include="xunit.assert" />
+    <PackageReference Include="xunit.core" />
   </ItemGroup>
 
   <ItemGroup>

@@ -100,10 +100,6 @@ public abstract class ReplicationConnection : IAsyncDisposable
                 ReplicationMode = ReplicationMode
             };
 
-            // Physical replication connections don't allow regular queries, so we can't load types from PG
-            if (ReplicationMode == ReplicationMode.Physical)
-                cs.ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading;
-
             _npgsqlConnection.ConnectionString = cs.ToString();
         }
     }
@@ -278,7 +274,7 @@ public abstract class ReplicationConnection : IAsyncDisposable
             }
         }
 
-#if !NETFRAMEWORK
+#if !NETFRAMEWORK // EnterpriseDB (NETFRAMWEWORK)
         Debug.Assert(_sendFeedbackTimer is null, "Send feedback timer isn't null at replication shutdown");
         Debug.Assert(_requestFeedbackTimer is null, "Request feedback timer isn't null at replication shutdown");
 #endif
@@ -501,7 +497,7 @@ public abstract class ReplicationConnection : IAsyncDisposable
                     // Our consumer may not have read the stream to the end, but it might as well have been us
                     // ourselves bypassing the stream and reading directly from the buffer in StartReplication()
                     if (!columnStream.IsDisposed && columnStream.Position < columnStream.Length && !bypassingStream)
-                        await buf.Skip(checked((int)(columnStream.Length - columnStream.Position)), true).ConfigureAwait(false);
+                        await buf.Skip(async: true, checked((int)(columnStream.Length - columnStream.Position))).ConfigureAwait(false);
 
                     continue;
                 }

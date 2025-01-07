@@ -2,14 +2,10 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class KeysWithConvertersNpgsqlTest : KeysWithConvertersTestBase<
-    KeysWithConvertersNpgsqlTest.KeysWithConvertersNpgsqlFixture>
+public class KeysWithConvertersNpgsqlTest(KeysWithConvertersNpgsqlTest.KeysWithConvertersNpgsqlFixture fixture)
+    : KeysWithConvertersTestBase<
+        KeysWithConvertersNpgsqlTest.KeysWithConvertersNpgsqlFixture>(fixture)
 {
-    public KeysWithConvertersNpgsqlTest(KeysWithConvertersNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
     public class KeysWithConvertersNpgsqlFixture : KeysWithConvertersFixtureBase
     {
         protected override ITestStoreFactory TestStoreFactory

@@ -21,7 +21,7 @@ class PgPostmasterMock : IAsyncDisposable
     static readonly Encoding RelaxedEncoding = EDBWriteBuffer.RelaxedUTF8Encoding;
 
     readonly Socket _socket;
-    readonly List<PgServerMock> _allServers = new();
+    readonly List<PgServerMock> _allServers = [];
     bool _acceptingClients;
     Task? _acceptClientsTask;
     int _processIdCounter;
@@ -80,17 +80,20 @@ class PgPostmasterMock : IAsyncDisposable
         Port = localEndPoint.Port;
         connectionStringBuilder.Host = Host;
         connectionStringBuilder.Port = Port;
+#pragma warning disable CS0618 // Type or member is obsolete
         connectionStringBuilder.ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading;
+#pragma warning restore CS0618 // Type or member is obsolete
         ConnectionString = connectionStringBuilder.ConnectionString;
 
         _socket.Listen(5);
     }
 
-    public EDBDataSourceBuilder GetDataSourceBuilder()
-        => new(ConnectionString);
-
-    public EDBDataSource CreateDataSource()
-        => EDBDataSource.Create(ConnectionString);
+    public EDBDataSource CreateDataSource(Action<EDBDataSourceBuilder>? configure = null)
+    {
+        var builder = new EDBDataSourceBuilder(ConnectionString);
+        configure?.Invoke(builder);
+        return builder.Build();
+    }
 
     void AcceptClients()
     {

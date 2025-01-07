@@ -17,22 +17,25 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 /// </summary>
 public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQueryableMethodTranslatingExpressionVisitor
 {
+    private readonly RelationalQueryCompilationContext _queryCompilationContext;
     private readonly NpgsqlTypeMappingSource _typeMappingSource;
     private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
+    private readonly bool _isRedshift;
+    private RelationalTypeMapping? _ordinalityTypeMapping;
 
     #region MethodInfos
 
     private static readonly MethodInfo Like2MethodInfo =
         typeof(DbFunctionsExtensions).GetRuntimeMethod(
-            nameof(DbFunctionsExtensions.Like), new[] { typeof(DbFunctions), typeof(string), typeof(string) })!;
+            nameof(DbFunctionsExtensions.Like), [typeof(DbFunctions), typeof(string), typeof(string)])!;
 
     // ReSharper disable once InconsistentNaming
     private static readonly MethodInfo ILike2MethodInfo
         = typeof(NpgsqlDbFunctionsExtensions).GetRuntimeMethod(
-            nameof(NpgsqlDbFunctionsExtensions.ILike), new[] { typeof(DbFunctions), typeof(string), typeof(string) })!;
+            nameof(NpgsqlDbFunctionsExtensions.ILike), [typeof(DbFunctions), typeof(string), typeof(string)])!;
 
     private static readonly MethodInfo MatchesLQuery =
-        typeof(LTree).GetRuntimeMethod(nameof(LTree.MatchesLQuery), new[] { typeof(string) })!;
+        typeof(LTree).GetRuntimeMethod(nameof(LTree.MatchesLQuery), [typeof(string)])!;
 
     #endregion
 
@@ -45,11 +48,14 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
     public NpgsqlQueryableMethodTranslatingExpressionVisitor(
         QueryableMethodTranslatingExpressionVisitorDependencies dependencies,
         RelationalQueryableMethodTranslatingExpressionVisitorDependencies relationalDependencies,
-        QueryCompilationContext queryCompilationContext)
+        RelationalQueryCompilationContext queryCompilationContext,
+        INpgsqlSingletonOptions npgsqlSingletonOptions)
         : base(dependencies, relationalDependencies, queryCompilationContext)
     {
+        _queryCompilationContext = queryCompilationContext;
         _typeMappingSource = (NpgsqlTypeMappingSource)relationalDependencies.TypeMappingSource;
         _sqlExpressionFactory = (NpgsqlSqlExpressionFactory)relationalDependencies.SqlExpressionFactory;
+        _isRedshift = npgsqlSingletonOptions.UseRedshift;
     }
 
     /// <summary>
@@ -61,8 +67,10 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
     protected NpgsqlQueryableMethodTranslatingExpressionVisitor(NpgsqlQueryableMethodTranslatingExpressionVisitor parentVisitor)
         : base(parentVisitor)
     {
+        _queryCompilationContext = parentVisitor._queryCompilationContext;
         _typeMappingSource = parentVisitor._typeMappingSource;
         _sqlExpressionFactory = parentVisitor._sqlExpressionFactory;
+        _isRedshift = parentVisitor._isRedshift;
     }
 
     /// <summary>
@@ -80,11 +88,18 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override ShapedQueryExpression TranslatePrimitiveCollection(
+    protected override ShapedQueryExpression? TranslatePrimitiveCollection(
         SqlExpression sqlExpression,
         IProperty? property,
         string tableAlias)
     {
+        if (_isRedshift)
+        {
+            AddTranslationErrorDetails("Redshift does not support unnest, which is required for most forms of querying of JSON arrays.");
+
+            return null;
+        }
+
         var elementClrType = sqlExpression.Type.GetSequenceType();
         var elementTypeMapping = (RelationalTypeMapping?)sqlExpression.TypeMapping?.ElementTypeMapping;
 
@@ -101,7 +116,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         // a special case for geometry collections, where we use
         SelectExpression selectExpression;
 
-#pragma warning disable EF1001
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
         // TODO: Parameters have no type mapping. We can check whether the expression type is one of the NTS geometry collection types,
         // though in a perfect world we'd actually infer this. In other words, when the type mapping of the element is inferred further on,
         // we'd replace the unnest expression with ST_Dump. We could even have a special expression type which means "indeterminate, must be
@@ -110,8 +125,10 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         {
             // TODO: For geometry collection support (not yet supported), see #2850.
             selectExpression = new SelectExpression(
-                new TableValuedFunctionExpression(tableAlias, "ST_Dump", new[] { sqlExpression }),
-                "geom", elementClrType, elementTypeMapping, isElementNullable);
+                [new TableValuedFunctionExpression(tableAlias, "ST_Dump", [sqlExpression])],
+                new ColumnExpression("geom", tableAlias, elementClrType.UnwrapNullableType(), elementTypeMapping, isElementNullable),
+                identifier: [], // TODO
+                _queryCompilationContext.SqlAliasManager);
         }
         else
         {
@@ -125,21 +142,19 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             // Note also that with PostgreSQL unnest, the output ordering is guaranteed to be the same as the input array. However, we still
             // need to add an explicit ordering on the ordinality column, since once the unnest is joined into a select, its "natural"
             // orderings is lost and an explicit ordering is needed again (see #3207).
-            var unnest = new PgUnnestExpression(tableAlias, sqlExpression, "value");
-            var ordinalityTypeMapping = _typeMappingSource.FindMapping(typeof(int));
+            var (ordinalityColumn, ordinalityComparer) = GenerateOrdinalityIdentifier(tableAlias);
             selectExpression = new SelectExpression(
-                unnest,
-                columnName: "value",
-                columnType: elementClrType,
-                columnTypeMapping: elementTypeMapping,
-                isColumnNullable: isElementNullable,
-                identifierColumnName: "ordinality",
-                identifierColumnType: typeof(int),
-                identifierColumnTypeMapping: ordinalityTypeMapping);
+                [new PgUnnestExpression(tableAlias, sqlExpression, "value")],
+                new ColumnExpression(
+                    "value",
+                    tableAlias,
+                    elementClrType.UnwrapNullableType(),
+                    elementTypeMapping,
+                    isElementNullable),
+                identifier: [(ordinalityColumn, ordinalityComparer)],
+                _queryCompilationContext.SqlAliasManager);
 
-            selectExpression.AppendOrdering(
-                new OrderingExpression(
-                    selectExpression.CreateColumnExpression(unnest, "ordinality", typeof(int), ordinalityTypeMapping), ascending: true));
+            selectExpression.AppendOrdering(new OrderingExpression(ordinalityColumn, ascending: true));
         }
 #pragma warning restore EF1001
 
@@ -169,7 +184,9 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         // Calculate the table alias for the jsonb_to_recordset function based on the last named path segment
         // (or the JSON column name if there are none)
         var lastNamedPathSegment = jsonQueryExpression.Path.LastOrDefault(ps => ps.PropertyName is not null);
-        var tableAlias = char.ToLowerInvariant((lastNamedPathSegment.PropertyName ?? jsonQueryExpression.JsonColumn.Name)[0]).ToString();
+        var tableAlias =
+            _queryCompilationContext.SqlAliasManager.GenerateTableAlias(
+                lastNamedPathSegment.PropertyName ?? jsonQueryExpression.JsonColumn.Name);
 
         // TODO: This relies on nested JSON columns flowing across the type mapping of the top-most containing JSON column, check this.
         var functionName = jsonQueryExpression.JsonColumn switch
@@ -223,15 +240,15 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
 
         // Construct the json_to_recordset around the JsonScalarExpression, and wrap it in a SelectExpression
         var jsonToRecordSetExpression = new PgTableValuedFunctionExpression(
-            tableAlias, functionName, new[] { jsonScalarExpression }, columnInfos, withOrdinality: true);
+            tableAlias, functionName, [jsonScalarExpression], columnInfos, withOrdinality: true);
 
-#pragma warning disable EF1001 // Internal EF Core API usage.
-        var selectExpression = new SelectExpression(
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
+        var selectExpression = CreateSelect(
             jsonQueryExpression,
             jsonToRecordSetExpression,
-            identifierColumnName: "ordinality",
-            identifierColumnType: typeof(int),
-            identifierColumnTypeMapping: _typeMappingSource.FindMapping(typeof(int))!);
+            "ordinality",
+            typeof(int),
+            _typeMappingSource.FindMapping(typeof(int))!);
 #pragma warning restore EF1001 // Internal EF Core API usage.
 
         return new ShapedQueryExpression(
@@ -260,23 +277,11 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected override Expression ApplyInferredTypeMappings(
-        Expression expression,
-        IReadOnlyDictionary<(TableExpressionBase, string), RelationalTypeMapping?> inferredTypeMappings)
-        => new NpgsqlInferredTypeMappingApplier(
-            RelationalDependencies.Model, _typeMappingSource, _sqlExpressionFactory, inferredTypeMappings).Visit(expression);
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
     protected override ShapedQueryExpression? TranslateAll(ShapedQueryExpression source, LambdaExpression predicate)
     {
         if ((source.TryExtractArray(out var array, ignoreOrderings: true)
             || source.TryConvertValuesToArray(out array, ignoreOrderings: true))
-            && source.QueryExpression is SelectExpression { Tables: [var sourceTable] }
+            && source.QueryExpression is SelectExpression { Tables: [{ Alias: var tableAlias }] }
             && TranslateLambdaExpression(source, predicate) is { } translatedPredicate)
         {
             switch (translatedPredicate)
@@ -289,7 +294,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Pattern: ColumnExpression pattern,
                         EscapeChar: SqlConstantExpression { Value: "" }
                     }
-                    when pattern.Table == sourceTable:
+                    when pattern.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -304,7 +309,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Pattern: ColumnExpression pattern,
                         EscapeChar: SqlConstantExpression { Value: "" }
                     }
-                    when pattern.Table == sourceTable:
+                    when pattern.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -318,7 +323,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Item: ColumnExpression sourceColumn,
                         Array: var otherArray
                     }
-                    when sourceColumn.Table == sourceTable:
+                    when sourceColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(source, _sqlExpressionFactory.ContainedBy(array, otherArray));
                 }
@@ -331,7 +336,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: var otherArray,
                         Right: PgNewArrayExpression { Expressions: [ColumnExpression sourceColumn] }
                     }
-                    when sourceColumn.Table == sourceTable:
+                    when sourceColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(source, _sqlExpressionFactory.ContainedBy(array, otherArray));
                 }
@@ -351,7 +356,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
     {
         if ((source.TryExtractArray(out var array, ignoreOrderings: true)
                 || source.TryConvertValuesToArray(out array, ignoreOrderings: true))
-            && source.QueryExpression is SelectExpression { Tables: [var sourceTable] })
+            && source.QueryExpression is SelectExpression { Tables: [{ Alias: var tableAlias }] })
         {
             // Pattern match: x.Array.Any()
             // Translation: cardinality(x.array) > 0 instead of EXISTS (SELECT 1 FROM FROM unnest(x.Array))
@@ -362,7 +367,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                     _sqlExpressionFactory.GreaterThan(
                         _sqlExpressionFactory.Function(
                             "cardinality",
-                            new[] { array },
+                            [array],
                             nullable: true,
                             argumentsPropagateNullability: TrueArrays[1],
                             typeof(int)),
@@ -384,7 +389,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Pattern: ColumnExpression pattern,
                         EscapeChar: SqlConstantExpression { Value: "" }
                     }
-                    when pattern.Table == sourceTable:
+                    when pattern.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source, _sqlExpressionFactory.Any(match, array, PgAnyOperatorType.Like));
@@ -398,7 +403,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Pattern: ColumnExpression pattern,
                         EscapeChar: SqlConstantExpression { Value: "" }
                     }
-                    when pattern.Table == sourceTable:
+                    when pattern.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source, _sqlExpressionFactory.Any(match, array, PgAnyOperatorType.ILike));
@@ -412,7 +417,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Item: ColumnExpression sourceColumn,
                         Array: var otherArray
                     }
-                    when sourceColumn.Table == sourceTable:
+                    when sourceColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(source, _sqlExpressionFactory.Overlaps(array, otherArray));
                 }
@@ -426,7 +431,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: var otherArray,
                         Right: PgNewArrayExpression { Expressions: [ColumnExpression sourceColumn] }
                     }
-                    when sourceColumn.Table == sourceTable:
+                    when sourceColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(source, _sqlExpressionFactory.Overlaps(array, otherArray));
                 }
@@ -441,7 +446,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: var ltree,
                         Right: SqlUnaryExpression { OperatorType: ExpressionType.Convert, Operand: ColumnExpression lqueryColumn }
                     }
-                    when lqueryColumn.Table == sourceTable:
+                    when lqueryColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -464,7 +469,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         // Contains/ContainedBy can happen for non-LTree types too, so check that
                         Right: { TypeMapping: NpgsqlLTreeTypeMapping } ltree
                     }
-                    when ltreeColumn.Table == sourceTable:
+                    when ltreeColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -486,7 +491,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: ColumnExpression ltreeColumn,
                         Right: var lquery
                     }
-                    when ltreeColumn.Table == sourceTable:
+                    when ltreeColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -507,7 +512,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: ColumnExpression ltreeColumn,
                         Right: var lqueries
                     }
-                    when ltreeColumn.Table == sourceTable:
+                    when ltreeColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -598,7 +603,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                             _sqlExpressionFactory.IsNotNull(
                                 _sqlExpressionFactory.Function(
                                     "array_position",
-                                    new[] { array, translatedItem },
+                                    [array, translatedItem],
                                     nullable: true,
                                     argumentsPropagateNullability: FalseArrays[2],
                                     typeof(int))));
@@ -608,7 +613,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         source,
                         _sqlExpressionFactory.Contains(
                             array,
-                            _sqlExpressionFactory.NewArrayOrConstant(new[] { translatedItem }, array.Type, array.TypeMapping)));
+                            _sqlExpressionFactory.NewArrayOrConstant([translatedItem], array.Type, array.TypeMapping)));
 
                 // For constant arrays (new[] { 1, 2, 3 }) or inline arrays (new[] { 1, param, 3 }), don't do anything PG-specific for since
                 // the general EF Core mechanism is fine for that case: item IN (1, 2, 3).
@@ -653,16 +658,18 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         {
             var translation = _sqlExpressionFactory.Function(
                 "cardinality",
-                new[] { array },
+                [array],
                 nullable: true,
                 argumentsPropagateNullability: TrueArrays[1],
                 typeof(int));
 
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
             return source.Update(
-                _sqlExpressionFactory.Select(translation),
+                new SelectExpression(translation, _queryCompilationContext.SqlAliasManager),
                 Expression.Convert(
                     new ProjectionBindingExpression(source.QueryExpression, new ProjectionMember(), typeof(int?)),
                     typeof(int)));
+#pragma warning restore EF1001
         }
 
         return base.TranslateCount(source, predicate);
@@ -689,17 +696,13 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             // TODO: Conflicting type mappings from both sides?
             var inferredTypeMapping = projectedColumn1.TypeMapping ?? projectedColumn2.TypeMapping;
 
-#pragma warning disable EF1001 // Internal EF Core API usage.
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
             var tableAlias = ((SelectExpression)source1.QueryExpression).Tables.Single().Alias!;
             var selectExpression = new SelectExpression(
-                new PgUnnestExpression(tableAlias, _sqlExpressionFactory.Add(array1, array2), "value"),
-                columnName: "value",
-                columnType: projectedColumn1.Type,
-                columnTypeMapping: inferredTypeMapping,
-                isColumnNullable: projectedColumn1.IsNullable || projectedColumn2.IsNullable,
-                identifierColumnName: "ordinality",
-                identifierColumnType: typeof(int),
-                identifierColumnTypeMapping: _typeMappingSource.FindMapping(typeof(int)));
+                [new PgUnnestExpression(tableAlias, _sqlExpressionFactory.Add(array1, array2), "value")],
+                new ColumnExpression("value", tableAlias, projectedColumn1.Type, inferredTypeMapping, projectedColumn1.IsNullable || projectedColumn2.IsNullable),
+                identifier: [GenerateOrdinalityIdentifier(tableAlias)],
+                _queryCompilationContext.SqlAliasManager);
 #pragma warning restore EF1001 // Internal EF Core API usage.
 
             // TODO: Simplify by using UpdateQueryExpression after https://github.com/dotnet/efcore/issues/31511
@@ -739,11 +742,14 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             && TranslateExpression(index) is { } translatedIndex)
         {
             // Note that PostgreSQL arrays are 1-based, so adjust the index.
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
             return source.UpdateQueryExpression(
-                _sqlExpressionFactory.Select(
+                new SelectExpression(
                     _sqlExpressionFactory.ArrayIndex(
                         array,
-                        GenerateOneBasedIndexExpression(translatedIndex), projectedColumn.IsNullable)));
+                        GenerateOneBasedIndexExpression(translatedIndex), projectedColumn.IsNullable),
+                _queryCompilationContext.SqlAliasManager));
+#pragma warning restore EF1001
         }
 
         return base.TranslateElementAtOrDefault(source, index, returnDefault);
@@ -766,7 +772,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         // select expression should already contain our predicate.
         if ((source.TryExtractArray(out var array, ignorePredicate: true)
                 || source.TryConvertValuesToArray(out array, ignorePredicate: true))
-            && source.QueryExpression is SelectExpression { Tables: [var sourceTable], Predicate: var translatedPredicate }
+            && source.QueryExpression is SelectExpression { Tables: [{ Alias: var tableAlias }], Predicate: var translatedPredicate }
             && translatedPredicate is null ^ predicate is null)
         {
             if (translatedPredicate is null)
@@ -791,7 +797,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         // Contains/ContainedBy can happen for non-LTree types too, so check that
                         Right: { TypeMapping: NpgsqlLTreeTypeMapping } ltree
                     }
-                    when ltreeColumn.Table == sourceTable:
+                    when ltreeColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -815,7 +821,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                         Left: ColumnExpression ltreeColumn,
                         Right: var lquery
                     }
-                    when ltreeColumn.Table == sourceTable:
+                    when ltreeColumn.TableAlias == tableAlias:
                 {
                     return BuildSimplifiedShapedQuery(
                         source,
@@ -845,26 +851,24 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
         if (source.TryExtractArray(out var array, out var projectedColumn)
             && TranslateExpression(count) is { } translatedCount)
         {
-#pragma warning disable EF1001 // Internal EF Core API usage.
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
             var tableAlias = ((SelectExpression)source.QueryExpression).Tables[0].Alias!;
             var selectExpression = new SelectExpression(
-                new PgUnnestExpression(
-                    tableAlias,
-                    _sqlExpressionFactory.ArraySlice(
-                        array,
-                        lowerBound: GenerateOneBasedIndexExpression(translatedCount),
-                        upperBound: null,
-                        projectedColumn.IsNullable),
-                    "value"),
-                "value",
-                projectedColumn.Type,
-                projectedColumn.TypeMapping,
-                isColumnNullable: projectedColumn.IsNullable,
-                // isColumnNullable: /*projectedColumn.IsNullable*/ true, // TODO: This fails because of a shaper check
-                identifierColumnName: "ordinality",
-                identifierColumnType: typeof(int),
-                identifierColumnTypeMapping: _typeMappingSource.FindMapping(typeof(int)));
-#pragma warning restore EF1001 // Internal EF Core API usage.
+                [
+                    new PgUnnestExpression(
+                        tableAlias,
+                        _sqlExpressionFactory.ArraySlice(
+                            array,
+                            lowerBound: GenerateOneBasedIndexExpression(translatedCount),
+                            upperBound: null,
+                            // isColumnNullable: /*projectedColumn.IsNullable*/ true, // TODO: This fails because of a shaper check
+                            projectedColumn.IsNullable),
+                        "value"),
+                ],
+                new ColumnExpression("value", tableAlias, projectedColumn.Type, projectedColumn.TypeMapping, projectedColumn.IsNullable),
+                identifier: [GenerateOrdinalityIdentifier(tableAlias)],
+                _queryCompilationContext.SqlAliasManager);
+#pragma warning restore EF1001
 
             // TODO: Simplify by using UpdateQueryExpression after https://github.com/dotnet/efcore/issues/31511
             Expression shaperExpression = new ProjectionBindingExpression(
@@ -936,17 +940,13 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                     projectedColumn.IsNullable);
             }
 
-#pragma warning disable EF1001 // Internal EF Core API usage.
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
             var tableAlias = ((SelectExpression)source.QueryExpression).Tables[0].Alias!;
             var selectExpression = new SelectExpression(
-                new PgUnnestExpression(tableAlias, sliceExpression, "value"),
-                "value",
-                projectedColumn.Type,
-                projectedColumn.TypeMapping,
-                isColumnNullable: projectedColumn.IsNullable,
-                identifierColumnName: "ordinality",
-                identifierColumnType: typeof(int),
-                identifierColumnTypeMapping: _typeMappingSource.FindMapping(typeof(int)));
+                [new PgUnnestExpression(tableAlias, sliceExpression, "value")],
+                new ColumnExpression("value", tableAlias, projectedColumn.Type, projectedColumn.TypeMapping, projectedColumn.IsNullable),
+                [GenerateOrdinalityIdentifier(tableAlias)],
+                _queryCompilationContext.SqlAliasManager);
 #pragma warning restore EF1001 // Internal EF Core API usage.
 
             // TODO: Simplify by using UpdateQueryExpression after https://github.com/dotnet/efcore/issues/31511
@@ -967,6 +967,62 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
 
         return base.TranslateTake(source, count);
     }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
+    protected override ShapedQueryExpression? TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
+    {
+        // Simplify x.Array.Where(i => i != 3) => array_remove(x.Array, 3) instead of subquery
+        if (predicate.Body is BinaryExpression
+            {
+                NodeType: ExpressionType.NotEqual,
+                Left: var left,
+                Right: var right
+            }
+            && (left == predicate.Parameters[0] ? right : right == predicate.Parameters[0] ? left : null) is Expression itemToFilterOut
+            && source.TryExtractArray(out var array, out var projectedColumn)
+            && TranslateExpression(itemToFilterOut) is SqlExpression translatedItemToFilterOut)
+        {
+            var simplifiedTranslation = _sqlExpressionFactory.Function(
+                "array_remove",
+                [array, translatedItemToFilterOut],
+                nullable: true,
+                argumentsPropagateNullability: TrueArrays[2],
+                array.Type,
+                array.TypeMapping);
+
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
+            var tableAlias = ((SelectExpression)source.QueryExpression).Tables[0].Alias!;
+            var selectExpression = new SelectExpression(
+                [new PgUnnestExpression(tableAlias, simplifiedTranslation, "value")],
+                new ColumnExpression("value", tableAlias, projectedColumn.Type, projectedColumn.TypeMapping, projectedColumn.IsNullable),
+                [GenerateOrdinalityIdentifier(tableAlias)],
+                _queryCompilationContext.SqlAliasManager);
+#pragma warning restore EF1001 // Internal EF Core API usage.
+
+            // TODO: Simplify by using UpdateQueryExpression after https://github.com/dotnet/efcore/issues/31511
+            Expression shaperExpression = new ProjectionBindingExpression(
+                selectExpression, new ProjectionMember(), source.ShaperExpression.Type.MakeNullable());
+
+            if (source.ShaperExpression.Type != shaperExpression.Type)
+            {
+                Check.DebugAssert(
+                    source.ShaperExpression.Type.MakeNullable() == shaperExpression.Type,
+                    "expression.Type must be nullable of targetType");
+
+                shaperExpression = Expression.Convert(shaperExpression, source.ShaperExpression.Type);
+            }
+
+            return new ShapedQueryExpression(selectExpression, shaperExpression);
+        }
+
+        return base.TranslateWhere(source, predicate);
+    }
+
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -1067,11 +1123,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                 var entityProjectionExpression =
                     (StructuralTypeProjectionExpression)selectExpression.GetProjection(projectionBindingExpression);
                 var column = entityProjectionExpression.BindProperty(shaper.StructuralType.GetProperties().First());
-                table = column.Table;
-                if (table is JoinExpressionBase joinExpressionBase)
-                {
-                    table = joinExpressionBase.Table;
-                }
+                table = selectExpression.Tables.Select(t => t.UnwrapJoin()).Single(t => t.Alias == column.TableAlias);
             }
 
             if (table is TableExpression te)
@@ -1093,6 +1145,13 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             || selectExpression.Tables is
                 [PgTableValuedFunctionExpression { Name: "unnest" or "jsonb_to_recordset" or "json_to_recordset" }];
 
+    private (ColumnExpression, ValueComparer) GenerateOrdinalityIdentifier(string tableAlias)
+    {
+        _ordinalityTypeMapping ??= _typeMappingSource.FindMapping("int")!;
+        return (new ColumnExpression("ordinality", tableAlias, typeof(int), _ordinalityTypeMapping, nullable: false),
+            _ordinalityTypeMapping.Comparer);
+    }
+
     /// <summary>
     ///     PostgreSQL array indexing is 1-based. If the index happens to be a constant, just increment it. Otherwise, append a +1 in the
     ///     SQL.
@@ -1102,21 +1161,17 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             ? _sqlExpressionFactory.Constant(Convert.ToInt32(constant.Value) + 1, constant.TypeMapping)
             : _sqlExpressionFactory.Add(expression, _sqlExpressionFactory.Constant(1));
 
+#pragma warning disable EF1001 // SelectExpression constructors are currently internal
     private ShapedQueryExpression BuildSimplifiedShapedQuery(ShapedQueryExpression source, SqlExpression translation)
         => source.Update(
-            _sqlExpressionFactory.Select(translation),
+            new SelectExpression(translation, _queryCompilationContext.SqlAliasManager),
             Expression.Convert(
                 new ProjectionBindingExpression(translation, new ProjectionMember(), typeof(bool?)), typeof(bool)));
+#pragma warning restore EF1001
 
-    private sealed class OuterReferenceFindingExpressionVisitor : ExpressionVisitor
+    private sealed class OuterReferenceFindingExpressionVisitor(TableExpression mainTable) : ExpressionVisitor
     {
-        private readonly TableExpression _mainTable;
         private bool _containsReference;
-
-        public OuterReferenceFindingExpressionVisitor(TableExpression mainTable)
-        {
-            _mainTable = mainTable;
-        }
 
         public bool ContainsReferenceToMainTable(TableExpressionBase tableExpression)
         {
@@ -1135,8 +1190,7 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
                 return expression;
             }
 
-            if (expression is ColumnExpression columnExpression
-                && columnExpression.Table == _mainTable)
+            if (expression is ColumnExpression { TableAlias: var tableAlias} && tableAlias == mainTable.Alias)
             {
                 _containsReference = true;
 
@@ -1144,64 +1198,6 @@ public class NpgsqlQueryableMethodTranslatingExpressionVisitor : RelationalQuery
             }
 
             return base.Visit(expression);
-        }
-    }
-
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
-    protected class NpgsqlInferredTypeMappingApplier : RelationalInferredTypeMappingApplier
-    {
-        private readonly NpgsqlTypeMappingSource _typeMappingSource;
-        private readonly NpgsqlSqlExpressionFactory _sqlExpressionFactory;
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        public NpgsqlInferredTypeMappingApplier(
-            IModel model,
-            NpgsqlTypeMappingSource typeMappingSource,
-            NpgsqlSqlExpressionFactory sqlExpressionFactory,
-            IReadOnlyDictionary<(TableExpressionBase, string), RelationalTypeMapping?> inferredTypeMappings)
-            : base(model, sqlExpressionFactory, inferredTypeMappings)
-        {
-            _typeMappingSource = typeMappingSource;
-            _sqlExpressionFactory = sqlExpressionFactory;
-        }
-
-        /// <summary>
-        ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-        ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-        ///     any release. You should only use it directly in your code with extreme caution and knowing that
-        ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-        /// </summary>
-        protected override Expression VisitExtension(Expression expression)
-        {
-            switch (expression)
-            {
-                case PgUnnestExpression unnestExpression
-                    when TryGetInferredTypeMapping(unnestExpression, unnestExpression.ColumnName, out var elementTypeMapping):
-                {
-                    var collectionTypeMapping = _typeMappingSource.FindMapping(unnestExpression.Array.Type, Model, elementTypeMapping);
-
-                    if (collectionTypeMapping is null)
-                    {
-                        throw new InvalidOperationException(RelationalStrings.NullTypeMappingInSqlTree(expression.Print()));
-                    }
-
-                    return unnestExpression.Update(
-                        _sqlExpressionFactory.ApplyTypeMapping(unnestExpression.Array, collectionTypeMapping));
-                }
-
-                default:
-                    return base.VisitExtension(expression);
-            }
         }
     }
 }

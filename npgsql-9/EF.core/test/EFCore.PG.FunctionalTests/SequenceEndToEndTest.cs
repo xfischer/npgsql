@@ -2,7 +2,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class SequenceEndToEndTest : IDisposable
+public class SequenceEndToEndTest : IAsyncLifetime
 {
     [ConditionalFact]
     public void Can_use_sequence_end_to_end()
@@ -263,23 +263,14 @@ public class SequenceEndToEndTest : IDisposable
         context.SaveChanges();
     }
 
-    private class BronieContext : DbContext
+    private class BronieContext(IServiceProvider serviceProvider, string databaseName) : DbContext
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly string _databaseName;
-
-        public BronieContext(IServiceProvider serviceProvider, string databaseName)
-        {
-            _serviceProvider = serviceProvider;
-            _databaseName = databaseName;
-        }
-
         public DbSet<Pegasus> Pegasuses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
-                .UseInternalServiceProvider(_serviceProvider)
-                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(_databaseName), b => b.ApplyConfiguration());
+                .UseInternalServiceProvider(serviceProvider)
+                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(databaseName), b => b.ApplyConfiguration());
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.Entity<Pegasus>(
@@ -366,32 +357,22 @@ public class SequenceEndToEndTest : IDisposable
         context.SaveChanges();
     }
 
-    private class NullableBronieContext : DbContext
+    private class NullableBronieContext(IServiceProvider serviceProvider, string databaseName, bool useSequence)
+        : DbContext
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly string _databaseName;
-        private readonly bool _useSequence;
-
-        public NullableBronieContext(IServiceProvider serviceProvider, string databaseName, bool useSequence)
-        {
-            _serviceProvider = serviceProvider;
-            _databaseName = databaseName;
-            _useSequence = useSequence;
-        }
-
         public DbSet<Unicon> Unicons { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
-                .UseInternalServiceProvider(_serviceProvider)
-                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(_databaseName), b => b.ApplyConfiguration());
+                .UseInternalServiceProvider(serviceProvider)
+                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(databaseName), b => b.ApplyConfiguration());
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.Entity<Unicon>(
                 b =>
                 {
                     b.HasKey(e => e.Identifier);
-                    if (_useSequence)
+                    if (useSequence)
                     {
                         b.Property(e => e.Identifier).UseHiLo();
                     }
@@ -408,13 +389,11 @@ public class SequenceEndToEndTest : IDisposable
         public string Name { get; set; }
     }
 
-    public SequenceEndToEndTest()
-    {
-        TestStore = NpgsqlTestStore.CreateInitialized("SequenceEndToEndTest");
-    }
+    protected NpgsqlTestStore TestStore { get; private set; }
 
-    protected NpgsqlTestStore TestStore { get; }
+    public async Task InitializeAsync()
+        => TestStore = await NpgsqlTestStore.CreateInitializedAsync("SequenceEndToEndTest");
 
-    public void Dispose()
-        => TestStore.Dispose();
+    public async Task DisposeAsync()
+        => await TestStore.DisposeAsync();
 }

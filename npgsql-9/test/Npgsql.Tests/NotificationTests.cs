@@ -115,7 +115,6 @@ public class NotificationTests : TestBase
         Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
 
-
     [Test, EDBExplicit("Hangs")]
     public void WaitAsync_with_timeout()
     {
@@ -123,7 +122,6 @@ public class NotificationTests : TestBase
         Assert.That(async () => await conn.WaitAsync(100), Is.EqualTo(false));
         Assert.That(conn.ExecuteScalar("SELECT 1"), Is.EqualTo(1));
     }
-
 
     [Test]
     public void Wait_with_keepalive()
@@ -145,8 +143,6 @@ public class NotificationTests : TestBase
         notificationTask.GetAwaiter().GetResult();
         //Assert.That(TestLoggerSink.Records, Has.Some.With.Property("EventId").EqualTo(new EventId(EDBEventId.Keepalive)));
     }
-
-
 
 #if NETFRAMEWORK
     [Test, EDBExplicit("Times out instead of returning")]

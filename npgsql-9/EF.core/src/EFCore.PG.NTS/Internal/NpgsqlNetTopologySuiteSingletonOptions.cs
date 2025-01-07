@@ -4,8 +4,17 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Inter
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 
 /// <inheritdoc />
-public class NpgsqlNetTopologySuiteOptions : INpgsqlNetTopologySuiteOptions
+public class NpgsqlNetTopologySuiteSingletonOptions : INpgsqlNetTopologySuiteSingletonOptions
 {
+    /// <inheritdoc />
+    public virtual CoordinateSequenceFactory? CoordinateSequenceFactory { get; set; }
+
+    /// <inheritdoc />
+    public virtual PrecisionModel? PrecisionModel { get; set; }
+
+    /// <inheritdoc />
+    public virtual Ordinates HandleOrdinates { get; set; }
+
     /// <inheritdoc />
     public virtual bool IsGeographyDefault { get; set; }
 
@@ -15,9 +24,12 @@ public class NpgsqlNetTopologySuiteOptions : INpgsqlNetTopologySuiteOptions
         var npgsqlNtsOptions = options.FindExtension<NpgsqlNetTopologySuiteOptionsExtension>()
             ?? new NpgsqlNetTopologySuiteOptionsExtension();
 
+        CoordinateSequenceFactory = npgsqlNtsOptions.CoordinateSequenceFactory;
+        PrecisionModel = npgsqlNtsOptions.PrecisionModel;
+        HandleOrdinates = npgsqlNtsOptions.HandleOrdinates;
         IsGeographyDefault = npgsqlNtsOptions.IsGeographyDefault;
     }
 
     /// <inheritdoc />
-    public virtual void Validate(IDbContextOptions options) {}
+    public virtual void Validate(IDbContextOptions options) { }
 }

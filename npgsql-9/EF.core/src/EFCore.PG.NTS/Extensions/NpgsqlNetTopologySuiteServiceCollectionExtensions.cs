@@ -1,3 +1,4 @@
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.ExpressionTranslators.Internal;
@@ -21,16 +22,16 @@ public static class NpgsqlNetTopologySuiteServiceCollectionExtensions
     {
         Check.NotNull(serviceCollection, nameof(serviceCollection));
 
-        new EntityFrameworkRelationalServicesBuilder(serviceCollection)
-            .TryAdd<ISingletonOptions, INpgsqlNetTopologySuiteOptions>(p => p.GetRequiredService<INpgsqlNetTopologySuiteOptions>())
+        new EntityFrameworkNpgsqlServicesBuilder(serviceCollection)
+            .TryAdd<INpgsqlDataSourceConfigurationPlugin, NetTopologySuiteDataSourceConfigurationPlugin>()
+            .TryAdd<ISingletonOptions, INpgsqlNetTopologySuiteSingletonOptions>(p => p.GetRequiredService<INpgsqlNetTopologySuiteSingletonOptions>())
             .TryAdd<IRelationalTypeMappingSourcePlugin, NpgsqlNetTopologySuiteTypeMappingSourcePlugin>()
             .TryAdd<IMethodCallTranslatorPlugin, NpgsqlNetTopologySuiteMethodCallTranslatorPlugin>()
             .TryAdd<IAggregateMethodCallTranslatorPlugin, NpgsqlNetTopologySuiteAggregateMethodCallTranslatorPlugin>()
             .TryAdd<IMemberTranslatorPlugin, NpgsqlNetTopologySuiteMemberTranslatorPlugin>()
             .TryAdd<IConventionSetPlugin, NpgsqlNetTopologySuiteConventionSetPlugin>()
             .TryAddProviderSpecificServices(
-                x => x.TryAddSingleton<INpgsqlNetTopologySuiteOptions, NpgsqlNetTopologySuiteOptions>());
-
+                x => x.TryAddSingleton<INpgsqlNetTopologySuiteSingletonOptions, NpgsqlNetTopologySuiteSingletonOptions>());
 
         return serviceCollection;
     }

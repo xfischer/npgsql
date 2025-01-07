@@ -15,8 +15,12 @@ public class PostgresExtension
     /// </summary>
     /// <param name="annotatable">The annotatable to search for the annotation.</param>
     /// <param name="annotationName">The annotation name to search for in the annotatable.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotationName"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotationName" />
+    /// </exception>
     internal PostgresExtension(IReadOnlyAnnotatable annotatable, string annotationName)
     {
         _annotatable = Check.NotNull(annotatable, nameof(annotatable));
@@ -31,11 +35,17 @@ public class PostgresExtension
     /// <param name="name">The extension name.</param>
     /// <param name="version">The extension version.</param>
     /// <returns>
-    /// The <see cref="PostgresExtension"/> from the <see cref="IMutableAnnotatable"/>.
+    ///     The <see cref="PostgresExtension" /> from the <see cref="IMutableAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentException"><paramref name="schema"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
     public static PostgresExtension GetOrAddPostgresExtension(
         IMutableAnnotatable annotatable,
         string? schema,
@@ -64,11 +74,17 @@ public class PostgresExtension
     /// <param name="name">The extension name.</param>
     /// <param name="version">The extension version.</param>
     /// <returns>
-    /// The <see cref="PostgresExtension"/> from the <see cref="IMutableAnnotatable"/>.
+    ///     The <see cref="PostgresExtension" /> from the <see cref="IMutableAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentException"><paramref name="schema"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
     public static PostgresExtension GetOrAddPostgresExtension(
         IConventionAnnotatable annotatable,
         string? schema,
@@ -96,10 +112,14 @@ public class PostgresExtension
     /// <param name="name">The extension name.</param>
     /// <param name="version">The extension version.</param>
     /// <returns>
-    /// The <see cref="PostgresExtension"/> from the <see cref="IMutableAnnotatable"/>.
+    ///     The <see cref="PostgresExtension" /> from the <see cref="IMutableAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
     public static PostgresExtension GetOrAddPostgresExtension(
         IMutableAnnotatable annotatable,
         string name,
@@ -113,11 +133,17 @@ public class PostgresExtension
     /// <param name="schema">The extension schema. The default schema is never used.</param>
     /// <param name="name">The extension name.</param>
     /// <returns>
-    /// The <see cref="PostgresExtension"/> from the <see cref="IAnnotatable"/>.
+    ///     The <see cref="PostgresExtension" /> from the <see cref="IAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentException"><paramref name="schema"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
     public static PostgresExtension? FindPostgresExtension(
         IReadOnlyAnnotatable annotatable,
         string? schema,
@@ -142,9 +168,11 @@ public class PostgresExtension
     /// </summary>
     /// <param name="annotatable">The annotatable to search for <see cref="PostgresExtension"/> annotations.</param>
     /// <returns>
-    /// The collection of <see cref="PostgresExtension"/> stored in the <see cref="IAnnotatable"/>.
+    ///     The collection of <see cref="PostgresExtension" /> stored in the <see cref="IAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
     public static IEnumerable<PostgresExtension> GetPostgresExtensions(IReadOnlyAnnotatable annotatable)
         => Check.NotNull(annotatable, nameof(annotatable))
             .GetAnnotations()

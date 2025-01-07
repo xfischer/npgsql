@@ -137,7 +137,7 @@ sealed partial class EDBReadBuffer : IDisposable
     #region I/O
 
     public void Ensure(int count)
-        => Ensure(count, async: false, readingNotifications: false, checkDataAvailable: false).GetAwaiter().GetResult();
+        => Ensure(count, async: false, readingNotifications: false, checkDataAvailable: false).GetAwaiter().GetResult();  // EnterpriseDB (additionnal param)
 
     public ValueTask Ensure(int count, bool async)
         => Ensure(count, async, readingNotifications: false, checkDataAvailable: false);  // EnterpriseDB (additionnal param)
@@ -292,7 +292,7 @@ sealed partial class EDBReadBuffer : IDisposable
     {
         return count <= ReadBytesLeft ? new() : EnsureLong(this, count, async, readingNotifications, checkDataAvailable); // EnterpriseDB (additionnal param)
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         static async ValueTask EnsureLong(
@@ -363,7 +363,7 @@ sealed partial class EDBReadBuffer : IDisposable
                     }
 #endif
                     var toRead = buffer.Size - buffer.FilledBytes;
-                    int read = 0;
+                    var read = 0;
                     try
                     {
                         read = async
@@ -498,8 +498,29 @@ sealed partial class EDBReadBuffer : IDisposable
     }
 
     /// <summary>
-    /// Does not perform any I/O - assuming that the bytes to be skipped are in the memory buffer.
+    /// Skip a given number of bytes.
     /// </summary>
+    internal void Skip(int len, bool allowIO)
+    {
+        Debug.Assert(len >= 0);
+
+        if (allowIO && len > ReadBytesLeft)
+        {
+            len -= ReadBytesLeft;
+            while (len > Size)
+            {
+                ResetPosition();
+                Ensure(Size);
+                len -= Size;
+            }
+            ResetPosition();
+            Ensure(len);
+        }
+
+        Debug.Assert(ReadBytesLeft >= len);
+        ReadPosition += len;
+    }
+
     internal void Skip(int len)
     {
         Debug.Assert(ReadBytesLeft >= len);
@@ -509,7 +530,7 @@ sealed partial class EDBReadBuffer : IDisposable
     /// <summary>
     /// Skip a given number of bytes.
     /// </summary>
-    public async Task Skip(int len, bool async, bool checkDataAvailable = false) // EnterpriseDB (additional param)
+    public async Task Skip(bool async, int len, bool checkDataAvailable = false) // EnterpriseDB (additional param)
     {
         Debug.Assert(len >= 0);
 
@@ -785,11 +806,11 @@ sealed partial class EDBReadBuffer : IDisposable
     }
 
     ColumnStream? _lastStream;
-    public ColumnStream CreateStream(int len, bool canSeek)
+    public ColumnStream CreateStream(int len, bool canSeek, bool consumeOnDispose = true)
     {
         if (_lastStream is not { IsDisposed: true })
             _lastStream = new ColumnStream(Connector);
-        _lastStream.Init(len, canSeek, !Connector.LongRunningConnection);
+        _lastStream.Init(len, canSeek, !Connector.LongRunningConnection, consumeOnDispose);
         return _lastStream;
     }
 

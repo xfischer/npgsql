@@ -2,22 +2,24 @@
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class SqlExecutorNpgsqlTest : SqlExecutorTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
+public class SqlExecutorNpgsqlTest : SqlExecutorTestBase<NorthwindQueryNpgsqlFixture<SqlExecutorModelCustomizer>>
 {
-    public SqlExecutorNpgsqlTest(NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture)
+    public SqlExecutorNpgsqlTest(NorthwindQueryNpgsqlFixture<SqlExecutorModelCustomizer> fixture, ITestOutputHelper testOutputHelper)
         : base(fixture)
     {
+        Fixture.TestSqlLoggerFactory.Clear();
+        Fixture.TestSqlLoggerFactory.SetTestOutputHelper(testOutputHelper);
     }
 
     protected override DbParameter CreateDbParameter(string name, object value)
         => new EDBParameter { ParameterName = name, Value = value };
 
     protected override string TenMostExpensiveProductsSproc
-        => @"SELECT * FROM ""Ten Most Expensive Products""()";
+        => """SELECT * FROM "Ten Most Expensive Products"()""";
 
     protected override string CustomerOrderHistorySproc
-        => @"SELECT * FROM ""CustOrderHist""(@CustomerID)";
+        => """SELECT * FROM "CustOrderHist"(@CustomerID)""";
 
     protected override string CustomerOrderHistoryWithGeneratedParameterSproc
-        => @"SELECT * FROM ""CustOrderHist""({0})";
+        => """SELECT * FROM "CustOrderHist"({0})""";
 }

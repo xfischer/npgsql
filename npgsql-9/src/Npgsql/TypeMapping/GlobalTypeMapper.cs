@@ -16,10 +16,9 @@ namespace EnterpriseDB.EDBClient.TypeMapping;
 sealed class GlobalTypeMapper : IEDBTypeMapper
 {
     readonly UserTypeMapper _userTypeMapper = new();
-    readonly List<PgTypeInfoResolverFactory> _pluginResolverFactories = new();
+    readonly List<PgTypeInfoResolverFactory> _pluginResolverFactories = [];
     readonly ReaderWriterLockSlim _lock = new();
-    PgTypeInfoResolverFactory[] _typeMappingResolvers = Array.Empty<PgTypeInfoResolverFactory>();
-
+    PgTypeInfoResolverFactory[] _typeMappingResolvers = [];
     internal List<HackyEnumTypeMapping> HackyEnumTypeMappings { get; } = new();
 
     internal IEnumerable<PgTypeInfoResolverFactory> GetPluginResolverFactories()

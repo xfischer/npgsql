@@ -3,21 +3,20 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class ManyToManyTrackingNpgsqlTest : ManyToManyTrackingRelationalTestBase<
-    ManyToManyTrackingNpgsqlTest.ManyToManyTrackingNpgsqlFixture>
+public class ManyToManyTrackingNpgsqlTest(ManyToManyTrackingNpgsqlTest.ManyToManyTrackingNpgsqlFixture fixture)
+    : ManyToManyTrackingRelationalTestBase<
+        ManyToManyTrackingNpgsqlTest.ManyToManyTrackingNpgsqlFixture>(fixture)
 {
-    public ManyToManyTrackingNpgsqlTest(ManyToManyTrackingNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override void UseTransaction(DatabaseFacade facade, IDbContextTransaction transaction)
         => facade.UseTransaction(transaction.GetDbTransaction());
 
-    public class ManyToManyTrackingNpgsqlFixture : ManyToManyTrackingRelationalFixture
+    public class ManyToManyTrackingNpgsqlFixture : ManyToManyTrackingRelationalFixture, ITestSqlLoggerFactory
     {
         protected override ITestStoreFactory TestStoreFactory
             => NpgsqlTestStoreFactory.Instance;
+
+        public TestSqlLoggerFactory TestSqlLoggerFactory
+            => (TestSqlLoggerFactory)ListLoggerFactory;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder, DbContext context)
         {

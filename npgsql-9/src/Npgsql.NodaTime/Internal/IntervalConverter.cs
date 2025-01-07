@@ -6,13 +6,8 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.NodaTime.Internal;
 
-public class IntervalConverter : PgStreamingConverter<Interval>
+public class IntervalConverter(PgConverter<EDBRange<Instant>> rangeConverter) : PgStreamingConverter<Interval>
 {
-    readonly PgConverter<EDBRange<Instant>> _rangeConverter;
-
-    public IntervalConverter(PgConverter<EDBRange<Instant>> rangeConverter)
-        => _rangeConverter = rangeConverter;
-
     public override Interval Read(PgReader reader)
         => Read(async: false, reader, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -22,9 +17,9 @@ public class IntervalConverter : PgStreamingConverter<Interval>
     async ValueTask<Interval> Read(bool async, PgReader reader, CancellationToken cancellationToken)
     {
         var range = async
-            ? await _rangeConverter.ReadAsync(reader, cancellationToken).ConfigureAwait(false)
+            ? await rangeConverter.ReadAsync(reader, cancellationToken).ConfigureAwait(false)
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-            : _rangeConverter.Read(reader);
+            : rangeConverter.Read(reader);
 
         // NodaTime Interval includes the start instant and excludes the end instant.
         Instant? start = range.LowerBoundInfinite
@@ -42,13 +37,13 @@ public class IntervalConverter : PgStreamingConverter<Interval>
     }
 
     public override Size GetSize(SizeContext context, Interval value, ref object? writeState)
-        => _rangeConverter.GetSize(context, IntervalToEDBRange(value), ref writeState);
+        => rangeConverter.GetSize(context, IntervalToEDBRange(value), ref writeState);
 
     public override void Write(PgWriter writer, Interval value)
-        => _rangeConverter.Write(writer, IntervalToEDBRange(value));
+        => rangeConverter.Write(writer, IntervalToEDBRange(value));
 
     public override ValueTask WriteAsync(PgWriter writer, Interval value, CancellationToken cancellationToken = default)
-        => _rangeConverter.WriteAsync(writer, IntervalToEDBRange(value), cancellationToken);
+        => rangeConverter.WriteAsync(writer, IntervalToEDBRange(value), cancellationToken);
 
     static EDBRange<Instant> IntervalToEDBRange(Interval interval)
         => new(

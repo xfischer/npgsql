@@ -4,13 +4,9 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
-public class ConferencePlannerNpgsqlTest : ConferencePlannerTestBase<ConferencePlannerNpgsqlTest.ConferencePlannerNpgsqlFixture>
+public class ConferencePlannerNpgsqlTest(ConferencePlannerNpgsqlTest.ConferencePlannerNpgsqlFixture fixture)
+    : ConferencePlannerTestBase<ConferencePlannerNpgsqlTest.ConferencePlannerNpgsqlFixture>(fixture)
 {
-    public ConferencePlannerNpgsqlTest(ConferencePlannerNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
     // Overridden to use UTC DateTimeOffsets
     public override async Task SessionsController_Post()
         => await ExecuteWithStrategyInTransactionAsync(
@@ -49,7 +45,7 @@ public class ConferencePlannerNpgsqlTest : ConferencePlannerTestBase<ConferenceP
 
         // We don't support DateTimeOffset with non-zero offsets, so we unfortunately need to override the entire seeding method.
         // See https://github.com/dotnet/efcore/issues/26068
-        protected override void Seed(ApplicationDbContext context)
+        protected override async Task SeedAsync(ApplicationDbContext context)
         {
             var attendees1 = new List<Attendee>
             {
@@ -166,7 +162,7 @@ public class ConferencePlannerNpgsqlTest : ConferencePlannerTestBase<ConferenceP
             }
 
             context.AddRange(tracks.Values);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }

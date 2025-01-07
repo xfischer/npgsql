@@ -293,17 +293,21 @@ public class SecurityTests : TestBase
         }
     }
 
+#if NET6_0_OR_GREATER
     [Test]
-    public async Task DataSource_UserCertificateValidationCallback_is_invoked([Values] bool acceptCertificate)
+    public async Task DataSource_SslClientAuthenticationOptionsCallback_is_invoked([Values] bool acceptCertificate)
     {
         var callbackWasInvoked = false;
 
         var dataSourceBuilder = CreateDataSourceBuilder();
         dataSourceBuilder.ConnectionStringBuilder.SslMode = SslMode.Require;
-        dataSourceBuilder.UseUserCertificateValidationCallback((_, _, _, _) =>
+        dataSourceBuilder.UseSslClientAuthenticationOptionsCallback(options =>
+        {
+            options.RemoteCertificateValidationCallback = (_, _, _, _) =>
         {
             callbackWasInvoked = true;
             return acceptCertificate;
+            };
         });
         await using var dataSource = dataSourceBuilder.Build();
         await using var connection = dataSource.CreateConnection();
@@ -316,11 +320,11 @@ public class SecurityTests : TestBase
             Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
         }
 
-        Assert.That(callbackWasInvoked);
+        Assert.IsTrue(callbackWasInvoked);
     }
 
     [Test]
-    public async Task Connection_UserCertificateValidationCallback_is_invoked([Values] bool acceptCertificate)
+    public async Task Connection_SslClientAuthenticationOptionsCallback_is_invoked([Values] bool acceptCertificate)
     {
         var callbackWasInvoked = false;
 
@@ -328,10 +332,13 @@ public class SecurityTests : TestBase
         dataSourceBuilder.ConnectionStringBuilder.SslMode = SslMode.Require;
         await using var dataSource = dataSourceBuilder.Build();
         await using var connection = dataSource.CreateConnection();
-        connection.UserCertificateValidationCallback = (_, _, _, _) =>
+        connection.SslClientAuthenticationOptionsCallback = options =>
+        {
+            options.RemoteCertificateValidationCallback = (_, _, _, _) =>
         {
             callbackWasInvoked = true;
             return acceptCertificate;
+            };
         };
 
         if (acceptCertificate)
@@ -342,7 +349,7 @@ public class SecurityTests : TestBase
             Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
         }
 
-        Assert.That(callbackWasInvoked);
+        Assert.IsTrue(callbackWasInvoked);
     }
 
     [Test]
@@ -350,10 +357,13 @@ public class SecurityTests : TestBase
     {
         using var dataSource = CreateDataSource(csb => csb.SslMode = sslMode);
         using var connection = dataSource.CreateConnection();
-        connection.UserCertificateValidationCallback = (_, _, _, _) => true;
+        connection.SslClientAuthenticationOptionsCallback = options =>
+        {
+            options.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+        };
 
         var ex = Assert.ThrowsAsync<ArgumentException>(async () => await connection.OpenAsync())!;
-        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslVerifyWithUserCallback, sslMode)));
+        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslVerifyWithCustomValidationCallback, sslMode)));
     }
 
     [Test]
@@ -365,11 +375,15 @@ public class SecurityTests : TestBase
             csb.RootCertificate = "foo";
         });
         using var connection = dataSource.CreateConnection();
-        connection.UserCertificateValidationCallback = (_, _, _, _) => true;
+        connection.SslClientAuthenticationOptionsCallback = options =>
+        {
+            options.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+        };
 
         var ex = Assert.ThrowsAsync<ArgumentException>(async () => await connection.OpenAsync())!;
-        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslRootCertificateWithUserCallback)));
+        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslRootCertificateWithCustomValidationCallback)));
     }
+#endif
 
     [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/4305")]
@@ -468,6 +482,114 @@ public class SecurityTests : TestBase
             Assert.DoesNotThrowAsync(async () => await cmd.ExecuteNonQueryAsync());
         else
             Assert.DoesNotThrow(() => cmd.ExecuteNonQuery());
+    }
+
+    [Test]
+    public async Task Direct_ssl_negotiation()
+    {
+        await using var adminConn = await OpenConnectionAsync();
+        MinimumPgVersion(adminConn, "17.0");
+
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.SslMode = SslMode.Require;
+            csb.SslNegotiation = SslNegotiation.Direct;
+        });
+        await using var conn = await dataSource.OpenConnectionAsync();
+        Assert.IsTrue(conn.IsSecure);
+    }
+
+    [Test]
+    public void Direct_ssl_requires_correct_sslmode([Values] SslMode sslMode)
+    {
+        if (sslMode is SslMode.Disable or SslMode.Allow or SslMode.Prefer)
+        {
+            var ex = Assert.Throws<ArgumentException>(() =>
+            {
+                using var dataSource = CreateDataSource(csb =>
+                {
+                    csb.SslMode = sslMode;
+                    csb.SslNegotiation = SslNegotiation.Direct;
+                });
+            })!;
+            Assert.That(ex.Message, Is.EqualTo("SSL Mode has to be Require or higher to be used with direct SSL Negotiation"));
+        }
+        else
+        {
+            using var dataSource = CreateDataSource(csb =>
+            {
+                csb.SslMode = sslMode;
+                csb.SslNegotiation = SslNegotiation.Direct;
+            });
+        }
+    }
+
+    [Test]
+    [Platform(Exclude = "MacOsX", Reason = "Mac requires explicit opt-in to receive CA certificate in TLS handshake")]
+    public async Task Connect_with_verify_and_ca_cert([Values(SslMode.VerifyCA, SslMode.VerifyFull)] SslMode sslMode)
+    {
+        if (!IsOnBuildServer)
+            Assert.Ignore("Only executed in CI");
+
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.SslMode = sslMode;
+            csb.RootCertificate = "ca.crt";
+        });
+
+        await using var _ = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
+    [Platform(Exclude = "MacOsX", Reason = "Mac requires explicit opt-in to receive CA certificate in TLS handshake")]
+    public async Task Connect_with_verify_check_host([Values(SslMode.VerifyCA, SslMode.VerifyFull)] SslMode sslMode)
+    {
+        if (!IsOnBuildServer)
+            Assert.Ignore("Only executed in CI");
+
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.Host = "127.0.0.1";
+            csb.SslMode = sslMode;
+            csb.RootCertificate = "ca.crt";
+        });
+
+        if (sslMode == SslMode.VerifyCA)
+        {
+            await using var _ = await dataSource.OpenConnectionAsync();
+        }
+        else
+        {
+            var ex = Assert.ThrowsAsync<EDBException>(async () => await dataSource.OpenConnectionAsync())!;
+            Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
+        }
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Direct_ssl_via_env_requires_correct_sslmode()
+    {
+        await using var adminConn = await OpenConnectionAsync();
+        MinimumPgVersion(adminConn, "17.0");
+
+        // NonParallelizable attribute doesn't work with parameters that well
+        foreach (var sslMode in new[] { SslMode.Disable, SslMode.Allow, SslMode.Prefer, SslMode.Require })
+        {
+            using var _ = SetEnvironmentVariable("PGSSLNEGOTIATION", nameof(SslNegotiation.Direct));
+            await using var dataSource = CreateDataSource(csb =>
+            {
+                csb.SslMode = sslMode;
+            });
+            if (sslMode is SslMode.Disable or SslMode.Allow or SslMode.Prefer)
+            {
+                var ex = Assert.ThrowsAsync<ArgumentException>(async () => await dataSource.OpenConnectionAsync())!;
+                Assert.That(ex.Message, Is.EqualTo("SSL Mode has to be Require or higher to be used with direct SSL Negotiation"));
+            }
+            else
+            {
+                await using var conn = await dataSource.OpenConnectionAsync();
+            }
+        }
     }
 
     #region Setup / Teardown / Utils

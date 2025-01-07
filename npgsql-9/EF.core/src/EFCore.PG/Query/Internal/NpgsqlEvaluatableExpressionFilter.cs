@@ -11,10 +11,10 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 public class NpgsqlEvaluatableExpressionFilter : RelationalEvaluatableExpressionFilter
 {
     private static readonly MethodInfo TsQueryParse =
-        typeof(EDBTsQuery).GetRuntimeMethod(nameof(EDBTsQuery.Parse), new[] { typeof(string) })!;
+        typeof(EDBTsQuery).GetRuntimeMethod(nameof(EDBTsQuery.Parse), [typeof(string)])!;
 
     private static readonly MethodInfo TsVectorParse =
-        typeof(EDBTsVector).GetRuntimeMethod(nameof(EDBTsVector.Parse), new[] { typeof(string) })!;
+        typeof(EDBTsVector).GetRuntimeMethod(nameof(EDBTsVector.Parse), [typeof(string)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to

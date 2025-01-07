@@ -9,8 +9,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <summary>
 /// Tests on PostgreSQL types which don't fit elsewhere
 /// </summary>
-[NonParallelizable]
-class MiscTypeTests : MultiplexingTestBase
+class MiscTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     [Test]
     public async Task Boolean()
@@ -109,7 +108,7 @@ class MiscTypeTests : MultiplexingTestBase
 
         await using var conn = await OpenConnectionAsync();
         await using var cmd = new EDBCommand("SELECT TRUE, 8", conn);
-        cmd.UnknownResultTypeList = new[] { true, false };
+        cmd.UnknownResultTypeList = [true, false];
         await using var reader = await cmd.ExecuteReaderAsync();
         reader.Read();
 
@@ -215,6 +214,4 @@ class MiscTypeTests : MultiplexingTestBase
         Assert.That(() => cmd.Parameters.Add(new EDBParameter("p", DbType.UInt32) { Value = 8u }),
             Throws.Exception.TypeOf<NotSupportedException>());
     }
-
-    public MiscTypeTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
 }

@@ -14,9 +14,8 @@ public static class NpgsqlFuzzyStringMatchDbFunctionsExtensions
     /// The soundex function converts a string to its Soundex code.
     /// </summary>
     /// <remarks>
-    /// The method call is translated to <c>soundex(text)</c>.
-    ///
-    /// See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
+    ///     The method call is translated to <c>soundex(text)</c>.
+    ///     See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
     /// </remarks>
     public static string FuzzyStringMatchSoundex(this DbFunctions _, string text)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(FuzzyStringMatchSoundex)));
@@ -28,9 +27,8 @@ public static class NpgsqlFuzzyStringMatchDbFunctionsExtensions
     /// no match and four being an exact match.
     /// </summary>
     /// <remarks>
-    /// The method call is translated to <c>difference(source, target)</c>.
-    ///
-    /// See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
+    ///     The method call is translated to <c>difference(source, target)</c>.
+    ///     See https://www.postgresql.org/docs/current/fuzzystrmatch.html.
     /// </remarks>
     public static int FuzzyStringMatchDifference(this DbFunctions _, string source, string target)
         => throw new InvalidOperationException(CoreStrings.FunctionOnClient(nameof(FuzzyStringMatchDifference)));

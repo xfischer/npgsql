@@ -608,7 +608,7 @@ internal class EDBNestedTableTest : EPASTestBase
             var commandText = "pkgExtendTest.nestedTableExtendTest";
             var cstmt = new EDBCommand(commandText, connection);
             cstmt.CommandType = CommandType.StoredProcedure;
-            EDBParameter? tableOfParam = null;
+            //EDBParameter? tableOfParam = null;
             //if (deriveParameters)
             //{
             cstmt.DeriveParameters();

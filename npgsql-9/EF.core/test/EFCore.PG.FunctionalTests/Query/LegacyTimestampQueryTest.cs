@@ -79,14 +79,9 @@ WHERE now() AT TIME ZONE 'UTC' <> @__myDatetime_0
         private void AssertSql(params string[] expected)
             => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-        public class TimestampQueryContext : PoolableDbContext
+        public class TimestampQueryContext(DbContextOptions options) : PoolableDbContext(options)
         {
             public DbSet<Entity> Entities { get; set; }
-
-            public TimestampQueryContext(DbContextOptions options)
-                : base(options)
-            {
-            }
         }
 
         public class Entity
@@ -116,10 +111,13 @@ WHERE now() AT TIME ZONE 'UTC' <> @__myDatetime_0
                 NpgsqlTypeMappingSource.LegacyTimestampBehavior = true;
             }
 
-            public override void Dispose()
-                => NpgsqlTypeMappingSource.LegacyTimestampBehavior = false;
+            public override Task DisposeAsync()
+            {
+                NpgsqlTypeMappingSource.LegacyTimestampBehavior = false;
+                return Task.CompletedTask;
+            }
 
-            protected override void Seed(TimestampQueryContext context)
+            protected override async Task SeedAsync(TimestampQueryContext context)
             {
                 using var ctx = CreateContext();
 
@@ -141,7 +139,8 @@ WHERE now() AT TIME ZONE 'UTC' <> @__myDatetime_0
                         TimestampDateTime = DateTime.SpecifyKind(utcDateTime2.ToLocalTime(), DateTimeKind.Unspecified),
                         TimestampDateTimeOffset = new DateTimeOffset(utcDateTime2)
                     });
-                ctx.SaveChanges();
+
+                await ctx.SaveChangesAsync();
             }
         }
 
@@ -149,9 +148,7 @@ WHERE now() AT TIME ZONE 'UTC' <> @__myDatetime_0
     }
 
     [CollectionDefinition("LegacyTimestampQueryTest", DisableParallelization = true)]
-    public class EventSourceTestCollection
-    {
-    }
+    public class NodaTimeEventSourceTestCollection;
 }
 
 #endif

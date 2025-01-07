@@ -51,6 +51,11 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructType<EDBCidr>(DataTypeNames.Cidr,
                 static (options, mapping, _) => mapping.CreateInfo(options, new EDBCidrConverter()), isDefault: true);
 
+#if NET8_0_OR_GREATER
+            mappings.AddStructType<IPNetwork>(DataTypeNames.Cidr,
+                static (options, mapping, _) => mapping.CreateInfo(options, new IPNetworkConverter()));
+#endif
+
             return mappings;
         }
     }
@@ -75,6 +80,10 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
 
             // cidr
             mappings.AddStructArrayType<EDBCidr>(DataTypeNames.Cidr);
+
+#if NET8_0_OR_GREATER
+            mappings.AddStructArrayType<IPNetwork>(DataTypeNames.Cidr);
+#endif
 
             return mappings;
         }

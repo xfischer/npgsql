@@ -6,8 +6,6 @@ namespace Npgsql.Benchmarks.TypeHandlers;
 
 /* EnterpriseDB: disabling tests, raises  System.NotSupportedException: Specified method is not supported
 [Config(typeof(Config))]
-public class Uuid : TypeHandlerBenchmarks<Guid>
-{
-    public Uuid() : base(new GuidUuidConverter()) { }
-}
+public class Uuid() : TypeHandlerBenchmarks<Guid>(new GuidUuidConverter());
+
 */

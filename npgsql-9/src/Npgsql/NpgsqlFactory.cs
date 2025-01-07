@@ -1,6 +1,5 @@
 using System;
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -60,7 +59,7 @@ public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     public override bool CanCreateCommandBuilder => true;
 #endif
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB 
     /// <inheritdoc/>
     public override bool CanCreateBatch => true;
 

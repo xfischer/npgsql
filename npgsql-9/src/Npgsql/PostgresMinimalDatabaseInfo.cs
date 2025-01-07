@@ -11,7 +11,7 @@ sealed class PostgresMinimalDatabaseInfoFactory : IEDBDatabaseInfoFactory
 {
     public Task<EDBDatabaseInfo?> Load(EDBConnector conn, EDBTimeout timeout, bool async)
         => Task.FromResult(
-            conn.Settings.ServerCompatibilityMode == ServerCompatibilityMode.NoTypeLoading
+            !conn.DataSource.Configuration.TypeLoading.LoadTypes
                 ? (EDBDatabaseInfo)new PostgresMinimalDatabaseInfo(conn)
                 : null);
 }
@@ -118,10 +118,8 @@ sealed class PostgresMinimalDatabaseInfo : PostgresDatabaseInfo
 
     internal PostgresMinimalDatabaseInfo(EDBConnector conn)
         : base(conn)
-    {
-        HasIntegerDateTimes = !conn.PostgresParameters.TryGetValue("integer_datetimes", out var intDateTimes) ||
-                              intDateTimes == "on";
-    }
+        => HasIntegerDateTimes = !conn.PostgresParameters.TryGetValue("integer_datetimes", out var intDateTimes) ||
+                                 intDateTimes == "on";
 
     // TODO, split database info and type catalog.
     internal PostgresMinimalDatabaseInfo()

@@ -232,12 +232,12 @@ LIMIT 2
 
         AssertSql(
             """
-@__starCount_0='3'
-@__customerId_1='1'
+@__starCount_1='3'
+@__customerId_0='1'
 
-SELECT c."LastName", "StarValue"(@__starCount_0, "CustomerOrderCount"(@__customerId_1)) AS "OrderCount"
+SELECT c."LastName", "StarValue"(@__starCount_1, "CustomerOrderCount"(@__customerId_0)) AS "OrderCount"
 FROM "Customers" AS c
-WHERE c."Id" = @__customerId_1
+WHERE c."Id" = @__customerId_0
 LIMIT 2
 """);
     }
@@ -530,12 +530,12 @@ LIMIT 2
 
         AssertSql(
             """
-@__starCount_1='3'
-@__customerId_2='1'
+@__starCount_2='3'
+@__customerId_1='1'
 
-SELECT c."LastName", "StarValue"(@__starCount_1, "CustomerOrderCount"(@__customerId_2)) AS "OrderCount"
+SELECT c."LastName", "StarValue"(@__starCount_2, "CustomerOrderCount"(@__customerId_1)) AS "OrderCount"
 FROM "Customers" AS c
-WHERE c."Id" = @__customerId_2
+WHERE c."Id" = @__customerId_1
 LIMIT 2
 """);
     }
@@ -588,13 +588,8 @@ LIMIT 2
     public override void Scalar_Function_with_nullable_value_return_type_throws() {}
 #endif
 
-    protected class NpgsqlUDFSqlContext : UDFSqlContext
+    protected class NpgsqlUDFSqlContext(DbContextOptions options) : UDFSqlContext(options)
     {
-        public NpgsqlUDFSqlContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -676,11 +671,11 @@ LIMIT 2
                 .HasParameter("startDate").Metadata.TypeMapping = typeMappingSource.GetMapping("timestamp without time zone");
         }
 
-        protected override void Seed(DbContext context)
+        protected override async Task SeedAsync(DbContext context)
         {
-            base.Seed(context);
+            await base.SeedAsync(context);
 
-            context.Database.ExecuteSqlRaw(
+            await context.Database.ExecuteSqlRawAsync(
                 """
 CREATE FUNCTION "CustomerOrderCount" ("customerId" INTEGER) RETURNS INTEGER
 AS $$ SELECT COUNT("Id")::INTEGER FROM "Orders" WHERE "CustomerId" = $1 $$
@@ -781,7 +776,7 @@ END;
 $$ LANGUAGE PLPGSQL;
 """);
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 

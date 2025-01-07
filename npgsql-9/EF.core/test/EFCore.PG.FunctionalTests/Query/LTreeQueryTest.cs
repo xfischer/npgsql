@@ -502,16 +502,11 @@ WHERE lca(ARRAY[l."LTree",'Top.Hobbies']::ltree[]) = 'Top'
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class LTreeQueryContext : PoolableDbContext
+    public class LTreeQueryContext(DbContextOptions options) : PoolableDbContext(options)
     {
         public DbSet<LTreeEntity> LTreeEntities { get; set; }
 
-        public LTreeQueryContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        public static void Seed(LTreeQueryContext context)
+        public static async Task SeedAsync(LTreeQueryContext context)
         {
             var ltreeEntities = new LTreeEntity[]
             {
@@ -528,11 +523,11 @@ WHERE lca(ARRAY[l."LTree",'Top.Hobbies']::ltree[]) = 'Top'
             {
                 ltreeEntity.LTreeAsString = ltreeEntity.LTree;
                 ltreeEntity.SomeString = "*.Astrophysics";
-                ltreeEntity.LTrees = new LTree[] { ltreeEntity.LTree, "Foo" };
+                ltreeEntity.LTrees = [ltreeEntity.LTree, "Foo"];
             }
 
             context.LTreeEntities.AddRange(ltreeEntities);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 
@@ -565,8 +560,8 @@ WHERE lca(ARRAY[l."LTree",'Top.Hobbies']::ltree[]) = 'Top'
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
 
-        protected override void Seed(LTreeQueryContext context)
-            => LTreeQueryContext.Seed(context);
+        protected override Task SeedAsync(LTreeQueryContext context)
+            => LTreeQueryContext.SeedAsync(context);
     }
 
     #endregion

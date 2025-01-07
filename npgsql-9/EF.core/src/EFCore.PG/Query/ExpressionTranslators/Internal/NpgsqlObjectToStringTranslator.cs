@@ -10,8 +10,8 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Expression
 /// </summary>
 public class NpgsqlObjectToStringTranslator : IMethodCallTranslator
 {
-    private static readonly HashSet<Type> _typeMapping = new()
-    {
+    private static readonly HashSet<Type> _typeMapping =
+    [
         typeof(int),
         typeof(long),
         typeof(DateTime),
@@ -29,8 +29,8 @@ public class NpgsqlObjectToStringTranslator : IMethodCallTranslator
         typeof(uint),
         typeof(ushort),
         typeof(ulong),
-        typeof(sbyte),
-    };
+        typeof(sbyte)
+    ];
 
     private readonly ISqlExpressionFactory _sqlExpressionFactory;
     private readonly RelationalTypeMapping _textTypeMapping;
@@ -67,31 +67,38 @@ public class NpgsqlObjectToStringTranslator : IMethodCallTranslator
 
         if (instance.Type == typeof(bool))
         {
-            return instance is ColumnExpression { IsNullable: true }
-                ? _sqlExpressionFactory.Case(
-                    new[]
-                    {
+            if (instance.Type == typeof(bool))
+            {
+                if (instance is not ColumnExpression { IsNullable: false })
+                {
+                    return _sqlExpressionFactory.Case(
+                        instance,
+                        [
+                            new CaseWhenClause(
+                                _sqlExpressionFactory.Constant(false),
+                                _sqlExpressionFactory.Constant(false.ToString())),
+                            new CaseWhenClause(
+                                _sqlExpressionFactory.Constant(true),
+                                _sqlExpressionFactory.Constant(true.ToString()))
+                        ],
+                        _sqlExpressionFactory.Constant(string.Empty));
+                }
+
+                return _sqlExpressionFactory.Case(
+                    [
                         new CaseWhenClause(
-                            _sqlExpressionFactory.Equal(instance, _sqlExpressionFactory.Constant(false)),
-                            _sqlExpressionFactory.Constant(false.ToString())),
-                        new CaseWhenClause(
-                            _sqlExpressionFactory.Equal(instance, _sqlExpressionFactory.Constant(true)),
+                            instance,
                             _sqlExpressionFactory.Constant(true.ToString()))
-                    },
-                    _sqlExpressionFactory.Constant(null))
-                : _sqlExpressionFactory.Case(
-                    new[]
-                    {
-                        new CaseWhenClause(
-                            _sqlExpressionFactory.Equal(instance, _sqlExpressionFactory.Constant(false)),
-                            _sqlExpressionFactory.Constant(false.ToString()))
-                    },
-                    _sqlExpressionFactory.Constant(true.ToString()));
+                    ],
+                    _sqlExpressionFactory.Constant(false.ToString()));
+            }
         }
 
         return _typeMapping.Contains(instance.Type)
             || instance.Type.UnwrapNullableType().IsEnum && instance.TypeMapping is NpgsqlEnumTypeMapping
-                ? _sqlExpressionFactory.Convert(instance, typeof(string), _textTypeMapping)
+                ? _sqlExpressionFactory.Coalesce(
+                    _sqlExpressionFactory.Convert(instance, typeof(string), _textTypeMapping),
+                    _sqlExpressionFactory.Constant(string.Empty))
                 : null;
     }
 }

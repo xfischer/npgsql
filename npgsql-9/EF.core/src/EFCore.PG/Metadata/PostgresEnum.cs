@@ -15,8 +15,12 @@ public class PostgresEnum
     /// </summary>
     /// <param name="annotatable">The annotatable to search for the annotation.</param>
     /// <param name="annotationName">The annotation name to search for in the annotatable.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotationName"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotationName" />
+    /// </exception>
     internal PostgresEnum(IReadOnlyAnnotatable annotatable, string annotationName)
     {
         _annotatable = Check.NotNull(annotatable, nameof(annotatable));
@@ -31,12 +35,20 @@ public class PostgresEnum
     /// <param name="name">The enum name.</param>
     /// <param name="labels">The enum labels.</param>
     /// <returns>
-    /// The <see cref="PostgresEnum"/> from the <see cref="IMutableAnnotatable"/>.
+    ///     The <see cref="PostgresEnum" /> from the <see cref="IMutableAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentException"><paramref name="schema"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="labels"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="labels" />
+    /// </exception>
     public static PostgresEnum GetOrAddPostgresEnum(
         IMutableAnnotatable annotatable,
         string? schema,
@@ -62,14 +74,63 @@ public class PostgresEnum
     /// Gets or adds a <see cref="PostgresEnum"/> from or to the <see cref="IMutableAnnotatable"/>.
     /// </summary>
     /// <param name="annotatable">The annotatable from which to get or add the enum.</param>
+    /// <param name="schema">The enum schema or null to use the model's default schema.</param>
     /// <param name="name">The enum name.</param>
     /// <param name="labels">The enum labels.</param>
     /// <returns>
-    /// The <see cref="PostgresEnum"/> from the <see cref="IMutableAnnotatable"/>.
+    ///     The <see cref="PostgresEnum" /> from the <see cref="IMutableAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="labels"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="labels" />
+    /// </exception>
+    public static PostgresEnum GetOrAddPostgresEnum(
+        IConventionAnnotatable annotatable,
+        string? schema,
+        string name,
+        string[] labels)
+    {
+        Check.NotNull(annotatable, nameof(annotatable));
+        Check.NullButNotEmpty(schema, nameof(schema));
+        Check.NotEmpty(name, nameof(name));
+        Check.NotNull(labels, nameof(labels));
+
+        if (FindPostgresEnum(annotatable, schema, name) is { } enumType)
+        {
+            return enumType;
+        }
+
+        var annotationName = BuildAnnotationName(schema, name);
+
+        return new PostgresEnum(annotatable, annotationName) { Labels = labels };
+    }
+
+    /// <summary>
+    ///     Gets or adds a <see cref="PostgresEnum" /> from or to the <see cref="IMutableAnnotatable" />.
+    /// </summary>
+    /// <param name="annotatable">The annotatable from which to get or add the enum.</param>
+    /// <param name="name">The enum name.</param>
+    /// <param name="labels">The enum labels.</param>
+    /// <returns>
+    ///     The <see cref="PostgresEnum" /> from the <see cref="IMutableAnnotatable" />.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="labels" />
+    /// </exception>
     public static PostgresEnum GetOrAddPostgresEnum(
         IMutableAnnotatable annotatable,
         string name,
@@ -83,11 +144,17 @@ public class PostgresEnum
     /// <param name="schema">The enum schema or null to use the model's default schema.</param>
     /// <param name="name">The enum name.</param>
     /// <returns>
-    /// The <see cref="PostgresEnum"/> from the <see cref="IAnnotatable"/>.
+    ///     The <see cref="PostgresEnum" /> from the <see cref="IAnnotatable" />.
     /// </returns>
-    /// <exception cref="ArgumentException"><paramref name="schema"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
-    /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="schema" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="name" />
+    /// </exception>
     public static PostgresEnum? FindPostgresEnum(
         IReadOnlyAnnotatable annotatable,
         string? schema,
@@ -114,7 +181,9 @@ public class PostgresEnum
     /// <returns>
     /// The collection of <see cref="PostgresEnum"/> stored in the <see cref="IAnnotatable"/>.
     /// </returns>
-    /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="annotatable" />
+    /// </exception>
     public static IEnumerable<PostgresEnum> GetPostgresEnums(IReadOnlyAnnotatable annotatable)
         => Check.NotNull(annotatable, nameof(annotatable))
             .GetAnnotations()

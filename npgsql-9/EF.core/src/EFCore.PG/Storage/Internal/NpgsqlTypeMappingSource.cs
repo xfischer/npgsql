@@ -48,7 +48,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected virtual ConcurrentDictionary<string, RelationalTypeMapping[]> StoreTypeMappings { get; }
-    
+
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
     ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -57,6 +57,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     /// </summary>
     protected virtual ConcurrentDictionary<Type, RelationalTypeMapping> ClrTypeMappings { get; }
 
+    private readonly IReadOnlyList<EnumDefinition> _enumDefinitions;
     private readonly IReadOnlyList<UserRangeDefinition> _userRangeDefinitions;
 
     private readonly bool _supportsMultiranges;
@@ -84,6 +85,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     private readonly NpgsqlCharacterCharTypeMapping   _singleChar         = new("character(1)");
     private readonly NpgsqlStringTypeMapping          _xml                = new("xml", EDBDbType.Xml);
     private readonly NpgsqlStringTypeMapping          _citext             = new("citext", EDBDbType.Citext);
+    private readonly NpgsqlStringTypeMapping _jsonpath = new("jsonpath", EDBDbType.JsonPath);
 
     // JSON mappings - EF owned entity support
     private readonly NpgsqlOwnedJsonTypeMapping _jsonbOwned = new("jsonb");
@@ -148,7 +150,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     private readonly NpgsqlRangeTypeMapping _int8range;
     private readonly NpgsqlRangeTypeMapping _numrange;
     private readonly NpgsqlRangeTypeMapping _tsrange;
-    private readonly NpgsqlRangeTypeMapping _tstzrange;
+    private readonly NpgsqlRangeTypeMapping _tstzrange, _tstzrangeDto;
     private readonly NpgsqlRangeTypeMapping _dateOnlyDaterange;
     private readonly NpgsqlRangeTypeMapping _dateTimeDaterange;
 
@@ -206,6 +208,8 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             "tsrange", typeof(EDBRange<DateTime>), EDBDbType.TimestampRange, _timestamp);
         _tstzrange = NpgsqlRangeTypeMapping.CreatBuiltInRangeMapping(
             "tstzrange", typeof(EDBRange<DateTime>), EDBDbType.TimestampTzRange, _timestamptz);
+        _tstzrangeDto = NpgsqlRangeTypeMapping.CreatBuiltInRangeMapping(
+            "tstzrange", typeof(EDBRange<DateTimeOffset>), EDBDbType.TimestampTzRange, _timestamptzDto);
         _dateOnlyDaterange = NpgsqlRangeTypeMapping.CreatBuiltInRangeMapping(
             "daterange", typeof(EDBRange<DateOnly>), EDBDbType.DateRange, _dateDateOnly);
         _dateTimeDaterange = NpgsqlRangeTypeMapping.CreatBuiltInRangeMapping(
@@ -217,75 +221,76 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         // https://www.postgresql.org/docs/current/static/datatype.html#DATATYPE-TABLE
         var storeTypeMappings = new Dictionary<string, RelationalTypeMapping[]>(StringComparer.OrdinalIgnoreCase)
         {
-            { "smallint", new RelationalTypeMapping[] { _int2, _int2Byte } },
-            { "int2", new RelationalTypeMapping[] { _int2, _int2Byte } },
-            { "integer", new[] { _int4 } },
-            { "int", new[] { _int4 } },
-            { "int4", new[] { _int4 } },
-            { "bigint", new[] { _int8 } },
-            { "int8", new[] { _int8 } },
-            { "real", new[] { _float4 } },
-            { "float4", new[] { _float4 } },
-            { "double precision", new[] { _float8 } },
-            { "float8", new[] { _float8 } },
-            { "numeric", new RelationalTypeMapping[] { _numeric, _bigInteger, _numericAsFloat, _numericAsDouble } },
-            { "decimal", new RelationalTypeMapping[] { _numeric, _bigInteger, _numericAsFloat, _numericAsDouble } },
-            { "money", new[] { _money } },
-            { "text", new[] { _text } },
-            { "jsonb", new RelationalTypeMapping[] { _jsonbString, _jsonbDocument, _jsonbElement } },
-            { "json", new RelationalTypeMapping[] { _jsonString, _jsonDocument, _jsonElement } },
-            { "xml", new[] { _xml } },
-            { "citext", new[] { _citext } },
-            { "character varying", new[] { _varchar } },
-            { "varchar", new[] { _varchar } },
+            { "smallint", [_int2, _int2Byte] },
+            { "int2", [_int2, _int2Byte] },
+            { "integer", [_int4] },
+            { "int", [_int4] },
+            { "int4", [_int4] },
+            { "bigint", [_int8] },
+            { "int8", [_int8] },
+            { "real", [_float4] },
+            { "float4", [_float4] },
+            { "double precision", [_float8] },
+            { "float8", [_float8] },
+            { "numeric", [_numeric, _bigInteger, _numericAsFloat, _numericAsDouble] },
+            { "decimal", [_numeric, _bigInteger, _numericAsFloat, _numericAsDouble] },
+            { "money", [_money] },
+            { "text", [_text] },
+            { "jsonb", [_jsonbString, _jsonbDocument, _jsonbElement] },
+            { "json", [_jsonString, _jsonDocument, _jsonElement] },
+            { "jsonpath", [_jsonpath] },
+            { "xml", [_xml] },
+            { "citext", [_citext] },
+            { "character varying", [_varchar] },
+            { "varchar", [_varchar] },
             // See FindBaseMapping below for special treatment of 'character'
 
-            { "timestamp without time zone", new[] { _timestamp } },
-            { "timestamp with time zone", new[] { _timestamptz, _timestamptzDto } },
-            { "interval", new[] { _interval } },
-            { "date", new RelationalTypeMapping[] { _dateDateOnly, _dateDateTime } },
-            { "time without time zone", new RelationalTypeMapping[] { _timeTimeOnly, _timeTimeSpan } },
-            { "time with time zone", new[] { _timetz } },
-            { "boolean", new[] { _bool } },
-            { "bool", new[] { _bool } },
-            { "bytea", new[] { _bytea } },
-            { "uuid", new[] { _uuid } },
-            { "bit", new[] { _bit } },
-            { "bit varying", new[] { _varbit } },
-            { "varbit", new[] { _varbit } },
-            { "hstore", new RelationalTypeMapping[] { _hstore, _immutableHstore } },
-            { "macaddr", new[] { _macaddr } },
-            { "macaddr8", new[] { _macaddr8 } },
-            { "inet", new RelationalTypeMapping[] { _inetAsIPAddress, _inetAsNpgsqlInet } },
-            { "cidr", new[] { _cidr } },
-            { "point", new[] { _point } },
-            { "box", new[] { _box } },
-            { "line", new[] { _line } },
-            { "lseg", new[] { _lseg } },
-            { "path", new[] { _path } },
-            { "polygon", new[] { _polygon } },
-            { "circle", new[] { _circle } },
-            { "xid", new[] { _xid } },
-            { "xid8", new[] { _xid8 } },
-            { "oid", new[] { _oid } },
-            { "cid", new[] { _cid } },
-            { "regtype", new[] { _regtype } },
-            { "lo", new[] { _lo } },
-            { "tid", new[] { _tid } },
-            { "pg_lsn", new[] { _pgLsn } },
-            { "int4range", new[] { _int4range } },
-            { "int8range", new[] { _int8range } },
-            { "numrange", new[] { _numrange } },
-            { "tsrange", new[] { _tsrange } },
-            { "tstzrange", new[] { _tstzrange } },
-            { "daterange", new[] { _dateOnlyDaterange, _dateTimeDaterange } },
-            { "tsquery", new[] { _tsquery } },
-            { "tsvector", new[] { _tsvector } },
-            { "regconfig", new[] { _regconfig } },
-            { "ltree", new[] { _ltree, _ltreeString } },
-            { "lquery", new[] { _lquery } },
-            { "ltxtquery", new[] { _ltxtquery } },
-            { "regdictionary", new[] { _regdictionary } }
+            { "timestamp without time zone", [_timestamp] },
+            { "timestamp with time zone", [_timestamptz, _timestamptzDto] },
+            { "interval", [_interval] },
+            { "date", [_dateDateOnly, _dateDateTime] },
+            { "time without time zone", [_timeTimeOnly, _timeTimeSpan] },
+            { "time with time zone", [_timetz] },
+            { "boolean", [_bool] },
+            { "bool", [_bool] },
+            { "bytea", [_bytea] },
+            { "uuid", [_uuid] },
+            { "bit", [_bit] },
+            { "bit varying", [_varbit] },
+            { "varbit", [_varbit] },
+            { "hstore", [_hstore, _immutableHstore] },
+            { "macaddr", [_macaddr] },
+            { "macaddr8", [_macaddr8] },
+            { "inet", [_inetAsIPAddress, _inetAsNpgsqlInet] },
+            { "cidr", [_cidr] },
+            { "point", [_point] },
+            { "box", [_box] },
+            { "line", [_line] },
+            { "lseg", [_lseg] },
+            { "path", [_path] },
+            { "polygon", [_polygon] },
+            { "circle", [_circle] },
+            { "xid", [_xid] },
+            { "xid8", [_xid8] },
+            { "oid", [_oid] },
+            { "cid", [_cid] },
+            { "regtype", [_regtype] },
+            { "lo", [_lo] },
+            { "tid", [_tid] },
+            { "pg_lsn", [_pgLsn] },
+            { "int4range", [_int4range] },
+            { "int8range", [_int8range] },
+            { "numrange", [_numrange] },
+            { "tsrange", [_tsrange] },
+            { "tstzrange", [_tstzrange, _tstzrangeDto] },
+            { "daterange", [_dateOnlyDaterange, _dateTimeDaterange] },
+            { "tsquery", [_tsquery] },
+            { "tsvector", [_tsvector] },
+            { "regconfig", [_regconfig] },
+            { "ltree", [_ltree, _ltreeString] },
+            { "lquery", [_lquery] },
+            { "ltxtquery", [_ltxtquery] },
+            { "regdictionary", [_regdictionary] }
         };
 // ReSharper restore CoVariantArrayConversion
 
@@ -348,67 +353,9 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         StoreTypeMappings = new ConcurrentDictionary<string, RelationalTypeMapping[]>(storeTypeMappings, StringComparer.OrdinalIgnoreCase);
         ClrTypeMappings = new ConcurrentDictionary<Type, RelationalTypeMapping>(clrTypeMappings);
 
-        LoadUserDefinedTypeMappings(sqlGenerationHelper, options.DataSource as EDBDataSource);
-
+        _enumDefinitions = options.EnumDefinitions;
         _userRangeDefinitions = options.UserRangeDefinitions;
     }
-
-    /// <summary>
-    /// To be used in case user-defined mappings are added late, after this TypeMappingSource has already been initialized.
-    /// This is basically only for test usage.
-    /// </summary>
-    public virtual void LoadUserDefinedTypeMappings(
-        ISqlGenerationHelper sqlGenerationHelper,
-        EDBDataSource? dataSource)
-        => SetupEnumMappings(sqlGenerationHelper, dataSource);
-
-#pragma warning disable NPG9001
-    /// <summary>
-    /// Gets all global enum mappings from the ADO.NET layer and creates mappings for them
-    /// </summary>
-    protected virtual void SetupEnumMappings(ISqlGenerationHelper sqlGenerationHelper, EDBDataSource? dataSource)
-    {
-        List<HackyEnumTypeMapping>? adoEnumMappings = null;
-
-        if (dataSource is not null
-            && typeof(EDBDataSource).GetField("_hackyEnumTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance) is
-                { } dataSourceTypeMappingsFieldInfo
-            && dataSourceTypeMappingsFieldInfo.GetValue(dataSource) is List<HackyEnumTypeMapping> dataSourceEnumMappings)
-        {
-            // Note that the data source's enum mappings also include any global ones that were configured when the data source was created.
-            // So we don't need to also collect mappings from GlobalTypeMapper below.
-            adoEnumMappings = dataSourceEnumMappings;
-        }
-#pragma warning disable CS0618 // NpgsqlConnection.GlobalTypeMapper is obsolete
-        else if (EDBConnection.GlobalTypeMapper.GetType().GetProperty(
-                         "HackyEnumTypeMappings", BindingFlags.NonPublic | BindingFlags.Instance)
-                     is PropertyInfo globalEnumTypeMappingsProperty
-                 && globalEnumTypeMappingsProperty.GetValue(EDBConnection.GlobalTypeMapper) is List<HackyEnumTypeMapping>
-                     globalEnumMappings)
-        {
-            adoEnumMappings = globalEnumMappings;
-        }
-#pragma warning restore CS0618
-
-        if (adoEnumMappings is not null)
-        {
-            foreach (var adoEnumMapping in adoEnumMappings)
-            {
-                // TODO: update with schema per https://github.com/npgsql/npgsql/issues/2121
-                var components = adoEnumMapping.PgTypeName.Split('.');
-                var schema = components.Length > 1 ? components.First() : null;
-                var name = components.Length > 1 ? string.Join(null, components.Skip(1)) : adoEnumMapping.PgTypeName;
-
-                var mapping = new NpgsqlEnumTypeMapping(
-                    sqlGenerationHelper.DelimitIdentifier(name, schema),
-                    adoEnumMapping.EnumClrType,
-                    adoEnumMapping.NameTranslator);
-                ClrTypeMappings[adoEnumMapping.EnumClrType] = mapping;
-                StoreTypeMappings[mapping.StoreType] = new RelationalTypeMapping[] { mapping };
-            }
-        }
-    }
-#pragma warning restore NPG9001
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -420,6 +367,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         // First, try any plugins, allowing them to override built-in mappings (e.g. NodaTime)
         => base.FindMapping(mappingInfo)
             ?? FindBaseMapping(mappingInfo)?.Clone(mappingInfo)
+            ?? FindEnumMapping(mappingInfo)
             ?? FindRowValueMapping(mappingInfo)?.Clone(mappingInfo)
             ?? FindUserRangeMapping(mappingInfo);
 
@@ -498,11 +446,10 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
                 }
             }
 
-            // TODO: the following is a workaround/hack for https://github.com/dotnet/efcore/issues/31505
             if ((storeTypeName.EndsWith("[]", StringComparison.Ordinal)
                     || storeTypeName is "int4multirange" or "int8multirange" or "nummultirange" or "datemultirange" or "tsmultirange"
                         or "tstzmultirange")
-                && FindCollectionMapping(mappingInfo, mappingInfo.ClrType!, providerType: null, elementMapping: null) is
+                && FindCollectionMapping(mappingInfo, mappingInfo.ClrType, providerType: null, elementMapping: null) is
                     RelationalTypeMapping collectionMapping)
             {
                 return collectionMapping;
@@ -517,7 +464,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
             if (ClrTypeMappings.TryGetValue(clrType, out var mapping))
             {
                 // Handle types with the size facet (string, bitarray)
-                if (mappingInfo.Size is > 0)
+                if (mappingInfo.Size > 0)
                 {
                     if (clrType == typeof(string))
                     {
@@ -583,7 +530,9 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     /// </summary>
     protected override RelationalTypeMapping? FindCollectionMapping(
         RelationalTypeMappingInfo info,
-        Type modelType,
+        // Note that modelType is nullable (in the relational base signature it isn't) because of array scaffolding, i.e. we call
+        // FindCollectionMapping from our own FindMapping, where the clrType is null when scaffolding.
+        Type? modelType,
         Type? providerType,
         CoreTypeMapping? elementMapping)
     {
@@ -595,9 +544,6 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         Type concreteCollectionType;
         Type? elementType = null;
 
-        // TODO: modelType can be null (contrary to nullable annotations) only because of https://github.com/dotnet/efcore/issues/31505,
-        // i.e. we call into here
-        // If there's a CLR type (i.e. not reverse-engineering), check that it's a compatible enumerable.
         if (modelType is not null)
         {
             // We do GetElementType for multidimensional arrays - these don't implement generic IEnumerable<>
@@ -822,6 +768,58 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    protected virtual RelationalTypeMapping? FindEnumMapping(in RelationalTypeMappingInfo mappingInfo)
+    {
+        var storeType = mappingInfo.StoreTypeName;
+        var clrType = mappingInfo.ClrType;
+
+        if (clrType is not null and not { IsEnum: true, IsClass: false })
+        {
+            return null;
+        }
+
+        // Try to find an enum definition (defined by the user on their context options), based on the
+        // incoming MappingInfo's StoreType or ClrType
+        EnumDefinition? enumDefinition;
+        if (storeType is null)
+        {
+            enumDefinition = _enumDefinitions.SingleOrDefault(m => m.ClrType == clrType);
+        }
+        else
+        {
+            // TODO: Not sure what to do about quoting. Is the user expected to configure properties
+            // TODO: with a quoted (schema-qualified) store type or not?
+            var dot = storeType.IndexOf('.');
+            enumDefinition = dot is -1
+                ? _enumDefinitions.SingleOrDefault(m => m.StoreTypeName == storeType)
+                : _enumDefinitions.SingleOrDefault(m => m.StoreTypeName == storeType[(dot + 1)..] && m.StoreTypeSchema == storeType[..dot]);
+        }
+
+        if (enumDefinition is null)
+        {
+            return null;
+        }
+
+        // We now have an enum definition from the context options.
+
+        // We need the following store type names:
+        // 1. The quoted type name is used in migrations, where quoting is needed
+        // 2. The unquoted type name is set on NpgsqlParameter.DataTypeName
+        //    (though see https://github.com/npgsql/npgsql/issues/5710).
+        var (name, schema) = (enumDefinition.StoreTypeName, enumDefinition.StoreTypeSchema);
+        return new NpgsqlEnumTypeMapping(
+            _sqlGenerationHelper.DelimitIdentifier(name, schema),
+            schema is null ? name : schema + "." + name,
+            enumDefinition.ClrType,
+            enumDefinition.Labels);
+    }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     protected virtual RelationalTypeMapping? FindUserRangeMapping(in RelationalTypeMappingInfo mappingInfo)
     {
         UserRangeDefinition? rangeDefinition = null;
@@ -838,7 +836,7 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
         // incoming MappingInfo's StoreType or ClrType
         if (rangeStoreType is not null)
         {
-            rangeDefinition = _userRangeDefinitions.SingleOrDefault(m => m.RangeName == rangeStoreType);
+            rangeDefinition = _userRangeDefinitions.SingleOrDefault(m => m.StoreTypeName == rangeStoreType);
 
             if (rangeDefinition is null)
             {
@@ -875,16 +873,16 @@ public class NpgsqlTypeMappingSource : RelationalTypeMappingSource
 
         if (subtypeMapping is null)
         {
-            throw new Exception($"Could not map range {rangeDefinition.RangeName}, no mapping was found its subtype");
+            throw new Exception($"Could not map range {rangeDefinition.StoreTypeName}, no mapping was found its subtype");
         }
 
         // We need to store types for the user-defined range:
         // 1. The quoted type name is used in migrations, where quoting is needed
         // 2. The unquoted type name is set on NpgsqlParameter.DataTypeName
-        var quotedRangeStoreType = _sqlGenerationHelper.DelimitIdentifier(rangeDefinition.RangeName, rangeDefinition.SchemaName);
-        var unquotedRangeStoreType = rangeDefinition.SchemaName is null
-            ? rangeDefinition.RangeName
-            : rangeDefinition.SchemaName + '.' + rangeDefinition.RangeName;
+        var quotedRangeStoreType = _sqlGenerationHelper.DelimitIdentifier(rangeDefinition.StoreTypeName, rangeDefinition.StoreTypeSchema);
+        var unquotedRangeStoreType = rangeDefinition.StoreTypeSchema is null
+            ? rangeDefinition.StoreTypeName
+            : rangeDefinition.StoreTypeSchema + '.' + rangeDefinition.StoreTypeName;
 
         return NpgsqlRangeTypeMapping.CreatUserDefinedRangeMapping(
             quotedRangeStoreType, unquotedRangeStoreType, rangeClrType, subtypeMapping);

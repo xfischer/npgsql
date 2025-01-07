@@ -75,7 +75,7 @@ namespace EnterpriseDB.EDBClient
 
         async ValueTask Write(bool async, PgWriter writer, string value, CancellationToken cancellationToken = default)
         {
-            int size = options.TextEncoding.GetByteCount(value);
+            var size = options.TextEncoding.GetByteCount(value);
 
             if (writer.ShouldFlush(sizeof(int) + size))
                 await writer.Flush(async, cancellationToken).ConfigureAwait(false);

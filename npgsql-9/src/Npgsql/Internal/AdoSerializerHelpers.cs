@@ -16,7 +16,7 @@ static class AdoSerializerHelpers
         typeInfo = null;
         try
         {
-            typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
+            typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
         }
         catch (Exception ex)
         {
@@ -31,7 +31,8 @@ static class AdoSerializerHelpers
         Exception? inner = null;
         try
         {
-            typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
+            typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
+			// EnterpriseDB: BEFORE MERGE typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
         }
         catch (Exception ex)
         {

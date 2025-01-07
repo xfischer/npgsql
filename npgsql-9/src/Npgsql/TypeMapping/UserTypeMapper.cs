@@ -38,10 +38,25 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
     readonly List<UserTypeMapping> _mappings;
     public IList<UserTypeMapping> Items => _mappings;
 
-    public IEDBNameTranslator DefaultNameTranslator { get; set; } = EDBSnakeCaseNameTranslator.Instance;
+    IEDBNameTranslator _defaultNameTranslator = EDBSnakeCaseNameTranslator.Instance;
+    public IEDBNameTranslator DefaultNameTranslator
+    {
+        get => _defaultNameTranslator;
+        set
+        {
+#if NET6_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
+            ArgumentNullException.ThrowIfNull(value);
+#else
+            if (value is null)
+                throw new ArgumentNullException(nameof(value));
+#endif
 
-    UserTypeMapper(IEnumerable<UserTypeMapping> mappings) => _mappings = new List<UserTypeMapping>(mappings);
-    public UserTypeMapper() => _mappings = new();
+            _defaultNameTranslator = value;
+        }
+    }
+
+    UserTypeMapper(IEnumerable<UserTypeMapping> mappings) => _mappings = [..mappings];
+    public UserTypeMapper() => _mappings = [];
 
     public UserTypeMapper Clone() => new(_mappings) { DefaultNameTranslator = DefaultNameTranslator };
 
@@ -65,9 +80,9 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
         if (!clrType.IsEnum || !clrType.IsValueType)
             throw new ArgumentException("Type must be a concrete Enum", nameof(clrType));
 
-        var openMethod = typeof(UserTypeMapper).GetMethod(nameof(MapEnum), new[] { typeof(string), typeof(IEDBNameTranslator) })!;
+        var openMethod = typeof(UserTypeMapper).GetMethod(nameof(MapEnum), [typeof(string), typeof(IEDBNameTranslator)])!;
         var method = openMethod.MakeGenericMethod(clrType);
-        method.Invoke(this, new object?[] { pgName, nameTranslator });
+        method.Invoke(this, [pgName, nameTranslator]);
         return this;
     }
 
@@ -107,11 +122,11 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
 
         var openMethod = typeof(UserTypeMapper).GetMethod(
             clrType.IsValueType ? nameof(MapStructComposite) : nameof(MapComposite),
-            new[] { typeof(string), typeof(IEDBNameTranslator) })!;
+            [typeof(string), typeof(IEDBNameTranslator)])!;
 
         var method = openMethod.MakeGenericMethod(clrType);
 
-        method.Invoke(this, new object?[] { pgName, nameTranslator });
+        method.Invoke(this, [pgName, nameTranslator]);
 
         return this;
     }
@@ -145,16 +160,14 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
         => type.GetCustomAttribute<PgNameAttribute>()?.PgName
            ?? nameTranslator.TranslateTypeName(type.Name);
 
-    public override IPgTypeInfoResolver CreateResolver() => new Resolver(new(_mappings));
-    public override IPgTypeInfoResolver CreateArrayResolver() => new ArrayResolver(new(_mappings));
+    public override IPgTypeInfoResolver CreateResolver() => new Resolver([.._mappings]);
+    public override IPgTypeInfoResolver CreateArrayResolver() => new ArrayResolver([.._mappings]);
 
-    class Resolver : IPgTypeInfoResolver
+    class Resolver(List<UserTypeMapping> userTypeMappings) : IPgTypeInfoResolver
     {
-        protected readonly List<UserTypeMapping> _userTypeMappings;
+        protected readonly List<UserTypeMapping> _userTypeMappings = userTypeMappings;
         TypeInfoMappingCollection? _mappings;
         protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new());
-
-        public Resolver(List<UserTypeMapping> userTypeMappings) => _userTypeMappings = userTypeMappings;
 
         PgTypeInfo? IPgTypeInfoResolver.GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
             => Mappings.Find(type, dataTypeName, options);
@@ -168,12 +181,10 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
         }
     }
 
-    sealed class ArrayResolver : Resolver, IPgTypeInfoResolver
+    sealed class ArrayResolver(List<UserTypeMapping> userTypeMappings) : Resolver(userTypeMappings), IPgTypeInfoResolver
     {
         TypeInfoMappingCollection? _mappings;
         new TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new(base.Mappings));
-
-        public ArrayResolver(List<UserTypeMapping> userTypeMappings) : base(userTypeMappings) { }
 
         PgTypeInfo? IPgTypeInfoResolver.GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
             => Mappings.Find(type, dataTypeName, options);
@@ -188,62 +199,54 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
     }
 
     [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
-    sealed class CompositeMapping<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T> : UserTypeMapping where T : class
+    sealed class CompositeMapping<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields |
+                                    DynamicallyAccessedMemberTypes.PublicProperties)]
+        T>(string pgTypeName, IEDBNameTranslator nameTranslator) : UserTypeMapping(pgTypeName, typeof(T))
+        where T : class
     {
-        readonly IEDBNameTranslator _nameTranslator;
-
-        public CompositeMapping(string pgTypeName, IEDBNameTranslator nameTranslator)
-            : base(pgTypeName, typeof(T))
-            => _nameTranslator = nameTranslator;
-
         internal override void AddMapping(TypeInfoMappingCollection mappings)
-        {
-            mappings.AddType<T>(PgTypeName, (options, mapping, _) =>
+            => mappings.AddType<T>(PgTypeName, (options, mapping, _) =>
             {
                 var pgType = mapping.GetPgType(options);
                 if (pgType is not PostgresCompositeType compositeType)
                     throw new InvalidOperationException("Composite mapping must be to a composite type");
 
                 return mapping.CreateInfo(options, new CompositeConverter<T>(
-                    ReflectionCompositeInfoFactory.CreateCompositeInfo<T>(compositeType, _nameTranslator, options)));
+                    ReflectionCompositeInfoFactory.CreateCompositeInfo<T>(compositeType, nameTranslator, options)));
             }, isDefault: true);
-        }
 
         internal override void AddArrayMapping(TypeInfoMappingCollection mappings) => mappings.AddArrayType<T>(PgTypeName);
     }
 
     [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
-    sealed class StructCompositeMapping<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T> : UserTypeMapping where T : struct
+    sealed class StructCompositeMapping<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields |
+                                    DynamicallyAccessedMemberTypes.PublicProperties)]
+        T>(string pgTypeName, IEDBNameTranslator nameTranslator) : UserTypeMapping(pgTypeName, typeof(T))
+        where T : struct
     {
-        readonly IEDBNameTranslator _nameTranslator;
-
-        public StructCompositeMapping(string pgTypeName, IEDBNameTranslator nameTranslator)
-            : base(pgTypeName, typeof(T))
-            => _nameTranslator = nameTranslator;
-
         internal override void AddMapping(TypeInfoMappingCollection mappings)
-        {
-            mappings.AddStructType<T>(PgTypeName, (options, mapping, dataTypeNameMatch) =>
+            => mappings.AddStructType<T>(PgTypeName, (options, mapping, requiresDataTypeName) =>
             {
                 var pgType = mapping.GetPgType(options);
                 if (pgType is not PostgresCompositeType compositeType)
                     throw new InvalidOperationException("Composite mapping must be to a composite type");
 
                 return mapping.CreateInfo(options, new CompositeConverter<T>(
-                    ReflectionCompositeInfoFactory.CreateCompositeInfo<T>(compositeType, _nameTranslator, options)));
+                    ReflectionCompositeInfoFactory.CreateCompositeInfo<T>(compositeType, nameTranslator, options)));
             }, isDefault: true);
-        }
 
         internal override void AddArrayMapping(TypeInfoMappingCollection mappings) => mappings.AddStructArrayType<T>(PgTypeName);
     }
 
-    internal abstract class EnumMapping : UserTypeMapping
+    internal abstract class EnumMapping(
+        string pgTypeName,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] Type enumClrType,
+        IEDBNameTranslator nameTranslator)
+        : UserTypeMapping(pgTypeName, enumClrType)
     {
-        internal IEDBNameTranslator NameTranslator { get; }
-
-        public EnumMapping(string pgTypeName, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]Type enumClrType, IEDBNameTranslator nameTranslator)
-            : base(pgTypeName, enumClrType)
-            => NameTranslator = nameTranslator;
+        internal IEDBNameTranslator NameTranslator { get; } = nameTranslator;
     }
 
     sealed class EnumMapping<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> : EnumMapping

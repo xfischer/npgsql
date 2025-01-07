@@ -265,7 +265,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
     /// Adds the specified <see cref="EDBParameter"/> object to the <see cref="EDBParameterCollection"/>.
     /// </summary>
     /// <param name="value">The <see cref="EDBParameter"/> to add to the collection.</param>
-    /// <returns>The index of the new <see cref="EDBParameter"/> object.</returns>
+    /// <returns>The parameter that was added.</returns>
     public EDBParameter Add(EDBParameter value)
     {
         if (value is null)
@@ -273,7 +273,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
         if (value.Collection is not null)
             ThrowHelper.ThrowInvalidOperationException("The parameter already belongs to a collection");
 
-        if (value.Direction != System.Data.ParameterDirection.ReturnValue)
+        if (value.Direction != System.Data.ParameterDirection.ReturnValue) // EnterpriseDB (return value)
         {
             InternalList.Add(value);
             value.Collection = this;
@@ -360,7 +360,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
     /// </summary>
     /// <param name="parameterName">The name of the parameter.</param>
     /// <param name="parameterType">One of the <see cref="DbType"/> values.</param>
-    /// <returns>The index of the new <see cref="EDBParameter"/> object.</returns>
+    /// <returns>The parameter that was added.</returns>
     public EDBParameter Add(string parameterName, EDBDbType parameterType)
         => Add(new EDBParameter(parameterName, parameterType));
 
@@ -371,7 +371,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
     /// <param name="parameterName">The name of the parameter.</param>
     /// <param name="parameterType">One of the <see cref="DbType"/> values.</param>
     /// <param name="size">The length of the column.</param>
-    /// <returns>The index of the new <see cref="EDBParameter"/> object.</returns>
+    /// <returns>The parameter that was added.</returns>
     public EDBParameter Add(string parameterName, EDBDbType parameterType, int size)
         => Add(new EDBParameter(parameterName, parameterType, size));
 
@@ -383,7 +383,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
     /// <param name="parameterType">One of the <see cref="DbType"/> values.</param>
     /// <param name="size">The length of the column.</param>
     /// <param name="sourceColumn">The name of the source column.</param>
-    /// <returns>The index of the new <see cref="EDBParameter"/> object.</returns>
+    /// <returns>The parameter that was added.</returns>
     public EDBParameter Add(string parameterName, EDBDbType parameterType, int size, string sourceColumn)
         => Add(new EDBParameter(parameterName, parameterType, size, sourceColumn));
 
@@ -765,12 +765,8 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
                 ThrowHelper.ThrowArgumentOutOfRangeException(nameof(PlaceholderType), $"Unknown {nameof(PlaceholderType)} value: {{0}}", PlaceholderType);
                 break;
             }
-
-            // EnterpriseDB Team : avoid throwing exception if handler not found at this stage
-            // We need the type handler set for output parameters
-            // p.TryBind(typeMapper); 
-
-            switch (p.Direction)
+			
+			switch (p.Direction)
             {
             case ParameterDirection.Input:
                 break;
@@ -786,12 +782,11 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
                     ThrowHelper.ThrowNotSupportedException("Output parameters are not supported in positional mode (unless used with CommandType.StoredProcedure)");
                 HasOutputParameters = true;
 
-                if ((p.Value == null && p._npgsqlDbType == null && p.DataTypeName == null)
+                if ((p.Value == null && p._npgsqlDbType == null && p.DataTypeName == null) // EnterpriseDB  continue --> break to enforce ResolveTypeInfo call, except when we are sure it will fail
                     || p.Value != null)
                     continue;
                 else
                     break;
-            // EnterpriseDB continue --> break to enforce ResolveTypeInfo call, except when we are sure it will fail
 
             case ParameterDirection.ReturnValue:
                 // Simply ignored

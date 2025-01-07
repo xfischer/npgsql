@@ -7,7 +7,13 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations;
 
-public class NpgsqlMigrationsSqlGeneratorTest : MigrationsSqlGeneratorTestBase
+public class NpgsqlMigrationsSqlGeneratorTest() : MigrationsSqlGeneratorTestBase(
+    NpgsqlTestHelpers.Instance,
+    new ServiceCollection().AddEntityFrameworkNpgsqlNetTopologySuite(),
+    NpgsqlTestHelpers.Instance.AddProviderOptions(
+        ((IRelationalDbContextOptionsBuilderInfrastructure)
+            new NpgsqlDbContextOptionsBuilder(new DbContextOptionsBuilder()).UseNetTopologySuite())
+        .OptionsBuilder).Options)
 {
     #region Database
 
@@ -17,8 +23,10 @@ public class NpgsqlMigrationsSqlGeneratorTest : MigrationsSqlGeneratorTestBase
         Generate(new NpgsqlCreateDatabaseOperation { Name = "Northwind" });
 
         AssertSql(
-            @"CREATE DATABASE ""Northwind"";
-");
+            """
+CREATE DATABASE "Northwind";
+
+""");
     }
 
     [ConditionalFact]
@@ -484,8 +492,7 @@ ALTER SEQUENCE dbo."TestRestartSequenceOperation" RESTART;
                 modelBuilder.HasAnnotation(CoreAnnotationNames.ProductVersion, "3.1.0");
                 modelBuilder.Entity<Person>().Property<int>("Id").UseSerialColumn();
             },
-            new[]
-            {
+            [
                 new AlterColumnOperation
                 {
                     Table = "Person",
@@ -502,7 +509,7 @@ ALTER SEQUENCE dbo."TestRestartSequenceOperation" RESTART;
                             NpgsqlValueGenerationStrategy.SerialColumn,
                     }
                 }
-            },
+            ],
             options);
 
         AssertSql(
@@ -521,7 +528,7 @@ DROP SEQUENCE "Person_Id_old_seq";
     {
         Generate(
             _ => { },
-            new[] { new EnsureSchemaOperation { Name = "some_schema" } },
+            [new EnsureSchemaOperation { Name = "some_schema" }],
             MigrationsSqlGenerationOptions.Idempotent);
 
         AssertSql(
@@ -557,13 +564,13 @@ DROP SEQUENCE "Person_Id_old_seq";
                         IsNullable = false
                     },
                 },
-                PrimaryKey = new AddPrimaryKeyOperation { Columns = new[] { "Id" } }
+                PrimaryKey = new AddPrimaryKeyOperation { Columns = ["Id"] }
             };
 
         var interleaveInParent = new CockroachDbInterleaveInParent(op);
         interleaveInParent.ParentTableSchema = "my_schema";
         interleaveInParent.ParentTableName = "my_parent";
-        interleaveInParent.InterleavePrefix = new List<string> { "col_a", "col_b" };
+        interleaveInParent.InterleavePrefix = ["col_a", "col_b"];
 
         Generate(op);
 
@@ -606,23 +613,12 @@ INTERLEAVE IN PARENT my_schema.my_parent (col_a, col_b);
                         {
                             Table = "People",
                             Schema = "dbo",
-                            Columns = new[] { "First Name" },
-                            ColumnTypes = new[] { "foo" },
+                            Columns = ["First Name"],
+                            ColumnTypes = ["foo"],
                             Values = new object[,] { { null } }
                         })).Message);
 
 #pragma warning restore 618
-
-    public NpgsqlMigrationsSqlGeneratorTest()
-        : base(
-            NpgsqlTestHelpers.Instance,
-            new ServiceCollection().AddEntityFrameworkNpgsqlNetTopologySuite(),
-            NpgsqlTestHelpers.Instance.AddProviderOptions(
-                ((IRelationalDbContextOptionsBuilderInfrastructure)
-                    new NpgsqlDbContextOptionsBuilder(new DbContextOptionsBuilder()).UseNetTopologySuite())
-                .OptionsBuilder).Options)
-    {
-    }
 
     protected override string GetGeometryCollectionStoreType()
         => "GEOMETRY(GEOMETRYCOLLECTION)";

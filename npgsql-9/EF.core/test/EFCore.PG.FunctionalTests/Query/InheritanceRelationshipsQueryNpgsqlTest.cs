@@ -1,11 +1,7 @@
 ﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
 
-public class InheritanceRelationshipsQueryNpgsqlTest : InheritanceRelationshipsQueryTestBase<InheritanceRelationshipsQueryNpgsqlFixture>
+public class InheritanceRelationshipsQueryNpgsqlTest(InheritanceRelationshipsQueryNpgsqlFixture fixture)
+    : InheritanceRelationshipsQueryTestBase<InheritanceRelationshipsQueryNpgsqlFixture>(fixture)
 {
-    public InheritanceRelationshipsQueryNpgsqlTest(InheritanceRelationshipsQueryNpgsqlFixture fixture)
-        : base(fixture)
-    {
-    }
-
-    protected override void ClearLog() {}
+    protected override void ClearLog() { }
 }

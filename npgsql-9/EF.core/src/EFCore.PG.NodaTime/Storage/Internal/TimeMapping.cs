@@ -16,15 +16,15 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 public class TimeMapping : NpgsqlTypeMapping
 {
     private static readonly ConstructorInfo ConstructorWithMinutes =
-        typeof(LocalTime).GetConstructor(new[] { typeof(int), typeof(int) })!;
+        typeof(LocalTime).GetConstructor([typeof(int), typeof(int)])!;
 
     private static readonly ConstructorInfo ConstructorWithSeconds =
-        typeof(LocalTime).GetConstructor(new[] { typeof(int), typeof(int), typeof(int) })!;
+        typeof(LocalTime).GetConstructor([typeof(int), typeof(int), typeof(int)])!;
 
     private static readonly MethodInfo FromHourMinuteSecondNanosecondMethod =
         typeof(LocalTime).GetMethod(
             nameof(LocalTime.FromHourMinuteSecondNanosecond),
-            new[] { typeof(int), typeof(int), typeof(int), typeof(long) })!;
+            [typeof(int), typeof(int), typeof(int), typeof(long)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -119,6 +119,8 @@ public class TimeMapping : NpgsqlTypeMapping
 
     private sealed class JsonLocalTimeReaderWriter : JsonValueReaderWriter<LocalTime>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonLocalTimeReaderWriter).GetProperty(nameof(Instance))!;
+
         public static JsonLocalTimeReaderWriter Instance { get; } = new();
 
         public override LocalTime FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
@@ -126,5 +128,8 @@ public class TimeMapping : NpgsqlTypeMapping
 
         public override void ToJsonTyped(Utf8JsonWriter writer, LocalTime value)
             => writer.WriteStringValue(LocalTimePattern.ExtendedIso.Format(value));
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

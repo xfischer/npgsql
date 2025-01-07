@@ -111,6 +111,7 @@ public sealed class EDBParameter<T> : EDBParameter
             WriteSize = -1;
             _bufferRequirement = default;
         }
+
         Format = dataFormat;
     }
 

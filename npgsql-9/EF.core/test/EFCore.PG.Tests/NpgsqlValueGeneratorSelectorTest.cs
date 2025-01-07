@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.ValueGeneration.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
@@ -21,7 +22,7 @@ public class NpgsqlValueGeneratorSelectorTest
         AssertGenerator<TemporaryByteValueGenerator>("NullableByte");
         AssertGenerator<TemporaryDecimalValueGenerator>("Decimal");
         AssertGenerator<StringValueGenerator>("String");
-        AssertGenerator<GuidValueGenerator>("Guid");
+        AssertGenerator<NpgsqlSequentialGuidValueGenerator>("Guid");
         AssertGenerator<BinaryValueGenerator>("Binary");
     }
 
@@ -47,10 +48,13 @@ public class NpgsqlValueGeneratorSelectorTest
 
         var selector = NpgsqlTestHelpers.Instance.CreateContextServices(model).GetRequiredService<IValueGeneratorSelector>();
 
-        Assert.IsType<TExpected>(selector.Select(entityType.FindProperty(propertyName), entityType));
+        var property = entityType.FindProperty(propertyName)!;
+        Assert.True(selector.TrySelect(property, property.DeclaringType, out var generator));
+
+        Assert.IsType<TExpected>(generator);
     }
 
-    [Fact]
+    [ConditionalFact]
     public void Returns_temp_guid_generator_when_default_sql_set()
     {
         var builder = NpgsqlTestHelpers.Instance.CreateConventionBuilder();
@@ -65,7 +69,9 @@ public class NpgsqlValueGeneratorSelectorTest
 
         var selector = NpgsqlTestHelpers.Instance.CreateContextServices(model).GetRequiredService<IValueGeneratorSelector>();
 
-        Assert.IsType<TemporaryGuidValueGenerator>(selector.Select(entityType.FindProperty("Guid"), entityType));
+        var property = entityType.FindProperty("Guid")!;
+        Assert.True(selector.TrySelect(property, property.DeclaringType, out var generator));
+        Assert.IsType<TemporaryGuidValueGenerator>(generator);
     }
 
     [ConditionalFact]
@@ -83,7 +89,9 @@ public class NpgsqlValueGeneratorSelectorTest
 
         var selector = NpgsqlTestHelpers.Instance.CreateContextServices(model).GetRequiredService<IValueGeneratorSelector>();
 
-        var generator = selector.Select(entityType.FindProperty("String"), entityType);
+        var property = entityType.FindProperty("String")!;
+        Assert.True(selector.TrySelect(property, property.DeclaringType, out var generator));
+
         Assert.IsType<TemporaryStringValueGenerator>(generator);
         Assert.True(generator.GeneratesTemporaryValues);
     }
@@ -103,7 +111,9 @@ public class NpgsqlValueGeneratorSelectorTest
 
         var selector = NpgsqlTestHelpers.Instance.CreateContextServices(model).GetRequiredService<IValueGeneratorSelector>();
 
-        var generator = selector.Select(entityType.FindProperty("Binary"), entityType);
+        var property = entityType.FindProperty("Binary")!;
+        Assert.True(selector.TrySelect(property, property.DeclaringType, out var generator));
+
         Assert.IsType<TemporaryBinaryValueGenerator>(generator);
         Assert.True(generator.GeneratesTemporaryValues);
     }
@@ -119,10 +129,9 @@ public class NpgsqlValueGeneratorSelectorTest
         AssertGenerator<NpgsqlSequenceHiLoValueGenerator<long>>("NullableLong", setSequences: true);
         AssertGenerator<NpgsqlSequenceHiLoValueGenerator<short>>("NullableShort", setSequences: true);
         AssertGenerator<StringValueGenerator>("String", setSequences: true);
-        AssertGenerator<GuidValueGenerator>("Guid", setSequences: true);
+        AssertGenerator<NpgsqlSequentialGuidValueGenerator>("Guid", setSequences: true);
         AssertGenerator<BinaryValueGenerator>("Binary", setSequences: true);
     }
-
 
 //        [ConditionalFact]
 //        public void Throws_for_unsupported_combinations()
@@ -160,7 +169,10 @@ public class NpgsqlValueGeneratorSelectorTest
 
         var selector = NpgsqlTestHelpers.Instance.CreateContextServices(model).GetRequiredService<IValueGeneratorSelector>();
 
-        Assert.IsType<NpgsqlSequenceHiLoValueGenerator<int>>(selector.Select(entityType.FindProperty("Id"), entityType));
+        var property = entityType.FindProperty("Id")!;
+        Assert.True(selector.TrySelect(property, property.DeclaringType, out var generator));
+
+        Assert.IsType<NpgsqlSequenceHiLoValueGenerator<int>>(generator);
     }
 
     private class AnEntity
@@ -198,5 +210,20 @@ public class NpgsqlValueGeneratorSelectorTest
 
         public override bool GeneratesTemporaryValues
             => false;
+    }
+
+    [Fact]
+    public void NpgsqlUuid7ValueGenerator_creates_uuidv7()
+    {
+        var dtoNow = DateTimeOffset.UtcNow;
+        var net9Internal = Guid.CreateVersion7(dtoNow);
+        var custom = NpgsqlSequentialGuidValueGenerator.BorrowedFromNet9.CreateVersion7(dtoNow);
+        var bytenet9 = net9Internal.ToByteArray().AsSpan(0, 6);
+        var bytecustom = custom.ToByteArray().AsSpan(0, 6);
+        Assert.Equal(bytenet9, bytecustom);
+        Assert.Equal(7, net9Internal.Version);
+        Assert.Equal(net9Internal.Version, custom.Version);
+        Assert.InRange(net9Internal.Variant, 8, 0xB);
+        Assert.InRange(custom.Variant, 8, 0xB);
     }
 }

@@ -15,8 +15,11 @@ namespace EnterpriseDB.EDBClient
 {
     internal static class StringToNativeConverter
     {
-        internal static object ConvertTextToNative(string token, PostgresType fieldPgType, PgSerializerOptions options)
+        internal static object ConvertTextToNative(string token, PostgresType fieldPgType, PgSerializerOptions? options)
         {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
             if (fieldPgType is PostgresBaseType pgElementBaseType)
             {
                 var boxedToken = StringToNativeConverter.ConvertDomainTypeTextToNative(options, token, pgElementBaseType);
@@ -25,7 +28,7 @@ namespace EnterpriseDB.EDBClient
             else if (fieldPgType is PostgresEnumType pgEnumType)
             {
                 var pgTypeId = options.ToCanonicalTypeId(pgEnumType);
-                var enumTypeInfo = options.GetObjectOrDefaultTypeInfoInternal(pgTypeId);
+                var enumTypeInfo = options.GetDefaultTypeInfo(pgTypeId);
                 if (enumTypeInfo is null || !enumTypeInfo.Type.IsEnum)
                 {
                     // no enum mapping found, return token as string
@@ -46,7 +49,7 @@ namespace EnterpriseDB.EDBClient
         private static object? ConvertDomainTypeTextToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresType pgBaseType)
         {
             var pgTypeId = options.ToCanonicalTypeId(pgBaseType);
-            var typeInfo = options.GetObjectOrDefaultTypeInfoInternal(pgTypeId)
+            var typeInfo = options.GetDefaultTypeInfo(pgTypeId)
                                        ?? throw new NotSupportedException(
                                            $"Reading isn't supported for record field 0 (PG type '{pgBaseType.DisplayName}'");
 
@@ -126,26 +129,21 @@ namespace EnterpriseDB.EDBClient
                 {
                     return HstoreStringToNative(token);
                 }
-                if (typeInfo.Type == typeof(object)
-                        && typeInfo.PgTypeId != null
-                        && typeInfo.PgTypeId.Value.Oid == 1560 /*bit or bit array*/)
+                if (typeInfo.Type == typeof(BitArray))
                 {
-                    if (token.Length == 1) // bit
+                    if (typeInfo?.PgTypeId!.Value.Oid == 1560) /*bit or bit array*/
                     {
-                        return token == "1";
+                        return token.Length == 1 ?
+                            token == "1" // bit
+                            : new BitArray(token.Select(c => c == '1').ToArray());
                     }
-                    else
+                    else if (typeInfo?.PgTypeId!.Value.Oid == 1562) /*bitvarying*/
                     {
                         return new BitArray(token.Select(c => c == '1').ToArray());
                     }
                 }
-                if (typeInfo.Type == typeof(object)
-                        && typeInfo.PgTypeId != null
-                        && typeInfo.PgTypeId.Value.Oid == 1562 /*bit varying */)
-                {
-                    return new BitArray(token.Select(c => c == '1').ToArray());
-                }
 
+                // fallback
                 nativeValue = Convert.ChangeType(token, typeInfo.Type);
 
             }
@@ -160,7 +158,7 @@ namespace EnterpriseDB.EDBClient
         {
             // Remove all non digits chars except commas and dots
             var sb = new StringBuilder(token.Length);
-            int index = 0;
+            var index = 0;
             foreach (var c in token)
             {
                 if (c >= '0' && c <= '9')
@@ -187,13 +185,13 @@ namespace EnterpriseDB.EDBClient
             return decimal.Parse(finalToken, NumberStyles.Currency | NumberStyles.AllowLeadingSign | NumberStyles.AllowParentheses, CultureInfo.InvariantCulture);
         }
 
-        private static string[] HstoreTupleSeparator = new string[] { "\", \"", "\",\"" };
-        private static string[] HstoreKeyvalueSeparator = new string[] { "=>" };
+        private static string[] HstoreTupleSeparator = ["\", \"", "\",\""];
+        private static string[] HstoreKeyvalueSeparator = ["=>"];
 
         private static object HstoreStringToNative(string token)
         {
             var pairs = token.Split(HstoreTupleSeparator, StringSplitOptions.RemoveEmptyEntries);
-            Dictionary<string, string> hstore = new Dictionary<string, string>(pairs.Length);
+            var hstore = new Dictionary<string, string>(pairs.Length);
             foreach (var pair in pairs)
             {
                 var keyvalue = pair.Split(HstoreKeyvalueSeparator, StringSplitOptions.None);

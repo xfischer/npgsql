@@ -12,9 +12,9 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
-public class TransactionTests : MultiplexingTestBase
+public class TransactionTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
-    [Test, Description("Basic insert within a commited transaction")]
+    [Test, Description("Basic insert within a committed transaction")]
     public async Task Commit([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
     {
         if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -43,7 +43,7 @@ public class TransactionTests : MultiplexingTestBase
             Assert.That(() => tx.Connection, Throws.Exception.TypeOf<ObjectDisposedException>());
     }
 
-    [Test, Description("Basic insert within a commited transaction")]
+    [Test, Description("Basic insert within a committed transaction")]
     public async Task CommitAsync([Values(PrepareOrNot.NotPrepared, PrepareOrNot.Prepared)] PrepareOrNot prepare)
     {
         if (prepare == PrepareOrNot.Prepared && IsMultiplexing)
@@ -186,7 +186,7 @@ public class TransactionTests : MultiplexingTestBase
         await conn.BeginTransaction().RollbackAsync();
     }
 
-    [Test, Description("Disposes an empty transaction")] // EDBExplicit("Works in community"), 
+    [Test, Description("Disposes an empty transaction")]
     public async Task Empty_Dispose()
     {
         await using var dataSource = CreateDataSource();
@@ -693,7 +693,7 @@ public class TransactionTests : MultiplexingTestBase
         }
     }
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3686")] // EDBExplicit("Works in community")
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3686")]
     public async Task Bug3686()
     {
         if (IsMultiplexing)
@@ -746,6 +746,4 @@ public class TransactionTests : MultiplexingTestBase
             t.Rollback();
         }
     }
-
-    public TransactionTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
 }

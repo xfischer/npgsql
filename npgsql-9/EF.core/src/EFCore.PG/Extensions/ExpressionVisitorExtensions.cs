@@ -3,8 +3,6 @@ using System.Runtime.CompilerServices;
 // ReSharper disable once CheckNamespace
 namespace System.Linq.Expressions;
 
-#nullable enable
-
 [DebuggerStepThrough]
 internal static class ExpressionVisitorExtensions
 {
@@ -16,12 +14,13 @@ internal static class ExpressionVisitorExtensions
     /// <returns>
     ///     The modified expression list, if any of the elements were modified; otherwise, returns the original expression list.
     /// </returns>
-    public static IReadOnlyList<Expression> Visit(this ExpressionVisitor visitor, IReadOnlyList<Expression> nodes)
+    public static IReadOnlyList<T> Visit<T>(this ExpressionVisitor visitor, IReadOnlyList<T> nodes)
+        where T : Expression
     {
-        Expression[]? newNodes = null;
+        T[]? newNodes = null;
         for (int i = 0, n = nodes.Count; i < n; i++)
         {
-            var node = visitor.Visit(nodes[i]);
+            var node = (T)visitor.Visit(nodes[i]);
 
             if (newNodes is not null)
             {
@@ -29,7 +28,7 @@ internal static class ExpressionVisitorExtensions
             }
             else if (!ReferenceEquals(node, nodes[i]))
             {
-                newNodes = new Expression[n];
+                newNodes = new T[n];
                 for (var j = 0; j < i; j++)
                 {
                     newNodes[j] = nodes[j];

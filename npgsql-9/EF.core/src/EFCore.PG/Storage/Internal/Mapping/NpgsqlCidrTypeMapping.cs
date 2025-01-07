@@ -78,10 +78,10 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
             Expression.Constant(cidr.Netmask));
     }
 
-    private static readonly MethodInfo ParseMethod = typeof(IPAddress).GetMethod("Parse", new[] { typeof(string) })!;
+    private static readonly MethodInfo ParseMethod = typeof(IPAddress).GetMethod("Parse", [typeof(string)])!;
 
     private static readonly ConstructorInfo NpgsqlCidrConstructor =
-        typeof(EDBCidr).GetConstructor(new[] { typeof(IPAddress), typeof(byte) })!;
+        typeof(EDBCidr).GetConstructor([typeof(IPAddress), typeof(byte)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -91,6 +91,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public sealed class JsonCidrReaderWriter : JsonValueReaderWriter<EDBCidr>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonCidrReaderWriter).GetProperty(nameof(Instance))!;
+
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
         ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
@@ -116,5 +118,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
         /// </summary>
         public override void ToJsonTyped(Utf8JsonWriter writer, EDBCidr value)
             => writer.WriteStringValue(value.ToString());
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

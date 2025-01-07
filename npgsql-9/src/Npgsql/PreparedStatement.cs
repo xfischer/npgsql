@@ -115,7 +115,7 @@ sealed class PreparedStatement
     {
         if (parameters.Count == 0)
         {
-            ConverterParamTypes = Array.Empty<PgTypeId>();
+            ConverterParamTypes = [];
             return;
         }
 

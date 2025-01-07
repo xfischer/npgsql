@@ -1,14 +1,9 @@
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Array;
 
-public class ArrayQueryContext : PoolableDbContext
+public class ArrayQueryContext(DbContextOptions options) : PoolableDbContext(options)
 {
     public DbSet<ArrayEntity> SomeEntities { get; set; }
     public DbSet<ArrayContainerEntity> SomeEntityContainers { get; set; }
-
-    public ArrayQueryContext(DbContextOptions options)
-        : base(options)
-    {
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.Entity<ArrayEntity>(
@@ -59,14 +54,12 @@ public class ArrayQueryContext : PoolableDbContext
                 e.HasIndex(ae => ae.NonNullableText);
             });
 
-    public static void Seed(ArrayQueryContext context)
+    public static async Task SeedAsync(ArrayQueryContext context)
     {
         var arrayEntities = ArrayQueryData.CreateArrayEntities();
 
         context.SomeEntities.AddRange(arrayEntities);
-        context.SomeEntityContainers.Add(
-            new ArrayContainerEntity { Id = 1, ArrayEntities = arrayEntities.ToList() }
-        );
-        context.SaveChanges();
+        context.SomeEntityContainers.Add(new ArrayContainerEntity { Id = 1, ArrayEntities = arrayEntities.ToList() });
+        await context.SaveChangesAsync();
     }
 }

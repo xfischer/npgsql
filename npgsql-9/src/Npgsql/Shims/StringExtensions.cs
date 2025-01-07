@@ -12,8 +12,10 @@ namespace System;
 public static class StringExtensions
 {
     public static bool Contains(this string s, string other, StringComparison comparison) => s.IndexOf(other, comparison) >= 0;
+    public static bool Contains(this string? s, char c) => s is null ? false : s!.Contains(c.ToString());
 
     public static string Trim(this string s, char trimChar) => s.Trim(new char[] { trimChar });
+
 
 }
 

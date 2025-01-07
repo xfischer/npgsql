@@ -15,8 +15,8 @@ sealed class EDBDataSourceCommand : EDBCommand
     }
 
     // For EDBBatch only
-    internal EDBDataSourceCommand(int batchCommandCapacity, EDBConnection connection)
-        : base(batchCommandCapacity, connection)
+    internal EDBDataSourceCommand(EDBBatch batch, int batchCommandCapacity, EDBConnection connection)
+        : base(batch, batchCommandCapacity, connection)
     {
     }
 

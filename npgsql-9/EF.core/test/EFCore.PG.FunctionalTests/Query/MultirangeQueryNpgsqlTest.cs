@@ -488,7 +488,7 @@ LIMIT 2
             .Select(g => g.Select(x => x.IntMultirange).RangeIntersectAgg())
             .Single();
 
-        Assert.Equal(new EDBRange<int>[] { new(4, true, 6, false), new(7, true, 9, false) }, intersection);
+        Assert.Equal([new(4, true, 6, false), new(7, true, 9, false)], intersection);
 
         AssertSql(
             """
@@ -730,8 +730,8 @@ LIMIT 2
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
 
-        protected override void Seed(MultirangeContext context)
-            => MultirangeContext.Seed(context);
+        protected override Task SeedAsync(MultirangeContext context)
+            => MultirangeContext.SeedAsync(context);
     }
 
     public class MultirangeTestEntity
@@ -748,54 +748,47 @@ LIMIT 2
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class MultirangeContext : PoolableDbContext
+    public class MultirangeContext(DbContextOptions options) : PoolableDbContext(options)
     {
         public DbSet<MultirangeTestEntity> TestEntities { get; set; }
 
-        public MultirangeContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        public static void Seed(MultirangeContext context)
+        public static async Task SeedAsync(MultirangeContext context)
         {
             context.TestEntities.AddRange(
                 new MultirangeTestEntity
                 {
                     Id = 1,
-                    IntMultirange = new EDBRange<int>[] { new(0, 5), new(7, 10) },
-                    LongMultirange = new EDBRange<long>[] { new(0, 5), new(7, 10) },
-                    DecimalMultirange = new EDBRange<decimal>[] { new(0, 5), new(7, 10) },
+                    IntMultirange = [new(0, 5), new(7, 10)],
+                    LongMultirange = [new(0, 5), new(7, 10)],
+                    DecimalMultirange = [new(0, 5), new(7, 10)],
                     DateOnlyDateMultirange =
-                        new EDBRange<DateOnly>[]
-                        {
+                    [
                             new(new DateOnly(2020, 1, 1), new DateOnly(2020, 1, 5)),
                             new(new DateOnly(2020, 1, 7), new DateOnly(2020, 1, 10))
-                        },
-                    DateTimeDateMultirange = new EDBRange<DateTime>[]
-                    {
+                    ],
+                    DateTimeDateMultirange =
+                    [
                         new(new DateTime(2020, 1, 1), new DateTime(2020, 1, 5)), new(new DateTime(2020, 1, 7), new DateTime(2020, 1, 10))
-                    }
+                    ]
                 },
                 new MultirangeTestEntity
                 {
                     Id = 2,
-                    IntMultirange = new EDBRange<int>[] { new(4, 8), new(13, 20) },
-                    LongMultirange = new EDBRange<long>[] { new(4, 8), new(13, 20) },
-                    DecimalMultirange = new EDBRange<decimal>[] { new(4, 8), new(13, 20) },
+                    IntMultirange = [new(4, 8), new(13, 20)],
+                    LongMultirange = [new(4, 8), new(13, 20)],
+                    DecimalMultirange = [new(4, 8), new(13, 20)],
                     DateOnlyDateMultirange =
-                        new EDBRange<DateOnly>[]
-                        {
+                    [
                             new(new DateOnly(2020, 1, 4), new DateOnly(2020, 1, 8)),
                             new(new DateOnly(2020, 1, 13), new DateOnly(2020, 1, 20))
-                        },
-                    DateTimeDateMultirange = new EDBRange<DateTime>[]
-                    {
+                    ],
+                    DateTimeDateMultirange =
+                    [
                         new(new DateTime(2020, 1, 4), new DateTime(2020, 1, 8)), new(new DateTime(2020, 1, 13), new DateTime(2020, 1, 20))
-                    }
+                    ]
                 });
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 

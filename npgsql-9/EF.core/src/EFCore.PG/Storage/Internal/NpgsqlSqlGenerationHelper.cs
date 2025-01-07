@@ -19,7 +19,7 @@ public class NpgsqlSqlGenerationHelper : RelationalSqlGenerationHelper
         using (var conn = new EDBConnection())
         {
             ReservedWords =
-                new HashSet<string>(conn.GetSchema("ReservedWords").Rows.Cast<DataRow>().Select(r => (string)r["ReservedWord"]));
+                [..conn.GetSchema("ReservedWords").Rows.Cast<DataRow>().Select(r => (string)r["ReservedWord"])];
         }
     }
 

@@ -12,7 +12,7 @@ public class NpgsqlCodeGeneratorTest
     {
         var codeGenerator = new NpgsqlCodeGenerator(
             new ProviderCodeGeneratorDependencies(
-                Enumerable.Empty<IProviderCodeGeneratorPlugin>()));
+                []));
 
         var result = codeGenerator.GenerateUseProvider("Server=test;Username=test;Password=test;Database=test", providerOptions: null);
 
@@ -28,7 +28,7 @@ public class NpgsqlCodeGeneratorTest
     {
         var codeGenerator = new NpgsqlCodeGenerator(
             new ProviderCodeGeneratorDependencies(
-                Enumerable.Empty<IProviderCodeGeneratorPlugin>()));
+                []));
 
         var providerOptions = new MethodCallCodeFragment(_setProviderOptionMethodInfo);
 
@@ -53,7 +53,7 @@ public class NpgsqlCodeGeneratorTest
     {
         var codeGenerator = new NpgsqlCodeGenerator(
             new ProviderCodeGeneratorDependencies(
-                new[] { new NpgsqlNetTopologySuiteCodeGeneratorPlugin() }));
+                [new NpgsqlNetTopologySuiteCodeGeneratorPlugin()]));
 
         var result = ((IProviderConfigurationCodeGenerator)codeGenerator).GenerateUseProvider("Data Source=Test");
 
@@ -76,7 +76,7 @@ public class NpgsqlCodeGeneratorTest
     {
         var codeGenerator = new NpgsqlCodeGenerator(
             new ProviderCodeGeneratorDependencies(
-                new[] { new NpgsqlNodaTimeCodeGeneratorPlugin() }));
+                [new NpgsqlNodaTimeCodeGeneratorPlugin()]));
 
         var result = ((IProviderConfigurationCodeGenerator)codeGenerator).GenerateUseProvider("Data Source=Test");
 
@@ -95,7 +95,7 @@ public class NpgsqlCodeGeneratorTest
     }
 
     private static readonly MethodInfo _setProviderOptionMethodInfo
-        = typeof(NpgsqlCodeGeneratorTest).GetRuntimeMethod(nameof(SetProviderOption), new[] { typeof(DbContextOptionsBuilder) });
+        = typeof(NpgsqlCodeGeneratorTest).GetRuntimeMethod(nameof(SetProviderOption), [typeof(DbContextOptionsBuilder)]);
 
     public static NpgsqlDbContextOptionsBuilder SetProviderOption(DbContextOptionsBuilder optionsBuilder)
         => throw new NotSupportedException();

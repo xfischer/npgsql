@@ -773,6 +773,56 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS date) + TIME '15:26:38'
 """);
     }
 
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public virtual async Task DateOnly_DayNumber(bool async)
+    {
+        await AssertQuery(
+            async,
+            ss => ss.Set<Entity>().Where(e => DateOnly.FromDateTime(e.TimestamptzDateTime).DayNumber == 729490));
+
+        AssertSql(
+            """
+SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
+FROM "Entities" AS e
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS date) - DATE '0001-01-01' = 729490
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public virtual async Task DateOnly_DayNumber_subtraction(bool async)
+    {
+        await AssertQuery(
+            async,
+            ss => ss.Set<Entity>().Where(
+                e => DateOnly.FromDateTime(e.TimestamptzDateTime).DayNumber -
+                    DateOnly.FromDateTime(e.TimestamptzDateTime - TimeSpan.FromDays(3)).DayNumber == 3));
+
+        AssertSql(
+            """
+SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
+FROM "Entities" AS e
+WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS date) - CAST((e."TimestamptzDateTime" - INTERVAL '3 00:00:00') AT TIME ZONE 'UTC' AS date) = 3
+""");
+    }
+
+    [ConditionalTheory]
+    [MemberData(nameof(IsAsyncData))]
+    public virtual async Task DateOnly_FromDayNumber(bool async)
+    {
+        await AssertQuery(
+            async,
+            ss => ss.Set<Entity>().Where(e => DateOnly.FromDayNumber(e.Id) == new DateOnly(0001, 01, 03)));
+
+        AssertSql(
+            """
+SELECT e."Id", e."TimestampDateTime", e."TimestampDateTimeArray", e."TimestampDateTimeOffset", e."TimestampDateTimeOffsetArray", e."TimestampDateTimeRange", e."TimestamptzDateTime", e."TimestamptzDateTimeArray", e."TimestamptzDateTimeRange"
+FROM "Entities" AS e
+WHERE DATE '0001-01-01' + e."Id" = DATE '0001-01-03'
+""");
+    }
+
     #endregion DateOnly
 
     #region TimeOnly
@@ -854,19 +904,14 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class TimestampQueryContext : PoolableDbContext
+    public class TimestampQueryContext(DbContextOptions options) : PoolableDbContext(options)
     {
         public DbSet<Entity> Entities { get; set; }
 
-        public TimestampQueryContext(DbContextOptions options)
-            : base(options)
-        {
-        }
-
-        public static void Seed(TimestampQueryContext context)
+        public static async Task SeedAsync (TimestampQueryContext context)
         {
             context.Entities.AddRange(TimestampData.CreateEntities());
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 
@@ -893,7 +938,7 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
         public EDBRange<DateTime> TimestampDateTimeRange { get; set; }
     }
 
-    public class TimestampQueryFixture : SharedStoreFixtureBase<TimestampQueryContext>, IQueryFixtureBase
+    public class TimestampQueryFixture : SharedStoreFixtureBase<TimestampQueryContext>, IQueryFixtureBase, ITestSqlLoggerFactory
     {
         protected override string StoreName
             => "TimestampQueryTest";
@@ -902,15 +947,15 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
         // don't depend on the database's time zone, and also that operations which shouldn't take TimeZone into account indeed
         // don't.
         protected override ITestStoreFactory TestStoreFactory
-            => NpgsqlTestStoreFactory.WithConnectionStringOptions("-c TimeZone=Europe/Berlin");
+            => new NpgsqlTestStoreFactory(connectionStringOptions: "-c TimeZone=Europe/Berlin");
 
         public TestSqlLoggerFactory TestSqlLoggerFactory
             => (TestSqlLoggerFactory)ListLoggerFactory;
 
         private TimestampData _expectedData;
 
-        protected override void Seed(TimestampQueryContext context)
-            => TimestampQueryContext.Seed(context);
+        protected override Task SeedAsync(TimestampQueryContext context)
+            => TimestampQueryContext.SeedAsync(context);
 
         public Func<DbContext> GetContextCreator()
             => CreateContext;
@@ -954,12 +999,7 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
 
     protected class TimestampData : ISetSource
     {
-        public IReadOnlyList<Entity> Entities { get; }
-
-        public TimestampData()
-        {
-            Entities = CreateEntities();
-        }
+        public IReadOnlyList<Entity> Entities { get; } = CreateEntities();
 
         public IQueryable<TEntity> Set<TEntity>()
             where TEntity : class
@@ -1016,7 +1056,7 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
                     TimestampDateTimeOffset = new DateTimeOffset(utcDateTime1),
                     TimestamptzDateTimeArray = utcDateTimeArray1,
                     TimestampDateTimeArray = localDateTimeArray1,
-                    TimestampDateTimeOffsetArray = new DateTimeOffset[] { new(utcDateTimeArray1[0]), new(utcDateTimeArray1[1]) },
+                    TimestampDateTimeOffsetArray = [new(utcDateTimeArray1[0]), new(utcDateTimeArray1[1])],
                     TimestamptzDateTimeRange = utcDateTimeRange1,
                     TimestampDateTimeRange = localDateTimeRange1,
                 },
@@ -1028,7 +1068,7 @@ WHERE CAST(e."TimestamptzDateTime" AT TIME ZONE 'UTC' AS time without time zone)
                     TimestampDateTimeOffset = new DateTimeOffset(utcDateTime2),
                     TimestamptzDateTimeArray = utcDateTimeArray2,
                     TimestampDateTimeArray = localDateTimeArray2,
-                    TimestampDateTimeOffsetArray = new DateTimeOffset[] { new(utcDateTimeArray2[0]), new(utcDateTimeArray2[1]) },
+                    TimestampDateTimeOffsetArray = [new(utcDateTimeArray2[0]), new(utcDateTimeArray2[1])],
                     TimestamptzDateTimeRange = utcDateTimeRange2,
                     TimestampDateTimeRange = localDateTimeRange2,
                 }

@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿// Modified by EnterpriseDB 
+using System.Data.Common;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
@@ -9,12 +10,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
 {
-    private readonly NpgsqlSqlGenerationHelper _sqlGenerationHelper;
-
-    public NpgsqlDatabaseCleaner()
-    {
-        _sqlGenerationHelper = new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies());
-    }
+    private readonly NpgsqlSqlGenerationHelper _sqlGenerationHelper = new(new RelationalSqlGenerationHelperDependencies());
 
     protected override IDatabaseModelFactory CreateDatabaseModelFactory(ILoggerFactory loggerFactory)
         => new NpgsqlDatabaseModelFactory(
@@ -97,7 +93,7 @@ WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')"; // Enterpr
 
         if (userDefinedTypes.Any())
         {
-            var dropTypes = string.Concat(userDefinedTypes.Select(t => $@"DROP TYPE ""{t.Schema}"".""{t.Name}"" CASCADE;"));
+            var dropTypes = string.Concat(userDefinedTypes.Select(t => $"""DROP TYPE "{t.Schema}"."{t.Name}" CASCADE;"""));
             using var cmd = new EDBCommand(dropTypes, conn);
             cmd.ExecuteNonQuery();
         }
@@ -162,7 +158,7 @@ WHERE typtype IN ('r', 'e') AND nspname NOT IN ('pg_catalog','sys')"; // Enterpr
             return;
         }
 
-        // EntepriseDB Team
+        // EnterpriseDB Team
         const string getUserCollations = @"SELECT nspname, collname
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
@@ -179,7 +175,7 @@ FROM pg_collation coll
 
         if (userDefinedTypes.Any())
         {
-            var dropTypes = string.Concat(userDefinedTypes.Select(t => $@"DROP COLLATION ""{t.Schema}"".""{t.Name}"" CASCADE;"));
+            var dropTypes = string.Concat(userDefinedTypes.Select(t => $"""DROP COLLATION "{t.Schema}"."{t.Name}" CASCADE;"""));
             using var cmd = new EDBCommand(dropTypes, conn);
             cmd.ExecuteNonQuery();
         }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿// Modified by EnterpriseDB
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;

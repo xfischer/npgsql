@@ -38,7 +38,7 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
-    public class FunkyDataQueryNpgsqlFixture : FunkyDataQueryFixtureBase
+    public class FunkyDataQueryNpgsqlFixture : FunkyDataQueryFixtureBase, ITestSqlLoggerFactory
     {
         private FunkyDataData _expectedData;
 
@@ -77,10 +77,10 @@ public class FunkyDataQueryNpgsqlTest : FunkyDataQueryTestBase<FunkyDataQueryNpg
             return _expectedData;
         }
 
-        protected override void Seed(FunkyDataContext context)
+        protected override async Task SeedAsync(FunkyDataContext context)
         {
             context.FunkyCustomers.AddRange(GetExpectedData().Set<FunkyCustomer>());
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }

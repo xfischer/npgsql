@@ -3,7 +3,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
 
 [MinimumPostgresVersion(12, 0)]
-public class ComputedColumnTest : IDisposable
+public class ComputedColumnTest : IAsyncLifetime
 {
     [ConditionalFact]
     public void Can_use_computed_columns()
@@ -47,16 +47,10 @@ public class ComputedColumnTest : IDisposable
         Assert.Null(entity.P5);
     }
 
-    private class Context : DbContext
+    private class Context(IServiceProvider serviceProvider, string databaseName) : DbContext
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly string _databaseName;
-
-        public Context(IServiceProvider serviceProvider, string databaseName)
-        {
-            _serviceProvider = serviceProvider;
-            _databaseName = databaseName;
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
+        private readonly string _databaseName = databaseName;
 
         public DbSet<Entity> Entities { get; set; }
 
@@ -69,11 +63,15 @@ public class ComputedColumnTest : IDisposable
         {
             modelBuilder.Entity<Entity>()
                 .Property(e => e.P4)
-                .HasComputedColumnSql(@"""P1"" + ""P2""", stored: true);
+                .HasComputedColumnSql("""
+                    "P1" + "P2"
+                    """, stored: true);
 
             modelBuilder.Entity<Entity>()
                 .Property(e => e.P5)
-                .HasComputedColumnSql(@"""P1"" + ""P3""", stored: true);
+                .HasComputedColumnSql("""
+                    "P1" + "P3"
+                    """, stored: true);
         }
     }
 
@@ -103,28 +101,21 @@ public class ComputedColumnTest : IDisposable
         public FlagEnum? CalculatedFlagEnum { get; set; }
     }
 
-    private class NullableContext : DbContext
+    private class NullableContext(IServiceProvider serviceProvider, string databaseName) : DbContext
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly string _databaseName;
-
-        public NullableContext(IServiceProvider serviceProvider, string databaseName)
-        {
-            _serviceProvider = serviceProvider;
-            _databaseName = databaseName;
-        }
-
         public DbSet<EnumItem> EnumItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder
-                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(_databaseName), b => b.ApplyConfiguration())
-                .UseInternalServiceProvider(_serviceProvider);
+                .UseNpgsql(NpgsqlTestStore.CreateConnectionString(databaseName), b => b.ApplyConfiguration())
+                .UseInternalServiceProvider(serviceProvider);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.Entity<EnumItem>()
                 .Property(entity => entity.CalculatedFlagEnum)
-                .HasComputedColumnSql(@"""FlagEnum"" | ""OptionalFlagEnum""", stored: true);
+                .HasComputedColumnSql("""
+                    "FlagEnum" | "OptionalFlagEnum"
+                    """, stored: true);
     }
 
     [ConditionalFact]
@@ -143,13 +134,11 @@ public class ComputedColumnTest : IDisposable
         Assert.Equal(FlagEnum.AValue | FlagEnum.BValue, entity.CalculatedFlagEnum);
     }
 
-    public ComputedColumnTest()
-    {
-        TestStore = NpgsqlTestStore.CreateInitialized("ComputedColumnTest");
-    }
+    protected NpgsqlTestStore TestStore { get; private set; }
 
-    protected NpgsqlTestStore TestStore { get; }
+    public async Task InitializeAsync()
+        => TestStore = await NpgsqlTestStore.CreateInitializedAsync("ComputedColumnTest");
 
-    public virtual void Dispose()
-        => TestStore.Dispose();
+    public async Task DisposeAsync()
+        => await TestStore.DisposeAsync();
 }

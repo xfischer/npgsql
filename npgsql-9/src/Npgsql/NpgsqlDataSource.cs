@@ -4,7 +4,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -13,6 +12,7 @@ using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.ResolverFactories;
 using EnterpriseDB.EDBClient.Properties;
 using EnterpriseDB.EDBClient.Util;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -40,9 +40,14 @@ public abstract class EDBDataSource : DbDataSource
     internal EDBDatabaseInfo DatabaseInfo { get; private set; } = null!; // Initialized at bootstrapping
 
     internal TransportSecurityHandler TransportSecurityHandler { get; }
+
+#if NET7_0_OR_GREATER // EnterpriseDB 
+    internal Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback { get; }
+#else
     internal RemoteCertificateValidationCallback? UserCertificateValidationCallback { get; }
     internal Action<X509CertificateCollection>? ClientCertificatesCallback { get; }
 
+#endif
     readonly Func<EDBConnectionStringBuilder, string>? _passwordProvider;
     readonly Func<EDBConnectionStringBuilder, CancellationToken, ValueTask<string>>? _passwordProviderAsync;
     readonly Func<EDBConnectionStringBuilder, CancellationToken, ValueTask<string>>? _periodicPasswordProvider;
@@ -98,10 +103,16 @@ public abstract class EDBDataSource : DbDataSource
 
         (var name,
                 LoggingConfiguration,
+                _,
+                _,
                 TransportSecurityHandler,
                 IntegratedSecurityHandler,
+#if NET7_0_OR_GREATER // EnterpriseDB 
+                SslClientAuthenticationOptionsCallback,
+#else
                 UserCertificateValidationCallback,
                 ClientCertificatesCallback,
+#endif
                 _passwordProvider,
                 _passwordProviderAsync,
                 _periodicPasswordProvider,
@@ -111,7 +122,11 @@ public abstract class EDBDataSource : DbDataSource
                 _hackyEnumTypeMappings,
                 _defaultNameTranslator,
                 ConnectionInitializer,
-                ConnectionInitializerAsync)
+                ConnectionInitializerAsync
+#if NET7_0_OR_GREATER
+                ,_
+#endif
+                )
             = dataSourceConfig;
         _connectionLogger = LoggingConfiguration.ConnectionLogger;
 
@@ -137,11 +152,11 @@ public abstract class EDBDataSource : DbDataSource
         MetricsReporter = new MetricsReporter(this);
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="DbDataSource.CreateConnection" />
     public new EDBConnection CreateConnection()
         => EDBConnection.FromDataSource(this);
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="DbDataSource.OpenConnection" />
     public new EDBConnection OpenConnection()
     {
         var connection = CreateConnection();
@@ -162,7 +177,7 @@ public abstract class EDBDataSource : DbDataSource
     protected override DbConnection OpenDbConnection()
         => OpenConnection();
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="DbDataSource.OpenConnectionAsync" />
     public new async ValueTask<EDBConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {
         var connection = CreateConnection();
@@ -209,6 +224,12 @@ public abstract class EDBDataSource : DbDataSource
         => new EDBDataSourceBatch(CreateConnection());
 
     /// <summary>
+    /// If the data source pools connections, clears any idle connections and flags any busy connections to be closed as soon as they're
+    /// returned to the pool.
+    /// </summary>
+    public abstract void Clear();
+
+    /// <summary>
     /// Creates a new <see cref="EDBDataSource" /> for the given <paramref name="connectionString" />.
     /// </summary>
     public static EDBDataSource Create(string connectionString)
@@ -219,6 +240,33 @@ public abstract class EDBDataSource : DbDataSource
     /// </summary>
     public static EDBDataSource Create(EDBConnectionStringBuilder connectionStringBuilder)
         => Create(connectionStringBuilder.ToString());
+
+    /// <summary>
+    /// Flushes the type cache for this data source.
+    /// Type changes will appear for connections only after they are re-opened from the pool.
+    /// </summary>
+    public void ReloadTypes()
+    {
+        using var connection = OpenConnection();
+        connection.ReloadTypes();
+    }
+
+    /// <summary>
+    /// Flushes the type cache for this data source.
+    /// Type changes will appear for connections only after they are re-opened from the pool.
+    /// </summary>
+    public async Task ReloadTypesAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+#if NETFRAMEWORK || NETSTANDARD2_0 // EnterpriseDB 
+        using (connection)
+#else
+        await using (connection.ConfigureAwait(false))
+#endif
+        {
+            await connection.ReloadTypesAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     internal async Task Bootstrap(
         EDBConnector connector,
@@ -263,8 +311,7 @@ public abstract class EDBDataSource : DbDataSource
                     ArrayNullabilityMode = Settings.ArrayNullabilityMode,
                     EnableDateTimeInfinityConversions = !Statics.DisableDateTimeInfinityConversions,
                     TextEncoding = connector.TextEncoding,
-                    DefaultNameTranslator = _defaultNameTranslator,
-
+                    DefaultNameTranslator = _defaultNameTranslator
                 };
 
             IsBootstrapped = true;
@@ -371,8 +418,6 @@ public abstract class EDBDataSource : DbDataSource
 
     internal abstract void Return(EDBConnector connector);
 
-    internal abstract void Clear();
-
     internal abstract bool OwnsConnectors { get; }
 
     #region Database state management
@@ -397,7 +442,7 @@ public abstract class EDBDataSource : DbDataSource
         Debug.Assert(this is not EDBMultiHostDataSource);
 
         var databaseStateInfo = _databaseStateInfo;
-        
+
         if (!ignoreTimeStamp && timeStamp <= databaseStateInfo.TimeStamp)
             return _databaseStateInfo.State;
 
@@ -443,7 +488,7 @@ public abstract class EDBDataSource : DbDataSource
                 connector = null;
                 return false;
             }
-            connector = list[list.Count - 1];
+            connector = list[list.Count - 1];  // EnterpriseDB (NETFRAMEWORK)
             list.RemoveAt(list.Count - 1);
             if (list.Count == 0)
                 _pendingEnlistedConnectors.Remove(transaction);
@@ -488,7 +533,6 @@ public abstract class EDBDataSource : DbDataSource
         return default;
     }
 
-#pragma warning disable CS1998
     /// <inheritdoc cref="DisposeAsyncCore" />
     protected virtual async ValueTask DisposeAsyncBase()
     {
@@ -501,7 +545,7 @@ public abstract class EDBDataSource : DbDataSource
 
         if (_periodicPasswordProviderTimer is not null)
         {
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER // EnterpriseDB 
             await _periodicPasswordProviderTimer.DisposeAsync().ConfigureAwait(false);
 #else
             _periodicPasswordProviderTimer.Dispose();
@@ -514,7 +558,6 @@ public abstract class EDBDataSource : DbDataSource
         // TODO: async Clear, #4499
         Clear();
     }
-#pragma warning restore CS1998
 
     private protected void CheckDisposed()
     {
@@ -524,16 +567,13 @@ public abstract class EDBDataSource : DbDataSource
 
     #endregion
 
-    sealed class DatabaseStateInfo
+    sealed class DatabaseStateInfo(DatabaseState state, EDBTimeout timeout, DateTime timeStamp)
     {
-        internal readonly DatabaseState State;
-        internal readonly EDBTimeout Timeout;
+        internal readonly DatabaseState State = state;
+        internal readonly EDBTimeout Timeout = timeout;
         // While the TimeStamp is not strictly required, it does lower the risk of overwriting the current state with an old value
-        internal readonly DateTime TimeStamp;
+        internal readonly DateTime TimeStamp = timeStamp;
 
         public DatabaseStateInfo() : this(default, default, default) { }
-
-        public DatabaseStateInfo(DatabaseState state, EDBTimeout timeout, DateTime timeStamp)
-            => (State, Timeout, TimeStamp) = (state, timeout, timeStamp);
     }
 }

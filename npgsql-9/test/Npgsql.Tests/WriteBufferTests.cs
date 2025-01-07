@@ -107,7 +107,6 @@ class WriteBufferTests
         Assert.That(completed, Is.False);
     }
 
-#pragma warning disable CS8625
     [SetUp]
     public void SetUp()
     {
@@ -115,7 +114,6 @@ class WriteBufferTests
         WriteBuffer = new EDBWriteBuffer(null, Underlying, null, EDBReadBuffer.DefaultSize, EDBWriteBuffer.UTF8Encoding);
         WriteBuffer.MessageLengthValidation = false;
     }
-#pragma warning restore CS8625
 
     // ReSharper disable once InconsistentNaming
     EDBWriteBuffer WriteBuffer = default!;

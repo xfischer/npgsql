@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-
-#pragma warning disable 1591
-
+﻿
 namespace System.Diagnostics.CodeAnalysis
 {
 #if !NET7_0_OR_GREATER
@@ -24,9 +20,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// A message that contains information about the usage of dynamic code.
         /// </param>
         public RequiresDynamicCodeAttribute(string message)
-        {
-            Message = message;
-        }
+            => Message = message;
 
         /// <summary>
         /// Gets a message that contains information about the usage of dynamic code.
@@ -226,22 +220,17 @@ namespace System.Runtime.CompilerServices
     { }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
-    sealed class CompilerFeatureRequiredAttribute : Attribute
+    sealed class CompilerFeatureRequiredAttribute(string featureName) : Attribute
     {
-        public CompilerFeatureRequiredAttribute(string featureName)
-        {
-            FeatureName = featureName;
-        }
-
         /// <summary>
         /// The name of the compiler feature.
         /// </summary>
-        public string FeatureName { get; }
+        public string FeatureName { get; } = featureName;
 
         /// <summary>
         /// If true, the compiler can choose to allow access to the location where this attribute is applied if it does not understand <see cref="FeatureName"/>.
         /// </summary>
-        public bool IsOptional { get; init; }
+        public bool IsOptional { get; set; }
 
         /// <summary>
         /// The <see cref="FeatureName"/> used for the ref structs C# feature.

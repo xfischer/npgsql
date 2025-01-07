@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace EnterpriseDB.EDBClient.Util;
 
@@ -25,6 +26,15 @@ static class Statics
         EnableAssertions = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableAssertions", out var enabled) && enabled;
         LegacyTimestampBehavior = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.EnableLegacyTimestampBehavior", out enabled) && enabled;
         DisableDateTimeInfinityConversions = AppContext.TryGetSwitch("EnterpriseDB.EDBClient.DisableDateTimeInfinityConversions", out enabled) && enabled;
+    }
+
+    /// Returns the escaped SQL representation of a string literal.
+    /// <param name="literal">The identifier to be escaped.</param>
+    internal static string EscapeLiteral(string literal)
+    {
+        // There is no support for escape sequences in quoted values for PostgreSQL, so replacing ' is enough.
+        // (to be able to use escaped characters an alternative syntax exists, it requires E to appear directly before the opening quote)
+        return literal.Replace("'", "''");
     }
 
     internal static T Expect<T>(IBackendMessage msg, EDBConnector connector)

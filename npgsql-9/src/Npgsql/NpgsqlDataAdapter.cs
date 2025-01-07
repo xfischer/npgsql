@@ -213,18 +213,18 @@ public sealed class EDBDataAdapter : DbDataAdapter
 
 #pragma warning disable 1591
 
-public class EDBRowUpdatingEventArgs : RowUpdatingEventArgs
-{
-    public EDBRowUpdatingEventArgs(DataRow dataRow, IDbCommand? command, System.Data.StatementType statementType,
-        DataTableMapping tableMapping)
-        : base(dataRow, command, statementType, tableMapping) {}
-}
+public class EDBRowUpdatingEventArgs(
+    DataRow dataRow,
+    IDbCommand? command,
+    System.Data.StatementType statementType,
+    DataTableMapping tableMapping)
+    : RowUpdatingEventArgs(dataRow, command, statementType, tableMapping);
 
-public class EDBRowUpdatedEventArgs : RowUpdatedEventArgs
-{
-    public EDBRowUpdatedEventArgs(DataRow dataRow, IDbCommand? command, System.Data.StatementType statementType,
-        DataTableMapping tableMapping)
-        : base(dataRow, command, statementType, tableMapping) {}
-}
+public class EDBRowUpdatedEventArgs(
+    DataRow dataRow,
+    IDbCommand? command,
+    System.Data.StatementType statementType,
+    DataTableMapping tableMapping)
+    : RowUpdatedEventArgs(dataRow, command, statementType, tableMapping);
 
 #pragma warning restore 1591

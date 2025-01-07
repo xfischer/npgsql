@@ -44,9 +44,7 @@ sealed class KerberosUsernameProvider
 
         return GetUsernameAsyncInternal();
 
-#pragma warning disable CS1998
         async ValueTask<string?> GetUsernameAsyncInternal()
-#pragma warning restore CS1998
         {
 #if NET5_0_OR_GREATER
             if (async)
@@ -68,7 +66,7 @@ sealed class KerberosUsernameProvider
             var line = default(string);
             for (var i = 0; i < 2; i++)
                 // ReSharper disable once MethodHasAsyncOverload
-#if NET7_0_OR_GREATER
+#if NET7_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
                 if ((line = async ? await process.StandardOutput.ReadLineAsync(cancellationToken).ConfigureAwait(false) : process.StandardOutput.ReadLine()) == null)
 #elif NET5_0_OR_GREATER
                 if ((line = async ? await process.StandardOutput.ReadLineAsync().ConfigureAwait(false) : process.StandardOutput.ReadLine()) == null)
@@ -113,7 +111,7 @@ sealed class KerberosUsernameProvider
 
     static string? FindInPath(string name)
     {
-        foreach (var p in Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>())
+        foreach (var p in Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? [])
         {
             var path = Path.Combine(p, name);
             if (File.Exists(path))

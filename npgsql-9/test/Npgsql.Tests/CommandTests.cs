@@ -16,7 +16,7 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
-public class CommandTests : MultiplexingTestBase
+public class CommandTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     static uint Int4Oid => PostgresMinimalDatabaseInfo.DefaultTypeCatalog.GetOid(DataTypeNames.Int4).Value;
     static uint TextOid => PostgresMinimalDatabaseInfo.DefaultTypeCatalog.GetOid(DataTypeNames.Text).Value;
@@ -247,7 +247,7 @@ public class CommandTests : MultiplexingTestBase
     public async Task Timeout_switch_connection()
     {
         var csb = new EDBConnectionStringBuilder(ConnectionString);
-        if (csb.CommandTimeout >= 100 && csb.CommandTimeout < 105)
+        if (csb.CommandTimeout is >= 100 and < 105)
             IgnoreExceptOnBuildServer("Bad default command timeout");
 
         await using var dataSource1 = CreateDataSource(ConnectionString + ";CommandTimeout=100");
@@ -902,8 +902,7 @@ $$ LANGUAGE plpgsql;";
         // Create a separate dataSource because of Multiplexing (otherwise we can break unrelated queries)
         await using var dataSource = CreateDataSource();
         await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new 
-            EDBCommand("SELECT @a, @b, @c, @d, @e, @f, @g, @h", conn);
+        await using var cmd = new EDBCommand("SELECT @a, @b, @c, @d, @e, @f, @g, @h", conn);
 
         var largeParam = new string('A', 1 << 29);
         cmd.Parameters.AddWithValue("a", largeParam);
@@ -1320,7 +1319,7 @@ $$ LANGUAGE plpgsql;";
         }
     }
 
-    [Test, Timeout(30000)]
+    [Test, Timeout(30000)] // EnterpriseDB (timeout)
     public void Batched_small_then_big_statements_do_not_deadlock_in_sync_io()
     {
         if (IsMultiplexing)
@@ -1644,181 +1643,4 @@ FROM
 
         Assert.That(connection.PostgresParameters, Contains.Key("SomeKey").WithValue("SomeValue"));
     }
-
-    #region Logging
-
-    [Test]
-    public async Task Log_ExecuteScalar_single_statement_without_parameters()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT 1", conn);
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Command execution completed").And.Contains("SELECT 1"));
-        AssertLoggingStateContains(executingCommandEvent, "CommandText", "SELECT 1");
-        AssertLoggingStateDoesNotContain(executingCommandEvent, "Parameters");
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_single_statement_with_positional_parameters()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT $1, $2", conn);
-        cmd.Parameters.Add(new() { Value = 8 });
-        cmd.Parameters.Add(new() { EDBDbType = EDBDbType.Integer, Value = DBNull.Value });
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Command execution completed")
-            .And.Contains("SELECT $1, $2")
-            .And.Contains("Parameters: [8, NULL]"));
-        AssertLoggingStateContains(executingCommandEvent, "CommandText", "SELECT $1, $2");
-        AssertLoggingStateContains(executingCommandEvent, "Parameters", new object[] { 8, "NULL" });
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_single_statement_with_named_parameters()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT @p1, @p2", conn);
-        cmd.Parameters.Add(new() { ParameterName = "p1", Value = 8 });
-        cmd.Parameters.Add(new() { ParameterName = "p2", EDBDbType = EDBDbType.Integer, Value = DBNull.Value });
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Command execution completed")
-            .And.Contains("SELECT $1, $2")
-            .And.Contains("Parameters: [8, NULL]"));
-        AssertLoggingStateContains(executingCommandEvent, "CommandText", "SELECT $1, $2");
-        AssertLoggingStateContains(executingCommandEvent, "Parameters", new object[] { 8, "NULL" });
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_single_statement_with_parameter_logging_off()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider, sensitiveDataLoggingEnabled: false);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT $1, $2", conn);
-        cmd.Parameters.Add(new() { Value = 8 });
-        cmd.Parameters.Add(new() { Value = 9 });
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Command execution completed").And.Contains($"SELECT $1, $2"));
-        AssertLoggingStateContains(executingCommandEvent, "CommandText", "SELECT $1, $2");
-        AssertLoggingStateDoesNotContain(executingCommandEvent, "Parameters");
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_multiple_statement_without_parameters()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT 1; SELECT 2", conn);
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Batch execution completed").And.Contains("[(SELECT 1, System.Object[]), (SELECT 2, System.Object[])]"));
-        var batchCommands = (IList<(string CommandText, object[] Parameters)>)AssertLoggingStateContains(executingCommandEvent, "BatchCommands");
-        Assert.That(batchCommands.Count, Is.EqualTo(2));
-        Assert.That(batchCommands[0].CommandText, Is.EqualTo("SELECT 1"));
-        Assert.That(batchCommands[0].Parameters, Is.Empty);
-        Assert.That(batchCommands[1].CommandText, Is.EqualTo("SELECT 2"));
-        Assert.That(batchCommands[1].Parameters, Is.Empty);
-        AssertLoggingStateDoesNotContain(executingCommandEvent, "Parameters");
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_multiple_statement_with_parameters()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT @p1; SELECT @p2", conn);
-        cmd.Parameters.Add(new() { ParameterName = "p1", Value = 8 });
-        cmd.Parameters.Add(new() { ParameterName = "p2", Value = 9 });
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Batch execution completed").And.Contains("[(SELECT $1, System.Object[]), (SELECT $1, System.Object[])]"));
-        var batchCommands = (IList<(string CommandText, object[] Parameters)>)AssertLoggingStateContains(executingCommandEvent, "BatchCommands");
-        Assert.That(batchCommands.Count, Is.EqualTo(2));
-        Assert.That(batchCommands[0].CommandText, Is.EqualTo("SELECT $1"));
-        Assert.That(batchCommands[0].Parameters[0], Is.EqualTo(8));
-        Assert.That(batchCommands[1].CommandText, Is.EqualTo("SELECT $1"));
-        Assert.That(batchCommands[1].Parameters[0], Is.EqualTo(9));
-        AssertLoggingStateDoesNotContain(executingCommandEvent, "Parameters");
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    [Test]
-    public async Task Log_ExecuteScalar_multiple_statement_with_parameter_logging_off()
-    {
-        await using var dataSource = CreateLoggingDataSource(out var listLoggerProvider, sensitiveDataLoggingEnabled: false);
-        await using var conn = await dataSource.OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT @p1; SELECT @p2", conn);
-        cmd.Parameters.Add(new() { ParameterName = "p1", Value = 8 });
-        cmd.Parameters.Add(new() { ParameterName = "p2", Value = 9 });
-
-        using (listLoggerProvider.Record())
-        {
-            await cmd.ExecuteScalarAsync();
-        }
-
-        var executingCommandEvent = listLoggerProvider.Log.Single(l => l.Id == EDBEventId.CommandExecutionCompleted);
-        Assert.That(executingCommandEvent.Message, Does.Contain("Batch execution completed").And.Contains("[SELECT $1, SELECT $1]"));
-        var batchCommands = (IList<string>)AssertLoggingStateContains(executingCommandEvent, "BatchCommands");
-        Assert.That(batchCommands.Count, Is.EqualTo(2));
-        Assert.That(batchCommands[0], Is.EqualTo("SELECT $1"));
-        Assert.That(batchCommands[1], Is.EqualTo("SELECT $1"));
-        AssertLoggingStateDoesNotContain(executingCommandEvent, "Parameters");
-
-        if (!IsMultiplexing)
-            AssertLoggingStateContains(executingCommandEvent, "ConnectorId", conn.ProcessID);
-    }
-
-    #endregion Logging
-
-    public CommandTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) { }
 }

@@ -11,11 +11,8 @@ using EnterpriseDB.EDBClient;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
-public class FullTextSearchTests : MultiplexingTestBase
+public class FullTextSearchTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
-    public FullTextSearchTests(MultiplexingMode multiplexingMode)
-        : base(multiplexingMode) { }
-
     [Test]
     public Task TsVector()
         => AssertType(
@@ -26,31 +23,27 @@ public class FullTextSearchTests : MultiplexingTestBase
 
     public static IEnumerable TsQueryTestCases() => new[]
     {
-        new object[]
-        {
+        [
             "'a'",
             new EDBTsQueryLexeme("a")
-        },
-        new object[]
-        {
+        ],
+        [
             "!'a'",
             new EDBTsQueryNot(
                 new EDBTsQueryLexeme("a"))
-        },
-        new object[]
-        {
+        ],
+        [
             "'a' | 'b'",
             new EDBTsQueryOr(
                 new EDBTsQueryLexeme("a"),
                 new EDBTsQueryLexeme("b"))
-        },
-        new object[]
-        {
+        ],
+        [
             "'a' & 'b'",
             new EDBTsQueryAnd(
                 new EDBTsQueryLexeme("a"),
                 new EDBTsQueryLexeme("b"))
-        },
+        ],
         new object[]
         {
             "'a' <-> 'b'",

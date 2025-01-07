@@ -14,19 +14,19 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 /// </summary>
 public class PeriodIntervalMapping : NpgsqlTypeMapping
 {
-    private static readonly MethodInfo FromYears = typeof(Period).GetRuntimeMethod(nameof(Period.FromYears), new[] { typeof(int) })!;
-    private static readonly MethodInfo FromMonths = typeof(Period).GetRuntimeMethod(nameof(Period.FromMonths), new[] { typeof(int) })!;
-    private static readonly MethodInfo FromWeeks = typeof(Period).GetRuntimeMethod(nameof(Period.FromWeeks), new[] { typeof(int) })!;
-    private static readonly MethodInfo FromDays = typeof(Period).GetRuntimeMethod(nameof(Period.FromDays), new[] { typeof(int) })!;
-    private static readonly MethodInfo FromHours = typeof(Period).GetRuntimeMethod(nameof(Period.FromHours), new[] { typeof(long) })!;
-    private static readonly MethodInfo FromMinutes = typeof(Period).GetRuntimeMethod(nameof(Period.FromMinutes), new[] { typeof(long) })!;
-    private static readonly MethodInfo FromSeconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromSeconds), new[] { typeof(long) })!;
+    private static readonly MethodInfo FromYears = typeof(Period).GetRuntimeMethod(nameof(Period.FromYears), [typeof(int)])!;
+    private static readonly MethodInfo FromMonths = typeof(Period).GetRuntimeMethod(nameof(Period.FromMonths), [typeof(int)])!;
+    private static readonly MethodInfo FromWeeks = typeof(Period).GetRuntimeMethod(nameof(Period.FromWeeks), [typeof(int)])!;
+    private static readonly MethodInfo FromDays = typeof(Period).GetRuntimeMethod(nameof(Period.FromDays), [typeof(int)])!;
+    private static readonly MethodInfo FromHours = typeof(Period).GetRuntimeMethod(nameof(Period.FromHours), [typeof(long)])!;
+    private static readonly MethodInfo FromMinutes = typeof(Period).GetRuntimeMethod(nameof(Period.FromMinutes), [typeof(long)])!;
+    private static readonly MethodInfo FromSeconds = typeof(Period).GetRuntimeMethod(nameof(Period.FromSeconds), [typeof(long)])!;
 
     private static readonly MethodInfo FromMilliseconds = typeof(Period).GetRuntimeMethod(
-        nameof(Period.FromMilliseconds), new[] { typeof(long) })!;
+        nameof(Period.FromMilliseconds), [typeof(long)])!;
 
     private static readonly MethodInfo FromNanoseconds = typeof(Period).GetRuntimeMethod(
-        nameof(Period.FromNanoseconds), new[] { typeof(long) })!;
+        nameof(Period.FromNanoseconds), [typeof(long)])!;
 
     private static readonly PropertyInfo Zero = typeof(Period).GetProperty(nameof(Period.Zero))!;
 
@@ -94,7 +94,9 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override string GenerateEmbeddedNonNullSqlLiteral(object value)
-        => $@"""{GenerateLiteralCore(value)}""";
+        => $"""
+            "{GenerateLiteralCore(value)}"
+            """;
 
     private string GenerateLiteralCore(object value)
         => PeriodPattern.NormalizingIso.Format((Period)value);
@@ -163,6 +165,8 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
 
     private sealed class JsonPeriodReaderWriter : JsonValueReaderWriter<Period>
     {
+        private static readonly PropertyInfo InstanceProperty = typeof(JsonPeriodReaderWriter).GetProperty(nameof(Instance))!;
+
         public static JsonPeriodReaderWriter Instance { get; } = new();
 
         public override Period FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
@@ -170,5 +174,8 @@ public class PeriodIntervalMapping : NpgsqlTypeMapping
 
         public override void ToJsonTyped(Utf8JsonWriter writer, Period value)
             => writer.WriteStringValue(PeriodPattern.NormalizingIso.Format(value));
+
+        /// <inheritdoc />
+        public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);
     }
 }

@@ -3,35 +3,21 @@ using EnterpriseDB.EDBClient.Internal;
 
 namespace EnterpriseDB.EDBClient.Tests.Support;
 
-class PgCancellationRequest
+class PgCancellationRequest(EDBReadBuffer readBuffer, EDBWriteBuffer writeBuffer, Stream stream, int processId, int secret)
 {
-    readonly EDBReadBuffer _readBuffer;
-    readonly EDBWriteBuffer _writeBuffer;
-    readonly Stream _stream;
-
-    public int ProcessId { get; }
-    public int Secret { get; }
+    public int ProcessId { get; } = processId;
+    public int Secret { get; } = secret;
 
     bool completed;
-
-    public PgCancellationRequest(EDBReadBuffer readBuffer, EDBWriteBuffer writeBuffer, Stream stream, int processId, int secret)
-    {
-        _readBuffer = readBuffer;
-        _writeBuffer = writeBuffer;
-        _stream = stream;
-
-        ProcessId = processId;
-        Secret = secret;
-    }
 
     public void Complete()
     {
         if (completed)
             return;
 
-        _readBuffer.Dispose();
-        _writeBuffer.Dispose();
-        _stream.Dispose();
+        readBuffer.Dispose();
+        writeBuffer.Dispose();
+        stream.Dispose();
 
         completed = true;
     }

@@ -12,8 +12,6 @@ public static class TracerProviderBuilderExtensions
     /// <summary>
     /// Subscribes to the EDB activity source to enable OpenTelemetry tracing.
     /// </summary>
-    public static TracerProviderBuilder AddEDB(
-        this TracerProviderBuilder builder,
-        Action<EDBTracingOptions>? options = null)
+    public static TracerProviderBuilder AddEDB(this TracerProviderBuilder builder)
         => builder.AddSource("EDB");
 }

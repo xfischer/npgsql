@@ -956,14 +956,33 @@ LANGUAGE 'plpgsql'");
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5484")]
     public async Task GetFieldValueAsync_AsyncRead()
     {
-        await using var conn = await OpenConnectionAsync();
-        using var cmd = conn.CreateCommand();
-        var expected = new string('a', conn.Settings.ReadBufferSize + 1);
-        cmd.CommandText = $"""select repeat('a', {conn.Settings.ReadBufferSize+1}) from generate_series(1, 1000)""";
-        var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+        if (!IsSequential)
+            return;
+
+        await using var postmasterMock = PgPostmasterMock.Start(ConnectionString);
+        await using var dataSource = CreateDataSource(postmasterMock.ConnectionString);
+        await using var conn = await dataSource.OpenConnectionAsync();
+
+        var expected = new byte[10000];
+        expected.AsSpan().Fill(1);
+
+        var pgMock = await postmasterMock.WaitForServerConnection();
+        await pgMock
+            .WriteParseComplete()
+            .WriteBindComplete()
+            .WriteRowDescription(new FieldDescription(ByteaOid))
+            .WriteDataRowWithFlush(expected);
+
+        using var cmd = new EDBCommand("irrelevant", conn);
+        var reader = await cmd.ExecuteReaderAsync(Behavior);
         while (await reader.ReadAsync())
         {
-            Assert.AreEqual(expected, await reader.GetFieldValueAsync<object>(0));
+            var task = reader.GetFieldValueAsync<object>(0);
+            await pgMock
+                .WriteCommandComplete()
+                .WriteReadyForQuery()
+                .FlushAsync();
+            Assert.AreEqual(expected, await task);
         }
     }
 
@@ -1353,7 +1372,7 @@ LANGUAGE plpgsql VOLATILE";
         var table = await CreateTempTable(conn, "bytes BYTEA");
 
         // TODO: This is too small to actually test any interesting sequential behavior
-        byte[] expected = { 1, 2, 3, 4, 5 };
+        byte[] expected = [1, 2, 3, 4, 5];
         var actual = new byte[expected.Length];
         await conn.ExecuteNonQueryAsync($"INSERT INTO {table} (bytes) VALUES ({EncodeByteaHex(expected)})");
 
@@ -1384,7 +1403,7 @@ LANGUAGE plpgsql VOLATILE";
         reader.GetBytes(4, 0, actual, 0, 2);
         Assert.That(reader.GetBytes(4, expected.Length - 1, actual, 0, 2), Is.EqualTo(1),
             "Length greater than data length");
-        Assert.That(actual[0], Is.EqualTo(expected[expected.Length - 1]), "Length greater than data length");
+        Assert.That(actual[0], Is.EqualTo(expected[^1]), "Length greater than data length");
         Assert.That(() => reader.GetBytes(4, 0, actual, 0, actual.Length + 1),
             Throws.Exception.TypeOf<IndexOutOfRangeException>(), "Length great than output buffer length");
         // Close in the middle of a column
@@ -1650,7 +1669,7 @@ LANGUAGE plpgsql VOLATILE";
         // Jump to another column from the middle of the column
         reader.GetChars(5, 0, actual, 0, 2);
         Assert.That(reader.GetChars(5, expected.Length - 1, actual, 0, 2), Is.EqualTo(1), "Length greater than data length");
-        Assert.That(actual[0], Is.EqualTo(expected[expected.Length - 1]), "Length greater than data length");
+        Assert.That(actual[0], Is.EqualTo(expected[^1]), "Length greater than data length");
         Assert.That(() => reader.GetChars(5, 0, actual, 0, actual.Length + 1), Throws.Exception.TypeOf<IndexOutOfRangeException>(), "Length great than output buffer length");
         // Close in the middle of a column
         reader.GetChars(6, 0, actual, 0, 2);
@@ -1871,7 +1890,7 @@ LANGUAGE plpgsql VOLATILE";
                 Assert.DoesNotThrow(() => reader.EndRead());
         }
 
-        reader.Commit(resuming: false);
+        reader.Commit();
     }
 
     [Test, Description("Tests that everything goes well when a type handler generates a NpgsqlSafeReadException")]
@@ -2335,7 +2354,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
 
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3446")] // EDBExplicit("Works in community")
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/3446")]
     public async Task Bug3446()
     {
         if (IsMultiplexing)
@@ -2388,23 +2407,17 @@ LANGUAGE plpgsql VOLATILE";
 
 #region Mock Type Handlers
 
-sealed class ExplodingTypeHandlerResolverFactory : PgTypeInfoResolverFactory
+sealed class ExplodingTypeHandlerResolverFactory(bool safe) : PgTypeInfoResolverFactory
 {
-    readonly bool _safe;
-    public ExplodingTypeHandlerResolverFactory(bool safe) => _safe = safe;
-
-    public override IPgTypeInfoResolver CreateResolver() => new Resolver(_safe);
+    public override IPgTypeInfoResolver CreateResolver() => new Resolver(safe);
     public override IPgTypeInfoResolver? CreateArrayResolver() => null;
 
-    sealed class Resolver : IPgTypeInfoResolver
+    sealed class Resolver(bool safe) : IPgTypeInfoResolver
     {
-        readonly bool _safe;
-        public Resolver(bool safe) => _safe = safe;
-
         public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
         {
             if (dataTypeName == DataTypeNames.Int4 && (type == typeof(int) || type is null))
-                return new(options, new ExplodingTypeHandler(_safe), DataTypeNames.Int4);
+                return new(options, new ExplodingTypeHandler(safe), DataTypeNames.Int4);
 
             return null;
         }

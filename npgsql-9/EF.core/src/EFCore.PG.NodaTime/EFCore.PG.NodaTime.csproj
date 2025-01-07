@@ -24,6 +24,10 @@
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" />
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="build\**\*">
+      <Pack>True</Pack>
+      <PackagePath>build</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

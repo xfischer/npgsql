@@ -4,33 +4,18 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
 {
-    public class MigrationsInfrastructureNpgsqlTest
-        : MigrationsInfrastructureTestBase<MigrationsInfrastructureNpgsqlTest.MigrationsInfrastructureNpgsqlFixture>
+    public class MigrationsInfrastructureNpgsqlTest(MigrationsInfrastructureNpgsqlTest.MigrationsInfrastructureNpgsqlFixture fixture)
+        : MigrationsInfrastructureTestBase<MigrationsInfrastructureNpgsqlTest.MigrationsInfrastructureNpgsqlFixture>(fixture)
     {
-        public MigrationsInfrastructureNpgsqlTest(MigrationsInfrastructureNpgsqlFixture fixture)
-            : base(fixture)
+        // TODO: Remove once we sync to https://github.com/dotnet/efcore/pull/35106
+        public override void Can_generate_no_migration_script()
         {
         }
 
-        // https://github.com/dotnet/efcore/pull/33404/files#r1597462604
-        public override void Can_apply_all_migrations()
-            => Assert.Throws<PostgresException>(() => base.Can_apply_all_migrations());
-
-        // https://github.com/dotnet/efcore/pull/33404/files#r1597462604
-        public override Task Can_apply_all_migrations_async()
-            => Assert.ThrowsAsync<PostgresException>(() => base.Can_apply_all_migrations_async());
-
-        // https://github.com/dotnet/efcore/pull/33404/files#r1597462604
-        public override void Can_apply_range_of_migrations()
-            => Assert.Throws<PostgresException>(() => base.Can_apply_range_of_migrations());
-
-        // https://github.com/dotnet/efcore/pull/33404/files#r1597462604
-        public override void Can_revert_all_migrations()
-            => Assert.Throws<PostgresException>(() => base.Can_revert_all_migrations());
-
-        // https://github.com/dotnet/efcore/pull/33404/files#r1597462604
-        public override void Can_revert_one_migrations()
-            => Assert.Throws<PostgresException>(() => base.Can_revert_one_migrations());
+        // TODO: Remove once we sync to https://github.com/dotnet/efcore/pull/35106
+        public override void Can_generate_migration_from_initial_database_to_initial()
+        {
+        }
 
         public override void Can_get_active_provider()
         {
@@ -39,12 +24,33 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
             Assert.Equal("EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL", ActiveProvider);
         }
 
+        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/33056")]
+        public override void Can_apply_all_migrations()
+            => base.Can_apply_all_migrations();
+
+        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/33056")]
+        public override void Can_apply_range_of_migrations()
+            => base.Can_apply_range_of_migrations();
+
+        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/33056")]
+        public override void Can_revert_all_migrations()
+            => base.Can_revert_all_migrations();
+
+        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/33056")]
+        public override void Can_revert_one_migrations()
+            => base.Can_revert_one_migrations();
+
+        [ConditionalFact(Skip = "https://github.com/dotnet/efcore/issues/33056")]
+        public override Task Can_apply_all_migrations_async()
+            => base.Can_apply_all_migrations_async();
+
         [ConditionalFact]
         public async Task Empty_Migration_Creates_Database()
         {
             await using var context = new BloggingContext(
                 Fixture.TestStore.AddProviderOptions(
-                    new DbContextOptionsBuilder().EnableServiceProviderCaching(false)).Options);
+                        new DbContextOptionsBuilder().EnableServiceProviderCaching(false))
+                    .ConfigureWarnings(e => e.Log(RelationalEventId.PendingModelChangesWarning)).Options);
 
             var creator = (NpgsqlDatabaseCreator)context.GetService<IRelationalDatabaseCreator>();
             creator.RetryTimeout = TimeSpan.FromMinutes(10);
@@ -54,13 +60,8 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
             Assert.True(creator.Exists());
         }
 
-        private class BloggingContext : DbContext
+        private class BloggingContext(DbContextOptions options) : DbContext(options)
         {
-            public BloggingContext(DbContextOptions options)
-                : base(options)
-            {
-            }
-
             // ReSharper disable once UnusedMember.Local
             public DbSet<Blog> Blogs { get; set; }
 
@@ -168,6 +169,9 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
             // TODO: Implement
         }
 
+        protected override Task ExecuteSqlAsync(string value)
+            => ((NpgsqlTestStore)Fixture.TestStore).ExecuteNonQueryAsync(value);
+
         public class MigrationsInfrastructureNpgsqlFixture : MigrationsInfrastructureFixtureBase
         {
             protected override ITestStoreFactory TestStoreFactory
@@ -176,21 +180,14 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations
             public override MigrationsContext CreateContext()
             {
                 var options = AddOptions(
-                        new DbContextOptionsBuilder()
+                        TestStore.AddProviderOptions(new DbContextOptionsBuilder())
                             .UseNpgsql(
                                 TestStore.ConnectionString, b => b.ApplyConfiguration()
-                                    .CommandTimeout(NpgsqlTestStore.CommandTimeout)
-                                    .SetPostgresVersion(TestEnvironment.PostgresVersion)
-                                    .ReverseNullOrdering()))
-                    .UseInternalServiceProvider(CreateServiceProvider())
+                                    .SetPostgresVersion(TestEnvironment.PostgresVersion)))
+                    .UseInternalServiceProvider(ServiceProvider)
                     .Options;
                 return new MigrationsContext(options);
             }
-
-            private static IServiceProvider CreateServiceProvider()
-                => new ServiceCollection()
-                    .AddEntityFrameworkNpgsql()
-                    .BuildServiceProvider();
         }
     }
 }

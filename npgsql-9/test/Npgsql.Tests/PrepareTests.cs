@@ -462,7 +462,7 @@ public class PrepareTests: TestBase
 
         // SQL overloading is a pretty rare/exotic scenario. Handling it properly would involve keying
         // prepared statements not just by SQL but also by the parameter types, which would pointlessly
-        // increase allocations. Instead, the second execution simply reuns unprepared
+        // increase allocations. Instead, the second execution simply reruns unprepared
         AssertNumPreparedStatements(conn, 1);
         conn.UnprepareAll();
     }
@@ -659,7 +659,7 @@ public class PrepareTests: TestBase
         using (var conn = OpenConnectionAndUnprepare())
         using (var cmd = new EDBCommand("SELECT @p", conn))
         {
-            throw new NotImplementedException("Problem: currentl setting EDBParameter.Value clears/invalidates...");
+            throw new NotImplementedException("Problem: current setting NpgsqlParameter.Value clears/invalidates...");
             cmd.Parameters.Add(new EDBParameter("p", EDBDbType.Integer));
             cmd.Prepare(true);
 
@@ -789,11 +789,7 @@ public class PrepareTests: TestBase
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var cmd = conn.CreateCommand();
 
-#if NETFRAMEWORK
         cmd.CommandText = string.Join(";", Enumerable.Range(1, 500).Select(x => $"SELECT {x}"));
-#else
-        cmd.CommandText = string.Join(';', Enumerable.Range(1, 500).Select(x => $"SELECT {x}"));
-#endif
         await cmd.PrepareAsync();
         await cmd.UnprepareAsync();
     }

@@ -198,7 +198,7 @@ public sealed class EDBTransaction : DbTransaction
     /// This method does not cause a database roundtrip to be made. The savepoint creation statement will instead be sent along with
     /// the next command.
     /// </remarks>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override void Save(string name)
 #else
     public void Save(string name)
@@ -240,7 +240,7 @@ public sealed class EDBTransaction : DbTransaction
     /// This method does not cause a database roundtrip to be made, and will therefore always complete synchronously.
     /// The savepoint creation statement will instead be sent along with the next command.
     /// </remarks>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override Task SaveAsync(string name, CancellationToken cancellationToken = default)
 #else
     public Task SaveAsync(string name, CancellationToken cancellationToken = default)
@@ -272,7 +272,7 @@ public sealed class EDBTransaction : DbTransaction
     /// Rolls back a transaction from a pending savepoint state.
     /// </summary>
     /// <param name="name">The name of the savepoint.</param>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override void Rollback(string name)
 #else
     public void Rollback(string name)
@@ -286,7 +286,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override Task RollbackAsync(string name, CancellationToken cancellationToken = default)
 #else
     public Task RollbackAsync(string name, CancellationToken cancellationToken = default)
@@ -315,7 +315,7 @@ public sealed class EDBTransaction : DbTransaction
     /// Releases a transaction from a pending savepoint state.
     /// </summary>
     /// <param name="name">The name of the savepoint.</param>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override void Release(string name)
 #else
     public void Release(string name)
@@ -329,7 +329,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <param name="cancellationToken">
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override Task ReleaseAsync(string name, CancellationToken cancellationToken = default)
 #else
     public Task ReleaseAsync(string name, CancellationToken cancellationToken = default)
@@ -339,7 +339,7 @@ public sealed class EDBTransaction : DbTransaction
     /// <summary>
     /// Indicates whether this transaction supports database savepoints.
     /// </summary>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB
     public override bool SupportsSavepoints
 #else
     public bool SupportsSavepoints

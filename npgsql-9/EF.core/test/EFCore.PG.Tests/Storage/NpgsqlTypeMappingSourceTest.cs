@@ -41,6 +41,7 @@ public class NpgsqlTypeMappingSourceTest
     [InlineData("geometry(POLYGONM)", typeof(Polygon), null, null, null, false)]
     [InlineData("xid", typeof(uint), null, null, null, false)]
     [InlineData("xid8", typeof(ulong), null, null, null, false)]
+    [InlineData("jsonpath", typeof(string), null, null, null, false)]
     public void By_StoreType(string typeName, Type type, int? size, int? precision, int? scale, bool fixedLength)
     {
         var mapping = CreateTypeMappingSource().FindMapping(typeName);
@@ -308,13 +309,12 @@ public class NpgsqlTypeMappingSourceTest
             new TypeMappingSourceDependencies(
                 new ValueConverterSelector(new ValueConverterSelectorDependencies()),
                 new JsonValueReaderWriterSource(new JsonValueReaderWriterSourceDependencies()),
-                Array.Empty<ITypeMappingSourcePlugin>()),
+                []),
             new RelationalTypeMappingSourceDependencies(
-                new IRelationalTypeMappingSourcePlugin[]
-                {
-                    new NpgsqlNetTopologySuiteTypeMappingSourcePlugin(new NpgsqlNetTopologySuiteOptions()),
+            [
+                new NpgsqlNetTopologySuiteTypeMappingSourcePlugin(new NpgsqlNetTopologySuiteSingletonOptions()),
                     new DummyTypeMappingSourcePlugin()
-                }),
+            ]),
             new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
             options);
     }
@@ -353,13 +353,9 @@ public class NpgsqlTypeMappingSourceTest
         }
     }
 
-    private class DummyType
-    {
-    }
+    private class DummyType;
 
-    private class UnknownType
-    {
-    }
+    private class UnknownType;
 
     protected IModel CreateEmptyModel()
         => CreateModelBuilder().Model.FinalizeModel();

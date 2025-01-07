@@ -2,7 +2,7 @@ using System;
 
 namespace EnterpriseDB.EDBClient;
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -32,7 +32,7 @@ sealed class MetricsReporter : IDisposable
     readonly EDBDataSource _dataSource;
     readonly KeyValuePair<string, object?> _poolNameTag;
 
-    static readonly List<MetricsReporter> Reporters = new();
+    static readonly List<MetricsReporter> Reporters = [];
 
     CommandCounters _commandCounters;
 
@@ -256,7 +256,7 @@ sealed class MetricsReporter : IDisposable
     static readonly double StopWatchTickFrequency = (double)TicksPerSecond / Stopwatch.Frequency;
 #endif
 }
-#else
+#else  // EnterpriseDB (NETFRAMWEWORK)
 sealed class MetricsReporter : IDisposable
 {
     public MetricsReporter(EDBDataSource _) {}

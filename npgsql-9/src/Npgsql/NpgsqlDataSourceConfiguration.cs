@@ -10,10 +10,16 @@ namespace EnterpriseDB.EDBClient;
 
 sealed record EDBDataSourceConfiguration(string? Name,
     EDBLoggingConfiguration LoggingConfiguration,
+	EDBTracingOptions TracingOptions,
+    EDBTypeLoadingOptions TypeLoading,
     TransportSecurityHandler TransportSecurityHandler,
-    IntegratedSecurityHandler userCertificateValidationCallback,
+    IntegratedSecurityHandler IntegratedSecurityHandler,
+#if NET7_0_OR_GREATER // EnterpriseDB 
+    Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback,
+#else
     RemoteCertificateValidationCallback? UserCertificateValidationCallback,
     Action<X509CertificateCollection>? ClientCertificatesCallback,
+#endif
     Func<EDBConnectionStringBuilder, string>? PasswordProvider,
     Func<EDBConnectionStringBuilder, CancellationToken, ValueTask<string>>? PasswordProviderAsync,
     Func<EDBConnectionStringBuilder, CancellationToken, ValueTask<string>>? PeriodicPasswordProvider,
@@ -23,4 +29,8 @@ sealed record EDBDataSourceConfiguration(string? Name,
     List<HackyEnumTypeMapping> HackyEnumMappings,
     IEDBNameTranslator DefaultNameTranslator,
     Action<EDBConnection>? ConnectionInitializer,
-    Func<EDBConnection, Task>? ConnectionInitializerAsync);
+    Func<EDBConnection, Task>? ConnectionInitializerAsync
+#if NET7_0_OR_GREATER
+    ,Action<NegotiateAuthenticationClientOptions>? NegotiateOptionsCallback
+#endif
+    );

@@ -17,7 +17,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
 {
     #region Fields
 
-    private const string NamePartRegex = @"(?:(?:""(?<part{0}>(?:(?:"""")|[^""])+)"")|(?<part{0}>[^\.\[""]+))";
+    private const string NamePartRegex = """(?:(?:"(?<part{0}>(?:(?:"")|[^"])+)")|(?<part{0}>[^\.\["]+))""";
 
     private static readonly Regex SchemaTableNameExtractor =
         new(
@@ -29,7 +29,7 @@ public class NpgsqlDatabaseModelFactory : DatabaseModelFactory
             RegexOptions.Compiled,
             TimeSpan.FromMilliseconds(1000.0));
 
-    private static readonly string[] SerialTypes = { "int2", "int4", "int8" };
+    private static readonly string[] SerialTypes = ["int2", "int4", "int8"];
 
     private readonly IDiagnosticsLogger<DbLoggerCategory.Scaffolding> _logger;
 
@@ -229,7 +229,7 @@ WHERE
                 var name = reader.GetString("relname");
                 var type = reader.GetChar("relkind");
                 var comment = reader.GetValueOrDefault<string>("description");
-                var storageParameters = reader.GetValueOrDefault<string[]>("reloptions") ?? Array.Empty<string>();
+                var storageParameters = reader.GetValueOrDefault<string[]>("reloptions") ?? [];
 
                 var table = type switch
                 {
@@ -460,7 +460,7 @@ ORDER BY attnum
                         MaxValue = seqInfo.MaxValue,
                         IncrementBy = (int)(seqInfo.IncrementBy ?? 1),
                         IsCyclic = seqInfo.IsCyclic ?? false,
-                        NumbersToCache = seqInfo.NumbersToCache ?? 1
+                        NumbersToCache = seqInfo.CacheSize ?? 1
                     };
 
                     if (!sequenceData.Equals(IdentitySequenceOptionsData.Empty))
@@ -775,7 +775,7 @@ WHERE
                         index[NpgsqlAnnotationNames.NullsDistinct] = false;
                     }
 
-                    foreach (var storageParameter in record.GetValueOrDefault<string[]>("idx_reloptions") ?? Array.Empty<string>())
+                    foreach (var storageParameter in record.GetValueOrDefault<string[]>("idx_reloptions") ?? [])
                     {
                         if (storageParameter.Split("=") is [var paramName, var paramValue])
                         {
@@ -843,7 +843,7 @@ WHERE
         using var command = new EDBCommand(commandText, connection);
         using var reader = command.ExecuteReader();
 
-        constraintIndexes = new List<uint>();
+        constraintIndexes = [];
         var tableGroups = reader.Cast<DbDataRecord>().GroupBy(
             ddr => (
                 tableSchema: ddr.GetFieldValue<string>("nspname"),
@@ -980,12 +980,67 @@ WHERE
         Func<string, string>? schemaFilter,
         IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
     {
-    	// EnterpriseDB Team : add sys schema
-        // Note: we consult information_schema.sequences instead of pg_sequence but the latter was only introduced in PG 10
-        var commandText = $"""
+        // pg_sequence was only introduced in PG 10; we prefer that (cleaner and also exposes sequence caching info), but retain the old
+        // code for backwards compat
+        return connection.PostgreSqlVersion >= new Version(10, 0)
+            ? GetSequencesNew(connection, databaseModel, schemaFilter, logger)
+            : GetSequencesOld(connection, databaseModel, schemaFilter, logger);
+
+        static IEnumerable<DatabaseSequence> GetSequencesNew(
+            EDBConnection connection,
+            DatabaseModel databaseModel,
+            Func<string, string>? schemaFilter,
+            IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
+        {
+            // EnterpriseDB: filter out sys schema
+            var commandText = $"""
+SELECT nspname, relname, typname, seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle
+FROM pg_sequence
+JOIN pg_class AS cls ON cls.oid=seqrelid
+JOIN pg_namespace AS ns ON ns.oid = cls.relnamespace
+JOIN pg_type AS typ ON typ.oid = seqtypid
+/* Filter out owned serial and identity sequences */
+WHERE NOT EXISTS (SELECT * FROM pg_depend AS dep WHERE dep.objid = cls.oid AND dep.deptype IN ('i', 'I', 'a'))
+AND nspname <> 'sys'
+    {(schemaFilter is not null ? $"AND {schemaFilter("nspname")}" : null)}
+""";
+
+            using var command = new EDBCommand(commandText, connection);
+            using var reader = command.ExecuteReader();
+
+            foreach (var record in reader.Cast<DbDataRecord>())
+            {
+                var sequenceSchema = reader.GetFieldValue<string>("nspname");
+                var sequenceName = reader.GetFieldValue<string>("relname");
+
+                var seqInfo = ReadSequenceInfo(record, connection.PostgreSqlVersion);
+                var sequence = new DatabaseSequence
+                {
+                    Database = databaseModel,
+                    Name = sequenceName,
+                    Schema = sequenceSchema,
+                    StoreType = seqInfo.StoreType,
+                    StartValue = seqInfo.StartValue,
+                    MinValue = seqInfo.MinValue,
+                    MaxValue = seqInfo.MaxValue,
+                    IncrementBy = (int?)seqInfo.IncrementBy,
+                    IsCyclic = seqInfo.IsCyclic,
+                };
+
+                yield return sequence;
+            }
+        }
+
+        static IEnumerable<DatabaseSequence> GetSequencesOld(
+            EDBConnection connection,
+            DatabaseModel databaseModel,
+            Func<string, string>? schemaFilter,
+            IDiagnosticsLogger<DbLoggerCategory.Scaffolding> logger)
+        {
+            var commandText = $"""
 SELECT
   sequence_schema, sequence_name,
-  data_type AS seqtype,
+  data_type AS typname,
   {(connection.PostgreSqlVersion >= new Version(9, 1) ? "start_value" : "1")}::bigint AS seqstart,
   minimum_value::bigint AS seqmin,
   maximum_value::bigint AS seqmax,
@@ -1031,6 +1086,7 @@ WHERE
 
             yield return sequence;
         }
+    }
     }
 
     /// <summary>
@@ -1120,12 +1176,11 @@ JOIN pg_namespace ns ON ns.oid=extnamespace
         var commandText = $"""
 SELECT
     nspname, collname, collprovider, collcollate, collctype,
-    {(connection.PostgreSqlVersion.Major switch
-        {
-            >= 17 => "colllocale",
-            >= 15 => "colliculocale AS colllocale",
-            _ => "NULL AS colllocale"
-        })},
+    {(connection.PostgreSqlVersion.Major switch {
+        >= 17 => "colllocale",
+        >= 15 => "colliculocale AS colllocale",
+        _ => "NULL AS colllocale"
+         })},
     {(connection.PostgreSqlVersion >= new Version(12, 0) ? "collisdeterministic" : "true AS collisdeterministic")}
 FROM pg_collation coll
     JOIN pg_namespace ns ON ns.oid=coll.collnamespace
@@ -1241,15 +1296,23 @@ WHERE
 
     private static SequenceInfo ReadSequenceInfo(DbDataRecord record, Version postgresVersion)
     {
-        var storeType = record.GetFieldValue<string>("seqtype");
+        var storeType = record.GetFieldValue<string>("typname");
         var startValue = record.GetValueOrDefault<long>("seqstart");
         var minValue = record.GetValueOrDefault<long>("seqmin");
         var maxValue = record.GetValueOrDefault<long>("seqmax");
         var incrementBy = record.GetValueOrDefault<long>("seqincrement");
         var isCyclic = record.GetValueOrDefault<bool>("seqcycle");
-        var numbersToCache = (int)record.GetValueOrDefault<long>("seqcache");
+        var cacheSize = (int?)record.GetValueOrDefault<long>("seqcache");
 
         long defaultStart, defaultMin, defaultMax;
+
+        storeType = storeType switch
+        {
+            "int2" => "smallint",
+            "int4" => "integer",
+            "int8" => "bigint",
+            _ => storeType
+        };
 
         switch (storeType)
         {
@@ -1309,24 +1372,19 @@ WHERE
             MaxValue = maxValue == defaultMax ? null : maxValue,
             IncrementBy = incrementBy == 1 ? null : incrementBy,
             IsCyclic = isCyclic == false ? null : true,
-            NumbersToCache = numbersToCache == 1 ? null : numbersToCache
+            CacheSize = cacheSize is 1 or null ? null : cacheSize
         };
     }
 
-    private sealed class SequenceInfo
+    private sealed class SequenceInfo(string storeType)
     {
-        public SequenceInfo(string storeType)
-        {
-            StoreType = storeType;
-        }
-
-        public string StoreType { get; }
+        public string StoreType { get; } = storeType;
         public long? StartValue { get; set; }
         public long? MinValue { get; set; }
         public long? MaxValue { get; set; }
         public long? IncrementBy { get; set; }
         public bool? IsCyclic { get; set; }
-        public long? NumbersToCache { get; set; }
+        public int? CacheSize { get; set; }
     }
 
     #endregion
