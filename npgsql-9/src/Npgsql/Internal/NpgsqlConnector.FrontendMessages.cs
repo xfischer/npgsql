@@ -411,13 +411,14 @@ partial class EDBConnector
             sizeof(ushort) +         // Number of parameters
             inputParameters.Count * sizeof(int);  // Parameter OIDs
 
-        writeBuffer.StartMessage(messageLength);
-        if (writeBuffer.WriteSpaceLeft < 1 + 4 + asciiName.Length + 1)
+
+        WriteBuffer.StartMessage(messageLength);
+        if (WriteBuffer.WriteSpaceLeft < 1 + 4 + asciiName.Length + 1)
             await Flush(async, cancellationToken).ConfigureAwait(false);
 
-        writeBuffer.WriteByte(FrontendMessageCode.Parse);
-        writeBuffer.WriteInt32(messageLength - 1);
-        writeBuffer.WriteNullTerminatedString(asciiName);
+        WriteBuffer.WriteByte(FrontendMessageCode.Parse);
+        WriteBuffer.WriteInt32(messageLength - 1);
+        WriteBuffer.WriteNullTerminatedString(asciiName);
 
         await writeBuffer.WriteString(sql, queryByteLen, async, cancellationToken).ConfigureAwait(false);
 

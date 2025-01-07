@@ -197,14 +197,14 @@ public class TypesTests
     public void EDBPath_default()
     {
         EDBPath defaultPath = default;
-        Assert.IsFalse(defaultPath.Equals(new EDBPath { new(1, 2) }));
+        Assert.IsFalse(defaultPath.Equals([new(1, 2)]));
     }
 
     [Test]
     public void EDBPolygon_default()
     {
         EDBPolygon defaultPolygon = default;
-        Assert.IsFalse(defaultPolygon.Equals(new EDBPolygon { new(1, 2) }));
+        Assert.IsFalse(defaultPolygon.Equals([new(1, 2)]));
     }
 
     [Test]
@@ -216,7 +216,6 @@ public class TypesTests
         var o = p.Value;
     }
 
-#pragma warning disable 618
     [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/750")]
     public void EDBInet()
@@ -224,7 +223,6 @@ public class TypesTests
         var v = new EDBInet(IPAddress.Parse("2001:1db8:85a3:1142:1000:8a2e:1370:7334"), 32);
         Assert.That(v.ToString(), Is.EqualTo("2001:1db8:85a3:1142:1000:8a2e:1370:7334/32"));
     }
-#pragma warning restore 618
 
     [Test]
     public void EDBInet_parse_ipv4()

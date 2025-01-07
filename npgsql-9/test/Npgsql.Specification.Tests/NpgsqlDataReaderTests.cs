@@ -4,11 +4,8 @@ using System.Threading.Tasks;
 
 namespace Npgsql.Specification.Tests;
 
-public sealed class EDBDataReaderTests : DataReaderTestBase<EDBSelectValueFixture>
+public sealed class EDBDataReaderTests(EDBSelectValueFixture fixture) : DataReaderTestBase<EDBSelectValueFixture>(fixture)
 {
-    public EDBDataReaderTests(EDBSelectValueFixture fixture)
-    : base(fixture) {}
-
     // EnterpriseDB
     public override void FieldCount_throws_when_closed() { }
     public override Task GetFieldValueAsync_is_canceled() { return Task.CompletedTask; }

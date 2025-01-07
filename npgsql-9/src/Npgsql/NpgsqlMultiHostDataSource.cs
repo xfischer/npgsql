@@ -367,7 +367,8 @@ public sealed class EDBMultiHostDataSource : EDBDataSource
     internal override ValueTask<EDBConnector?> OpenNewConnector(EDBConnection conn, EDBTimeout timeout, bool async, CancellationToken cancellationToken)
         => throw new EDBException("EDB bug: trying to open a new connector from " + nameof(EDBMultiHostDataSource));
 
-    internal override void Clear()
+    /// <inheritdoc />
+    public override void Clear()
     {
         foreach (var pool in _pools)
             pool.Clear();

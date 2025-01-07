@@ -1,1 +1,2 @@
 ﻿#nullable enable
+static EnterpriseDB.EDBClient.EDBNodaTimeExtensions.UseNodaTime<TMapper>(this TMapper mapper) -> TMapper

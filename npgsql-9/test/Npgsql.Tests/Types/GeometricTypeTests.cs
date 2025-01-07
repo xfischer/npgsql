@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-geometric.html
 /// </remarks>
-class GeometricTypeTests : MultiplexingTestBase
+class GeometricTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     [Test]
     public Task Point()
@@ -107,7 +107,7 @@ class GeometricTypeTests : MultiplexingTestBase
     [Test]
     public Task Path_closed()
         => AssertType(
-            new EDBPath(new[] {new EDBPoint(1, 2), new EDBPoint(3, 4)}, false),
+            new EDBPath([new EDBPoint(1, 2), new EDBPoint(3, 4)], false),
             "((1,2),(3,4))",
             "path",
             EDBDbType.Path);
@@ -115,7 +115,7 @@ class GeometricTypeTests : MultiplexingTestBase
     [Test]
     public Task Path_open()
         => AssertType(
-            new EDBPath(new[] { new EDBPoint(1, 2), new EDBPoint(3, 4) }, true),
+            new EDBPath([new EDBPoint(1, 2), new EDBPoint(3, 4)], true),
             "[(1,2),(3,4)]",
             "path",
             EDBDbType.Path);
@@ -135,6 +135,4 @@ class GeometricTypeTests : MultiplexingTestBase
             "<(1,2),0.5>",
             "circle",
             EDBDbType.Circle);
-
-    public GeometricTypeTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) {}
 }

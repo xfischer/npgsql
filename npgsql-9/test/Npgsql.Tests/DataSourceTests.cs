@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
+using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 // ReSharper disable MethodHasAsyncOverload
 
@@ -52,7 +53,7 @@ public class DataSourceTests : TestBase
         Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
     }
 
-    [Test] //, EDBExplicit("Works in community, see EC-2796")]
+    [Test]
     public async Task ExecuteNonQuery_on_connectionless_command([Values] bool async)
     {
         await using var dataSource = EDBDataSource.Create(ConnectionString);
@@ -99,7 +100,7 @@ public class DataSourceTests : TestBase
         Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
     }
 
-    [Test] //, EDBExplicit("Works in community, see EC-2796")]
+    [Test]
     public async Task ExecuteNonQuery_on_connectionless_batch([Values] bool async)
     {
         await using var dataSource = EDBDataSource.Create(ConnectionString);
@@ -132,6 +133,30 @@ public class DataSourceTests : TestBase
             Assert.That(reader.GetInt32(0), Is.EqualTo(2));
         }
 
+        Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
+    }
+
+    [Test]
+    public void Clear()
+    {
+        using var dataSource = EDBDataSource.Create(ConnectionString);
+        var connection1 = dataSource.OpenConnection();
+        var connection2 = dataSource.OpenConnection();
+        connection1.Close();
+
+        Assert.That(dataSource.Statistics, Is.EqualTo((Total: 2, Idle: 1, Busy: 1)));
+
+        dataSource.Clear();
+
+        Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 0, Busy: 1)));
+
+        var connection3 = dataSource.OpenConnection();
+        Assert.That(dataSource.Statistics, Is.EqualTo((Total: 2, Idle: 0, Busy: 2)));
+
+        connection2.Close();
+        Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 0, Busy: 1)));
+
+        connection3.Close();
         Assert.That(dataSource.Statistics, Is.EqualTo((Total: 1, Idle: 1, Busy: 0)));
     }
 
@@ -251,15 +276,6 @@ public class DataSourceTests : TestBase
     [Test] // #4752
     public async Task As_DbDataSource([Values] bool async)
     {
-        //#if NETFRAMEWORK
-        //        using DbDataSource dataSource = EDBDataSource.Create(ConnectionString);
-        //        using var connection = async
-        //            ? await dataSource.OpenConnectionAsync()
-        //            : dataSource.OpenConnection();
-        //        Assert.That(connection.State, Is.EqualTo(ConnectionState.Open));
-        //
-        //        using var command = dataSource.CreateCommand("SELECT 1");
-        //#else
         await using DbDataSource dataSource = EDBDataSource.Create(ConnectionString);
 #if !NETFRAMEWORK
         await
@@ -273,8 +289,7 @@ public class DataSourceTests : TestBase
         await
 #endif
         using var command = dataSource.CreateCommand("SELECT 1");
-        //#endif
-
+		
         Assert.That(async
             ? await command.ExecuteScalarAsync()
             : command.ExecuteScalar(), Is.EqualTo(1));
@@ -379,4 +394,72 @@ public class DataSourceTests : TestBase
             Assert.That(reader.GetFieldValue<Test>(0).Id, Is.EqualTo(1));
         }
     }
+
+    [Test]
+    public async Task ReloadTypes([Values] bool async)
+    {
+        await using var adminConnection = await OpenConnectionAsync();
+        var type = await GetTempTypeName(adminConnection);
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.MapEnum<Mood>(type);
+        await using var dataSource = dataSourceBuilder.Build();
+
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await connection.ExecuteNonQueryAsync($"CREATE TYPE {type} AS ENUM ('sad', 'ok', 'happy')");
+
+        if (async)
+            await dataSource.ReloadTypesAsync();
+        else
+            dataSource.ReloadTypes();
+
+        Assert.ThrowsAsync<InvalidCastException>(async () => await connection.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+
+        // Close connection and reopen to make sure it picks up the new type and mapping from the data source
+        await connection.CloseAsync();
+        await connection.OpenAsync();
+
+        Assert.DoesNotThrowAsync(async () => await connection.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+    }
+
+    [Test]
+    public async Task ReloadTypes_across_data_sources([Values] bool async)
+    {
+        await using var adminConnection = await OpenConnectionAsync();
+        var type = await GetTempTypeName(adminConnection);
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.MapEnum<Mood>(type);
+        await using var dataSource1 = dataSourceBuilder.Build();
+        await using var connection1 = await dataSource1.OpenConnectionAsync();
+
+        await using var dataSource2 = dataSourceBuilder.Build();
+        await using var connection2 = await dataSource2.OpenConnectionAsync();
+
+        await connection1.ExecuteNonQueryAsync($"CREATE TYPE {type} AS ENUM ('sad', 'ok', 'happy')");
+
+        if (async)
+            await dataSource1.ReloadTypesAsync();
+        else
+            dataSource1.ReloadTypes();
+
+        Assert.ThrowsAsync<InvalidCastException>(async () => await connection1.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+        Assert.ThrowsAsync<InvalidCastException>(async () => await connection2.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+
+        // Close connection and reopen to check that the new type and mapping is not available in dataSource2
+        await connection2.CloseAsync();
+        await connection2.OpenAsync();
+
+        Assert.ThrowsAsync<InvalidCastException>(async () => await connection2.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+
+        await dataSource2.ReloadTypesAsync();
+
+        // Close connection2 and reopen to make sure it picks up the new type and mapping from dataSource2
+        await connection2.CloseAsync();
+        await connection2.OpenAsync();
+
+        Assert.DoesNotThrowAsync(async () => await connection2.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
+    }
+
+    enum Mood { Sad, Ok, Happy }
 }

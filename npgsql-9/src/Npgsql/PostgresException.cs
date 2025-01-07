@@ -263,7 +263,7 @@ public sealed class PostgresException : EDBException
     /// Constants are defined in <seealso cref="PostgresErrorCodes"/>.
     /// See https://www.postgresql.org/docs/current/static/errcodes-appendix.html
     /// </remarks>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB 
     public override string SqlState { get; }
 #else
     public string SqlState { get; }

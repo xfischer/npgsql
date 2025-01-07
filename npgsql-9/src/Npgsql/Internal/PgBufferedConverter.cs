@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 namespace EnterpriseDB.EDBClient.Internal;
 
 [Experimental(EDBDiagnostics.ConvertersExperimental)]
-public abstract class PgBufferedConverter<T> : PgConverter<T>
+public abstract class PgBufferedConverter<T>(bool customDbNullPredicate = false) : PgConverter<T>(customDbNullPredicate)
 {
-    protected PgBufferedConverter(bool customDbNullPredicate = false) : base(customDbNullPredicate) { }
-
     protected abstract T ReadCore(PgReader reader);
     protected abstract void WriteCore(PgWriter writer, T value);
 
@@ -18,8 +16,8 @@ public abstract class PgBufferedConverter<T> : PgConverter<T>
 
     public sealed override T Read(PgReader reader)
     {
-        // We check IsAtStart first to speed up primitive reads.
-        if (!reader.IsAtStart && reader.ShouldBufferCurrent())
+        // We check FieldAtStart to speed up simple value reads, as field level buffering was handled by reader.StartRead() already.
+        if (!reader.FieldAtStart && reader.ShouldBufferCurrent())
             ThrowIORequired(reader.CurrentBufferRequirement);
 
         return ReadCore(reader);

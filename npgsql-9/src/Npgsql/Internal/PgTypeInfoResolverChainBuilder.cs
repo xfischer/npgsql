@@ -6,7 +6,7 @@ namespace EnterpriseDB.EDBClient.Internal;
 
 struct PgTypeInfoResolverChainBuilder
 {
-    readonly List<(Type ImplementationType, object)> _factories = new();
+    readonly List<(Type ImplementationType, object)> _factories = [];
     Action<PgTypeInfoResolverChainBuilder, List<IPgTypeInfoResolver>>? _addRangeResolvers;
     Action<PgTypeInfoResolverChainBuilder, List<IPgTypeInfoResolver>>? _addMultirangeResolvers;
     RangeArrayHandler _rangeArrayHandler = RangeArrayHandler.Instance;
@@ -55,7 +55,7 @@ struct PgTypeInfoResolverChainBuilder
             }
     }
 
-    void AddResolverFactory(Type type, object factory, bool prepend = false)
+    void AddResolverFactory(Type type, object factory, bool prepend = false) // EnterpriseDB
     {
         RemoveResolverFactory(type);
 

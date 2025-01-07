@@ -17,10 +17,11 @@ public abstract class EDBDatabaseInfo
 {
     #region Fields
 
-    static volatile IEDBDatabaseInfoFactory[] Factories = {
+    static volatile IEDBDatabaseInfoFactory[] Factories =
+    [
         new PostgresMinimalDatabaseInfoFactory(),
         new PostgresDatabaseInfoFactory()
-    };
+    ];
 
     #endregion Fields
 
@@ -127,13 +128,13 @@ public abstract class EDBDatabaseInfo
 
     #region Types
 
-    readonly List<PostgresBaseType>       _baseTypesMutable       = new();
-    readonly List<PostgresArrayType>      _arrayTypesMutable      = new();
-    readonly List<PostgresRangeType>      _rangeTypesMutable      = new();
-    readonly List<PostgresMultirangeType> _multirangeTypesMutable = new();
-    readonly List<PostgresEnumType>       _enumTypesMutable       = new();
-    readonly List<PostgresCompositeType>  _compositeTypesMutable  = new();
-    readonly List<PostgresDomainType>     _domainTypesMutable     = new();
+    readonly List<PostgresBaseType>       _baseTypesMutable       = [];
+    readonly List<PostgresArrayType>      _arrayTypesMutable      = [];
+    readonly List<PostgresRangeType>      _rangeTypesMutable      = [];
+    readonly List<PostgresMultirangeType> _multirangeTypesMutable = [];
+    readonly List<PostgresEnumType>       _enumTypesMutable       = [];
+    readonly List<PostgresCompositeType>  _compositeTypesMutable  = [];
+    readonly List<PostgresDomainType>     _domainTypesMutable     = [];
 
     internal IReadOnlyList<PostgresBaseType>       BaseTypes       => _baseTypesMutable;
     internal IReadOnlyList<PostgresArrayType>      ArrayTypes      => _arrayTypesMutable;
@@ -351,11 +352,11 @@ public abstract class EDBDatabaseInfo
 
     // For tests
     internal static void ResetFactories()
-        => Factories = new IEDBDatabaseInfoFactory[]
-        {
+        => Factories =
+        [
             new PostgresMinimalDatabaseInfoFactory(),
             new PostgresDatabaseInfoFactory()
-        };
+        ];
 
     #endregion Factory management
 

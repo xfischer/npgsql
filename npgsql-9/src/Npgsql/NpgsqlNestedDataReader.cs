@@ -29,32 +29,23 @@ public sealed class EDBNestedDataReader : DbDataReader
     int _nextRowBufferPos;
     ReaderState _readerState;
 
-    readonly List<ColumnInfo> _columns = new();
+    readonly List<ColumnInfo> _columns = [];
     long _startPos;
 
     DataFormat Format => DataFormat.Binary;
 
-    readonly struct ColumnInfo
+    readonly struct ColumnInfo(PostgresType postgresType, int bufferPos, PgTypeInfo objectOrDefaultTypeInfo, DataFormat format)
     {
-        readonly DataFormat _format;
-        public PostgresType PostgresType { get; }
-        public int BufferPos { get; }
+        public PostgresType PostgresType { get; } = postgresType;
+        public int BufferPos { get; } = bufferPos;
         public PgConverterInfo LastConverterInfo { get; init; }
 
-        public PgTypeInfo ObjectOrDefaultTypeInfo { get; }
-        public PgConverterInfo GetObjectOrDefaultInfo() => ObjectOrDefaultTypeInfo.Bind(Field, _format);
+        public PgTypeInfo ObjectOrDefaultTypeInfo { get; } = objectOrDefaultTypeInfo;
+        public PgConverterInfo GetObjectOrDefaultInfo() => ObjectOrDefaultTypeInfo.Bind(Field, format);
 
         Field Field => new("?", ObjectOrDefaultTypeInfo.Options.PortableTypeIds ? PostgresType.DataTypeName : (Oid)PostgresType.OID, -1);
 
-        public PgConverterInfo Bind(PgTypeInfo typeInfo) => typeInfo.Bind(Field, _format);
-
-        public ColumnInfo(PostgresType postgresType, int bufferPos, PgTypeInfo objectOrDefaultTypeInfo, DataFormat format)
-        {
-            _format = format;
-            PostgresType = postgresType;
-            BufferPos = bufferPos;
-            ObjectOrDefaultTypeInfo = objectOrDefaultTypeInfo;
-        }
+        public PgConverterInfo Bind(PgTypeInfo typeInfo) => typeInfo.Bind(Field, format);
     }
 
     PgReader PgReader => _outermostReader.Buffer.PgReader;
@@ -67,12 +58,12 @@ public sealed class EDBNestedDataReader : DbDataReader
         _outerNestedReader = outerNestedReader;
         _depth = depth;
         _compositeType = compositeType;
-        _startPos = PgReader.FieldStartPos;
+        _startPos = PgReader.GetFieldStartPos(this);
     }
 
     internal void Init(PostgresCompositeType? compositeType)
     {
-        _startPos = PgReader.FieldStartPos;
+        _startPos = PgReader.GetFieldStartPos(this);
         _columns.Clear();
         _numRows = 0;
         _nextRowIndex = 0;
@@ -102,13 +93,13 @@ public sealed class EDBNestedDataReader : DbDataReader
         if (_numRows > 0)
             PgReader.ReadInt32(); // Length of first row
 
-        _nextRowBufferPos = PgReader.FieldOffset;
+        _nextRowBufferPos = PgReader.GetFieldOffset(this);
     }
 
     internal void InitSingleRow()
     {
         _numRows = 1;
-        _nextRowBufferPos = PgReader.FieldOffset;
+        _nextRowBufferPos = PgReader.GetFieldOffset(this);
     }
 
     /// <inheritdoc />
@@ -150,7 +141,7 @@ public sealed class EDBNestedDataReader : DbDataReader
     /// <inheritdoc />
     public override bool IsClosed
         => _readerState == ReaderState.Closed || _readerState == ReaderState.Disposed
-                                              || _outermostReader.IsClosed || PgReader.FieldStartPos != _startPos;
+                                              || _outermostReader.IsClosed || PgReader.GetFieldStartPos(this) != _startPos;
 
     /// <inheritdoc />
     public override int RecordsAffected => -1;
@@ -376,7 +367,7 @@ public sealed class EDBNestedDataReader : DbDataReader
         for (var i = 0; i < numColumns; i++)
         {
             var typeOid = PgReader.ReadUInt32();
-            var bufferPos = PgReader.FieldOffset;
+            var bufferPos = PgReader.GetFieldOffset(this);
             if (i >= _columns.Count)
             {
                 var pgType = SerializerOptions.DatabaseInfo.GetPostgresType(typeOid);
@@ -398,7 +389,7 @@ public sealed class EDBNestedDataReader : DbDataReader
         }
         _columns.RemoveRange(numColumns, _columns.Count - numColumns);
 
-        _nextRowBufferPos = PgReader.FieldOffset;
+        _nextRowBufferPos = PgReader.GetFieldOffset(this);
 
         _readerState = ReaderState.OnRow;
         return true;

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.ResolverFactories;
+using EnterpriseDB.EDBClient.NameTranslation;
 using EnterpriseDB.EDBClient.Properties;
 using EnterpriseDB.EDBClient.TypeMapping;
 using EDBTypes;
@@ -29,10 +30,19 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
 
     ILoggerFactory? _loggerFactory;
     bool _sensitiveDataLoggingEnabled;
+    List<Action<EDBTracingOptionsBuilder>>? _tracingOptionsBuilderCallbacks;
+    List<Action<EDBTypeLoadingOptionsBuilder>>? _typeLoadingOptionsBuilderCallbacks;
 
     TransportSecurityHandler _transportSecurityHandler = new();
     RemoteCertificateValidationCallback? _userCertificateValidationCallback;
     Action<X509CertificateCollection>? _clientCertificatesCallback;
+#if NET7_0_OR_GREATER // EnterpriseDB
+    Action<SslClientAuthenticationOptions>? _sslClientAuthenticationOptionsCallback;
+#endif
+
+#if NET7_0_OR_GREATER
+    Action<NegotiateAuthenticationClientOptions>? _negotiateOptionsCallback;
+#endif
 
     IntegratedSecurityHandler _integratedSecurityHandler = new();
 
@@ -64,7 +74,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     public string ConnectionString => ConnectionStringBuilder.ToString();
 
     static EDBSlimDataSourceBuilder()
-        => GlobalTypeMapper.Instance.AddGlobalTypeMappingResolvers(new PgTypeInfoResolverFactory[] { new AdoTypeInfoResolverFactory() });
+        => GlobalTypeMapper.Instance.AddGlobalTypeMappingResolvers([new AdoTypeInfoResolverFactory()]);
 
     /// <summary>
     /// A diagnostics name used by EnterpriseDB.EDBClient when generating tracing, logging and metrics.
@@ -112,12 +122,55 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     }
 
     /// <summary>
+    /// Configure type loading options for the DataSource. Calling this again will replace
+    /// the prior action.
+    /// </summary>
+    public EDBSlimDataSourceBuilder ConfigureTypeLoading(Action<EDBTypeLoadingOptionsBuilder> configureAction)
+    {
+#if NET6_0_OR_GREATER // EnterpriseDB
+        ArgumentNullException.ThrowIfNull(configureAction);
+#else
+        if (configureAction is null)
+            throw new ArgumentNullException(nameof(configureAction));
+#endif
+
+        _typeLoadingOptionsBuilderCallbacks ??= new();
+        _typeLoadingOptionsBuilderCallbacks.Add(configureAction);
+        return this;
+    }
+
+    /// <summary>
+    /// Configures OpenTelemetry tracing options.
+    /// </summary>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder ConfigureTracing(Action<EDBTracingOptionsBuilder> configureAction)
+    {
+#if NET6_0_OR_GREATER // EnterpriseDB
+        ArgumentNullException.ThrowIfNull(configureAction);
+#else
+        if (configureAction is null)
+            throw new ArgumentNullException(nameof(configureAction));
+#endif
+
+        _tracingOptionsBuilderCallbacks ??= new();
+        _tracingOptionsBuilderCallbacks.Add(configureAction);
+        return this;
+    }
+
+    /// <summary>
     /// Configures the JSON serializer options used when reading and writing all System.Text.Json data.
     /// </summary>
     /// <param name="serializerOptions">Options to customize JSON serialization and deserialization.</param>
-    /// <returns></returns>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     public EDBSlimDataSourceBuilder ConfigureJsonOptions(JsonSerializerOptions serializerOptions)
     {
+#if NET6_0_OR_GREATER // EnterpriseDB
+        ArgumentNullException.ThrowIfNull(serializerOptions);
+#else
+        if (serializerOptions is null)
+            throw new ArgumentNullException(nameof(serializerOptions));
+#endif
+
         JsonSerializerOptions = serializerOptions;
         return this;
     }
@@ -139,6 +192,9 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+#if NET7_0_OR_GREATER // EnterpriseDB
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
+#endif
     public EDBSlimDataSourceBuilder UseUserCertificateValidationCallback(
         RemoteCertificateValidationCallback userCertificateValidationCallback)
     {
@@ -152,6 +208,9 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificate">The client certificate to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+#if NET7_0_OR_GREATER // EnterpriseDB
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
+#endif
     public EDBSlimDataSourceBuilder UseClientCertificate(X509Certificate? clientCertificate)
     {
         if (clientCertificate is null)
@@ -166,11 +225,34 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificates">The client certificate collection to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+#if NET7_0_OR_GREATER // EnterpriseDB
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
+#endif
     public EDBSlimDataSourceBuilder UseClientCertificates(X509CertificateCollection? clientCertificates)
         => UseClientCertificatesCallback(clientCertificates is null ? null : certs => certs.AddRange(clientCertificates));
 
+
+#if NET7_0_OR_GREATER
     /// <summary>
-    /// Specifies a callback to modify the collection of SSL/TLS client certificates which EnterpriseDB.EDBClient will send to PostgreSQL for
+    /// When using SSL/TLS, this is a callback that allows customizing SslStream's authentication options.
+    /// </summary>
+    /// <param name="sslClientAuthenticationOptionsCallback">The callback to customize SslStream's authentication options.</param>
+    /// <remarks>
+    /// <para>
+    /// See <see href="https://learn.microsoft.com/en-us/dotnet/api/system.net.security.sslclientauthenticationoptions?view=net-8.0"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder UseSslClientAuthenticationOptionsCallback(Action<SslClientAuthenticationOptions>? sslClientAuthenticationOptionsCallback)
+    {
+        _sslClientAuthenticationOptionsCallback = sslClientAuthenticationOptionsCallback;
+
+        return this;
+    }
+#endif
+
+    /// <summary>
+    /// Specifies a callback to modify the collection of SSL/TLS client certificates which EDB .NET Connector will send to PostgreSQL for
     /// certificate-based authentication. This is an advanced API, consider using <see cref="UseClientCertificate" /> or
     /// <see cref="UseClientCertificates" /> instead.
     /// </summary>
@@ -186,6 +268,9 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+#if NET7_0_OR_GREATER // EnterpriseDB
+    [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
+#endif
     public EDBSlimDataSourceBuilder UseClientCertificatesCallback(Action<X509CertificateCollection>? clientCertificatesCallback)
     {
         _clientCertificatesCallback = clientCertificatesCallback;
@@ -289,6 +374,25 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// When using Kerberos, this is a callback that allows customizing default settings for Kerberos authentication.
+    /// </summary>
+    /// <param name="negotiateOptionsCallback">The callback containing logic to customize Kerberos authentication settings.</param>
+    /// <remarks>
+    /// <para>
+    /// See <see href="https://learn.microsoft.com/en-us/dotnet/api/system.net.security.negotiateauthenticationclientoptions?view=net-7.0"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder UseNegotiateOptionsCallback(Action<NegotiateAuthenticationClientOptions>? negotiateOptionsCallback)
+    {
+        _negotiateOptionsCallback = negotiateOptionsCallback;
+
+        return this;
+    }
+#endif
+
     #endregion Authentication
 
     #region Type mapping
@@ -300,8 +404,27 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         set => _userTypeMapper.DefaultNameTranslator = value;
     }
 
-    /// <inheritdoc />
-    public IEDBTypeMapper MapEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
+    /// <summary>
+    /// Maps a CLR enum to a PostgreSQL enum type.
+    /// </summary>
+    /// <remarks>
+    /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+    /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+    /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+    /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
+    /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
+    /// an exception will be raised.
+    /// </remarks>
+    /// <param name="pgName">
+    /// A PostgreSQL type name for the corresponding enum type in the database.
+    /// If null, the name translator given in <paramref name="nameTranslator"/> will be used.
+    /// </param>
+    /// <param name="nameTranslator">
+    /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+    /// Defaults to <see cref="DefaultNameTranslator" />.
+    /// </param>
+    /// <typeparam name="TEnum">The .NET enum type to be mapped</typeparam>
+    public EDBSlimDataSourceBuilder MapEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         where TEnum : struct, Enum
     {
         _userTypeMapper.MapEnum<TEnum>(pgName, nameTranslator);
@@ -313,9 +436,28 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         where TEnum : struct, Enum
         => _userTypeMapper.UnmapEnum<TEnum>(pgName, nameTranslator);
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Maps a CLR enum to a PostgreSQL enum type.
+    /// </summary>
+    /// <remarks>
+    /// CLR enum labels are mapped by name to PostgreSQL enum labels.
+    /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+    /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+    /// You can also use the <see cref="PgNameAttribute"/> on your enum fields to manually specify a PostgreSQL enum label.
+    /// If there is a discrepancy between the .NET and database labels while an enum is read or written,
+    /// an exception will be raised.
+    /// </remarks>
+    /// <param name="clrType">The .NET enum type to be mapped</param>
+    /// <param name="pgName">
+    /// A PostgreSQL type name for the corresponding enum type in the database.
+    /// If null, the name translator given in <paramref name="nameTranslator"/> will be used.
+    /// </param>
+    /// <param name="nameTranslator">
+    /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+    /// Defaults to <see cref="DefaultNameTranslator" />.
+    /// </param>
     [RequiresDynamicCode("Calling MapEnum with a Type can require creating new generic types or methods. This may not work when AOT compiling.")]
-    public IEDBTypeMapper MapEnum([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+    public EDBSlimDataSourceBuilder MapEnum([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
         Type clrType, string? pgName = null, IEDBNameTranslator? nameTranslator = null)
     {
         _userTypeMapper.MapEnum(clrType, pgName, nameTranslator);
@@ -327,9 +469,28 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         Type clrType, string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         => _userTypeMapper.UnmapEnum(clrType, pgName, nameTranslator);
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Maps a CLR type to a PostgreSQL composite type.
+    /// </summary>
+    /// <remarks>
+    /// CLR fields and properties by string to PostgreSQL names.
+    /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+    /// which defaults to <see cref="EDBSnakeCaseNameTranslator"/>.
+    /// You can also use the <see cref="PgNameAttribute"/> on your members to manually specify a PostgreSQL name.
+    /// If there is a discrepancy between the .NET type and database type while a composite is read or written,
+    /// an exception will be raised.
+    /// </remarks>
+    /// <param name="pgName">
+    /// A PostgreSQL type name for the corresponding composite type in the database.
+    /// If null, the name translator given in <paramref name="nameTranslator"/> will be used.
+    /// </param>
+    /// <param name="nameTranslator">
+    /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+    /// Defaults to <see cref="DefaultNameTranslator" />.
+    /// </param>
+    /// <typeparam name="T">The .NET type to be mapped</typeparam>
     [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
-    public IEDBTypeMapper MapComposite<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] T>(
+    public EDBSlimDataSourceBuilder MapComposite<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] T>(
         string? pgName = null, IEDBNameTranslator? nameTranslator = null)
     {
         _userTypeMapper.MapComposite(typeof(T), pgName, nameTranslator);
@@ -342,9 +503,27 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         => _userTypeMapper.UnmapComposite(typeof(T), pgName, nameTranslator);
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Maps a CLR type to a composite type.
+    /// </summary>
+    /// <remarks>
+    /// Maps CLR fields and properties by string to PostgreSQL names.
+    /// The translation strategy can be controlled by the <paramref name="nameTranslator"/> parameter,
+    /// which defaults to <see cref="DefaultNameTranslator" />.
+    /// If there is a discrepancy between the .NET type and database type while a composite is read or written,
+    /// an exception will be raised.
+    /// </remarks>
+    /// <param name="clrType">The .NET type to be mapped.</param>
+    /// <param name="pgName">
+    /// A PostgreSQL type name for the corresponding composite type in the database.
+    /// If null, the name translator given in <paramref name="nameTranslator"/> will be used.
+    /// </param>
+    /// <param name="nameTranslator">
+    /// A component which will be used to translate CLR names (e.g. SomeClass) into database names (e.g. some_class).
+    /// Defaults to <see cref="DefaultNameTranslator" />.
+    /// </param>
     [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
-    public IEDBTypeMapper MapComposite([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+    public EDBSlimDataSourceBuilder MapComposite([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
         Type clrType, string? pgName = null, IEDBNameTranslator? nameTranslator = null)
     {
         _userTypeMapper.MapComposite(clrType, pgName, nameTranslator);
@@ -477,9 +656,8 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
-    
-	/// <summary>
-    /// Sets up network mappings. This allows mapping PhysicalAddress, IPAddress, NpgsqlInet and NpgsqlCidr types
+    /// <summary>
+    /// Sets up network mappings. This allows mapping PhysicalAddress, IPAddress, EDBInet and EDBCidr types
     /// to PostgreSQL <c>macaddr</c>, <c>macaddr8</c>, <c>inet</c> and <c>cidr</c> types.
     /// </summary>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
@@ -488,9 +666,9 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         _resolverChainBuilder.AppendResolverFactory(new NetworkTypeInfoResolverFactory());
         return this;
     }
-	
-	/// <summary>
-    /// Sets up network mappings. This allows mapping types like NpgsqlPoint and NpgsqlPath
+
+    /// <summary>
+    /// Sets up network mappings. This allows mapping types like EDBPoint and EDBPath
     /// to PostgreSQL <c>point</c>, <c>path</c> and so on types.
     /// </summary>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
@@ -510,8 +688,8 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         _resolverChainBuilder.AppendResolverFactory(() => new JsonTypeInfoResolverFactory(JsonSerializerOptions));
         return this;
     }
-	
-	/// <summary>
+
+    /// <summary>
     /// Sets up dynamic System.Text.Json mappings. This allows mapping arbitrary .NET types to PostgreSQL <c>json</c> and <c>jsonb</c>
     /// types, as well as <see cref="JsonNode" /> and its derived types.
     /// </summary>
@@ -622,10 +800,9 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     public EDBDataSource Build()
     {
-        var config = PrepareConfiguration();
-        var connectionStringBuilder = ConnectionStringBuilder.Clone();
+        var (connectionStringBuilder, config) = PrepareConfiguration();
 
-        if (ConnectionStringBuilder.Host!.Contains(","))
+        if (ConnectionStringBuilder.Host!.Contains(','))
         {
             ValidateMultiHost();
 
@@ -644,21 +821,53 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     public EDBMultiHostDataSource BuildMultiHost()
     {
-        var config = PrepareConfiguration();
+        var (connectionStringBuilder, config) = PrepareConfiguration();
 
         ValidateMultiHost();
 
-        return new(ConnectionStringBuilder.Clone(), config);
+        return new(connectionStringBuilder, config);
     }
 
-    EDBDataSourceConfiguration PrepareConfiguration()
+    (EDBConnectionStringBuilder, EDBDataSourceConfiguration) PrepareConfiguration()
     {
         ConnectionStringBuilder.PostProcessAndValidate();
+        var connectionStringBuilder = ConnectionStringBuilder.Clone();
 
+#if NET7_0_OR_GREATER // EnterpriseDB
+        var sslClientAuthenticationOptionsCallback = _sslClientAuthenticationOptionsCallback;
+        var hasCertificateCallbacks = _userCertificateValidationCallback is not null || _clientCertificatesCallback is not null;
+        if (sslClientAuthenticationOptionsCallback is not null && hasCertificateCallbacks)
+        {
+            throw new NotSupportedException(EDBStrings.SslClientAuthenticationOptionsCallbackWithOtherCallbacksNotSupported);
+        }
+
+        if (sslClientAuthenticationOptionsCallback is null && hasCertificateCallbacks)
+        {
+            sslClientAuthenticationOptionsCallback = options =>
+            {
+                if (_clientCertificatesCallback is not null)
+                {
+                    options.ClientCertificates ??= new X509Certificate2Collection();
+                    _clientCertificatesCallback.Invoke(options.ClientCertificates);
+                }
+
+                if (_userCertificateValidationCallback is not null)
+                {
+                    options.RemoteCertificateValidationCallback = _userCertificateValidationCallback;
+                }
+            };
+        }
+
+        if (!_transportSecurityHandler.SupportEncryption && sslClientAuthenticationOptionsCallback is not null)
+        {
+            throw new InvalidOperationException(EDBStrings.TransportSecurityDisabled);
+        }
+#else // EnterpriseDB
         if (!_transportSecurityHandler.SupportEncryption && (_userCertificateValidationCallback is not null || _clientCertificatesCallback is not null))
         {
             throw new InvalidOperationException(EDBStrings.TransportSecurityDisabled);
         }
+#endif
 
         if (_passwordProvider is not null && _periodicPasswordProvider is not null)
         {
@@ -673,15 +882,35 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
 
         ConfigureDefaultFactories(this);
 
-        return new(
+        var typeLoadingOptionsBuilder = new EDBTypeLoadingOptionsBuilder();
+#pragma warning disable CS0618 // Type or member is obsolete
+        typeLoadingOptionsBuilder.EnableTableCompositesLoading(connectionStringBuilder.LoadTableComposites);
+        typeLoadingOptionsBuilder.EnableTypeLoading(connectionStringBuilder.ServerCompatibilityMode is not ServerCompatibilityMode.NoTypeLoading);
+#pragma warning restore CS0618 // Type or member is obsolete
+        foreach (var callback in _typeLoadingOptionsBuilderCallbacks ?? (IEnumerable<Action<EDBTypeLoadingOptionsBuilder>>)[])
+            callback.Invoke(typeLoadingOptionsBuilder);
+        var typeLoadingOptions = typeLoadingOptionsBuilder.Build();
+
+        var tracingOptionsBuilder = new EDBTracingOptionsBuilder();
+        foreach (var callback in _tracingOptionsBuilderCallbacks ?? (IEnumerable<Action<EDBTracingOptionsBuilder>>)[])
+            callback.Invoke(tracingOptionsBuilder);
+        var tracingOptions = tracingOptionsBuilder.Build();
+
+        return (connectionStringBuilder, new(
             Name,
             _loggerFactory is null
                 ? EDBLoggingConfiguration.NullConfiguration
                 : new EDBLoggingConfiguration(_loggerFactory, _sensitiveDataLoggingEnabled),
+            tracingOptions,
+            typeLoadingOptions,
             _transportSecurityHandler,
             _integratedSecurityHandler,
+#if NET7_0_OR_GREATER // EnterpriseDB
+            sslClientAuthenticationOptionsCallback,
+#else
             _userCertificateValidationCallback,
             _clientCertificatesCallback,
+#endif
             _passwordProvider,
             _passwordProviderAsync,
             _periodicPasswordProvider,
@@ -691,7 +920,11 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
             HackyEnumMappings(),
             DefaultNameTranslator,
             _connectionInitializer,
-            _connectionInitializerAsync);
+            _connectionInitializerAsync
+#if NET7_0_OR_GREATER
+            ,_negotiateOptionsCallback
+#endif
+            ));
 
         List<HackyEnumTypeMapping> HackyEnumMappings()
         {
@@ -742,10 +975,31 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     IEDBTypeMapper IEDBTypeMapper.EnableUnmappedTypes()
         => EnableUnmappedTypes();
 
+    /// <inheritdoc />
+    IEDBTypeMapper IEDBTypeMapper.MapEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(string? pgName, IEDBNameTranslator? nameTranslator)
+    {
+        _userTypeMapper.MapEnum<TEnum>(pgName, nameTranslator);
+        return this;
+    }
+    IEDBTypeMapper IEDBTypeMapper.MapEnum(Type clrType, string pgName, IEDBNameTranslator nameTranslator)
+    {
+        _userTypeMapper.MapEnum(clrType, pgName, nameTranslator);
+        return this;
+    }
 
     // EnterpriseDB : remove optins (see EC-3060)
     IEDBTypeMapper IEDBTypeMapper.DisableDynamicJson() => DisableDynamicJson();
     IEDBTypeMapper IEDBTypeMapper.DisableUnmappedTypes() => DisableUnmappedTypes();
     IEDBTypeMapper IEDBTypeMapper.DisableRecordsAsTuples() => DisableRecordsAsTuples();
+    IEDBTypeMapper IEDBTypeMapper.MapComposite<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>(string? pgName, IEDBNameTranslator? nameTranslator)
+    {
+        _userTypeMapper.MapComposite(typeof(T), pgName, nameTranslator);
+        return this;
+    }
 
+    IEDBTypeMapper IEDBTypeMapper.MapComposite(Type clrType, string pgName, IEDBNameTranslator nameTranslator)
+    {
+        _userTypeMapper.MapComposite(clrType, pgName, nameTranslator);
+        return this;
+    }
 }

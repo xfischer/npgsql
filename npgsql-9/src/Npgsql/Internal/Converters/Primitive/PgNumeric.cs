@@ -8,28 +8,21 @@ using static EnterpriseDB.EDBClient.Internal.Converters.PgNumeric.Builder;
 
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
-readonly struct PgNumeric
+readonly struct PgNumeric(ArraySegment<short> digits, short weight, short sign, short scale)
 {
     // numeric digit count + weight + sign + scale
     const int StructureByteCount = 4 * sizeof(short);
     const int DecimalBits = 4;
     const int StackAllocByteThreshold = 64 * sizeof(uint);
 
-    readonly ushort _sign;
-
-    public PgNumeric(ArraySegment<short> digits, short weight, short sign, short scale)
-    {
-        Digits = digits;
-        Weight = weight;
-        _sign = (ushort)sign;
-        Scale = scale;
-    }
+    readonly ushort _sign = (ushort)sign;
 
     /// Big endian array of numeric digits
-    public ArraySegment<short> Digits { get; }
-    public short Weight { get; }
+    public ArraySegment<short> Digits { get; } = digits;
+
+    public short Weight { get; } = weight;
     public short Sign => (short)_sign;
-    public short Scale { get; }
+    public short Scale { get; } = scale;
 
     public int GetByteCount() => GetByteCount(Digits.Count);
     public static int GetByteCount(int digitCount) => StructureByteCount + digitCount * sizeof(short);
@@ -119,7 +112,8 @@ readonly struct PgNumeric
         internal const int MaxDecimalNumericDigits = 8;
 
         // Fast access for 10^n where n is 0-9
-        static ReadOnlySpan<uint> UIntPowers10 => new uint[] {
+        static ReadOnlySpan<uint> UIntPowers10 =>
+        [
             1,
             10,
             100,
@@ -130,7 +124,7 @@ readonly struct PgNumeric
             10000000,
             100000000,
             1000000000
-        };
+        ];
 
         const int MaxUInt32Scale = 9;
         const int MaxUInt16Scale = 4;
@@ -221,7 +215,7 @@ readonly struct PgNumeric
         public Builder(BigInteger value, Span<short> destination)
         {
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 // EnterpriseDB (NETFRAMEWORK)
             var bits = value.ToByteArray().AsSpan();
             // Detect the presence of a padding byte and slice it away (as we don't have isUnsigned: true overloads on ns2.0).
             if (value.Sign == 1 && bits.Length > 2 && (bits[bits.Length - 2] & 0x80) != 0 && bits[bits.Length - 1] == 0)
@@ -243,7 +237,7 @@ readonly struct PgNumeric
             // Fill the last uint worth of bytes as it may only be partially written to.
             uintRoundedBits.Slice(uintRoundedBits.Length - sizeof(uint)).Fill(0);
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 // EnterpriseDB (NETFRAMEWORK)
             bits.CopyTo(uintRoundedBits);
 #elif NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
             absByteArray.Slice(0,Math.Min(absByteArray.Length, uintRoundedBits.Length)).CopyTo(uintRoundedBits);

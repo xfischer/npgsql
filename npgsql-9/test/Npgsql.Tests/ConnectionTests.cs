@@ -20,7 +20,7 @@ using static EnterpriseDB.EDBClient.Tests.TestUtil;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
-public class ConnectionTests : MultiplexingTestBase
+public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     [Test, Description("Makes sure the connection goes through the proper state lifecycle")]
     public async Task Basic_lifecycle()
@@ -32,12 +32,10 @@ public class ConnectionTests : MultiplexingTestBase
 
         conn.StateChange += (s, e) =>
         {
-            if (e.OriginalState == ConnectionState.Closed &&
-                e.CurrentState == ConnectionState.Open)
+            if (e is { OriginalState: ConnectionState.Closed, CurrentState: ConnectionState.Open })
                 eventOpen = true;
 
-            if (e.OriginalState == ConnectionState.Open &&
-                e.CurrentState == ConnectionState.Closed)
+            if (e is { OriginalState: ConnectionState.Open, CurrentState: ConnectionState.Closed })
                 eventClosed = true;
         };
 
@@ -83,12 +81,10 @@ public class ConnectionTests : MultiplexingTestBase
 
         conn.StateChange += (s, e) =>
         {
-            if (e.OriginalState == ConnectionState.Closed &&
-                e.CurrentState == ConnectionState.Open)
+            if (e is { OriginalState: ConnectionState.Closed, CurrentState: ConnectionState.Open })
                 eventOpen = true;
 
-            if (e.OriginalState == ConnectionState.Open &&
-                e.CurrentState == ConnectionState.Closed)
+            if (e is { OriginalState: ConnectionState.Open, CurrentState: ConnectionState.Closed })
                 eventClosed = true;
         };
 
@@ -197,7 +193,8 @@ public class ConnectionTests : MultiplexingTestBase
     {
         var connString = new EDBConnectionStringBuilder(ConnectionString)
         {
-            Username = "unknown", Pooling = false
+            Username = "unknown",
+            Pooling = false
         }.ToString();
         using var conn = new EDBConnection(connString);
         Assert.That(conn.Open, Throws.Exception
@@ -224,6 +221,7 @@ public class ConnectionTests : MultiplexingTestBase
         => Assert.Throws<ArgumentException>(() =>
             new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests"));
 
+    // EnterpriseDB (timeout added)
     [Test, Description("Reuses the same connection instance for a failed connection, then a successful one"), Timeout(15000)]
     public async Task Fail_connect_then_succeed([Values] bool pooling)
     {
@@ -397,7 +395,7 @@ public class ConnectionTests : MultiplexingTestBase
 
     #region ConnectionString - Host
 
-	// EnterpriseDB default port changed
+    // EnterpriseDB default port changed
     [TestCase("127.0.0.1", ExpectedResult = new[] { "127.0.0.1:5444" })]
     [TestCase("127.0.0.1:5444", ExpectedResult = new[] { "127.0.0.1:5444" })]
     [TestCase("::1", ExpectedResult = new[] { "::1:5444" })]
@@ -655,6 +653,85 @@ public class ConnectionTests : MultiplexingTestBase
         Assert.That(conn.ConnectionString, Is.SameAs(string.Empty));
         Assert.That(conn.Settings.Host, Is.Null);
         Assert.That(() => conn.Open(), Throws.Exception.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
+    [TestCase("test_schema_1", "public", true)]
+    [TestCase("test_schema_1", "test_schema_2", true)]
+    [TestCase("test_schema_2", "test_schema_3", true)]
+    [TestCase("test_schema_1", "public", false)]
+    [TestCase("test_schema_1", "test_schema_2", false)]
+    [TestCase("test_schema_2", "test_schema_3", false)]
+    [TestCase("'DROP TABLE X", "'COMMIT;  ", false)]
+    [Parallelizable(ParallelScope.None)]
+    public async Task Set_Schemas_And_Load_Relevant_Types(string testSchema, string otherSchema, bool enabled)
+    {
+        if (IsMultiplexing)
+            return;
+
+        await using var conn1 = await OpenConnectionAsync();
+        try
+        {
+            await conn1.ExecuteNonQueryAsync("DROP TYPE IF EXISTS public.test_type_1");
+            await conn1.ExecuteNonQueryAsync("DROP TYPE IF EXISTS public.test_type_2");
+            await conn1.ExecuteNonQueryAsync("DROP TYPE IF EXISTS public.test_type_3");
+            await conn1.ExecuteNonQueryAsync("CREATE TYPE public.test_type_3 AS (id int, name text)");
+
+            if (testSchema != "public")
+            {
+                await conn1.ExecuteNonQueryAsync($"DROP SCHEMA IF EXISTS \"{testSchema}\" CASCADE");
+                await conn1.ExecuteNonQueryAsync($"CREATE SCHEMA \"{testSchema}\"");
+            }
+
+            if (otherSchema != "public")
+            {
+                await conn1.ExecuteNonQueryAsync($"DROP SCHEMA IF EXISTS \"{otherSchema}\" CASCADE");
+                await conn1.ExecuteNonQueryAsync($"CREATE SCHEMA \"{otherSchema}\"");
+            }
+
+            await conn1.ExecuteNonQueryAsync($"DROP TYPE IF EXISTS \"{testSchema}\".test_type_1");
+            await conn1.ExecuteNonQueryAsync($"CREATE TYPE \"{testSchema}\".test_type_1 AS (id int)");
+            await conn1.ExecuteNonQueryAsync($"DROP TYPE IF EXISTS \"{otherSchema}\".test_type_2");
+            await conn1.ExecuteNonQueryAsync($"CREATE TYPE \"{otherSchema}\".test_type_2 AS (id int, name text)");
+
+            using var dataSource = CreateDataSource(builder =>
+            {
+                builder.ConfigureTypeLoading(builder =>
+                {
+                    if (enabled)
+                        builder.SetTypeLoadingSchemas(testSchema, otherSchema);
+                });
+            });
+            using var conn = await dataSource.OpenConnectionAsync();
+            if (enabled)
+            {
+                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
+                if (testSchema == "public" || otherSchema == "public")
+                {
+                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+                }
+                else
+                {
+                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                    Assert.False(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+                }
+            }
+            else
+            {
+                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
+                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+            }
+        }
+        finally
+        {
+            if (testSchema != "public")
+                await conn1.ExecuteNonQueryAsync($"DROP SCHEMA IF EXISTS \"{testSchema}\" CASCADE");
+            if (otherSchema != "public")
+                await conn1.ExecuteNonQueryAsync($"DROP SCHEMA IF EXISTS \"{otherSchema}\" CASCADE");
+        }
+
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/703")]
@@ -953,7 +1030,7 @@ LANGUAGE 'plpgsql'");
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/2725")]
-    public void Clone_with_PersistSecurityInfo()
+    public async Task Clone_with_PersistSecurityInfo([Values] bool async)
     {
         var builder = new EDBConnectionStringBuilder(ConnectionString)
         {
@@ -966,20 +1043,24 @@ LANGUAGE 'plpgsql'");
         // First un-persist, should work
         builder.PersistSecurityInfo = false;
         var connStringWithoutPersist = builder.ToString();
-        using var clonedWithoutPersist = connWithPersist.CloneWith(connStringWithoutPersist);
+        using var clonedWithoutPersist = async
+            ? await connWithPersist.CloneWithAsync(connStringWithoutPersist)
+            : connWithPersist.CloneWith(connStringWithoutPersist);
         clonedWithoutPersist.Open();
 
         Assert.That(clonedWithoutPersist.ConnectionString, Does.Not.Contain("Password="));
 
         // Then attempt to re-persist, should not work
-        using var clonedConn = clonedWithoutPersist.CloneWith(connStringWithPersist);
+        using var clonedConn = async
+            ? await clonedWithoutPersist.CloneWithAsync(connStringWithPersist)
+            : clonedWithoutPersist.CloneWith(connStringWithPersist);
         clonedConn.Open();
 
         Assert.That(clonedConn.ConnectionString, Does.Not.Contain("Password="));
     }
 
     [Test]
-    public async Task CloneWith_and_data_source_with_password()
+    public async Task CloneWith_and_data_source_with_password([Values] bool async)
     {
         var dataSourceBuilder = new EDBDataSourceBuilder(ConnectionString);
         // Set the password via the data source property later to make sure that's picked up by CloneWith
@@ -992,37 +1073,47 @@ LANGUAGE 'plpgsql'");
 
         // Test that the up-to-date password gets copied to the clone, as if we opened the original connection instead of cloning it
         using var _ = CreateTempPool(new EDBConnectionStringBuilder(ConnectionString) { Password = null }, out var tempConnectionString);
-        await using var clonedConnection = connection.CloneWith(tempConnectionString);
+        await using var clonedConnection = async
+            ? await connection.CloneWithAsync(tempConnectionString)
+            : connection.CloneWith(tempConnectionString);
         await clonedConnection.OpenAsync();
     }
 
+#if NET6_0_OR_GREATER
+
     [Test]
-    public async Task CloneWith_and_data_source_with_auth_callbacks()
+    public async Task CloneWith_and_data_source_with_auth_callbacks([Values] bool async)
     {
         var (userCertificateValidationCallbackCalled, clientCertificatesCallbackCalled) = (false, false);
 
         var dataSourceBuilder = CreateDataSourceBuilder();
-        dataSourceBuilder.UseUserCertificateValidationCallback(UserCertificateValidationCallback);
-        dataSourceBuilder.UseClientCertificatesCallback(ClientCertificatesCallback);
+        dataSourceBuilder.UseSslClientAuthenticationOptionsCallback(options =>
+        {
+            ClientCertificatesCallback(options.ClientCertificates);
+            options.RemoteCertificateValidationCallback = UserCertificateValidationCallback;
+        });
         await using var dataSource = dataSourceBuilder.Build();
         await using var connection = dataSource.CreateConnection();
 
         using var _ = CreateTempPool(ConnectionString, out var tempConnectionString);
-        await using var clonedConnection = connection.CloneWith(tempConnectionString);
+        await using var clonedConnection = async
+            ? await connection.CloneWithAsync(tempConnectionString)
+            : connection.CloneWith(tempConnectionString);
 
-        clonedConnection.UserCertificateValidationCallback!(null!, null, null, SslPolicyErrors.None);
-        Assert.True(userCertificateValidationCallbackCalled);
-        clonedConnection.ProvideClientCertificatesCallback!(null!);
+        var sslClientAuthenticationOptions = new SslClientAuthenticationOptions();
+        clonedConnection.SslClientAuthenticationOptionsCallback!(sslClientAuthenticationOptions);
         Assert.True(clientCertificatesCallbackCalled);
+        sslClientAuthenticationOptions.RemoteCertificateValidationCallback!(null!, null, null, SslPolicyErrors.None);
+        Assert.True(userCertificateValidationCallbackCalled);
 
         bool UserCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
             => userCertificateValidationCallbackCalled = true;
 
-        void ClientCertificatesCallback(X509CertificateCollection certs)
+        void ClientCertificatesCallback(X509CertificateCollection? certs)
             => clientCertificatesCallbackCalled = true;
     }
 
-    #endregion PersistSecurityInfo
+
 
     [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/743")]
@@ -1031,21 +1122,22 @@ LANGUAGE 'plpgsql'");
     {
         using var pool = CreateTempPool(ConnectionString, out var connectionString);
         using var conn = new EDBConnection(connectionString);
-        ProvideClientCertificatesCallback callback1 = certificates => { };
-        conn.ProvideClientCertificatesCallback = callback1;
-        RemoteCertificateValidationCallback callback2 = (sender, certificate, chain, errors) => true;
-        conn.UserCertificateValidationCallback = callback2;
+        Action<SslClientAuthenticationOptions> callback = _ => { };
+        conn.SslClientAuthenticationOptionsCallback = callback;
 
         conn.Open();
         Assert.That(async () => await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
 
         using var conn2 = (EDBConnection)((ICloneable)conn).Clone();
         Assert.That(conn2.ConnectionString, Is.EqualTo(conn.ConnectionString));
-        Assert.That(conn2.ProvideClientCertificatesCallback, Is.SameAs(callback1));
-        Assert.That(conn2.UserCertificateValidationCallback, Is.SameAs(callback2));
+        Assert.That(conn2.SslClientAuthenticationOptionsCallback, Is.SameAs(callback));
         conn2.Open();
         Assert.That(async () => await conn2.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
+    
+#endif
+
+    #endregion PersistSecurityInfo
 
     [Test]
     public async Task Clone_with_data_source()
@@ -1153,7 +1245,7 @@ LANGUAGE 'plpgsql'");
     [Test, Description("Some pseudo-PG database don't support pg_type loading, we have a minimal DatabaseInfo for this")]
     public async Task NoTypeLoading()
     {
-        await using var dataSource = CreateDataSource(csb => csb.ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading);
+        await using var dataSource = CreateDataSource(builder => builder.ConfigureTypeLoading(builder => builder.EnableTypeLoading()));
         await using var conn = await dataSource.OpenConnectionAsync();
 
         Assert.That(await conn.ExecuteScalarAsync("SELECT 8"), Is.EqualTo(8));
@@ -1206,7 +1298,7 @@ CREATE TABLE record ()");
         }
     }
 
-//#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
+    //#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
     [Timeout(10000)]
@@ -1269,7 +1361,7 @@ CREATE TABLE record ()");
             await adminConn.ExecuteNonQueryAsync("DROP DATABASE IF EXISTS sqlascii");
         }
     }
-//#endif
+    //#endif
 
     [Test]
     public async Task Oversize_buffer()
@@ -1561,7 +1653,7 @@ CREATE TABLE record ()");
             {
 #if NETFRAMEWORK
                 if (++count == 1)
-                    return;;
+                    return; ;
                 throw new Exception("INTENTIONAL FAILURE");
 #else
                 throw new NotSupportedException();
@@ -1615,7 +1707,7 @@ CREATE TABLE record ()");
         Assert.That(() => initializerConnection!.Open(), Throws.Exception.TypeOf<ObjectDisposedException>());
     }
 
-#endregion Physical connection initialization
+    #endregion Physical connection initialization
 
     [Test]
     [NonParallelizable] // Modifies global database info factories
@@ -1787,6 +1879,4 @@ CREATE TABLE record ()");
     }
 
     #endregion Logging tests
-
-    public ConnectionTests(MultiplexingMode multiplexingMode) : base(multiplexingMode) { }
 }

@@ -17,7 +17,7 @@ public class PostgresMultirangeType : PostgresType
     public PostgresRangeType Subrange { get; }
 
     /// <summary>
-    /// Constructs a representation of a PostgreSQL range data type.
+    /// Constructs a representation of a PostgreSQL multirange data type.
     /// </summary>
     protected internal PostgresMultirangeType(string ns, string name, uint oid, PostgresRangeType rangePostgresType)
         : base(ns, name, oid)

@@ -135,7 +135,7 @@ internal static class ArrayBackendToNativeTypeConverter
 
             // Create composite instance if converter found
             var pgTypeId = options.ToCanonicalTypeId(pgCompType);
-            var pgCompTypeInfo = options.GetObjectOrDefaultTypeInfoInternal(pgTypeId);            
+            var pgCompTypeInfo = options.GetDefaultTypeInfo(pgTypeId);            
             var converter = pgCompTypeInfo?.GetResolution().Converter;
             if (converter is not null && converter is ITextFormatConverter textConverter)
             {

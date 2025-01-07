@@ -198,7 +198,5 @@ public sealed class EDBNoticeEventArgs : EventArgs
     public PostgresNotice Notice { get; }
 
     internal EDBNoticeEventArgs(PostgresNotice notice)
-    {
-        Notice = notice;
-    }
+        => Notice = notice;
 }

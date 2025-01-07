@@ -9,7 +9,7 @@ namespace EnterpriseDB.EDBClient;
 sealed class EDBDataSourceBatch : EDBBatch
 {
     internal EDBDataSourceBatch(EDBConnection connection)
-        : base(new EDBDataSourceCommand(DefaultBatchCommandsSize, connection))
+        : base(static (conn, batch) => new EDBDataSourceCommand(batch, DefaultBatchCommandsSize, conn), connection)
     {
     }
 

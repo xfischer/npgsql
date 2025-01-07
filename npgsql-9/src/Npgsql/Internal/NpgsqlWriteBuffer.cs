@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Util;
 using static System.Threading.Timeout;
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 namespace EnterpriseDB.EDBClient.Internal;
 
 /// <summary>
@@ -159,28 +158,26 @@ sealed class EDBWriteBuffer : IDisposable
                 Underlying.Flush();
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             // Stopping twice (in case the previous Stop() call succeeded) doesn't hurt.
             // Not stopping will cause an assertion failure in debug mode when we call Start() the next time.
             // We can't stop in a finally block because Connector.Break() will dispose the buffer and the contained
             // _timeoutCts
             _timeoutCts.Stop();
-            switch (e)
+            switch (ex)
             {
             // User requested the cancellation
-            case OperationCanceledException _ when (cancellationToken.IsCancellationRequested):
-                throw Connector.Break(e);
+            case OperationCanceledException when cancellationToken.IsCancellationRequested:
+                throw Connector.Break(ex);
             // Read timeout
-            case OperationCanceledException _:
-            // Note that mono throws SocketException with the wrong error (see #1330)
-            case IOException _ when (e.InnerException as SocketException)?.SocketErrorCode ==
-                                    (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
-                Debug.Assert(e is OperationCanceledException ? async : !async);
+            case OperationCanceledException:
+            case IOException { InnerException: SocketException { SocketErrorCode: SocketError.TimedOut } }:
+                Debug.Assert(ex is OperationCanceledException ? async : !async);
                 throw Connector.Break(new EDBException("Exception while writing to stream", new TimeoutException("Timeout during writing attempt")));
             }
 
-            throw Connector.Break(new EDBException("Exception while writing to stream", e));
+            throw Connector.Break(new EDBException("Exception while writing to stream", ex));
         }
         EDBEventSource.Log.BytesWritten(WritePosition);
         _metricsReporter?.ReportBytesWritten(WritePosition);

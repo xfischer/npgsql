@@ -19,17 +19,10 @@ namespace EDBTypes;
 /// <remarks>
 /// See https://www.postgresql.org/docs/current/static/datatype-geometric.html
 /// </remarks>
-public struct EDBPoint : IEquatable<EDBPoint>
+public struct EDBPoint(double x, double y) : IEquatable<EDBPoint>
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-
-    public EDBPoint(double x, double y)
-        : this()
-    {
-        X = x;
-        Y = y;
-    }
+    public double X { get; set; } = x;
+    public double Y { get; set; } = y;
 
     // ReSharper disable CompareOfFloatsByEqualityOperator
     public bool Equals(EDBPoint other) => X == other.X && Y == other.Y;
@@ -68,19 +61,11 @@ public struct EDBPoint : IEquatable<EDBPoint>
 /// <remarks>
 /// See https://www.postgresql.org/docs/current/static/datatype-geometric.html
 /// </remarks>
-public struct EDBLine : IEquatable<EDBLine>
+public struct EDBLine(double a, double b, double c) : IEquatable<EDBLine>
 {
-    public double A { get; set; }
-    public double B { get; set; }
-    public double C { get; set; }
-
-    public EDBLine(double a, double b, double c)
-        : this()
-    {
-        A = a;
-        B = b;
-        C = c;
-    }
+    public double A { get; set; } = a;
+    public double B { get; set; } = b;
+    public double C { get; set; } = c;
 
     // EDBMERGE: Not native AOT compliant, TODO remove and implement proper parsing
     static readonly Regex Regex = new(@"\{(-?\d+.?\d*),(-?\d+.?\d*),(-?\d+.?\d*)\}", RegexOptions.None, TimeSpan.FromSeconds(1));
@@ -264,16 +249,16 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 {
     List<EDBPoint> _points;
 
-    List<EDBPoint> Points => _points ??= new();
+    List<EDBPoint> Points => _points ??= [];
 
     public bool Open { get; set; }
 
     public EDBPath()
-        => _points = new();
+        => _points = [];
 
     public EDBPath(IEnumerable<EDBPoint> points, bool open)
     {
-        _points = new List<EDBPoint>(points);
+        _points = [..points];
         Open = open;
     }
 
@@ -282,7 +267,7 @@ public struct EDBPath : IList<EDBPoint>, IEquatable<EDBPath>
 
     public EDBPath(bool open) : this()
     {
-        _points = new List<EDBPoint>();
+        _points = [];
         Open = open;
     }
 
@@ -394,13 +379,13 @@ public struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
 {
     List<EDBPoint> _points;
 
-    List<EDBPoint> Points => _points ??= new();
+    List<EDBPoint> Points => _points ??= [];
 
     public EDBPolygon()
-        => _points = new();
+        => _points = [];
 
     public EDBPolygon(IEnumerable<EDBPoint> points)
-        => _points = new List<EDBPoint>(points);
+        => _points = [..points];
 
     public EDBPolygon(params EDBPoint[] points) : this((IEnumerable<EDBPoint>) points) {}
 
@@ -496,26 +481,17 @@ public struct EDBPolygon : IList<EDBPoint>, IEquatable<EDBPolygon>
 /// <summary>
 /// Represents a PostgreSQL Circle type.
 /// </summary>
-public struct EDBCircle : IEquatable<EDBCircle>
+public struct EDBCircle(double x, double y, double radius) : IEquatable<EDBCircle>
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-    public double Radius { get; set; }
+    public double X { get; set; } = x;
+    public double Y { get; set; } = y;
+    public double Radius { get; set; } = radius;
 
     public EDBCircle(EDBPoint center, double radius)
-        : this()
+        : this(center.X, center.Y, radius)
     {
-        X = center.X;
-        Y = center.Y;
-        Radius = radius;
     }
 
-    public EDBCircle(double x, double y, double radius) : this()
-    {
-        X = x;
-        Y = y;
-        Radius = radius;
-    }
 
     public EDBPoint Center
     {
@@ -557,8 +533,7 @@ public struct EDBCircle : IEquatable<EDBCircle>
 }
 
 /// <summary>
-/// Represents a PostgreSQL inet type, which is a combination of an IPAddress and a
-/// subnet mask.
+/// Represents a PostgreSQL inet type, which is a combination of an IPAddress and a subnet mask.
 /// </summary>
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-net-types.html
@@ -674,23 +649,17 @@ public readonly record struct EDBCidr
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-oid.html
 /// </remarks>
-public readonly struct EDBTid : IEquatable<EDBTid>
+public readonly struct EDBTid(uint blockNumber, ushort offsetNumber) : IEquatable<EDBTid>
 {
     /// <summary>
     /// Block number
     /// </summary>
-    public uint BlockNumber { get; }
+    public uint BlockNumber { get; } = blockNumber;
 
     /// <summary>
     /// Tuple index within block
     /// </summary>
-    public ushort OffsetNumber { get; }
-
-    public EDBTid(uint blockNumber, ushort offsetNumber)
-    {
-        BlockNumber = blockNumber;
-        OffsetNumber = offsetNumber;
-    }
+    public ushort OffsetNumber { get; } = offsetNumber;
 
     public bool Equals(EDBTid other)
         => BlockNumber == other.BlockNumber && OffsetNumber == other.OffsetNumber;

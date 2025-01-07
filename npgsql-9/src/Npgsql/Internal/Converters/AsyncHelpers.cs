@@ -15,7 +15,7 @@ static class AsyncHelpers
         _ = Core(task, source, continuation);
 
         // Have our state machine be pooled, but don't return the task, source.Task should be used instead.
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         async ValueTask Core(Task task, CompletionSource source, CompletionSourceContinuation continuation)
@@ -92,7 +92,7 @@ static class AsyncHelpers
     public static unsafe ValueTask<T?> ReadAsyncAsNullable<T>(this PgConverter<T?> instance, PgConverter<T> effectiveConverter, PgReader reader, CancellationToken cancellationToken)
         where T : struct
     {
-        // Easy if we have all the data.
+        // Cheap if we have all the data.
         var task = effectiveConverter.ReadAsync(reader, cancellationToken);
         if (task.IsCompletedSuccessfully)
             return new(new T?(task.Result));

@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -17,14 +16,15 @@ using static EnterpriseDB.EDBClient.Tests.Support.MockState;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
 using IsolationLevel = System.Transactions.IsolationLevel;
 using TransactionStatus = EnterpriseDB.EDBClient.Internal.TransactionStatus;
-using System.Collections;
 
 namespace EnterpriseDB.EDBClient.Tests;
+
+#pragma warning disable CS0618
 
 public class MultipleHostsTests : TestBase
 {
     static readonly object[] MyCases =
-    {
+    [
         new object[] { TargetSessionAttributes.Standby,        new[] { Primary,         Standby         }, 1 },
         new object[] { TargetSessionAttributes.Standby,        new[] { PrimaryReadOnly, Standby         }, 1 },
         new object[] { TargetSessionAttributes.PreferStandby,  new[] { Primary,         Standby         }, 1 },
@@ -42,7 +42,7 @@ public class MultipleHostsTests : TestBase
         new object[] { TargetSessionAttributes.ReadWrite,      new[] { PrimaryReadOnly, Primary         }, 1 },
         new object[] { TargetSessionAttributes.ReadOnly,       new[] { Primary,         Standby         }, 1 },
         new object[] { TargetSessionAttributes.ReadOnly,       new[] { PrimaryReadOnly, Standby         }, 0 }
-    };
+    ];
 
     [Test]
     [TestCaseSource(nameof(MyCases))]
@@ -73,7 +73,7 @@ public class MultipleHostsTests : TestBase
     public async Task Connect_to_correct_host_unpooled(TargetSessionAttributes targetSessionAttributes, MockState[] servers, int expectedServer)
     {
         var postmasters = servers.Select(s => PgPostmasterMock.Start(state: s)).ToArray();
-        await using var __ = new DisposableWrapper(postmasters); // EnterpriseDB add explicit cast
+        await using var __ = new DisposableWrapper(postmasters);
 
         var connectionStringBuilder = new EDBConnectionStringBuilder
         {
@@ -162,10 +162,6 @@ public class MultipleHostsTests : TestBase
     [Test, Platform(Exclude = "MacOsX", Reason = "#3786")]
     public void All_hosts_are_down()
     {
-        // Different exception raised in .NET Core 3.1, skip (NUnit doesn't seem to support detecting .NET Core versions)
-        if (RuntimeInformation.FrameworkDescription.StartsWith(".NET Core 3.1"))
-            return;
-
         var endpoint = new IPEndPoint(IPAddress.Loopback, 0);
 
         using var socket1 = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -621,10 +617,11 @@ public class MultipleHostsTests : TestBase
     public async Task Offline_state_on_query_execution_TimeoutException()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = 1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = 1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -647,10 +644,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_TimeoutException_with_disabled_cancellation()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = -1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = -1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -673,10 +671,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_cancellation_with_disabled_cancellation_timeout()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 30;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = -1;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 30;
+            builder.ConnectionStringBuilder.CancellationTimeout = -1;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var anotherConn = await dataSource.OpenConnectionAsync();
@@ -703,10 +702,11 @@ public class MultipleHostsTests : TestBase
     public async Task Unknown_state_on_query_execution_TimeoutException_with_cancellation_failure()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
-        var dataSourceBuilder = postmaster.GetDataSourceBuilder();
-        dataSourceBuilder.ConnectionStringBuilder.CommandTimeout = 1;
-        dataSourceBuilder.ConnectionStringBuilder.CancellationTimeout = 0;
-        await using var dataSource = dataSourceBuilder.Build();
+        await using var dataSource = postmaster.CreateDataSource(builder =>
+        {
+            builder.ConnectionStringBuilder.CommandTimeout = 1;
+            builder.ConnectionStringBuilder.CancellationTimeout = 0;
+        });
 
         await using var conn = await dataSource.OpenConnectionAsync();
 
@@ -893,7 +893,6 @@ public class MultipleHostsTests : TestBase
         Assert.That(secondDataSource.GetDatabaseState(), Is.EqualTo(DatabaseState.PrimaryReadWrite));
     }
 
-    // This is the only test in this class which actually connects to PostgreSQL (the others use the PostgreSQL mock)
     [Test, NonParallelizable]
     public void IntegrationTest([Values] bool loadBalancing, [Values] bool alwaysCheckHostState)
     {

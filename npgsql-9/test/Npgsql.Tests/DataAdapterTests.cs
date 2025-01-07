@@ -140,7 +140,6 @@ public class DataAdapterTests : TestBase
         Assert.AreEqual(2, daupdate);
     }
 
-    //[Test, Ignore("")]
     [Test]
     [Ignore("")]
     public async Task DataAdapter_update_return_value2()
@@ -189,7 +188,6 @@ public class DataAdapterTests : TestBase
         Assert.AreEqual("field_numeric", ds.Tables[0].Columns[3].ColumnName);
     }
 
-    //[Test, Ignore("")]
     [Test]
     [Ignore("")]
     public async Task Fill_add_with_key()
@@ -306,7 +304,7 @@ public class DataAdapterTests : TestBase
         var dt = ds.Tables[0];
         Assert.IsNotNull(dt);
 
-        var dr = ds.Tables[0].Rows[ds.Tables[0].Rows.Count - 1];
+        var dr = ds.Tables[0].Rows[^1];
         dr["field_int2"] = 4;
 
         var ds2 = ds.GetChanges()!;
@@ -330,7 +328,6 @@ public class DataAdapterTests : TestBase
         da.Fill(ds);
     }
 
-    //[Test, Ignore("")]
     [Test]
     [Ignore("")]
     public Task Update_with_DataSet() => DoUpdateWithDataSet();
@@ -353,7 +350,7 @@ public class DataAdapterTests : TestBase
         var dt = ds.Tables[0];
         Assert.IsNotNull(dt);
 
-        var dr = ds.Tables[0].Rows[ds.Tables[0].Rows.Count - 1];
+        var dr = ds.Tables[0].Rows[^1];
 
         dr["field_int2"] = 4;
 
@@ -367,7 +364,6 @@ public class DataAdapterTests : TestBase
         Assert.AreEqual(4, dr2["field_int2"]);
     }
 
-    //[Test, Ignore("")]
     [Test]
     [Ignore("")]
     public async Task Insert_with_CommandBuilder_case_sensitive()

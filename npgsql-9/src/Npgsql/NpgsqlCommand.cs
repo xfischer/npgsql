@@ -17,6 +17,7 @@ using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Properties;
+using System.Collections;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -49,10 +50,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
     int? _timeout;
     internal EDBParameterCollection? _parameters;
 
-    /// <summary>
-    /// Whether this <see cref="EDBCommand" /> is wrapped by an <see cref="EDBBatch" />.
-    /// </summary>
-    internal bool IsWrappedByBatch { get; }
+    internal EDBBatch? WrappingBatch { get; }
 
     internal List<EDBBatchCommand> InternalBatchCommands { get; }
 
@@ -145,13 +143,13 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
     /// <summary>
     /// Used when this <see cref="EDBCommand"/> instance is wrapped inside an <see cref="EDBBatch"/>.
     /// </summary>
-    internal EDBCommand(int batchCommandCapacity, EDBConnection? connection = null)
+    internal EDBCommand(EDBBatch batch, int batchCommandCapacity, EDBConnection? connection = null)
     {
         GC.SuppressFinalize(this);
         InternalBatchCommands = new List<EDBBatchCommand>(batchCommandCapacity);
         InternalConnection = connection;
         CommandType = CommandType.Text;
-        IsWrappedByBatch = true;
+        WrappingBatch = batch;
 
         // These can/should never be used in this mode
         _commandText = null!;
@@ -164,8 +162,8 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
     /// <summary>
     /// Used when this <see cref="EDBCommand"/> instance is wrapped inside an <see cref="EDBBatch"/>.
     /// </summary>
-    internal EDBCommand(EDBConnector connector, int batchCommandCapacity)
-        : this(batchCommandCapacity)
+    internal EDBCommand(EDBBatch batch, EDBConnector connector, int batchCommandCapacity)
+        : this(batch, batchCommandCapacity)
         => _connector = connector;
 
     internal static EDBCommand CreateCachedCommand(EDBConnection connection)
@@ -186,7 +184,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         get => _commandText;
         set
         {
-            Debug.Assert(!IsWrappedByBatch);
+            Debug.Assert(WrappingBatch is null);
 
             if (State != CommandState.Idle)
                 ThrowHelper.ThrowInvalidOperationException("An open data reader exists for this command.");
@@ -200,11 +198,12 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
 
     string GetBatchFullCommandText()
     {
-        Debug.Assert(IsWrappedByBatch);
+        Debug.Assert(WrappingBatch is not null);
         if (InternalBatchCommands.Count == 0)
             return string.Empty;
         if (InternalBatchCommands.Count == 1)
             return InternalBatchCommands[0].CommandText;
+        // TODO: Potentially cache on connector/command?
         var sb = new StringBuilder();
         sb.Append(InternalBatchCommands[0].CommandText);
         for (var i = 1; i < InternalBatchCommands.Count; i++)
@@ -426,7 +425,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
     /// Gets the <see cref="EDBParameterCollection"/>.
     /// </summary>
     /// <value>The parameters of the SQL statement or function (stored procedure). The default is an empty collection.</value>
-    public new EDBParameterCollection Parameters => _parameters ??= new();
+    public new EDBParameterCollection Parameters => _parameters ??= [];
 
     #endregion
 
@@ -580,21 +579,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 };
             }
 
-            // EDBMERGE: try to stick to standard before parsing
-            //paramNames = paramNames + ":" + param.ParameterName + ", "; //EnterpriseDB Team
             Parameters.Add(param);
         }
-
-        // EDBMERGE: try to stick to standard before parsing
-        //if (hasParams.HasValue && CommandType == CommandType.StoredProcedure && paramNames is not null) //EnterpriseDB Team
-        //{
-        //    if (paramNames.Trim().EndsWith(",", StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        paramNames = paramNames.Substring(0, paramNames.LastIndexOf(",", StringComparison.OrdinalIgnoreCase));
-        //    }
-        //    CommandText = CommandText + "(" + paramNames + ")";
-        //}
-
     }
 
     void DeriveParametersForQuery(EDBConnector connector)
@@ -603,7 +589,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         {
             LogMessages.DerivingParameters(connector.CommandLogger, CommandText, connector.Id);
 
-            if (IsWrappedByBatch)
+            if (WrappingBatch is not null)
                 foreach (var batchCommand in InternalBatchCommands)
                     connector.SqlQueryParser.ParseRawQuery(batchCommand, connector.UseConformingStrings, deriveParameters: true);
             else
@@ -661,7 +647,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     switch (msg.Code)
                     {
                     case BackendMessageCode.RowDescription:
-                    case BackendMessageCode.OutDescription:
+                    case BackendMessageCode.OutDescription: // EnterpriseDB
                     case BackendMessageCode.NoData:
                         break;
                     default:
@@ -721,7 +707,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         var needToPrepare = false;
 
-        if (IsWrappedByBatch)
+        if (WrappingBatch is not null)
         {
             foreach (var batchCommand in InternalBatchCommands)
             {
@@ -800,7 +786,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             switch (msg.Code)
                             {
                             case BackendMessageCode.RowDescription:
-                            case BackendMessageCode.OutDescription:
+                            case BackendMessageCode.OutDescription: // EnterpriseDB
                                 // Clone the RowDescription for use with the prepared statement (the one we have is reused
                                 // by the connection)
                                 var description = ((RowDescriptionMessage)msg).Clone();
@@ -1136,11 +1122,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
         static void ValidateParameterCount(EDBBatchCommand batchCommand)
         {
-            if (batchCommand.HasParameters && batchCommand.PositionalParameters.Count > ushort.MaxValue)
+            if (batchCommand is { HasParameters: true, PositionalParameters.Count: > ushort.MaxValue })
                 ThrowHelper.ThrowEDBException("A statement cannot have more than 65535 parameters");
         }
 
-        static string ReplaceParameterName(string commandText, string parameterName, string newName)
+        // EnterpriseDB
+		static string ReplaceParameterName(string commandText, string parameterName, string newName)
         {
             while (commandText.Contains("  ")) commandText = commandText.Replace("  ", " ");
 
@@ -1231,7 +1218,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         async, cancellationToken).ConfigureAwait(false);
                     }
 
-                    await connector.WriteDescribe(StatementOrPortal.Portal, Array.Empty<byte>(), async, cancellationToken).ConfigureAwait(false);
+                    await connector.WriteDescribe(StatementOrPortal.Portal, [], async, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -1329,8 +1316,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
             var batchCommand = InternalBatchCommands[i];
 
-            await connector.WriteParse(batchCommand.FinalCommandText!, Array.Empty<byte>(), EDBBatchCommand.EmptyParameters, async, cancellationToken).ConfigureAwait(false);
-            await connector.WriteDescribe(StatementOrPortal.Statement, Array.Empty<byte>(), async, cancellationToken).ConfigureAwait(false);
+            await connector.WriteParse(batchCommand.FinalCommandText!, [], EDBBatchCommand.EmptyParameters, async, cancellationToken).ConfigureAwait(false);
+            await connector.WriteDescribe(StatementOrPortal.Statement, [], async, cancellationToken).ConfigureAwait(false);
         }
 
         await connector.WriteSync(async, cancellationToken).ConfigureAwait(false);
@@ -1476,7 +1463,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     async ValueTask<object?> ExecuteScalar(bool async, CancellationToken cancellationToken)
     {
         var behavior = CommandBehavior.SingleRow;
-        if (IsWrappedByBatch || _parameters?.HasOutputParameters != true)
+        if (WrappingBatch is not null || _parameters?.HasOutputParameters != true)
             behavior |= CommandBehavior.SequentialAccess;
 
         var reader = await ExecuteReader(async, behavior, cancellationToken).ConfigureAwait(false);
@@ -1596,7 +1583,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     {
                     case true:
                         Debug.Assert(_connectorPreparedOn != null);
-                        if (IsWrappedByBatch)
+                        if (WrappingBatch is not null)
                         {
                             foreach (var batchCommand in InternalBatchCommands)
                             {
@@ -1631,7 +1618,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     case false:
                         var numPrepared = 0;
 
-                        if (IsWrappedByBatch)
+                        if (WrappingBatch is not null)
                         {
                             for (var i = 0; i < InternalBatchCommands.Count; i++)
                             {
@@ -1687,7 +1674,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     EDBEventSource.Log.CommandStart(CommandText);
                     startTimestamp = connector.DataSource.MetricsReporter.ReportCommandStart();
-                    TraceCommandStart(connector.Settings);
+                    TraceCommandStart(connector.Settings, connector.DataSource.Configuration.TracingOptions);
                     TraceCommandEnrich(connector);
 
                     // We do not wait for the entire send to complete before proceeding to reading -
@@ -1722,20 +1709,15 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 else
                     reader.NextResult();
 
-                TraceReceivedFirstResponse();
+                TraceReceivedFirstResponse(connector.DataSource.Configuration.TracingOptions);
 
                 //EnterpriseDB Team
-                // if (CommandType == CommandType.StoredProcedure && (
-                //         Parameters.HasOutputParameters
-                //         || Parameters._hasReturnParam
-                //         || Parameters.IsNonQuery))
 				if (CommandType == CommandType.StoredProcedure)
                 {
                     reader.MutateToInMemoryReader(this);
                 }
 
                 return reader;
-
             }
             else
             {
@@ -1755,7 +1737,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     ThrowHelper.ThrowNotSupportedException("Synchronous command execution is not supported when multiplexing is on");
                 }
 
-                if (IsWrappedByBatch)
+                if (WrappingBatch is not null)
                 {
                     foreach (var batchCommand in InternalBatchCommands)
                     {
@@ -1771,7 +1753,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 State = CommandState.InProgress;
 
-                TraceCommandStart(conn.Settings);
+                TraceCommandStart(conn.Settings, conn.EDBDataSource.Configuration.TracingOptions);
 
                 // TODO: Experiment: do we want to wait on *writing* here, or on *reading*?
                 // Previous behavior was to wait on reading, which throw the exception from ExecuteReader (and not from
@@ -1908,23 +1890,48 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     #region Tracing
 
-    internal void TraceCommandStart(EDBConnectionStringBuilder settings)
+    internal void TraceCommandStart(EDBConnectionStringBuilder settings, EDBTracingOptions tracingOptions)
     {
         Debug.Assert(CurrentActivity is null);
+		
         if (EDBActivitySource.IsEnabled)
-            CurrentActivity = EDBActivitySource.CommandStart(settings, IsWrappedByBatch ? GetBatchFullCommandText() : CommandText, CommandType);
+        {
+            var enableTracing = WrappingBatch is not null
+                ? tracingOptions.BatchFilter?.Invoke(WrappingBatch) ?? true
+                : tracingOptions.CommandFilter?.Invoke(this) ?? true;
+
+            var spanName = WrappingBatch is not null
+                ? tracingOptions.BatchSpanNameProvider?.Invoke(WrappingBatch)
+                : tracingOptions.CommandSpanNameProvider?.Invoke(this);
+
+            if (enableTracing)
+            {
+                CurrentActivity = EDBActivitySource.CommandStart(
+                    settings,
+                    WrappingBatch is not null ? GetBatchFullCommandText() : CommandText,
+                    CommandType,
+                    spanName);
+            }
+        }
     }
 
     internal void TraceCommandEnrich(EDBConnector connector)
     {
         if (CurrentActivity is not null)
+        {
             EDBActivitySource.Enrich(CurrentActivity, connector);
+            var tracingOptions = connector.DataSource.Configuration.TracingOptions;
+            if (WrappingBatch is not null)
+                tracingOptions.BatchEnrichmentCallback?.Invoke(CurrentActivity, WrappingBatch);
+            else
+                tracingOptions.CommandEnrichmentCallback?.Invoke(CurrentActivity, this);
+        }
     }
 
-    internal void TraceReceivedFirstResponse()
+    internal void TraceReceivedFirstResponse(EDBTracingOptions tracingOptions)
     {
         if (CurrentActivity is not null)
-            EDBActivitySource.ReceivedFirstResponse(CurrentActivity);
+            EDBActivitySource.ReceivedFirstResponse(CurrentActivity, tracingOptions);
     }
 
     internal void TraceCommandStop()
@@ -2008,7 +2015,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     LogMessages.ExecutingCommandWithParameters(
                         logger,
                         singleCommand.FinalCommandText!,
-                        ParametersDbNullAsString(singleCommand),
+                        GetParametersForLogging(singleCommand),
                         connector.Id);
                 }
                 else
@@ -2016,7 +2023,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     LogMessages.CommandExecutionCompletedWithParameters(
                         logger,
                         singleCommand.FinalCommandText!,
-                        ParametersDbNullAsString(singleCommand),
+                        GetParametersForLogging(singleCommand),
                         connector.QueryLogStopWatch.ElapsedMilliseconds,
                         connector.Id);
                 }
@@ -2035,7 +2042,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             {
                 var commands = new (string, object[])[InternalBatchCommands.Count];
                 for (var i = 0; i < InternalBatchCommands.Count; i++)
-                    commands[i] = (InternalBatchCommands[i].FinalCommandText!, ParametersDbNullAsString(InternalBatchCommands[i]));
+                    commands[i] = (InternalBatchCommands[i].FinalCommandText!, GetParametersForLogging(InternalBatchCommands[i]));
 
                 if (executing)
                     LogMessages.ExecutingBatchWithParameters(logger, commands, connector.Id);
@@ -2054,15 +2061,53 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             }
         }
 
-        object[] ParametersDbNullAsString(EDBBatchCommand c)
+        static object[] GetParametersForLogging(EDBBatchCommand c)
         {
             var positionalParameters = c.CurrentParametersReadOnly;
             var parameters = new object[positionalParameters.Count];
             for (var i = 0; i < positionalParameters.Count; i++)
-                parameters[i] = positionalParameters[i].Value == DBNull.Value ? "NULL" : positionalParameters[i].Value!;
+            {
+                parameters[i] = GetParameterForLogging(positionalParameters[i].Value);
+            }
             return parameters;
+
+            object GetParameterForLogging(object? value)
+            {
+                return value switch
+                {
+                    DBNull or null => "NULL",
+                    IEnumerable enumerable and not string => GetEnumerableForLogging(enumerable),
+                    _ => value
+                };
+
+                string GetEnumerableForLogging(IEnumerable enumerable)
+                {
+                    var vsb = new StringBuilder(256);
+                    var count = 0;
+                    vsb.Append('[');
+                    foreach (var e in enumerable)
+                    {
+                        if (count > 9)
+                        {
+                            vsb.Append(", ...");
+                            break;
+                        }
+
+                        if (count > 0)
+                        {
+                            vsb.Append(", ");
+                        }
+
+                        vsb.Append(GetParameterForLogging(e));
+                        count++;
+                    }
+
+                    vsb.Append(']');
+                    return vsb.ToString();
+                }
+            }
         }
-    }
+   }
 
     /// <summary>
     /// Create a new command based on this one.
@@ -2092,6 +2137,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     {
         if (State is CommandState.Disposed)
             ThrowHelper.ThrowObjectDisposedException(GetType().FullName);
+
         var conn = InternalConnection;
         if (conn is null)
         {

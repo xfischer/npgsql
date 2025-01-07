@@ -74,18 +74,18 @@ sealed partial class AdoTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverType<EDBRange<DateTime>[]>(DataTypeNames.TsMultirange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateMultirangeResolver<EDBRange<DateTime>[], EDBRange<DateTime>>(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzMultirange),
                             options.GetCanonicalTypeId(DataTypeNames.TsMultirange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch),
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName),
                     isDefault: true);
                 mappings.AddResolverType<List<EDBRange<DateTime>>>(DataTypeNames.TsMultirange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateMultirangeResolver<List<EDBRange<DateTime>>, EDBRange<DateTime>>(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzMultirange),
                             options.GetCanonicalTypeId(DataTypeNames.TsMultirange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch));
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName));
             }
 
             mappings.AddType<EDBRange<long>[]>(DataTypeNames.TsMultirange,
@@ -126,18 +126,18 @@ sealed partial class AdoTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverType<EDBRange<DateTime>[]>(DataTypeNames.TsTzMultirange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateMultirangeResolver<EDBRange<DateTime>[], EDBRange<DateTime>>(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzMultirange),
                             options.GetCanonicalTypeId(DataTypeNames.TsMultirange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch),
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName),
                     isDefault: true);
                 mappings.AddResolverType<List<EDBRange<DateTime>>>(DataTypeNames.TsTzMultirange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateMultirangeResolver<List<EDBRange<DateTime>>, EDBRange<DateTime>>(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzMultirange),
                             options.GetCanonicalTypeId(DataTypeNames.TsMultirange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch));
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName));
                 mappings.AddType<EDBRange<DateTimeOffset>[]>(DataTypeNames.TsTzMultirange,
                     static (options, mapping, _) =>
                         mapping.CreateInfo(options, CreateArrayMultirangeConverter(
@@ -168,7 +168,7 @@ sealed partial class AdoTypeInfoResolverFactory
                 static (options, mapping, _) =>
                     mapping.CreateInfo(options, CreateListMultirangeConverter(
                         CreateRangeConverter(new DateTimeDateConverter(options.EnableDateTimeInfinityConversions), options), options)));
-    #if NET6_0_OR_GREATER
+    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 mappings.AddType<EDBRange<DateOnly>[]>(DataTypeNames.DateMultirange,
                     static (options, mapping, _) =>
                         mapping.CreateInfo(options, CreateArrayMultirangeConverter(
@@ -243,7 +243,7 @@ sealed partial class AdoTypeInfoResolverFactory
             // datemultirange
             mappings.AddArrayType<EDBRange<DateTime>[]>(DataTypeNames.DateMultirange);
             mappings.AddArrayType<List<EDBRange<DateTime>>>(DataTypeNames.DateMultirange);
-    #if NET6_0_OR_GREATER
+    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 mappings.AddArrayType<EDBRange<DateOnly>[]>(DataTypeNames.DateMultirange);
                 mappings.AddArrayType<List<EDBRange<DateOnly>>>(DataTypeNames.DateMultirange);
     #endif

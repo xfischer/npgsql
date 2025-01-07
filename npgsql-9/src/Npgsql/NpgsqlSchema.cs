@@ -1008,7 +1008,7 @@ FROM pg_constraint c
     /// List of keywords taken from PostgreSQL 9.0 reserved words documentation.
     /// </summary>
     static readonly string[] ReservedKeywords =
-    {
+    [
         "ALL",
         "ANALYSE",
         "ANALYZE",
@@ -1108,7 +1108,7 @@ FROM pg_constraint c
         "WHERE",
         "WINDOW",
         "WITH"
-    };
+    ];
 
     #endregion Reserved Keywords
 

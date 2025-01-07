@@ -9,7 +9,7 @@ namespace EnterpriseDB.EDBClient;
 
 sealed class SqlQueryParser
 {
-    static EDBParameterCollection EmptyParameters { get; } = new();
+    static EDBParameterCollection EmptyParameters { get; } = [];
 
     readonly Dictionary<string, int> _paramIndexMap = new(StringComparer.OrdinalIgnoreCase);
     readonly StringBuilder _rewrittenSql = new();

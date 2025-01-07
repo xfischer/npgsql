@@ -6,13 +6,9 @@ using EnterpriseDB.EDBClient.Util;
 
 namespace EnterpriseDB.EDBClient;
 
-sealed class UnpooledDataSource : EDBDataSource
+sealed class UnpooledDataSource(EDBConnectionStringBuilder settings, EDBDataSourceConfiguration dataSourceConfig)
+    : EDBDataSource(settings, dataSourceConfig)
 {
-    public UnpooledDataSource(EDBConnectionStringBuilder settings, EDBDataSourceConfiguration dataSourceConfig)
-        : base(settings, dataSourceConfig)
-    {
-    }
-
     volatile int _numConnectors;
 
     internal override (int Total, int Idle, int Busy) Statistics => (_numConnectors, 0, _numConnectors);
@@ -46,6 +42,7 @@ sealed class UnpooledDataSource : EDBDataSource
         connector.Close();
     }
 
-    internal override void Clear() {}
-
+    public override void Clear()
+    {
+    }
 }

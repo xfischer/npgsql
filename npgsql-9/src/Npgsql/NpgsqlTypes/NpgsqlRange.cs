@@ -395,8 +395,8 @@ public readonly struct EDBRange<T> : IEquatable<EDBRange<T>>
         if (!lowerInclusive && !lowerExclusive)
             throw new FormatException("Malformed range literal. Missing left parenthesis or bracket.");
 
-        var upperInclusive = value[value.Length - 1] == UpperInclusiveBound;
-        var upperExclusive = value[value.Length - 1] == UpperExclusiveBound;
+        var upperInclusive = value[value.Length - 1] == UpperInclusiveBound; // EnterpriseDB (NETFRAMWEWORK)
+        var upperExclusive = value[value.Length - 1] == UpperExclusiveBound; // EnterpriseDB (NETFRAMWEWORK)
 
         if (!upperInclusive && !upperExclusive)
             throw new FormatException("Malformed range literal. Missing right parenthesis or bracket.");

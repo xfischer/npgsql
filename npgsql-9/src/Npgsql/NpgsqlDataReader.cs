@@ -21,7 +21,6 @@ using EnterpriseDB.EDBClient.Schema;
 using EDBTypes;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
-#pragma warning disable CA2222 // Do not decrease inherited member visibility
 namespace EnterpriseDB.EDBClient;
 
 /// <summary>
@@ -71,7 +70,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Records, for each column, its starting offset and length in the current row.
     /// Used only in non-sequential mode.
     /// </summary>
-    List<(int Offset, int Length)> _columns = new();
+    readonly List<(int Offset, int Length)> _columns = [];
     int _columnsStartPos;
 
     /// <summary>
@@ -92,14 +91,14 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Mostly useful for a sequential mode, when the row is already in the buffer.
     /// Should always be true for the non-sequential mode.
     /// </summary>
-    bool _canConsumeRowNonSequentially;
+    bool _isRowBuffered;
 
     /// <summary>
     /// The RowDescription message for the current resultset being processed
     /// </summary>
     internal RowDescriptionMessage? RowDescription;
 
-    int ColumnCount => RowDescription?.Count ?? 0;
+    int ColumnCount => RowDescription?.Count ?? 0;  // EnterpriseDB (defaults to 0)
 
     /// <summary>
     /// Stores the last converter info resolved by column, to speed up repeated reading.
@@ -164,8 +163,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </remarks>
     public override bool Read()
     {
-        CheckClosedOrDisposed();
-
+        ThrowIfClosedOrDisposed();
         return TryRead()?.Result ?? Read(false).GetAwaiter().GetResult();
     }
 
@@ -178,7 +176,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>A task representing the asynchronous operation.</returns>
     public override Task<bool> ReadAsync(CancellationToken cancellationToken)
     {
-        CheckClosedOrDisposed();
+        ThrowIfClosedOrDisposed();
 
         if (!HasRows) // EnterpriseDB team
             return Task.FromResult(false);
@@ -208,10 +206,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         }
 
         // We have a special case path for SingleRow.
-        if (_behavior.HasFlag(CommandBehavior.SingleRow) || !_canConsumeRowNonSequentially)
+        if (_behavior.HasFlag(CommandBehavior.SingleRow) || !_isRowBuffered)
             return null;
 
-        ConsumeRowNonSequential();
+        ConsumeBufferedRow();
 
         const int headerSize = sizeof(byte) + sizeof(int);
         var buffer = Buffer;
@@ -327,8 +325,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Advances the reader to the next result when reading the results of a batch of statements.
     /// </summary>
     /// <returns></returns>
-    public override bool NextResult() => (_isSchemaOnly ? NextResultSchemaOnly(false) : NextResult(false))
-        .GetAwaiter().GetResult();
+    public override bool NextResult()
+    {
+        ThrowIfClosedOrDisposed();
+        return (_isSchemaOnly ? NextResultSchemaOnly(false) : NextResult(false))
+            .GetAwaiter().GetResult();
+    }
 
     /// <summary>
     /// This is the asynchronous version of NextResult.
@@ -338,9 +340,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </param>
     /// <returns>A task representing the asynchronous operation.</returns>
     public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
-        => _isSchemaOnly
+    {
+        ThrowIfClosedOrDisposed();
+        return _isSchemaOnly
             ? NextResultSchemaOnly(async: true, cancellationToken: cancellationToken)
             : NextResult(async: true, cancellationToken: cancellationToken);
+    }
 
     /// <summary>
     /// Internal implementation of NextResult
@@ -348,8 +353,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     async Task<bool> NextResult(bool async, bool isConsuming = false, CancellationToken cancellationToken = default)
     {
         Debug.Assert(!_isSchemaOnly);
-        CheckClosedOrDisposed();
-
         if (State is ReaderState.Consumed)
             return false;
 
@@ -424,7 +427,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                         // RowDescription messages are cached on the connector, but if we're auto-preparing, we need to
                         // clone our own copy which will last beyond the lifetime of this invocation.
-                        BackendMessageCode.RowDescription or BackendMessageCode.OutDescription => preparedStatement == null
+                        BackendMessageCode.RowDescription or BackendMessageCode.OutDescription => preparedStatement == null // EnterpriseDB (added OutDescription case)
                             ? (RowDescriptionMessage)msg
                             : ((RowDescriptionMessage)msg).Clone(),
 
@@ -432,7 +435,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     };
                 }
 
-                if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
+                if (Command.CommandType != CommandType.StoredProcedure) // EnterpriseDB ZK: Connector._isCallableStmt != true
                 {
                     if (RowDescription is not null)
                     {
@@ -482,15 +485,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 // community:
                 // if ((Command.IsWrappedByBatch || StatementIndex is 0) && Command.InternalBatchCommands[StatementIndex]._parameters?.HasOutputParameters == true)
                 //
-                bool hasOutParameters = Command._parameters?.HasOutputParameters ?? false;
-                bool hasReturnParam = Command._parameters?._hasReturnParam ?? false;
-                if (!Command.IsWrappedByBatch && StatementIndex == 0 && (hasOutParameters || hasReturnParam))
+                var hasOutParameters = Command._parameters?.HasOutputParameters ?? false;
+                var hasReturnParam = Command._parameters?._hasReturnParam ?? false;
+                if (Command.WrappingBatch is null && StatementIndex == 0 && (hasOutParameters || hasReturnParam))
                 {
                     // If output parameters are present and this is the first row of the resultset,
                     // we must always read it in non-sequential mode because it will be traversed twice (once
                     // here for the parameters, then as a regular row).
                     msg = await Connector.ReadMessage(async).ConfigureAwait(false);
-                    if (Command.CommandType != CommandType.StoredProcedure) //ZK: Connector._isCallableStmt != true
+                    if (Command.CommandType != CommandType.StoredProcedure) // EnterpriseDB ZK: Connector._isCallableStmt != true
                     {
                         /* Community code
 						ProcessMessage(msg);
@@ -519,7 +522,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                     }
                 }
-                else if (Command.CommandType == CommandType.StoredProcedure && Command.Parameters.Count > 0)  //ZK :Connector._isCallableStmt == true
+                else if (Command.CommandType == CommandType.StoredProcedure && Command.Parameters.Count > 0) // EnterpriseDB ZK :Connector._isCallableStmt == true
                 {
                     msg = await Connector.ReadMessage(async).ConfigureAwait(false);
 
@@ -527,7 +530,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 }
                 else
                 {
-                    msg = await ReadMessage(async).ConfigureAwait(false); // ZK: Connector._isCallableStmt == true
+                    msg = await ReadMessage(async).ConfigureAwait(false); // EnterpriseDB ZK: Connector._isCallableStmt == true
                     if (msg.Code == BackendMessageCode.NoData && Command.CommandType == CommandType.StoredProcedure)
                         msg = await ReadMessage(async).ConfigureAwait(false);
                     //if ((msg.Code == BackendMessageCode.RowDescription || msg.Code == BackendMessageCode.OutDescription) && Command.CommandType == CommandType.StoredProcedure)
@@ -576,7 +579,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         await PopulateOutputParameters(async, Command.InternalBatchCommands[StatementIndex]._parameters!).ConfigureAwait(false);
                     }
                     return true;
-                case BackendMessageCode.DataRow:
+                case BackendMessageCode.DataRow: // EnterpriseDB
                     break;
                 case BackendMessageCode.CommandComplete:
                     if (statement.AppendErrorBarrier ?? Command.EnableErrorBarriers)
@@ -587,12 +590,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     break;
                 }
 
+				// EnterpriseDB
                 ProcessMessage(msg);
                 return true;
             }
 
             // There are no more queries, we're done. Read the RFQ.
-            // XFI Merge v8 : community code
             if (_statements.Count is 0 || !(_statements[_statements.Count - 1].AppendErrorBarrier ?? Command.EnableErrorBarriers))
                 Expect<ReadyForQueryMessage>(await Connector.ReadMessage(async).ConfigureAwait(false), Connector);
 
@@ -782,7 +785,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 case BackendMessageCode.BindComplete:
                 case BackendMessageCode.ParameterDescription:
                 case BackendMessageCode.NoData:
-                    bool hasNoOutParam = true;
+                    var hasNoOutParam = true;
                     foreach (var p in (IEnumerable<EDBParameter>)parameters)
                     {
                         if (p.IsOutputDirection)
@@ -807,7 +810,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             var pending = new Queue<object>();
             var taken = new List<EDBParameter>();
 
-            for (var i = 0; i < FieldCount; i++)
+            for (var i = 0; i < ColumnCount; i++)
             {
                 if (parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
                 {
@@ -900,7 +903,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         // once for populating the output parameters and once for the actual result set traversal. So in this
         // case we can't be sequential.
 #if DEBUG
-        bool hasOutParam = false;
+        var hasOutParam = false;
         foreach (var p in (IEnumerable<EDBParameter>)parameters)
         {
             if (p.IsOutputDirection)
@@ -945,7 +948,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             p.Value = pending.Dequeue();
         }
 
-        PgReader.Commit(resuming: false);
+        PgReader.Commit();
         State = ReaderState.BeforeResult; // Set the state back
         Buffer.ReadPosition = currentPosition; // Restore position
 
@@ -959,26 +962,13 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     async Task<bool> NextResultSchemaOnly(bool async, bool isConsuming = false, CancellationToken cancellationToken = default)
     {
         Debug.Assert(_isSchemaOnly);
+        if (State is ReaderState.Consumed)
+            return false;
 
         using var registration = isConsuming ? default : Connector.StartNestedCancellableOperation(cancellationToken);
 
         try
         {
-            switch (State)
-            {
-            case ReaderState.BeforeResult:
-            case ReaderState.InResult:
-            case ReaderState.BetweenResults:
-                break;
-            case ReaderState.Consumed:
-            case ReaderState.Closed:
-            case ReaderState.Disposed:
-                return false;
-            default:
-                ThrowHelper.ThrowArgumentOutOfRangeException();
-                return false;
-            }
-
             for (StatementIndex++; StatementIndex < _statements.Count; StatementIndex++)
             {
                 var statement = _statements[StatementIndex];
@@ -1019,7 +1009,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         RowDescription = _statements[StatementIndex].Description = null;
                         break;
                     case BackendMessageCode.RowDescription:
-                    case BackendMessageCode.OutDescription:
+                    case BackendMessageCode.OutDescription: // EnterpriseDB
                         // We have a resultset
                         RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
                         Command.FixupRowDescription(RowDescription, StatementIndex == 0);
@@ -1123,7 +1113,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         var msgRemainder = dataRow.Length - sizeof(short);
         _dataMsgEnd = readPosition + msgRemainder;
         _columnsStartPos = readPosition;
-        _canConsumeRowNonSequentially = msgRemainder <= Buffer.FilledBytes - readPosition;
+        _isRowBuffered = msgRemainder <= Buffer.FilledBytes - readPosition;
+        Debug.Assert(_isRowBuffered || _isSequential);
         _column = -1;
 
         if (_columns.Count > 0)
@@ -1199,15 +1190,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 Debug.Assert(RowDescription.Count == 1);
                 var fieldDescription = RowDescription._fields[0];
 
-                var converter = fieldDescription.ObjectOrDefaultInfo.Converter;
-                var bufferRequirement = fieldDescription.ObjectOrDefaultInfo.BufferRequirement;
+                var converter = fieldDescription.ObjectInfo.Converter;
+                var bufferRequirement = fieldDescription.ObjectInfo.BufferRequirement;
                 var format = fieldDescription.DataFormat;
 
                 buf.PgReader.Init(colLength, format);
                 buf.PgReader.StartRead(bufferRequirement);
                 var result = converter.ReadAsObject(buf.PgReader);
                 buf.PgReader.EndRead();
-                buf.PgReader.Commit(false);
+                buf.PgReader.Commit();
 
                 if (isReturnRow)
                 {
@@ -1270,7 +1261,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <summary>
     /// Gets a value indicating whether the data reader is closed.
     /// </summary>
-    public override bool IsClosed => State == ReaderState.Closed || State == ReaderState.Disposed;
+    public override bool IsClosed => State is ReaderState.Closed or ReaderState.Disposed;
 
     /// <summary>
     /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
@@ -1306,18 +1297,26 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// which exposes an aggregation across all statements.
     /// </remarks>
     [Obsolete("Use the new DbBatch API")]
-    public IReadOnlyList<EDBBatchCommand> Statements => _statements.AsReadOnly();
+    public IReadOnlyList<EDBBatchCommand> Statements
+    {
+        get
+        {
+            ThrowIfClosedOrDisposed();
+            return _statements.AsReadOnly();
+        }
+    }
 
     /// <summary>
     /// Gets a value that indicates whether this DbDataReader contains one or more rows.
     /// </summary>
     public override bool HasRows
-        => State switch
+    {
+        get
         {
-            ReaderState.Closed => throw new InvalidOperationException("Invalid attempt to call HasRows when reader is closed."),
-            ReaderState.Disposed => throw new ObjectDisposedException(nameof(EDBDataReader)),
-            _ => _hasRows
-        };
+            ThrowIfClosedOrDisposed();
+            return _hasRows;
+        }
+    }
 
     /// <summary>
     /// Indicates whether the reader is currently positioned on a row, i.e. whether reading a
@@ -1326,7 +1325,14 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// return true even if attempting to read a column will fail, e.g. before <see cref="Read()"/>
     /// has been called
     /// </summary>
-    public bool IsOnRow => State == ReaderState.InResult;
+    public bool IsOnRow
+    {
+        get
+        {
+            ThrowIfClosedOrDisposed();
+            return State is ReaderState.InResult;
+        }
+    }
 
     /// <summary>
     /// Gets the name of the column, given the zero-based column ordinal.
@@ -1342,7 +1348,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         get
         {
-            CheckClosedOrDisposed();
+            ThrowIfClosedOrDisposed();
             return RowDescription?.Count ?? 0;
         }
     }
@@ -1377,7 +1383,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                     if (_isSchemaOnly)
                     {
-                        bool allPrepared = true;
+                        var allPrepared = true;
                         foreach (var stmt in _statements)
                         {
                             if (!stmt.IsPrepared)
@@ -1426,7 +1432,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             }
             catch (Exception e)
             {
-                exceptions ??= new();
+                exceptions ??= [];
                 exceptions.Add(e);
             }
         }
@@ -1493,7 +1499,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         {
             // In the case of a PostgresException (or multiple ones, if we have error barriers), the reader's state has already been set
             // to Disposed in Close above; in multiplexing, we also unbind the connector (with its reader), and at that point it can be used
-            // by other consumers. Therefore, we only set the state fo Disposed if the exception *wasn't* a PostgresException.
+            // by other consumers. Therefore, we only set the state to Disposed if the exception *wasn't* a PostgresException.
             if (!(ex is PostgresException ||
                   ex is EDBException { InnerException: AggregateException aggregateException } &&
                   AllPostgresExceptions(aggregateException.InnerExceptions)))
@@ -1770,11 +1776,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The number of instances of <see cref="object"/> in the array.</returns>
     public override int GetValues(object[] values)
     {
-        if (values == null)
+        ThrowIfNotInResult();
+#if NET6_0_OR_GREATER // EnterpriseDB
+        ArgumentNullException.ThrowIfNull(values);
+#else
+        if (values is null)
             throw new ArgumentNullException(nameof(values));
-        CheckResultSet();
+#endif       
 
-        var count = Math.Min(FieldCount, values.Length);
+        var count = Math.Min(ColumnCount, values.Length);
         for (var i = 0; i < count; i++)
             values[i] = GetValue(i);
         return count;
@@ -1816,23 +1826,23 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>A data reader.</returns>
     public new EDBNestedDataReader GetData(int ordinal)
     {
+        ThrowIfNotInResult();
+        var field = RowDescription[ordinal];
         if (_isSequential)
-            throw new NotSupportedException("GetData() not supported in sequential mode.");
+            ThrowHelper.ThrowNotSupportedException("GetData() not supported in sequential mode.");
 
-        var field = CheckRowAndGetField(ordinal);
         var type = field.PostgresType;
         var isArray = type is PostgresArrayType;
         var elementType = isArray ? ((PostgresArrayType)type).Element : type;
         var compositeType = elementType as PostgresCompositeType;
         if (field.DataFormat is DataFormat.Text || (elementType.InternalName != "record" && compositeType == null))
-            throw new InvalidCastException("GetData() not supported for type " + field.TypeDisplayName);
+            ThrowHelper.ThrowInvalidCastException("GetData() not supported for type " + field.TypeDisplayName);
 
-        var columnLength = SeekToColumn(async: false, ordinal, field.DataFormat, resumableOp: true).GetAwaiter().GetResult();
-        if (columnLength is -1)
+        if (SeekToColumn(ordinal, field.DataFormat, resumableOp: true) is -1)
             ThrowHelper.ThrowInvalidCastException_NoValue(field);
 
-        if (PgReader.FieldOffset > 0)
-            PgReader.Rewind(PgReader.FieldOffset);
+        Debug.Assert(!PgReader.NestedInitialized, "Unexpected nested read active, Seek(0) would seek to the start of the nested data.");
+        PgReader.Seek(0);
 
         var reader = CachedFreeNestedDataReader;
         if (reader != null)
@@ -1866,29 +1876,32 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The actual number of bytes read.</returns>
     public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length)
     {
-        if (dataOffset is < 0 or > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, $"dataOffset must be between {0} and {int.MaxValue}");
-        if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
-            throw new IndexOutOfRangeException($"bufferOffset must be between 0 and {buffer.Length}");
-        if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
-            throw new IndexOutOfRangeException($"length must be between 0 and {buffer.Length - bufferOffset}");
+        ThrowIfNotInResult();
+        var field = RowDescription[ordinal];
 
-        var field = CheckRowAndGetField(ordinal);
-        var columnLength = SeekToColumn(async: false, ordinal, field.DataFormat, resumableOp: true).GetAwaiter().GetResult();
-        if (columnLength == -1)
+        if (dataOffset is < 0 or > int.MaxValue)
+            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(dataOffset), "dataOffset must be between 0 and {0}", int.MaxValue);
+        if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
+            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length));
+        if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
+            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset));
+
+        if (SeekToColumn(ordinal, field.DataFormat, resumableOp: true) is var columnLength && columnLength is -1)
             ThrowHelper.ThrowInvalidCastException_NoValue(field);
 
         if (buffer is null)
             return columnLength;
 
-        // Move to offset
-        if (_isSequential && PgReader.FieldOffset > dataOffset)
+        // Check whether any sequential seek is contractually sound (even though we might be able to satisfy rewinds we make sure we won't).
+        if (_isSequential && PgReader.IsFieldConsumed((int)dataOffset))
             ThrowHelper.ThrowInvalidOperationException("Attempt to read a position in the column which has already been read");
 
-        PgReader.Seek((int)dataOffset);
+        // Move to offset
+        Debug.Assert(!PgReader.NestedInitialized, "Unexpected nested read active, Seek(0) would seek to the start of the nested data.");
+        var remaining = PgReader.Seek((int)dataOffset);
 
         // At offset, read into buffer.
-        length = Math.Min(length, PgReader.FieldRemaining);
+        length = Math.Min(length, remaining);
         PgReader.ReadBytes(new Span<byte>(buffer, bufferOffset, length));
         return length;
     }
@@ -1927,19 +1940,20 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The actual number of characters read.</returns>
     public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length)
     {
-        if (dataOffset is < 0 or > int.MaxValue)
-            throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, $"dataOffset must be between 0 and {int.MaxValue}");
-        if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
-            throw new IndexOutOfRangeException($"bufferOffset must be between 0 and {buffer.Length}");
-        if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
-            throw new IndexOutOfRangeException($"length must be between 0 and {buffer.Length - bufferOffset}");
+        ThrowIfNotInResult();
 
         // Check whether we have a GetChars implementation for this column type.
         var field = GetInfo(ordinal, typeof(GetChars), out var converter, out var bufferRequirement, out var asObject);
 
-        var columnLength = SeekToColumn(async: false, ordinal, field, resumableOp: true).GetAwaiter().GetResult();
-        if (columnLength == -1)
-            ThrowHelper.ThrowInvalidCastException_NoValue(CheckRowAndGetField(ordinal));
+        if (dataOffset is < 0 or > int.MaxValue)
+            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(dataOffset), "dataOffset must be between 0 and {0}", int.MaxValue);
+        if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
+            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length));
+        if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
+            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset));
+
+        if (SeekToColumn(ordinal, field, resumableOp: true) is -1)
+            ThrowHelper.ThrowInvalidCastException_NoValue(RowDescription[ordinal]);
 
         var reader = PgReader;
         dataOffset = buffer is null ? 0 : dataOffset;
@@ -1993,8 +2007,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns></returns>
     public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
     {
-        // In non-sequential, we know that the column is already buffered - no I/O will take place
-        if (!_isSequential)
+        // As the row is buffered we know the column is too - no I/O will take place
+        if (_isRowBuffered)
             return Task.FromResult(GetFieldValueCore<T>(ordinal));
 
         // The only statically mapped converter, it always exists.
@@ -2005,12 +2019,11 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         async ValueTask<T> Core(int ordinal, CancellationToken cancellationToken)
         {
-            using var registration = Connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
-
+            ThrowIfNotInResult();
             var field = GetInfo(ordinal, typeof(T), out var converter, out var bufferRequirement, out var asObject);
 
-            var columnLength = await SeekToColumn(async: true, ordinal, field).ConfigureAwait(false);
-            if (columnLength is -1)
+            using var registration = Connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+            if (await SeekToColumnAsync(ordinal, field).ConfigureAwait(false) is -1)
                 return DbNullValueOrThrow<T>(ordinal);
 
             if (typeof(T) == typeof(TextReader))
@@ -2032,9 +2045,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             var field = GetDefaultInfo(ordinal, out _, out _);
             PgReader.ThrowIfStreamActive();
 
-            var columnLength = await SeekToColumn(async: true, ordinal, field).ConfigureAwait(false);
-
-            if (columnLength == -1)
+            if (await SeekToColumnAsync(ordinal, field).ConfigureAwait(false) is -1)
                 return DbNullValueOrThrow<T>(ordinal);
 
             return (T)(object)PgReader.GetStream(canSeek: !_isSequential);
@@ -2051,6 +2062,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     T GetFieldValueCore<T>(int ordinal)
     {
+        ThrowIfNotInResult();
+
         // The only statically mapped converter, it always exists.
         if (typeof(T) == typeof(Stream))
             return GetStream(ordinal);
@@ -2060,11 +2073,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (typeof(T) == typeof(TextReader))
             PgReader.ThrowIfStreamActive();
 
-        var columnLength =
-            _isSequential
-                ? SeekToColumnSequential(async: false, ordinal, field).GetAwaiter().GetResult()
-                : SeekToColumnNonSequential(ordinal, field);
-        if (columnLength is -1)
+        if (SeekToColumn(ordinal, field) is -1)
             return DbNullValueOrThrow<T>(ordinal);
 
         Debug.Assert(asObject || converter is PgConverter<T>);
@@ -2081,12 +2090,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             var field = GetDefaultInfo(ordinal, out _, out _);
             PgReader.ThrowIfStreamActive();
 
-            var columnLength =
-                _isSequential
-                    ? SeekToColumnSequential(async: false, ordinal, field).GetAwaiter().GetResult()
-                    : SeekToColumnNonSequential(ordinal, field);
-
-            if (columnLength == -1)
+            if (SeekToColumn(ordinal, field) is -1)
                 return DbNullValueOrThrow<T>(ordinal);
 
             return (T)(object)PgReader.GetStream(canSeek: !_isSequential);
@@ -2107,12 +2111,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (_isInMemoryReader) // EnterpriseDB Team
             return GetValueFromParameters(ordinal);
 
+		ThrowIfNotInResult();
         var field = GetDefaultInfo(ordinal, out var converter, out var bufferRequirement);
-        var columnLength =
-            _isSequential
-                ? SeekToColumnSequential(async: false, ordinal, field).GetAwaiter().GetResult()
-                : SeekToColumnNonSequential(ordinal, field);
-        if (columnLength == -1)
+        if (SeekToColumn(ordinal, field) is -1)
             return DBNull.Value;
 
         PgReader.StartRead(bufferRequirement);
@@ -2149,7 +2150,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             PgReader.StartRead(bufferRequirement);
             result = converter.ReadAsObject(PgReader);
             PgReader.EndRead();
-            PgReader.Commit(false);
+            PgReader.Commit();
         }
         catch
         {
@@ -2158,7 +2159,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 var writtenBytes = Buffer.ReadPosition;
                 var remainingBytes = columnLength - writtenBytes;
                 if (remainingBytes > 0)
-                    Buffer.Skip(remainingBytes, false).GetAwaiter().GetResult();
+                    Buffer.Skip(remainingBytes, false);
             }
             throw;
         }
@@ -2169,7 +2170,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     // EnterpriseDB
     internal int SeekToColumnStart(int column, bool async)
     {
-        int columnLen = -1;
+        var columnLen = -1;
 
         if (column < 0 || column >= _columns.Count)
             throw new IndexOutOfRangeException("Column index out of range");
@@ -2201,8 +2202,17 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <param name="ordinal">The zero-based column ordinal.</param>
     /// <returns><b>true</b> if the specified column is equivalent to <see cref="DBNull"/>; otherwise <b>false</b>.</returns>
     public override bool IsDBNull(int ordinal)
-        => _isInMemoryReader ? GetValue(ordinal) == DBNull.Value
-        : SeekToColumn(async: false, ordinal, CheckRowAndGetField(ordinal).DataFormat, resumableOp: true).GetAwaiter().GetResult() is -1;
+	{
+		if (_isInMemoryReader)
+		{
+			return GetValue(ordinal) == DBNull.Value;
+		}
+		else		
+		{
+        	ThrowIfNotInResult();
+			return SeekToColumn(ordinal, RowDescription[ordinal].DataFormat, resumableOp: true) is -1;
+		}
+	}
 
     /// <summary>
     /// An asynchronous version of <see cref="IsDBNull(int)"/>, which gets a value that indicates whether the column contains non-existent or missing values.
@@ -2215,15 +2225,16 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns><b>true</b> if the specified column value is equivalent to <see cref="DBNull"/> otherwise <b>false</b>.</returns>
     public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellationToken)
     {
-        if (!_isSequential)
+        if (_isRowBuffered || _isInMemoryReader) // EnterpriseDB _isInMemoryReader
             return IsDBNull(ordinal) ? TrueTask : FalseTask;
 
         return Core(ordinal, cancellationToken);
 
         async Task<bool> Core(int ordinal, CancellationToken cancellationToken)
         {
+            ThrowIfNotInResult();
             using var registration = Connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
-            return await SeekToColumn(async: true, ordinal, CheckRowAndGetField(ordinal).DataFormat, resumableOp: true).ConfigureAwait(false) is -1;
+            return await SeekToColumnAsync(ordinal, RowDescription[ordinal].DataFormat, resumableOp: true).ConfigureAwait(false) is -1;
         }
     }
 
@@ -2238,9 +2249,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// <returns>The zero-based column ordinal.</returns>
     public override int GetOrdinal(string name)
     {
+        ThrowIfClosedOrDisposed();
         if (string.IsNullOrEmpty(name))
             ThrowHelper.ThrowArgumentException($"{nameof(name)} cannot be empty", nameof(name));
-        CheckClosedOrDisposed();
         if (RowDescription is null)
             ThrowHelper.ThrowInvalidOperationException("No resultset is currently being traversed");
         return RowDescription.GetFieldIndex(name);
@@ -2311,7 +2322,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Asynchronously returns schema information for the columns in the current resultset.
     /// </summary>
     /// <returns></returns>
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB 
     public new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #else
     public Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
@@ -2341,7 +2352,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     [UnconditionalSuppressMessage(
         "Composite type mapping currently isn't trimming-safe, and warnings are generated at the MapComposite level.", "IL2026")]
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB 
     public override Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
@@ -2423,209 +2434,135 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     #region Seeking
 
-    /// <summary>
-    /// Seeks to the given column. The 4-byte length is read and returned.
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    ValueTask<int> SeekToColumn(bool async, int ordinal, DataFormat dataFormat, bool resumableOp = false)
-        => _isSequential
-            ? SeekToColumnSequential(async, ordinal, dataFormat, resumableOp)
-            : new(SeekToColumnNonSequential(ordinal, dataFormat, resumableOp));
-
-    int SeekToColumnNonSequential(int ordinal, DataFormat dataFormat, bool resumableOp = false)
+    int SeekToColumn(int ordinal, DataFormat dataFormat, bool resumableOp = false)
     {
-        var currentColumn = _column;
-        var buffer = Buffer;
-        var pgReader = PgReader;
+        Debug.Assert(_isRowBuffered || _isSequential);
+        var reader = PgReader;
+        var column = _column;
 
-        // Deals with current column commit and rereads
-        int columnLength;
-        if (currentColumn >= 0)
-        {
-            if (currentColumn == ordinal)
-                return HandleReread(pgReader.Resumable && resumableOp);
-            pgReader.Commit(resuming: false);
-        }
-
-        // Deals with forward movement
-        Debug.Assert(ordinal != currentColumn);
-        if (ordinal > currentColumn)
-        {
-            // Written as a while to be able to increment _column directly after reading into it.
-            while (_column < ordinal - 1)
-            {
-                columnLength = buffer.ReadInt32();
-                _column++;
-                Debug.Assert(columnLength >= -1);
-                if (columnLength > 0)
-                    buffer.Skip(columnLength);
-            }
-            columnLength = buffer.ReadInt32();
-        }
-        else
-            columnLength = SeekBackwards();
-
-        pgReader.Init(columnLength, dataFormat, resumableOp);
-        _column = ordinal;
-
-        return columnLength;
-
-        int HandleReread(bool resuming)
-        {
-            Debug.Assert(pgReader.Initialized);
-            var columnLength = pgReader.FieldSize;
-            pgReader.Commit(resuming);
-            if (!resuming && columnLength > 0)
-                buffer.ReadPosition -= columnLength;
-            pgReader.Init(columnLength, dataFormat, resumableOp);
-            return columnLength;
-        }
-
-        // On the first call to SeekBackwards we'll fill up the columns list as we may need seek positions more than once.
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        int SeekBackwards()
-        {
-            // Backfill the first column.
-            if (_columns.Count is 0)
-            {
-                buffer.ReadPosition = _columnsStartPos;
-                var len = buffer.ReadInt32();
-                _columns.Add((buffer.ReadPosition, len));
-            }
-            for (var lastColumnRead = _columns.Count; ordinal >= lastColumnRead; lastColumnRead++)
-            {
-                (Buffer.ReadPosition, var lastLen) = _columns[lastColumnRead - 1];
-                if (lastLen > 0)
-                    buffer.Skip(lastLen);
-                var len = Buffer.ReadInt32();
-                _columns.Add((Buffer.ReadPosition, len));
-            }
-            (Buffer.ReadPosition, var columnLength) = _columns[ordinal];
-            return columnLength;
-        }
-    }
-
-    ValueTask<int> SeekToColumnSequential(bool async, int ordinal, DataFormat dataFormat, bool resumableOp = false)
-    {
-        var reread = _column == ordinal;
         // Column rereading rules for sequential mode:
         // * We never allow rereading if the column didn't get initialized as resumable the previous time
         // * If it did get initialized as resumable we only allow rereading when either of the following is true:
         //  - The op is a resumable one again
         //  - The op isn't resumable but the field is still entirely unconsumed
-        if (ordinal < _column || (reread && (!PgReader.Resumable || (!resumableOp && !PgReader.IsAtStart))))
-            ThrowHelper.ThrowInvalidOperationException(
+        if (_isSequential && (column > ordinal || (column == ordinal && (!reader.Resumable || (!resumableOp && !reader.FieldAtStart)))))
+            ThrowInvalidSequentialSeek(column, ordinal);
+
+        if (column == ordinal)
+            return reader.Restart(resumableOp);
+
+        reader.Commit();
+        var columnLength = BufferSeekToColumn(column, ordinal, !_isRowBuffered);
+        reader.Init(columnLength, dataFormat, resumableOp);
+        return columnLength;
+
+        static void ThrowInvalidSequentialSeek(int column, int ordinal)
+            => ThrowHelper.ThrowInvalidOperationException(
                 $"Invalid attempt to read from column ordinal '{ordinal}'. With CommandBehavior.SequentialAccess, " +
-                $"you may only read from column ordinal '{_column}' or greater.");
+                $"you may only read from column ordinal '{column}' or greater.");
+    }
 
-        var committed = false;
-        if (!PgReader.CommitHasIO(reread))
-        {
-            var columnLength = PgReader.FieldSize;
-            PgReader.Commit(reread);
-            committed = true;
-            if (reread)
-            {
-                PgReader.Init(columnLength, dataFormat, columnLength is -1 || resumableOp);
-                return new(columnLength);
-            }
+    ValueTask<int> SeekToColumnAsync(int ordinal, DataFormat dataFormat, bool resumableOp = false)
+    {
+        // When the row is buffered or we're rereading previous data no IO will be done.
+        if (_isRowBuffered || _column >= ordinal)
+            return new(SeekToColumn(ordinal, dataFormat, resumableOp));
 
-            if (TrySeekBuffered(ordinal, out columnLength))
-            {
-                PgReader.Init(columnLength, dataFormat, columnLength is -1 || resumableOp);
-                return new(columnLength);
-            }
+        return Core(ordinal, dataFormat, resumableOp);
 
-            // If we couldn't consume the column TrySeekBuffered had to stop at, do so now.
-            if (columnLength > -1)
-            {
-                // Resumable: true causes commit to consume without error.
-                PgReader.Init(columnLength, dataFormat, resumable: true);
-                committed = false;
-            }
-        }
-
-        return Core(async, reread, !committed, ordinal, dataFormat, resumableOp);
-
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB 
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
-        async ValueTask<int> Core(bool async, bool reread, bool commit, int ordinal, DataFormat dataFormat, bool resumableOp)
+        async ValueTask<int> Core(int ordinal, DataFormat dataFormat, bool resumableOp)
         {
-            if (commit)
-            {
-                Debug.Assert(ordinal != _column);
-                if (async)
-                    await PgReader.CommitAsync(reread).ConfigureAwait(false);
-                else
-                    PgReader.Commit(reread);
-            }
+            Debug.Assert(!_isRowBuffered && _column < ordinal);
 
-            if (reread)
-            {
-                PgReader.Init(PgReader.FieldSize, dataFormat, PgReader.FieldSize is -1 || resumableOp);
-                return PgReader.FieldSize;
-            }
-
-            // Seek to the requested column
-            int columnLength;
-            var buffer = Buffer;
-            // Written as a while to be able to increment _column directly after reading into it.
-            while (_column < ordinal - 1)
-            {
-                await buffer.Ensure(4, async).ConfigureAwait(false);
-                columnLength = buffer.ReadInt32();
-                _column++;
-                Debug.Assert(columnLength >= -1);
-                if (columnLength > 0)
-                    await buffer.Skip(columnLength, async, checkDataAvailable: true).ConfigureAwait(false); // EnterpriseDB (additional param)
-            }
-
-            await buffer.Ensure(4, async, readingNotifications: false, checkDataAvailable: true).ConfigureAwait(false);  // EnterpriseDB (additional params)
-            columnLength = buffer.ReadInt32();
-            _column = ordinal;
-
-            PgReader.Init(columnLength, dataFormat, resumableOp);
+            var reader = PgReader;
+            await reader.CommitAsync().ConfigureAwait(false);
+            var columnLength = await BufferSeekToColumnAsync(_column, ordinal, !_isRowBuffered).ConfigureAwait(false);
+            reader.Init(columnLength, dataFormat, resumableOp);
             return columnLength;
-        }
-
-        bool TrySeekBuffered(int ordinal, out int columnLength)
-        {
-            // Skip over unwanted fields
-            columnLength = -1;
-            var buffer = Buffer;
-            // Written as a while to be able to increment _column directly after reading into it.
-            while (_column < ordinal - 1)
-            {
-                if (buffer.ReadBytesLeft < 4)
-                {
-                    columnLength = -1;
-                    return false;
-                }
-                columnLength = buffer.ReadInt32();
-                _column++;
-                Debug.Assert(columnLength >= -1);
-                if (columnLength > 0)
-                {
-                    if (buffer.ReadBytesLeft < columnLength)
-                        return false;
-                    buffer.Skip(columnLength);
-                }
-            }
-
-            if (buffer.ReadBytesLeft < 4)
-            {
-                columnLength = -1;
-                return false;
-            }
-
-            columnLength = buffer.ReadInt32();
-            _column = ordinal;
-            return true;
         }
     }
 
-    #endregion
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    int BufferSeekToColumn(int column, int ordinal, bool allowIO)
+    {
+        Debug.Assert(column < ordinal || !allowIO);
+
+        if (column >= ordinal)
+        {
+            _column = ordinal;
+            return SeekBackwards(ordinal);
+        }
+
+        // We know we need at least one iteration, a do while also helps with optimal codegen.
+        var buffer = Buffer;
+        var columnLength = 0;
+        do
+        {
+            if (columnLength > 0)
+                buffer.Skip(columnLength, allowIO);
+
+            if (allowIO)
+                buffer.Ensure(sizeof(int));
+            columnLength = buffer.ReadInt32();
+            Debug.Assert(columnLength >= -1);
+        } while (++_column < ordinal);
+
+        return columnLength;
+
+        // On the first call to SeekBackwards we'll fill up the columns list as we may need seek positions more than once.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        int SeekBackwards(int ordinal)
+        {
+            var buffer = Buffer;
+            var columns = _columns;
+
+            (buffer.ReadPosition, var columnLength) = columns.Count is 0
+                ? (_columnsStartPos, 0)
+                : columns[Math.Min(columns.Count -1, ordinal)];
+
+            while (columns.Count <= ordinal)
+            {
+                if (columnLength > 0)
+                    buffer.Skip(columnLength);
+                columnLength = buffer.ReadInt32();
+                columns.Add((buffer.ReadPosition, columnLength));
+            }
+
+            return columnLength;
+        }
+    }
+
+    ValueTask<int> BufferSeekToColumnAsync(int column, int ordinal, bool allowIO)
+    {
+        return !allowIO || column >= ordinal ? new(BufferSeekToColumn(column, ordinal, allowIO)) : Core(ordinal);
+
+#if NET6_0_OR_GREATER // EnterpriseDB 
+        [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+#endif
+        async ValueTask<int> Core(int ordinal)
+        {
+            // We know we need at least one iteration, a do while also helps with optimal codegen.
+            var buffer = Buffer;
+            var columnLength = 0;
+            do
+            {
+                if (columnLength > 0)
+                    await buffer.Skip(async: true, columnLength).ConfigureAwait(false);
+
+                await buffer.EnsureAsync(sizeof(int)).ConfigureAwait(false);
+                columnLength = buffer.ReadInt32();
+                Debug.Assert(columnLength >= -1);
+            } while (++_column < ordinal);
+
+            return columnLength;
+        }
+    }
+
+#endregion
 
     #region ConsumeRow
 
@@ -2633,19 +2570,19 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         Debug.Assert(State is ReaderState.InResult or ReaderState.BeforeResult);
 
-        if (!_canConsumeRowNonSequentially)
+        if (!_isRowBuffered)
             return ConsumeRowSequential(async);
 
         // We get here, if we're in a non-sequential mode (or the row is already in the buffer)
-        ConsumeRowNonSequential();
+        ConsumeBufferedRow();
         return Task.CompletedTask;
 
         async Task ConsumeRowSequential(bool async)
         {
             if (async)
-                await PgReader.CommitAsync(resuming: false).ConfigureAwait(false);
+                await PgReader.CommitAsync().ConfigureAwait(false);
             else
-                PgReader.Commit(resuming: false);
+                PgReader.Commit();
 
             // Skip over the remaining columns in the row
             var buffer = Buffer;
@@ -2657,41 +2594,22 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 _column++;
                 Debug.Assert(columnLength >= -1);
                 if (columnLength > 0)
-                    await buffer.Skip(columnLength, async).ConfigureAwait(false);
+                    await buffer.Skip(async, columnLength).ConfigureAwait(false);
             }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ConsumeRowNonSequential()
+    void ConsumeBufferedRow()
     {
         Debug.Assert(State is ReaderState.InResult or ReaderState.BeforeResult);
-        PgReader.Commit(resuming: false);
+        PgReader.Commit();
         Buffer.ReadPosition = _dataMsgEnd;
     }
 
     #endregion
 
     #region Checks
-
-    void CheckResultSet()
-    {
-        switch (State)
-        {
-        case ReaderState.BeforeResult:
-        case ReaderState.InResult:
-            return;
-        case ReaderState.Closed:
-            ThrowHelper.ThrowInvalidOperationException("The reader is closed");
-            return;
-        case ReaderState.Disposed:
-            ThrowHelper.ThrowObjectDisposedException(nameof(EDBDataReader));
-            return;
-        default:
-            ThrowHelper.ThrowInvalidOperationException("No resultset is currently being traversed");
-            return;
-        }
-    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     T DbNullValueOrThrow<T>(int ordinal)
@@ -2703,22 +2621,15 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (typeof(T) == typeof(object))
             return (T)(object)DBNull.Value;
 
-        ThrowHelper.ThrowInvalidCastException_NoValue(CheckRowAndGetField(ordinal));
+        ThrowHelper.ThrowInvalidCastException_NoValue(RowDescription![ordinal]);
         return default;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     DataFormat GetInfo(int ordinal, Type type, out PgConverter converter, out Size bufferRequirement, out bool asObject)
     {
-        var state = State;
-        if (state is not ReaderState.InResult || (uint)ordinal > (uint)ColumnCount)
-        {
-            Unsafe.SkipInit(out converter);
-            Unsafe.SkipInit(out bufferRequirement);
-            Unsafe.SkipInit(out asObject);
-            HandleInvalidState(state, ColumnCount);
-            Debug.Fail("Should never get here");
-        }
+        if ((uint)ordinal > (uint)ColumnCount)
+            ThrowHelper.ThrowIndexOutOfRangeException("Ordinal must be between 0 and " + (ColumnCount - 1));
 
         ref var info = ref ColumnInfoCache![ordinal];
 
@@ -2737,7 +2648,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         [MethodImpl(MethodImplOptions.NoInlining)]
         DataFormat Slow(ref ColumnInfo info, out PgConverter converter, out Size bufferRequirement, out bool asObject)
         {
-            var field = CheckRowAndGetField(ordinal);
+            var field = RowDescription![ordinal];
             field.GetInfo(type, ref info);
             converter = info.ConverterInfo.Converter;
             bufferRequirement = info.ConverterInfo.BufferRequirement;
@@ -2749,33 +2660,47 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     DataFormat GetDefaultInfo(int ordinal, out PgConverter converter, out Size bufferRequirement)
     {
-        var field = CheckRowAndGetField(ordinal);
+        var field = RowDescription![ordinal];
 
-        converter = field.ObjectOrDefaultInfo.Converter;
-        bufferRequirement = field.ObjectOrDefaultInfo.BufferRequirement;
+        converter = field.ObjectInfo.Converter;
+        bufferRequirement = field.ObjectInfo.BufferRequirement;
         return field.DataFormat;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    FieldDescription CheckRowAndGetField(int column)
+    /// <summary>
+    /// Checks that we have a RowDescription, but not necessary an actual resultset
+    /// (for operations which work in SchemaOnly mode.
+    /// </summary>
+    FieldDescription GetField(int ordinal)
     {
-        var columns = RowDescription;
-        var state = State;
-        if (state is ReaderState.InResult && (uint)column < (uint)columns!.Count)
-            return columns[column];
+        ThrowIfClosedOrDisposed();
+        if (RowDescription is { } columns)
+            return columns[ordinal];
 
-        return HandleInvalidState(state, columns?.Count ?? 0);
+        ThrowHelper.ThrowInvalidOperationException("No resultset is currently being traversed");
+        return default!;
     }
 
-    [DoesNotReturn]
+    void ThrowIfClosedOrDisposed()
+    {
+        if (State is (ReaderState.Closed or ReaderState.Disposed) and var state)
+            ThrowInvalidState(state);
+    }
+
+    [MemberNotNull(nameof(RowDescription))]
+    void ThrowIfNotInResult()
+    {
+        if (State is not ReaderState.InResult and var state)
+            ThrowInvalidState(state);
+
+        Debug.Assert(RowDescription is not null);
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static FieldDescription HandleInvalidState(ReaderState state, int maxColumns)
+    static void ThrowInvalidState(ReaderState state)
     {
         switch (state)
         {
-        case ReaderState.InResult:
-            ThrowColumnOutOfRange(maxColumns);
-            break;
         case ReaderState.Closed:
             ThrowHelper.ThrowInvalidOperationException("The reader is closed");
             break;
@@ -2783,51 +2708,10 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             ThrowHelper.ThrowObjectDisposedException(nameof(EDBDataReader));
             break;
         default:
-            ThrowHelper.ThrowInvalidOperationException("No row is available");
+            ThrowHelper.ThrowInvalidOperationException("No resultset is currently being traversed");
             break;
         }
-        return default!;
     }
-
-    /// <summary>
-    /// Checks that we have a RowDescription, but not necessary an actual resultset
-    /// (for operations which work in SchemaOnly mode.
-    /// </summary>
-    FieldDescription GetField(int column)
-    {
-        if (RowDescription is null)
-            ThrowHelper.ThrowInvalidOperationException("No resultset is currently being traversed");
-
-        var columns = RowDescription;
-        if (column < 0 || column >= columns.Count)
-            ThrowColumnOutOfRange(columns.Count);
-
-        return columns[column];
-    }
-
-    void CheckClosedOrDisposed()
-    {
-        if (State is (ReaderState.Closed or ReaderState.Disposed) and var state)
-            Throw(state);
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void Throw(ReaderState state)
-        {
-            switch (state)
-            {
-            case ReaderState.Closed:
-                ThrowHelper.ThrowInvalidOperationException("The reader is closed");
-                return;
-            case ReaderState.Disposed:
-                ThrowHelper.ThrowObjectDisposedException(nameof(EDBDataReader));
-                return;
-            }
-        }
-    }
-
-    [DoesNotReturn]
-    static void ThrowColumnOutOfRange(int maxIndex) =>
-        throw new IndexOutOfRangeException($"Column must be between {0} and {maxIndex - 1}");
 
     #endregion
 
@@ -2840,7 +2724,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     internal void UnbindIfNecessary()
     {
         // We're closing the connection, but reader is not yet disposed
-        // We have to unbind the reader from the connector, otherwise there could be a concurency issues
+        // We have to unbind the reader from the connector, otherwise there could be a concurrency issues
         // See #3126 and #3290
         if (State != ReaderState.Disposed)
         {
@@ -2863,7 +2747,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         paramsByName = new(capacity: command.Parameters.InternalList.Count);
 
-        int i = 0;
+        var i = 0;
         foreach (var param in command.Parameters.InternalList)
         {
             if (!param.IsOutReturnDirection) continue;
@@ -2881,7 +2765,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     private object GetValueFromParameters(int ordinal)
     {
-        var fieldDescription = CheckRowAndGetField(ordinal);
+        var fieldDescription = RowDescription![ordinal];
         return paramsByName![fieldDescription!.Name]!.Value!;
     }
 

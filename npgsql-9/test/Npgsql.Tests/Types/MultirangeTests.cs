@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 public class MultirangeTests : TestBase
 {
     static readonly TestCaseData[] MultirangeTestCases =
-    {
+    [
         // int4multirange
         new TestCaseData(
                 new EDBRange<int>[]
@@ -83,9 +83,9 @@ public class MultirangeTests : TestBase
                     new(new(2020, 1, 10), true, false, default, false, true)
                 },
                 "{[2020-01-01,2020-01-05),[2020-01-10,)}", "datemultirange", EDBDbType.DateMultirange, false, false, default(EDBRange<DateOnly>))
-            .SetName("DateOnly"),
+            .SetName("DateOnly")
 #endif
-    };
+    ];
 
     [Test, TestCaseSource(nameof(MultirangeTestCases))]
     public Task Multirange_as_array<T, TRange>(

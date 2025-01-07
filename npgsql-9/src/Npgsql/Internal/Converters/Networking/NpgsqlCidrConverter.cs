@@ -6,7 +6,7 @@ namespace EnterpriseDB.EDBClient.Internal.Converters;
 sealed class EDBCidrConverter : PgBufferedConverter<EDBCidr>
 {
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
-        => CanConvertBufferedDefault(format, out bufferRequirements);
+        => EDBInetConverter.CanConvertImpl(format, out bufferRequirements);
 
     public override Size GetSize(SizeContext context, EDBCidr value, ref object? writeState)
         => EDBInetConverter.GetSizeImpl(context, value.Address, ref writeState);

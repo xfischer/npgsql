@@ -14,7 +14,7 @@ sealed class TimeSpanTimeConverter : PgBufferedConverter<TimeSpan>
     protected override void WriteCore(PgWriter writer, TimeSpan value) => writer.WriteInt64(value.Ticks / 10);
 }
 
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
 sealed class TimeOnlyTimeConverter : PgBufferedConverter<TimeOnly>
 {
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)

@@ -1,5 +1,6 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Properties;
 using EnterpriseDB.EDBClient.Util;
@@ -16,7 +17,7 @@ class TransportSecurityHandler
         set => throw new NotSupportedException(string.Format(EDBStrings.TransportSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableTransportSecurity)));
     }
 
-    public virtual Task NegotiateEncryption(bool async, EDBConnector connector, SslMode sslMode, EDBTimeout timeout, bool isFirstAttempt)
+    public virtual Task NegotiateEncryption(bool async, EDBConnector connector, SslMode sslMode, EDBTimeout timeout, CancellationToken cancellationToken)
         => throw new NotSupportedException(string.Format(EDBStrings.TransportSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableTransportSecurity)));
 
     public virtual void AuthenticateSASLSha256Plus(EDBConnector connector, ref string mechanism, ref string cbindFlag, ref string cbind,
@@ -30,8 +31,8 @@ sealed class RealTransportSecurityHandler : TransportSecurityHandler
 
     public override Func<X509Certificate2?>? RootCertificateCallback { get; set; }
 
-    public override Task NegotiateEncryption(bool async, EDBConnector connector, SslMode sslMode, EDBTimeout timeout, bool isFirstAttempt)
-        => connector.NegotiateEncryption(sslMode, timeout, async, isFirstAttempt);
+    public override Task NegotiateEncryption(bool async, EDBConnector connector, SslMode sslMode, EDBTimeout timeout, CancellationToken cancellationToken)
+        => connector.NegotiateEncryption(sslMode, timeout, async, cancellationToken);
 
     public override void AuthenticateSASLSha256Plus(EDBConnector connector, ref string mechanism, ref string cbindFlag, ref string cbind,
             ref bool successfulBind)

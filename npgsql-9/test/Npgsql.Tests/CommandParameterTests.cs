@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
-public class CommandParameterTests : MultiplexingTestBase
+public class CommandParameterTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(multiplexingMode)
 {
     [Test]
     [TestCase(CommandBehavior.Default)]
@@ -164,7 +164,7 @@ public class CommandParameterTests : MultiplexingTestBase
         cmd.Parameters.Add(new EDBParameter<int>("p1", 8));
         cmd.Parameters.Add(new EDBParameter<short>("p2", 8) { EDBDbType = EDBDbType.Integer });
         cmd.Parameters.Add(new EDBParameter<string>("p3", "hello"));
-        cmd.Parameters.Add(new EDBParameter<char[]>("p4", new[] { 'f', 'o', 'o' }));
+        cmd.Parameters.Add(new EDBParameter<char[]>("p4", ['f', 'o', 'o']));
         using var reader = await cmd.ExecuteReaderAsync();
         reader.Read();
         Assert.That(reader.GetInt32(0), Is.EqualTo(8));
@@ -208,9 +208,5 @@ public class CommandParameterTests : MultiplexingTestBase
         await using var cmd = new EDBCommand("SELECT $1", conn);
         cmd.Parameters.Add(new EDBParameter<object> { EDBDbType = EDBDbType.Integer, Value = 8 });
         Assert.That(await cmd.ExecuteScalarAsync(), Is.EqualTo(8));
-    }
-
-    public CommandParameterTests(MultiplexingMode multiplexingMode) : base(multiplexingMode)
-    {
     }
 }

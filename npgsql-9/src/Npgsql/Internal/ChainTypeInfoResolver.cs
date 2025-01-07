@@ -4,12 +4,9 @@ using EnterpriseDB.EDBClient.Internal.Postgres;
 
 namespace EnterpriseDB.EDBClient.Internal;
 
-sealed class ChainTypeInfoResolver : IPgTypeInfoResolver
+sealed class ChainTypeInfoResolver(IEnumerable<IPgTypeInfoResolver> resolvers) : IPgTypeInfoResolver
 {
-    readonly IPgTypeInfoResolver[] _resolvers;
-
-    public ChainTypeInfoResolver(IEnumerable<IPgTypeInfoResolver> resolvers)
-        => _resolvers = new List<IPgTypeInfoResolver>(resolvers).ToArray();
+    readonly IPgTypeInfoResolver[] _resolvers = new List<IPgTypeInfoResolver>(resolvers).ToArray();
 
     public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
     {

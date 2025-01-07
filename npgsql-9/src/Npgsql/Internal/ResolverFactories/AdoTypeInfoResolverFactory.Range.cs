@@ -48,11 +48,11 @@ sealed partial class AdoTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverStructType<EDBRange<DateTime>>(DataTypeNames.TsRange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateRangeResolver(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzRange),
                             options.GetCanonicalTypeId(DataTypeNames.TsRange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch),
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName),
                     isDefault: true);
             }
             mappings.AddStructType<EDBRange<long>>(DataTypeNames.TsRange,
@@ -73,11 +73,11 @@ sealed partial class AdoTypeInfoResolverFactory
             else
             {
                 mappings.AddResolverStructType<EDBRange<DateTime>>(DataTypeNames.TsTzRange,
-                    static (options, mapping, dataTypeNameMatch) => mapping.CreateInfo(options,
+                    static (options, mapping, requiresDataTypeName) => mapping.CreateInfo(options,
                         DateTimeConverterResolver.CreateRangeResolver(options,
                             options.GetCanonicalTypeId(DataTypeNames.TsTzRange),
                             options.GetCanonicalTypeId(DataTypeNames.TsRange),
-                            options.EnableDateTimeInfinityConversions), dataTypeNameMatch),
+                            options.EnableDateTimeInfinityConversions), requiresDataTypeName),
                     isDefault: true);
                 mappings.AddStructType<EDBRange<DateTimeOffset>>(DataTypeNames.TsTzRange,
                     static (options, mapping, _) => mapping.CreateInfo(options,
@@ -93,7 +93,7 @@ sealed partial class AdoTypeInfoResolverFactory
                 isDefault: true);
             mappings.AddStructType<EDBRange<int>>(DataTypeNames.DateRange,
                 static (options, mapping, _) => mapping.CreateInfo(options, CreateRangeConverter(new Int4Converter<int>(), options)));
-    #if NET6_0_OR_GREATER
+    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructType<EDBRange<DateOnly>>(DataTypeNames.DateRange,
                 static (options, mapping, _) =>
                     mapping.CreateInfo(options, CreateRangeConverter(new DateOnlyDateConverter(options.EnableDateTimeInfinityConversions), options)));
@@ -142,7 +142,7 @@ sealed partial class AdoTypeInfoResolverFactory
             // daterange
             mappings.AddStructArrayType<EDBRange<DateTime>>(DataTypeNames.DateRange);
             mappings.AddStructArrayType<EDBRange<int>>(DataTypeNames.DateRange);
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructArrayType<EDBRange<DateOnly>>(DataTypeNames.DateRange);
 #endif
 

@@ -100,7 +100,7 @@ public class EDBBatch : DbBatch
     public EDBBatch(EDBConnection? connection = null, EDBTransaction? transaction = null)
     {
         GC.SuppressFinalize(this);
-        Command = new(DefaultBatchCommandsSize);
+        Command = new(this, DefaultBatchCommandsSize);
         BatchCommands = new EDBBatchCommandCollection(Command.InternalBatchCommands);
 
         Connection = connection;
@@ -110,14 +110,14 @@ public class EDBBatch : DbBatch
     internal EDBBatch(EDBConnector connector)
     {
         GC.SuppressFinalize(this);
-        Command = new(connector, DefaultBatchCommandsSize);
+        Command = new(this, connector, DefaultBatchCommandsSize);
         BatchCommands = new EDBBatchCommandCollection(Command.InternalBatchCommands);
     }
 
-    private protected EDBBatch(EDBDataSourceCommand command)
+    private protected EDBBatch(Func<EDBConnection, EDBBatch, EDBCommand> commandFactory, EDBConnection connection)
     {
         GC.SuppressFinalize(this);
-        Command = command;
+        Command = commandFactory(connection, this);
         BatchCommands = new EDBBatchCommandCollection(Command.InternalBatchCommands);
     }
 
