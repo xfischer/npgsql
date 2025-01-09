@@ -1,0 +1,13 @@
+{
+    "extra_args": "",
+    "false_positives": [
+      {
+        "commit": "10eb548580a0ba85633c7c2d82ae4bb387eaa5dc",
+        "file": "npgsql-9/.build/server.key",
+        "email": "Xavier Fischer <xavier.fischer@enterprisedb.com>",
+        "repository": "https://github.com/EnterpriseDB/edb-dotnet",
+        "timestamp": "2025-01-07 21:04:05 +0000",
+        "line": 1
+      }
+    ]
+  }
