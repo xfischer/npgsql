@@ -18,6 +18,7 @@ internal class Program
         {
             "BenchmarkDotNet.Artifacts.BenchmarkVersion7" => "7.0.6.2",
             "BenchmarkDotNet.Artifacts.BenchmarkVersion8" => "8.0.5.2",
+            "BenchmarkDotNet.Artifacts.BenchmarkVersion9" => "9.0.2.1",
             "BenchmarkDotNet.Artifacts.BenchmarkVersion4" => "4.0.10.2",
             "BenchmarkDotNet.Artifacts.BenchmarkNpgsql" => "Npgsql8",
             _ => "Unknown"
