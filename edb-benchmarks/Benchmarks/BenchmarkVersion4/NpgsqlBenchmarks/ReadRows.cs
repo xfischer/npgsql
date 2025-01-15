@@ -3,6 +3,7 @@ using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Reports;
 using System.Reflection;
+using EnterpriseDB.EDBClient;
 
 namespace EDBBenchmark;
 

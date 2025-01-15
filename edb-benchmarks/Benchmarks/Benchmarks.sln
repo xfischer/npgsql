@@ -15,6 +15,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JoinBenchmarks", "JoinBench
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NpgsqlEDBBenchmark", "NpgsqlEDBBenchmark\NpgsqlEDBBenchmark.csproj", "{B17CE8D5-9176-4A44-AD6B-2AD1E3ACCE55}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenchmarkVersion9", "BenchmarkVersion9\BenchmarkVersion9.csproj", "{4FC6B3BF-362A-4668-B484-79CF3A798395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenchmarkNetStandard", "BenchmarkNetStandard\BenchmarkNetStandard.csproj", "{B88072A9-C3D3-46E8-8C79-EE5B8EE46676}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{B17CE8D5-9176-4A44-AD6B-2AD1E3ACCE55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B17CE8D5-9176-4A44-AD6B-2AD1E3ACCE55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B17CE8D5-9176-4A44-AD6B-2AD1E3ACCE55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FC6B3BF-362A-4668-B484-79CF3A798395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FC6B3BF-362A-4668-B484-79CF3A798395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FC6B3BF-362A-4668-B484-79CF3A798395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FC6B3BF-362A-4668-B484-79CF3A798395}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B88072A9-C3D3-46E8-8C79-EE5B8EE46676}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B88072A9-C3D3-46E8-8C79-EE5B8EE46676}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B88072A9-C3D3-46E8-8C79-EE5B8EE46676}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B88072A9-C3D3-46E8-8C79-EE5B8EE46676}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,10 +2,12 @@
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
+using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace EDBBenchmark
 {
@@ -19,26 +21,30 @@ namespace EDBBenchmark
         public async Task<string> StoredProcedureParamValuesAsync()
         {
             StringBuilder output = new StringBuilder();
-            using var conn = BenchmarkEnvironment.OpenConnection();
-            using var callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn);
-            callable_command.CommandType = CommandType.StoredProcedure;
-            callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
-            callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-            callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
-            callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            await callable_command.PrepareAsync();
+            using (var conn = BenchmarkEnvironment.OpenConnection())
+            using (var callable_command = new EDBCommand("emp_query(:p_deptno,:p_empno,:p_ename,:p_job,:p_hiredate,:p_sal)", conn))
+            {
+                callable_command.CommandType = CommandType.StoredProcedure;
+                callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
+                callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+                callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
+                callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                await callable_command.PrepareAsync();
 
-            callable_command.Parameters[0].Value = 20;
-            callable_command.Parameters[1].Value = 7369;
+                callable_command.Parameters[0].Value = 20;
+                callable_command.Parameters[1].Value = 7369;
 
-            using var reader = await callable_command.ExecuteReaderAsync();
-            var fc = reader.FieldCount;
-            for (var i = 0; i < (fc + 1); i++)
-                output.AppendLine($"RESULT[{i}]={Convert.ToString(callable_command.Parameters[i].Value)}");
-            reader.Close();
-            conn.Close();
+                using (var reader = await callable_command.ExecuteReaderAsync())
+                {
+                    var fc = reader.FieldCount;
+                    for (var i = 0; i < (fc + 1); i++)
+                        output.AppendLine($"RESULT[{i}]={callable_command.Parameters[i].Value.ToString()}");
+                    reader.Close();
+                    conn.Close();
+                }
+            }
 
             return output.ToString();
         }

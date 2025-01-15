@@ -31,3 +31,4 @@ edb-benchmarks/**/*.log
 edb-benchmarks/Benchmarks/**report.csv
 edb-benchmarks/*report.csv
 edb-benchmarks/**/*.xlsx
+edb-benchmarks/Benchmarks/packages

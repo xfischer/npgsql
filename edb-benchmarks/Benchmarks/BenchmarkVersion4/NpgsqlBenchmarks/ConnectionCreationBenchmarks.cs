@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using EnterpriseDB.EDBClient;
 
 // ReSharper disable UnusedMember.Global
 

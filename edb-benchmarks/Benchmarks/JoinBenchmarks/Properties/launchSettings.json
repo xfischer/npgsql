@@ -2,7 +2,7 @@
   "profiles": {
     "JoinBenchmarks": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\dev\\repos\\edb-dotnet\\edb-benchmarks *-report.csv"
+      "commandLineArgs": "C:\\dev\\repos\\edb-dotnet\\edb-benchmarks"
     }
   }
 }

@@ -1,4 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
+using EnterpriseDB.EDBClient;
+using Npgsql;
 using System.Text;
 
 namespace EDBBenchmark
