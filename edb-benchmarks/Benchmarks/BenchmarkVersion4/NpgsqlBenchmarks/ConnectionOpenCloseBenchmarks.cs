@@ -3,6 +3,7 @@ using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Reports;
 using EDBBenchmark;
+using EnterpriseDB.EDBClient;
 //using Microsoft.Data.SqlClient;
 
 // ReSharper disable UnusedMember.Global

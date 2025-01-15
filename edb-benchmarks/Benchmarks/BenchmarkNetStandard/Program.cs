@@ -1,7 +1,8 @@
 ﻿using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
+using System;
 
-namespace BenchmarkVersion9
+namespace EDBBenchmark
 {
     internal class Program
     {

@@ -4,8 +4,10 @@ repos:
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
-        entry: trufflehog filesystem c:\dev\repos\edb-dotnet --no-verification --no-update --fail
+        entry: bash -c 'trufflehog git file://. --since-commit HEAD --no-verification --no-update --fail'
         # For running trufflehog in docker, use the following entry instead:
         # entry: bash -c 'docker run --rm -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD --results=verified,unknown --fail'
+        # local
+        # bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail'
         language: system
         stages: ["pre-commit", "pre-push"]

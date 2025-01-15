@@ -1,6 +1,6 @@
-﻿global using EnterpriseDB.EDBClient;
+﻿using EnterpriseDB.EDBClient;
 #if NPGSQL
-global using Npgsql;
+using Npgsql;
 #endif
 namespace EDBBenchmark
 {
@@ -8,7 +8,7 @@ namespace EDBBenchmark
     {
         public const string ConnectionString = "Server=localhost;port=5446;User ID=enterprisedb;Password=edb;Database=test;Maximum Pool Size=200";
 
-        internal static EDBConnection GetConnection() => new(ConnectionString);
+        internal static EDBConnection GetConnection() => new EDBConnection(ConnectionString);
 
         internal static EDBConnection OpenConnection()
         {

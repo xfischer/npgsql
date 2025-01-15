@@ -2,6 +2,7 @@
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Reports;
+using EnterpriseDB.EDBClient;
 
 namespace EDBBenchmark;
 

@@ -5,6 +5,8 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
 using EDBTypes;
+using EnterpriseDB.EDBClient;
+using Npgsql;
 using NpgsqlTypes;
 
 namespace EDBBenchmark;
