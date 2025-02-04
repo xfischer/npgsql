@@ -81,7 +81,7 @@ static class EDBActivitySource
         case IPEndPoint ipEndPoint:
             activity.SetTag("net.transport", "ip_tcp");
             activity.SetTag("net.peer.ip", ipEndPoint.Address.ToString());
-            if (ipEndPoint.Port != 5432)
+            if (ipEndPoint.Port != EDBConnection.DefaultPort)
                 activity.SetTag("net.peer.port", ipEndPoint.Port);
             activity.SetTag("net.peer.name", connector.Host);
             break;

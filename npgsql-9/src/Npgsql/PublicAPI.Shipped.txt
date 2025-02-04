@@ -1,7 +1,7 @@
 ﻿#nullable enable
 abstract EnterpriseDB.EDBClient.Replication.PgOutput.Messages.UpdateMessage.NewRow.get -> EnterpriseDB.EDBClient.Replication.PgOutput.ReplicationTuple!
 abstract EDBTypes.EDBTsQuery.Equals(EDBTypes.EDBTsQuery? other) -> bool
-const EnterpriseDB.EDBClient.EDBConnection.DefaultPort = 5432 -> int
+const EnterpriseDB.EDBClient.EDBConnection.DefaultPort = 5444 -> int
 const EnterpriseDB.EDBClient.PostgresErrorCodes.ActiveSqlTransaction = "25001" -> string!
 const EnterpriseDB.EDBClient.PostgresErrorCodes.AdminShutdown = "57P01" -> string!
 const EnterpriseDB.EDBClient.PostgresErrorCodes.AmbiguousAlias = "42P09" -> string!
