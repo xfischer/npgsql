@@ -103,6 +103,10 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
 
         // EnterpriseDB : add TABLEOF support
         _internalBuilder.AddTypeInfoResolverFactory(new EDBTableOfResolverFactory());
+
+        // EnterpriseDB : add EDB Advanced Queue support
+        _internalBuilder.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
+        _internalBuilder.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ namespace EnterpriseDB.EDBClient
         /// MessageId
         /// </summary>
         /// <value>The ID of the queued message.</value>
-        public byte[] MessageId { get; set; }
+        public string MessageId { get; set; }
         
     }
 }

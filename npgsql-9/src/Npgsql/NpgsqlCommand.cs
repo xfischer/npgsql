@@ -1069,7 +1069,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 parameters ??= new();
                 _parameters ??= new();
                 var inputList = new List<EDBParameter>(parameters.Count);
-                for (int i = 0; i < parameters.Count; i++)
+                for (var i = 0; i < parameters.Count; i++)
                 {
                     if (parameters[i].IsInputDirection) inputList.Add(parameters[i]);
                 }
@@ -1134,9 +1134,9 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
             char[] paramIdentifier = [':', '$', '@'];
             char[] paramTerminator = [',', ')'];
-            int start = commandText.IndexOf('(');
-            int pos = 0;
-            bool found = false;
+            var start = commandText.IndexOf('(');
+            var pos = 0;
+            var found = false;
 
             do
             {

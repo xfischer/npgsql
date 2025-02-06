@@ -21,11 +21,8 @@
 // TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endregion
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 #nullable disable
 namespace EnterpriseDB.EDBClient
 {
@@ -43,22 +40,26 @@ namespace EnterpriseDB.EDBClient
         /// </summary>
         /// <value>The connection to be used.</value>
         public EDBConnection Connection { get; set; } = con;
+
         /// <summary>
         /// Name of the queue
         /// </summary>
         /// <value>.</value>
         public string Name { get; set; } = name;
+
         /// <summary>
         /// MessageType of the message.
         /// </summary>
         /// <value>The name of the queue.</value>
         [System.ComponentModel.DefaultValue(EDBAQMessageType.Udt)]
         public EDBAQMessageType MessageType { get; set; } = EDBAQMessageType.Udt;
+
         /// <summary>
         /// Name of the user defined type.
         /// </summary>
         /// <value>The message type that is enqueued/dequeued from this queue. For example EDBAQMessageType.Udt.</value>
         public string UdtTypeName { get; set; }
+
         /// <summary>
         /// EDBAQEnqueueOptions to be used.
         /// </summary>
@@ -98,13 +99,6 @@ namespace EnterpriseDB.EDBClient
                                                            original_msgid: null,
                                                            transaction_group: null,
                                                            delivery_mode: 0);
-
-        static EDBAQQueue()
-        {
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
-           // EDBConnection.GlobalTypeMapper.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
-        }
 
         /// <summary>
         /// Enques the provided message in queue.
@@ -161,14 +155,13 @@ namespace EnterpriseDB.EDBClient
                 });
 
                 command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                var connector = Connection.Connector;//  CheckReadyAndGetConnector();
                 command.Prepare();
-                var reader = command.ExecuteNonQuery();
-                msg.MessageId = Encoding.ASCII.GetBytes(command.Parameters[4].Value?.ToString());
+                command.ExecuteNonQuery();
+                msg.MessageId = Convert.ToBase64String((byte[])command.Parameters[4].Value);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new EDBException("Error while enqueuing message: " + ex.Message, ex);
             }
         }
 
@@ -222,30 +215,24 @@ namespace EnterpriseDB.EDBClient
                 command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
                 command.Prepare();
                 var reader = command.ExecuteNonQuery();
-                msg.MessageId = (byte[])command.Parameters[4].Value;
+                msg.MessageId = msg.MessageId = Convert.ToBase64String((byte[])command.Parameters[4].Value);
                 msg.Payload = command.Parameters[3].Value;
                 MessageProperties = MessageProperties.ToObjectParam(command.Parameters[2].Value.ToString());
                 return msg;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new EDBException("Error while dequeuing message: " + ex.Message, ex);
             }
         }
 
         /// <summary>
         /// Listens to the queue for available messages.
         /// </summary>
-        /// <param name="listenConsumers"></param>
         /// <param name="waitTime"></param>
         /// <returns></returns>
-        public string Listen(string[] listenConsumers, int waitTime)
+        public string Listen(int waitTime)
         {
-            if (listenConsumers != null)
-            {
-                throw new InvalidOperationException("Listen Consumers is not supported");
-            }
-
             var dqMode = DequeueOptions.DequeueMode;
             var wait = DequeueOptions.Wait;
 
@@ -254,12 +241,12 @@ namespace EnterpriseDB.EDBClient
                 DequeueOptions.Wait = waitTime;
                 DequeueOptions.DequeueMode = EDBAQDequeueMode.BROWSE;
                 EDBAQMessage msg = Dequeue();
-                return ByteArrayToString((byte[])msg.MessageId);
+
+                return msg.MessageId;
             }
-            catch (PostgresException e)
+            catch (EDBException ex) when (ex.InnerException is PostgresException pgException)
             {
-                e.ToString();
-                if (e.SqlState == "P0002")
+                if (pgException.SqlState == "P0002")
                 {
                     return null;
                 }
@@ -267,7 +254,6 @@ namespace EnterpriseDB.EDBClient
                 {
                     throw;
                 }
-
             }
             finally
             {
@@ -275,108 +261,6 @@ namespace EnterpriseDB.EDBClient
                 DequeueOptions.Wait = wait;
             }
         }
-
-        private string ByteArrayToString(byte[] byteArray)
-        {
-            // Sanity check if it's null so we don't incur overhead of an exception
-            if (byteArray == null)
-            {
-                return string.Empty;
-            }
-            try
-            {
-                var hex = new StringBuilder(byteArray.Length * 2);
-                foreach (var b in byteArray)
-                {
-                    hex.AppendFormat("{0:x2}", b);
-                }
-
-                return hex.ToString().ToUpper();
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Maps payload to the user defined composite object.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="destination"></param>
-        [Obsolete("Advanced Queue messages payload are now strongly typed, no mapping is required.")]
-        public void Map<T>(object source, T destination)
-        {
-            // If types are mapped, parameters are strongly typed, so direct cast is OK
-            if (source is T)
-            {
-                destination = DeepCopyReflection<T>((T)source, ref destination);
-                return;
-            }
-
-            // Old implementation not working, as there is no ExpandoObject instanciated on the caller, neither docs suggesting it
-            if (!(source is System.Dynamic.ExpandoObject))
-            {
-                throw new InvalidOperationException("Invalid Object provided");
-            }
-            IDictionary<string, object> dict = (System.Dynamic.ExpandoObject)source;
-
-            foreach (var prop in typeof(T).GetProperties())
-            {
-                var lower = prop.Name.ToLower();
-                var key = dict.Keys.SingleOrDefault(k => k.ToLower() == lower);
-
-                if (key != null)
-                {
-                    prop.SetValue(destination, dict[key], null);
-                }
-            }
-        }
-
-        private static T DeepCopyReflection<T>(T input, ref T clonedObj)
-        {
-            var properties = typeof(T).GetProperties();
-            foreach (var property in properties)
-            {
-                if (property.CanWrite)
-                {
-                    object value = property.GetValue(input);
-                    if (value != null && value.GetType().IsClass && !value.GetType().FullName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        property.SetValue(clonedObj, DeepCopyReflection(value));
-                    }
-                    else
-                    {
-                        property.SetValue(clonedObj, value);
-                    }
-                }
-            }
-            return clonedObj;
-        }
-
-        private static T DeepCopyReflection<T>(T input)
-        {
-            var properties = typeof(T).GetProperties();
-            T clonedObj = (T)Activator.CreateInstance(typeof(T));
-            foreach (var property in properties)
-            {
-                if (property.CanWrite)
-                {
-                    object value = property.GetValue(input);
-                    if (value != null && value.GetType().IsClass && !value.GetType().FullName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        property.SetValue(clonedObj, DeepCopyReflection(value));
-                    }
-                    else
-                    {
-                        property.SetValue(clonedObj, value);
-                    }
-                }
-            }
-            return clonedObj;
-        }
-
 
         /// <summary>
         /// 
@@ -390,16 +274,9 @@ namespace EnterpriseDB.EDBClient
         {
             if (disposing)
             {
-                try
+                if (EnqueueOptions != null)
                 {
-                    if (EnqueueOptions != null)
-                    {
-                        //EnqueueOptions = null;
-                    }
-                }
-                catch (Exception)
-                {
-                    throw;
+                    EnqueueOptions = null;
                 }
             }
         }

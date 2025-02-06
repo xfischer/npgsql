@@ -3,6 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
+using System.Diagnostics;
 #nullable disable
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -16,21 +17,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     class EDBAQTest : EPASTestBase
     {
         EDBConnection con = null;
-        EDBDataSourceBuilder dataSourceBuilder = null;
 
         [SetUp]
         public void Init()
         {
 
-            dataSourceBuilder = CreateDataSourceBuilder();
-            dataSourceBuilder.AddTypeInfoResolverFactory(new EDBAQResolverFactory());
-            dataSourceBuilder.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
-            dataSourceBuilder.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
-            //dataSourceBuilder.MapComposite<EDBAQMessageProperties>("dbms_aq.message_properties_t");
-            dataSourceBuilder.MapComposite<MyXML>("public.myxml");
-
             //write setup for following test cases
-            con = dataSourceBuilder.Build().OpenConnection();
+            con = CreateDataSourceBuilder()
+                .MapComposite<MyXML>("public.myxml")
+                .Build()
+                .OpenConnection();
 
             var Command = new EDBCommand("", con);
 
@@ -74,20 +70,51 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void AQTest()
         {
-            Enqueue();
-            Dequeue();
+            var msg = Enqueue();
+            var msgOut = Dequeue();
+
+            Assert.AreEqual(msg.MessageId, msgOut.MessageId);
+            Assert.IsInstanceOf(typeof(MyXML), msg.Payload);
+            Assert.IsInstanceOf(typeof(MyXML), msgOut.Payload);
+
+            var payload = (MyXML)msg.Payload;
+            var payloadOut = (MyXML)msgOut.Payload;
+
+            Assert.AreEqual(payload.value, payloadOut.value);
         }
 
-        private void Enqueue()
+        [Test]
+        public void AQTest_EnsureDequeueEmptyThrows()
         {
+            Assert.Throws<InvalidOperationException>(() => Dequeue(waitTimeSeconds: 1));
+        }
+
+
+        [Test]
+        public void AQTest_EnsureMessageIdsUnique()
+        {
+            var msg1 = Enqueue();
+            var msg2 = Enqueue();
+
+            Assert.AreNotEqual(msg1.MessageId, msg2.MessageId);
+
+            var msg1Out = Dequeue();
+            var msg2Out = Dequeue();
+
+            Assert.AreEqual(msg1.MessageId, msg1Out.MessageId);
+            Assert.AreEqual(msg2.MessageId, msg2Out.MessageId);
+        }
+
+        private EDBAQMessage Enqueue()
+        {
+            var queMsg = new EDBAQMessage();
+
             using (var queue = new EDBAQQueue("MSG_QUEUE", con))
             {
-                queue.MessageType = EDBAQMessageType.Xml;
                 EDBTransaction txn = queue.Connection.BeginTransaction();
 
                 try
                 {
-                    var queMsg = new EDBAQMessage();
                     queMsg.Payload = new MyXML { value = "(<Message><MessageText>Mahesh</MessageText></Message>)" };
                     queue.EnqueueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
                     queue.MessageType = EDBAQMessageType.Udt;
@@ -95,7 +122,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     queue.Enqueue(queMsg);
                     Assert.IsNotNull(queMsg.MessageId);
                     txn.Commit();
-                    queMsg = null;
+                    return queMsg;
                 }
                 catch (Exception)
                 {
@@ -105,11 +132,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private void Dequeue()
+        private EDBAQMessage Dequeue(int waitTimeSeconds = 10)
         {
-            var waitTime = 10;
+            var deqMsg = new EDBAQMessage();
+
             using (var queueListen = new EDBAQQueue("MSG_QUEUE", con))
             {
+                queueListen.MessageType = EDBAQMessageType.Udt;
                 queueListen.UdtTypeName = "myxml";
                 queueListen.DequeueOptions.Navigation = EDBAQNavigationMode.FIRST_MESSAGE;
                 queueListen.DequeueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
@@ -123,10 +152,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 }
                 try
                 {
-                    var v = queueListen.Listen(null, waitTime);
+                    var v = queueListen.Listen(waitTimeSeconds);
                     // If we are waiting for a message and we specify a Wait time,
                     // then if there are no more messages, we want to just bounce out.
-                    if (waitTime > -1 && v == null)
+                    if (waitTimeSeconds > -1 && v == null)
                     {
                         throw new InvalidOperationException("Message was expected");
                     }
@@ -134,7 +163,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     // once we're here that means a message has been detected in the queue. Let's deal with it.
                     txn = queueListen.Connection.BeginTransaction();
                     // dequeue the message
-                    var deqMsg = new EDBAQMessage();
                     try
                     {
                         deqMsg = queueListen.Dequeue();
@@ -151,17 +179,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                         // Direct cast
                         var obj = (MyXML)deqMsg.Payload;
-                        Assert.AreEqual(obj.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
+                        Assert.AreEqual("(<Message><MessageText>Mahesh</MessageText></Message>)", obj.value);
 
-                        // via Map
-                        var obj2 = new MyXML();
-#pragma warning disable CS0618 // Type or member is obsolete
-                        queueListen.Map<MyXML>(deqMsg.Payload, obj2);
-#pragma warning restore CS0618 // Type or member is obsolete
-
-                        Assert.AreEqual(obj2.value, "(<Message><MessageText>Mahesh</MessageText></Message>)");
                         txn.Commit();
+
+                        return deqMsg;
                     }
+
+                    return null;
                 }
                 catch (Exception)
                 {
