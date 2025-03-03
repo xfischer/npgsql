@@ -83,7 +83,7 @@ sealed partial class CompositeConverter<T> : PgStreamingConverter<T> where T : n
 
             // We're only requiring the PgTypeIds to be oids if this converter is actually used during execution.
             // As a result we can still introspect in the global mapper and create all the info with portable ids.
-            if (oid != field.PgTypeId.Oid)
+            if(oid != field.PgTypeId.Oid)
                 // We could remove this requirement by storing a dictionary of CompositeInfos keyed by backend.
                 throw new InvalidCastException(
                     $"Cannot read oid {oid} into composite field {field.Name} with oid {field.PgTypeId}. " +

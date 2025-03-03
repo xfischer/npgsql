@@ -34,15 +34,15 @@ static class IndicesExtensions
     {
         switch (indices.Count)
         {
-        case 0:
-            ThrowHelper.ThrowIndexOutOfRangeException("Cannot index into a 0-dimensional array.");
-            return ref Unsafe.NullRef<int>();
-        case 1:
-            Debug.Assert(index is 0);
-            Debug.Assert(indices.Many is null);
-            return ref indices.One;
-        default:
-            return ref indices.Many![index];
+            case 0:
+                ThrowHelper.ThrowIndexOutOfRangeException("Cannot index into a 0-dimensional array.");
+                return ref Unsafe.NullRef<int>();
+            case 1:
+                Debug.Assert(index is 0);
+                Debug.Assert(indices.Many is null);
+                return ref indices.One;
+            default:
+                return ref indices.Many![index];
         }
     }
 }
@@ -52,8 +52,8 @@ interface IElementOperations
     object CreateCollection(ReadOnlySpan<int> lengths);
     int GetCollectionCount(object collection, out int[]? lengths);
     Size? GetSizeOrDbNull(SizeContext context, object collection, Indices indices, ref object? writeState);
-    ValueTask Read(bool async, PgReader reader, bool isDbNull, object collection, Indices indices, CancellationToken cancellationToken = default);
-    ValueTask Write(bool async, PgWriter writer, object collection, Indices indices, CancellationToken cancellationToken = default);
+    ValueTask Read(bool async, PgReader reader, bool isDbNull, object collection,  Indices indices, CancellationToken cancellationToken = default);
+    ValueTask Write(bool async, PgWriter writer, object collection,  Indices indices, CancellationToken cancellationToken = default);
 }
 
 readonly struct PgArrayConverter(
@@ -267,7 +267,7 @@ readonly struct PgArrayConverter(
     {
         var (count, dims, state) = writer.Current.WriteState switch
         {
-            WriteState writeState => (writeState.Count, writeState.Lengths?.Length ?? 1, writeState),
+            WriteState writeState => (writeState.Count, writeState.Lengths?.Length ?? 1 , writeState),
             null => (0, values is Array a ? a.Rank : 1, null),
             _ => throw new InvalidCastException($"Invalid write state, expected {typeof(WriteState).FullName}.")
         };
@@ -293,7 +293,7 @@ readonly struct PgArrayConverter(
 
         var indices = state.Indices;
         if (indices.Many is not null)
-            Array.Clear(indices.Many, 0, indices.Many.Length);
+            Array.Clear(indices.Many, 0 , indices.Many.Length);
         var lastLength = state.Lengths?[state.Lengths.Length - 1] ?? state.Count; // EnterpriseDB (NETFRAMEWORK)
         var i = state.Data.Offset;
         do
@@ -453,16 +453,16 @@ sealed class ArrayBasedArrayConverter<T, TElement>(PgConverterResolution elemRes
         Debug.Assert(indices.Count > 0);
         switch (indices.Count)
         {
-        case 1:
-            // Justification: exact type Unsafe.As used to avoid the cast overhead for per element calls.
-            Debug.Assert(collection is TElement?[]);
-            Unsafe.As<TElement?[]>(collection)[indices.One] = value;
-            break;
-        default:
-            // Justification: exact type Unsafe.As used to avoid the cast overhead for per element calls.
-            Debug.Assert(collection is Array);
-            Unsafe.As<Array>(collection).SetValue(value, indices.Many!);
-            break;
+            case 1:
+                // Justification: exact type Unsafe.As used to avoid the cast overhead for per element calls.
+                Debug.Assert(collection is TElement?[]);
+                Unsafe.As<TElement?[]>(collection)[indices.One] = value;
+                break;
+            default:
+                // Justification: exact type Unsafe.As used to avoid the cast overhead for per element calls.
+                Debug.Assert(collection is Array);
+                Unsafe.As<Array>(collection).SetValue(value, indices.Many!);
+                break;
         }
     }
 
@@ -569,23 +569,23 @@ sealed class ListBasedArrayConverter<T, TElement>(PgConverterResolution elemReso
         return new();
     }
 
-    unsafe ValueTask ReadAsync(PgStreamingConverter<TElement> converter, PgReader reader, object collection, Indices indices, CancellationToken cancellationToken)
-    {
-        Debug.Assert(indices.Count is 1);
-        if (converter.ReadAsyncAsTask(reader, cancellationToken, out var result) is { } task)
-            return PgArrayConverter.AwaitTask(task, new(this, &SetResult), collection, indices);
+     unsafe ValueTask ReadAsync(PgStreamingConverter<TElement> converter, PgReader reader, object collection, Indices indices, CancellationToken cancellationToken)
+     {
+         Debug.Assert(indices.Count is 1);
+         if (converter.ReadAsyncAsTask(reader, cancellationToken, out var result) is { } task)
+             return PgArrayConverter.AwaitTask(task, new(this, &SetResult), collection, indices);
 
-        SetValue(collection, indices.One, result);
-        return new();
+         SetValue(collection, indices.One, result);
+         return new();
 
-        static void SetResult(Task task, object collection, Indices indices)
-        {
-            // Justification: exact type Unsafe.As used to reduce generic duplication cost.
-            Debug.Assert(task is Task<TElement>);
-            // Using .Result on ValueTask is equivalent to GetAwaiter().GetResult(), this removes TaskAwaiter<T> rooting.
-            SetValue(collection, indices.One, new ValueTask<TElement>(task: Unsafe.As<Task<TElement>>(task)).Result);
-        }
-    }
+         static void SetResult(Task task, object collection, Indices indices)
+         {
+             // Justification: exact type Unsafe.As used to reduce generic duplication cost.
+             Debug.Assert(task is Task<TElement>);
+             // Using .Result on ValueTask is equivalent to GetAwaiter().GetResult(), this removes TaskAwaiter<T> rooting.
+             SetValue(collection, indices.One, new ValueTask<TElement>(task: Unsafe.As<Task<TElement>>(task)).Result);
+         }
+     }
 
     ValueTask IElementOperations.Write(bool async, PgWriter writer, object collection, Indices indices, CancellationToken cancellationToken)
     {
@@ -630,36 +630,36 @@ sealed class ArrayConverterResolver<T, TElement>(PgResolverTypeInfo elementTypeI
         {
             switch (values)
             {
-            case TElement[] array:
-                foreach (var value in array)
-                {
-                    var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
-                    resolution ??= result;
-                }
-                break;
-            case List<TElement> list:
-                foreach (var value in list)
-                {
-                    var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
-                    resolution ??= result;
-                }
-                break;
-            case IList<TElement> list:
-                foreach (var value in list)
-                {
-                    var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
-                    resolution ??= result;
-                }
-                break;
-            case Array array:
-                foreach (var value in array)
-                {
-                    var result = EffectiveTypeInfo.GetResolutionAsObject(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
-                    resolution ??= result;
-                }
-                break;
-            default:
-                throw new NotSupportedException();
+                case TElement[] array:
+                    foreach (var value in array)
+                    {
+                        var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
+                        resolution ??= result;
+                    }
+                    break;
+                case List<TElement> list:
+                    foreach (var value in list)
+                    {
+                        var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
+                        resolution ??= result;
+                    }
+                    break;
+                case IList<TElement> list:
+                    foreach (var value in list)
+                    {
+                        var result = EffectiveTypeInfo.GetResolution(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
+                        resolution ??= result;
+                    }
+                    break;
+                case Array array:
+                    foreach (var value in array)
+                    {
+                        var result = EffectiveTypeInfo.GetResolutionAsObject(value, resolution?.PgTypeId ?? expectedEffectivePgTypeId);
+                        resolution ??= result;
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
         }
 

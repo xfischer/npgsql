@@ -475,7 +475,6 @@ public sealed class FieldDescription
             // When passed in an unsupported type it allows the error to be more specific, instead of just having object/null to deal with.
             if (_objectInfo.ConverterInfo.IsDefault && type is not null)
                 _ = ObjectInfo;
-
         }
 
         // DataFormat.Text today exclusively signals that we executed with an UnknownResultTypeList.

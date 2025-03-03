@@ -199,7 +199,7 @@ public class NpgsqlDatabaseCreatorEnsureCreatedTest : NpgsqlDatabaseCreatorTest
 
         // EnterpriseDB Team
         var tables = testDatabase.Query<string>(
-            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES \r\nWHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'")
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'")
 			.ToList();
         Assert.Single(tables);
         Assert.Equal("Blogs", tables.Single());
@@ -535,7 +535,7 @@ public class NpgsqlDatabaseCreatorCreateTest : NpgsqlDatabaseCreatorTest
 		// EnterpriseDB (add filters on sys and edb_)
         Assert.Empty(
             await testDatabase.QueryAsync<string>(
-                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES \r\nWHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'"));
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND NOT TABLE_NAME LIKE ANY ('{pg_%,sql_%,edb_%}') AND TABLE_SCHEMA <> 'sys'"));
     }
 
     [ConditionalTheory]

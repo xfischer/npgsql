@@ -44,8 +44,6 @@ sealed class AuthenticationMD5PasswordMessage  : AuthenticationRequestMessage
         => Salt = salt;
 }
 
-
-
 sealed class AuthenticationGSSMessage : AuthenticationRequestMessage
 {
     internal override AuthenticationRequestType AuthRequestType => AuthenticationRequestType.GSS;

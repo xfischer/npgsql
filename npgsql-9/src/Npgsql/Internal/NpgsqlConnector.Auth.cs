@@ -71,10 +71,10 @@ partial class EDBConnector
     {
         // At the time of writing PostgreSQL only supports SCRAM-SHA-256 and SCRAM-SHA-256-PLUS
         var serverSupportsSha256 = mechanisms.Contains("SCRAM-SHA-256");
-        var clientSupportsSha256 = serverSupportsSha256 && Settings.ChannelBinding != ChannelBinding.Require;
+        var allowSha256 = serverSupportsSha256 && Settings.ChannelBinding != ChannelBinding.Require;
         var serverSupportsSha256Plus = mechanisms.Contains("SCRAM-SHA-256-PLUS");
-        var clientSupportsSha256Plus = serverSupportsSha256Plus && Settings.ChannelBinding != ChannelBinding.Disable;
-        if (!clientSupportsSha256 && !clientSupportsSha256Plus)
+        var allowSha256Plus = serverSupportsSha256Plus && Settings.ChannelBinding != ChannelBinding.Disable;
+        if (!allowSha256 && !allowSha256Plus)
         {
             if (serverSupportsSha256 && Settings.ChannelBinding == ChannelBinding.Require)
                 throw new EDBException($"Couldn't connect because {nameof(ChannelBinding)} is set to {nameof(ChannelBinding.Require)} " +
@@ -92,10 +92,10 @@ partial class EDBConnector
         var cbind = string.Empty;
         var successfulBind = false;
 
-        if (clientSupportsSha256Plus)
+        if (allowSha256Plus)
             DataSource.TransportSecurityHandler.AuthenticateSASLSha256Plus(this, ref mechanism, ref cbindFlag, ref cbind, ref successfulBind);
 
-        if (!successfulBind && serverSupportsSha256)
+        if (!successfulBind && allowSha256)
         {
             mechanism = "SCRAM-SHA-256";
             // We can get here if PostgreSQL supports only SCRAM-SHA-256 or there was an error while binding to SCRAM-SHA-256-PLUS
@@ -203,6 +203,8 @@ partial class EDBConnector
             return;
         }
 
+        // While SslStream.RemoteCertificate is X509Certificate2, it actually returns X509Certificate2
+        // But to be on the safe side we'll just create a new instance of it
         using var remoteCertificate = new X509Certificate2(sslStream.RemoteCertificate);
         // Checking for hashing algorithms
         HashAlgorithm? hashAlgorithm = null;
@@ -231,16 +233,16 @@ partial class EDBConnector
                 $"Support for signature algorithm {algorithmName} is not yet implemented, falling back to SCRAM-SHA-256");
         }
 
-                if (hashAlgorithm != null)
-                {
-                    using var _ = hashAlgorithm;
+        if (hashAlgorithm != null)
+        {
+            using var _ = hashAlgorithm;
 
-                    // RFC 5929
-                    mechanism = "SCRAM-SHA-256-PLUS";
-                    // PostgreSQL only supports tls-server-end-point binding
-                    cbindFlag = "p=tls-server-end-point";
-                    // SCRAM-SHA-256-PLUS depends on using ssl stream, so it's fine
-                    var cbindFlagBytes = Encoding.UTF8.GetBytes($"{cbindFlag},,");
+            // RFC 5929
+            mechanism = "SCRAM-SHA-256-PLUS";
+            // PostgreSQL only supports tls-server-end-point binding
+            cbindFlag = "p=tls-server-end-point";
+            // SCRAM-SHA-256-PLUS depends on using ssl stream, so it's fine
+            var cbindFlagBytes = Encoding.UTF8.GetBytes($"{cbindFlag},,");
 
             var certificateHash = hashAlgorithm.ComputeHash(remoteCertificate.GetRawCertData());
             var cbindBytes = new byte[cbindFlagBytes.Length + certificateHash.Length];

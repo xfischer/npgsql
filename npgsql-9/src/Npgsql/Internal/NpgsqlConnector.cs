@@ -342,16 +342,16 @@ public sealed partial class EDBConnector
     int _resetWithoutDeallocateResponseCount;
 
     // Backend
-    readonly CommandCompleteMessage _commandCompleteMessage = new();
-    readonly ReadyForQueryMessage _readyForQueryMessage = new();
+    readonly CommandCompleteMessage      _commandCompleteMessage      = new();
+    readonly ReadyForQueryMessage        _readyForQueryMessage        = new();
     readonly ParameterDescriptionMessage _parameterDescriptionMessage = new();
-    readonly DataRowMessage _dataRowMessage = new();
-    readonly RowDescriptionMessage _rowDescriptionMessage = new(connectorOwned: true);
+    readonly DataRowMessage              _dataRowMessage              = new();
+    readonly RowDescriptionMessage       _rowDescriptionMessage       = new(connectorOwned: true);
 
     // Since COPY is rarely used, allocate these lazily
-    CopyInResponseMessage? _copyInResponseMessage;
+    CopyInResponseMessage?  _copyInResponseMessage;
     CopyOutResponseMessage? _copyOutResponseMessage;
-    CopyDataMessage? _copyDataMessage;
+    CopyDataMessage?        _copyDataMessage;
     CopyBothResponseMessage? _copyBothResponseMessage;
 
     #endregion
@@ -1897,12 +1897,12 @@ public sealed partial class EDBConnector
     internal bool IsSecure { get; private set; }
 
     /// <summary>
-    /// Returns whether SCRAM-SHA256 is being user for the connection
+    /// Returns whether SCRAM-SHA256 is being used for the connection
     /// </summary>
     internal bool IsScram { get; private set; }
 
     /// <summary>
-    /// Returns whether SCRAM-SHA256-PLUS is being user for the connection
+    /// Returns whether SCRAM-SHA256-PLUS is being used for the connection
     /// </summary>
     internal bool IsScramPlus { get; private set; }
 
@@ -2432,10 +2432,41 @@ public sealed partial class EDBConnector
     /// Closes the socket and cleans up client-side resources associated with this connector.
     /// </summary>
     /// <remarks>
-    /// This method doesn't actually perform any meaningful I/O, and therefore is sync-only.
+    /// This method doesn't actually perform any meaningful I/O (except sending TLS alert), and therefore is sync-only.
     /// </remarks>
     void Cleanup()
     {
+        var sslStream = _stream as SslStream;
+        if (sslStream is not null)
+        {
+            try
+            {
+                // Send close_notify TLS alert to correctly close connection on postgres's side
+#if !NETSTANDARD2_0
+                sslStream.ShutdownAsync().GetAwaiter().GetResult();
+#endif
+                // Theoretically we should do a 0 read here to receive server's close_notify alert
+                // But overall it doesn't look like it makes much of a difference
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        // After we access SslStream.RemoteCertificate (like for SASLSha256Plus)
+        // SslStream will no longer dispose it for us automatically
+        // Which is why we have to do it ourselves before disposing the stream
+        // As otherwise accessing RemoteCertificate will throw an exception
+        try
+        {
+            sslStream?.RemoteCertificate?.Dispose();
+        }
+        catch
+        {
+            // ignored
+        }
+
         try
         {
             _stream?.Dispose();
@@ -2644,7 +2675,7 @@ public sealed partial class EDBConnector
         PreparedStatementManager.ClearAll();
     }
 
-    #endregion Close / Reset
+#endregion Close / Reset
 
     #region Locking
 

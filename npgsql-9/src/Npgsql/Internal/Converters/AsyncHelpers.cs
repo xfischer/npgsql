@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
-// Using a function pointer here is safe against assembly unloading as the instance reference that the static pointer method lives on is passed along.
-// As such the instance cannot be collected by the gc which means the entire assembly is prevented from unloading until we're done.
 static class AsyncHelpers
 {
     public static void OnCompletedWithSource(Task task, CompletionSource source, CompletionSourceContinuation continuation)

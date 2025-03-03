@@ -1,5 +1,3 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
-
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query.Internal;
 
 /// <summary>
