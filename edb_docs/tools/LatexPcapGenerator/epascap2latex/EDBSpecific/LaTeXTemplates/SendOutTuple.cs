@@ -29,7 +29,7 @@ namespace epascap2latex
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n    \\begin{leftwordgroup}{SendOutTuple}\r\n        \\bitbox{1}[bgcolor=edborange]{" +
+            this.Write("\r\n    \\begin{leftwordgroup}{SendOutTuple}\r\n        \\bitbox{1}[bgcolor=edbyellow]{" +
                     "v} &\r\n        \\bitbox{4}[bgcolor=lightgreen]{length: ");
             
             #line 10 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\epascap2latex\EDBSpecific\LaTeXTemplates\SendOutTuple.tt"

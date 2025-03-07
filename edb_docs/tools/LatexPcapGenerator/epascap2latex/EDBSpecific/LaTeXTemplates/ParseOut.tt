@@ -6,7 +6,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
     \begin{leftwordgroup}{ParseOut}
-        \bitbox{1}[bgcolor=edborange]{O} &
+        \bitbox{1}[bgcolor=edbyellow]{O} &
         \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
         \bitbox{12}{\tiny Statement: <#= this.Statement #>} &
         \bitbox{13}{\tiny Query: <#= this.Query #>} &

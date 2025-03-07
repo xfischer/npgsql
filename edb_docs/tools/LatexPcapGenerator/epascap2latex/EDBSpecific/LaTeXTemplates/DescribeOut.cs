@@ -28,7 +28,7 @@ namespace epascap2latex
         /// </summary>
         public virtual string TransformText()
         {
-            this.Write("\r\n    \\begin{leftwordgroup}{DescribeOut}\r\n        \\bitbox{1}[bgcolor=edborange]{u" +
+            this.Write("\r\n    \\begin{leftwordgroup}{DescribeOut}\r\n        \\bitbox{1}[bgcolor=edbyellow]{u" +
                     "} &\r\n        \\bitbox{4}[bgcolor=lightgreen]{length: ");
             
             #line 9 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\epascap2latex\EDBSpecific\LaTeXTemplates\DescribeOut.tt"

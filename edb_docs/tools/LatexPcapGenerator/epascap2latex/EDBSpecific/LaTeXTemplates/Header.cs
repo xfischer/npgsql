@@ -51,7 +51,7 @@ namespace epascap2latex
 \definecolor{lightgreen}{rgb}{0.64,1,0.71}
 \definecolor{lightergreen}{rgb}{0.74,1,0.81}
 \definecolor{lightred}{rgb}{1,0.7,0.71}
-\definecolor{edborange}{rgb}{1,0.243,0}
+\definecolor{edbyellow}{rgb}{0.902,0.77,0.406}
 \definecolor{lightgray}{gray}{0.8}
 \definecolor{white}{gray}{1}
 
@@ -93,7 +93,7 @@ namespace epascap2latex
 \definecolor{lightgreen}{rgb}{0.64,1,0.71}
 \definecolor{lightergreen}{rgb}{0.74,1,0.81}
 \definecolor{lightred}{rgb}{1,0.7,0.71}
-\definecolor{edborange}{rgb}{1,0.243,0}
+\definecolor{edbyellow}{rgb}{0.902,0.77,0.406}
 \definecolor{lightgray}{gray}{0.8}
 \definecolor{white}{gray}{1}
 

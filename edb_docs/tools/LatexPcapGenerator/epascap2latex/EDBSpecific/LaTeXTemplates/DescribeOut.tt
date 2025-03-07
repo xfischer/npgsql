@@ -5,7 +5,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
     \begin{leftwordgroup}{DescribeOut}
-        \bitbox{1}[bgcolor=edborange]{u} &
+        \bitbox{1}[bgcolor=edbyellow]{u} &
         \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
         \bitbox{1}{<#= this.StatementOrPortalCode #>} &
         \bitbox{26}{<#= this.StatementOrPortalCaption #>}

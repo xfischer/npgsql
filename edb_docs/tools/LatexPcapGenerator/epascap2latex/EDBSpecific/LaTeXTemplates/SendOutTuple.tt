@@ -6,7 +6,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
     \begin{leftwordgroup}{SendOutTuple}
-        \bitbox{1}[bgcolor=edborange]{v} &
+        \bitbox{1}[bgcolor=edbyellow]{v} &
         \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
         \bitbox{2}{\rotatebox{90}{\tiny fields: <#= this.FieldCount #> }} & 
         \bitbox{25}[bgcolor=lightgray]{} 

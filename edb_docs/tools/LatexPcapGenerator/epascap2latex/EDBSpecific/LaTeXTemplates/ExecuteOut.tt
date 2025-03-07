@@ -5,7 +5,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 
     \begin{leftwordgroup}{ExecuteOut}
-        \bitbox{1}[bgcolor=edborange]{v} &
+        \bitbox{1}[bgcolor=edbyellow]{v} &
         \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>}
         \bitbox{27}[bgcolor=lightgray]{one more byte unidentified }
     \end{leftwordgroup}

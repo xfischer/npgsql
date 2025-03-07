@@ -92,7 +92,6 @@ namespace pcap2latex
 \definecolor{lightgreen}{rgb}{0.64,1,0.71}
 \definecolor{lightergreen}{rgb}{0.74,1,0.81}
 \definecolor{lightred}{rgb}{1,0.7,0.71}
-\definecolor{edborange}{rgb}{1,0.243,0}
 \definecolor{lightgray}{gray}{0.8}
 \definecolor{white}{gray}{1}
 
@@ -100,7 +99,7 @@ namespace pcap2latex
     
 ");
             
-            #line 48 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\pcap2latex.core\Templates\Paging\Header.tt"
+            #line 47 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\pcap2latex.core\Templates\Paging\Header.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(this.Message));
             
             #line default
@@ -108,7 +107,7 @@ namespace pcap2latex
             this.Write("\r\n\r\nPackets are grouped in conversations.\r\nA conversation ends when backend is is" +
                     "suing a ReadyForQuery message.\r\n\r\n\\section{Conversation}\r\n\r\n");
             
-            #line 55 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\pcap2latex.core\Templates\Paging\Header.tt"
+            #line 54 "C:\dev\repos\edb-dotnet\edb_docs\tools\LatexPcapGenerator\pcap2latex.core\Templates\Paging\Header.tt"
  } 
             
             #line default
