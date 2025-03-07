@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Postgres": {
+      "commandName": "Project",
+      "commandLineArgs": "SampleData\\connectorStartup.pcapng SampleData\\output 5446 --standalone"
+    },
+    "Sample-NoArgs": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    },
+    "Sample-InvalidArgs": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    }
+  }
+}

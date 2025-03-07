@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Sample": {
-      "commandName": "Project",
-      "commandLineArgs": "SampleData\\connectorStartup.pcapng -o SampleData\\output --standalone True --port 5446"
-    }
-  }
-}

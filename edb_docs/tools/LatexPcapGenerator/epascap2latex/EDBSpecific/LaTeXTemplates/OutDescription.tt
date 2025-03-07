@@ -1,0 +1,34 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="pcap2latex" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+    \begin{leftwordgroup}{OutDescription}
+        \bitbox{1}[bgcolor=edborange]{u} &
+        \bitbox{4}[bgcolor=lightgreen]{length: <#= this.Length #>} &
+        \bitbox{2}{\tiny params \\ \tiny =<#= this.FieldCount #>} &
+        \bitbox{25}[bgcolor=lightgray]{}    
+
+<# 
+    int paramIndex = 0;
+    foreach (var param in this.Columns) 
+    {
+        paramIndex++;
+#>
+        \\
+        \begin{rightwordgroup}{param <#= paramIndex #>}
+            \bitbox{14}{name: <#= LatexHelper.Unescape(param.ColumnName) #>} &
+            \bitbox{2}{\rotatebox{90}{\tiny index: <#= param.ColumnIndex #>}} &
+            \bitbox{4}{\small oid: <#= param.TypeOid #>} &
+            \bitbox{2}{\rotatebox{90}{\tiny length: <#= param.ColumnLength #>}} &
+            \bitbox{4}{\rotatebox{90}{\parbox{1cm}{\tiny typemod: \\ <#= param.TypeModifier #>}}} &
+            \bitbox{2}{\rotatebox{90}{\small <#= LatexHelper.ToFormatString(param.Format) #>}} & 
+            \bitbox{4}[bgcolor=lightgray]{}
+        \end{rightwordgroup}
+<#
+    } 
+#>
+    \end{leftwordgroup}
+<#+ float ITextTransformer.EstimateBytefieldRowCount() => 1 + this.Columns.Count; #>
