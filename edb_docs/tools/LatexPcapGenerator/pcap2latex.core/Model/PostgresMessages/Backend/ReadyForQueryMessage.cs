@@ -1,15 +1,15 @@
 ﻿namespace pcap2latex;
 
-public class ReadyForQueryMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ReadyForQueryMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public char StatusCode { get; private set; }
     
     public TransactionStatus Status { get; private set; }
 
-    internal static ReadyForQueryMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static ReadyForQueryMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new ReadyForQueryMessage(messageCode, len)
+        var message = new ReadyForQueryMessage(pgMessage, len)
         {
             StatusCode = reader.ReadChar()
         };
@@ -23,6 +23,8 @@ public class ReadyForQueryMessage(char code, int length) : PostgresMessageBase(c
 
         return message;
     }
+
+    public override string GetStringRepresentation() => Status.ToString();
 }
 
 public enum TransactionStatus

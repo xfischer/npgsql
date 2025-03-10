@@ -2,7 +2,7 @@
 
 public class GenerationState(bool standalone, bool multiple = false)
 {
-    public IPostgresMessage? LastMessage { get; set; } = null;
+    public PostgresMessageBase? LastMessage { get; set; } = null;
 
     public int ConsecutiveDataRows { get; set; } = 0;
     public bool Standalone { get; } = standalone;

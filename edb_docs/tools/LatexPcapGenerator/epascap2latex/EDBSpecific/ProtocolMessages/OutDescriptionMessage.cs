@@ -2,17 +2,17 @@
 
 namespace epascap2latex;
 
-public class OutDescriptionMessage(char code, int length) : PostgresMessageBase(code, length)
+public class OutDescriptionMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
 
     public short FieldCount { get; internal set; }
 
     public List<OutParamDescription> ParameterDescriptions { get; internal set; } = [];
 
-    public static OutDescriptionMessage Read(char messageCode, PcapBinaryReader reader)
+    public static OutDescriptionMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new OutDescriptionMessage(messageCode, len)
+        var message = new OutDescriptionMessage(pgMessage, len)
         {
             FieldCount = reader.ReadInt16()
         };

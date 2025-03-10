@@ -1,14 +1,14 @@
 ﻿namespace pcap2latex;
 
-public class ExecuteMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ExecuteMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public string PortalName { get; internal set; } = "";
     public int MaxRows { get; internal set; }
 
-    internal static ExecuteMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static ExecuteMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new ExecuteMessage(messageCode, len)
+        var message = new ExecuteMessage(pgMessage, len)
         {
             PortalName = reader.ReadNullTerminatedString(len),
             MaxRows = reader.ReadInt32()
@@ -16,4 +16,6 @@ public class ExecuteMessage(char code, int length) : PostgresMessageBase(code, l
 
         return message;
     }
+
+    public override string GetStringRepresentation() => $"{PortalName}, maxrows={MaxRows}";
 }

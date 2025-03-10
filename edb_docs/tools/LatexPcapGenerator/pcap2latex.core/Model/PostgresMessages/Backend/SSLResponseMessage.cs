@@ -1,10 +1,10 @@
 ﻿namespace pcap2latex;
 
-public class SSLResponseMessage(char code, int length) : PostgresMessageBase(code, length)
+public class SSLResponseMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
-    internal static SSLResponseMessage Read(char messageCode) 
+    internal static SSLResponseMessage Read(PostgresMessage pgMessage) 
     {
-        var message = new SSLResponseMessage(messageCode, 0);
+        var message = new SSLResponseMessage(pgMessage, 0);
         return message;
     }
 }

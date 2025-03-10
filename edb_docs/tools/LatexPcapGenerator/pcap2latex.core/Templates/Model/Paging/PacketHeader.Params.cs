@@ -7,7 +7,7 @@ public partial class PacketHeader
     public string MessagesCount { get; }
     public GenerationState State { get; }
 
-    public PacketHeader(List<IPostgresMessage> messages, bool isFrontEnd, int packetIndex, GenerationState state)
+    public PacketHeader(List<PostgresMessageBase> messages, bool isFrontEnd, int packetIndex, GenerationState state)
     {
         Direction = LatexHelper.GetProtoDirectionText(isFrontEnd);
         PacketIndex = packetIndex;

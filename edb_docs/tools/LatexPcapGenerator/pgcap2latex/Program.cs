@@ -18,10 +18,9 @@ internal sealed class Program
             // pull this setting.
             var serviceCollection = new ServiceCollection()
                 .AddLogging(configure =>
-                    configure.AddSpectreConsole());
-
-            serviceCollection.AddPcap2Latex();;
-            serviceCollection.AddSingleton<ConvertApp>();
+                    configure.AddSpectreConsole())
+                .AddPcap2Latex()
+                .AddSingleton<ConvertApp>();
 
             var registrar = new TypeRegistrar(serviceCollection);
             var app = new CommandApp<ConvertCommand>(registrar);

@@ -1,11 +1,11 @@
 ﻿namespace pcap2latex;
 
-internal class NoDataMessage(char code, int length) : PostgresMessageBase(code, length)
+internal class NoDataMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
-    internal static NoDataMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static NoDataMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var packet = new NoDataMessage(messageCode, len);
+        var packet = new NoDataMessage(pgMessage, len);
 
         return packet;
     }

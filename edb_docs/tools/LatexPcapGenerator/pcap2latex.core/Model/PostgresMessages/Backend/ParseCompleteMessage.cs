@@ -1,11 +1,11 @@
 ﻿namespace pcap2latex;
 
-public class ParseCompleteMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ParseCompleteMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
-    internal static ParseCompleteMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static ParseCompleteMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new ParseCompleteMessage(messageCode, len);
+        var message = new ParseCompleteMessage(pgMessage, len);
 
         return message;
     }

@@ -2,14 +2,14 @@
 
 namespace epascap2latex;
 
-public class ExecuteOutMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ExecuteOutMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public string PortalName { get; internal set; } = "";
 
-    public static ExecuteOutMessage Read(char messageCode, PcapBinaryReader reader)
+    public static ExecuteOutMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new ExecuteOutMessage(messageCode, len)
+        var message = new ExecuteOutMessage(pgMessage, len)
         {
             PortalName = reader.ReadNullTerminatedString(len)
         };

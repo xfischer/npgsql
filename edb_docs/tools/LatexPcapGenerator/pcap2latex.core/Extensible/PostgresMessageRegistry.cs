@@ -10,33 +10,31 @@ namespace pcap2latex;
 
 class PostgresMessageRegistry : IPostgresMessageRegistry
 {
-    public static PostgresMessage Undefined => new('0', "Undefined");
-
     private readonly Dictionary<char, PostgresMessage> backendMessages = [];
     private readonly Dictionary<char, PostgresMessage> frontendMessages = [];
 
-    public void AddOrReplaceBackendMessage(PostgresMessage message)
+    public void AddOrReplaceBackendMessage(PostgresMessage pgMessage)
     {
-        if (backendMessages.TryGetValue(message.Code, out var _))
+        if (backendMessages.TryGetValue(pgMessage.Code, out var _))
         {
             //Trace.TraceWarning("Message '{Code}' exists (name: {Name}). Replacing with {NewName}",
             //                    existingMessage.Code,
             //                    existingMessage.Name,
             //                    message.Name);
         }
-        backendMessages[message.Code] = message;
+        backendMessages[pgMessage.Code] = pgMessage;
     }
 
-    public void AddOrReplaceFrontendMessage(PostgresMessage message)
+    public void AddOrReplaceFrontendMessage(PostgresMessage pgMessage)
     {
-        if (frontendMessages.TryGetValue(message.Code, out var _))
+        if (frontendMessages.TryGetValue(pgMessage.Code, out var _))
         {
             //logger.LogWarning("Message '{Code}' exists (name: {Name}). Replacing with {NewName}",
             //                    existingMessage.Code,
             //                    existingMessage.Name,
             //                    message.Name);
         }
-        frontendMessages[message.Code] = message;
+        frontendMessages[pgMessage.Code] = pgMessage;
     }
 
     public PostgresMessage? GetMessage(char messageCode, bool? frontEnd)

@@ -1,16 +1,15 @@
 ﻿namespace pcap2latex;
 
-public class ParameterDescriptionMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ParameterDescriptionMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
-
     public short ParameterCount { get; internal set; }
 
     public List<int> ParameterOids { get; internal set; } = [];
 
-    internal static ParameterDescriptionMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static ParameterDescriptionMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new ParameterDescriptionMessage(messageCode, len)
+        var message = new ParameterDescriptionMessage(pgMessage, len)
         {
             ParameterCount = reader.ReadInt16()
         };
@@ -22,4 +21,6 @@ public class ParameterDescriptionMessage(char code, int length) : PostgresMessag
 
         return message;
     }
+
+    public override string GetStringRepresentation() => $"oids: [{string.Join(", ", ParameterOids)}]";
 }

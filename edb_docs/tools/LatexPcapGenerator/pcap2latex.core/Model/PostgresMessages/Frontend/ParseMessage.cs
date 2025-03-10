@@ -1,16 +1,16 @@
 ﻿namespace pcap2latex;
 
-public class ParseMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ParseMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {    
     public string Statement { get; internal set; } = "";
     public string Query { get; internal set; } = "";
     public short ParameterCount { get; internal set; }
     public List<int> ParameterOids { get; internal set; } = [];
 
-    internal static ParseMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static ParseMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var packet = new ParseMessage(messageCode, len)
+        var packet = new ParseMessage(pgMessage, len)
         {
             Statement = reader.ReadNullTerminatedString(len),
             Query = reader.ReadNullTerminatedString(len),
@@ -23,4 +23,8 @@ public class ParseMessage(char code, int length) : PostgresMessageBase(code, len
         }
         return packet;
     }
+
+    public override string GetStringRepresentation() => $"statement={Statement}, " +
+        $"query={Query}, " +
+        $"parameter oids=[{string.Join(", ", ParameterOids)}]";
 }

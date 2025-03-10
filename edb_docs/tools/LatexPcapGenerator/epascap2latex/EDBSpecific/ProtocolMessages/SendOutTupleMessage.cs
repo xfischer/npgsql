@@ -3,7 +3,7 @@ using pcap2latex;
 
 namespace epascap2latex;
 
-public class SendOutTupleMessage(char code, int length) : PostgresMessageBase(code, length)
+public class SendOutTupleMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public class Param(int Length, bool IsText, byte[]? Data, string? TextRepresentation)
     {
@@ -18,10 +18,10 @@ public class SendOutTupleMessage(char code, int length) : PostgresMessageBase(co
 
     public List<Param> ParameterValues { get; internal set; } = [];
 
-    public static SendOutTupleMessage Read(char messageCode, PcapBinaryReader reader, OutDescriptionMessage? lastOutDescription)
+    public static SendOutTupleMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader, OutDescriptionMessage? lastOutDescription)
     {
         var len = reader.ReadInt32();
-        var message = new SendOutTupleMessage(messageCode, len)
+        var message = new SendOutTupleMessage(pgMessage, len)
         {
             ParameterCount = reader.ReadInt16()
         };

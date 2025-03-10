@@ -2,7 +2,7 @@
 
 namespace pcap2latex;
 
-public class DataRowMessage(char code, int length) : PostgresMessageBase(code, length)
+public class DataRowMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public class Row(int Length, bool IsText, byte[]? Data, string? TextRepresentation)
     {
@@ -18,7 +18,7 @@ public class DataRowMessage(char code, int length) : PostgresMessageBase(code, l
 
     public List<Row> ColumnValues { get; internal set; } = [];
 
-    internal static DataRowMessage? Read(char messageCode, PcapBinaryReader reader, RowDescriptionMessage? lastRowDescription)
+    internal static DataRowMessage? Read(PostgresMessage pgMessage, PcapBinaryReader reader, RowDescriptionMessage? lastRowDescription)
     {
         if (!reader.HasSufficientData(4))
             return null;
@@ -27,7 +27,7 @@ public class DataRowMessage(char code, int length) : PostgresMessageBase(code, l
         if (!reader.HasSufficientData(len))
             return null;
 
-        var message = new DataRowMessage(messageCode, len)
+        var message = new DataRowMessage(pgMessage, len)
         {
             FieldCount = reader.ReadInt16()
         };
@@ -45,4 +45,7 @@ public class DataRowMessage(char code, int length) : PostgresMessageBase(code, l
 
         return message;
     }
+
+    public override string GetStringRepresentation() 
+        => $"[{string.Join(", ", ColumnValues.Select(c => $"{c.Name}:{c.TextRepresentation}"))}]";
 }

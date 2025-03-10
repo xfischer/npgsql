@@ -1,13 +1,13 @@
 ﻿namespace pcap2latex;
 
-public class NoticeResponseMessage(char code, int length) : PostgresMessageBase(code, length)
+public class NoticeResponseMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public List<(char FieldType, string Message)> Fields { get; private set; } = [];
 
-    internal static NoticeResponseMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static NoticeResponseMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new NoticeResponseMessage(messageCode, len);
+        var message = new NoticeResponseMessage(pgMessage, len);
                     
         char fieldType = reader.ReadChar();
         do
@@ -26,4 +26,6 @@ public class NoticeResponseMessage(char code, int length) : PostgresMessageBase(
 
         return message;
     }
+
+    public override string GetStringRepresentation() => $"[{string.Join(", ", Fields.Select(c => $"{c.FieldType}: {c.Message}"))}]";
 }

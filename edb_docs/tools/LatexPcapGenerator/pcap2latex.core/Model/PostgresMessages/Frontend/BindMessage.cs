@@ -1,6 +1,6 @@
 ﻿namespace pcap2latex;
 
-public class BindMessage(char code, int length) : PostgresMessageBase(code, length)
+public class BindMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public string PortalName { get; internal set; } = "";
     public string StatementName { get; internal set; } = "";
@@ -17,10 +17,10 @@ public class BindMessage(char code, int length) : PostgresMessageBase(code, leng
     public short ResultsFormatCount { get; internal set; }
     public List<short> ResultsFormat { get; internal set; } = [];
 
-    internal static BindMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static BindMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new BindMessage(messageCode, len)
+        var message = new BindMessage(pgMessage, len)
         {
             PortalName = reader.ReadNullTerminatedString(len),
             StatementName = reader.ReadNullTerminatedString(len),
@@ -53,4 +53,9 @@ public class BindMessage(char code, int length) : PostgresMessageBase(code, leng
         }
         return message;
     }
+
+    public override string GetStringRepresentation() => $"{PortalName}{StatementName}: " +
+        $"formats: [{string.Join(", ", ParameterFormats)}], " +
+        $"values len: [{string.Join(", ", ParameterValues.Select(v => v.Length))}], " +
+        $"results format: [{string.Join(", ", ResultsFormat)}]";
 }

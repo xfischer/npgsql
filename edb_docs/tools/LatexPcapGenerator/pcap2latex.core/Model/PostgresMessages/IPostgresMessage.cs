@@ -1,14 +1,17 @@
-﻿namespace pcap2latex;
+﻿using System.Runtime.CompilerServices;
 
-public interface IPostgresMessage
-{
-    char Code { get; }
-    int Length { get; }
-}
+namespace pcap2latex;
 
-public abstract class PostgresMessageBase(char code, int length) : IPostgresMessage
+
+public abstract class PostgresMessageBase(PostgresMessage pgMessage, int length)
 {
-    public char Code => code;
+    public char Code => pgMessage.Code;
+
+    public string Name => pgMessage.Name;
 
     public int Length => length;
+
+    public bool FrontEnd => pgMessage.IsFrontEnd;
+
+    public virtual string GetStringRepresentation() => this.GetType().Name;
 }

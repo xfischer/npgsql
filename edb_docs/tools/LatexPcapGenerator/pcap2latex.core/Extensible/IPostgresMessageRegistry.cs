@@ -10,8 +10,8 @@ public interface IPostgresMessageRegistry
 {
     PostgresMessage? GetMessage(char messageCode, bool? frontEnd);
 
-    void AddOrReplaceBackendMessage(PostgresMessage message);
+    void AddOrReplaceBackendMessage(PostgresMessage pgMessage);
 
-    void AddOrReplaceFrontendMessage(PostgresMessage message);
+    void AddOrReplaceFrontendMessage(PostgresMessage pgMessage);
 
 }

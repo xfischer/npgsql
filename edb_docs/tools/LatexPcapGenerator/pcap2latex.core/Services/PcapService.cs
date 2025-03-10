@@ -47,6 +47,7 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
                         srcIp, srcPort, dstIp, dstPort);
 
                     var pgPacket = ParsePacket(tcpPacket, ipPacket, state);
+                    pgPacket.Timestamp = time;
                     pgPacket.PacketIndex = packetRelativeIndex++;
                     yield return pgPacket;
 
@@ -70,7 +71,7 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
         };
 
         // Reconstruct packet
-        byte[] payloadData = state.PreviousBufferLeftover is null ? tcpPacket.PayloadData 
+        byte[] payloadData = state.PreviousBufferLeftover is null ? tcpPacket.PayloadData
                                                                 : [.. state.PreviousBufferLeftover, .. tcpPacket.PayloadData];
 
         using var memStream = new MemoryStream(payloadData);
@@ -100,9 +101,7 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
         return pgPacket;
     }
 
-    
-
-    private bool TryReadMessage(ParserInfo info, out IPostgresMessage? message)
+    private bool TryReadMessage(ParserInfo info, out PostgresMessageBase? message)
     {
         try
         {
@@ -118,44 +117,45 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
                 messageLength = info.Reader.ReadInt32();
             }
 
-            var pgMessage = options.MessageCatalog.GetMessage(messageCode, info.IsFrontEnd) ?? options.MessageCatalog.GetMessage(messageCode, !info.IsFrontEnd);
+            var pgMessageRaw = options.MessageCatalog.GetMessage(messageCode, info.IsFrontEnd) ?? options.MessageCatalog.GetMessage(messageCode, !info.IsFrontEnd);
 
-            if (pgMessage == null)
+            if (pgMessageRaw == null)
             {
                 throw new NotSupportedException($"Message not supported for code: '{messageCode}'");
             }
+            var pgMessage = pgMessageRaw.Value with { IsFrontEnd = info.IsFrontEnd };
 
             // Check if buffer empty
             if (!info.Reader.HasSufficientData(sizeof(int)) && !info.State.SSLRequestedFromClient(info.ClientPort)) // code + length
                 return false;
 
-            message = pgMessage.Value.Name! switch
+            message = pgMessage.Name switch
             {
-                nameof(Parse) => ParseMessage.Read(messageCode, info.Reader),
-                nameof(Bind) => BindMessage.Read(messageCode, info.Reader),
-                nameof(Describe) => DescribeMessage.Read(messageCode, info.Reader),
-                nameof(Execute) => ExecuteMessage.Read(messageCode, info.Reader),
-                nameof(Sync) => SyncMessage.Read(messageCode, info.Reader),
-                nameof(Query) => QueryMessage.Read(messageCode, info.Reader),
-                nameof(NoData) => NoDataMessage.Read(messageCode, info.Reader),
-                nameof(BindComplete) => BindCompleteMessage.Read(messageCode, info.Reader),
-                nameof(ParseComplete) => ParseCompleteMessage.Read(messageCode, info.Reader),
-                nameof(ParameterDescription) => ParameterDescriptionMessage.Read(messageCode, info.Reader),
-                nameof(RowDescription) => RowDescriptionMessage.Read(messageCode, info.Reader),
-                nameof(ReadyForQuery) => ReadyForQueryMessage.Read(messageCode, info.Reader),
-                nameof(DataRow) => DataRowMessage.Read(messageCode, info.Reader, info.State.LastRowDescription),
-                nameof(CommandComplete) => CommandCompleteMessage.Read(messageCode, info.Reader),
-                nameof(NoticeResponse) when info.State.SSLRequestedFromClient(info.ClientPort) => SSLResponseMessage.Read(messageCode),
-                nameof(NoticeResponse) => NoticeResponseMessage.Read(messageCode, info.Reader),
-                nameof(Terminate) => TerminateMessage.Read(messageCode, info.Reader),
-                "StartupMessage" when messageLength == 8 => SSLRequestMessage.Read(messageCode, messageLength, info.Reader),
-                "StartupMessage" when messageLength > 8 => StartupMessageMessage.Read(messageCode, messageLength, info.Reader),
-                "AuthenticationRequest" => AuthenticationMessage.Read(messageCode, info.Reader),
-                "Password" => info.State.GetLastAuthPacket(info.ClientPort)!.ReadResponseMessage(messageCode, info.Reader),
-                nameof(ParameterStatus) => ParameterStatusMessage.Read(messageCode, info.Reader),
-                nameof(BackendKeyData) => BackendKeyDataMessage.Read(messageCode, info.Reader),
-                nameof(ErrorResponse) => ErrorResponseMessage.Read(messageCode, info.Reader),
-                _ => options.CustomMessageProcessor?.Invoke(pgMessage.Value, info) ?? throw new NotImplementedException($"Missing implementation for message '{pgMessage.Value.Name}' (code: '{messageCode}') read."),
+                nameof(Parse) => ParseMessage.Read(pgMessage, info.Reader),
+                nameof(Bind) => BindMessage.Read(pgMessage, info.Reader),
+                nameof(Describe) => DescribeMessage.Read(pgMessage, info.Reader),
+                nameof(Execute) => ExecuteMessage.Read(pgMessage, info.Reader),
+                nameof(Sync) => SyncMessage.Read(pgMessage, info.Reader),
+                nameof(Query) => QueryMessage.Read(pgMessage, info.Reader),
+                nameof(NoData) => NoDataMessage.Read(pgMessage, info.Reader),
+                nameof(BindComplete) => BindCompleteMessage.Read(pgMessage, info.Reader),
+                nameof(ParseComplete) => ParseCompleteMessage.Read(pgMessage, info.Reader),
+                nameof(ParameterDescription) => ParameterDescriptionMessage.Read(pgMessage, info.Reader),
+                nameof(RowDescription) => RowDescriptionMessage.Read(pgMessage, info.Reader),
+                nameof(ReadyForQuery) => ReadyForQueryMessage.Read(pgMessage, info.Reader),
+                nameof(DataRow) => DataRowMessage.Read(pgMessage, info.Reader, info.State.LastRowDescription),
+                nameof(CommandComplete) => CommandCompleteMessage.Read(pgMessage, info.Reader),
+                nameof(NoticeResponse) when info.State.SSLRequestedFromClient(info.ClientPort) => SSLResponseMessage.Read(pgMessage),
+                nameof(NoticeResponse) => NoticeResponseMessage.Read(pgMessage, info.Reader),
+                nameof(Terminate) => TerminateMessage.Read(pgMessage, info.Reader),
+                "StartupMessage" when messageLength == 8 => SSLRequestMessage.Read(pgMessage, messageLength, info.Reader),
+                "StartupMessage" when messageLength > 8 => StartupMessageMessage.Read(pgMessage, messageLength, info.Reader),
+                "AuthenticationRequest" => AuthenticationMessage.Read(pgMessage, info.Reader),
+                "Password" => info.State.GetLastAuthPacket(info.ClientPort)!.ReadResponseMessage(pgMessage, info.Reader),
+                nameof(ParameterStatus) => ParameterStatusMessage.Read(pgMessage, info.Reader),
+                nameof(BackendKeyData) => BackendKeyDataMessage.Read(pgMessage, info.Reader),
+                nameof(ErrorResponse) => ErrorResponseMessage.Read(pgMessage, info.Reader),
+                _ => options.CustomMessageProcessor?.Invoke(pgMessage, info) ?? throw new NotImplementedException($"Missing implementation for message '{pgMessage.Name}' (code: '{messageCode}') read."),
             };
 
             if (message == null) // Cannot read, unsufficient buffer data available

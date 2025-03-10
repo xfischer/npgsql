@@ -2,16 +2,16 @@
 
 namespace pcap2latex;
 
-public class StartupMessageMessage(char code, int length) : PostgresMessageBase(code, length)
+public class StartupMessageMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public short ProtocolMajorVersion { get; private set; }
     public short ProtocolMinorVersion { get; private set; }
 
     public Dictionary<string, string> Parameters { get; set; } = [];
 
-    internal static StartupMessageMessage Read(char messageCode, int length, PcapBinaryReader reader)
+    internal static StartupMessageMessage Read(PostgresMessage pgMessage, int length, PcapBinaryReader reader)
     {
-        var message = new StartupMessageMessage(messageCode, length)
+        var message = new StartupMessageMessage(pgMessage, length)
         {
             ProtocolMajorVersion = reader.ReadInt16(),
             ProtocolMinorVersion = reader.ReadInt16()
@@ -41,4 +41,6 @@ public class StartupMessageMessage(char code, int length) : PostgresMessageBase(
 
         return message;
     }
+    public override string GetStringRepresentation() => $"minor={ProtocolMinorVersion}, major={ProtocolMajorVersion}, " +
+        $"Parameters=[{string.Join(", ", Parameters.Select(p => $"{p.Key}: {p.Value}"))}]";
 }

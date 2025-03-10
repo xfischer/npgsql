@@ -12,35 +12,35 @@ public static class EDBServiceCollectionExtensions
 {
     public static IServiceCollection AddPcap2Latex_EPAS(this IServiceCollection services)
     {
-        return services.AddPcap2Latex(options =>
-        {
-            RegisterEPASOptions(options);
-        });
+        return services.AddPcap2Latex(ConfigureEPASCaptureOptions, ConfigureEPASLatexOptions);
     }
-    private static void RegisterEPASOptions(PcapPostgresOptions options)
+    private static void ConfigureEPASCaptureOptions(PcapPostgresOptions options)
     {
-        options.MessageCatalog.AddOrReplaceBackendMessage(new('u', "OutDescription"));
-        options.MessageCatalog.AddOrReplaceBackendMessage(new('v', "ParamData"));
-        options.MessageCatalog.AddOrReplaceFrontendMessage(new('O', "ParseOut"));
-        options.MessageCatalog.AddOrReplaceFrontendMessage(new('u', "DescribeOut"));
-        options.MessageCatalog.AddOrReplaceFrontendMessage(new('v', "ExecuteOut"));
+        options.MessageCatalog.AddOrReplaceBackendMessage(new('u', "OutDescription", IsFrontEnd: false));
+        options.MessageCatalog.AddOrReplaceBackendMessage(new('v', "ParamData", IsFrontEnd: false));
+
+        options.MessageCatalog.AddOrReplaceFrontendMessage(new('O', "ParseOut", IsFrontEnd: true));
+        options.MessageCatalog.AddOrReplaceFrontendMessage(new('u', "DescribeOut", IsFrontEnd: true));
+        options.MessageCatalog.AddOrReplaceFrontendMessage(new('v', "ExecuteOut", IsFrontEnd: true));
 
         options.CustomMessageProcessor = HandleEdbEpasMessages;
-
+    }
+    private static void ConfigureEPASLatexOptions(PostgresToLatexOptions options)
+    {
         options.CustomTemplateProvider = HandleEdbEpasTemplates;
         options.CustomHeaderProvider = GetCustomHeader();
     }
 
     private static OutDescriptionMessage? LastOutDescriptionMessage;
-    private static IPostgresMessage? HandleEdbEpasMessages(PostgresMessage pgMessage, ParserInfo info)
+    private static PostgresMessageBase? HandleEdbEpasMessages(PostgresMessage pgMessage, ParserInfo info)
     {
-        IPostgresMessage? message = pgMessage.Name! switch
+        PostgresMessageBase? message = pgMessage.Name! switch
         {
-            nameof(ExecuteOut) => ExecuteOutMessage.Read(pgMessage.Code, info.Reader),
-            nameof(DescribeOut) => DescribeOutMessage.Read(pgMessage.Code, info.Reader),
-            nameof(ParseOut) => ParseOutMessage.Read(pgMessage.Code, info.Reader),
-            nameof(OutDescription) => OutDescriptionMessage.Read(pgMessage.Code, info.Reader),
-            "ParamData" => SendOutTupleMessage.Read(pgMessage.Code, info.Reader, LastOutDescriptionMessage),
+            nameof(ExecuteOut) => ExecuteOutMessage.Read(pgMessage, info.Reader),
+            nameof(DescribeOut) => DescribeOutMessage.Read(pgMessage, info.Reader),
+            nameof(ParseOut) => ParseOutMessage.Read(pgMessage, info.Reader),
+            nameof(OutDescription) => OutDescriptionMessage.Read(pgMessage, info.Reader),
+            "ParamData" => SendOutTupleMessage.Read(pgMessage, info.Reader, LastOutDescriptionMessage),
             _ => null
         };
 
@@ -50,7 +50,7 @@ public static class EDBServiceCollectionExtensions
         return message;
     }
 
-    private static ITextTransformer? HandleEdbEpasTemplates(IPostgresMessage message) => message switch
+    private static ITextTransformer? HandleEdbEpasTemplates(PostgresMessageBase message) => message switch
     {
         ParseOutMessage m => new ParseOut(m),
         DescribeOutMessage m => new DescribeOut(m),

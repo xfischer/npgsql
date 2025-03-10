@@ -2,13 +2,13 @@
 
 namespace pcap2latex;
 
-public class SSLRequestMessage(char code, int length) : PostgresMessageBase(code, length)
+public class SSLRequestMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     public int Payload { get; private set; }
 
-    internal static SSLRequestMessage Read(char messageCode, int messageLength, PcapBinaryReader reader)
+    internal static SSLRequestMessage Read(PostgresMessage pgMessage, int messageLength, PcapBinaryReader reader)
     {
-        var message = new SSLRequestMessage(messageCode, messageLength)
+        var message = new SSLRequestMessage(pgMessage, messageLength)
         {
             Payload = reader.ReadInt32()
         };

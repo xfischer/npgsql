@@ -1,11 +1,11 @@
 ﻿namespace pcap2latex;
 
-internal class SyncMessage(char code, int length) : PostgresMessageBase(code, length)
+internal class SyncMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
-    internal static SyncMessage Read(char messageCode, PcapBinaryReader reader)
+    internal static SyncMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var message = new SyncMessage(messageCode, len);
+        var message = new SyncMessage(pgMessage, len);
 
         return message;
     }

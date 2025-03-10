@@ -2,7 +2,7 @@
 
 namespace epascap2latex;
 
-public class ParseOutMessage(char code, int length) : PostgresMessageBase(code, length)
+public class ParseOutMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {    
     public string Statement { get; internal set; } = "";
     public string Query { get; internal set; } = "";
@@ -10,10 +10,10 @@ public class ParseOutMessage(char code, int length) : PostgresMessageBase(code, 
     public List<int> ParameterOids { get; internal set; } = [];
     public List<short> ParameterDirections { get; internal set; } = [];
 
-    public static ParseOutMessage Read(char messageCode, PcapBinaryReader reader)
+    public static ParseOutMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
         var len = reader.ReadInt32();
-        var packet = new ParseOutMessage(messageCode, len)
+        var packet = new ParseOutMessage(pgMessage, len)
         {
             Statement = reader.ReadNullTerminatedString(len),
             Query = reader.ReadNullTerminatedString(len),

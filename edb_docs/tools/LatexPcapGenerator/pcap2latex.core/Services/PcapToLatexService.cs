@@ -4,9 +4,9 @@ using System.Text;
 
 namespace pcap2latex;
 
-public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PcapPostgresOptions> pcapPostgresOptions)
+public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PostgresToLatexOptions> pcapPostgresOptions)
 {
-    private PcapPostgresOptions options { get; init; } = pcapPostgresOptions.Value;
+    private PostgresToLatexOptions options { get; init; } = pcapPostgresOptions.Value;
 
     const int MaxLatexRowsPerPage = 21;
 
@@ -137,7 +137,7 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pca
         return state;
     }
 
-    bool ProcessPostGresMessage(IPostgresMessage message, GenerationState state, StringBuilder latexBuilder, Action<StringBuilder, GenerationState>? messageReadyAction = null)
+    bool ProcessPostGresMessage(PostgresMessageBase message, GenerationState state, StringBuilder latexBuilder, Action<StringBuilder, GenerationState>? messageReadyAction = null)
     {
         // check consecutive datarows
         // if max datarows reached, skip until the last and write a "n skipped rows" skippedwords
@@ -203,7 +203,7 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pca
         latexBuilder.AppendLine(new MessageSeparator().TransformText());
     }
 
-    ITextTransformer? FindTextTransformer(IPostgresMessage message) => message switch
+    ITextTransformer? FindTextTransformer(PostgresMessageBase message) => message switch
     {
         QueryMessage m => new Query(m),
         ParseMessage m => new Parse(m),

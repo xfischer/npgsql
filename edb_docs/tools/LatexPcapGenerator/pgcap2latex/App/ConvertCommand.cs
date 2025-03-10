@@ -33,6 +33,11 @@ internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Se
         [DefaultValue(false)]
         public bool? Multiple { get; init; }
 
+        [Description("When set will generate text file (like PQTrace)")]
+        [CommandOption("-t|--text")]
+        [DefaultValue(false)]
+        public bool? ToText { get; init; }
+
         public override ValidationResult Validate()
         {
             if (!CheckInputFile(InputFile, out var result))
@@ -92,7 +97,14 @@ internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Se
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        app.ProcessFile(settings.InputFile!, settings.OutputPath!, settings.Standalone ?? true, settings.Port!.Value, settings.Multiple ?? false);
+        if (settings.ToText ?? false)
+        {
+            app.ProcessFileAsText(settings.InputFile!, settings.OutputPath!, settings.Port!.Value);
+        }
+        else
+        {
+            app.ProcessFile(settings.InputFile!, settings.OutputPath!, settings.Standalone ?? true, settings.Port!.Value, settings.Multiple ?? false);
+        }
 
         return 0;
     }

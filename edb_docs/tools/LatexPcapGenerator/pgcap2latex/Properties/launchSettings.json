@@ -4,6 +4,10 @@
       "commandName": "Project",
       "commandLineArgs": "SampleData\\connectorStartup.pcapng SampleData\\output 5446 --standalone"
     },
+    "Postgres-Text": {
+      "commandName": "Project",
+      "commandLineArgs": "SampleData\\extendedQuery.pcapng SampleData\\output 5446 --text"
+    },
     "Sample-NoArgs": {
       "commandName": "Project",
       "commandLineArgs": ""
