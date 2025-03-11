@@ -11,7 +11,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Npgsql.Properties;
 using static Npgsql.Tests.Support.MockState;
 using static Npgsql.Tests.TestUtil;
 using IsolationLevel = System.Transactions.IsolationLevel;
@@ -85,6 +84,55 @@ public class MultipleHostsTests : TestBase
         await using var dataSource = new NpgsqlDataSourceBuilder(connectionStringBuilder.ConnectionString)
             .BuildMultiHost();
         await using var conn = await dataSource.OpenConnectionAsync(targetSessionAttributes);
+
+        Assert.That(conn.Port, Is.EqualTo(postmasters[expectedServer].Port));
+
+        for (var i = 0; i <= expectedServer; i++)
+            _ = await postmasters[i].WaitForServerConnection();
+    }
+
+    [Test]
+    [TestCaseSource(nameof(MyCases))]
+    public async Task Connect_to_correct_host_legacy(TargetSessionAttributes targetSessionAttributes, MockState[] servers, int expectedServer)
+    {
+        var postmasters = servers.Select(s => PgPostmasterMock.Start(state: s)).ToArray();
+        await using var __ = new DisposableWrapper(postmasters);
+
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+        {
+            Host = MultipleHosts(postmasters),
+            ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading,
+            TargetSessionAttributes = TargetSessionAttributesAsString(targetSessionAttributes)
+        };
+
+        using var pool = CreateTempPool(connectionStringBuilder, out var connectionString);
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        Assert.That(conn.Port, Is.EqualTo(postmasters[expectedServer].Port));
+
+        for (var i = 0; i <= expectedServer; i++)
+            _ = await postmasters[i].WaitForServerConnection();
+    }
+
+    [Test]
+    [TestCaseSource(nameof(MyCases))]
+    public async Task Connect_to_correct_host_connection_string(TargetSessionAttributes targetSessionAttributes, MockState[] servers, int expectedServer)
+    {
+        var postmasters = servers.Select(s => PgPostmasterMock.Start(state: s)).ToArray();
+        await using var __ = new DisposableWrapper(postmasters);
+
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+        {
+            Host = MultipleHosts(postmasters),
+            ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading,
+            TargetSessionAttributes = TargetSessionAttributesAsString(targetSessionAttributes)
+        };
+
+        await using var dataSource = new NpgsqlDataSourceBuilder(connectionStringBuilder.ConnectionString)
+            .Build();
+        Assert.That(dataSource, Is.TypeOf<NpgsqlMultiHostDataSource>());
+        await using var conn = await dataSource.OpenConnectionAsync();
 
         Assert.That(conn.Port, Is.EqualTo(postmasters[expectedServer].Port));
 
@@ -254,7 +302,7 @@ public class MultipleHostsTests : TestBase
 
         if (targetSessionAttributes == "any")
         {
-            await using var postmasterMock = PgPostmasterMock.Start(ConnectionString);
+            await using var postmasterMock = PgPostmasterMock.Start(connectionString);
             using var pool = CreateTempPool(postmasterMock.ConnectionString, out connectionString);
             await using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
@@ -1024,15 +1072,6 @@ public class MultipleHostsTests : TestBase
     }
 
     [Test]
-    public void DataSource_with_TargetSessionAttributes_is_not_supported()
-    {
-        var builder = new NpgsqlDataSourceBuilder("Host=foo,bar;Target Session Attributes=primary");
-
-        Assert.That(() => builder.BuildMultiHost(), Throws.Exception.TypeOf<InvalidOperationException>()
-            .With.Message.EqualTo(NpgsqlStrings.CannotSpecifyTargetSessionAttributes));
-    }
-
-    [Test]
     public async Task BuildMultiHost_with_single_host_is_supported()
     {
         var builder = new NpgsqlDataSourceBuilder(ConnectionString);
@@ -1171,7 +1210,20 @@ public class MultipleHostsTests : TestBase
     static string MultipleHosts(params PgPostmasterMock[] postmasters)
         => string.Join(",", postmasters.Select(p => $"{p.Host}:{p.Port}"));
 
-    class DisposableWrapper(IEnumerable<IAsyncDisposable> disposables) : IAsyncDisposable
+    static string? TargetSessionAttributesAsString(TargetSessionAttributes targetSessionAttributes)
+        => targetSessionAttributes switch
+        {
+            TargetSessionAttributes.Any => "Any",
+            TargetSessionAttributes.Primary => "Primary",
+            TargetSessionAttributes.Standby => "Standby",
+            TargetSessionAttributes.PreferPrimary => "Prefer-Primary",
+            TargetSessionAttributes.PreferStandby => "Prefer-Standby",
+            TargetSessionAttributes.ReadOnly => "Read-Only",
+            TargetSessionAttributes.ReadWrite => "Read-Write",
+            _ => null
+        };
+
+    sealed class DisposableWrapper(IEnumerable<IAsyncDisposable> disposables) : IAsyncDisposable
     {
         public async ValueTask DisposeAsync()
         {

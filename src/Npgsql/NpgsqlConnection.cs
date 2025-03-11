@@ -197,11 +197,6 @@ public sealed class NpgsqlConnection : DbConnection, ICloneable, IComponent
 
         if (PoolManager.Pools.TryGetValue(canonical, out _dataSource))
         {
-            // If this is a multi-host data source and the user specified a TargetSessionAttributes, create a wrapper in front of the
-            // MultiHostDataSource with that TargetSessionAttributes.
-            if (_dataSource is NpgsqlMultiHostDataSource multiHostDataSource && settings.TargetSessionAttributesParsed.HasValue)
-                _dataSource = multiHostDataSource.WithTargetSession(settings.TargetSessionAttributesParsed.Value);
-
             // The pool was found, but only under the canonical key - we're using a different version
             // for the first time. Map it via our own key for next time.
             _dataSource = PoolManager.Pools.GetOrAdd(_connectionString, _dataSource);
