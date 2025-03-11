@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pcap2latex.core", "pcap2lat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "epascap2latex", "epascap2latex\epascap2latex.csproj", "{B68C9155-86EF-4D3E-B0EF-288A4505DB0A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicSample", "BasicSample\BasicSample.csproj", "{92690ED4-3C61-41DA-9EBD-E262D2CC3435}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{B68C9155-86EF-4D3E-B0EF-288A4505DB0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B68C9155-86EF-4D3E-B0EF-288A4505DB0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B68C9155-86EF-4D3E-B0EF-288A4505DB0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92690ED4-3C61-41DA-9EBD-E262D2CC3435}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92690ED4-3C61-41DA-9EBD-E262D2CC3435}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92690ED4-3C61-41DA-9EBD-E262D2CC3435}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92690ED4-3C61-41DA-9EBD-E262D2CC3435}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

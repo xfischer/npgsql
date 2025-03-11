@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SharpPcap;
 using SharpPcap.LibPcap;
@@ -10,6 +11,20 @@ namespace pcap2latex;
 
 public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptions> pcapPostgresOptions)
 {
+    public static PcapService Create(ILoggerFactory? loggerFactory = null, PcapPostgresOptions? options = null)
+    {
+        if (options is null)
+        {
+            options = new PcapPostgresOptions();
+            options.AddDefaultPostgresMessages();
+        }
+
+        var logger = loggerFactory == null ?
+                        NullLogger<PcapService>.Instance
+                        : loggerFactory.CreateLogger<PcapService>();
+        return new PcapService(logger, Options.Create(options));
+    }
+
     private PcapPostgresOptions options { get; init; } = pcapPostgresOptions.Value;
 
     public IEnumerable<PostgresPacket> ConvertPcap(string pcapFile, ushort pgsqlPortNumber = 5432)

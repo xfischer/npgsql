@@ -6,7 +6,7 @@ namespace pcap2latex;
 
 
 
-public sealed class PostgresToLatexOptions
+public sealed class PcapToLatexOptions
 {    
     /// <summary>
     /// Delegate called to provide additionnal template for a given <see cref="PostgresMessageBase"/>.

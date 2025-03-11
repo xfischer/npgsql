@@ -1,12 +1,24 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace pcap2latex;
 
-public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PostgresToLatexOptions> pcapPostgresOptions)
+public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PcapToLatexOptions> pcapPostgresOptions)
 {
-    private PostgresToLatexOptions options { get; init; } = pcapPostgresOptions.Value;
+    public static PcapToLatexService Create(ILoggerFactory? loggerFactory = null, PcapToLatexOptions? options = null)
+    {
+        options ??= new PcapToLatexOptions();
+
+        var logger = loggerFactory == null ?
+                        NullLogger<PcapToLatexService>.Instance
+                        : loggerFactory.CreateLogger<PcapToLatexService>();
+
+        return new PcapToLatexService(logger, Options.Create(options));
+    }
+
+    private PcapToLatexOptions options { get; init; } = pcapPostgresOptions.Value;
 
     const int MaxLatexRowsPerPage = 21;
 
@@ -64,17 +76,17 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pos
             // Header INSERTION AT BEGINNING
             var headerMsg = $"PostgreSQL packets. {packetIndex - 1} packet(s).";
             var headerDelegate = options?.CustomHeaderProvider;
-            ITextTransformer? header = headerDelegate is not null 
-                                        ? headerDelegate.Invoke(headerMsg, state) 
+            ITextTransformer? header = headerDelegate is not null
+                                        ? headerDelegate.Invoke(headerMsg, state)
                                         : new Header(headerMsg, state);
             if (header is null)
                 throw new Exception("Header must inherit from ITextTransformer");
 
-            fileLatexBuilder.Insert(0, header!.TransformText() + Environment.NewLine);            
+            fileLatexBuilder.Insert(0, header!.TransformText() + Environment.NewLine);
 
             var finalLatex = fileLatexBuilder.ToString();
             var outputDir = Path.GetDirectoryName(latexOutputFile);
-            if (!Directory.Exists(outputDir))
+            if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
                 Directory.CreateDirectory(outputDir!);
 
             File.WriteAllText(latexOutputFile, finalLatex);

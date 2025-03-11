@@ -25,7 +25,7 @@ public static class EDBServiceCollectionExtensions
 
         options.CustomMessageProcessor = HandleEdbEpasMessages;
     }
-    private static void ConfigureEPASLatexOptions(PostgresToLatexOptions options)
+    private static void ConfigureEPASLatexOptions(PcapToLatexOptions options)
     {
         options.CustomTemplateProvider = HandleEdbEpasTemplates;
         options.CustomHeaderProvider = GetCustomHeader();

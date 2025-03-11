@@ -17,7 +17,7 @@ public sealed class PcapPostgresOptions
     public IPostgresMessageRegistry MessageCatalog { get; set; } = new PostgresMessageRegistry();
 }
 
-internal static class PcapPostgresOptionsExtensions
+public static class PcapPostgresOptionsExtensions
 {
     public static void AddDefaultPostgresMessages(this PcapPostgresOptions options)
     {
