@@ -181,6 +181,40 @@ public class MultipleHostsTests : TestBase
     }
 
     [Test]
+    public async Task Legacy_connection_shares_datasource()
+    {
+        await using var primaryPostmaster = PgPostmasterMock.Start(state: Primary);
+        await using var standbyPostmaster = PgPostmasterMock.Start(state: Standby);
+
+        var builder1 = new NpgsqlConnectionStringBuilder
+        {
+            Host = MultipleHosts(primaryPostmaster, standbyPostmaster),
+            ServerCompatibilityMode = ServerCompatibilityMode.NoTypeLoading,
+            TargetSessionAttributes = "Prefer-Primary"
+        };
+
+        // Use the exact same pool for both connections as CreateTempPool adds a unique `ApplicationName` to connection string
+        using var pool = CreateTempPool(builder1, out var connectionString1);
+        var connectionString2 = new NpgsqlConnectionStringBuilder(connectionString1)
+        {
+            TargetSessionAttributes = "Prefer-Standby"
+        }.ConnectionString;
+
+        await using var conn1 = new NpgsqlConnection(connectionString1);
+        await conn1.OpenAsync();
+        Assert.That(conn1.Port, Is.EqualTo(primaryPostmaster.Port));
+
+        await using var conn2 = new NpgsqlConnection(connectionString2);
+        await conn2.OpenAsync();
+        Assert.That(conn2.Port, Is.EqualTo(standbyPostmaster.Port));
+
+        Assert.That(conn1.NpgsqlDataSource, Is.Not.SameAs(conn2.NpgsqlDataSource));
+        Assert.That(conn1.NpgsqlDataSource, Is.TypeOf<MultiHostDataSourceWrapper>());
+        Assert.That(conn2.NpgsqlDataSource, Is.TypeOf<MultiHostDataSourceWrapper>());
+        Assert.That(((MultiHostDataSourceWrapper)conn1.NpgsqlDataSource).WrappedSource, Is.SameAs(((MultiHostDataSourceWrapper)conn2.NpgsqlDataSource).WrappedSource));
+    }
+
+    [Test]
     [TestCase(TargetSessionAttributes.Standby,   new[] { Primary,         Primary })]
     [TestCase(TargetSessionAttributes.Primary,   new[] { Standby,         Standby })]
     [TestCase(TargetSessionAttributes.ReadWrite, new[] { PrimaryReadOnly, Standby })]
