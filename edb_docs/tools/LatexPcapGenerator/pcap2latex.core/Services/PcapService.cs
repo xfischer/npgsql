@@ -6,12 +6,13 @@ using SharpPcap;
 using SharpPcap.LibPcap;
 using System.Diagnostics;
 using System.Text;
+using pcap2latex.Templates;
 
 namespace pcap2latex;
 
-public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptions> pcapPostgresOptions)
+public sealed class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptions> pcapPostgresOptions) : IPcapService
 {
-    public static PcapService Create(ILoggerFactory? loggerFactory = null, PcapPostgresOptions? options = null)
+    public static IPcapService Create(ILoggerFactory? loggerFactory = null, PcapPostgresOptions? options = null)
     {
         if (options is null)
         {
@@ -92,14 +93,16 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
         using var memStream = new MemoryStream(payloadData);
         using var binaryReader = new BinaryReader(memStream, Encoding.UTF8);
         using var reader = new PcapBinaryReader(binaryReader, Encoding.UTF8);
+        var parserInfo = new ParserInfo(reader, state);
 
         byte[]? nextRemainder = null;
         while (binaryReader.BaseStream.Position != memStream.Length)
         {
             var currentPosition = binaryReader.BaseStream.Position;
             ushort clientPort = pgPacket.IsFrontEnd ? pgPacket.SourcePort : pgPacket.DestinationPort;
-            ParserInfo info = new ParserInfo(reader, state, pgPacket.IsFrontEnd, clientPort);
-            if (TryReadMessage(info, out var message))
+            parserInfo.IsFrontEnd = pgPacket.IsFrontEnd;
+            parserInfo.ClientPort = clientPort;
+            if (TryReadMessage(parserInfo, out var message))
             {
                 Debug.Assert(message != null);
                 pgPacket.Messages.Add(message!);
@@ -136,7 +139,9 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
 
             if (pgMessageRaw == null)
             {
-                throw new NotSupportedException($"Message not supported for code: '{messageCode}'");
+                logger.LogWarning("Unknown message with code: {MessageCode}", messageCode);
+                message = UnknownMessage.Read(new PostgresMessage(messageCode, "Unknown", info.IsFrontEnd), info.Reader);
+                return true;
             }
             var pgMessage = pgMessageRaw.Value with { IsFrontEnd = info.IsFrontEnd };
 
@@ -170,7 +175,8 @@ public class PcapService(ILogger<PcapService> logger, IOptions<PcapPostgresOptio
                 nameof(ParameterStatus) => ParameterStatusMessage.Read(pgMessage, info.Reader),
                 nameof(BackendKeyData) => BackendKeyDataMessage.Read(pgMessage, info.Reader),
                 nameof(ErrorResponse) => ErrorResponseMessage.Read(pgMessage, info.Reader),
-                _ => options.CustomMessageProcessor?.Invoke(pgMessage, info) ?? throw new NotImplementedException($"Missing implementation for message '{pgMessage.Name}' (code: '{messageCode}') read."),
+                _ => options.CustomMessageProcessor?.Invoke(pgMessage, info) ?? UnknownMessage.Read(new PostgresMessage(messageCode, "Unknown", info.IsFrontEnd), info.Reader) 
+                //throw new NotImplementedException($"Missing implementation for message '{pgMessage.Name}' (code: '{messageCode}') read."),
             };
 
             if (message == null) // Cannot read, unsufficient buffer data available

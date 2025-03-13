@@ -3,8 +3,8 @@ using pcap2latex;
 
 namespace epascap2latex;
 
-public sealed class ConvertApp(PcapService pcapService, 
-                                PcapToLatexService pcapToLatexService,
+public sealed class ConvertApp(IPcapService pcapService, 
+                                IPcapToLatexService pcapToLatexService,
                                 ILogger<ConvertApp> logger)
 {
     public void ProcessFile(string inputFile, string outputPath, bool standalone, ushort port, bool multipleFiles)

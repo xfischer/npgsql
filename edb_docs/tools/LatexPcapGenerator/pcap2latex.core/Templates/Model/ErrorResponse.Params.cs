@@ -1,4 +1,4 @@
-﻿namespace pcap2latex;
+﻿namespace pcap2latex.Templates;
 
 public partial class ErrorResponse(ErrorResponseMessage message) : ITextTransformer
 {

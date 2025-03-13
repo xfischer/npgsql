@@ -2,12 +2,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Text;
+using pcap2latex.Templates;
 
 namespace pcap2latex;
 
-public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PcapToLatexOptions> pcapPostgresOptions)
+public sealed class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<PcapToLatexOptions> pcapPostgresOptions) : IPcapToLatexService
 {
-    public static PcapToLatexService Create(ILoggerFactory? loggerFactory = null, PcapToLatexOptions? options = null)
+    public static IPcapToLatexService Create(ILoggerFactory? loggerFactory = null, PcapToLatexOptions? options = null)
     {
         options ??= new PcapToLatexOptions();
 
@@ -23,6 +24,16 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pca
     const int MaxLatexRowsPerPage = 21;
 
     public GenerationState PcapToLaTeX(IEnumerable<PostgresPacket> pgSqlPackets, string latexOutputFile, bool standalone = true)
+    {
+        var outputDir = Path.GetDirectoryName(latexOutputFile);
+        if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir!);
+
+        using var writer = new FileStream(latexOutputFile, FileMode.Create);
+        return PcapToLaTeX(pgSqlPackets, writer, standalone);
+    }
+
+    public GenerationState PcapToLaTeX(IEnumerable<PostgresPacket> pgSqlPackets, Stream outputStream, bool standalone = true)
     {
         GenerationState state = new(standalone: standalone);
 
@@ -85,11 +96,8 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pca
             fileLatexBuilder.Insert(0, header!.TransformText() + Environment.NewLine);
 
             var finalLatex = fileLatexBuilder.ToString();
-            var outputDir = Path.GetDirectoryName(latexOutputFile);
-            if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
-                Directory.CreateDirectory(outputDir!);
-
-            File.WriteAllText(latexOutputFile, finalLatex);
+            using var writer = new StreamWriter(outputStream, leaveOpen: true);
+            writer.Write(finalLatex);
         }
 
         return state;
@@ -242,6 +250,7 @@ public class PcapToLatexService(ILogger<PcapToLatexService> logger, IOptions<Pca
         ParameterStatusMessage m => new ParameterStatus(m),
         BackendKeyDataMessage m => new BackendKeyData(m),
         ErrorResponseMessage m => new ErrorResponse(m),
+        UnknownMessage m => new Unknown(m),
         _ => null,
     };
 }

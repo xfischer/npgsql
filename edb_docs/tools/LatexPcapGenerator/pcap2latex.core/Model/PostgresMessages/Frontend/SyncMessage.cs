@@ -1,6 +1,6 @@
 ﻿namespace pcap2latex;
 
-internal class SyncMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
+public class SyncMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     internal static SyncMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {

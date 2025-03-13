@@ -1,6 +1,6 @@
 ﻿namespace pcap2latex;
 
-internal class TerminateMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
+public class TerminateMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     internal static TerminateMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {

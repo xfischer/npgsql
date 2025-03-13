@@ -6,27 +6,28 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace pgcap2latex;
 
-internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Settings>
+public class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Settings>
 {
-    public sealed class Settings : CommandSettings
+    public class Settings : CommandSettings
     {
         [Description("Capture file to translate (.pcapng, .pcap)")]
         [CommandArgument(0, "<capture_file>")]
         public required string InputFile { get; init; }
 
-        [Description("Output file path. Leave empty generate a file at the same location as input file, with .tex extension")]
-        [CommandArgument(1, "[output_path]")]
-        public string? OutputPath { get; private set; }
-
         [Description("PostgreSQL port number. Only packets from/to this port will be processed. Defaults to 5432")]
-        [CommandArgument(2, "[postgres_port]")]
+        [CommandArgument(1, "[postgres_port]")]
         [DefaultValue((ushort)5432)]
         public ushort? Port { get; set; }
+
+        [Description("Output file path. Leave empty generate a file at the same location as input file, with .tex extension")]
+        [CommandArgument(2, "[output_path]")]
+        public string? OutputPath { get; private set; }
+
 
         [Description("When set will generate standlone LaTeX documents, ideal for short messages. Leave unset to generate LaTeX articles with page breaks when possible")]
         [CommandOption("-s|--standalone")]
         [DefaultValue(false)]
-        public bool? Standalone { get; init; } 
+        public bool? Standalone { get; init; }
 
         [Description("When set, one file is generated per message in standalone mode")]
         [CommandOption("-m|--multiple")]
@@ -93,10 +94,10 @@ internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Se
 
             return outputFile;
         }
-    }    
+    }
 
     public override int Execute([NotNull] CommandContext context, [NotNull] Settings settings)
-    {
+    {   
         if (settings.ToText ?? false)
         {
             app.ProcessFileAsText(settings.InputFile!, settings.OutputPath!, settings.Port!.Value);
@@ -109,6 +110,6 @@ internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Se
         return 0;
     }
 
-    
+
 
 }

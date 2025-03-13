@@ -33,8 +33,8 @@ internal sealed class Program
                 config.ValidateExamples();
 #endif
                 config.AddExample("file.pcapng", "diagram.tex");
-                config.AddExample("file.pcapng", "diagram.tex", "5432", "--standalone");
-                config.AddExample("file.pcapng", "diagram.tex", "5432", "--standalone", "--multiple");
+                config.AddExample("file.pcapng", "diagram.tex", "5444", "--standalone");
+                config.AddExample("file.pcapng", "diagram.tex", "5444", "--standalone", "--multiple");
 
 
             });

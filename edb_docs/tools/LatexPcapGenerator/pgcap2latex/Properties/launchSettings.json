@@ -2,7 +2,7 @@
   "profiles": {
     "Postgres": {
       "commandName": "Project",
-      "commandLineArgs": "SampleData\\connectorStartup.pcapng SampleData\\output 5446 --standalone"
+      "commandLineArgs": "SampleData\\connectorStartup.pcapng 5446 --standalone"
     },
     "Postgres-Text": {
       "commandName": "Project",

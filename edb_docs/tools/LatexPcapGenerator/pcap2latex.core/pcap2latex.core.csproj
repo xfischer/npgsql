@@ -115,6 +115,11 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>ParseComplete.tt</DependentUpon>
 		</Compile>
+		<Compile Update="Templates\Unknown.cs">
+		  <DependentUpon>Unknown.tt</DependentUpon>
+		  <DesignTime>True</DesignTime>
+		  <AutoGen>True</AutoGen>
+		</Compile>
 		<Compile Update="Templates\Query.cs">
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
@@ -176,158 +181,162 @@
 		<None Update="Templates\AuthenticationGeneric.tt">
 			<LastGenOutput>AuthenticationGeneric.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\BackendKeyData.tt">
 			<LastGenOutput>BackEndKeyData.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Bind.tt">
 			<LastGenOutput>Bind.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\BindComplete.tt">
 			<LastGenOutput>BindComplete.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\CommandComplete.tt">
 			<LastGenOutput>CommandComplete.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\DataRow.tt">
 			<LastGenOutput>DataRow.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Describe.tt">
 			<LastGenOutput>Describe.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\ErrorResponse.tt">
 			<LastGenOutput>ErrorResponse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Execute.tt">
 			<LastGenOutput>Execute.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\NoData.tt">
 			<LastGenOutput>NoData.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\NoticeResponse.tt">
 			<LastGenOutput>NoticeResponse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Paging\Footer.tt">
 			<LastGenOutput>Footer.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Paging\Header.tt">
 			<LastGenOutput>Header.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Paging\MessageSeparator.tt">
 			<LastGenOutput>MessageSeparator.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Paging\PacketFooter.tt">
 			<LastGenOutput>PacketFooter.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Paging\PacketHeader.tt">
 			<LastGenOutput>PacketHeader.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\ParameterDescription.tt">
 			<LastGenOutput>ParameterDescription.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\ParameterStatus.tt">
 			<LastGenOutput>ParameterStatus.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Parse.tt">
 			<LastGenOutput>Parse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\ParseComplete.tt">
 			<LastGenOutput>ParseComplete.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
+		</None>
+		<None Update="Templates\Unknown.tt">
+		  <CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
+		  <LastGenOutput>Unknown.cs</LastGenOutput>
+		  <Generator>TextTemplatingFilePreprocessor</Generator>
 		</None>
 		<None Update="Templates\Query.tt">
 			<LastGenOutput>Query.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\ReadyForQuery.tt">
 			<LastGenOutput>ReadyForQuery.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\RowDescription.tt">
 			<LastGenOutput>RowDescription.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\SASLInitialResponse.tt">
 			<LastGenOutput>SASLInitialResponse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\SASLResponse.tt">
 			<LastGenOutput>SASLResponse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\SkippedWords.tt">
 			<LastGenOutput>SkippedWords.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\SSLRequest.tt">
 			<LastGenOutput>SSLRequest.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\SSLResponse.tt">
 			<LastGenOutput>SSLResponse.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\StartupMessage.tt">
 			<LastGenOutput>StartupMessage.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Sync.tt">
 			<LastGenOutput>Sync.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 		<None Update="Templates\Terminate.tt">
 			<LastGenOutput>Terminate.cs</LastGenOutput>
 			<Generator>TextTemplatingFilePreprocessor</Generator>
-			<CustomToolNamespace>pcap2latex</CustomToolNamespace>
+			<CustomToolNamespace>pcap2latex.Templates</CustomToolNamespace>
 		</None>
 	</ItemGroup>
 

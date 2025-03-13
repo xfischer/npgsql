@@ -19,7 +19,7 @@ public sealed class PcapPostgresOptions
 
 public static class PcapPostgresOptionsExtensions
 {
-    public static void AddDefaultPostgresMessages(this PcapPostgresOptions options)
+    public static PcapPostgresOptions AddDefaultPostgresMessages(this PcapPostgresOptions options)
     {
         options.MessageCatalog.AddOrReplaceBackendMessage(new('R', "AuthenticationRequest", IsFrontEnd: false));
         options.MessageCatalog.AddOrReplaceBackendMessage(new('K', "BackendKeyData", IsFrontEnd: false));
@@ -63,6 +63,8 @@ public static class PcapPostgresOptionsExtensions
         options.MessageCatalog.AddOrReplaceFrontendMessage(new('f', "CopyFail", IsFrontEnd: true));
         options.MessageCatalog.AddOrReplaceFrontendMessage(new('X', "Terminate", IsFrontEnd: true));
         options.MessageCatalog.AddOrReplaceFrontendMessage(new('p', "Password", IsFrontEnd: true));
+
+        return options;
     }
         
 }

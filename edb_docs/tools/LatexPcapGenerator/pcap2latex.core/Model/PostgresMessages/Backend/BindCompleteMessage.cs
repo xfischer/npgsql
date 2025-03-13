@@ -1,6 +1,6 @@
 ﻿namespace pcap2latex;
 
-internal class BindCompleteMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
+public class BindCompleteMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     internal static BindCompleteMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {

@@ -3,13 +3,13 @@ using pcap2latex;
 
 namespace pgcap2latex;
 
-public sealed class ConvertApp(PcapService pcapService, 
-                                PcapToLatexService pcapToLatexService,
+public class ConvertApp(IPcapService pcapService, 
+                                IPcapToLatexService pcapToLatexService,
                                 ILogger<ConvertApp> logger)
 {
     public void ProcessFile(string inputFile, string outputPath, bool standalone, ushort port, bool multipleFiles)
     {
-        logger.LogInformation("PCAP to LaTeX converter - Copyright EnterpriseDB");
+        logger.LogInformation("PCAP to LaTeX converter");
 
         if (multipleFiles)
         {

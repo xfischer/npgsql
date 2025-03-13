@@ -7,7 +7,7 @@
 //     the code is regenerated.
 // </auto-generated>
 // ------------------------------------------------------------------------------
-namespace pcap2latex
+namespace pcap2latex.Templates
 {
     using System.Linq;
     using System.Text;

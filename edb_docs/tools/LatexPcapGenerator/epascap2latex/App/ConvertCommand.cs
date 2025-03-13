@@ -14,14 +14,14 @@ internal sealed class ConvertCommand(ConvertApp app) : Command<ConvertCommand.Se
         [CommandArgument(0, "<capture_file>")]
         public required string InputFile { get; init; }
 
-        [Description("Output file path. Leave empty generate a file at the same location as input file, with .tex extension")]
-        [CommandArgument(1, "[output_path]")]
-        public string? OutputPath { get; private set; }
-
         [Description("PostgreSQL port number. Only packets from/to this port will be processed. Defaults to 5432")]
-        [CommandArgument(2, "[postgres_port]")]
+        [CommandArgument(1, "[postgres_port]")]
         [DefaultValue((ushort)5432)]
         public ushort Port { get; set; }
+
+        [Description("Output file path. Leave empty generate a file at the same location as input file, with .tex extension")]
+        [CommandArgument(2, "[output_path]")]
+        public string? OutputPath { get; private set; }
 
         [Description("When set will generate standlone LaTeX documents, ideal for short messages. Leave unset to generate LaTeX articles with page breaks when possible")]
         [CommandOption("-s|--standalone")]

@@ -24,8 +24,8 @@ public static class ServiceCollectionExtensions
             services.PostConfigure(transformOptions);
         }
 
-        services.AddTransient<PcapService>()
-                .AddTransient<PcapToLatexService>();
+        services.AddTransient<IPcapService, PcapService>()
+                .AddTransient<IPcapToLatexService, PcapToLatexService>();
 
         return services;
     }

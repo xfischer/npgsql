@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using pcap2latex;
 using pgcap2latex.Infrastructure;
 using Spectre.Console;
@@ -6,9 +7,9 @@ using Spectre.Console.Cli;
 
 namespace pgcap2latex;
 
-internal sealed class Program
+public sealed class Program
 {
-    static int Main(string[] args)
+    public static int Main(string[] args)
     {
         try
         {
@@ -18,7 +19,9 @@ internal sealed class Program
             // pull this setting.
             var serviceCollection = new ServiceCollection()
                 .AddLogging(configure =>
-                    configure.AddSpectreConsole())
+                {
+                    configure.AddSpectreConsole();
+                })
                 .AddPcap2Latex()
                 .AddSingleton<ConvertApp>();
 

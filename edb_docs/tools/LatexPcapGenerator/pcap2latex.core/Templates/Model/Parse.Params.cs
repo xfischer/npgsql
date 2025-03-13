@@ -1,6 +1,6 @@
 ﻿using static pcap2latex.LatexHelper;
 
-namespace pcap2latex;
+namespace pcap2latex.Templates;
 
 public partial class Parse(ParseMessage message) : ITextTransformer
 {

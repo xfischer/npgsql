@@ -12,9 +12,12 @@ public static class EDBServiceCollectionExtensions
 {
     public static IServiceCollection AddPcap2Latex_EPAS(this IServiceCollection services)
     {
-        return services.AddPcap2Latex(ConfigureEPASCaptureOptions, ConfigureEPASLatexOptions);
+        return services.AddPcap2Latex(ConfigureEPASCustomMessages, ConfigureEPASLatexOptions);
     }
-    private static void ConfigureEPASCaptureOptions(PcapPostgresOptions options)
+
+    // EnterpriseDB EPAS PCAP -> PG messages configuration
+    // Additionnal EPAS messages are registered here
+    private static void ConfigureEPASCustomMessages(PcapPostgresOptions options)
     {
         options.MessageCatalog.AddOrReplaceBackendMessage(new('u', "OutDescription", IsFrontEnd: false));
         options.MessageCatalog.AddOrReplaceBackendMessage(new('v', "ParamData", IsFrontEnd: false));
@@ -23,16 +26,12 @@ public static class EDBServiceCollectionExtensions
         options.MessageCatalog.AddOrReplaceFrontendMessage(new('u', "DescribeOut", IsFrontEnd: true));
         options.MessageCatalog.AddOrReplaceFrontendMessage(new('v', "ExecuteOut", IsFrontEnd: true));
 
-        options.CustomMessageProcessor = HandleEdbEpasMessages;
-    }
-    private static void ConfigureEPASLatexOptions(PcapToLatexOptions options)
-    {
-        options.CustomTemplateProvider = HandleEdbEpasTemplates;
-        options.CustomHeaderProvider = GetCustomHeader();
+        options.CustomMessageProcessor = EPASMessageHandler;
     }
 
+    // Binary readers for each specific message
     private static OutDescriptionMessage? LastOutDescriptionMessage;
-    private static PostgresMessageBase? HandleEdbEpasMessages(PostgresMessage pgMessage, ParserInfo info)
+    private static PostgresMessageBase? EPASMessageHandler(PostgresMessage pgMessage, ParserInfo info)
     {
         PostgresMessageBase? message = pgMessage.Name! switch
         {
@@ -48,6 +47,15 @@ public static class EDBServiceCollectionExtensions
             LastOutDescriptionMessage = outDescriptionMessage;
 
         return message;
+    }
+
+
+    // EnterpriseDB EPAS PG messages -> LaTeX configuration
+    // Additionnal EPAS messages T4 templates are registered here
+    private static void ConfigureEPASLatexOptions(PcapToLatexOptions options)
+    {
+        options.CustomTemplateProvider = HandleEdbEpasTemplates;
+        options.CustomHeaderProvider = GetCustomHeader();
     }
 
     private static ITextTransformer? HandleEdbEpasTemplates(PostgresMessageBase message) => message switch

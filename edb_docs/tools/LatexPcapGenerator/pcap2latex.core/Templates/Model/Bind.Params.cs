@@ -1,4 +1,4 @@
-﻿namespace pcap2latex;
+﻿namespace pcap2latex.Templates;
 
 public partial class Bind(BindMessage message) : ITextTransformer
 {

@@ -35,7 +35,10 @@ public class DataRowMessage(PostgresMessage pgMessage, int length) : PostgresMes
         for (int i = 0; i < message.FieldCount; i++)
         {
             int colLength = reader.ReadInt32();
-            bool isText = lastRowDescription?.FieldDescriptions[i].Format == 0;
+            // TODO: create converters, should be also useful for Bind and other messages with data
+            bool isText = lastRowDescription?.FieldDescriptions[i].Format == 0 
+                            || lastRowDescription?.FieldDescriptions[i].TypeOid == 19
+                            || lastRowDescription?.FieldDescriptions[i].TypeOid == 18;
             byte[]? data = (colLength > 0) ? reader.ReadBytes(colLength) : null;
             string? text = (data != null) ? Encoding.UTF8.GetString(data) : null;
 

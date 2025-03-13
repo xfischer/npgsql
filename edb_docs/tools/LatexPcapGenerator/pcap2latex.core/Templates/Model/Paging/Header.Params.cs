@@ -1,4 +1,4 @@
-﻿namespace pcap2latex;
+﻿namespace pcap2latex.Templates;
 
 public partial class Header(string? message, GenerationState state) : ITextTransformer
 {

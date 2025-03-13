@@ -1,6 +1,6 @@
 ﻿namespace pcap2latex;
 
-internal class NoDataMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
+public class NoDataMessage(PostgresMessage pgMessage, int length) : PostgresMessageBase(pgMessage, length)
 {
     internal static NoDataMessage Read(PostgresMessage pgMessage, PcapBinaryReader reader)
     {
