@@ -39,7 +39,7 @@ env:
   TPA_2Q_SUBSCRIPTION_TOKEN: ${{ secrets.TPA_2Q_SUBSCRIPTION_TOKEN }}
   CLOUDSMITH_TOKEN: ${{ secrets.CLOUDSMITH_READ_ALL }}
   SECRET_SERIALIZE: ${{ secrets.PASSPHRASE }}
-  FOUNDATION_VER: "v2.2.2" # Foundation framework version branch or tag
+  FOUNDATION_VER: v3
 
 jobs:
   prepare:
