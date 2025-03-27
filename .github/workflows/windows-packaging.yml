@@ -340,4 +340,3 @@ jobs:
         uses: ./foundation/actions/publish/conveyor-upload
         with:
           artifact-name: windows-installers
-          environment: dev
