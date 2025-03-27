@@ -83,7 +83,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL
         private static RelationalTypeMapping GetMapping(Type clrType, string storeType)
             => Mapper.FindMapping(clrType, storeType);
 
-        private class LegacyNpgsqlNodaTimeTypeMappingFixture : IDisposable
+        public class LegacyNpgsqlNodaTimeTypeMappingFixture : IDisposable
         {
             public LegacyNpgsqlNodaTimeTypeMappingFixture()
             {
