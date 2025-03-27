@@ -1,5 +1,7 @@
 # LaTeX protocol datagrams
 
+Those diagrams were generated using [epascap2latex](https://github.com/EnterpriseDB/epascap2latex) (a superset of [pgcap2latex](https://github.com/EnterpriseDB/pgcap2latex))
+
 ## Installation
 
 - VSCode

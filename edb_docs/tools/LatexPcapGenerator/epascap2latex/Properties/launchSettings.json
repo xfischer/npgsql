@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "epascap2latex": {
-      "commandName": "Project",
-      "commandLineArgs": "SampleData\\epas.pcapng 5446 SampleData\\output --standalone"
-    }
-  }
-}
