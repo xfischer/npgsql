@@ -234,7 +234,7 @@ jobs:
           path: download-artifact
 
       - name: Download installer archive artifact
-        uses: ./download-artifact
+        uses: actions/download-artifact@v4
         with:
           name: windows-installers
 
