@@ -282,7 +282,7 @@ jobs:
         uses: ./foundation/actions/installer/test-installer/
         with:
           platform: windows
-          platform-arch: x64
+          platform-arch: ${{ inputs.architecture }}
           additional-options: "--extract-only 1 --prefix \"${{ github.workspace }}\\extracted-installer\""
 
       - name: Run bom-squad
