@@ -448,5 +448,47 @@ public class DataSourceTests : TestBase
         Assert.DoesNotThrowAsync(async () => await connection2.ExecuteScalarAsync($"SELECT 'happy'::{type}"));
     }
 
+    [Test]
+    public async Task Resolve_type_mapping([Values] bool async)
+    {
+        var dataSource = DataSource;
+        var intClrTypeMapping = async
+            ? await dataSource.TryGetMappingAsync<int>()
+            : dataSource.TryGetMapping<int>();
+        Assert.That(intClrTypeMapping, Is.Not.Null);
+        Assert.That(intClrTypeMapping!.Type, Is.EqualTo(typeof(int)));
+
+        var int4DataTypeNameMapping = async
+            ? await dataSource.TryGetMappingAsync(dataTypeName: "int4")
+            : dataSource.TryGetMapping(dataTypeName: "int4");
+
+        Assert.That(int4DataTypeNameMapping, Is.Not.Null);
+        Assert.That(int4DataTypeNameMapping!.Type, Is.EqualTo(typeof(int)));
+    }
+
+    [Test]
+    public async Task Resolve_unknown_enum_type_mapping([Values] bool async)
+    {
+        await using var adminConnection = await OpenConnectionAsync();
+        var type = await GetTempTypeName(adminConnection);
+        await adminConnection.ExecuteNonQueryAsync($"CREATE TYPE {type} AS ENUM ('sad', 'ok', 'happy')");
+
+        var dataSource = DataSource;
+        // Reload types to load the new enum from the database
+        await dataSource.ReloadTypesAsync();
+        var moodClrTypeMapping = async
+            ? await dataSource.TryGetMappingAsync<Mood>()
+            : dataSource.TryGetMapping<Mood>();
+        Assert.That(moodClrTypeMapping, Is.Null);
+
+        var moodDataTypeNameMapping = async
+            ? await dataSource.TryGetMappingAsync(dataTypeName: type)
+            : dataSource.TryGetMapping(dataTypeName: type);
+
+        // We support mapping unknown enums to text
+        Assert.That(moodDataTypeNameMapping, Is.Not.Null);
+        Assert.That(moodDataTypeNameMapping!.Type, Is.EqualTo(typeof(string)));
+    }
+
     enum Mood { Sad, Ok, Happy }
 }
