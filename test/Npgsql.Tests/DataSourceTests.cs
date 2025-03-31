@@ -479,11 +479,11 @@ public class DataSourceTests : TestBase
         // Reload types to load the new enum from the database
         await dataSource.ReloadTypesAsync();
 
-        var moodClrTypeMapping = async
+        var enumClrTypeMapping = async
             ? await dataSource.TryGetMappingAsync<Mood>()
             : dataSource.TryGetMapping<Mood>();
 
-        Assert.That(moodClrTypeMapping, Is.Null);
+        Assert.That(enumClrTypeMapping, Is.Null);
 
         var enumDataTypeNameMapping = async
             ? await dataSource.TryGetMappingAsync(dataTypeName: type)
