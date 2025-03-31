@@ -265,20 +265,7 @@ public abstract class NpgsqlDataSource : DbDataSource
         if (SerializerOptions is null)
             using (OpenConnection()) { }
 
-        Debug.Assert(IsBootstrapped);
-        Debug.Assert(SerializerOptions is not null);
-        Debug.Assert(DatabaseInfo is not null);
-
-        PgTypeId? pgTypeID = null;
-
-        if (!string.IsNullOrEmpty(dataTypeName))
-        {
-            if (!DatabaseInfo.TryGetPostgresTypeByName(DataTypeName.NormalizeName(dataTypeName), out var pgType))
-                throw new NotSupportedException($"The data type name '{dataTypeName}' isn't present in your database. You may need to install an extension or upgrade to a newer version.");
-            pgTypeID = SerializerOptions.ToCanonicalTypeId(pgType.GetRepresentationalType());
-        }
-
-        return SerializerOptions.GetTypeInfoInternal(type, pgTypeID);
+        return TryGetMappingCore(type, dataTypeName);
     }
 
     /// <summary>
@@ -302,6 +289,11 @@ public abstract class NpgsqlDataSource : DbDataSource
             await connection.DisposeAsync().ConfigureAwait(false);
         }
 
+        return TryGetMappingCore(type, dataTypeName);
+    }
+
+    PgTypeInfo? TryGetMappingCore(Type? type, string? dataTypeName)
+    {
         Debug.Assert(IsBootstrapped);
         Debug.Assert(SerializerOptions is not null);
         Debug.Assert(DatabaseInfo is not null);
